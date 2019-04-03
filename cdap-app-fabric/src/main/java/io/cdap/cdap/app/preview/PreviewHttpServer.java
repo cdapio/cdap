@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.http.NettyHttpService;

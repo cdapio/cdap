@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.BasicThrowable;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;

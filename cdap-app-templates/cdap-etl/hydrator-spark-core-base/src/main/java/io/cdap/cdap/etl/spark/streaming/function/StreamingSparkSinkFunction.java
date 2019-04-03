@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function;
+package io.cdap.cdap.etl.spark.streaming.function;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.api.batch.SparkPluginContext;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.SparkPipelineRuntime;
-import co.cask.cdap.etl.spark.batch.BasicSparkPluginContext;
-import co.cask.cdap.etl.spark.function.CountingFunction;
-import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
-import co.cask.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
+import io.cdap.cdap.etl.spark.batch.BasicSparkPluginContext;
+import io.cdap.cdap.etl.spark.function.CountingFunction;
+import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import io.cdap.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;

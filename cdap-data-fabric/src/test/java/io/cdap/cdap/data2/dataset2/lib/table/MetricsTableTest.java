@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;

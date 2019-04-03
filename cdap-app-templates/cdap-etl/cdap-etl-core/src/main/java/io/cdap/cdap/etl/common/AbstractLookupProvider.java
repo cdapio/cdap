@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.etl.api.Lookup;
-import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.lookup.KeyValueTableLookup;
-import co.cask.cdap.etl.api.lookup.TableLookup;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.etl.api.Lookup;
+import io.cdap.cdap.etl.api.LookupProvider;
+import io.cdap.cdap.etl.api.lookup.KeyValueTableLookup;
+import io.cdap.cdap.etl.api.lookup.TableLookup;
 
 import javax.annotation.Nullable;
 

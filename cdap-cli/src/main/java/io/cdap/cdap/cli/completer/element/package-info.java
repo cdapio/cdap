@@ -17,4 +17,4 @@
 /**
  * CLI completers for CDAP elements.
  */
-package co.cask.cdap.cli.completer.element;
+package io.cdap.cdap.cli.completer.element;

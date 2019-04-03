@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
 /**
  * Interface for the dataset that a batch job can output to.

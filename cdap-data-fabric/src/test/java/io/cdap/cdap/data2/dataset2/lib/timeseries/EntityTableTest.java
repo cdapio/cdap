@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.dataset2.lib.timeseries;
+package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import org.junit.Assert;
 import org.junit.Test;
 

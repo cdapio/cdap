@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.format;
+package io.cdap.cdap.format;
 
-import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.format.UnexpectedFormatException;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.data.format.RecordFormat;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.format.UnexpectedFormatException;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth.context;
+package io.cdap.cdap.security.auth.context;
 
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 
 /**
  * A dummy {@link AuthenticationContext} to be used in tests.

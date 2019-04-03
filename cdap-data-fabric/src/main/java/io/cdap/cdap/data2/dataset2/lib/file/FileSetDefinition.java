@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.file;
+package io.cdap.cdap.data2.dataset2.lib.file;
 
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.Reconfigurable;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.Reconfigurable;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;

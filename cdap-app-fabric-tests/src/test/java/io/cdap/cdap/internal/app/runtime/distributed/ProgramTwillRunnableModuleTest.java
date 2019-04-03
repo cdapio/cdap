@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.test.MockTwillContext;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.test.MockTwillContext;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

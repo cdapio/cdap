@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.log;
+package io.cdap.cdap.gateway.handlers.log;
 
-import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
-import co.cask.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
+import io.cdap.cdap.logging.read.LogOffset;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;

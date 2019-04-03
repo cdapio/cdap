@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;

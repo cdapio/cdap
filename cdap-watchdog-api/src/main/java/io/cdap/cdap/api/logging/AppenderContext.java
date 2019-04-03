@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.logging;
+package io.cdap.cdap.api.logging;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.Context;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**

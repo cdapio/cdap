@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;

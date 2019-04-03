@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.TestConfiguration;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
+import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
+import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.SlowTests;
+import io.cdap.cdap.test.TestBase;
+import io.cdap.cdap.test.TestConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;

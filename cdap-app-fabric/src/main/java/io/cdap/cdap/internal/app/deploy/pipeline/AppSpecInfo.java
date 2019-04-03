@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.Collection;
 

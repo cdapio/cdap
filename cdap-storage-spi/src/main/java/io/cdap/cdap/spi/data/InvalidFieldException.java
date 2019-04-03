@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data;
+package io.cdap.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.FieldType;
 
 import java.util.Collection;
 import java.util.Collections;

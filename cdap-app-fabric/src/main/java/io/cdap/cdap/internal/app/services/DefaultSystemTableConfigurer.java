@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.api.SystemTableConfigurer;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.SystemTableConfigurer;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
 import com.google.common.collect.ForwardingObject;
 import org.apache.tephra.Transaction;

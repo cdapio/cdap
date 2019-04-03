@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.common.options.Option;
+import io.cdap.cdap.common.options.Option;
 
 /**
  * Options for a MasterEnvironment.

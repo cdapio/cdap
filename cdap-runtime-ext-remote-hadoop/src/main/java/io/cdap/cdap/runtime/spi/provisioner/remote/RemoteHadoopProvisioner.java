@@ -15,18 +15,18 @@
  *
  */
 
-package co.cask.cdap.runtime.spi.provisioner.remote;
+package io.cdap.cdap.runtime.spi.provisioner.remote;
 
-import co.cask.cdap.runtime.spi.provisioner.Capabilities;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
-import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
-import co.cask.cdap.runtime.spi.provisioner.Node;
-import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
-import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.provisioner.Node;
+import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
+import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.command.CallServiceCommand;
-import co.cask.cdap.cli.command.CheckServiceAvailabilityCommand;
-import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
+import io.cdap.cdap.cli.command.CallServiceCommand;
+import io.cdap.cdap.cli.command.CheckServiceAvailabilityCommand;
+import io.cdap.cdap.cli.command.GetServiceEndpointsCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

@@ -15,12 +15,12 @@
  *
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 
 import java.util.Collections;
 import java.util.Map;

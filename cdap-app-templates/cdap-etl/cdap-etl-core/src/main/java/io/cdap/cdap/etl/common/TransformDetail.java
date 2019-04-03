@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.etl.api.Destroyable;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.Transformation;
+import io.cdap.cdap.etl.api.Destroyable;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.InvalidEntry;
+import io.cdap.cdap.etl.api.Transformation;
 
 import java.util.Collection;
 import java.util.Map;

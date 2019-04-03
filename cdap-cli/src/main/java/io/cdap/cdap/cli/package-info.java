@@ -17,4 +17,4 @@
 /**
  * Cask Data Application Platform (CDAP) CLI.
  */
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;

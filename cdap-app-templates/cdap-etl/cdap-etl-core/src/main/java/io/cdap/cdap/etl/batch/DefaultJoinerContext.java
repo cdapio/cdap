@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.etl.api.batch.BatchJoinerContext;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 /**
  * Batch Joiner context

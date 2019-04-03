@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package io.cdap.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -25,7 +25,7 @@ import java.util.Map;
 
 /**
  * Carries the "raw" emitted metric data points: context, timestamp, collection of
- * {@link co.cask.cdap.api.metrics.MetricValue}
+ * {@link io.cdap.cdap.api.metrics.MetricValue}
  */
 public class MetricValues {
   private final Map<String, String> tags;

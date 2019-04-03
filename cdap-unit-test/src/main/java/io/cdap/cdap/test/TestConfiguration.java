@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 import com.google.common.base.Preconditions;
 import org.junit.rules.ExternalResource;

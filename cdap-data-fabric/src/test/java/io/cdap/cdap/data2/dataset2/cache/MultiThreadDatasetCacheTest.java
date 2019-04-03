@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.cache;
+package io.cdap.cdap.data2.dataset2.cache;
 
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
+import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
 import org.junit.Assert;
 import org.junit.Test;
 

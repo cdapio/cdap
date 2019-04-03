@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggerInfo;
 
 /**
  * Base class for the trigger information to be passed to the triggered program.

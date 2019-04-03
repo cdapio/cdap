@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.AbstractApplication;
 
 /**
  * Testing application for Spark2.

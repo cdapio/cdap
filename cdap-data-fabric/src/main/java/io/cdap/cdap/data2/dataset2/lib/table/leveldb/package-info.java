@@ -17,4 +17,4 @@
 /**
  * This package contains LevelDB implementations of the table dataset.
  */
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;

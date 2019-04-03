@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.tools;
+package io.cdap.cdap.security.tools;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 

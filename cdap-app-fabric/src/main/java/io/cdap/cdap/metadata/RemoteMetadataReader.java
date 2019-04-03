@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataException;
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.AbstractMetadataClient;
-import co.cask.cdap.common.metadata.MetadataRecord;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataException;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.metadata.AbstractMetadataClient;
+import io.cdap.cdap.common.metadata.MetadataRecord;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

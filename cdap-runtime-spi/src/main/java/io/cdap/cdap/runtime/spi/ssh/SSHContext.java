@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.ssh;
+package io.cdap.cdap.runtime.spi.ssh;
 
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 
 import java.io.IOException;
 import java.security.KeyException;

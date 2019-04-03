@@ -16,21 +16,21 @@
 
 /**
  * An Application is a logical grouping of
- * {@link co.cask.cdap.api.dataset.Dataset Datasets}
+ * {@link io.cdap.cdap.api.dataset.Dataset Datasets}
  * and programs.
  *
  * <h1>Application</h1>
  *
  * <p>
- * Every Application must either implement the {@link co.cask.cdap.api.app.Application} 
- * interface or extend the {@link co.cask.cdap.api.app.AbstractApplication} class. 
+ * Every Application must either implement the {@link io.cdap.cdap.api.app.Application} 
+ * interface or extend the {@link io.cdap.cdap.api.app.AbstractApplication} class. 
  * Extending AbstractApplication is simpler and helps produce cleaner code.
  * </p>
  *
  * <p>
  * To create a CDAP Application, first begin by extending the
- * {@link co.cask.cdap.api.app.AbstractApplication} class, then implement its 
- * {@link co.cask.cdap.api.app.Application#configure(ApplicationConfigurer configurer, ApplicationContext context)
+ * {@link io.cdap.cdap.api.app.AbstractApplication} class, then implement its 
+ * {@link io.cdap.cdap.api.app.Application#configure(ApplicationConfigurer configurer, ApplicationContext context)
  * configure()} method. In the configure method, specify the Application's metadata
  * (its name and description), and declare and configure each of the Application elements.
  * </p>
@@ -59,34 +59,34 @@
  * <h1>Dataset</h1>
  *
  * <p>
- * A {@link co.cask.cdap.api.dataset.Dataset Dataset} defines the storage and
+ * A {@link io.cdap.cdap.api.dataset.Dataset Dataset} defines the storage and
  * retrieval of data. In addition to the several Dataset implementations CDAP
  * provides, you can also implement your own Custom Datasets.
  * </p>
  *
  * <p>
- * See {@link co.cask.cdap.api.dataset.Dataset} for details.
+ * See {@link io.cdap.cdap.api.dataset.Dataset} for details.
  * </p>
  *
  * <h1>Spark</h1>
  *
  * <p>
- *   A {@link co.cask.cdap.api.spark.Spark} program defines the processing
+ *   A {@link io.cdap.cdap.api.spark.Spark} program defines the processing
  *   of data using Spark.
  * </p>
  *
  * <h1>MapReduce</h1>
  *
  * <p>
- *   A {@link co.cask.cdap.api.mapreduce.MapReduce} program to process in batch
+ *   A {@link io.cdap.cdap.api.mapreduce.MapReduce} program to process in batch
  *   using MapReduce
  * </p>
  *
  * <h1>Workflow</h1>
  *
  * <p>
- *   A {@link co.cask.cdap.api.workflow.Workflow} program to orchestrate a series
+ *   A {@link io.cdap.cdap.api.workflow.Workflow} program to orchestrate a series
  *   of mapreduce or spark jobs.
  * </p>
  */
-package co.cask.cdap.api.app;
+package io.cdap.cdap.api.app;

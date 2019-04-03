@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.macro;
+package io.cdap.cdap.etl.common.macro;
 
 import org.junit.Assert;
 import org.junit.Test;

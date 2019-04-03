@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.etl.batch.AbstractBatchContext;
-import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
-import co.cask.cdap.etl.common.ExternalDatasets;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.SparkClientContext;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.batch.AbstractBatchContext;
+import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
+import io.cdap.cdap.etl.common.ExternalDatasets;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;

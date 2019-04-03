@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package io.cdap.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.InputField;
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.api.lineage.field.ReadOperation;
-import co.cask.cdap.api.lineage.field.TransformOperation;
-import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.codec.OperationTypeAdapter;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.InputField;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.TransformOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.proto.codec.OperationTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;

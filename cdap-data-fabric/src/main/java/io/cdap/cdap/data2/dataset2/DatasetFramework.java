@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.InstanceConflictException;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.api.dataset.Reconfigurable;
-import co.cask.cdap.api.dataset.Updatable;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.api.dataset.Reconfigurable;
+import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
@@ -325,7 +325,7 @@ public interface DatasetFramework {
    * @param classLoader classLoader to be used to load classes or {@code null} to use system classLoader
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
-   * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
+   * @throws IOException when there's trouble to instantiate {@link io.cdap.cdap.api.dataset.Dataset}
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
@@ -350,7 +350,7 @@ public interface DatasetFramework {
    * @param accessType accessType for this request
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
-   * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
+   * @throws IOException when there's trouble to instantiate {@link io.cdap.cdap.api.dataset.Dataset}
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable

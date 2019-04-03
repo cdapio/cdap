@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.hbase.wd;
+package io.cdap.cdap.hbase.wd;
 
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.HTableInterface;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.SparkClientContext;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 

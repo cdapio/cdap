@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.ExploreProperties;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.ExploreProperties;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;

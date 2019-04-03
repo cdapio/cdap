@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
 
 /**
  *

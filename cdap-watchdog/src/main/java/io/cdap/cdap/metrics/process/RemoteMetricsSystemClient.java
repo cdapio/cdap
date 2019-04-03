@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.proto.MetricQueryResult;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.MetricQueryResult;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

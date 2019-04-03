@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.python;
+package io.cdap.cdap.app.runtime.spark.python;
 
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

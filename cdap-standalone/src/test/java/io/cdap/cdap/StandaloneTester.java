@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.ExternalResource;

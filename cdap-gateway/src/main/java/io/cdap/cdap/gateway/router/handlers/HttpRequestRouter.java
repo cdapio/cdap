@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router.handlers;
+package io.cdap.cdap.gateway.router.handlers;
 
-import co.cask.cdap.common.HandlerException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.http.Channels;
-import co.cask.cdap.gateway.router.RouterServiceLookup;
+import io.cdap.cdap.common.HandlerException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.http.Channels;
+import io.cdap.cdap.gateway.router.RouterServiceLookup;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;

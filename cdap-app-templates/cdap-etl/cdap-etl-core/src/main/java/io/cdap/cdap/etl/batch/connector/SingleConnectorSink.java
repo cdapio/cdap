@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.connector;
+package io.cdap.cdap.etl.batch.connector;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.format.StructuredRecordStringConverter;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 

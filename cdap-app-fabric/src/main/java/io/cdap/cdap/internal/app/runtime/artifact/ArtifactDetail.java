@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
 /**
  * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.

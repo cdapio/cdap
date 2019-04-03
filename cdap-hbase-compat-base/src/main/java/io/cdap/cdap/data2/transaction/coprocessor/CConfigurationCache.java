@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.coprocessor;
+package io.cdap.cdap.data2.transaction.coprocessor;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.util.hbase.CConfigurationReader;
-import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

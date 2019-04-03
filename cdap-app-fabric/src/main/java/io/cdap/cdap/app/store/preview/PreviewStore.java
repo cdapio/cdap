@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.store.preview;
+package io.cdap.cdap.app.store.preview;
 
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.gson.JsonElement;
 
 import java.util.List;

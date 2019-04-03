@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.PartitionNotFoundException;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
 import java.util.Set;
@@ -27,9 +27,9 @@ import javax.annotation.Nullable;
 /**
  * Represents a dataset that is split into partitions that can be uniquely addressed
  * by time. Each partition is a path in a file set, with a timestamp attached as meta data.
- * The timestamp is mapped to a partition key of a {@link co.cask.cdap.api.dataset.lib.PartitionedFileSet}
+ * The timestamp is mapped to a partition key of a {@link io.cdap.cdap.api.dataset.lib.PartitionedFileSet}
  * with five integer partitioning fields: the year, month, day, hour and minute. Partitions can
- * be retrieved using time range or using a {@link co.cask.cdap.api.dataset.lib.PartitionFilter}.
+ * be retrieved using time range or using a {@link io.cdap.cdap.api.dataset.lib.PartitionFilter}.
  * <p>
  * The granularity of time is in minutes, that is, any seconds or milliseconds after the
  * full minute is ignored for the partition keys. That means, there can not be be two partitions
@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  * time or time range are ignored.
  * <p>
  * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
- * properties when the dataset is created. See {@link co.cask.cdap.api.dataset.lib.FileSetProperties}
+ * properties when the dataset is created. See {@link io.cdap.cdap.api.dataset.lib.FileSetProperties}
  * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
  * created. The Hive table is partitioned by year, month, day, hour and minute.
  */

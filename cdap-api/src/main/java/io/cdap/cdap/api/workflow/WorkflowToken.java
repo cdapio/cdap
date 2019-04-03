@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.util.List;
 import java.util.Map;

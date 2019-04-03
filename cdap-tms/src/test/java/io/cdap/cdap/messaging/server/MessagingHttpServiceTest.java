@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.server;
+package io.cdap.cdap.messaging.server;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.client.ClientMessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.client.ClientMessagingService;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.inject.AbstractModule;

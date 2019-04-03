@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.twill;
+package io.cdap.cdap.common.twill;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Containers;
-import co.cask.cdap.proto.SystemServiceLiveInfo;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.Containers;
+import io.cdap.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import io.netty.handler.codec.http.HttpResponseStatus;

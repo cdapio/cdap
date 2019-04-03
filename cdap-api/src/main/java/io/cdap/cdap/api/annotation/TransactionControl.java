@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;
 
 /**
  * Declares how transactions are controlled for a method: IMPLICIT means that the platform encloses the

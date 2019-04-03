@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.ProgramConfigurer;
-import co.cask.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.ProgramConfigurer;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring the {@link Condition} in the {@link Workflow}.

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.submit;
+package io.cdap.cdap.app.runtime.spark.submit;
 
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
-import co.cask.cdap.app.runtime.spark.distributed.SparkExecutionService;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
+import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
+import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;

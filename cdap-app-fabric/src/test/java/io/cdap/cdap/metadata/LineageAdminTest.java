@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.LineageTable;
-import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
-import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.Lineage;
+import io.cdap.cdap.data2.metadata.lineage.LineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.LineageTable;
+import io.cdap.cdap.data2.metadata.lineage.Relation;
+import io.cdap.cdap.data2.metadata.writer.BasicLineageWriter;
+import io.cdap.cdap.data2.metadata.writer.LineageWriter;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;

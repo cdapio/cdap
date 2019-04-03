@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.ssh;
+package io.cdap.cdap.common.ssh;
 
 import com.jcraft.jsch.KeyPair;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;

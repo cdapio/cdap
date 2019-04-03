@@ -14,45 +14,45 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.app.DefaultApplicationContext;
-import co.cask.cdap.app.MockAppConfigurer;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.runtime.spark.SparkResourceFilters;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.StickyEndpointStrategy;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ProgramResources;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.test.PluginJarHelper;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.jdbc.ExploreDriver;
-import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.test.internal.ApplicationManagerFactory;
-import co.cask.cdap.test.internal.ArtifactManagerFactory;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.app.DefaultApplicationContext;
+import io.cdap.cdap.app.MockAppConfigurer;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.app.runtime.spark.SparkResourceFilters;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.StickyEndpointStrategy;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.ProgramResources;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.test.PluginJarHelper;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.explore.jdbc.ExploreDriver;
+import io.cdap.cdap.internal.AppFabricClient;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.test.internal.ApplicationManagerFactory;
+import io.cdap.cdap.test.internal.ArtifactManagerFactory;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -111,7 +111,7 @@ public class UnitTestManager extends AbstractTestManager {
 
       try {
         // allow developers to exclude spark-core module from their unit tests (it'll work if they don't use spark)
-        getClass().getClassLoader().loadClass("co.cask.cdap.app.runtime.spark.SparkRuntimeUtils");
+        getClass().getClassLoader().loadClass("io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils");
         // If it is loading by spark framework, don't include it in the app JAR
         return !SparkResourceFilters.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
       } catch (ClassNotFoundException e) {

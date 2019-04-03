@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store;
+package io.cdap.cdap.messaging.store;
 
-import co.cask.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.TopicMetadata;
 
 import java.io.IOException;
 

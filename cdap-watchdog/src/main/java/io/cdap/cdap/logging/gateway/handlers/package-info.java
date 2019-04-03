@@ -17,5 +17,5 @@
 /**
  * Classes to log fetch requests.
  */
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 

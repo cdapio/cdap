@@ -15,14 +15,14 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import org.junit.After;

@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import co.cask.cdap.cli.command.system.HelpCommand;
-import co.cask.cdap.cli.command.system.SearchCommandsCommand;
-import co.cask.cdap.cli.commandset.DefaultCommands;
-import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
-import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
-import co.cask.cdap.cli.util.table.TableRenderer;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.OSDetector;
+import io.cdap.cdap.cli.command.system.HelpCommand;
+import io.cdap.cdap.cli.command.system.SearchCommandsCommand;
+import io.cdap.cdap.cli.commandset.DefaultCommands;
+import io.cdap.cdap.cli.completer.supplier.EndpointSupplier;
+import io.cdap.cdap.cli.util.FilePathResolver;
+import io.cdap.cdap.cli.util.InstanceURIParser;
+import io.cdap.cdap.cli.util.table.AltStyleTableRenderer;
+import io.cdap.cdap.cli.util.table.TableRenderer;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.client.exception.DisconnectedException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.utils.OSDetector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;

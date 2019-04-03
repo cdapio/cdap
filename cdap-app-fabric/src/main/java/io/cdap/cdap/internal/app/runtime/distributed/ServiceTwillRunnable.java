@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;

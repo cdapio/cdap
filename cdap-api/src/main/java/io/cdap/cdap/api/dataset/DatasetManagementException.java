@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;
 
 /**
  * Thrown when there's an error during dataset modules, types or instances management operations.

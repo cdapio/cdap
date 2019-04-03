@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;

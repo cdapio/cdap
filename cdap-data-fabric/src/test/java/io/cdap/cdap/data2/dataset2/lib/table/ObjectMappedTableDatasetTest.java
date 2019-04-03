@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.collect.Lists;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;

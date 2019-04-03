@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

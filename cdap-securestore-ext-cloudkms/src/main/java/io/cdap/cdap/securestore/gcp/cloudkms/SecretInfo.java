@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.gcp.cloudkms;
+package io.cdap.cdap.securestore.gcp.cloudkms;
 
 import java.util.Collections;
 import java.util.HashMap;

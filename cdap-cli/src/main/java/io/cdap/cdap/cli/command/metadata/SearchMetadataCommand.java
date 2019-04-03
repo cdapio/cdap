@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.metadata;
+package io.cdap.cdap.cli.command.metadata;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.cli.util.table.Table;
+import io.cdap.cdap.client.MetadataClient;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;

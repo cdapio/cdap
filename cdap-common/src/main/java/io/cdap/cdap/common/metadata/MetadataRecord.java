@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.metadata;
+package io.cdap.cdap.common.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
 import java.util.HashMap;

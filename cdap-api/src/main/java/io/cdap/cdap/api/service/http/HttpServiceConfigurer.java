@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 import java.util.Map;
 

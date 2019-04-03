@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.collect.ImmutableMultimap;
 import org.junit.Assert;
 import org.junit.Test;

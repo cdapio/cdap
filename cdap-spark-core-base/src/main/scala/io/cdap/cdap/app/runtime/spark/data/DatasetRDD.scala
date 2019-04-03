@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
-import co.cask.cdap.api.data.DatasetInstantiationException
-import co.cask.cdap.api.data.batch.BatchReadable
-import co.cask.cdap.api.data.batch.InputFormatProvider
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.app.runtime.spark.DatasetCompute
-import co.cask.cdap.app.runtime.spark.SparkClassLoader
-import co.cask.cdap.common.conf.ConfigurationUtil
+import io.cdap.cdap.api.data.DatasetInstantiationException
+import io.cdap.cdap.api.data.batch.BatchReadable
+import io.cdap.cdap.api.data.batch.InputFormatProvider
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.dataset.Dataset
+import io.cdap.cdap.app.runtime.spark.DatasetCompute
+import io.cdap.cdap.app.runtime.spark.SparkClassLoader
+import io.cdap.cdap.common.conf.ConfigurationUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.InputFormat
 import org.apache.spark.Partition
@@ -40,7 +40,7 @@ import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
 /**
-  * A [[org.apache.spark.rdd.RDD]] for reading data from [[co.cask.cdap.api.dataset.Dataset]].
+  * A [[org.apache.spark.rdd.RDD]] for reading data from [[io.cdap.cdap.api.dataset.Dataset]].
   */
 class DatasetRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkContext,
                                            @(transient @param) datasetCompute: DatasetCompute,

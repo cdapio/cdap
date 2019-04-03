@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.metrics;
+package io.cdap.cdap.common.metrics;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
 
 import java.io.IOException;
 import java.util.Collection;

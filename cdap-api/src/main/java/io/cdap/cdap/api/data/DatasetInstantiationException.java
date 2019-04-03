@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data;
+package io.cdap.cdap.api.data;
 
 /**
  * This exception is thrown if - for whatever reason - a data set cannot be

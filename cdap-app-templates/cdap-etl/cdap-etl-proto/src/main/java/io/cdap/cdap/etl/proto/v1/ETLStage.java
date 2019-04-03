@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v1;
+package io.cdap.cdap.etl.proto.v1;
 
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.UpgradeContext;
 
 import java.util.Map;
 import java.util.Objects;
@@ -90,12 +90,12 @@ public final class ETLStage {
     return Objects.hash(name, plugin, errorDatasetName);
   }
 
-  public co.cask.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
+  public io.cdap.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(type, plugin.getName());
     if (artifactSelectorConfig == null) {
       artifactSelectorConfig = plugin.getArtifact();
     }
-    co.cask.cdap.etl.proto.v2.ETLPlugin etlPlugin = new co.cask.cdap.etl.proto.v2.ETLPlugin(
+    io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
       plugin.getName(), type, plugin.getProperties(), artifactSelectorConfig);
 
     if (errorDatasetName != null) {
@@ -104,6 +104,6 @@ public final class ETLStage {
                         "Please connect stage '%s' to an error collector, then connect the error collector " +
                         "to a sink.", name, name));
     }
-    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
+    return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 }

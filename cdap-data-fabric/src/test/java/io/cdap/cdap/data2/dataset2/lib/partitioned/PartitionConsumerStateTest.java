@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;

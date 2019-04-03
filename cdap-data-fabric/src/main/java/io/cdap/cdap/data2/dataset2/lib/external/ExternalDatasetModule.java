@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.external;
+package io.cdap.cdap.data2.dataset2.lib.external;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 
 /**
  * Dataset module for {@link ExternalDataset}.

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.hive.serde;
+package io.cdap.cdap.hive.serde;
 
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.Schema;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

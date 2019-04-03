@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
-import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
+package io.cdap.cdap.app.runtime.spark
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
+import io.cdap.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
+import io.cdap.cdap.app.runtime.spark.dynamic.URLAdder
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.security.UserGroupInformation

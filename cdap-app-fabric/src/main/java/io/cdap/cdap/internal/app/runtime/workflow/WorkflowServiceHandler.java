@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.workflow;
+package io.cdap.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
-import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
+import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.api.workflow.ConditionSpecification;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.proto.codec.ConditionSpecificationCodec;
+import io.cdap.cdap.proto.codec.CustomActionSpecificationCodec;
 import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

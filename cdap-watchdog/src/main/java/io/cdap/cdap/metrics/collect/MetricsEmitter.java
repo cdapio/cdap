@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValue;
 
 /**
- * A MetricsEmitter is a class that emits a {@link co.cask.cdap.api.metrics.MetricValue}.
+ * A MetricsEmitter is a class that emits a {@link io.cdap.cdap.api.metrics.MetricValue}.
  */
 public interface MetricsEmitter {
 
   /**
    * Emits metric
-   * @return A {@link co.cask.cdap.api.metrics.MetricValue} representing metrics for the given timestamp
+   * @return A {@link io.cdap.cdap.api.metrics.MetricValue} representing metrics for the given timestamp
    */
   MetricValue emit();
 }

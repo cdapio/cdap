@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 import java.util.Map;
 

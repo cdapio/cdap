@@ -17,5 +17,5 @@
 /**
  * ASM related common classes.
  */
-package co.cask.cdap.internal.asm;
+package io.cdap.cdap.internal.asm;
 

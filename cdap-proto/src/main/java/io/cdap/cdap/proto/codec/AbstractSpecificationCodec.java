@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.internal.guava.reflect.TypeParameter;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.internal.guava.reflect.TypeParameter;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

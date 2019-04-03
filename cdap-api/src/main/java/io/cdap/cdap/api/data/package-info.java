@@ -19,4 +19,4 @@
  *
  * All data access is performed via system or user defined (custom) Datasets.
  */
-package co.cask.cdap.api.data;
+package io.cdap.cdap.api.data;

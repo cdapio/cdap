@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 import com.google.common.base.Throwables;
 
 import java.util.Collections;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.hive.objectinspector;
+package io.cdap.cdap.hive.objectinspector;
 
-import co.cask.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;

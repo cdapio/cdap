@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.io;
+package io.cdap.cdap.common.io;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.io.IOException;
 import java.io.OutputStream;

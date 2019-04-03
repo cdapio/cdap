@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.system;
+package io.cdap.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowNodeType;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowNodeType;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;

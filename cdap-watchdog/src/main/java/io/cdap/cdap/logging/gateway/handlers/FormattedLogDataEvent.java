@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.read.LogOffset;
 
 /**
  * Formatted {@link LogData} event.

@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.transform;
+package io.cdap.cdap.etl.mock.transform;
 
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.etl.api.MultiOutputEmitter;
-import co.cask.cdap.etl.api.MultiOutputPipelineConfigurer;
-import co.cask.cdap.etl.api.MultiOutputStageConfigurer;
-import co.cask.cdap.etl.api.SplitterTransform;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.MultiOutputEmitter;
+import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
+import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
+import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 import java.util.Map;

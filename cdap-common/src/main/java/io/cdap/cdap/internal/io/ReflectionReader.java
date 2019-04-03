@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.lang.Instantiator;
-import co.cask.cdap.common.lang.InstantiatorFactory;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.lang.Instantiator;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;

@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.metrics;
+package io.cdap.cdap.metrics;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.internal.io.ASMDatumWriterFactory;
-import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
+import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -47,8 +47,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TestBase for testing {@link co.cask.cdap.metrics.collect.MessagingMetricsCollectionService} 
- * and {@link co.cask.cdap.metrics.process.MessagingMetricsProcessorService}
+ * TestBase for testing {@link io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService} 
+ * and {@link io.cdap.cdap.metrics.process.MessagingMetricsProcessorService}
  */
 public abstract class MetricsTestBase {
 

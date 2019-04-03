@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.metrics;
+package io.cdap.cdap.gateway.handlers.metrics;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.MetricQueryResult;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.app.metrics.MapReduceMetrics;
+import io.cdap.cdap.app.metrics.ProgramUserMetrics;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.MetricQueryResult;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

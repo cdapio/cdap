@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.TaskLocalizationContext;
+import io.cdap.cdap.api.TaskLocalizationContext;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.File;

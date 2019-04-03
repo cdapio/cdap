@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.leveldb;
+package io.cdap.cdap.data2.dataset2.module.lib.leveldb;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefinition;
 
 /**
  * Registers LevelDB-based implementations of the metrics system datasets

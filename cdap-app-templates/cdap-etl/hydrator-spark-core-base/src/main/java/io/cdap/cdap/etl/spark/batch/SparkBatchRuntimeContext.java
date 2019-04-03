@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.common.AbstractTransformContext;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.NoLookupProvider;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.common.AbstractTransformContext;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.NoLookupProvider;
 
 import java.util.List;
 import java.util.Map;

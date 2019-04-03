@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.verification;
+package io.cdap.cdap.app.verification;
 
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
  * A verifier for verifying the specifications provided.

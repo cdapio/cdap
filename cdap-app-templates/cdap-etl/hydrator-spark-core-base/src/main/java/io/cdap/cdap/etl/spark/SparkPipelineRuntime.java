@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark;
+package io.cdap.cdap.etl.spark;
 
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.SparkClientContext;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.PipelineRuntime;
 
 /**
  * PipelineRuntime that can be created using Spark contexts.

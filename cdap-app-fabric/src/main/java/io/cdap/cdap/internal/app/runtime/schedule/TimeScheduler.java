@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -411,7 +411,7 @@ public final class TimeScheduler {
     throws org.quartz.SchedulerException {
     ProgramId program = schedule.getProgramId();
     SchedulableProgramType programType = program.getType().getSchedulableType();
-    co.cask.cdap.api.schedule.Trigger trigger = schedule.getTrigger();
+    io.cdap.cdap.api.schedule.Trigger trigger = schedule.getTrigger();
     Map<String, TriggerKey> cronTriggerKeyMap = new HashMap<>();
     // Get a set of TimeTrigger if the schedule's trigger is a composite trigger
     if (trigger instanceof AbstractSatisfiableCompositeTrigger) {

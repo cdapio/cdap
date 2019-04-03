@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package io.cdap.cdap.config;
 
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ParentedId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ParentedId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 

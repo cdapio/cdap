@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package io.cdap.cdap.client.app;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 
 /**
  *

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.cache;
+package io.cdap.cdap.data2.dataset2.cache;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

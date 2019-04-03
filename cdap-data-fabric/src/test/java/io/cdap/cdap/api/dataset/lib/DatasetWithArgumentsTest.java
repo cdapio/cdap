@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;

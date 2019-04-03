@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.common.namespace;
+package io.cdap.cdap.common.namespace;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.inject.Inject;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.clean;
+package io.cdap.cdap.logging.clean;
 
-import co.cask.cdap.common.io.Locations;
+import io.cdap.cdap.common.io.Locations;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

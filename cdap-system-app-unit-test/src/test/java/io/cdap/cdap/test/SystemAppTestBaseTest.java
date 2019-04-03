@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.FieldType;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.test.app.SystemTestApp;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.test.app.SystemTestApp;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

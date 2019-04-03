@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package io.cdap.cdap.client.app;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
 
 /**
  * No-op plugin, for CLI testing

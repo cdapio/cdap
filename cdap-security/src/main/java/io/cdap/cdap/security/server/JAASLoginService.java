@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
 import org.eclipse.jetty.security.DefaultIdentityService;

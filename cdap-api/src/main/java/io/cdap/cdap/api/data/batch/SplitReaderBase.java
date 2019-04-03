@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
 /**
  * Provides an abstract implementation of {@link SplitReader}.
@@ -34,7 +34,7 @@ public abstract class SplitReaderBase<KEY, VALUE> extends SplitReader<KEY, VALUE
    * If true, use the {@link #setCurrentKeyValue(Object, Object)} method to
    * set the new current key/value. If false there are no more key/value records to read. 
    *
-   * See {@link co.cask.cdap.api.data.batch.IteratorBasedSplitReader} for an implementation 
+   * See {@link io.cdap.cdap.api.data.batch.IteratorBasedSplitReader} for an implementation 
    * of the abstract fetchNextKeyValue() method.
    *
    * @return false if reached end of the split, true otherwise.

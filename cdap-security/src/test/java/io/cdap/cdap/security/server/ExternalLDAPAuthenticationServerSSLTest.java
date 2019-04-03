@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.security.tools.HttpsEnabler;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.security.tools.HttpsEnabler;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;

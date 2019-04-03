@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.app.plugin;
+package io.cdap.cdap.internal.app.runtime.artifact.app.plugin;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.Application;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.Application;
 
 /**
  * An {@link Application} for testing plugin supports.

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.guice;
+package io.cdap.cdap.common.guice;
 
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 

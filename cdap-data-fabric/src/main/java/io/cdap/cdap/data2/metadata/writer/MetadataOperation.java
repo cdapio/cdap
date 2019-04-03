@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

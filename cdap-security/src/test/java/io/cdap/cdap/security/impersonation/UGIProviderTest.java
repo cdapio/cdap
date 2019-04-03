@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.gson.Gson;

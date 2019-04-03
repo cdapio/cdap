@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data.startup;
+package io.cdap.cdap.data.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.startup.Check;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.startup.Check;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TxConstants;

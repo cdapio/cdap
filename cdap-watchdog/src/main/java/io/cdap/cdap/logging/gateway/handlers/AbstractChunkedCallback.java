@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.logging.read.Callback;
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
 import io.cdap.http.ChunkResponder;

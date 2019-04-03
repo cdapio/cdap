@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mapreduce;
+package io.cdap.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static co.cask.cdap.api.annotation.TransactionControl.EXPLICIT;
-import static co.cask.cdap.api.annotation.TransactionControl.IMPLICIT;
+import static io.cdap.cdap.api.annotation.TransactionControl.EXPLICIT;
+import static io.cdap.cdap.api.annotation.TransactionControl.IMPLICIT;
 
 @SuppressWarnings("unused")
 public class TransactionsTest {

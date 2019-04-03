@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.scheduler;
+package io.cdap.cdap.scheduler;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
-import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
+import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;

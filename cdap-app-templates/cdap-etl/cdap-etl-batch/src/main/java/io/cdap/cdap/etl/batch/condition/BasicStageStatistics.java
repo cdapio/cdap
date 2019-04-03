@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.condition;
+package io.cdap.cdap.etl.batch.condition;
 
-import co.cask.cdap.etl.api.condition.StageStatistics;
+import io.cdap.cdap.etl.api.condition.StageStatistics;
 
 /**
  * Default implementation of the {@link StageStatistics}.

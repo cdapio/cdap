@@ -14,11 +14,11 @@
  *  the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.output;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.output;
 
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 

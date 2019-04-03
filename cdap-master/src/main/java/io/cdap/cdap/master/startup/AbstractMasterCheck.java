@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
-import co.cask.cdap.common.MasterUtils;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.startup.Check;
+import io.cdap.cdap.common.MasterUtils;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.startup.Check;
 
 import java.util.Set;
 

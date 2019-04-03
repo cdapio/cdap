@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.IntegerStore;
-import co.cask.cdap.api.dataset.lib.IntegerStoreModule;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.TypeRepresentation;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.IntegerStore;
+import io.cdap.cdap.api.dataset.lib.IntegerStoreModule;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.ObjectStore;
+import io.cdap.cdap.api.dataset.lib.ObjectStores;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.TypeRepresentation;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
@@ -58,7 +58,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Test for {@link co.cask.cdap.data2.dataset2.lib.table.ObjectStoreDataset}.
+ * Test for {@link io.cdap.cdap.data2.dataset2.lib.table.ObjectStoreDataset}.
  */
 public class ObjectStoreDatasetTest {
 

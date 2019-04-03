@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.internal.profile;
+package io.cdap.cdap.internal.profile;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.MethodNotAllowedException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.MethodNotAllowedException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.profile.ProfileStore;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

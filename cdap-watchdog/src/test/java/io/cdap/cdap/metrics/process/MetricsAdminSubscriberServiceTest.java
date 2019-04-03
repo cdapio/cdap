@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.guice.MetricsHandlerModule;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
+import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.metrics.query.MetricsQueryService;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

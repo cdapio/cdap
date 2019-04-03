@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package io.cdap.cdap.app.runtime.spark
 
-import co.cask.cdap.api.dataset.Dataset
+import io.cdap.cdap.api.dataset.Dataset
 
 import scala.reflect.ClassTag
 
 /**
-  * A trait for [[co.cask.cdap.app.runtime.spark.data.DatasetRDD]]
-  * to acquire [[co.cask.cdap.api.dataset.Dataset]] instance and performs computation on it.
+  * A trait for [[io.cdap.cdap.app.runtime.spark.data.DatasetRDD]]
+  * to acquire [[io.cdap.cdap.api.dataset.Dataset]] instance and performs computation on it.
   */
 trait DatasetCompute {
 
   /**
-    * Performs computation on a [[co.cask.cdap.api.dataset.Dataset]] instance.
+    * Performs computation on a [[io.cdap.cdap.api.dataset.Dataset]] instance.
     *
     * @param namespace namespace in which the dataset exists
     * @param datasetName name of the dataset

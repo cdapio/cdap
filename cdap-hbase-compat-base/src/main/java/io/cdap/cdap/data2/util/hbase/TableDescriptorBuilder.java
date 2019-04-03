@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
-import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
-import co.cask.cdap.spi.hbase.TableDescriptor;
+import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
+import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
+import io.cdap.cdap.spi.hbase.TableDescriptor;
 
 import java.util.HashMap;
 import java.util.HashSet;

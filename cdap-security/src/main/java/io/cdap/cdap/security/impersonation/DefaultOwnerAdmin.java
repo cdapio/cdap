@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.inject.Inject;
 
 import java.io.IOException;

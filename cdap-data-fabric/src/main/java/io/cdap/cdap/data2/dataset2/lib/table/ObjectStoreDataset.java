@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.Scannables;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.cdap.internal.io.ReflectionDatumReader;
-import co.cask.cdap.internal.io.ReflectionDatumWriter;
-import co.cask.cdap.internal.io.TypeRepresentation;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.RecordScanner;
+import io.cdap.cdap.api.data.batch.Scannables;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.ObjectStore;
+import io.cdap.cdap.common.io.BinaryDecoder;
+import io.cdap.cdap.common.io.BinaryEncoder;
+import io.cdap.cdap.internal.io.ReflectionDatumReader;
+import io.cdap.cdap.internal.io.ReflectionDatumWriter;
+import io.cdap.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
@@ -201,7 +201,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   /**
-   * {@link co.cask.cdap.api.data.batch.Scannables.RecordMaker} for {@link ObjectStoreDataset}.
+   * {@link io.cdap.cdap.api.data.batch.Scannables.RecordMaker} for {@link ObjectStoreDataset}.
    */
   public class ObjectRecordMaker implements Scannables.RecordMaker<byte[], T, KeyValue<byte[], T>> {
     @Override

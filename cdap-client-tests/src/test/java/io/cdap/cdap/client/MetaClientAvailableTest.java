@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;

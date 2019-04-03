@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.planner;
+package io.cdap.cdap.etl.planner;
 
-import co.cask.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;

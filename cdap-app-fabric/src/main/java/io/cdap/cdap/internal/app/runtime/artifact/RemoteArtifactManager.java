@@ -13,23 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
 
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -48,8 +48,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Implementation for {@link co.cask.cdap.api.artifact.ArtifactManager}
- * communicating with {@link co.cask.cdap.gateway.handlers.ArtifactHttpHandler} and returning artifact info.
+ * Implementation for {@link io.cdap.cdap.api.artifact.ArtifactManager}
+ * communicating with {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandler} and returning artifact info.
  */
 public final class RemoteArtifactManager extends AbstractArtifactManager {
   private static final Gson GSON = new GsonBuilder()

@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.logbuffer;
+package io.cdap.cdap.logging.pipeline.logbuffer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
-import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.logging.pipeline.MockAppender;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
+import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
+import io.cdap.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.pipeline.LogPipelineTestUtil;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.logging.pipeline.MockAppender;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;

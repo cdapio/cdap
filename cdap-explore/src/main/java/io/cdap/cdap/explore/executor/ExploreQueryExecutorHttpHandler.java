@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.explore.executor;
+package io.cdap.cdap.explore.executor;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.service.hive.OperationInfo;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.security.impersonation.ImpersonationUtils;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.ExploreService;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.explore.service.hive.OperationInfo;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.replication;
+package io.cdap.cdap.replication;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;

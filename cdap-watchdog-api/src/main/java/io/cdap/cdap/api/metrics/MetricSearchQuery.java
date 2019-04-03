@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package io.cdap.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;

@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.service.BasicService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;

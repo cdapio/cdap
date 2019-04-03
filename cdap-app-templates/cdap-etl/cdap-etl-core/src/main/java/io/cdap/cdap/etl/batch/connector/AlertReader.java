@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.connector;
+package io.cdap.cdap.etl.batch.connector;
 
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.common.Constants;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.common.Constants;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;

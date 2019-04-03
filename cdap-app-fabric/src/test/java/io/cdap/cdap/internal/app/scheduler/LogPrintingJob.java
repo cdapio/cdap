@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.scheduler;
+package io.cdap.cdap.internal.app.scheduler;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

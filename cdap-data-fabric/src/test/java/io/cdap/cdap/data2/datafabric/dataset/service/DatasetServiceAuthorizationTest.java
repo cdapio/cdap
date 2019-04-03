@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

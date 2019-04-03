@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.LocalPluginFinder;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;

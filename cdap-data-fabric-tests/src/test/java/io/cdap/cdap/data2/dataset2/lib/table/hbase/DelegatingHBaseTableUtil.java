@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;

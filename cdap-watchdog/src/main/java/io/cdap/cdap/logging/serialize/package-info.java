@@ -17,4 +17,4 @@
 /**
  * Contains classes that serialize/deserialize ILoggingEvent to/from Avro.
  */
-package co.cask.cdap.logging.serialize;
+package io.cdap.cdap.logging.serialize;

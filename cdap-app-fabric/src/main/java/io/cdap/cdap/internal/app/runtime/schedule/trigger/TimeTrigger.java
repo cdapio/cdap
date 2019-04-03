@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProtoTrigger;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  */
 public class TimeTrigger extends ProtoTrigger.TimeTrigger implements SatisfiableTrigger {
   private static final Logger LOG =
-    LoggerFactory.getLogger(co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger.class);
+    LoggerFactory.getLogger(io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger.class);
   private static final Gson GSON = new Gson();
   private static final java.lang.reflect.Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage;
+package io.cdap.cdap.data2.metadata.lineage;
 
 import com.google.common.collect.ImmutableSet;
 

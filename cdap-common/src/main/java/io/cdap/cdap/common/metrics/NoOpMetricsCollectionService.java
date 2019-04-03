@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.metrics;
+package io.cdap.cdap.common.metrics;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.util.Collections;

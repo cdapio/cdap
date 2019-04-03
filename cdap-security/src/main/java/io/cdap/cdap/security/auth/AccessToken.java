@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.schema.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 

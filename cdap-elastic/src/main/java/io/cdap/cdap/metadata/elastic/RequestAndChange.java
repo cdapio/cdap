@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataChange;
 import org.elasticsearch.action.support.WriteRequest;
 
 /**

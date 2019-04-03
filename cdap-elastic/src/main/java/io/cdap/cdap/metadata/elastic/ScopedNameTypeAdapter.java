@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedName;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

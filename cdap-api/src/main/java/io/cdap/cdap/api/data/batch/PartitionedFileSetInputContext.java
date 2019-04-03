@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.util.Set;
 

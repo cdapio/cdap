@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.conf.Configuration;

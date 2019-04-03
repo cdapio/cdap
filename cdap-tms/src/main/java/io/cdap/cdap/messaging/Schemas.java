@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
+package io.cdap.cdap.messaging;
 
 import org.apache.avro.Schema;
 import org.slf4j.Logger;

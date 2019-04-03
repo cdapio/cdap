@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql.jdbc;
+package io.cdap.cdap.spi.data.sql.jdbc;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.commons.pool2.ObjectPool;
 
 import java.io.PrintWriter;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.DatumReader;
-import co.cask.cdap.common.io.Decoder;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.DatumReader;
+import io.cdap.cdap.common.io.Decoder;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 

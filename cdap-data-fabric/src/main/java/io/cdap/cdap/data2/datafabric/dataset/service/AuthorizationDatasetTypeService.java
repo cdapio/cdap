@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.name.Named;

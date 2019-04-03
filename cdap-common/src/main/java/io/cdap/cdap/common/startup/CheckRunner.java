@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.startup;
+package io.cdap.cdap.common.startup;
 
-import co.cask.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.internal.guava.ClassPath;
 import com.google.common.base.Predicate;
 import com.google.inject.Injector;
 

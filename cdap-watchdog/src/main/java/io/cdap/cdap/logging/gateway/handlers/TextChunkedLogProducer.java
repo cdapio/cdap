@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.logging.read.LogEvent;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;

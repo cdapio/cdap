@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata.noop;
+package io.cdap.cdap.spi.metadata.noop;
 
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataChange;
-import co.cask.cdap.spi.metadata.MetadataMutation;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
 
 import java.io.IOException;
 import java.util.Collections;

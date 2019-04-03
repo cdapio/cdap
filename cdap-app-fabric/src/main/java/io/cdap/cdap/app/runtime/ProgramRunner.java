@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.app.program.Program;
+import io.cdap.cdap.app.program.Program;
 
 /**
  *

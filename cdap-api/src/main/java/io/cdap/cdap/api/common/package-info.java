@@ -17,10 +17,10 @@
 /**
  * Commonly used utility functions.
  * <p>
- * {@link co.cask.cdap.api.common.Bytes} class handles byte arrays, conversions to/from other types,
+ * {@link io.cdap.cdap.api.common.Bytes} class handles byte arrays, conversions to/from other types,
  * comparisons, hash code generation, and manufacturing keys for HashMaps or HashSets.
  */
-package co.cask.cdap.api.common;
+package io.cdap.cdap.api.common;
 
 
 

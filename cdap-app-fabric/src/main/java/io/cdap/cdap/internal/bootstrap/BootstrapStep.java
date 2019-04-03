@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap;
+package io.cdap.cdap.internal.bootstrap;
 
 import com.google.gson.JsonObject;
 

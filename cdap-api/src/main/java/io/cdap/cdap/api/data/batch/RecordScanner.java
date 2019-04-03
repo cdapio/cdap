@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Defines a reader of a dataset {@link co.cask.cdap.api.data.batch.Split}.
+ * Defines a reader of a dataset {@link io.cdap.cdap.api.data.batch.Split}.
  * @param <RECORD> the type of objects that represents a single record
  */
 @Beta

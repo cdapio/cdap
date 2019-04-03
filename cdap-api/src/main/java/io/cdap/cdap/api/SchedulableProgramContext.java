@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 
 import javax.annotation.Nullable;
 

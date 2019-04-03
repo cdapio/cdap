@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.kafka;
+package io.cdap.cdap.logging.kafka;
 
 import java.nio.ByteBuffer;
 

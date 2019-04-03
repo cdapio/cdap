@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.internal.DefaultId;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.pipeline.StageContext;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.DefaultId;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.pipeline.StageContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

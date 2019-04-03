@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;

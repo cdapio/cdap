@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

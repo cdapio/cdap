@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.spi.authentication;
+package io.cdap.cdap.security.spi.authentication;
 
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
 
 /**
  * A context that determines authentication details. {@link Authorizer} extensions can obtain authentication details

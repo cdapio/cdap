@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.system;
+package io.cdap.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 

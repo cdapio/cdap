@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.kafka;
+package io.cdap.cdap.logging.appender.kafka;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.logging.appender.AbstractLogPublisher;
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.logging.appender.AbstractLogPublisher;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.inject.Inject;
 import kafka.producer.KeyedMessage;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client.artifact;
+package io.cdap.cdap.client.artifact;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.table.Table;
 
 /**
  * App for testing ArtifactClient.

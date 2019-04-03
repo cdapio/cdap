@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.AbstractProgramSpecification;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.AbstractProgramSpecification;
+import io.cdap.cdap.api.common.PropertyProvider;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.util.ArrayList;
 import java.util.Collections;

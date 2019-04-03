@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;

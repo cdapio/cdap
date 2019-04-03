@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;

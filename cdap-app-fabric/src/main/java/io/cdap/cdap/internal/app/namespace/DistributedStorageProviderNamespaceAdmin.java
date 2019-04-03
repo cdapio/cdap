@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.explore.client.ExploreFacade;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

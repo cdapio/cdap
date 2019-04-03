@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.app.inspection;
+package io.cdap.cdap.internal.app.runtime.artifact.app.inspection;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.annotation.Requirements;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.annotation.Requirements;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.plugin.PluginConfig;
 
 /**
  * App used in artifact inspector tests

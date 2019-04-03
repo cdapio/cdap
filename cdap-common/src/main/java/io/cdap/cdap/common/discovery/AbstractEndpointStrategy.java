@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.discovery;
+package io.cdap.cdap.common.discovery;
 
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.common.Cancellable;

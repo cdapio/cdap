@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Connection information to a CDAP instance, with namespace.

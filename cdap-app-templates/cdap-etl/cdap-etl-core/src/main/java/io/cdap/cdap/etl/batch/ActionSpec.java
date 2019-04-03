@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
+import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 
 import java.util.Objects;
 

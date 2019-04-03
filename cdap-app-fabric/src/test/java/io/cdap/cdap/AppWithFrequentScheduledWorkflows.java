@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 
 public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
   public static final String NAME = "AppWithFrequentScheduledWorkflows";

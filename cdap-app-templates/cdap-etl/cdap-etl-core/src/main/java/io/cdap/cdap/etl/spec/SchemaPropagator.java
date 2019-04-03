@@ -15,17 +15,17 @@
  *
  */
 
-package co.cask.cdap.etl.spec;
+package io.cdap.cdap.etl.spec;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.api.ErrorTransform;
-import co.cask.cdap.etl.api.SplitterTransform;
-import co.cask.cdap.etl.api.action.Action;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
-import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
-import co.cask.cdap.etl.common.DefaultStageConfigurer;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
+import io.cdap.cdap.etl.common.DefaultStageConfigurer;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.Map;
 import java.util.Objects;

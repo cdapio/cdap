@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.discovery.DiscoveryService;

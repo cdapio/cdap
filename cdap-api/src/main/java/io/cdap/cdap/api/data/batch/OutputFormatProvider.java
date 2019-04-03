@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
 import java.util.Map;
 

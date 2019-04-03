@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.EntityId;
 
 /**
  * A metadata publisher that does nothing.

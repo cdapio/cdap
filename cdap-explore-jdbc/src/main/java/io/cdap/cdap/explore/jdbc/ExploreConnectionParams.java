@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMultimap;

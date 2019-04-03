@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
 
 import javax.annotation.Nullable;
 

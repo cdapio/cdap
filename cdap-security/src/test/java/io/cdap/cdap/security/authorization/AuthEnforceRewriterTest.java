@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.common.security.AuthEnforce;
-import co.cask.cdap.common.security.AuthEnforceRewriter;
-import co.cask.cdap.internal.asm.ByteCodeClassLoader;
-import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.common.security.AuthEnforce;
+import io.cdap.cdap.common.security.AuthEnforceRewriter;
+import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.objectweb.asm.Type;

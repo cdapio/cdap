@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
-import co.cask.cdap.api.common.RuntimeArguments;
+import io.cdap.cdap.api.common.RuntimeArguments;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -112,7 +112,7 @@ public abstract class Output {
   }
 
   /**
-   * An implementation of {@link Output}, which defines a {@link co.cask.cdap.api.dataset.Dataset} as an output.
+   * An implementation of {@link Output}, which defines a {@link io.cdap.cdap.api.dataset.Dataset} as an output.
    */
   public static class DatasetOutput extends Output {
 

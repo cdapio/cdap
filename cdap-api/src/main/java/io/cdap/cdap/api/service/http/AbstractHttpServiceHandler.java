@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.internal.api.AbstractPluginConfigurable;
+import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.Map;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Objects;
 

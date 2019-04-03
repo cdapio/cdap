@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.util.Collections;
 import java.util.HashMap;

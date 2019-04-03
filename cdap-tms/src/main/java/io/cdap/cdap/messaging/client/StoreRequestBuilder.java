@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.client;
+package io.cdap.cdap.messaging.client;
 
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 

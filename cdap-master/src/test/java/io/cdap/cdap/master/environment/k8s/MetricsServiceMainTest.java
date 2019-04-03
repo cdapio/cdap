@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.client.MetricsClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.metrics.process.RemoteMetricsSystemClient;
-import co.cask.cdap.proto.MetricQueryResult;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.client.MetricsClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.proto.MetricQueryResult;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.Discoverable;

@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.connector;
+package io.cdap.cdap.etl.batch.connector;
 
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.common.Constants;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.workflow.WorkflowConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.common.Constants;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

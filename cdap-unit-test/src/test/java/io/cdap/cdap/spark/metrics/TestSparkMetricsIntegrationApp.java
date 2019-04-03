@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.spark.metrics;
+package io.cdap.cdap.spark.metrics;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;

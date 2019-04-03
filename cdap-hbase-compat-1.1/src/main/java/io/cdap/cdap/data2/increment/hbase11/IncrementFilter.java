@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase11;
+package io.cdap.cdap.data2.increment.hbase11;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.filter.FilterBase;

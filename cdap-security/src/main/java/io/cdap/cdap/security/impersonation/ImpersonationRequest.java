@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * A wrapper which wraps around the {@link co.cask.cdap.proto.id.NamespacedEntityId} on which impersonation needs to
+ * A wrapper which wraps around the {@link io.cdap.cdap.proto.id.NamespacedEntityId} on which impersonation needs to
  * be performed and the type of operation {@link ImpersonatedOpType} which will be performed.
  */
 public class ImpersonationRequest {

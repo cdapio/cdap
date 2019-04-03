@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.hive;
+package io.cdap.cdap.security.hive;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.hive.ExploreUtils;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.hive.ExploreUtils;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;

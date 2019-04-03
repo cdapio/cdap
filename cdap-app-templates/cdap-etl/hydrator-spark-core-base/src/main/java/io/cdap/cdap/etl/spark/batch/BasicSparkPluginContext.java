@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.api.batch.SparkPluginContext;
-import co.cask.cdap.etl.batch.AbstractBatchContext;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.spark.SparkClientContext;
+import io.cdap.cdap.etl.api.batch.SparkPluginContext;
+import io.cdap.cdap.etl.batch.AbstractBatchContext;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.SparkConf;
 
 import java.util.List;

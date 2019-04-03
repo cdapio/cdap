@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.context;
+package io.cdap.cdap.messaging.context;
 
-import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.proto.id.TopicId;
 
 import java.io.IOException;
 import java.util.Iterator;

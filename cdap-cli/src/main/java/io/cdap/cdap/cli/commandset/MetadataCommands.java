@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.metadata.AddMetadataPropertiesCommand;
-import co.cask.cdap.cli.command.metadata.AddMetadataTagsCommand;
-import co.cask.cdap.cli.command.metadata.GetMetadataCommand;
-import co.cask.cdap.cli.command.metadata.GetMetadataPropertiesCommand;
-import co.cask.cdap.cli.command.metadata.GetMetadataTagsCommand;
-import co.cask.cdap.cli.command.metadata.RemoveMetadataCommand;
-import co.cask.cdap.cli.command.metadata.RemoveMetadataPropertiesCommand;
-import co.cask.cdap.cli.command.metadata.RemoveMetadataPropertyCommand;
-import co.cask.cdap.cli.command.metadata.RemoveMetadataTagCommand;
-import co.cask.cdap.cli.command.metadata.RemoveMetadataTagsCommand;
-import co.cask.cdap.cli.command.metadata.SearchMetadataCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.metadata.AddMetadataPropertiesCommand;
+import io.cdap.cdap.cli.command.metadata.AddMetadataTagsCommand;
+import io.cdap.cdap.cli.command.metadata.GetMetadataCommand;
+import io.cdap.cdap.cli.command.metadata.GetMetadataPropertiesCommand;
+import io.cdap.cdap.cli.command.metadata.GetMetadataTagsCommand;
+import io.cdap.cdap.cli.command.metadata.RemoveMetadataCommand;
+import io.cdap.cdap.cli.command.metadata.RemoveMetadataPropertiesCommand;
+import io.cdap.cdap.cli.command.metadata.RemoveMetadataPropertyCommand;
+import io.cdap.cdap.cli.command.metadata.RemoveMetadataTagCommand;
+import io.cdap.cdap.cli.command.metadata.RemoveMetadataTagsCommand;
+import io.cdap.cdap.cli.command.metadata.SearchMetadataCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

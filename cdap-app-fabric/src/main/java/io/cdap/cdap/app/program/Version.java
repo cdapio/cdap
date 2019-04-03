@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.program;
+package io.cdap.cdap.app.program;
 
 /**
  * This interface defines the version.

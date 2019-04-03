@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import com.google.inject.assistedinject.Assisted;
 
 import java.util.Properties;

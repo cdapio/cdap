@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.resource;
+package io.cdap.cdap.common.resource;
 
-import co.cask.cdap.common.utils.Tasks;
+import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;

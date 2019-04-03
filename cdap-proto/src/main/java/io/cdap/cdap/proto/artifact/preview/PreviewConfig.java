@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact.preview;
+package io.cdap.cdap.proto.artifact.preview;
 
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.AppRequest;
 
 import java.util.HashMap;
 import java.util.Map;

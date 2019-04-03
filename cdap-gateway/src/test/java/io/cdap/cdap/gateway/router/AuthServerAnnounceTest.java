@@ -15,17 +15,17 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.security.auth.AccessTokenTransformer;
-import co.cask.cdap.security.guice.SecurityModules;
-import co.cask.cdap.security.server.GrantAccessToken;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.internal.guice.AppFabricTestModule;
+import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.server.GrantAccessToken;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;

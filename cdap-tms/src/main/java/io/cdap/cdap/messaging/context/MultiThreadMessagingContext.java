@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.context;
+package io.cdap.cdap.messaging.context;
 
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.common.transaction.MultiThreadTransactionAware;
-import co.cask.cdap.messaging.MessagingService;
+import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.common.transaction.MultiThreadTransactionAware;
+import io.cdap.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionAware;
 
 /**

@@ -14,39 +14,39 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowConditionNode;
-import co.cask.cdap.api.workflow.WorkflowForkNode;
-import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowNodeType;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.verification.Verifier;
-import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.verification.ApplicationVerification;
-import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
-import co.cask.cdap.internal.app.verification.ProgramVerification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowConditionNode;
+import io.cdap.cdap.api.workflow.WorkflowForkNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowNodeType;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.app.verification.Verifier;
+import io.cdap.cdap.app.verification.VerifyResult;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.app.verification.ApplicationVerification;
+import io.cdap.cdap.internal.app.verification.DatasetCreationSpecVerifier;
+import io.cdap.cdap.internal.app.verification.ProgramVerification;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -64,7 +64,7 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
- * This {@link co.cask.cdap.pipeline.Stage} is responsible for verifying
+ * This {@link io.cdap.cdap.pipeline.Stage} is responsible for verifying
  * the specification and components of specification. Verification of each
  * component of specification is achieved by the {@link Verifier}
  * concrete implementations.

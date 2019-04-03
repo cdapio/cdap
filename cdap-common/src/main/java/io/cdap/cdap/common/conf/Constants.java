@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
 

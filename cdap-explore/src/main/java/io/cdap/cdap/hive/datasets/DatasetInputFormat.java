@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.hive.datasets;
+package io.cdap.cdap.hive.datasets;
 
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.Splits;
+import io.cdap.cdap.api.data.batch.RecordScannable;
+import io.cdap.cdap.api.data.batch.RecordScanner;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.Splits;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -83,7 +83,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
 
   /**
    * This class duplicates all the functionality of
-   * {@link co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputSplit}, but implements
+   * {@link io.cdap.cdap.internal.app.runtime.batch.dataset.DataSetInputSplit}, but implements
    * {@link org.apache.hadoop.mapred.InputSplit} instead of {@link org.apache.hadoop.mapreduce.InputSplit}.
    */
   public static class DatasetInputSplit extends FileSplit {

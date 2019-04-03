@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.operations.OperationalStatsUtils;
+import io.cdap.cdap.operations.OperationalStatsUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

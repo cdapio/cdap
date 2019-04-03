@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.hive.serde;
+package io.cdap.cdap.hive.serde;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.format.UnexpectedFormatException;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.format.UnexpectedFormatException;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.hive.objectinspector.ObjectInspectorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -251,7 +251,7 @@ public class ObjectDeserializer {
   /**
    * Translate a primitive type we understand into the type Hive understands. For example, we understand ByteBuffer
    * but Hive does not, so all ByteBuffer fields must be changed into byte[] fields.
-   * See {@link co.cask.cdap.internal.io.AbstractSchemaGenerator} for the full mapping.
+   * See {@link io.cdap.cdap.internal.io.AbstractSchemaGenerator} for the full mapping.
    * TODO: refactor so that changes don't have to be made both here and in AbstractSchemaGenerator
    */
   private Object deserializePrimitive(Object primitive, PrimitiveTypeInfo typeInfo, Schema schema) {

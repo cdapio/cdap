@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.explore.executor;
+package io.cdap.cdap.explore.executor;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.TableNotFoundException;
-import co.cask.cdap.explore.utils.ColumnsArgs;
-import co.cask.cdap.explore.utils.FunctionsArgs;
-import co.cask.cdap.explore.utils.SchemasArgs;
-import co.cask.cdap.explore.utils.TablesArgs;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.ExploreService;
+import io.cdap.cdap.explore.service.TableNotFoundException;
+import io.cdap.cdap.explore.utils.ColumnsArgs;
+import io.cdap.cdap.explore.utils.FunctionsArgs;
+import io.cdap.cdap.explore.utils.SchemasArgs;
+import io.cdap.cdap.explore.utils.TablesArgs;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.http.HttpResponder;

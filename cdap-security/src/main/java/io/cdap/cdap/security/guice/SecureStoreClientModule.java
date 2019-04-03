@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.security.store.client.RemoteSecureStore;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.security.store.client.RemoteSecureStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 

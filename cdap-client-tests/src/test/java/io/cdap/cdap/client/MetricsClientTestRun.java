@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.PingService;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsTags;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.MetricQueryResult;
-import co.cask.cdap.proto.MetricTagValue;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.app.PingService;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metrics.MetricsTags;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.MetricQueryResult;
+import io.cdap.cdap.proto.MetricTagValue;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;

@@ -13,26 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.batch.customaction;
+package io.cdap.cdap.etl.batch.customaction;
 
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.customaction.CustomAction;
-import co.cask.cdap.api.customaction.CustomActionContext;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.etl.api.action.Action;
-import co.cask.cdap.etl.api.action.ActionContext;
-import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.common.SetMultimapCodec;
-import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.customaction.CustomAction;
+import io.cdap.cdap.api.customaction.CustomActionContext;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.cdap.etl.api.action.ActionContext;
+import io.cdap.cdap.etl.batch.BatchPhaseSpec;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.common.SetMultimapCodec;
+import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

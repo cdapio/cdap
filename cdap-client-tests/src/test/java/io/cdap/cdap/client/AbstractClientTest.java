@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.StandaloneTester;
+import io.cdap.cdap.cli.util.InstanceURIParser;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

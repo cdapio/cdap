@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.twill;
+package io.cdap.cdap.common.twill;
 
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 
 import java.util.regex.Matcher;

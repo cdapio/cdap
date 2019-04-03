@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.plugin
+package io.cdap.cdap.etl.spark.plugin
 
 import java.util.concurrent.Callable
 
-import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
-import co.cask.cdap.etl.common.plugin.Caller
+import io.cdap.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import io.cdap.cdap.etl.common.plugin.Caller
 
 /**
  * Wrapper around a SparkMain that makes sure logging, classloading, and other pipeline capabilities

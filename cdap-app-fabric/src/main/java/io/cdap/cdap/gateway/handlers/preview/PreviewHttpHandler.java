@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.preview;
+package io.cdap.cdap.gateway.handlers.preview;
 
-import co.cask.cdap.app.preview.PreviewManager;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.gateway.handlers.AbstractLogHandler;
-import co.cask.cdap.metrics.query.MetricsQueryHelper;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.codec.BasicThrowableCodec;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.gateway.handlers.AbstractLogHandler;
+import io.cdap.cdap.metrics.query.MetricsQueryHelper;
+import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

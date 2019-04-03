@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Thrown when a program is not found

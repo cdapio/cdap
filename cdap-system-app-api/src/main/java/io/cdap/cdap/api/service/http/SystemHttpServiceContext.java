@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.util.Map;
 

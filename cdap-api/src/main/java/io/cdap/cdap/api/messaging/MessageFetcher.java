@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.messaging;
+package io.cdap.cdap.api.messaging;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

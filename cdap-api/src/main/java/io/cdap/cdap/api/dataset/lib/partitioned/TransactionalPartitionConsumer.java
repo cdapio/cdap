@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.DatasetStatePersistor;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.util.List;
 

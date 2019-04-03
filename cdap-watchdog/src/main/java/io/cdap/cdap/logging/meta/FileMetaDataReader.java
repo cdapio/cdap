@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.logging.meta;
+package io.cdap.cdap.logging.meta;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.logging.appender.system.LogPathIdentifier;
-import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.logging.appender.system.LogPathIdentifier;
+import io.cdap.cdap.logging.write.LogLocation;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;

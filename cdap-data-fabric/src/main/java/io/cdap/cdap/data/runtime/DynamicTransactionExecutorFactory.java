@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.data2.transaction.DynamicTransactionExecutor;
-import co.cask.cdap.data2.transaction.TransactionContextFactory;
-import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
+import io.cdap.cdap.data2.transaction.DynamicTransactionExecutor;
+import io.cdap.cdap.data2.transaction.TransactionContextFactory;
+import io.cdap.cdap.data2.transaction.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.tephra.DefaultTransactionExecutor;

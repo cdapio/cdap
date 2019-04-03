@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
-import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
 
 import java.net.URL
 

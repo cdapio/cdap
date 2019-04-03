@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package io.cdap.cdap.proto.artifact;
 
 /**
  * Enum class for the sort order info about artifacts.

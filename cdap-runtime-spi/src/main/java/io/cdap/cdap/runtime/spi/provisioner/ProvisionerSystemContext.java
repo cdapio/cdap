@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner;
 
 import java.util.Map;
 

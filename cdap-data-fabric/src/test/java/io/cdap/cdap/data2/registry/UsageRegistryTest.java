@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.registry;
+package io.cdap.cdap.data2.registry;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

@@ -15,22 +15,22 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.table.Delete;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.table.Delete;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

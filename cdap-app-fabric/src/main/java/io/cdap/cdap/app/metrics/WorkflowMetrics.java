@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.metrics;
+package io.cdap.cdap.app.metrics;
 
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
 
 /**
  * Implementation of {@link Metrics}, context used by programs, if they are a part of a workflow.

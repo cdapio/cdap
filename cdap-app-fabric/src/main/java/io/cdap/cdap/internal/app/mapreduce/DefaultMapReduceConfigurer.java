@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.mapreduce;
+package io.cdap.cdap.internal.app.mapreduce;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.AbstractConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceConfigurer;
+import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
+import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
 
 import java.util.HashMap;
 import java.util.HashSet;

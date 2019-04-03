@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
 import java.util.Map;
 

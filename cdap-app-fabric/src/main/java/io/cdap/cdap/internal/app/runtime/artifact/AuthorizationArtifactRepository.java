@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.proto.artifact.ApplicationClassInfo;
-import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
+import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.inject.name.Named;
@@ -142,7 +142,7 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
       new Function<ArtifactDetail, EntityId>() {
         @Override
         public EntityId apply(ArtifactDetail input) {
-          co.cask.cdap.api.artifact.ArtifactId artifactId = input.getDescriptor().getArtifactId();
+          io.cdap.cdap.api.artifact.ArtifactId artifactId = input.getDescriptor().getArtifactId();
           return namespaceId.artifact(artifactId.getName(), artifactId.getVersion().getVersion());
         }
       }, null);

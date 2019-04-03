@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.spi.discovery;
+package io.cdap.cdap.master.spi.discovery;
 
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.executor;
+package io.cdap.cdap.explore.executor;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.gson.JsonObject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;

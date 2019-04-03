@@ -14,43 +14,43 @@
  * the License.
  */
 
-package co.cask.cdap.hive.context;
+package io.cdap.cdap.hive.context;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.hive.datasets.DatasetSerDe;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.RemotePrivilegesManager;
-import co.cask.cdap.security.guice.SecureStoreClientModule;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.RemoteUGIProvider;
-import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.explore.guice.ExploreClientModule;
+import io.cdap.cdap.hive.datasets.DatasetSerDe;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.RemotePrivilegesManager;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
@@ -106,7 +106,7 @@ public class ContextManager {
    * method is called, a new context will be created. This is what happens in map reduce jobs launched by Hive.
    * If no context was saved and the conf is null, null is returned.
    *
-   * The {@code conf} param is expected to contain serialized {@link co.cask.cdap.common.conf.CConfiguration} and
+   * The {@code conf} param is expected to contain serialized {@link io.cdap.cdap.common.conf.CConfiguration} and
    * {@link org.apache.hadoop.conf.Configuration} objects, as well as transaction information.
    *
    * @param conf configuration used to create a context, if necessary. If it is null, return the saved context, which

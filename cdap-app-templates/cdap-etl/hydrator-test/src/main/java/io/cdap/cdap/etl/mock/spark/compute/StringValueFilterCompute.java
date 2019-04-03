@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.spark.compute;
+package io.cdap.cdap.etl.mock.spark.compute;
 
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.StageConfigurer;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.rdd.RDD;
 import scala.collection.JavaConversions;
@@ -72,7 +72,7 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
     interpreter = context.createSparkInterpreter();
     interpreter.compile(
       "package test\n" +
-      "import co.cask.cdap.api.data.format._\n" +
+      "import io.cdap.cdap.api.data.format._\n" +
       "import org.apache.spark._\n" +
       "import org.apache.spark.api.java._\n" +
       "import org.apache.spark.rdd._\n" +

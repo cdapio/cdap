@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.runtime.AbstractContext;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

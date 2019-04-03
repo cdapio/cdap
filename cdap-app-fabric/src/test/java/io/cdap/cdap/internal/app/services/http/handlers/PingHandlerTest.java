@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.partitioned;
+package io.cdap.cdap.partitioned;
 
-import co.cask.cdap.api.dataset.lib.app.partitioned.PartitionExploreCorrector;
+import io.cdap.cdap.api.dataset.lib.app.partitioned.PartitionExploreCorrector;
 
 /**
  * This class is needed because in the test framework, we build artifacts in a way that they

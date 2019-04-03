@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.util;
+package io.cdap.cdap.report.util;
 
 import java.util.concurrent.TimeUnit;
 

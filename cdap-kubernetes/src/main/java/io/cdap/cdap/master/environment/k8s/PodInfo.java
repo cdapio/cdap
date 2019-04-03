@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
 import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1OwnerReference;

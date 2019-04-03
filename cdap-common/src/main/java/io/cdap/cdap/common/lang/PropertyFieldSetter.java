@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.api.annotation.Property;
-import co.cask.cdap.internal.lang.FieldVisitor;
+import io.cdap.cdap.api.annotation.Property;
+import io.cdap.cdap.internal.lang.FieldVisitor;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 

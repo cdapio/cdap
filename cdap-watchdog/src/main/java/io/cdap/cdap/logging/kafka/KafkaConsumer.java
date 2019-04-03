@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.kafka;
+package io.cdap.cdap.logging.kafka;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

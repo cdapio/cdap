@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.NamespaceStore;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.DefaultNamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.internal.guice.AppFabricTestModule;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.store.NamespaceStore;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

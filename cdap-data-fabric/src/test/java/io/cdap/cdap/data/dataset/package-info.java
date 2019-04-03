@@ -17,4 +17,4 @@
 /**
  * DataSet test package.
  */
-package co.cask.cdap.data.dataset;
+package io.cdap.cdap.data.dataset;

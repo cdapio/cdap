@@ -17,5 +17,5 @@
 /**
  * Gateway util.
  */
-package co.cask.cdap.gateway.util;
+package io.cdap.cdap.gateway.util;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
+package io.cdap.cdap.messaging;
 
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.id.TopicId;
 
 import java.util.Iterator;
 

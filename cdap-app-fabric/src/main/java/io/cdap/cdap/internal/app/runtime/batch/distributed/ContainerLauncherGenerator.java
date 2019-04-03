@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.distributed;
+package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
-import co.cask.cdap.internal.asm.Methods;
+import io.cdap.cdap.internal.asm.Methods;
 import org.apache.twill.filesystem.Location;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;

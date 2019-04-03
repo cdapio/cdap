@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor.proxy;
+package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

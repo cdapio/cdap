@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.common.guice;
+package io.cdap.cdap.common.guice;
 
-import co.cask.cdap.internal.io.ASMDatumWriterFactory;
-import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
-import co.cask.cdap.internal.io.DatumReaderFactory;
-import co.cask.cdap.internal.io.DatumWriterFactory;
-import co.cask.cdap.internal.io.FieldAccessorFactory;
-import co.cask.cdap.internal.io.ReflectionDatumReaderFactory;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
+import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
+import io.cdap.cdap.internal.io.DatumReaderFactory;
+import io.cdap.cdap.internal.io.DatumWriterFactory;
+import io.cdap.cdap.internal.io.FieldAccessorFactory;
+import io.cdap.cdap.internal.io.ReflectionDatumReaderFactory;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.SchemaGenerator;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 

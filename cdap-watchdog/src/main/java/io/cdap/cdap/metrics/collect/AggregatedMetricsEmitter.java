@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

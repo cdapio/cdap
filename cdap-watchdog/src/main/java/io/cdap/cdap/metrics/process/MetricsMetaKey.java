@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
 /**
  * A wrapper class to provide byte array format of keys for {@link MetricsConsumerMetaTable}.

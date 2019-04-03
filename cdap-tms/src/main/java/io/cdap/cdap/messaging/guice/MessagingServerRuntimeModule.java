@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.guice;
+package io.cdap.cdap.messaging.guice;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.cache.MessageCache;
-import co.cask.cdap.messaging.distributed.LeaderElectionMessagingService;
-import co.cask.cdap.messaging.server.FetchHandler;
-import co.cask.cdap.messaging.server.MessagingHttpService;
-import co.cask.cdap.messaging.server.MetadataHandler;
-import co.cask.cdap.messaging.server.StoreHandler;
-import co.cask.cdap.messaging.service.CoreMessagingService;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.messaging.store.cache.CachingTableFactory;
-import co.cask.cdap.messaging.store.cache.DefaultMessageTableCacheProvider;
-import co.cask.cdap.messaging.store.cache.MessageTableCacheProvider;
-import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
-import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.cache.MessageCache;
+import io.cdap.cdap.messaging.distributed.LeaderElectionMessagingService;
+import io.cdap.cdap.messaging.server.FetchHandler;
+import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.messaging.server.MetadataHandler;
+import io.cdap.cdap.messaging.server.StoreHandler;
+import io.cdap.cdap.messaging.service.CoreMessagingService;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.messaging.store.cache.CachingTableFactory;
+import io.cdap.cdap.messaging.store.cache.DefaultMessageTableCacheProvider;
+import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
+import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
+import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Binder;
 import com.google.inject.Inject;

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.zookeeper.coordination;
+package io.cdap.cdap.common.zookeeper.coordination;
 
 import org.apache.twill.discovery.Discoverable;
 

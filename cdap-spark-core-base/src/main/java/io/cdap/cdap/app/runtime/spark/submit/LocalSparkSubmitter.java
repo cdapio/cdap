@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.submit;
+package io.cdap.cdap.app.runtime.spark.submit;
 
-import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
+import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Map;

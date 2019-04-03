@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.common.namespace;
+package io.cdap.cdap.common.namespace;
 
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.reflect.TypeToken;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.nosql;
+package io.cdap.cdap.spi.data.nosql;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.lib.IndexedTableDefinition;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;

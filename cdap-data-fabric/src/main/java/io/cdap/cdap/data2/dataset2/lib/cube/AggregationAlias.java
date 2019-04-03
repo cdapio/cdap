@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
 import java.util.Map;
 

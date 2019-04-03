@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

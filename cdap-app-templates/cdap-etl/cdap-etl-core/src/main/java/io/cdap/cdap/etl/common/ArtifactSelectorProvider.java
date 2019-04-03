@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.artifact.ArtifactVersionRange;
-import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import com.google.common.base.CharMatcher;
 
 import javax.annotation.Nullable;

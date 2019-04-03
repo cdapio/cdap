@@ -17,4 +17,4 @@
 /**
  * This package contains Class loaders and related utilities.
  */
-package co.cask.cdap.common.lang.jar;
+package io.cdap.cdap.common.lang.jar;

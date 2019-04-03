@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package io.cdap.cdap.logging.pipeline;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Syncable;
-import co.cask.cdap.logging.framework.Loggers;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Syncable;
+import io.cdap.cdap.logging.framework.Loggers;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

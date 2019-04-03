@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.partitioned;
+package io.cdap.cdap.partitioned;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;

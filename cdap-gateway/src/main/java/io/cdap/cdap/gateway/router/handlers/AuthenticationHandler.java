@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router.handlers;
+package io.cdap.cdap.gateway.router.handlers;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.AuditLogEntry;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.security.auth.AccessTokenTransformer;
-import co.cask.cdap.security.auth.TokenState;
-import co.cask.cdap.security.auth.TokenValidator;
-import co.cask.cdap.security.server.GrantAccessToken;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.AuditLogEntry;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.TokenState;
+import io.cdap.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.server.GrantAccessToken;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

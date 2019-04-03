@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package io.cdap.cdap.api.metrics;
 
 /**
  * Defines a way to collect user-defined metrics.

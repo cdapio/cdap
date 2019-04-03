@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
 import org.apache.hadoop.hbase.client.Delete;
 

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 
 /**
  * Responsible for dynamically determining a @{link PartitionKey}.

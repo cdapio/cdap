@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.type;
+package io.cdap.cdap.data2.datafabric.dataset.type;
 
-import co.cask.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 
 import java.io.Closeable;
 import java.io.IOException;

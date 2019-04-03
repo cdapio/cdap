@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.internal.io.TypeRepresentation;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;

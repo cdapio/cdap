@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.service;
+package io.cdap.cdap.messaging.service;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.MessageFetcher;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

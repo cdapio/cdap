@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store;
+package io.cdap.cdap.metrics.store;
 
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
+import io.cdap.cdap.metrics.process.MetricsConsumerMetaTable;
 
 /**
  * Manages metric system datasets.

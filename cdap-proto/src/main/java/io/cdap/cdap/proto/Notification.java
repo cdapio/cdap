@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

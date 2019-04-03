@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Map;
 

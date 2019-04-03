@@ -14,33 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata.dataset;
+package io.cdap.cdap.spi.metadata.dataset;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocalLocationModule;
-import co.cask.cdap.common.guice.NamespaceAdminTestModule;
-import co.cask.cdap.common.metadata.Cursor;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.runtime.StorageModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
-import co.cask.cdap.spi.metadata.MetadataMutation.Remove;
-import co.cask.cdap.spi.metadata.MetadataMutation.Update;
-import co.cask.cdap.spi.metadata.MetadataRecord;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.MetadataStorageTest;
-import co.cask.cdap.spi.metadata.ScopedNameOfKind;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
+import io.cdap.cdap.common.metadata.Cursor;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Drop;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Remove;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MetadataStorageTest;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -67,10 +67,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
-import static co.cask.cdap.api.metadata.MetadataScope.USER;
-import static co.cask.cdap.spi.metadata.MetadataKind.PROPERTY;
-import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
+import static io.cdap.cdap.spi.metadata.MetadataKind.TAG;
 
 public class DatasetMetadataStorageTest extends MetadataStorageTest {
 

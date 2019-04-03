@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;

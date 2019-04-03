@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.lib.CounterTimeseriesTable;
-import co.cask.cdap.api.dataset.lib.CounterTimeseriesTableDefinition;
-import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
-import co.cask.cdap.api.dataset.lib.IndexedObjectStoreDefinition;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.KeyValueTableDefinition;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.api.dataset.lib.TimeseriesTable;
-import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.CounterTimeseriesTable;
+import io.cdap.cdap.api.dataset.lib.CounterTimeseriesTableDefinition;
+import io.cdap.cdap.api.dataset.lib.IndexedObjectStore;
+import io.cdap.cdap.api.dataset.lib.IndexedObjectStoreDefinition;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.lib.IndexedTableDefinition;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.KeyValueTableDefinition;
+import io.cdap.cdap.api.dataset.lib.ObjectStore;
+import io.cdap.cdap.api.dataset.lib.TimeseriesTable;
+import io.cdap.cdap.api.dataset.lib.TimeseriesTableDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
 /**
  * DatasetModule containing default datasets.

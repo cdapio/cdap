@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.logging.meta;
+package io.cdap.cdap.logging.meta;
 
-import co.cask.cdap.logging.appender.system.LogPathIdentifier;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.logging.appender.system.LogPathIdentifier;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;

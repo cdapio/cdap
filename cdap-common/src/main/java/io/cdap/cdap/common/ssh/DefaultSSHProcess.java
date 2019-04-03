@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.ssh;
+package io.cdap.cdap.common.ssh;
 
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.runtime.spi.ssh.SSHProcess;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
 import com.jcraft.jsch.ChannelExec;
 
 import java.io.IOException;

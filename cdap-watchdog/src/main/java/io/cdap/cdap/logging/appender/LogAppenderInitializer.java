@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;

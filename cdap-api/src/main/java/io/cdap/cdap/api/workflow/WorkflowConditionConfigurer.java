@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.customaction.CustomAction;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.customaction.CustomAction;
 
 /**
  * Defines an interface for the conditions in the {@link Workflow}.

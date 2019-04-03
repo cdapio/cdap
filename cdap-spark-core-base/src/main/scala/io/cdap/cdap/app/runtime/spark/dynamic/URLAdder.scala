@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
 import java.net.URL
 

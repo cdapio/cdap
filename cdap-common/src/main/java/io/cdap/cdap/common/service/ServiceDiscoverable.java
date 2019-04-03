@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

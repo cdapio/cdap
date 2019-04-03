@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -58,7 +58,7 @@ public class ExploreFacade {
   }
 
   /**
-   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * Enables ad-hoc exploration of the given {@link io.cdap.cdap.api.data.batch.RecordScannable}.
    *
    * @param datasetInstance dataset instance id.
    * @param spec the dataset specification of the dataset
@@ -77,7 +77,7 @@ public class ExploreFacade {
   }
 
   /**
-   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * Enables ad-hoc exploration of the given {@link io.cdap.cdap.api.data.batch.RecordScannable}.
    *
    * @param datasetInstance dataset instance id.
    * @param oldSpec the previous dataset spec
@@ -94,7 +94,7 @@ public class ExploreFacade {
   }
 
   /**
-   * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * Disable ad-hoc exploration of the given {@link io.cdap.cdap.api.data.batch.RecordScannable}.
    *
    * @param datasetInstance dataset instance id.
    */
@@ -108,7 +108,7 @@ public class ExploreFacade {
   }
 
   /**
-   * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * Disable ad-hoc exploration of the given {@link io.cdap.cdap.api.data.batch.RecordScannable}.
    *
    * @param datasetInstance dataset instance id.
    * @param spec the dataset specification of the dataset

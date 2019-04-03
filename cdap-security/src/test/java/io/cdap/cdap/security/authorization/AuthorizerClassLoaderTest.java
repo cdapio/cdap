@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.common.lang.ClassPathResources;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.common.lang.ClassPathResources;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
@@ -77,9 +77,9 @@ public class AuthorizerClassLoaderTest {
     // classes from cdap-security should not be available
     assertClassUnavailable(AuthorizerClassLoader.class);
     // classes from cdap-data-fabric should not be available
-    assertClassUnavailable("co.cask.cdap.data2.util.TableId");
+    assertClassUnavailable("io.cdap.cdap.data2.util.TableId");
     // classes from cdap-app-fabric should not be available
-    assertClassUnavailable("co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin");
+    assertClassUnavailable("io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin");
   }
 
   private void assertClassUnavailable(Class<?> aClass) {

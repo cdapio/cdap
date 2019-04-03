@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.EntityId;
 
 import java.util.Objects;
 

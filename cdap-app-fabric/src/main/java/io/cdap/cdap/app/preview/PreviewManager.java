@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Interface used for managing the preview runs.

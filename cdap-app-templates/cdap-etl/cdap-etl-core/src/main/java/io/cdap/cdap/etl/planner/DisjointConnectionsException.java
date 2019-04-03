@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.planner;
+package io.cdap.cdap.etl.planner;
 
 /**
  * Runtime exception thrown when the Dag creation is attemped from the disjoint set of connections.

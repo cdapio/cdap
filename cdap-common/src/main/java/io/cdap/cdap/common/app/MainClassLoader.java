@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.common.app;
+package io.cdap.cdap.common.app;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.dataset.DatasetClassRewriter;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.InterceptableClassLoader;
-import co.cask.cdap.common.security.AuthEnforceRewriter;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.asm.Classes;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.common.dataset.DatasetClassRewriter;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.InterceptableClassLoader;
+import io.cdap.cdap.common.security.AuthEnforceRewriter;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.asm.Classes;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -181,6 +181,6 @@ public class MainClassLoader extends InterceptableClassLoader {
   }
 
   private boolean isAuthRewriteNeeded(String className) {
-    return className.startsWith("co.cask.cdap.");
+    return className.startsWith("io.cdap.cdap.");
   }
 }

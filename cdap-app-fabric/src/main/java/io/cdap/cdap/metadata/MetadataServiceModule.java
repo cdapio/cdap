@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;

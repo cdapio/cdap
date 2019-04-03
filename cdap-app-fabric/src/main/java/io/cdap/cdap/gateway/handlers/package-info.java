@@ -17,5 +17,5 @@
 /**
  * Various handlers for Gateway.
  */
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 

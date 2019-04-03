@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
 /**
  * Configuration parameters for Kafka server.

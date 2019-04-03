@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data;
+package io.cdap.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Field;
 
 import java.util.Collection;
 import javax.annotation.Nullable;

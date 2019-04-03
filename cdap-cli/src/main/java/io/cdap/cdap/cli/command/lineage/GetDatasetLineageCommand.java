@@ -14,15 +14,15 @@
  * the License
  */
 
-package co.cask.cdap.cli.command.lineage;
+package io.cdap.cdap.cli.command.lineage;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.LineageClient;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.cli.util.table.Table;
+import io.cdap.cdap.client.LineageClient;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

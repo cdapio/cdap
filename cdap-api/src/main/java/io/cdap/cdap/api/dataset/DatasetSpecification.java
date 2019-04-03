@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -192,8 +192,8 @@ public final class DatasetSpecification {
   }
 
   /**
-   * Get the map of embedded dataset name to {@link co.cask.cdap.api.dataset.DatasetSpecification}
-   * @return the map of dataset name to {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   * Get the map of embedded dataset name to {@link io.cdap.cdap.api.dataset.DatasetSpecification}
+   * @return the map of dataset name to {@link io.cdap.cdap.api.dataset.DatasetSpecification}
    */
   public SortedMap<String, DatasetSpecification> getSpecifications() {
     return datasetSpecs;

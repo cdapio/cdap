@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.module.EmbeddedDataset;
-import co.cask.cdap.spark.FileCountSparkProgram;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
+import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
+import io.cdap.cdap.spark.FileCountSparkProgram;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

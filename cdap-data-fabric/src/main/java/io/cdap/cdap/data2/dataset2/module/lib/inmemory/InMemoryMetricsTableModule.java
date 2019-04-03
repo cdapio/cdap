@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.inmemory;
+package io.cdap.cdap.data2.dataset2.module.lib.inmemory;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTableDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTableDefinition;
 
 /**
  * Registers in-memory implementations of the metrics system datasets

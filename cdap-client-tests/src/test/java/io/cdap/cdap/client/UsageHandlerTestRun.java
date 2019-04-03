@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.client.app.AllProgramsApp;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.client.app.AllProgramsApp;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tests for {@link co.cask.cdap.gateway.handlers.UsageHandler}
+ * Tests for {@link io.cdap.cdap.gateway.handlers.UsageHandler}
  */
 @Category(XSlowTests.class)
 public class UsageHandlerTestRun extends ClientTestBase {

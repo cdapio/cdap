@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.metadata;
+package io.cdap.cdap.api.metadata;
 
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Exception which is thrown when a metadata operation fails

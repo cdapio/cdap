@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

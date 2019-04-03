@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app.plugin;
+package io.cdap.cdap.spark.app.plugin;
 
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.spark.app.Extensible;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.spark.app.Extensible;
 
 import java.util.function.ToIntFunction;
 

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.internal.app.runtime.batch.WordCount;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.internal.app.runtime.batch.WordCount;
 import org.apache.hadoop.mapreduce.Job;
 
 import java.io.File;

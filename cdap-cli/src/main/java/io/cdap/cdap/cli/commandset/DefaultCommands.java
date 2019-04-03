@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.command.ExecuteQueryCommand;
-import co.cask.cdap.cli.command.PreferencesCommandSet;
+import io.cdap.cdap.cli.command.ExecuteQueryCommand;
+import io.cdap.cdap.cli.command.PreferencesCommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

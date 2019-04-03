@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
-import co.cask.cdap.app.runtime.spark.SparkTransactionClient
-import co.cask.cdap.data2.metadata.lineage.AccessType
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.dataset.Dataset
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider
+import io.cdap.cdap.app.runtime.spark.SparkTransactionClient
+import io.cdap.cdap.data2.metadata.lineage.AccessType
 import org.apache.spark.Partition
 import org.apache.spark.SparkContext
 import org.apache.spark.TaskContext
@@ -37,7 +37,7 @@ import scala.reflect.ClassTag
 
 /**
   * A base implementation of [[org.apache.spark.rdd.RDD]] that iterates based
-  * on [[co.cask.cdap.app.runtime.spark.data.DatumScanner]].
+  * on [[io.cdap.cdap.app.runtime.spark.data.DatumScanner]].
   */
 abstract class DatumScannerBasedRDD[R: ClassTag](@(transient @param) sc: SparkContext,
                                                  namespace: String,
@@ -85,8 +85,8 @@ abstract class DatumScannerBasedRDD[R: ClassTag](@(transient @param) sc: SparkCo
   }
 
   /**
-    * Creates a [[co.cask.cdap.app.runtime.spark.data.DatumScanner]] from the given [[co.cask.cdap.api.dataset.Dataset]]
-    * and [[co.cask.cdap.api.data.batch.Split]]. This is called from the `compute` method in the executor node.
+    * Creates a [[io.cdap.cdap.app.runtime.spark.data.DatumScanner]] from the given [[io.cdap.cdap.api.dataset.Dataset]]
+    * and [[io.cdap.cdap.api.data.batch.Split]]. This is called from the `compute` method in the executor node.
     */
   protected def createDatumScanner(dataset: Dataset, split: Split): DatumScanner[R]
 }

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;

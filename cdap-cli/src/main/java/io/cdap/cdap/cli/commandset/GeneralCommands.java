@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.ConnectCommand;
-import co.cask.cdap.cli.command.system.ExitCommand;
-import co.cask.cdap.cli.command.system.QuitCommand;
-import co.cask.cdap.cli.command.system.RenderAsCommand;
-import co.cask.cdap.cli.command.system.VersionCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.ConnectCommand;
+import io.cdap.cdap.cli.command.system.ExitCommand;
+import io.cdap.cdap.cli.command.system.QuitCommand;
+import io.cdap.cdap.cli.command.system.RenderAsCommand;
+import io.cdap.cdap.cli.command.system.VersionCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

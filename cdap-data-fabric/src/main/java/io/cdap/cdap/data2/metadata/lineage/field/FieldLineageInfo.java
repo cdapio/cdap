@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package io.cdap.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.InputField;
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.api.lineage.field.OperationType;
-import co.cask.cdap.api.lineage.field.ReadOperation;
-import co.cask.cdap.api.lineage.field.TransformOperation;
-import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.common.utils.Checksums;
-import co.cask.cdap.proto.codec.OperationTypeAdapter;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.InputField;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.OperationType;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.TransformOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
+import io.cdap.cdap.common.utils.Checksums;
+import io.cdap.cdap.proto.codec.OperationTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;

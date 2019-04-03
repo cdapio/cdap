@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment;
+package io.cdap.cdap.master.environment;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassPathResources;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.extension.AbstractExtensionLoader;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassPathResources;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 
 import java.io.IOException;
 import java.util.Collections;

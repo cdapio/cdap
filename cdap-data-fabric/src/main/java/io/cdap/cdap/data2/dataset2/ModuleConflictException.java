@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
 
 /**
- * Thrown when operation conflicts with existing {@link co.cask.cdap.api.dataset.module.DatasetModule}s
+ * Thrown when operation conflicts with existing {@link io.cdap.cdap.api.dataset.module.DatasetModule}s
  * in the system.
  */
 public class ModuleConflictException extends DatasetManagementException {

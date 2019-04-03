@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.InstanceConflictException;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.spark.AbstractExtendedSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
-import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
-import co.cask.cdap.api.spark.service.SparkHttpContentConsumer;
-import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
-import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
-import co.cask.cdap.api.spark.service.SparkHttpServicePluginContext;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.spark.AbstractExtendedSpark;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
+import io.cdap.cdap.api.spark.service.SparkHttpContentConsumer;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceContext;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler;
+import io.cdap.cdap.api.spark.service.SparkHttpServicePluginContext;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;

@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.client.app.StandaloneDataset;
-import co.cask.cdap.client.app.StandaloneDatasetModule;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.DatasetModuleNotFoundException;
-import co.cask.cdap.common.DatasetTypeNotFoundException;
-import co.cask.cdap.proto.DatasetInstanceConfiguration;
-import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.client.app.StandaloneDataset;
+import io.cdap.cdap.client.app.StandaloneDatasetModule;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.DatasetModuleNotFoundException;
+import io.cdap.cdap.common.DatasetTypeNotFoundException;
+import io.cdap.cdap.proto.DatasetInstanceConfiguration;
+import io.cdap.cdap.proto.DatasetMeta;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
 /**
  * Constants used in ETL Applications.

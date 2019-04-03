@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.format;
+package io.cdap.cdap.format;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.format.UnexpectedFormatException;
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.format.UnexpectedFormatException;
+import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
+import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -46,7 +46,7 @@ public class DefaultAggregation implements Aggregation {
    * See also {@link Aggregation#getDimensionNames()} for more info on aggregateDimensions.
    *
    * @param aggregateDimensions dimensions to be included in aggregation.
-   * @param requiredDimensions dimensions that must be present in {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}
+   * @param requiredDimensions dimensions that must be present in {@link io.cdap.cdap.api.dataset.lib.cube.CubeFact}
    *                     for aggregated value to be stored.
    */
   public DefaultAggregation(List<String> aggregateDimensions, Collection<String> requiredDimensions) {

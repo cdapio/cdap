@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.security.server.LDAPLoginModule;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.security.server.LDAPLoginModule;
 import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;

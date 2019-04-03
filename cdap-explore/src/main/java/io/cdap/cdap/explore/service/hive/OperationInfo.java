@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.hive;
+package io.cdap.cdap.explore.service.hive;
 
-import co.cask.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.cli.OperationHandle;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.explore.client.ExploreFacade;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.explore.client.ExploreFacade;
 import com.google.inject.Inject;
 
 /**

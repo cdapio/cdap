@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.metadata;
+package io.cdap.cdap.common.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;

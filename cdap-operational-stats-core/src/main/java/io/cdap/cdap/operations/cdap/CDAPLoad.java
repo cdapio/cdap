@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.operations.cdap;
+package io.cdap.cdap.operations.cdap;
 
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.operations.OperationalStats;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.operations.OperationalStats;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.inject.Injector;
 
 import java.io.IOException;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.proto.NamespaceConfig;
 
 /**
  * Helper class for all utils used in Namespace Commands

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data;
+package io.cdap.cdap.data;
 
 /**
  * Interface implemented by classes that need program context information.

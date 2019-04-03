@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.metrics.query.MetricsQueryHelper;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.metrics.query.MetricsQueryHelper;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.gson.JsonElement;
 
 import java.util.List;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.security.DefaultSecretStore;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

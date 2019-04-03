@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
 
-import co.cask.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.TableId;
 import com.google.common.base.Preconditions;
 
 /**

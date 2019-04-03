@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.util.List;
 
@@ -62,7 +62,7 @@ public interface PartitionConsumer {
 
   /**
    * Same as {@link #onFinish(List, boolean)}, but allows specifying {@link PartitionKey}s
-   * instead of {@link co.cask.cdap.api.dataset.lib.Partition}s.
+   * instead of {@link io.cdap.cdap.api.dataset.lib.Partition}s.
    *
    * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
    * @param succeeded whether or not processing of the specified partitions was successful

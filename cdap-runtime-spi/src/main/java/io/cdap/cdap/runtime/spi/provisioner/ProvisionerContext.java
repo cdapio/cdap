@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner;
 
-import co.cask.cdap.runtime.spi.SparkCompat;
-import co.cask.cdap.runtime.spi.ssh.SSHContext;
+import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 
 import java.util.Map;
 

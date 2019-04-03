@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.dataset2.lib.timeseries;
+package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;

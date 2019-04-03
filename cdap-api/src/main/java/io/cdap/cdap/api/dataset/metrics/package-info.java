@@ -15,6 +15,6 @@
  */
 
 /**
- * Defines integration points for {@link co.cask.cdap.api.dataset.Dataset}s and Metrics system.
+ * Defines integration points for {@link io.cdap.cdap.api.dataset.Dataset}s and Metrics system.
  */
-package co.cask.cdap.api.dataset.metrics;
+package io.cdap.cdap.api.dataset.metrics;

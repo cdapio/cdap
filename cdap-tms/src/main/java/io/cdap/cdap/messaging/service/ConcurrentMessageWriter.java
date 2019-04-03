@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.service;
+package io.cdap.cdap.messaging.service;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.TopicMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 

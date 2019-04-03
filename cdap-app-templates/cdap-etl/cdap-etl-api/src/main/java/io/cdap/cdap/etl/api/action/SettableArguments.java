@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.api.action;
+package io.cdap.cdap.etl.api.action;
 
-import co.cask.cdap.etl.api.Arguments;
+import io.cdap.cdap.etl.api.Arguments;
 
 import java.util.Map;
 import javax.annotation.Nullable;

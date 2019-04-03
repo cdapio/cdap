@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v0;
+package io.cdap.cdap.etl.proto.v0;
 
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.v1.Plugin;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.v1.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,9 +52,9 @@ public class ETLStage {
     return Collections.unmodifiableMap(properties == null ? new HashMap<String, String>() : properties);
   }
 
-  co.cask.cdap.etl.proto.v1.ETLStage upgradeStage(String name, String pluginType, UpgradeContext upgradeContext) {
+  io.cdap.cdap.etl.proto.v1.ETLStage upgradeStage(String name, String pluginType, UpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(pluginType, this.name);
     Plugin plugin = new Plugin(this.name, getProperties(), artifactSelectorConfig);
-    return new co.cask.cdap.etl.proto.v1.ETLStage(name, plugin, this.errorDatasetName);
+    return new io.cdap.cdap.etl.proto.v1.ETLStage(name, plugin, this.errorDatasetName);
   }
 }

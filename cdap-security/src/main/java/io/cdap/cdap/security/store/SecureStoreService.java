@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package io.cdap.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
 import com.google.common.util.concurrent.Service;
 
 /**

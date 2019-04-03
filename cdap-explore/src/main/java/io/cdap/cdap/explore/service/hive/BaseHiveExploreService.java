@@ -14,40 +14,40 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.hive;
+package io.cdap.cdap.explore.service.hive;
 
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.utils.FileUtils;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.service.Explore;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.service.HiveStreamRedirector;
-import co.cask.cdap.explore.service.MetaDataInfo;
-import co.cask.cdap.explore.service.TableNotFoundException;
-import co.cask.cdap.hive.context.CConfCodec;
-import co.cask.cdap.hive.context.ContextManager;
-import co.cask.cdap.hive.context.HConfCodec;
-import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetStorageHandler;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryInfo;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableInfo;
-import co.cask.cdap.proto.TableNameInfo;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.app.runtime.scheduler.SchedulerQueueResolver;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.utils.FileUtils;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.explore.service.Explore;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.ExploreService;
+import io.cdap.cdap.explore.service.ExploreServiceUtils;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.explore.service.HiveStreamRedirector;
+import io.cdap.cdap.explore.service.MetaDataInfo;
+import io.cdap.cdap.explore.service.TableNotFoundException;
+import io.cdap.cdap.hive.context.CConfCodec;
+import io.cdap.cdap.hive.context.ContextManager;
+import io.cdap.cdap.hive.context.HConfCodec;
+import io.cdap.cdap.hive.context.TxnCodec;
+import io.cdap.cdap.hive.datasets.DatasetStorageHandler;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryInfo;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.TableInfo;
+import io.cdap.cdap.proto.TableNameInfo;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -122,7 +122,7 @@ import javax.annotation.Nullable;
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
  * starting/stopping transactions, serializing configuration and saving operation information.
  *
- * Overridden {@link co.cask.cdap.explore.service.Explore} methods also call {@code startAndWait()},
+ * Overridden {@link io.cdap.cdap.explore.service.Explore} methods also call {@code startAndWait()},
  * which effectively allows this {@link com.google.common.util.concurrent.Service} to not have to start
  * until the first call to the explore methods is made. This is used for {@link Constants.Explore#START_ON_DEMAND},
  * which, if true, does not start the {@link ExploreService} when the explore HTTP services are started.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
 /**
  * Defines the mode that the program container is getting executed.

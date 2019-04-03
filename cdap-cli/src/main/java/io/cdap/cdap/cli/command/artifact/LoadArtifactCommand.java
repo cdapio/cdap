@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.artifact;
+package io.cdap.cdap.cli.command.artifact;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.common.conf.ArtifactConfig;
-import co.cask.cdap.common.conf.ArtifactConfigReader;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.cli.util.FilePathResolver;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.common.conf.ArtifactConfig;
+import io.cdap.cdap.common.conf.ArtifactConfigReader;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 

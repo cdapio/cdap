@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.proto.id.EntityId;
 
 import java.util.Set;
 import javax.annotation.Nullable;

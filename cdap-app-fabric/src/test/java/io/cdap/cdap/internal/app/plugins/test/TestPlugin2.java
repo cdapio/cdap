@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.plugins.test;
+package io.cdap.cdap.internal.app.plugins.test;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
 
 /**
  * Plugin class for testing instantiation with constructor.

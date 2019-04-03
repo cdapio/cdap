@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
 import com.google.common.collect.ImmutableMap;
 

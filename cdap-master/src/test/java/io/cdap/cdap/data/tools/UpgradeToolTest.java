@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package io.cdap.cdap.data.tools;
 
 import org.junit.Test;
 

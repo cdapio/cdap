@@ -17,4 +17,4 @@
 /**
  * Allows MapReduce jobs to read from and write to datasets.
  */
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;

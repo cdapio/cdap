@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 /**
  * Represents a plugin id and name in an HTTP response.

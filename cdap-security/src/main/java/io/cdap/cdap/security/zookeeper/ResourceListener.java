@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.zookeeper;
+package io.cdap.cdap.security.zookeeper;
 
 /**
  * Allows a client to receive notifications when the resources managed by {@link SharedResourceCache}

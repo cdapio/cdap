@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.batch.joiner;
+package io.cdap.cdap.etl.mock.batch.joiner;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.etl.api.JoinConfig;
-import co.cask.cdap.etl.api.JoinElement;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
-import co.cask.cdap.etl.api.MultiInputStageConfigurer;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.JoinConfig;
+import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
+import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.guice;
+package io.cdap.cdap.common.guice;
 
 import com.google.inject.AbstractModule;
 import org.apache.twill.discovery.DiscoveryService;

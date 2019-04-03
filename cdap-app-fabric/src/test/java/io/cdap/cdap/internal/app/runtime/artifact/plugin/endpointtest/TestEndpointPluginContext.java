@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.plugin.endpointtest;
+package io.cdap.cdap.internal.app.runtime.artifact.plugin.endpointtest;
 
 
 /**

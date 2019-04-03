@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
 import java.net.InetSocketAddress;
 import javax.annotation.Nullable;
 
 /**
  * An Explore Client that uses the provided host and port to talk to a server
- * implementing {@link co.cask.cdap.explore.service.Explore} over HTTP/HTTPS.
+ * implementing {@link io.cdap.cdap.explore.service.Explore} over HTTP/HTTPS.
  */
 public class FixedAddressExploreClient extends AbstractExploreClient {
   private final InetSocketAddress addr;

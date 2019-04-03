@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function;
+package io.cdap.cdap.etl.spark.streaming.function;
 
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.function.CountingFunction;
-import co.cask.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.function.CountingFunction;
+import io.cdap.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;

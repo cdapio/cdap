@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.util;
+package io.cdap.cdap.gateway.handlers.util;
 
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.service.ServerException;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.service.ServerException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;

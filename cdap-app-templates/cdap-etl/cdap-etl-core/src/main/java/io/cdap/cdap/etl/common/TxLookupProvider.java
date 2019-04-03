@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.etl.api.Lookup;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.etl.api.Lookup;
 import com.google.common.base.Function;
 
 import java.util.Map;

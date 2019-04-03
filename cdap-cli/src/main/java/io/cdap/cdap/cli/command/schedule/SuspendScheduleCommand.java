@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.cli.command.schedule;
+package io.cdap.cdap.cli.command.schedule;
 
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.client.ScheduleClient;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.exception.CommandInputError;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.client.ScheduleClient;
+import io.cdap.cdap.proto.id.ScheduleId;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 

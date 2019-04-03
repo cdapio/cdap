@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
 /**
  * Thrown when a pipeline stage fails. The message is supposed to carry stage information.

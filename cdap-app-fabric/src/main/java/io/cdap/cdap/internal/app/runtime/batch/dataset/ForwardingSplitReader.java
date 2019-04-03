@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
 
 /**
  * A {@link SplitReader} that forwards all methods call to another {@link SplitReader}.

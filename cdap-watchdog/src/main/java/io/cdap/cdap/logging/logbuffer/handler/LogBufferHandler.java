@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer.handler;
+package io.cdap.cdap.logging.logbuffer.handler;
 
-import co.cask.cdap.common.io.ByteBuffers;
-import co.cask.cdap.logging.logbuffer.ConcurrentLogBufferWriter;
-import co.cask.cdap.logging.logbuffer.LogBufferRequest;
+import io.cdap.cdap.common.io.ByteBuffers;
+import io.cdap.cdap.logging.logbuffer.ConcurrentLogBufferWriter;
+import io.cdap.cdap.logging.logbuffer.LogBufferRequest;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;

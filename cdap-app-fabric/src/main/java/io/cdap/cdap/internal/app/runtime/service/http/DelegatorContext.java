@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.service.http;
+package io.cdap.cdap.internal.app.runtime.service.http;
 
 import org.apache.twill.common.Cancellable;
 

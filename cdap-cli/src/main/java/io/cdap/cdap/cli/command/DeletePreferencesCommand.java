@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.client.PreferencesClient;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

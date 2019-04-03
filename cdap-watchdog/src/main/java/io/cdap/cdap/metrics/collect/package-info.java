@@ -16,4 +16,4 @@
 /**
  * This package contains classes for metrics collection.
  */
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.service.http;
+package io.cdap.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.service.http.HttpContentProducer;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;

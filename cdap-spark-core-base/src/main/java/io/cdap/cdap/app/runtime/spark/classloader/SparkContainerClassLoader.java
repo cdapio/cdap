@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.classloader;
+package io.cdap.cdap.app.runtime.spark.classloader;
 
-import co.cask.cdap.common.app.MainClassLoader;
-import co.cask.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.app.MainClassLoader;
+import io.cdap.cdap.common.lang.ClassLoaders;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

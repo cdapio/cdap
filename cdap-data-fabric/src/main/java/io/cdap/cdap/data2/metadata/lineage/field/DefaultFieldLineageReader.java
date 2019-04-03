@@ -15,13 +15,13 @@
  */
 
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package io.cdap.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 

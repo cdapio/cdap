@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.codec;
+package io.cdap.cdap.internal.app.runtime.codec;
 
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

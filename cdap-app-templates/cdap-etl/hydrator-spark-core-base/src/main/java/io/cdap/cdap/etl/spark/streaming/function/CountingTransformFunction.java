@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function;
+package io.cdap.cdap.etl.spark.streaming.function;
 
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.etl.spark.function.CountingFunction;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.etl.spark.function.CountingFunction;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 

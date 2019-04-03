@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Codec;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;

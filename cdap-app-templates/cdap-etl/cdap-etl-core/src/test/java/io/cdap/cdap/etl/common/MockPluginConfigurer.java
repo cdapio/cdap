@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.PluginSelector;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;

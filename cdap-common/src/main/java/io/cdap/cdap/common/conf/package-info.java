@@ -17,4 +17,4 @@
 /**
  * Configuration classes.
  */
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;

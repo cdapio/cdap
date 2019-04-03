@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.gateway.GatewayFastTestsSuite;
-import co.cask.cdap.gateway.GatewayTestBase;
-import co.cask.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.gateway.GatewayFastTestsSuite;
+import io.cdap.cdap.gateway.GatewayTestBase;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.netty.handler.codec.http.HttpResponseStatus;

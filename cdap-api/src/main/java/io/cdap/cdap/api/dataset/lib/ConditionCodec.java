@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.dataset.lib.partitioned.ComparableCodec;
+import io.cdap.cdap.api.dataset.lib.partitioned.ComparableCodec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

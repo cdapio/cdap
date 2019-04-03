@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

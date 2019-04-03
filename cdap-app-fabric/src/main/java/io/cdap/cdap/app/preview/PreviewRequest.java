@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Represents the preview application request.

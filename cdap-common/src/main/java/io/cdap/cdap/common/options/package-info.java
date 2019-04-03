@@ -17,4 +17,4 @@
 /**
  * Command line options.
  */
-package co.cask.cdap.common.options;
+package io.cdap.cdap.common.options;

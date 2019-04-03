@@ -14,51 +14,51 @@
  * the License.
  */
 
-package co.cask.cdap.report;
+package io.cdap.cdap.report;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.report.main.ProgramRunInfo;
-import co.cask.cdap.report.main.ProgramRunInfoSerializer;
-import co.cask.cdap.report.main.ProgramStartInfo;
-import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterCodec;
-import co.cask.cdap.report.proto.ProgramRunStartMethod;
-import co.cask.cdap.report.proto.RangeFilter;
-import co.cask.cdap.report.proto.ReportContent;
-import co.cask.cdap.report.proto.ReportGenerationInfo;
-import co.cask.cdap.report.proto.ReportGenerationRequest;
-import co.cask.cdap.report.proto.ReportList;
-import co.cask.cdap.report.proto.ReportSaveRequest;
-import co.cask.cdap.report.proto.ReportStatus;
-import co.cask.cdap.report.proto.ShareId;
-import co.cask.cdap.report.proto.Sort;
-import co.cask.cdap.report.proto.ValueFilter;
-import co.cask.cdap.report.proto.summary.ArtifactAggregate;
-import co.cask.cdap.report.proto.summary.DurationStats;
-import co.cask.cdap.report.proto.summary.NamespaceAggregate;
-import co.cask.cdap.report.proto.summary.ReportSummary;
-import co.cask.cdap.report.proto.summary.StartMethodAggregate;
-import co.cask.cdap.report.proto.summary.StartStats;
-import co.cask.cdap.report.proto.summary.UserAggregate;
-import co.cask.cdap.report.util.Constants;
-import co.cask.cdap.report.util.ReportContentDeserializer;
-import co.cask.cdap.report.util.ReportField;
-import co.cask.cdap.report.util.ReportIds;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.TestConfiguration;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.report.main.ProgramRunInfo;
+import io.cdap.cdap.report.main.ProgramRunInfoSerializer;
+import io.cdap.cdap.report.main.ProgramStartInfo;
+import io.cdap.cdap.report.proto.Filter;
+import io.cdap.cdap.report.proto.FilterCodec;
+import io.cdap.cdap.report.proto.ProgramRunStartMethod;
+import io.cdap.cdap.report.proto.RangeFilter;
+import io.cdap.cdap.report.proto.ReportContent;
+import io.cdap.cdap.report.proto.ReportGenerationInfo;
+import io.cdap.cdap.report.proto.ReportGenerationRequest;
+import io.cdap.cdap.report.proto.ReportList;
+import io.cdap.cdap.report.proto.ReportSaveRequest;
+import io.cdap.cdap.report.proto.ReportStatus;
+import io.cdap.cdap.report.proto.ShareId;
+import io.cdap.cdap.report.proto.Sort;
+import io.cdap.cdap.report.proto.ValueFilter;
+import io.cdap.cdap.report.proto.summary.ArtifactAggregate;
+import io.cdap.cdap.report.proto.summary.DurationStats;
+import io.cdap.cdap.report.proto.summary.NamespaceAggregate;
+import io.cdap.cdap.report.proto.summary.ReportSummary;
+import io.cdap.cdap.report.proto.summary.StartMethodAggregate;
+import io.cdap.cdap.report.proto.summary.StartStats;
+import io.cdap.cdap.report.proto.summary.UserAggregate;
+import io.cdap.cdap.report.util.Constants;
+import io.cdap.cdap.report.util.ReportContentDeserializer;
+import io.cdap.cdap.report.util.ReportField;
+import io.cdap.cdap.report.util.ReportIds;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.TestBase;
+import io.cdap.cdap.test.TestConfiguration;
 import com.databricks.spark.avro.DefaultSource;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -111,7 +111,7 @@ public class ReportGenerationAppTest extends TestBase {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   @ClassRule
   public static final TestConfiguration CONF =
-    new TestConfiguration(co.cask.cdap.common.conf.Constants.Explore.EXPLORE_ENABLED, "false");
+    new TestConfiguration(io.cdap.cdap.common.conf.Constants.Explore.EXPLORE_ENABLED, "false");
 
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationAppTest.class);
   private static final Gson GSON = new GsonBuilder()

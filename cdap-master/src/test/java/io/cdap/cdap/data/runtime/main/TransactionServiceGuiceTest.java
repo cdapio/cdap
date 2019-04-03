@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;

@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.client.MetadataClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;

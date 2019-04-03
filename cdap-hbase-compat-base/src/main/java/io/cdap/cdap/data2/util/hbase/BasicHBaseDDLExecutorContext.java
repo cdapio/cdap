@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.Collections;

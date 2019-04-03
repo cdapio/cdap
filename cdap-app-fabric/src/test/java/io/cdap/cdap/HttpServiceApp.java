@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.service.BasicService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;

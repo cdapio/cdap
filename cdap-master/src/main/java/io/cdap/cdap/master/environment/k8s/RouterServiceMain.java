@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.gateway.router.RouterModules;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.gateway.router.NettyRouter;
+import io.cdap.cdap.gateway.router.RouterModules;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.guice.SecurityModules;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import com.google.inject.Module;

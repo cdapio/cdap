@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.logbuffer;
+package io.cdap.cdap.logging.pipeline.logbuffer;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
-import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.logging.pipeline.queue.ProcessedEventMetadata;
-import co.cask.cdap.logging.pipeline.queue.ProcessorEvent;
-import co.cask.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
+import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
+import io.cdap.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.logging.pipeline.queue.ProcessedEventMetadata;
+import io.cdap.cdap.logging.pipeline.queue.ProcessorEvent;
+import io.cdap.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;

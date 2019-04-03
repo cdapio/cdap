@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.kafka;
+package io.cdap.cdap.logging.appender.kafka;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.LoggingConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.LoggingConfiguration;
 import com.google.common.util.concurrent.Futures;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
@@ -44,7 +44,7 @@ final class SimpleKafkaProducer {
     props.setProperty("metadata.broker.list", cConf.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
     props.setProperty("serializer.class", "kafka.serializer.DefaultEncoder");
     props.setProperty("key.serializer.class", "kafka.serializer.StringEncoder");
-    props.setProperty("partitioner.class", "co.cask.cdap.logging.appender.kafka.StringPartitioner");
+    props.setProperty("partitioner.class", "io.cdap.cdap.logging.appender.kafka.StringPartitioner");
     props.setProperty("request.required.acks", "1");
     props.setProperty("producer.type", cConf.get(LoggingConfiguration.KAFKA_PRODUCER_TYPE,
                        LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));

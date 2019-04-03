@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package io.cdap.cdap.internal.app.store;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import com.google.common.base.Objects;
 
 /**

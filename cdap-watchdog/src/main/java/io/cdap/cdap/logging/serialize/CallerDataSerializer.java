@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.serialize;
+package io.cdap.cdap.logging.serialize;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;

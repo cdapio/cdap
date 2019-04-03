@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.Dataset;
 import org.apache.tephra.TransactionFailureException;
 
 // TODO: add an annotation that indicates: this is a system interface, do not implement it yourself as it may evolve

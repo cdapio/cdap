@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.table.field;
+package io.cdap.cdap.spi.data.table.field;
 
-import co.cask.cdap.spi.data.InvalidFieldException;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSchema;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

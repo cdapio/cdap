@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v0;
+package io.cdap.cdap.etl.proto.v0;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.proto.UpgradeContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +57,7 @@ public abstract class ETLConfig extends Config {
     return resources == null ? new Resources() : resources;
   }
 
-  protected <T extends co.cask.cdap.etl.proto.v1.ETLConfig.Builder> T upgradeBase(T builder,
+  protected <T extends io.cdap.cdap.etl.proto.v1.ETLConfig.Builder> T upgradeBase(T builder,
                                                                                   UpgradeContext upgradeContext,
                                                                                   String sourceType,
                                                                                   String sinkType) {

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata.lineage;
+package io.cdap.cdap.proto.metadata.lineage;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.proto.id.DatasetId;
 
 import java.util.Collections;
 import java.util.HashSet;

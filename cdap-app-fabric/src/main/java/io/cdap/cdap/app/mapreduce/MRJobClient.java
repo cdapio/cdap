@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.app.mapreduce;
+package io.cdap.cdap.app.mapreduce;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.MRJobInfo;
-import co.cask.cdap.proto.MRTaskInfo;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.MRJobInfo;
+import io.cdap.cdap.proto.MRTaskInfo;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto.summary;
+package io.cdap.cdap.report.proto.summary;
 
 import com.google.common.base.Objects;
 

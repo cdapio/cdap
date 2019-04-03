@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.workflow;
+package io.cdap.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.Workflow;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.Workflow;
 
 /**
  * An interface for Programs which can run in a {@link Workflow}. Please see {@link SchedulableProgramType}.

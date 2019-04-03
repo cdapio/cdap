@@ -15,20 +15,20 @@
  *
  */
 
-package co.cask.cdap.service;
+package io.cdap.cdap.service;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpContentConsumer;
-import co.cask.cdap.api.service.http.HttpContentProducer;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.service.AbstractService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpContentConsumer;
+import io.cdap.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Type;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.app;
+package io.cdap.cdap.common.app;
 
 import org.junit.Assert;
 import org.junit.Test;

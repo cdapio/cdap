@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.dataset;
+package io.cdap.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;

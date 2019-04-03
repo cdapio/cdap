@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store.profile;
+package io.cdap.cdap.internal.app.store.profile;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.TableNotFoundException;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

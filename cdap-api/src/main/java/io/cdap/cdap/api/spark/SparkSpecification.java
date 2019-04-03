@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.AbstractProgramSpecification;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.AbstractProgramSpecification;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.common.PropertyProvider;
+import io.cdap.cdap.api.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Collections;

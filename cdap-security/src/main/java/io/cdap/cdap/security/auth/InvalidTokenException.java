@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
 /**
  * This exception indicates a failure to validate an issued {@link AccessToken}, for example due to token expiration

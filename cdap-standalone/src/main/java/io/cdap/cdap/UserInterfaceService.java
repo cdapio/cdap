@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Configuration;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.ui.ConfigurationJsonTool;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Configuration;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.ui.ConfigurationJsonTool;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;

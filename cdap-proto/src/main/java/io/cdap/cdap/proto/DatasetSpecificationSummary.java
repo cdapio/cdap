@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 
 import java.util.Map;
 import java.util.Objects;

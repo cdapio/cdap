@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.ssh.DefaultSSHSession;
-import co.cask.cdap.common.ssh.SSHConfig;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
-import co.cask.cdap.security.tools.KeyStores;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.ssh.DefaultSSHSession;
+import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
+import io.cdap.cdap.security.tools.KeyStores;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -177,7 +177,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     this.classAcceptor = new ClassAcceptor();
     this.locationCache = locationCache;
     this.locationFactory = locationFactory;
-    this.extraOptions = cConf.get(co.cask.cdap.common.conf.Constants.AppFabric.PROGRAM_JVM_OPTS);
+    this.extraOptions = cConf.get(io.cdap.cdap.common.conf.Constants.AppFabric.PROGRAM_JVM_OPTS);
     this.controllerFactory = controllerFactory;
   }
 
@@ -391,8 +391,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
   @Override
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
-      Path tempDir = java.nio.file.Paths.get(cConf.get(co.cask.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR),
-                                             cConf.get(co.cask.cdap.common.conf.Constants.AppFabric.TEMP_DIR))
+      Path tempDir = java.nio.file.Paths.get(cConf.get(io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR),
+                                             cConf.get(io.cdap.cdap.common.conf.Constants.AppFabric.TEMP_DIR))
                                         .toAbsolutePath();
       Path stagingDir = Files.createTempDirectory(tempDir, programRunId.getRun());
 
@@ -931,7 +931,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
 
     //noinspection OctalInteger
     session.copy(new ByteArrayInputStream(bos.toByteArray()), targetPath,
-                 co.cask.cdap.common.conf.Constants.RuntimeMonitor.SERVER_KEYSTORE,
+                 io.cdap.cdap.common.conf.Constants.RuntimeMonitor.SERVER_KEYSTORE,
                  bos.size(), 0600, null, null);
 
     // Creates a trust store from the client keystore
@@ -942,7 +942,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     trustStore.store(bos, "".toCharArray());
     //noinspection OctalInteger
     session.copy(new ByteArrayInputStream(bos.toByteArray()), targetPath,
-                 co.cask.cdap.common.conf.Constants.RuntimeMonitor.CLIENT_KEYSTORE,
+                 io.cdap.cdap.common.conf.Constants.RuntimeMonitor.CLIENT_KEYSTORE,
                  bos.size(), 0600, null, null);
   }
 }

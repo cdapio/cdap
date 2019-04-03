@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 

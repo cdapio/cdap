@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.internal.remote.RemoteOpsClient;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteOpsClient;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;

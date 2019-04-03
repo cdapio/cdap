@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.secretmanager;
+package io.cdap.cdap.security.store.secretmanager;
 
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.SecureKeyNotFoundException;
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.security.store.SecureStoreService;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.SecureKeyNotFoundException;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.security.store.SecureStoreService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.artifact.DeleteArtifactCommand;
-import co.cask.cdap.cli.command.artifact.DescribeArtifactCommand;
-import co.cask.cdap.cli.command.artifact.DescribeArtifactPluginCommand;
-import co.cask.cdap.cli.command.artifact.GetArtifactPropertiesCommand;
-import co.cask.cdap.cli.command.artifact.ListArtifactPluginTypesCommand;
-import co.cask.cdap.cli.command.artifact.ListArtifactPluginsCommand;
-import co.cask.cdap.cli.command.artifact.ListArtifactVersionsCommand;
-import co.cask.cdap.cli.command.artifact.ListArtifactsCommand;
-import co.cask.cdap.cli.command.artifact.LoadArtifactCommand;
-import co.cask.cdap.cli.command.artifact.SetArtifactPropertiesCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.artifact.DeleteArtifactCommand;
+import io.cdap.cdap.cli.command.artifact.DescribeArtifactCommand;
+import io.cdap.cdap.cli.command.artifact.DescribeArtifactPluginCommand;
+import io.cdap.cdap.cli.command.artifact.GetArtifactPropertiesCommand;
+import io.cdap.cdap.cli.command.artifact.ListArtifactPluginTypesCommand;
+import io.cdap.cdap.cli.command.artifact.ListArtifactPluginsCommand;
+import io.cdap.cdap.cli.command.artifact.ListArtifactVersionsCommand;
+import io.cdap.cdap.cli.command.artifact.ListArtifactsCommand;
+import io.cdap.cdap.cli.command.artifact.LoadArtifactCommand;
+import io.cdap.cdap.cli.command.artifact.SetArtifactPropertiesCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

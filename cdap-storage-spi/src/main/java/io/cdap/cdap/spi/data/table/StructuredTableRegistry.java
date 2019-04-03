@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.table;
+package io.cdap.cdap.spi.data.table;
 
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

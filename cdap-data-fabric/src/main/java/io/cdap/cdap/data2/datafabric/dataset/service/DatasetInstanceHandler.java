@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.common.DatasetAlreadyExistsException;
-import co.cask.cdap.common.DatasetTypeNotFoundException;
-import co.cask.cdap.common.HandlerException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.data2.datafabric.dataset.DatasetServiceClient;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.DatasetInstanceConfiguration;
-import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.common.DatasetAlreadyExistsException;
+import io.cdap.cdap.common.DatasetTypeNotFoundException;
+import io.cdap.cdap.common.HandlerException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetServiceClient;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.proto.DatasetInstanceConfiguration;
+import io.cdap.cdap.proto.DatasetMeta;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;

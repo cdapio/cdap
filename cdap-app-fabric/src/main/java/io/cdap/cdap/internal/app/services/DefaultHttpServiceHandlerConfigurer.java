@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.api.SystemTableConfigurer;
-import co.cask.cdap.api.service.http.HttpServiceConfigurer;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.api.service.http.SystemHttpServiceConfigurer;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.AbstractConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.SystemTableConfigurer;
+import io.cdap.cdap.api.service.http.HttpServiceConfigurer;
+import io.cdap.cdap.api.service.http.HttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.api.service.http.SystemHttpServiceConfigurer;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
+import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.ArrayList;
 import java.util.HashMap;

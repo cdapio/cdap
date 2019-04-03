@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 
 /**
  * Spark1 program runtime provider.

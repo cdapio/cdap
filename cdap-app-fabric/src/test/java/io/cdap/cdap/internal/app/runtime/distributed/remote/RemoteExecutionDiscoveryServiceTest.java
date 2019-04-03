@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;

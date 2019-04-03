@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.queue.SimpleJob;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.SimpleJob;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;

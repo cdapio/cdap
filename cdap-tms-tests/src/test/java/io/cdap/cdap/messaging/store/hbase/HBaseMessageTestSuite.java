@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.hbase;
+package io.cdap.cdap.messaging.store.hbase;
 
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.test.SingletonExternalResource;
+import io.cdap.cdap.data.hbase.HBaseTestBase;
+import io.cdap.cdap.data.hbase.HBaseTestFactory;
+import io.cdap.cdap.test.SingletonExternalResource;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;

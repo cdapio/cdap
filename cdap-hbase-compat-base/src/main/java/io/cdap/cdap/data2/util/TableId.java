@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util;
+package io.cdap.cdap.data2.util;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;

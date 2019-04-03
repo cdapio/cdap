@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 import java.util.Objects;
 
 /**
  * Represents an entry in {@link org.apache.hadoop.conf.Configuration}
- * or {@link co.cask.cdap.common.conf.CConfiguration}.
+ * or {@link io.cdap.cdap.common.conf.CConfiguration}.
  */
 public final class ConfigEntry {
   private final String name;

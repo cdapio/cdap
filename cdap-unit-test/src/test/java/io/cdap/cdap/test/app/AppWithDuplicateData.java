@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.worker.AbstractWorker;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
-import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.data2.dataset2.lib.file.FileSetModule;
+import io.cdap.cdap.data2.dataset2.lib.table.CubeModule;
 
 /**
  * App with streams, datasets, plugins added multiple times that should result in an error.

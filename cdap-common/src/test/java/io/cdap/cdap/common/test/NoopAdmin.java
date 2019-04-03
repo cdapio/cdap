@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.test;
+package io.cdap.cdap.common.test;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.NamespaceSummary;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.NamespaceSummary;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
 
 import java.io.IOException;
 import java.util.Collections;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package io.cdap.cdap.logging.framework;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
@@ -22,10 +22,10 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusChecker;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.logging.pipeline.LogPipelineConfigurator;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
 /**
  * Helper class to deal with {@link Delegator}.

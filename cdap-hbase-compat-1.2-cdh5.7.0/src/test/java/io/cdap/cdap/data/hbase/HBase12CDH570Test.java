@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.hbase;
+package io.cdap.cdap.data.hbase;
 
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;

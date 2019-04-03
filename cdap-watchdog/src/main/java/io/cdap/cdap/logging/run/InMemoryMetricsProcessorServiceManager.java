@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.run;
+package io.cdap.cdap.logging.run;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 
 /**
  * InMemory MetricsProcessor Service Management class.

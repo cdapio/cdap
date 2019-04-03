@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.hive.conf.HiveConf;

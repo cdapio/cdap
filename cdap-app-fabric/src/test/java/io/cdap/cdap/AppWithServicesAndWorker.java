@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.service.BasicService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.worker.AbstractWorker;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

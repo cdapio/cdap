@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.test.messaging;
+package io.cdap.cdap.test.messaging;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.WorkerManager;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.MessagingAdmin;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.WorkerManager;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.junit.Before;

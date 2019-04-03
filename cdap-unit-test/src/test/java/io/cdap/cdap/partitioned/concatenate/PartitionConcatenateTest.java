@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.partitioned.concatenate;
+package io.cdap.cdap.partitioned.concatenate;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionOutput;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;

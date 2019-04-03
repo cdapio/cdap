@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.Configs;

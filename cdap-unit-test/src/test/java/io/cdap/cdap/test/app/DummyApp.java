@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.service.AbstractService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class DummyApp extends AbstractApplication {
 
 
   /**
-   * A {@link co.cask.cdap.api.service.Service} that creates a greeting using a user's name.
+   * A {@link io.cdap.cdap.api.service.Service} that creates a greeting using a user's name.
    */
   public static final class Greeting extends AbstractService {
 

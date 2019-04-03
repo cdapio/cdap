@@ -17,4 +17,4 @@
 /**
  * Defines ServiceSpecification.
  */
-package co.cask.cdap.api.service;
+package io.cdap.cdap.api.service;

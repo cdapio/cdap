@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.lineage.field.Operation;
 
 import java.util.Collections;
 import java.util.HashSet;

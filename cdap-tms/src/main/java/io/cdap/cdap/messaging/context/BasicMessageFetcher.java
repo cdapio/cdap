@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.context;
+package io.cdap.cdap.messaging.context;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 
@@ -49,7 +49,7 @@ final class BasicMessageFetcher implements MessageFetcher, TransactionAware {
   @Override
   public CloseableIterator<Message> fetch(String namespace, String topic,
                                           int limit, long timestamp) throws IOException, TopicNotFoundException {
-    co.cask.cdap.messaging.MessageFetcher fetcher = messagingService
+    io.cdap.cdap.messaging.MessageFetcher fetcher = messagingService
       .prepareFetch(new NamespaceId(namespace).topic(topic))
       .setLimit(limit)
       .setStartTime(timestamp);
@@ -64,7 +64,7 @@ final class BasicMessageFetcher implements MessageFetcher, TransactionAware {
   @Override
   public CloseableIterator<Message> fetch(String namespace, String topic, int limit,
                                           @Nullable String afterMessageId) throws IOException, TopicNotFoundException {
-    co.cask.cdap.messaging.MessageFetcher fetcher = messagingService
+    io.cdap.cdap.messaging.MessageFetcher fetcher = messagingService
       .prepareFetch(new NamespaceId(namespace).topic(topic))
       .setLimit(limit);
 

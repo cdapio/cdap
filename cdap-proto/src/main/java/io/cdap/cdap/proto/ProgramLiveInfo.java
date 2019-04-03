@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Represents information about running programs. This class can be extended to add information for specific runtime

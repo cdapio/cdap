@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.etl.tool;
+package io.cdap.cdap.etl.tool;
 
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.etl.proto.v2.ETLConfig;
-import co.cask.cdap.etl.tool.config.Upgrader;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authentication.client.AccessToken;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.etl.proto.v2.ETLConfig;
+import io.cdap.cdap.etl.tool.config.Upgrader;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authentication.client.AccessToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

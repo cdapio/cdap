@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.function;
+package io.cdap.cdap.etl.spark.function;
 
 import scala.Tuple2;
 

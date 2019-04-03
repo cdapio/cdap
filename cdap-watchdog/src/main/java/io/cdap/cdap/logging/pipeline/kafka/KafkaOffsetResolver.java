@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.kafka;
+package io.cdap.cdap.logging.pipeline.kafka;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.base.Preconditions;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;

@@ -14,43 +14,43 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.common.ArtifactAlreadyExistsException;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.TableNotFoundException;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.spi.data.transaction.TransactionException;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.ArtifactAlreadyExistsException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -537,7 +537,7 @@ public class ArtifactStore {
    */
   public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(
     NamespaceId namespace, Id.Artifact parentArtifactId, String type, String name,
-    @Nullable Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
+    @Nullable Predicate<io.cdap.cdap.proto.id.ArtifactId> pluginPredicate,
     int limit, ArtifactSortOrder order) throws IOException, ArtifactNotFoundException, PluginNotExistsException {
     return getPluginClasses(namespace, new ArtifactRange(parentArtifactId.getNamespace().getId(),
                                                          parentArtifactId.getName(),
@@ -564,7 +564,7 @@ public class ArtifactStore {
    */
   public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(
     NamespaceId namespace, ArtifactRange parentArtifactRange, String type, String name,
-    @Nullable final Predicate<co.cask.cdap.proto.id.ArtifactId> pluginRange, int limit, ArtifactSortOrder order)
+    @Nullable final Predicate<io.cdap.cdap.proto.id.ArtifactId> pluginRange, int limit, ArtifactSortOrder order)
     throws IOException, ArtifactNotFoundException, PluginNotExistsException {
 
     SortedMap<ArtifactDescriptor, PluginClass> result = TransactionRunners.run(transactionRunner, context -> {
@@ -1044,7 +1044,7 @@ public class ArtifactStore {
   private void addPluginsInRangeToMap(final NamespaceId namespace, List<Id.Artifact> parentArtifacts,
                                       Iterator<StructuredRow> iterator,
                                       SortedMap<ArtifactDescriptor, PluginClass> plugins,
-                                      @Nullable Predicate<co.cask.cdap.proto.id.ArtifactId> range,
+                                      @Nullable Predicate<io.cdap.cdap.proto.id.ArtifactId> range,
                                       int limit) {
     // if predicate is null,
     // filter out plugins whose artifacts are not in the system namespace and not in this namespace
@@ -1075,7 +1075,7 @@ public class ArtifactStore {
 
   @Nullable
   private ImmutablePair<ArtifactDescriptor, PluginData> getPlugin(StructuredRow row,
-                                                                  Predicate<co.cask.cdap.proto.id.ArtifactId> range) {
+                                                                  Predicate<io.cdap.cdap.proto.id.ArtifactId> range) {
     // column is the artifact namespace, name, and version. value is the serialized PluginData
     Id.Namespace artifactNamespace =
       Id.Namespace.from(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD));
@@ -1281,7 +1281,7 @@ public class ArtifactStore {
       return artifactLocationPath == null ? artifactLocationURI.getPath() : artifactLocationPath;
     }
 
-    boolean isUsableBy(co.cask.cdap.proto.id.ArtifactId artifactId) {
+    boolean isUsableBy(io.cdap.cdap.proto.id.ArtifactId artifactId) {
       if (usableBy == null) {
         return true;
       }

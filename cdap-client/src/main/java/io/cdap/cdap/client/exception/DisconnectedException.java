@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.client.exception;
+package io.cdap.cdap.client.exception;
 
-import co.cask.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
 
 import javax.annotation.Nullable;
 

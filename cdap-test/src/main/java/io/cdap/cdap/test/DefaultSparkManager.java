@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.net.URL;

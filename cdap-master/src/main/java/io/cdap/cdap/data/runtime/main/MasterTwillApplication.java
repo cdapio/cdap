@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.hive.ExploreUtils;
-import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.logging.LoggingUtil;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.twill.AbortOnTimeoutEventHandler;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.explore.service.ExploreServiceUtils;
+import io.cdap.cdap.hive.ExploreUtils;
+import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.logging.LoggingUtil;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

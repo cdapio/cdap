@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.mapreduce.service;
+package io.cdap.cdap.mapreduce.service;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.test.app.MyKeyValueTableDefinition;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.io.Charsets;

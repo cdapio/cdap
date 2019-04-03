@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.Map;
@@ -65,36 +65,36 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
 
   @Override
   protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase96DDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase96DDLExecutor";
   }
 
   @Override
   protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase98DDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase98DDLExecutor";
   }
 
   @Override
   protected String getHBase10Classname() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase10DDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase10DDLExecutor";
   }
 
   @Override
   protected String getHBase10CDHClassname() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase10CDHDDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase10CDHDDLExecutor";
   }
 
   @Override
   protected String getHBase11Classname() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase11DDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase11DDLExecutor";
   }
 
   @Override
   protected String getHBase10CHD550ClassName() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase10CDH550DDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase10CDH550DDLExecutor";
   }
 
   @Override
   protected String getHBase12CHD570ClassName() {
-    return "co.cask.cdap.data2.util.hbase.DefaultHBase12CDH570DDLExecutor";
+    return "io.cdap.cdap.data2.util.hbase.DefaultHBase12CDH570DDLExecutor";
   }
 }

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package io.cdap.cdap.internal.pipeline;
 
-import co.cask.cdap.api.plugin.Requirements;
+import io.cdap.cdap.api.plugin.Requirements;
 
 import java.util.Objects;
 

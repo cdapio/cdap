@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.external;
+package io.cdap.cdap.data2.dataset2.lib.external;
 
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 
 import java.io.IOException;
 import java.util.Map;

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.File;
 import java.util.HashSet;

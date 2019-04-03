@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package io.cdap.cdap.internal.pipeline;
 
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.Stage;
+import io.cdap.cdap.pipeline.Pipeline;
+import io.cdap.cdap.pipeline.Stage;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;

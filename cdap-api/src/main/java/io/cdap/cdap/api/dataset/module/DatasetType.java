@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.module;
+package io.cdap.cdap.api.dataset.module;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,13 +24,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare a dataset type from {@link co.cask.cdap.api.dataset.Dataset}.
+ * Annotation to declare a dataset type from {@link io.cdap.cdap.api.dataset.Dataset}.
  * The value is used as dataset type name.
  *
- * This is used when creating {@link co.cask.cdap.api.dataset.DatasetDefinition} from only
- * {@link co.cask.cdap.api.dataset.Dataset} implementation. See
- * {@link co.cask.cdap.api.app.ApplicationConfigurer#addDatasetType
- * co.cask.cdap.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
+ * This is used when creating {@link io.cdap.cdap.api.dataset.DatasetDefinition} from only
+ * {@link io.cdap.cdap.api.dataset.Dataset} implementation. See
+ * {@link io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType
+ * io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
  * }
  * for details.
  *

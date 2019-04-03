@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.guice.ClusterMode;
 
 /**
  * Defines constants used across different modules.

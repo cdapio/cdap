@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.security.guice.preview;
+package io.cdap.cdap.security.guice.preview;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
 import com.google.inject.AbstractModule;
 
 /**

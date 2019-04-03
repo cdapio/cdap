@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.kafka;
+package io.cdap.cdap.logging.pipeline.kafka;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.kafka.KafkaTester;
-import co.cask.cdap.logging.context.GenericLoggingContext;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
-import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.kafka.KafkaTester;
+import io.cdap.cdap.logging.context.GenericLoggingContext;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;

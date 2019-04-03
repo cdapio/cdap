@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v1;
+package io.cdap.cdap.etl.proto.v1;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,24 +41,24 @@ public class ETLBatchConfigTest {
     final ArtifactSelectorConfig artifact = new ArtifactSelectorConfig("SYSTEM", "universal", "1.0.0");
     ETLStage source = new ETLStage(
       "source", new Plugin("DataGenerator", ImmutableMap.of("p1", "v1"), artifact), null);
-    co.cask.cdap.etl.proto.v2.ETLStage sourceNew = from(source, BatchSource.PLUGIN_TYPE);
+    io.cdap.cdap.etl.proto.v2.ETLStage sourceNew = from(source, BatchSource.PLUGIN_TYPE);
 
     ETLStage transform1 = new ETLStage(
       "transform1", new Plugin("Script", ImmutableMap.of("script", "something"), null));
-    co.cask.cdap.etl.proto.v2.ETLStage transform1New = from(transform1, Transform.PLUGIN_TYPE);
+    io.cdap.cdap.etl.proto.v2.ETLStage transform1New = from(transform1, Transform.PLUGIN_TYPE);
 
     ETLStage transform2 = new ETLStage("transform2", new Plugin("Script", null, null));
-    co.cask.cdap.etl.proto.v2.ETLStage transform2New = from(transform2, Transform.PLUGIN_TYPE);
+    io.cdap.cdap.etl.proto.v2.ETLStage transform2New = from(transform2, Transform.PLUGIN_TYPE);
 
     ETLStage transform3 = new ETLStage("transform3",
                                        new Plugin("Validator", ImmutableMap.of("p1", "v1", "p2", "v2")), null);
-    co.cask.cdap.etl.proto.v2.ETLStage transform3New = from(transform3, Transform.PLUGIN_TYPE);
+    io.cdap.cdap.etl.proto.v2.ETLStage transform3New = from(transform3, Transform.PLUGIN_TYPE);
 
     ETLStage sink1 = new ETLStage("sink1", new Plugin("Table", ImmutableMap.of("rowkey", "xyz"), artifact), null);
-    co.cask.cdap.etl.proto.v2.ETLStage sink1New = from(sink1, BatchSink.PLUGIN_TYPE);
+    io.cdap.cdap.etl.proto.v2.ETLStage sink1New = from(sink1, BatchSink.PLUGIN_TYPE);
 
     ETLStage sink2 = new ETLStage("sink2", new Plugin("HDFS", ImmutableMap.of("name", "abc"), artifact), null);
-    co.cask.cdap.etl.proto.v2.ETLStage sink2New = from(sink2, BatchSink.PLUGIN_TYPE);
+    io.cdap.cdap.etl.proto.v2.ETLStage sink2New = from(sink2, BatchSink.PLUGIN_TYPE);
 
     Set<Connection> connections = new HashSet<>();
     connections.add(new Connection(sourceNew.getName(), transform1New.getName()));
@@ -81,7 +81,7 @@ public class ETLBatchConfigTest {
       .setDriverResources(resources)
       .build();
 
-    co.cask.cdap.etl.proto.v2.ETLBatchConfig configNew = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
+    io.cdap.cdap.etl.proto.v2.ETLBatchConfig configNew = io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
       .addStage(sourceNew)
       .addStage(sink1New)
       .addStage(sink2New)
@@ -102,8 +102,8 @@ public class ETLBatchConfigTest {
     }));
   }
 
-  private co.cask.cdap.etl.proto.v2.ETLStage from(ETLStage stage, String pluginType) {
-    return new co.cask.cdap.etl.proto.v2.ETLStage(
+  private io.cdap.cdap.etl.proto.v2.ETLStage from(ETLStage stage, String pluginType) {
+    return new io.cdap.cdap.etl.proto.v2.ETLStage(
       stage.getName(),
       new ETLPlugin(stage.getPlugin().getName(), pluginType,
                     stage.getPlugin().getProperties(), stage.getPlugin().getArtifact()));

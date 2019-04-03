@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
+package io.cdap.cdap.messaging;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 
 import java.util.concurrent.TimeUnit;
 

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.ssh.DefaultSSHSession;
-import co.cask.cdap.common.ssh.SSHConfig;
-import co.cask.cdap.runtime.spi.ssh.SSHContext;
-import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
-import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.ssh.DefaultSSHSession;
+import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.runtime.spi.ssh.SSHContext;
+import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;

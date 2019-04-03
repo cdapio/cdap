@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package io.cdap.cdap.app.runtime.spark
 
 import java.io.IOException
 import java.lang
 import java.util
 
-import co.cask.cdap.api.Admin
-import co.cask.cdap.api.ServiceDiscoverer
-import co.cask.cdap.api.TxRunnable
-import co.cask.cdap.api.app.ApplicationSpecification
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.Metadata
-import co.cask.cdap.api.metadata.MetadataEntity
-import co.cask.cdap.api.metadata.MetadataScope
-import co.cask.cdap.api.metrics.Metrics
-import co.cask.cdap.api.plugin.PluginContext
-import co.cask.cdap.api.preview.DataTracer
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo
-import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
-import co.cask.cdap.api.spark.JavaSparkExecutionContext
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkSpecification
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.api.workflow.WorkflowInfo
-import co.cask.cdap.api.workflow.WorkflowToken
+import io.cdap.cdap.api.Admin
+import io.cdap.cdap.api.ServiceDiscoverer
+import io.cdap.cdap.api.TxRunnable
+import io.cdap.cdap.api.app.ApplicationSpecification
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.messaging.MessagingContext
+import io.cdap.cdap.api.metadata.Metadata
+import io.cdap.cdap.api.metadata.MetadataEntity
+import io.cdap.cdap.api.metadata.MetadataScope
+import io.cdap.cdap.api.metrics.Metrics
+import io.cdap.cdap.api.plugin.PluginContext
+import io.cdap.cdap.api.preview.DataTracer
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
+import io.cdap.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.SparkSpecification
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
+import io.cdap.cdap.api.workflow.WorkflowInfo
+import io.cdap.cdap.api.workflow.WorkflowToken
 import org.apache.spark.api.java.JavaPairRDD
 import org.apache.twill.api.RunId
 
@@ -47,8 +47,8 @@ import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
 /**
-  * Implementation of [[co.cask.cdap.api.spark.JavaSparkExecutionContext]] that simply delegates all calls to
-  * a [[co.cask.cdap.api.spark.SparkExecutionContext]].
+  * Implementation of [[io.cdap.cdap.api.spark.JavaSparkExecutionContext]] that simply delegates all calls to
+  * a [[io.cdap.cdap.api.spark.SparkExecutionContext]].
   */
 @SerialVersionUID(0L)
 class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaSparkExecutionContext with Serializable {

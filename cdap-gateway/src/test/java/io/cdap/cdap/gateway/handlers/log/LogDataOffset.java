@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.log;
+package io.cdap.cdap.gateway.handlers.log;
 
-import co.cask.cdap.logging.gateway.handlers.LogData;
-import co.cask.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.gateway.handlers.LogData;
+import io.cdap.cdap.logging.read.LogOffset;
 import com.google.common.base.Objects;
 
 /**

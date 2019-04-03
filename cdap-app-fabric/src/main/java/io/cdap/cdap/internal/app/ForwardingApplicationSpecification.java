@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.api.worker.WorkerSpecification;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 import java.util.Set;

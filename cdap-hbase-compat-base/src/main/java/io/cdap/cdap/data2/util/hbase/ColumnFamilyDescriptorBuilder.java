@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
+import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
 
 import java.util.HashMap;
 import java.util.Map;

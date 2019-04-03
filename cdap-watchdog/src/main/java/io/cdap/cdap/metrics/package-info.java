@@ -17,4 +17,4 @@
 /**
  * This package contains classes that handle collection and query of metrics.
  */
-package co.cask.cdap.metrics;
+package io.cdap.cdap.metrics;

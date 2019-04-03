@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric;
+package io.cdap.cdap.data2.datafabric;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.dataset2.DatasetNamespace;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
 
 /**
  * Default dataset namespace, which namespaces by configuration setting 
- * {@link co.cask.cdap.common.conf.Constants.Dataset#TABLE_PREFIX} and
+ * {@link io.cdap.cdap.common.conf.Constants.Dataset#TABLE_PREFIX} and
  * the {@link NamespaceId} in which the dataset instance was created.
  */
 public class DefaultDatasetNamespace implements DatasetNamespace {

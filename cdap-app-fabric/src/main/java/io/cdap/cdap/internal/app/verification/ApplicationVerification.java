@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.verification;
+package io.cdap.cdap.internal.app.verification;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.app.verification.AbstractVerifier;
-import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.error.Err;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.app.verification.AbstractVerifier;
+import io.cdap.cdap.app.verification.VerifyResult;
+import io.cdap.cdap.error.Err;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.Arrays;
 

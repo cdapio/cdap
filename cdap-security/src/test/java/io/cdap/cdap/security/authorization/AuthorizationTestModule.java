@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;

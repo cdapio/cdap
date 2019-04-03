@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.profile.Profile;
 
 import java.util.Arrays;
 import java.util.Collections;

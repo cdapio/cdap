@@ -16,4 +16,4 @@
 /**
  * This package contains classes for async operations.
  */
-package co.cask.cdap.common.async;
+package io.cdap.cdap.common.async;

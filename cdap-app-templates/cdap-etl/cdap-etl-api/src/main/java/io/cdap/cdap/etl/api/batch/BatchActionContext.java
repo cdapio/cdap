@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package io.cdap.cdap.etl.api.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.workflow.WorkflowNodeState;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.workflow.WorkflowNodeState;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 
 import java.util.Map;
 

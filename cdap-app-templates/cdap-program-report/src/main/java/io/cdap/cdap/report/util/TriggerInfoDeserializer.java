@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.report.util;
+package io.cdap.cdap.report.util;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.report.proto.SimpleTriggerInfo;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.report.proto.SimpleTriggerInfo;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

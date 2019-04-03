@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;

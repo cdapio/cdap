@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.Updatable;
-import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetAdmin;
 
 import java.io.IOException;
 import java.util.Map;

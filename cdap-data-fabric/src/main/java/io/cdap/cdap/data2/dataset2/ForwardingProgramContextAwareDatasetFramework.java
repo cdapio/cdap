@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.data.ProgramContext;
-import co.cask.cdap.data.ProgramContextAware;
+import io.cdap.cdap.data.ProgramContext;
+import io.cdap.cdap.data.ProgramContextAware;
 
 /**
  * Implementation of the {@link ForwardingDatasetFramework} which is also {@link ProgramContextAware}.

@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpContentConsumer;
-import co.cask.cdap.api.service.http.HttpContentProducer;
-import co.cask.cdap.api.service.http.HttpServiceContext;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.service.ServiceLifeCycleTestRun;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.ConflictDetection;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpContentConsumer;
+import io.cdap.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.api.service.http.HttpServiceContext;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.service.ServiceLifeCycleTestRun;
 import com.google.common.base.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

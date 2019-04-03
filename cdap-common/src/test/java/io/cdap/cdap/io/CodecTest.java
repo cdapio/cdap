@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.io;
+package io.cdap.cdap.io;
 
-import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.cdap.common.io.Decoder;
-import co.cask.cdap.common.io.Encoder;
+import io.cdap.cdap.common.io.BinaryDecoder;
+import io.cdap.cdap.common.io.BinaryEncoder;
+import io.cdap.cdap.common.io.Decoder;
+import io.cdap.cdap.common.io.Encoder;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.pipeline;
+package io.cdap.cdap.pipeline;
 
-import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
+import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;

@@ -14,37 +14,37 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.artifact.ArtifactVersionRange;
-import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.plugin.Requirements;
-import co.cask.cdap.common.ArtifactAlreadyExistsException;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.DefaultImpersonator;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.Requirements;
+import io.cdap.cdap.common.ArtifactAlreadyExistsException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.DefaultImpersonator;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -395,7 +395,7 @@ public abstract class ArtifactStoreTest {
     // write some system artifact
     Id.Artifact systemAppArtifact = Id.Artifact.from(Id.Namespace.SYSTEM, "app", "1.0.0");
     ArtifactMeta systemAppMeta = new ArtifactMeta(
-      ArtifactClasses.builder().addApp(new ApplicationClass("co.cask.class", "desc", null)).build());
+      ArtifactClasses.builder().addApp(new ApplicationClass("io.cdap.class", "desc", null)).build());
     writeArtifact(systemAppArtifact, systemAppMeta, "app contents");
     Set<ArtifactRange> usableBy = ImmutableSet.of(
       new ArtifactRange(systemAppArtifact.getNamespace().getId(), systemAppArtifact.getName(),

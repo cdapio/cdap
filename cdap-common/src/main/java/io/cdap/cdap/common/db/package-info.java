@@ -17,4 +17,4 @@
 /**
  * Database related classes.
  */
-package co.cask.cdap.common.db;
+package io.cdap.cdap.common.db;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.system;
+package io.cdap.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.id.Id;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.id.Id;
 
 /**
  * Used write {@link MetadataScope#SYSTEM} metadata for an {@link Id.NamespacedId entity}.

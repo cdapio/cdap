@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.MultiOutputEmitter;
-import co.cask.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.etl.api.InvalidEntry;
+import io.cdap.cdap.etl.api.MultiOutputEmitter;
+import io.cdap.cdap.etl.api.StageMetrics;
 
 import java.util.Map;
 import javax.annotation.Nullable;

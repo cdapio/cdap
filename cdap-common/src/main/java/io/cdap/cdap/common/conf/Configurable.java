@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
 /**
  * Interface defining the object is configurable.

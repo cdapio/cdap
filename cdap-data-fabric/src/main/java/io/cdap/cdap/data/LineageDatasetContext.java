@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data;
+package io.cdap.cdap.data;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
 
 import java.util.Map;
 

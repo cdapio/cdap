@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

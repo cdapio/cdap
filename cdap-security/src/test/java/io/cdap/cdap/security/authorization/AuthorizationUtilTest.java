@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.InMemoryOwnerStore;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
 import org.junit.BeforeClass;

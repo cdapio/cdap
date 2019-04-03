@@ -14,37 +14,37 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming;
+package io.cdap.cdap.etl.spark.streaming;
 
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.StageStatisticsCollector;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.Compat;
-import co.cask.cdap.etl.spark.SparkCollection;
-import co.cask.cdap.etl.spark.SparkPairCollection;
-import co.cask.cdap.etl.spark.SparkPipelineRuntime;
-import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
-import co.cask.cdap.etl.spark.streaming.function.ComputeTransformFunction;
-import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
-import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorAggregate;
-import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorGroupBy;
-import co.cask.cdap.etl.spark.streaming.function.DynamicSparkCompute;
-import co.cask.cdap.etl.spark.streaming.function.DynamicTransform;
-import co.cask.cdap.etl.spark.streaming.function.StreamingAlertPublishFunction;
-import co.cask.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
-import co.cask.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkPairCollection;
+import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
+import io.cdap.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
+import io.cdap.cdap.etl.spark.streaming.function.ComputeTransformFunction;
+import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
+import io.cdap.cdap.etl.spark.streaming.function.DynamicAggregatorAggregate;
+import io.cdap.cdap.etl.spark.streaming.function.DynamicAggregatorGroupBy;
+import io.cdap.cdap.etl.spark.streaming.function.DynamicSparkCompute;
+import io.cdap.cdap.etl.spark.streaming.function.DynamicTransform;
+import io.cdap.cdap.etl.spark.streaming.function.StreamingAlertPublishFunction;
+import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
+import io.cdap.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -56,7 +56,7 @@ import org.apache.spark.streaming.api.java.JavaPairDStream;
 import javax.annotation.Nullable;
 
 /**
- * JavaDStream backed {@link co.cask.cdap.etl.spark.SparkCollection}
+ * JavaDStream backed {@link io.cdap.cdap.etl.spark.SparkCollection}
  *
  * @param <T> type of objects in the collection
  */

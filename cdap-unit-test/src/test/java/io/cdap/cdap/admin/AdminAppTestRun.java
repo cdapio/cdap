@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.admin;
+package io.cdap.cdap.admin;
 
-import co.cask.cdap.api.NamespaceSummary;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ProgramManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.NamespaceSummary;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.ProgramManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;

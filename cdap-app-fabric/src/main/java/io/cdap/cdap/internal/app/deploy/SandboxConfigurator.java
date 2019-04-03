@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.app.deploy.ConfigResponse;
-import co.cask.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;

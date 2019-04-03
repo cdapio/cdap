@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.logging.read;
+package io.cdap.cdap.logging.read;
 
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.filter.AndFilter;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.meta.FileMetaDataReader;
-import co.cask.cdap.logging.write.LogLocation;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.filter.AndFilter;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.meta.FileMetaDataReader;
+import io.cdap.cdap.logging.write.LogLocation;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

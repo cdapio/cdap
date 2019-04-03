@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.gateway;
+package io.cdap.cdap.gateway;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
-import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
-import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.gateway.handlers.PingHandlerTestRun;
+import io.cdap.cdap.gateway.handlers.RuntimeArgumentTestRun;
+import io.cdap.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.Files;
 import org.apache.http.Header;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Preconditions;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;

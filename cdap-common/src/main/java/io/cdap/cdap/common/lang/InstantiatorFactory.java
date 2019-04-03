@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

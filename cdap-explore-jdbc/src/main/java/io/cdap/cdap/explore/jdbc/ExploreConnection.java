@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.ExploreClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

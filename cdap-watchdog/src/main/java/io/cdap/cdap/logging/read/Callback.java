@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.read;
+package io.cdap.cdap.logging.read;
 
 /**
  * Callback to handle log events.

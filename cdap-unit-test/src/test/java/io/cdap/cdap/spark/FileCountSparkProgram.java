@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spark;
+package io.cdap.cdap.spark;
 
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;

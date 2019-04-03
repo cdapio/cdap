@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.common.InvalidMetadataException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.common.InvalidMetadataException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.common.base.CharMatcher;
 
 import java.util.Map;

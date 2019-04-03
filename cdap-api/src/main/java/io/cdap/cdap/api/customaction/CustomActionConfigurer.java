@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.customaction;
+package io.cdap.cdap.api.customaction;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.workflow.Workflow;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.workflow.Workflow;
 
 import java.util.Map;
 

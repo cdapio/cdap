@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal;
+package io.cdap.cdap.internal;
 
 import java.util.ResourceBundle;
 

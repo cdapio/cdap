@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.store;
+package io.cdap.cdap.store;
 
-import co.cask.cdap.security.impersonation.InMemoryOwnerStore;
-import co.cask.cdap.security.impersonation.OwnerStore;
+import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
+import io.cdap.cdap.security.impersonation.OwnerStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

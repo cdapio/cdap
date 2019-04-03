@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.system;
+package io.cdap.cdap.data2.metadata.system;
 
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Map;
 import java.util.Set;

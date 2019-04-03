@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.spark;
+package io.cdap.cdap.internal.app.spark;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 
 import java.util.ArrayList;
 import java.util.List;

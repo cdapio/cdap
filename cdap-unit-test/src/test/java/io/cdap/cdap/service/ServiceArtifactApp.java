@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.service;
+package io.cdap.cdap.service;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 
 import java.io.IOException;
 import java.util.List;

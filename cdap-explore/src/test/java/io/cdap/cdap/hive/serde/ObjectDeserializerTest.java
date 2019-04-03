@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.hive.serde;
+package io.cdap.cdap.hive.serde;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.SchemaGenerator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.id;
+package io.cdap.cdap.common.id;
 
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.EntityId;
 
 /**
  * Compatibility from {@link Id} to {@link EntityId}.

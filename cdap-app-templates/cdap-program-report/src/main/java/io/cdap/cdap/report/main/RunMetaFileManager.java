@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.report.util.Constants;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.report.util.Constants;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;

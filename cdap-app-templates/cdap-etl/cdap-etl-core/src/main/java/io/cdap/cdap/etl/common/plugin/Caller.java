@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
 import com.google.common.base.Throwables;
 

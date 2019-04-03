@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.verification;
+package io.cdap.cdap.internal.app.verification;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.app.verification.AbstractVerifier;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.app.verification.AbstractVerifier;
 
 /**
  * @param <T> Type of ProgramSpecification

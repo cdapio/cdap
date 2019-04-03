@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
 /**
  * Exposes information about the input configured for this task.

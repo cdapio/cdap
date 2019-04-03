@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor;
+package io.cdap.cdap.internal.app.runtime.monitor;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

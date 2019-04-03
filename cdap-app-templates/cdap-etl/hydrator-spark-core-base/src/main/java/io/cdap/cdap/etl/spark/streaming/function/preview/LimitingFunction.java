@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function.preview;
+package io.cdap.cdap.etl.spark.streaming.function.preview;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;

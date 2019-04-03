@@ -17,4 +17,4 @@
 /**
  * DataFabric runtime main classes.
  */
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;

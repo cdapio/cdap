@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;

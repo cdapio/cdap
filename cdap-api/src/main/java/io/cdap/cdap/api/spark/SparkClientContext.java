@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.ClientLocalizationContext;
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.ProgramState;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.SchedulableProgramContext;
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.lineage.field.LineageRecorder;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataWriter;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.workflow.WorkflowInfoProvider;
+import io.cdap.cdap.api.ClientLocalizationContext;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.ProgramState;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.SchedulableProgramContext;
+import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.lineage.field.LineageRecorder;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
 
 import java.net.URI;
 

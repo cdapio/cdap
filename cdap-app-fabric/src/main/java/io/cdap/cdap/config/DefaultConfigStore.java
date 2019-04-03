@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package io.cdap.cdap.config;
 
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.inject.Inject;
 
 import java.util.List;

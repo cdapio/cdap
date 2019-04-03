@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

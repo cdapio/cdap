@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.operations.guice;
+package io.cdap.cdap.operations.guice;
 
-import co.cask.cdap.operations.OperationalStatsService;
+import io.cdap.cdap.operations.OperationalStatsService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 

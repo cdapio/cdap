@@ -205,4 +205,4 @@
  * </table>
  *
  */
-package co.cask.cdap.api.data.schema;
+package io.cdap.cdap.api.data.schema;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package io.cdap.cdap.common.security;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Text;

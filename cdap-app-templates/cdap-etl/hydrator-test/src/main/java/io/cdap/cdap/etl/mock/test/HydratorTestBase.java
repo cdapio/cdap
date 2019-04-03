@@ -14,52 +14,52 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.test;
+package io.cdap.cdap.etl.mock.test;
 
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.etl.api.PipelineConfigurable;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.action.Action;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.api.streaming.StreamingSource;
-import co.cask.cdap.etl.api.validation.InvalidStageException;
-import co.cask.cdap.etl.mock.action.FileMoveAction;
-import co.cask.cdap.etl.mock.action.MockAction;
-import co.cask.cdap.etl.mock.alert.NullAlertTransform;
-import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
-import co.cask.cdap.etl.mock.batch.FilterTransform;
-import co.cask.cdap.etl.mock.batch.IncapableSink;
-import co.cask.cdap.etl.mock.batch.IncapableSource;
-import co.cask.cdap.etl.mock.batch.LookupTransform;
-import co.cask.cdap.etl.mock.batch.MockExternalSink;
-import co.cask.cdap.etl.mock.batch.MockExternalSource;
-import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
-import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
-import co.cask.cdap.etl.mock.batch.MockSink;
-import co.cask.cdap.etl.mock.batch.MockSource;
-import co.cask.cdap.etl.mock.batch.NodeStatesAction;
-import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
-import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
-import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
-import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
-import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
-import co.cask.cdap.etl.mock.condition.MockCondition;
-import co.cask.cdap.etl.mock.spark.Window;
-import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
-import co.cask.cdap.etl.mock.transform.AllErrorTransform;
-import co.cask.cdap.etl.mock.transform.DoubleTransform;
-import co.cask.cdap.etl.mock.transform.DropNullTransform;
-import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
-import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
-import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
-import co.cask.cdap.etl.mock.transform.IdentityTransform;
-import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
-import co.cask.cdap.etl.mock.transform.NullFieldSplitterTransform;
-import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.test.TestBase;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.etl.api.PipelineConfigurable;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.api.validation.InvalidStageException;
+import io.cdap.cdap.etl.mock.action.FileMoveAction;
+import io.cdap.cdap.etl.mock.action.MockAction;
+import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
+import io.cdap.cdap.etl.mock.alert.TMSAlertPublisher;
+import io.cdap.cdap.etl.mock.batch.FilterTransform;
+import io.cdap.cdap.etl.mock.batch.IncapableSink;
+import io.cdap.cdap.etl.mock.batch.IncapableSource;
+import io.cdap.cdap.etl.mock.batch.LookupTransform;
+import io.cdap.cdap.etl.mock.batch.MockExternalSink;
+import io.cdap.cdap.etl.mock.batch.MockExternalSource;
+import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSink;
+import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSource;
+import io.cdap.cdap.etl.mock.batch.MockSink;
+import io.cdap.cdap.etl.mock.batch.MockSource;
+import io.cdap.cdap.etl.mock.batch.NodeStatesAction;
+import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.IdentityAggregator;
+import io.cdap.cdap.etl.mock.batch.joiner.DupeFlagger;
+import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
+import io.cdap.cdap.etl.mock.condition.MockCondition;
+import io.cdap.cdap.etl.mock.spark.Window;
+import io.cdap.cdap.etl.mock.spark.compute.StringValueFilterCompute;
+import io.cdap.cdap.etl.mock.transform.AllErrorTransform;
+import io.cdap.cdap.etl.mock.transform.DoubleTransform;
+import io.cdap.cdap.etl.mock.transform.DropNullTransform;
+import io.cdap.cdap.etl.mock.transform.FieldsPrefixTransform;
+import io.cdap.cdap.etl.mock.transform.FilterErrorTransform;
+import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
+import io.cdap.cdap.etl.mock.transform.IdentityTransform;
+import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
+import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
+import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.test.TestBase;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
@@ -88,9 +88,9 @@ public class HydratorTestBase extends TestBase {
     MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
-    co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
-    co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
-    co.cask.cdap.etl.mock.spark.streaming.MockSink.PLUGIN_CLASS,
+    io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
+    io.cdap.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
+    io.cdap.cdap.etl.mock.spark.streaming.MockSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     FilterTransform.PLUGIN_CLASS,
@@ -121,8 +121,8 @@ public class HydratorTestBase extends TestBase {
     addPluginArtifact(batchMocksArtifactId,
                       artifactId,
                       BATCH_MOCK_PLUGINS,
-                      co.cask.cdap.etl.mock.batch.MockSource.class,
-                      co.cask.cdap.etl.mock.batch.MockSink.class,
+                      io.cdap.cdap.etl.mock.batch.MockSource.class,
+                      io.cdap.cdap.etl.mock.batch.MockSink.class,
                       MockExternalSource.class, MockExternalSink.class,
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
@@ -147,9 +147,9 @@ public class HydratorTestBase extends TestBase {
     addPluginArtifact(streamingMocksArtifactId,
                       artifactId,
                       STREAMING_MOCK_PLUGINS,
-                      co.cask.cdap.etl.mock.spark.streaming.MockSource.class,
-                      co.cask.cdap.etl.mock.batch.MockSink.class,
-                      co.cask.cdap.etl.mock.spark.streaming.MockSink.class,
+                      io.cdap.cdap.etl.mock.spark.streaming.MockSource.class,
+                      io.cdap.cdap.etl.mock.batch.MockSink.class,
+                      io.cdap.cdap.etl.mock.spark.streaming.MockSink.class,
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       StringValueFilterCompute.class, Window.class,

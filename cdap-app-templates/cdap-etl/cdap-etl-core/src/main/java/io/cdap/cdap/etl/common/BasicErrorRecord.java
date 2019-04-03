@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.etl.api.ErrorRecord;
+import io.cdap.cdap.etl.api.ErrorRecord;
 
 import java.io.Serializable;
 import javax.annotation.Nullable;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;

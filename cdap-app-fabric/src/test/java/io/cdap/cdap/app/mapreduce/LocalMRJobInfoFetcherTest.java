@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.app.mapreduce;
+package io.cdap.cdap.app.mapreduce;
 
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.proto.MRJobInfo;
-import co.cask.cdap.proto.MRTaskInfo;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.app.metrics.MapReduceMetrics;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.internal.guice.AppFabricTestModule;
+import io.cdap.cdap.proto.MRJobInfo;
+import io.cdap.cdap.proto.MRTaskInfo;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.utils.ImmutablePair;
 
 import java.util.Set;
 import javax.annotation.Nullable;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.macro;
+package io.cdap.cdap.etl.common.macro;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataRecord;
-import co.cask.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.ScopedName;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -27,8 +27,8 @@ import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
-import static co.cask.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
 
 public class MetadataCodecTest {
 

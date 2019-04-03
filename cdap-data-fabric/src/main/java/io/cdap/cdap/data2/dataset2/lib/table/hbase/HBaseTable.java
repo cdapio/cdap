@@ -14,33 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.Filter;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
-import co.cask.cdap.data2.dataset2.lib.table.PutValue;
-import co.cask.cdap.data2.dataset2.lib.table.Update;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.DeleteBuilder;
-import co.cask.cdap.data2.util.hbase.GetBuilder;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.IncrementBuilder;
-import co.cask.cdap.data2.util.hbase.PutBuilder;
-import co.cask.cdap.data2.util.hbase.ScanBuilder;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.table.Filter;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.lib.table.BufferingTable;
+import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import io.cdap.cdap.data2.dataset2.lib.table.IncrementValue;
+import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
+import io.cdap.cdap.data2.dataset2.lib.table.Update;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.DeleteBuilder;
+import io.cdap.cdap.data2.util.hbase.GetBuilder;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.IncrementBuilder;
+import io.cdap.cdap.data2.util.hbase.PutBuilder;
+import io.cdap.cdap.data2.util.hbase.ScanBuilder;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -188,15 +188,15 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
-  protected List<Map<byte[], byte[]>> getPersisted(List<co.cask.cdap.api.dataset.table.Get> gets) {
+  protected List<Map<byte[], byte[]>> getPersisted(List<io.cdap.cdap.api.dataset.table.Get> gets) {
     if (gets.isEmpty()) {
       return Collections.emptyList();
     }
 
     List<Get> hbaseGets = new ArrayList<>();
-    for (co.cask.cdap.api.dataset.table.Get get : gets) {
+    for (io.cdap.cdap.api.dataset.table.Get get : gets) {
       List<byte[]> cols = get.getColumns();
-      // Our Get class (co.cask.cdap.api.dataset.table.Get) with empty array means get nothing, but there is no way to
+      // Our Get class (io.cdap.cdap.api.dataset.table.Get) with empty array means get nothing, but there is no way to
       // specify this in an HBase Get (org.apache.hadoop.hbase.client.Get). That's why we don't call createGet for
       // every get.
       if (cols == null || !cols.isEmpty()) {
@@ -212,7 +212,7 @@ public class HBaseTable extends BufferingTable {
 
     List<Map<byte[], byte[]>> results = new ArrayList<>(gets.size());
     int hbaseResultsIndex = 0;
-    for (co.cask.cdap.api.dataset.table.Get get : gets) {
+    for (io.cdap.cdap.api.dataset.table.Get get : gets) {
       List<byte[]> cols = get.getColumns();
       if (cols == null || !cols.isEmpty()) {
         Result hbaseResult = hbaseResults[hbaseResultsIndex++];
@@ -436,7 +436,7 @@ public class HBaseTable extends BufferingTable {
 
   @ReadOnly
   @Override
-  protected Scanner scanPersisted(co.cask.cdap.api.dataset.table.Scan scan) throws Exception {
+  protected Scanner scanPersisted(io.cdap.cdap.api.dataset.table.Scan scan) throws Exception {
     ScanBuilder hScan = tableUtil.buildScan();
     hScan.addFamily(columnFamily);
 

@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppForUnrecoverableResetTest;
-import co.cask.cdap.AppWithDataset;
-import co.cask.cdap.AppWithServices;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.AppForUnrecoverableResetTest;
+import io.cdap.cdap.AppWithDataset;
+import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;

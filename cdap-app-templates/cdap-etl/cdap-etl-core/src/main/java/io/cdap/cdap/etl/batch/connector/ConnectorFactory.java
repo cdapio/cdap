@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.connector;
+package io.cdap.cdap.etl.batch.connector;
 
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.Schema;
 
 import javax.annotation.Nullable;
 

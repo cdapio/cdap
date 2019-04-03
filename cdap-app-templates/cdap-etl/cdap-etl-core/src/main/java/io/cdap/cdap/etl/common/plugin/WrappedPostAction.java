@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.batch.BatchActionContext;
-import co.cask.cdap.etl.api.batch.PostAction;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchActionContext;
+import io.cdap.cdap.etl.api.batch.PostAction;
 
 import java.util.concurrent.Callable;
 

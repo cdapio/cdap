@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store;
+package io.cdap.cdap.messaging.store;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.proto.id.TopicId;
 
 import java.io.Closeable;
 import java.io.IOException;

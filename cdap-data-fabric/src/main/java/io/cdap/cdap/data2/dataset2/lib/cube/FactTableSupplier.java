@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
 
 /**
  * Provider for {@link FactTable}s.

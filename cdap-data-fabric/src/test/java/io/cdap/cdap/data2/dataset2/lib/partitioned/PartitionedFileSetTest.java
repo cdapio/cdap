@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.PartitionNotFoundException;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.PartitionNotFoundException;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionAlreadyExistsException;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionOutput;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;

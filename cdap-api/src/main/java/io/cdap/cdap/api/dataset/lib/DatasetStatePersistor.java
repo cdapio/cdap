@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetContext;
 
 import javax.annotation.Nullable;
 

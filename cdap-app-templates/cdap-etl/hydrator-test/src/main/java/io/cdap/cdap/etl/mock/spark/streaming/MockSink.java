@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.spark.streaming;
+package io.cdap.cdap.etl.mock.spark.streaming;
 
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.api.batch.SparkPluginContext;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
-import co.cask.cdap.test.DataSetManager;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.test.DataSetManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.PairFunction;

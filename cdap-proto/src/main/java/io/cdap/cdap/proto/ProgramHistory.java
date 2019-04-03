@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 import java.util.List;
 import java.util.Objects;

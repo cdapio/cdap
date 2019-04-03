@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.MockExploreClient;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.MockExploreClient;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;

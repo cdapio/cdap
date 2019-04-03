@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package io.cdap.cdap.data.tools;
 
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;

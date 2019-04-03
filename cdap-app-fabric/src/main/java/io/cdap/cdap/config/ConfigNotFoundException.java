@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package io.cdap.cdap.config;
 
-import co.cask.cdap.common.NotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 
 /**
  * Thrown when a Configuration is expected to be present (when get, set of properties) performed.

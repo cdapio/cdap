@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package io.cdap.cdap.proto.artifact;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
 
 import java.util.Map;
 import java.util.Objects;

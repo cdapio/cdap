@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
+package io.cdap.cdap.messaging;
 
 /**
  * This interface represents information needed to rollback message published transactionally.

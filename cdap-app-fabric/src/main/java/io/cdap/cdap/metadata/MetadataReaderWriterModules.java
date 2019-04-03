@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataWriter;
-import co.cask.cdap.common.metadata.AbstractMetadataClient;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.common.metadata.AbstractMetadataClient;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 

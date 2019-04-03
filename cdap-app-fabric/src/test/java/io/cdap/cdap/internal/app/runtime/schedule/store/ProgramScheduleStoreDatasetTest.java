@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.store;
+package io.cdap.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.AndTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.AndTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 
 /**
  * This tests the indexing of the schedule store. Adding, retrieving. listing, deleting schedules is tested
- * in {@link co.cask.cdap.scheduler.CoreSchedulerServiceTest}, which has equivalent methods that execute
+ * in {@link io.cdap.cdap.scheduler.CoreSchedulerServiceTest}, which has equivalent methods that execute
  * in a transaction.
  */
 public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {

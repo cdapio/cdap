@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 

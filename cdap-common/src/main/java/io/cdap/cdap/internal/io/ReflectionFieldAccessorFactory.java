@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

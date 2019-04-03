@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;

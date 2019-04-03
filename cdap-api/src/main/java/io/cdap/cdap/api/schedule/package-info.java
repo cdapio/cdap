@@ -19,4 +19,4 @@
  *   For running programs periodically.
  * </p>
  */
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;

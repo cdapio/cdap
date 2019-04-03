@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.security.auth.AccessToken;
-import co.cask.cdap.security.auth.AccessTokenIdentifier;
-import co.cask.cdap.security.auth.TokenManager;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenIdentifier;
+import io.cdap.cdap.security.auth.TokenManager;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;

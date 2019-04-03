@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.distributed;
+package io.cdap.cdap.messaging.distributed;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
-import co.cask.cdap.common.twill.MasterServiceManager;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
+import io.cdap.cdap.common.twill.MasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;

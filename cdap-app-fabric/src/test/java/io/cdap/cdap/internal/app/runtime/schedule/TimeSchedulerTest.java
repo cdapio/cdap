@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.BeforeClass;

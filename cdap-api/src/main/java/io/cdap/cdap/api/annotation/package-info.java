@@ -17,4 +17,4 @@
 /**
  * Annotations used when creating Applications.
  */
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;

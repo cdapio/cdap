@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.streaming;
+package io.cdap.cdap.etl.api.streaming;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.StageContext;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.StageContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
 

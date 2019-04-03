@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.pipeline;
+package io.cdap.cdap.pipeline;
 
 /**
  * <p>A Stage represents a set of tasks that can be performed on objects,

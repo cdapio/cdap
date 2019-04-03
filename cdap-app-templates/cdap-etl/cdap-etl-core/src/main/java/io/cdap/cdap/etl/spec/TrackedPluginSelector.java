@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spec;
+package io.cdap.cdap.etl.spec;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 
 import java.util.Map;
 import java.util.SortedMap;

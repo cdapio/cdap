@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.Metadata;
 
 import javax.annotation.Nullable;
 

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql;
+package io.cdap.cdap.spi.data.sql;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 
 import java.io.File;

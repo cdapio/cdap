@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.common.utils;
+package io.cdap.cdap.common.utils;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;

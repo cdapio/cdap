@@ -17,4 +17,4 @@
 /**
  * This package contains implementations of the data set framework and built-in data sets.
  */
-package co.cask.cdap.data.dataset;
+package io.cdap.cdap.data.dataset;

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.audit.payload.access.AccessPayload;
-import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.audit.payload.access.AccessPayload;
+import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

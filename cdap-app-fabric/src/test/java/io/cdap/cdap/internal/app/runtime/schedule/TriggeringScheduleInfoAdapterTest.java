@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.WorkflowAppWithFork;
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultPartitionTriggerInfo;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultProgramStatusTriggerInfo;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import io.cdap.cdap.WorkflowAppWithFork;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultPartitionTriggerInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultProgramStatusTriggerInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo;
+import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;

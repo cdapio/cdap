@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

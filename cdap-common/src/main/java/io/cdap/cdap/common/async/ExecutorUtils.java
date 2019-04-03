@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.async;
+package io.cdap.cdap.common.async;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;

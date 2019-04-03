@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
 import com.google.inject.Inject;
 import org.slf4j.Logger;

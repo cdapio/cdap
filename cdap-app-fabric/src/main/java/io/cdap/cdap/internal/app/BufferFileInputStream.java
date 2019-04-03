@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
 import java.io.Closeable;
 import java.io.FileInputStream;

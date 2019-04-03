@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.Command;

@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.workflow.WorkflowInfoProvider;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.etl.api.action.SettableArguments;
+import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.etl.api.action.SettableArguments;
 
 import java.io.Serializable;
 import java.util.Collections;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto.summary;
+package io.cdap.cdap.report.proto.summary;
 
 import java.util.List;
 
@@ -60,14 +60,14 @@ public class ReportSummary {
   }
 
   /**
-   * @return start time in seconds from {@link co.cask.cdap.report.proto.ReportGenerationRequest#start}
+   * @return start time in seconds from {@link io.cdap.cdap.report.proto.ReportGenerationRequest#start}
    */
   public Long getStart() {
     return start;
   }
 
   /**
-   * @return end time in seconds from {@link co.cask.cdap.report.proto.ReportGenerationRequest#end}
+   * @return end time in seconds from {@link io.cdap.cdap.report.proto.ReportGenerationRequest#end}
 
    */
   public Long getEnd() {

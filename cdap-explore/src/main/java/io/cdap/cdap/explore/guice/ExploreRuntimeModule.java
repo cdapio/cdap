@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.explore.guice;
+package io.cdap.cdap.explore.guice;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
-import co.cask.cdap.explore.executor.ExploreExecutorService;
-import co.cask.cdap.explore.executor.ExploreMetadataHttpHandler;
-import co.cask.cdap.explore.executor.ExploreQueryExecutorHttpHandler;
-import co.cask.cdap.explore.executor.ExploreStatusHandler;
-import co.cask.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
-import co.cask.cdap.explore.executor.NamespacedExploreQueryExecutorHttpHandler;
-import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.explore.service.hive.Hive14ExploreService;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.explore.executor.ExploreExecutorHttpHandler;
+import io.cdap.cdap.explore.executor.ExploreExecutorService;
+import io.cdap.cdap.explore.executor.ExploreMetadataHttpHandler;
+import io.cdap.cdap.explore.executor.ExploreQueryExecutorHttpHandler;
+import io.cdap.cdap.explore.executor.ExploreStatusHandler;
+import io.cdap.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
+import io.cdap.cdap.explore.executor.NamespacedExploreQueryExecutorHttpHandler;
+import io.cdap.cdap.explore.service.ExploreService;
+import io.cdap.cdap.explore.service.ExploreServiceUtils;
+import io.cdap.cdap.explore.service.hive.Hive14ExploreService;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.inject.Exposed;

@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.proto.security.Role;
-import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
-import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.NotFoundException;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.security.spi.authorization.AbstractAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.NotFoundException;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 

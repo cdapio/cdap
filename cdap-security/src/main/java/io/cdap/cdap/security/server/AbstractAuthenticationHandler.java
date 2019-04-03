@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;

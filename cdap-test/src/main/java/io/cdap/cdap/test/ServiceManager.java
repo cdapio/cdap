@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
+import io.cdap.cdap.api.metrics.RuntimeMetrics;
 
 import java.net.URL;
 import java.util.concurrent.TimeUnit;

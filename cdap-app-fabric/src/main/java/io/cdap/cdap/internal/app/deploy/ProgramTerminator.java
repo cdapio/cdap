@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Interface that is responsible to stopping programs. Used while stop programs that are being deleted during

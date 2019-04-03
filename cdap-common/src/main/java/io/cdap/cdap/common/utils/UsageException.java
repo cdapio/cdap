@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.utils;
+package io.cdap.cdap.common.utils;
 
 /**
  * This exception is only for bailing out of a command line tool when

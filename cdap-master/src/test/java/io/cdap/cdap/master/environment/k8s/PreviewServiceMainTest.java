@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.app.preview.PreviewStatus;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.master.environment.app.PreviewTestApp;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.preview.PreviewConfig;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.master.environment.app.PreviewTestApp;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
+import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.common.ContentProvider;

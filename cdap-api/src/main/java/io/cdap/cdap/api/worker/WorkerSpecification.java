@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.worker;
+package io.cdap.cdap.api.worker;
 
-import co.cask.cdap.api.AbstractProgramSpecification;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.AbstractProgramSpecification;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.common.PropertyProvider;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.plugin.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;

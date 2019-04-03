@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.Dataset;
 
 /**
  * A runnable that provides a {@link DatasetContext} to programs which may be used to get

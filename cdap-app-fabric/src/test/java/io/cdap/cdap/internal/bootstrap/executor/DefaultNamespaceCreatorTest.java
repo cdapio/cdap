@@ -15,14 +15,14 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import org.junit.AfterClass;

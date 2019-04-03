@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
 
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.EntityId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,8 +54,8 @@ public class Authorizable {
    * required to allow pre grants.
    * </li>
    * <li>
-   * CDAP Authorization does not support authorization on versions of {@link co.cask.cdap.proto.id.ApplicationId}
-   * and {@link co.cask.cdap.proto.id.ArtifactId}. If a version is included while construction an Authorizable
+   * CDAP Authorization does not support authorization on versions of {@link io.cdap.cdap.proto.id.ApplicationId}
+   * and {@link io.cdap.cdap.proto.id.ArtifactId}. If a version is included while construction an Authorizable
    * through {@link #fromString(String)} an {@link IllegalArgumentException} will be thrown.
    * </li>
    * </ol>
@@ -104,8 +104,8 @@ public class Authorizable {
 
   /**
    * Creates an {@link Authorizable} which represents the given entityId.
-   * Note: CDAP Authorization does not support authorization on versions of {@link co.cask.cdap.proto.id.ApplicationId}
-   * and {@link co.cask.cdap.proto.id.ArtifactId}. If an artifactId or applicationId which has version is passed to
+   * Note: CDAP Authorization does not support authorization on versions of {@link io.cdap.cdap.proto.id.ApplicationId}
+   * and {@link io.cdap.cdap.proto.id.ArtifactId}. If an artifactId or applicationId which has version is passed to
    * then the version will be silently dropped to construct the authorizable.
    *
    * @param entityId the entity

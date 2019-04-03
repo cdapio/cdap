@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.Split;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 

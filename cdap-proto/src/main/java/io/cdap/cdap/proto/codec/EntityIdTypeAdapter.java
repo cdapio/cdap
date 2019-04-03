@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;

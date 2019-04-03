@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal;
+package io.cdap.cdap.internal;
 
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Default Ids to use in test if you do not want to construct your own.

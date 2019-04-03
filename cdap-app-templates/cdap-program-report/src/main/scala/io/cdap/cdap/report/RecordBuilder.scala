@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report
+package io.cdap.cdap.report
 
-import co.cask.cdap.report.util.ProgramStartMethodHelper
+import io.cdap.cdap.report.util.ProgramStartMethodHelper
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._

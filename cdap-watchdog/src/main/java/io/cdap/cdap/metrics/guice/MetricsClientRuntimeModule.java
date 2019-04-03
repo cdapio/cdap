@@ -13,17 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.guice;
+package io.cdap.cdap.metrics.guice;
 
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.process.DirectMetricsSystemClient;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
+import io.cdap.cdap.metrics.process.DirectMetricsSystemClient;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import com.google.inject.Module;
 import com.google.inject.PrivateBinder;
 import com.google.inject.PrivateModule;

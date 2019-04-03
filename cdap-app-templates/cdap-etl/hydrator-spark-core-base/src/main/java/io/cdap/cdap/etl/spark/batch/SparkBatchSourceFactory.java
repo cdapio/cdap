@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

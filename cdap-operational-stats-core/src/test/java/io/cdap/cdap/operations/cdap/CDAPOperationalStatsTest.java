@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.operations.cdap;
+package io.cdap.cdap.operations.cdap;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.operations.OperationalStats;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.operations.OperationalStats;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.inject.Injector;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;

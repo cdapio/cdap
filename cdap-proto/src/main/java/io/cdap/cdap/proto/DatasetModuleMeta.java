@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 import java.net.URI;
 import java.util.ArrayList;

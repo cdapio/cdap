@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Delete;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Increment;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Result;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.TableAssert;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
+import io.cdap.cdap.api.dataset.table.ConflictDetection;
+import io.cdap.cdap.api.dataset.table.Delete;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Increment;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Result;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.TableAssert;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;

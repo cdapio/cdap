@@ -16,4 +16,4 @@
 /**
  * This package contains class that provides metrics REST endpoints for queries.
  */
-package co.cask.cdap.metrics.query;
+package io.cdap.cdap.metrics.query;

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.test.remote;
+package io.cdap.cdap.test.remote;
 
-import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.WorkerManager;
+import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.test.AbstractProgramManager;
+import io.cdap.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 

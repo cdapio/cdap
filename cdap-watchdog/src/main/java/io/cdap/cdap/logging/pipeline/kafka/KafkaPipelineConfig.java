@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.kafka;
+package io.cdap.cdap.logging.pipeline.kafka;
 
 import com.google.common.collect.ImmutableSet;
 

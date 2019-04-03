@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.logbuffer;
+package io.cdap.cdap.logging.pipeline.logbuffer;
 
 /**
  * Config for log buffer pipeline.

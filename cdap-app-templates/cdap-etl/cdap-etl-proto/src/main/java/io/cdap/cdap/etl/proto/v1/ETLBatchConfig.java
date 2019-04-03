@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v1;
+package io.cdap.cdap.etl.proto.v1;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.UpgradeableConfig;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.UpgradeableConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,7 +32,7 @@ import java.util.Objects;
  * ETL Batch Configuration. Public constructors are deprecated. Use the builder instead.
  */
 public final class ETLBatchConfig extends ETLConfig
-  implements UpgradeableConfig<co.cask.cdap.etl.proto.v2.ETLBatchConfig> {
+  implements UpgradeableConfig<io.cdap.cdap.etl.proto.v2.ETLBatchConfig> {
 
   /**
    * Enum for the execution engine to use.
@@ -80,10 +80,10 @@ public final class ETLBatchConfig extends ETLConfig
   }
 
   @Override
-  public co.cask.cdap.etl.proto.v2.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
-    co.cask.cdap.etl.proto.v2.ETLBatchConfig.Builder builder =
-      co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
-        .setEngine(co.cask.cdap.etl.api.Engine.valueOf(getEngine().name()))
+  public io.cdap.cdap.etl.proto.v2.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
+    io.cdap.cdap.etl.proto.v2.ETLBatchConfig.Builder builder =
+      io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
+        .setEngine(io.cdap.cdap.etl.api.Engine.valueOf(getEngine().name()))
         .setDriverResources(getDriverResources());
 
     return upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE).build();

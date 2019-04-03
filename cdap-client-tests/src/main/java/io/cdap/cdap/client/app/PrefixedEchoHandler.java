@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package io.cdap.cdap.client.app;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceContext;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceContext;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 

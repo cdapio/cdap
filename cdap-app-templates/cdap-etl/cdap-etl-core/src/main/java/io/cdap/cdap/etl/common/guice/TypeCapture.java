@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.guice;
+package io.cdap.cdap.etl.common.guice;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

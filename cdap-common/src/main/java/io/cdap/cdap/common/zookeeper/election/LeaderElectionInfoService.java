@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.zookeeper.election;
+package io.cdap.cdap.common.zookeeper.election;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;

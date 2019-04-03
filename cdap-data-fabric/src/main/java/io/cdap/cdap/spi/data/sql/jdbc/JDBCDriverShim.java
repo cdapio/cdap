@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql.jdbc;
+package io.cdap.cdap.spi.data.sql.jdbc;
 
 import java.sql.Connection;
 import java.sql.Driver;

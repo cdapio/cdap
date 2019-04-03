@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.metadata.MetadataWriter;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.StageContext;
-import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.common.plugin.Caller;
-import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.StageContext;
+import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.common.plugin.Caller;
+import io.cdap.cdap.etl.common.plugin.NoStageLoggingCaller;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.base.Throwables;
 
 import java.net.URL;

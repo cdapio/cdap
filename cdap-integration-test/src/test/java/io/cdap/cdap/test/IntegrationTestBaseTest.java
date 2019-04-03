@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.StandaloneTester;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.common.http.HttpMethod;
 import org.junit.Assert;

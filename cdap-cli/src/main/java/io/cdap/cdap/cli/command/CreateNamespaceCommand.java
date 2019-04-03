@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.proto.NamespaceMeta;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;

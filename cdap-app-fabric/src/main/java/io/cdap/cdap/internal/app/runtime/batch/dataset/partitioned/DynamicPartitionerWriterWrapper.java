@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned;
 
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
+import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
+import io.cdap.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;

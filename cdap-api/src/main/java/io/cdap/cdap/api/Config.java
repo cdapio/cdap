@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.app.Application;
+import io.cdap.cdap.api.app.Application;
 
 /**
  * Configuration class of an configurable entity, such as {@link Application}.

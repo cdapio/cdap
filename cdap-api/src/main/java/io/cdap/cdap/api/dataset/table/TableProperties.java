@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.ExploreProperties;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.ExploreProperties;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.io.IOException;

@@ -18,4 +18,4 @@
  * multiple regions.
  * TODO: the code was mostly copied from open-source project, we need to clean up stuff quite a bit.
  */
-package co.cask.cdap.hbase.wd;
+package io.cdap.cdap.hbase.wd;

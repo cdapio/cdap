@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark;
+package io.cdap.cdap.etl.spark;
 
-import co.cask.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import org.apache.spark.Accumulator;
 import org.apache.spark.api.java.JavaSparkContext;
 

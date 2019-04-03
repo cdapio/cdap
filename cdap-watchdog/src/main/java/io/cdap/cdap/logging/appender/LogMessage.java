@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import co.cask.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContext;
 import com.google.common.base.Objects;
 import org.slf4j.Marker;
 

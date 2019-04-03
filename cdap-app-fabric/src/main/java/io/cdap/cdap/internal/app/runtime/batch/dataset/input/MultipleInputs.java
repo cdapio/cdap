@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -82,7 +82,7 @@ public final class MultipleInputs {
 
   /**
    * A simple POJO for encapsulating information for an input. We don't use
-   * {@link co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput}, because that consists of an Interface,
+   * {@link io.cdap.cdap.internal.app.runtime.batch.dataset.input.MapperInput}, because that consists of an Interface,
    * which doesn't serialize well.
    */
   public static final class MapperInput {

@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.specification;
+package io.cdap.cdap.internal.specification;
 
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.internal.lang.FieldVisitor;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.internal.lang.FieldVisitor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;

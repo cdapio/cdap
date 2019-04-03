@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.Updatable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
-import co.cask.cdap.data2.util.hbase.CoprocessorManager;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import io.cdap.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
+import io.cdap.cdap.data2.util.hbase.CoprocessorManager;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import io.cdap.cdap.data2.util.hbase.TableDescriptorBuilder;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;

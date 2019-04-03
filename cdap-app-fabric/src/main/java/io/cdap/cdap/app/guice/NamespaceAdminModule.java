@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
-import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
+import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;

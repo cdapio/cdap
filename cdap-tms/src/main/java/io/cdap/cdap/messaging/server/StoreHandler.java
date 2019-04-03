@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.server;
+package io.cdap.cdap.messaging.server;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.io.ByteBuffers;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.Schemas;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.io.ByteBuffers;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.Schemas;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;

@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.worker.AbstractWorker;
-import co.cask.cdap.api.worker.WorkerContext;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowContext;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.api.worker.WorkerContext;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.workflow.WorkflowContext;
 import com.google.common.base.Preconditions;
 
 /**

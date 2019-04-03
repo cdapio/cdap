@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -85,12 +85,12 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   }
 
   /**
-   * Publishes the given collection of {@link co.cask.cdap.api.metrics.MetricValues}. When this method returns, the
+   * Publishes the given collection of {@link io.cdap.cdap.api.metrics.MetricValues}. When this method returns, the
    * given {@link Iterator} will no longer be valid. This method should process the input
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValues} to publish.
+   * @param metrics collection of {@link io.cdap.cdap.api.metrics.MetricValues} to publish.
    * @throws Exception if there is error raised during publish.
    */
   protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.List;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package io.cdap.cdap.test.internal;
 
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.test.ArtifactManager;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.test.ArtifactManager;
 import com.google.inject.Guice;
 import com.google.inject.assistedinject.Assisted;
 

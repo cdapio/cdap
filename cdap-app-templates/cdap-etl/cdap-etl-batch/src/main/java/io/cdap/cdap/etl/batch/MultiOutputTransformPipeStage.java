@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.etl.api.Destroyable;
-import co.cask.cdap.etl.api.MultiOutputEmitter;
-import co.cask.cdap.etl.api.MultiOutputTransformation;
-import co.cask.cdap.etl.common.Destroyables;
-import co.cask.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.api.Destroyable;
+import io.cdap.cdap.etl.api.MultiOutputEmitter;
+import io.cdap.cdap.etl.api.MultiOutputTransformation;
+import io.cdap.cdap.etl.common.Destroyables;
+import io.cdap.cdap.etl.common.RecordInfo;
 
 
 /**

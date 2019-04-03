@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ConfigEntry;
-import co.cask.cdap.proto.Version;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ConfigEntry;
+import io.cdap.cdap.proto.Version;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.Assert;

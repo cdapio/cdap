@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.gson.annotations.SerializedName;
 import org.apache.twill.filesystem.Location;
 

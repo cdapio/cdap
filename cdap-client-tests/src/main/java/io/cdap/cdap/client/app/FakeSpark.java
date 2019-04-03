@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package io.cdap.cdap.client.app;
 
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

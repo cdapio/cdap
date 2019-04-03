@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.runtime;
+package io.cdap.cdap.k8s.runtime;
 
-import co.cask.cdap.k8s.common.AbstractWatcherThread;
-import co.cask.cdap.k8s.common.ResourceChangeListener;
+import io.cdap.cdap.k8s.common.AbstractWatcherThread;
+import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import com.squareup.okhttp.Call;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;

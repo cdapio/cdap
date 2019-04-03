@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.cli.completer.element;
+package io.cdap.cdap.cli.completer.element;
 
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.completer.StringsCompleter;
-import co.cask.cdap.client.ArtifactClient;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.completer.StringsCompleter;
+import io.cdap.cdap.client.ArtifactClient;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 

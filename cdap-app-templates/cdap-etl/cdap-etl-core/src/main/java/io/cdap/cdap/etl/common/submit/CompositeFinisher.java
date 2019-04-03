@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.submit;
+package io.cdap.cdap.etl.common.submit;
 
-import co.cask.cdap.etl.api.batch.BatchConfigurable;
+import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 
 import java.util.ArrayList;
 import java.util.List;

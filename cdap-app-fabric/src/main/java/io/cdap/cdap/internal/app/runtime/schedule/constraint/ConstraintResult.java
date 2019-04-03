@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import com.google.common.base.Preconditions;
 

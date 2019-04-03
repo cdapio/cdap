@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.common.utils.Networks;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.common.utils.Networks;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;

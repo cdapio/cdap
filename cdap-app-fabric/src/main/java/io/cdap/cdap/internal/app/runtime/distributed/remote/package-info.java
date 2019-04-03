@@ -17,4 +17,4 @@
 /**
  * This package contains implementation for launch CDAP program on a hadoop cluster via SSH to the edge node.
  */
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;

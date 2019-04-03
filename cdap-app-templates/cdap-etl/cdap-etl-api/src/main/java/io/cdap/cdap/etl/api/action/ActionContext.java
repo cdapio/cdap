@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.action;
+package io.cdap.cdap.etl.api.action;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.etl.api.StageContext;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.etl.api.StageContext;
 
 /**
  * Represents the context available to the action plugin during runtime.

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.TypeRepresentation;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.TypeRepresentation;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Type;

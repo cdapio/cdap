@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
-import co.cask.cdap.data.security.DefaultSecretStore;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.store.StoreDefinition;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

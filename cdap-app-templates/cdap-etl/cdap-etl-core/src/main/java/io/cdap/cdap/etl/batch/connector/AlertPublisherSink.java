@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.connector;
+package io.cdap.cdap.etl.batch.connector;
 
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.etl.common.Constants;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.workflow.WorkflowConfigurer;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.common.Constants;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;

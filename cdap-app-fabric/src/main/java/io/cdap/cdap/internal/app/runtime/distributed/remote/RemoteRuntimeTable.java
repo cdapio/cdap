@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
-import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;

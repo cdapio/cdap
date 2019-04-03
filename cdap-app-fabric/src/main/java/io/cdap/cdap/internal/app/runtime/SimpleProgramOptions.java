@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  *

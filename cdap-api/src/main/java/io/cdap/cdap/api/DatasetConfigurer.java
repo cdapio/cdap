@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 
 /**
  * Provides the ability to add datasets.
@@ -49,7 +49,7 @@ public interface DatasetConfigurer {
   /**
    * Adds a Dataset instance, created automatically if absent in the CDAP namespace. If the Dataset instance
    * already exists, this updates the existing instance with the new properties.
-   * See {@link co.cask.cdap.api.dataset.DatasetDefinition} for details.
+   * See {@link io.cdap.cdap.api.dataset.DatasetDefinition} for details.
    *
    * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type

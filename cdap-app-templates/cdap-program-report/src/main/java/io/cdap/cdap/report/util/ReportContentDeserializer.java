@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.report.util;
+package io.cdap.cdap.report.util;
 
-import co.cask.cdap.report.proto.ReportContent;
+import io.cdap.cdap.report.proto.ReportContent;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

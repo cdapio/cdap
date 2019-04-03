@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.cli.util.table;
+package io.cdap.cdap.cli.util.table;
 
-import co.cask.cdap.cli.util.RowMaker;
+import io.cdap.cdap.cli.util.RowMaker;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

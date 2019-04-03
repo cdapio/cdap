@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.api.mapreduce;
+package io.cdap.cdap.api.mapreduce;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.SchedulableProgramContext;
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.TaskLocalizationContext;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.InputContext;
-import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowInfo;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.SchedulableProgramContext;
+import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.TaskLocalizationContext;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.batch.InputContext;
+import io.cdap.cdap.api.data.batch.PartitionedFileSetInputContext;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.workflow.Workflow;
+import io.cdap.cdap.api.workflow.WorkflowInfo;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

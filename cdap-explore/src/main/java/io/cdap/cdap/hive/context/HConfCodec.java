@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.hive.context;
+package io.cdap.cdap.hive.context;
 
-import co.cask.cdap.common.io.Codec;
+import io.cdap.cdap.common.io.Codec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 

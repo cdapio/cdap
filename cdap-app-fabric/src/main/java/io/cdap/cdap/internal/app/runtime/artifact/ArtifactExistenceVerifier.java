@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.entity.EntityExistenceVerifier;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.id.ArtifactId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.Result;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.table.Result;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import com.google.common.base.Throwables;
 import org.apache.tephra.Transaction;
 import org.iq80.leveldb.DB;

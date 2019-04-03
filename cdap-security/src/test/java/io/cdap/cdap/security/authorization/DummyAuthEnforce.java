@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.common.security.AuthEnforce;
-import co.cask.cdap.common.security.AuthEnforceRewriter;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.security.Action;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.common.security.AuthEnforce;
+import io.cdap.cdap.common.security.AuthEnforceRewriter;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.security.Action;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.name.Named;
 

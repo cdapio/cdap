@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset;
+package io.cdap.cdap.data2.datafabric.dataset;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.InstanceConflictException;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.data2.dataset2.ModuleConflictException;
-import co.cask.cdap.proto.DatasetInstanceConfiguration;
-import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.data2.dataset2.ModuleConflictException;
+import io.cdap.cdap.proto.DatasetInstanceConfiguration;
+import io.cdap.cdap.proto.DatasetMeta;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.common.ContentProvider;
@@ -64,7 +64,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Provides programmatic APIs to access {@link co.cask.cdap.data2.datafabric.dataset.service.DatasetService}.
+ * Provides programmatic APIs to access {@link io.cdap.cdap.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
 public class DatasetServiceClient {

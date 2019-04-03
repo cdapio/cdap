@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.store.NamespaceStore;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.store.NamespaceStore;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;

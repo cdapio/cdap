@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.common;
+package io.cdap.cdap.spi.data.common;
 
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.loader;
+package io.cdap.cdap.logging.appender.loader;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.extension.AbstractExtensionLoader;
 
 import java.util.Collections;
 import java.util.Set;

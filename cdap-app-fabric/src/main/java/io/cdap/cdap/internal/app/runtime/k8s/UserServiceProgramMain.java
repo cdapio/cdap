@@ -14,66 +14,66 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.k8s;
+package io.cdap.cdap.internal.app.runtime.k8s;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
-import co.cask.cdap.app.guice.UnsupportedExploreClient;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
-import co.cask.cdap.internal.app.program.StateChangeListener;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactFinder;
-import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
-import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.master.environment.k8s.AbstractServiceMain;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.metadata.MetadataReaderWriterModules;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreClientModule;
-import co.cask.cdap.security.impersonation.CurrentUGIProvider;
-import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
+import io.cdap.cdap.app.guice.UnsupportedExploreClient;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.program.Programs;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.internal.app.program.StateChangeListener;
+import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
+import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.master.environment.k8s.AbstractServiceMain;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -209,7 +209,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     closeableResources.add(userService);
   }
 
-  private static ArtifactId convert(NamespaceId namespaceId, co.cask.cdap.api.artifact.ArtifactId artifactId) {
+  private static ArtifactId convert(NamespaceId namespaceId, io.cdap.cdap.api.artifact.ArtifactId artifactId) {
     NamespaceId namespace = namespaceId;
     if (artifactId.getScope() == ArtifactScope.SYSTEM) {
       namespace = NamespaceId.SYSTEM;
@@ -299,7 +299,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       DirUtils.mkdirs(pluginsDir);
       Map<ArtifactId, Location> pluginLocations = artifactFinder.getArtifactLocations(pluginArtifacts);
       for (Map.Entry<ArtifactId, Location> pluginEntry : pluginLocations.entrySet()) {
-        co.cask.cdap.api.artifact.ArtifactId artifactId = pluginEntry.getKey().toApiArtifactId();
+        io.cdap.cdap.api.artifact.ArtifactId artifactId = pluginEntry.getKey().toApiArtifactId();
         Location location = pluginEntry.getValue();
         File destFile = new File(pluginsDir, String.format("%s-%s-%s.jar", artifactId.getScope().name(),
                                                            artifactId.getName(), artifactId.getVersion()));

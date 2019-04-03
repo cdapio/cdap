@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.ConfigEntry;
-import co.cask.cdap.proto.Version;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.ConfigEntry;
+import io.cdap.cdap.proto.Version;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import io.cdap.common.http.HttpMethod;

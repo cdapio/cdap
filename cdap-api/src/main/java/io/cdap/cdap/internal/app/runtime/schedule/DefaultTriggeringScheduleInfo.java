@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 
 import java.io.Serializable;
 import java.util.ArrayList;

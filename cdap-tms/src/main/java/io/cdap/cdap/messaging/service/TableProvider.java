@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.service;
+package io.cdap.cdap.messaging.service;
 
 import java.io.IOException;
 

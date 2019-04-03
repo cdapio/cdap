@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib;
+package io.cdap.cdap.data2.dataset2.lib;
 
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;

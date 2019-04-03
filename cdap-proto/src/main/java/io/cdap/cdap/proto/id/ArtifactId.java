@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.element.EntityType;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -145,10 +145,10 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
   }
 
   /**
-   * Creates a {@link co.cask.cdap.api.artifact.ArtifactId} from this class.
+   * Creates a {@link io.cdap.cdap.api.artifact.ArtifactId} from this class.
    */
-  public co.cask.cdap.api.artifact.ArtifactId toApiArtifactId() {
-    return new co.cask.cdap.api.artifact.ArtifactId(artifact, new ArtifactVersion(version),
+  public io.cdap.cdap.api.artifact.ArtifactId toApiArtifactId() {
+    return new io.cdap.cdap.api.artifact.ArtifactId(artifact, new ArtifactVersion(version),
                                                     NamespaceId.SYSTEM.getNamespace().equals(namespace)
                                                       ? ArtifactScope.SYSTEM : ArtifactScope.USER);
   }

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.twill.HadoopClassExcluder;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.twill.HadoopClassExcluder;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import com.google.common.collect.Iterables;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.ResourceSpecification;

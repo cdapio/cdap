@@ -17,4 +17,4 @@
 /**
  * This package contains GSON codec for various object types using by the runtime system
  */
-package co.cask.cdap.internal.app.runtime.codec;
+package io.cdap.cdap.internal.app.runtime.codec;

@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.spi.data;
+package io.cdap.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
 
 /**
  * Thrown when a table already exists when it is not expected to.

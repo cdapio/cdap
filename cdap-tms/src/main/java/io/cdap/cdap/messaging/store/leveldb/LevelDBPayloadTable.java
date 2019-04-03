@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.leveldb;
+package io.cdap.cdap.messaging.store.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.store.AbstractPayloadTable;
-import co.cask.cdap.messaging.store.ImmutablePayloadTableEntry;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.RawPayloadTableEntry;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.AbstractPayloadTable;
+import io.cdap.cdap.messaging.store.ImmutablePayloadTableEntry;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.RawPayloadTableEntry;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Preconditions;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;

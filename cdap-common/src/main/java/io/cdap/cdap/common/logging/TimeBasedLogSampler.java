@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
-import co.cask.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.common.utils.TimeProvider;
 import org.slf4j.spi.LocationAwareLogger;
 
 import java.util.concurrent.atomic.AtomicLong;

@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.reflect.TypeToken;
 
 /**
- * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
+ * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link DatasetModule}s specified by application.
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployable> {

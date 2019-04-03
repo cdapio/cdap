@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package io.cdap.cdap.client.app;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import com.google.common.base.Preconditions;
 
 import java.io.IOException;

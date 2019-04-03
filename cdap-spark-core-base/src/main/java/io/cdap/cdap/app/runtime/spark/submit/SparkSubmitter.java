@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.submit;
+package io.cdap.cdap.app.runtime.spark.submit;
 
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.net.URI;

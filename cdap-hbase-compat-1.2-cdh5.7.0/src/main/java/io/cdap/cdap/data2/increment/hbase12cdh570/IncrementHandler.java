@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase12cdh570;
+package io.cdap.cdap.data2.increment.hbase12cdh570;
 
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
-import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
-import co.cask.cdap.data2.increment.hbase.TimestampOracle;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
+import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
+import io.cdap.cdap.data2.increment.hbase.TimestampOracle;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.Cell;

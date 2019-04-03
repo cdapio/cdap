@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor.proxy;
+package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
 import io.netty.channel.ChannelHandler;
 import org.apache.twill.discovery.DiscoveryServiceClient;

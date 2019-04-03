@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterCodec;
-import co.cask.cdap.report.util.Constants;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.report.proto.Filter;
+import io.cdap.cdap.report.proto.FilterCodec;
+import io.cdap.cdap.report.util.Constants;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

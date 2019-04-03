@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.data.LineageDatasetContext;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.data.LineageDatasetContext;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
 
 /**
  * An interface for executing task inside transaction. It is similar to {@link TxRunnable} but it provides

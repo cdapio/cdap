@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
-import co.cask.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobID;

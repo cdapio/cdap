@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
-import co.cask.cdap.api.workflow.{Value, WorkflowForkNode}
+import io.cdap.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import io.cdap.cdap.api.workflow.{Value, WorkflowForkNode}
 import com.google.common.base.Stopwatch
 import org.apache.spark.{SparkConf, SparkContext}
 

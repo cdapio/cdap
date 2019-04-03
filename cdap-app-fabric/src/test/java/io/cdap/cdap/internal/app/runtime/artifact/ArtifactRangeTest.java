@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
-import co.cask.cdap.proto.artifact.ArtifactRanges;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;

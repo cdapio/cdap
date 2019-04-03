@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 /**
  * Represents the number of instances a program currently is running with.

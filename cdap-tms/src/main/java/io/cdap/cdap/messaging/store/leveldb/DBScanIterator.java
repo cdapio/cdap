@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.leveldb;
+package io.cdap.cdap.messaging.store.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import com.google.common.base.Throwables;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;

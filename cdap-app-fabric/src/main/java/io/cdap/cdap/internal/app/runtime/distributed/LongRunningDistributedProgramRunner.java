@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
 /**
  * Just a tagging interface for {@link DistributedProgramRunner} that represents long running program.

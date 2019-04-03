@@ -17,4 +17,4 @@
 /**
  * This package contains the public classes for unit tests.
  */
-package co.cask.cdap.test;
+package io.cdap.cdap.test;

@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.etl.tool.config;
+package io.cdap.cdap.etl.tool.config;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.artifact.PluginInfo;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.artifact.PluginInfo;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

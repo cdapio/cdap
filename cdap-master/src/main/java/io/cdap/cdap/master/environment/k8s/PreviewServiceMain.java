@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.UnsupportedExploreClient;
-import co.cask.cdap.app.preview.PreviewHttpModule;
-import co.cask.cdap.app.preview.PreviewHttpServer;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.metadata.MetadataReaderWriterModules;
-import co.cask.cdap.metadata.MetadataServiceModule;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.UnsupportedExploreClient;
+import io.cdap.cdap.app.preview.PreviewHttpModule;
+import io.cdap.cdap.app.preview.PreviewHttpServer;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.MetadataServiceModule;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;

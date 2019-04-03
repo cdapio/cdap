@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.plugins;
+package io.cdap.cdap.logging.plugins;
 
 import java.util.Objects;
 

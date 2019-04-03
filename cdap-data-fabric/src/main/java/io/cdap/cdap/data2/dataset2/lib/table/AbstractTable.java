@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.table.Delete;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Increment;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Result;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.api.dataset.table.TableSplit;
-import co.cask.cdap.format.RecordPutTransformer;
-import co.cask.cdap.internal.io.ReflectionRowRecordReader;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.RecordScanner;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.table.Delete;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Increment;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Result;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.api.dataset.table.TableSplit;
+import io.cdap.cdap.format.RecordPutTransformer;
+import io.cdap.cdap.internal.io.ReflectionRowRecordReader;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;

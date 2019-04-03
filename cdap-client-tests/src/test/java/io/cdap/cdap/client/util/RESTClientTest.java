@@ -15,15 +15,15 @@
  */
 
 
-package co.cask.cdap.client.util;
+package io.cdap.cdap.client.util;
 
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.authentication.client.AccessToken;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;

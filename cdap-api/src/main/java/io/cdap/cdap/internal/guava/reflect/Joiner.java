@@ -16,9 +16,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.guava.reflect;
+package io.cdap.cdap.internal.guava.reflect;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.IOException;
 import java.util.AbstractList;

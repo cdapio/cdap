@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.dataset.DatasetClassRewriter;
-import co.cask.cdap.data2.dataset2.customds.CustomDatasetApp;
-import co.cask.cdap.data2.dataset2.customds.CustomOperations;
-import co.cask.cdap.data2.dataset2.customds.DefaultTopLevelExtendsDataset;
-import co.cask.cdap.data2.dataset2.customds.DelegatingDataset;
-import co.cask.cdap.data2.dataset2.customds.TopLevelDataset;
-import co.cask.cdap.data2.dataset2.customds.TopLevelDirectDataset;
-import co.cask.cdap.data2.dataset2.customds.TopLevelExtendsDataset;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.internal.asm.ByteCodeClassLoader;
-import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.common.dataset.DatasetClassRewriter;
+import io.cdap.cdap.data2.dataset2.customds.CustomDatasetApp;
+import io.cdap.cdap.data2.dataset2.customds.CustomOperations;
+import io.cdap.cdap.data2.dataset2.customds.DefaultTopLevelExtendsDataset;
+import io.cdap.cdap.data2.dataset2.customds.DelegatingDataset;
+import io.cdap.cdap.data2.dataset2.customds.TopLevelDataset;
+import io.cdap.cdap.data2.dataset2.customds.TopLevelDirectDataset;
+import io.cdap.cdap.data2.dataset2.customds.TopLevelExtendsDataset;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;

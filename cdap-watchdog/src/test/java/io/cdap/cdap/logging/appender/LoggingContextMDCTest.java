@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.logback.TestLoggingContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.logback.TestLoggingContext;
 import org.junit.Assert;
 import org.junit.Test;
 

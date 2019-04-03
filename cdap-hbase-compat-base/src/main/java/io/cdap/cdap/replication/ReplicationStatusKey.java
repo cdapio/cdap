@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.replication;
+package io.cdap.cdap.replication;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto;
+package io.cdap.cdap.etl.proto;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 

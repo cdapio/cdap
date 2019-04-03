@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.zookeeper.store.ZKPropertyStore;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;

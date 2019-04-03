@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase98;
+package io.cdap.cdap.data2.increment.hbase98;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.hbase.HBase98Test;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
-import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.data2.util.hbase.MockRegionServerServices;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data.hbase.HBase98Test;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
+import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import io.cdap.cdap.data2.util.hbase.MockRegionServerServices;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;

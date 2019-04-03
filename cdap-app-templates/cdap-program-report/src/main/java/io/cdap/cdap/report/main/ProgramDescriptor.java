@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 
 /**
  * Class used to deserialize artifactId from ProgramDescriptor
@@ -31,8 +31,8 @@ public class ProgramDescriptor {
     String version;
     String namespace;
   }
-  public  co.cask.cdap.api.artifact.ArtifactId getArtifactId() {
-    return new co.cask.cdap.api.artifact.ArtifactId(artifactId.artifact, new ArtifactVersion(artifactId.version),
+  public  io.cdap.cdap.api.artifact.ArtifactId getArtifactId() {
+    return new io.cdap.cdap.api.artifact.ArtifactId(artifactId.artifact, new ArtifactVersion(artifactId.version),
                                                     "SYSTEM".equals(artifactId.namespace)
                                                       ? ArtifactScope.SYSTEM : ArtifactScope.USER);
   }

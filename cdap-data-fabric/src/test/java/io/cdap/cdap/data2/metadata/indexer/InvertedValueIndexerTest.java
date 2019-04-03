@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.indexer;
+package io.cdap.cdap.data2.metadata.indexer;
 
-import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.junit.Assert;

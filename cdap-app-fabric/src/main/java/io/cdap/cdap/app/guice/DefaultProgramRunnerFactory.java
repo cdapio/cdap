@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.internal.app.program.StateChangeListener;
-import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
+import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.internal.app.program.StateChangeListener;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;

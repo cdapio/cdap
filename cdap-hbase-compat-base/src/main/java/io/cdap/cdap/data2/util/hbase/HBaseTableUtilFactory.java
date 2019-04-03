@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import com.google.inject.Inject;
 
 /**
@@ -54,36 +54,36 @@ public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTabl
 
   @Override
   protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase96TableUtil";
   }
 
   @Override
   protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase98TableUtil";
   }
 
   @Override
   protected String getHBase10Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase10TableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase10TableUtil";
   }
 
   @Override
   protected String getHBase10CDHClassname() {
-    return "co.cask.cdap.data2.util.hbase.HBase10CDHTableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase10CDHTableUtil";
   }
 
   @Override
   protected String getHBase11Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase11TableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase11TableUtil";
   }
 
   @Override
   protected String getHBase10CHD550ClassName() {
-    return "co.cask.cdap.data2.util.hbase.HBase10CDH550TableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase10CDH550TableUtil";
   }
 
   @Override
   protected String getHBase12CHD570ClassName() {
-    return "co.cask.cdap.data2.util.hbase.HBase12CDH570TableUtil";
+    return "io.cdap.cdap.data2.util.hbase.HBase12CDH570TableUtil";
   }
 }

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
-import co.cask.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.metrics.Metrics;
 
 /**
  * The interface exposes method for emitting user metrics from ETL stage.

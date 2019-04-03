@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.pipeline;
+package io.cdap.cdap.pipeline;
 
 import com.google.common.reflect.TypeToken;
 

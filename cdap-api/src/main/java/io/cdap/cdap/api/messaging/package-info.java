@@ -21,6 +21,6 @@
  * are subject to change in future CDAP releases until it is out of the beta phase.
  */
 @Beta
-package co.cask.cdap.api.messaging;
+package io.cdap.cdap.api.messaging;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;

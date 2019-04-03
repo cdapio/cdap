@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.output;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.output;
 
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.spark;
+package io.cdap.cdap.etl.mock.spark;
 
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;

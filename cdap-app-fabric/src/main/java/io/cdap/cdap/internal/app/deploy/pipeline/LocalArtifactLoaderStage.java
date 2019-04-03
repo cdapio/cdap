@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.deploy.ConfigResponse;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
-import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.pipeline.Context;
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.Stage;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
+import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.pipeline.Context;
+import io.cdap.cdap.pipeline.Pipeline;
+import io.cdap.cdap.pipeline.Stage;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;

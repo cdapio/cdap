@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic;
+package io.cdap.cdap.app.runtime.spark.dynamic;
 
-import co.cask.cdap.api.spark.dynamic.CompilationFailureException;
-import co.cask.cdap.api.spark.dynamic.InterpretFailureException;
-import co.cask.cdap.api.spark.dynamic.SparkCompiler;
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
+import io.cdap.cdap.api.spark.dynamic.CompilationFailureException;
+import io.cdap.cdap.api.spark.dynamic.InterpretFailureException;
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler;
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import org.junit.Assert;
@@ -53,7 +53,7 @@ public abstract class SparkCompilerTestBase {
 
       // Compile a class that write out array to a file
       try (PrintWriter sourceWriter = new PrintWriter(writer, true)) {
-        sourceWriter.println("package co.cask.cdap.test");
+        sourceWriter.println("package io.cdap.cdap.test");
         sourceWriter.println("import java.io._");
         sourceWriter.println("class TestClass(outputFile: File) {");
         sourceWriter.println("  def write(args: Array[String]): Unit = {");
@@ -79,7 +79,7 @@ public abstract class SparkCompilerTestBase {
       // Compile a main class
       StringWriter writer = new StringWriter();
       try (PrintWriter sourceWriter = new PrintWriter(writer, true)) {
-        sourceWriter.println("package co.cask.cdap.test");
+        sourceWriter.println("package io.cdap.cdap.test");
         sourceWriter.println("import java.io._");
         sourceWriter.println("object TestMain {");
         sourceWriter.println("  def main(args: Array[String]): Unit = {");
@@ -97,7 +97,7 @@ public abstract class SparkCompilerTestBase {
 
     // Call the `TestMain.main` method
     File outputFile = TEMP_FOLDER.newFile();
-    interpreter.addImports(JavaConversions.asScalaBuffer(Collections.singletonList("co.cask.cdap.test.TestMain")));
+    interpreter.addImports(JavaConversions.asScalaBuffer(Collections.singletonList("io.cdap.cdap.test.TestMain")));
     interpreter.bind("output", File.class.getName(), outputFile,
                      JavaConversions.asScalaBuffer(Collections.<String>emptyList()));
     interpreter.interpret("TestMain.main(Array(output.getAbsolutePath(), \"a\", \"b\", \"c\"))");
@@ -112,7 +112,7 @@ public abstract class SparkCompilerTestBase {
 
     // Use the ClassLoader to load the TestMain class and call it using reflection
     File newOutputFile = TEMP_FOLDER.newFile();
-    Class<?> testMainClass = interpreter.getClassLoader().loadClass("co.cask.cdap.test.TestMain");
+    Class<?> testMainClass = interpreter.getClassLoader().loadClass("io.cdap.cdap.test.TestMain");
     testMainClass.getDeclaredMethod("main", String[].class).invoke(null, new Object[] { new String[] {
       newOutputFile.getAbsolutePath(), "x", "y", "z"
     }});

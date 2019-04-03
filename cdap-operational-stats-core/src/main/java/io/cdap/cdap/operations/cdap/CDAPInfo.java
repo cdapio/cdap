@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.operations.cdap;
+package io.cdap.cdap.operations.cdap;
 
-import co.cask.cdap.operations.OperationalStats;
+import io.cdap.cdap.operations.OperationalStats;
 
 /**
  * {@link OperationalStats} representing CDAP information.

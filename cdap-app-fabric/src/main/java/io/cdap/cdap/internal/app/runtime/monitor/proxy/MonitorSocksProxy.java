@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor.proxy;
+package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

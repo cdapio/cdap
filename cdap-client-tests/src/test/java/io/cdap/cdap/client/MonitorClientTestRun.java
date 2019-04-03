@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.proto.Containers;
-import co.cask.cdap.proto.SystemServiceMeta;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.proto.Containers;
+import io.cdap.cdap.proto.SystemServiceMeta;
+import io.cdap.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProfileId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Collections;

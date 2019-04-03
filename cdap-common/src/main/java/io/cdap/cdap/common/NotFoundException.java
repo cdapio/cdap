@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.proto.id.EntityId;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.annotation.Nullable;

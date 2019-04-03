@@ -19,4 +19,4 @@
  * example, an artifact can contain an Application class to create applications from, or it can contain plugins that
  * can be used by programs.
  */
-package co.cask.cdap.api.artifact;
+package io.cdap.cdap.api.artifact;

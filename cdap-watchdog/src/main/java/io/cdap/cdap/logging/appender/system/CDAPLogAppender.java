@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.system;
+package io.cdap.cdap.logging.appender.system;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Syncable;
-import co.cask.cdap.logging.clean.FileMetadataCleaner;
-import co.cask.cdap.logging.clean.LogCleaner;
-import co.cask.cdap.logging.meta.FileMetaDataWriter;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Syncable;
+import io.cdap.cdap.logging.clean.FileMetadataCleaner;
+import io.cdap.cdap.logging.clean.LogCleaner;
+import io.cdap.cdap.logging.meta.FileMetaDataWriter;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;

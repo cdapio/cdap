@@ -17,4 +17,4 @@
 /**
  * Handlers for Router.
  */
-package co.cask.cdap.gateway.router.handlers;
+package io.cdap.cdap.gateway.router.handlers;

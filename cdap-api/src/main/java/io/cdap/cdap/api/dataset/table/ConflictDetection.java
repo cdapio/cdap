@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
 /**
 * Conflict detection level of a table.

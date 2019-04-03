@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.deploy;
+package io.cdap.cdap.app.deploy;
 
-import co.cask.cdap.internal.app.deploy.ProgramTerminator;
+import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 
 /**
  * Factory for creating deployment {@link Manager}.

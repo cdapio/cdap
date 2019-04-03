@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package io.cdap.cdap.logging.pipeline;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
-import co.cask.cdap.logging.framework.Loggers;
+import io.cdap.cdap.logging.framework.Loggers;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;

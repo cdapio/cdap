@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.guice.preview;
+package io.cdap.cdap.common.guice.preview;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;

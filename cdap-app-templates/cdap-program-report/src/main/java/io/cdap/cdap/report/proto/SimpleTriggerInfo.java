@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto;
+package io.cdap.cdap.report.proto;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggerInfo;
 
 /**
  * A simple trigger information that only contains the type of the trigger.

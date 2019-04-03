@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 

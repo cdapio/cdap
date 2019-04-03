@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.WorkflowLoggingContext;
-import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
-import co.cask.cdap.logging.gateway.handlers.LogData;
-import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.context.WorkflowLoggingContext;
+import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
+import io.cdap.cdap.logging.gateway.handlers.LogData;
+import io.cdap.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HttpHeaders;

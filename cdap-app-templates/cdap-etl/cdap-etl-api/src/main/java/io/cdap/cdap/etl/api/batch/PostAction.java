@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package io.cdap.cdap.etl.api.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.etl.api.PipelineConfigurable;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.etl.api.PipelineConfigurable;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
 
 /**
  * Defines some logic that runs at the end of a workflow run. The action is run regardless of whether the pipeline

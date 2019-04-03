@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package io.cdap.cdap.config;
 
-import co.cask.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.AlreadyExistsException;
 
 /**
  * Thrown when a Configuration is present when it is not expected to be.

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.plugin;
+package io.cdap.cdap.internal.app.runtime.plugin;
 
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;

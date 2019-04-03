@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package io.cdap.cdap.datapipeline;
 
 import java.util.List;
 import java.util.Map;

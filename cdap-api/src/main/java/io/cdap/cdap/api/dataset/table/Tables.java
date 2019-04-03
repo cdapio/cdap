@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 
 /**
  * Utility for describing {@link Table} and derived data sets within application configuration.

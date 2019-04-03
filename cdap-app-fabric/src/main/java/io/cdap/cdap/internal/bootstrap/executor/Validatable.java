@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
 /**
  * Something that can be validated.

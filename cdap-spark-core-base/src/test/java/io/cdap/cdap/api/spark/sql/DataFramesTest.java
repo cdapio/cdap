@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.sql;
+package io.cdap.cdap.api.spark.sql;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;

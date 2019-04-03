@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.internal.asm.ByteCodeClassLoader;
-import co.cask.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
+import io.cdap.cdap.internal.asm.ClassDefinition;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;

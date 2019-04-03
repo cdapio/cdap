@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto;
+package io.cdap.cdap.report.proto;
 
 /**
  * ReportIdentifier represented by userName and reportId

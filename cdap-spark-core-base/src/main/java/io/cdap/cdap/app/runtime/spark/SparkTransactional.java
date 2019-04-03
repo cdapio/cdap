@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkExecutionContext;
-import co.cask.cdap.data.LineageDatasetContext;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.spark.SparkExecutionContext;
+import io.cdap.cdap.data.LineageDatasetContext;
+import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.transaction.RetryingLongTransactionSystemClient;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.apache.spark.SparkContext;

@@ -14,33 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata.dataset;
+package io.cdap.cdap.spi.metadata.dataset;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
-import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.data2.metadata.dataset.SearchResults;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.IndexedTableDefinition;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.metadata.dataset.MetadataDataset;
+import io.cdap.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
+import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
+import io.cdap.cdap.data2.metadata.dataset.SearchRequest;
+import io.cdap.cdap.data2.metadata.dataset.SearchResults;
+import io.cdap.cdap.data2.metadata.dataset.SortInfo;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -68,8 +68,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
-import static co.cask.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
 
 /**
  * Implements the metadata search over metadata datasets.
@@ -131,7 +131,7 @@ public class SearchHelper {
     return USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 
-  private class MetaOnlyDatasetContext implements co.cask.cdap.api.data.DatasetContext, AutoCloseable {
+  private class MetaOnlyDatasetContext implements io.cdap.cdap.api.data.DatasetContext, AutoCloseable {
     private final Map<String, MetadataDataset> datasets = new HashMap<>();
     private final TransactionContext txContext;
 
@@ -200,7 +200,7 @@ public class SearchHelper {
   private Transactional createTransactional(TransactionSystemClient txClient) {
     return new Transactional() {
       @Override
-      public void execute(co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+      public void execute(io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
         try (MetaOnlyDatasetContext datasetContext = new MetaOnlyDatasetContext(txContext)) {
           txContext.start();
@@ -211,7 +211,7 @@ public class SearchHelper {
       }
 
       @Override
-      public void execute(int timeout, co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+      public void execute(int timeout, io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
         try (MetaOnlyDatasetContext datasetContext = new MetaOnlyDatasetContext(txContext)) {
           txContext.start(timeout);
@@ -221,8 +221,8 @@ public class SearchHelper {
         }
       }
 
-      private void finishExecute(TransactionContext txContext, co.cask.cdap.api.data.DatasetContext dsContext,
-                                 co.cask.cdap.api.TxRunnable runnable)
+      private void finishExecute(TransactionContext txContext, io.cdap.cdap.api.data.DatasetContext dsContext,
+                                 io.cdap.cdap.api.TxRunnable runnable)
         throws TransactionFailureException {
         try {
           runnable.run(dsContext);

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.explore.table;
+package io.cdap.cdap.explore.table;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.dataset2.lib.partitioned.FieldTypes;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data2.dataset2.lib.partitioned.FieldTypes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -204,7 +204,7 @@ public class CreateStatementBuilder {
    * and has optional serde properties. For example:
    *
    * CREATE EXTERNAL TABLE IF NOT EXISTS nn
-   *   STORED BY 'co.cask.cdap.hive.datasets.DatasetStorageHandler'
+   *   STORED BY 'io.cdap.cdap.hive.datasets.DatasetStorageHandler'
    *     WITH SERDEPROPERTIES ('cdap.name' = 'nn', 'cdap.namespace' = 'default')
    * LOCATION '<uri>'
    * TBLPROPERTIES ( ... )

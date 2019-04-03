@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ProgramType;
 
 /**
  * A dummy implementation of {@link ProgramRunnerFactory} that doesn't support any program type.

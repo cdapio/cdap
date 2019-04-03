@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.lineage.field;
+package io.cdap.cdap.api.lineage.field;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

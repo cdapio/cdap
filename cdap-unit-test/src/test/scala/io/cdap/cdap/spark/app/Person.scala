@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
 /**
   * A case class representing a person.

@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.store.preview;
+package io.cdap.cdap.internal.app.store.preview;
 
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;

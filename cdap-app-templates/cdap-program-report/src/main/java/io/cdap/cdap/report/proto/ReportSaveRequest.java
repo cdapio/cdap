@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto;
+package io.cdap.cdap.report.proto;
 
 /**
  * Represents a request to save a program run report in an HTTP request.

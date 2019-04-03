@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.table.Delete;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Increment;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Result;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.RecordScanner;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.dataset.table.Delete;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Increment;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Result;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ import javax.annotation.Nullable;
  * of index reads).
  * </p>
  *
- * <p>The columns to index can be configured in the {@link co.cask.cdap.api.dataset.DatasetProperties} used
+ * <p>The columns to index can be configured in the {@link io.cdap.cdap.api.dataset.DatasetProperties} used
  * when the dataset instance in created.  Multiple column names should be listed as a comma-separated string
  * (with no spaces):
  *
@@ -242,7 +242,7 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /**
    * Reads table rows by the given secondary index key.  If no rows are indexed by the given key, then a
-   * {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.
+   * {@link io.cdap.cdap.api.dataset.table.Scanner} with no results will be returned.
    * 
    * @return a Scanner returning rows from the data table, whose stored value for the given column matches the
    * given value.
@@ -259,7 +259,7 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /**
    * Reads table rows within the given secondary index key range. If no rows are indexed, falling within the given
-   * range, then a {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.
+   * range, then a {@link io.cdap.cdap.api.dataset.table.Scanner} with no results will be returned.
    *
    * @param column the column to use for the index lookup
    * @param startValue the inclusive start of the range for which rows must fall within to be returned in the scan.

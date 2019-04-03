@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.loader;
+package io.cdap.cdap.logging.appender.loader;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -22,9 +22,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.AbstractIdleService;

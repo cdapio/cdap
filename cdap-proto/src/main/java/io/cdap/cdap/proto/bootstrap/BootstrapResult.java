@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.proto.bootstrap;
+package io.cdap.cdap.proto.bootstrap;
 
 import java.util.Collections;
 import java.util.List;

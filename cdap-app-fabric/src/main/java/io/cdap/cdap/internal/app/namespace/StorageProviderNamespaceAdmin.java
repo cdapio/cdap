@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 import java.sql.SQLException;

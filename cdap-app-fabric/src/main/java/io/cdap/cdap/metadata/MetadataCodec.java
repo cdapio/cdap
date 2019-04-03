@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.ScopedName;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

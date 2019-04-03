@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.ModuleConflictException;
-import co.cask.cdap.data2.dataset2.SingleTypeModule;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.ModuleConflictException;
+import io.cdap.cdap.data2.dataset2.SingleTypeModule;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import com.google.common.collect.Iterables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;

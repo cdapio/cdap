@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;

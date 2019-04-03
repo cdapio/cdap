@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.hbase;
+package io.cdap.cdap.messaging.store.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.PutBuilder;
-import co.cask.cdap.data2.util.hbase.ScanBuilder;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.PutBuilder;
+import io.cdap.cdap.data2.util.hbase.ScanBuilder;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.MetadataTable;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.client.Get;

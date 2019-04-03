@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package io.cdap.cdap.api.service;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.service.http.HttpServiceHandler;
 
 /**
  * Interface for configurers used to create custom Services.

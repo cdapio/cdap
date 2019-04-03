@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.queue;
+package io.cdap.cdap.logging.pipeline.queue;
 
-import co.cask.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.meta.Checkpoint;
 
 import java.util.Map;
 import javax.annotation.Nullable;

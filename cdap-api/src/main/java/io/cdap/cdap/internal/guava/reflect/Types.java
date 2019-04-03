@@ -16,9 +16,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.guava.reflect;
+package io.cdap.cdap.internal.guava.reflect;
 
-import co.cask.cdap.api.Predicate;
+import io.cdap.cdap.api.Predicate;
 
 import java.io.Serializable;
 import java.lang.reflect.AnnotatedElement;

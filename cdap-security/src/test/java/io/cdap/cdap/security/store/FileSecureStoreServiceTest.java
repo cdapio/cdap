@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package io.cdap.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.proto.NamespaceMeta;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.UnmodifiableIterator;
 import org.apache.commons.io.Charsets;

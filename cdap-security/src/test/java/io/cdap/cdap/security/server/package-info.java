@@ -17,4 +17,4 @@
 /**
  *
  */
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;

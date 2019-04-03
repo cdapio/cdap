@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.query;
+package io.cdap.cdap.metrics.query;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.dataset.lib.cube.Interpolator;
-import co.cask.cdap.api.dataset.lib.cube.Interpolators;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.proto.MetricQueryRequest;
-import co.cask.cdap.proto.MetricQueryResult;
-import co.cask.cdap.proto.MetricTagValue;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
+import io.cdap.cdap.api.dataset.lib.cube.Interpolators;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricSearchQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.TagValue;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.TimeMathParser;
+import io.cdap.cdap.proto.MetricQueryRequest;
+import io.cdap.cdap.proto.MetricQueryResult;
+import io.cdap.cdap.proto.MetricTagValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;

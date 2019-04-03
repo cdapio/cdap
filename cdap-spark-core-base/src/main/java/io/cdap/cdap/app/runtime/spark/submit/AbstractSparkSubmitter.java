@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.submit;
+package io.cdap.cdap.app.runtime.spark.submit;
 
 
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;

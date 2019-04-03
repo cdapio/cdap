@@ -17,4 +17,4 @@
 /**
  * Contains classes to fetch messages from with Kafka.
  */
-package co.cask.cdap.logging.kafka;
+package io.cdap.cdap.logging.kafka;

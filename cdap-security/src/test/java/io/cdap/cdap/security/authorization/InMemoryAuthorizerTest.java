@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.AuthorizerTest;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.AuthorizerTest;
 
 /**
  * Tests for {@link InMemoryAuthorizer}.

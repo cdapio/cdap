@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark;
+package io.cdap.cdap.etl.spark;
 
-import co.cask.cdap.etl.api.Lookup;
-import co.cask.cdap.etl.api.LookupProvider;
+import io.cdap.cdap.etl.api.Lookup;
+import io.cdap.cdap.etl.api.LookupProvider;
 
 import java.util.Map;
 

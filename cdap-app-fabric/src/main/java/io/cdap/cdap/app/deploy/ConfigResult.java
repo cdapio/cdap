@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.deploy;
+package io.cdap.cdap.app.deploy;
 
 /**
  * A container class for holding configuration result.

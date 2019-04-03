@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.PluginInstanceDetail;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.PluginInstanceDetail;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;

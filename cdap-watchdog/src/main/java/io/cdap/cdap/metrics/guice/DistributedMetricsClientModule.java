@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.guice;
+package io.cdap.cdap.metrics.guice;
 
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.internal.io.DatumWriterFactory;
-import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.metrics.collect.MessagingMetricsCollectionService;
-import co.cask.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.internal.io.DatumWriterFactory;
+import io.cdap.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
+import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;

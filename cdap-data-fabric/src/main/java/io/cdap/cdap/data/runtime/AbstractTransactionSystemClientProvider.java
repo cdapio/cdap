@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionSystemClient;
 

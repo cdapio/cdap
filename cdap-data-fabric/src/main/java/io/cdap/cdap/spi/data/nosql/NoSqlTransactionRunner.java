@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.nosql;
+package io.cdap.cdap.spi.data.nosql;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.spi.data.nosql.dataset.NoSQLTransactionals;
-import co.cask.cdap.spi.data.nosql.dataset.TableDatasetSupplier;
-import co.cask.cdap.spi.data.transaction.TransactionException;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TxRunnable;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.spi.data.nosql.dataset.NoSQLTransactionals;
+import io.cdap.cdap.spi.data.nosql.dataset.TableDatasetSupplier;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;

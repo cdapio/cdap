@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.module.EmbeddedDataset;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
+import io.cdap.cdap.api.dataset.table.Table;
 import org.apache.tephra.Transaction;
 
 /**

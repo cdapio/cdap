@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.common.io.LocationStatus;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.io.Processor;
+import io.cdap.cdap.common.io.LocationStatus;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.io.Processor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;

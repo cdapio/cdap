@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework.distributed;
+package io.cdap.cdap.logging.framework.distributed;
 
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.resource.ResourceBalancerService;
-import co.cask.cdap.common.service.RetryOnStartFailureService;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.logging.framework.LogPipelineLoader;
-import co.cask.cdap.logging.framework.LogPipelineSpecification;
-import co.cask.cdap.logging.meta.CheckpointManagerFactory;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
-import co.cask.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.resource.ResourceBalancerService;
+import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.logging.framework.LogPipelineLoader;
+import io.cdap.cdap.logging.framework.LogPipelineSpecification;
+import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
+import io.cdap.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.mapreduce;
+package io.cdap.cdap.app.mapreduce;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.MRJobInfo;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.MRJobInfo;
 
 import java.io.IOException;
 

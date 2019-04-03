@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.plugin;
+package io.cdap.cdap.internal.app.runtime.plugin;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.InvalidPluginConfigException;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.lang.FieldVisitor;
-import co.cask.cdap.internal.lang.Fields;
-import co.cask.cdap.internal.lang.Reflections;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.lang.FieldVisitor;
+import io.cdap.cdap.internal.lang.Fields;
+import io.cdap.cdap.internal.lang.Reflections;
 import com.google.common.base.Defaults;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;

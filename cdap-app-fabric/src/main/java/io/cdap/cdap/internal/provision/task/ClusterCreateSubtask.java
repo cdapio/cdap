@@ -15,13 +15,13 @@
  *
  */
 
-package co.cask.cdap.internal.provision.task;
+package io.cdap.cdap.internal.provision.task;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.provision.ProvisioningOp;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.provision.ProvisioningOp;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.logging.AuditLogConfig;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.common.logging.AuditLogConfig;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import com.google.common.collect.ImmutableList;
 import io.netty.handler.codec.http.HttpMethod;
 import org.junit.Assert;

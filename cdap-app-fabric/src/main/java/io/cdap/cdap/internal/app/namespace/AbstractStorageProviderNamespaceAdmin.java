@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.explore.client.ExploreFacade;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import com.google.common.base.Strings;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;

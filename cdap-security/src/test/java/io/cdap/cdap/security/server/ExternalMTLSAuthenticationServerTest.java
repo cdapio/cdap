@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.security.tools.HttpsEnabler;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.security.tools.HttpsEnabler;
 import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -75,7 +75,7 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
     cConf.set(Constants.Security.AUTH_SERVER_BIND_PORT, "1");
 
     // Configure the Custom Handler
-    cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("ClassName"), "co.cask.cdap.security.server" +
+    cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("ClassName"), "io.cdap.cdap.security.server" +
       ".CertificateAuthenticationHandler");
 
     // setup the realm file for Identity

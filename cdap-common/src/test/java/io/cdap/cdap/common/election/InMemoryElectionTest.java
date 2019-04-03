@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.election;
+package io.cdap.cdap.common.election;
 
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Cancellable;

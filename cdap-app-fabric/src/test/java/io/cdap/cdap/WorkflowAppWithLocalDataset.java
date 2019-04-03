@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 
 /**
  * App with local dataset.

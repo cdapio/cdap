@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata.lineage;
+package io.cdap.cdap.proto.metadata.lineage;
 
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Objects;
 import java.util.Set;

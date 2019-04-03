@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib;
+package io.cdap.cdap.data2.dataset2.module.lib;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.data2.dataset2.SingleTypeModule;
 
 /**
  * Utility class for dealing with {@link DatasetModule}s

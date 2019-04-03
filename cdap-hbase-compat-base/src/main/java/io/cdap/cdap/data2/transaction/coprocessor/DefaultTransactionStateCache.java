@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.coprocessor;
+package io.cdap.cdap.data2.transaction.coprocessor;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.util.hbase.CConfigurationReader;
-import co.cask.cdap.data2.util.hbase.ConfigurationReader;
-import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.ConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HBaseConfiguration;

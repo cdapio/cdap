@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.schedule.TriggerFactory;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.TriggerFactory;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * The default implementation of {@link TriggerFactory}
@@ -65,7 +65,7 @@ public class DefaultTriggerFactory implements TriggerFactory {
   public Trigger onProgramStatus(String namespace, String application, String appVersion,
                                  ProgramType programType, String program, ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ApplicationId(namespace, application, appVersion)
-                                      .program(co.cask.cdap.proto.ProgramType.valueOf(programType.name()), program),
+                                      .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
                                     programStatuses);
   }
 
@@ -73,7 +73,7 @@ public class DefaultTriggerFactory implements TriggerFactory {
   public Trigger onProgramStatus(String programNamespace, String application, ProgramType programType,
                                  String program, ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ApplicationId(programNamespace, application)
-                                      .program(co.cask.cdap.proto.ProgramType.valueOf(programType.name()), program),
+                                      .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
                                     programStatuses);
   }
 
@@ -81,7 +81,7 @@ public class DefaultTriggerFactory implements TriggerFactory {
   public Trigger onProgramStatus(String application, ProgramType programType, String program,
                                  ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ProgramId(namespaceId.getNamespace(), application,
-                                                  co.cask.cdap.proto.ProgramType.valueOf(programType.name()), program),
+                                                  io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
                                     programStatuses);
   }
 

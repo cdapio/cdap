@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.server;
+package io.cdap.cdap.messaging.server;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.ByteBuffers;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.messaging.MessageFetcher;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.Schemas;
-import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.ByteBuffers;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.Schemas;
+import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;

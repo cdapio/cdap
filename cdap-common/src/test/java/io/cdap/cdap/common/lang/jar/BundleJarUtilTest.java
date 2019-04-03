@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang.jar;
+package io.cdap.cdap.common.lang.jar;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;

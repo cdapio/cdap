@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.file;
+package io.cdap.cdap.data2.dataset2.lib.file;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.utils.FileUtils;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.utils.FileUtils;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

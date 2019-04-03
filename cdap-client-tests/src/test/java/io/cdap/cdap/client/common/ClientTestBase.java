@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.client.common;
+package io.cdap.cdap.client.common;
 
-import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.client.AbstractClientTest;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.TestRunner;
-import co.cask.cdap.test.SingletonExternalResource;
+import io.cdap.cdap.StandaloneTester;
+import io.cdap.cdap.client.AbstractClientTest;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.TestRunner;
+import io.cdap.cdap.test.SingletonExternalResource;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 

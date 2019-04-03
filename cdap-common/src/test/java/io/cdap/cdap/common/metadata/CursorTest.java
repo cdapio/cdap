@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.metadata;
+package io.cdap.cdap.common.metadata;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
@@ -22,8 +22,8 @@ import org.junit.Test;
 
 import java.util.Set;
 
-import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
-import static co.cask.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
 
 public class CursorTest {
 

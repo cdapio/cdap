@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.DatasetInstanceOperation;
-import co.cask.cdap.data2.metadata.writer.MetadataMessage;
-import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.DatasetInstanceOperation;
+import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
+import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.slf4j.Logger;

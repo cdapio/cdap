@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.SecureStore;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;

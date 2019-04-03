@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment;
+package io.cdap.cdap.master.environment;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 
 import java.util.Map;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.runtime;
+package io.cdap.cdap.k8s.runtime;
 
-import co.cask.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
@@ -391,7 +391,7 @@ class KubeTwillPreparer implements TwillPreparer {
            containers:
            - name: cdap-app-container
              image: gcr.io/cdap-dogfood/cdap-sandbox:k8s-26
-             command: ["co.cask.cdap.internal.app.runtime.k8s.UserServiceProgramMain"]
+             command: ["io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain"]
              args: ["--env=k8s",
                     "--appSpecPath=/etc/podinfo-app/appSpec", "--programOptions=/etc/podinfo-app/programOptions"]
              volumeMounts:
@@ -455,7 +455,7 @@ class KubeTwillPreparer implements TwillPreparer {
                        .collect(Collectors.toList()));
 
     // when other program types are supported, there will need to be a mapping from program type to main class
-    container.setArgs(Arrays.asList("co.cask.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
+    container.setArgs(Arrays.asList("io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
                                     String.format("--appSpecPath=%s/%s", configDir, APP_SPEC),
                                     String.format("--programOptions=%s/%s", configDir, PROGRAM_OPTIONS)));
     podSpec.setContainers(Collections.singletonList(container));

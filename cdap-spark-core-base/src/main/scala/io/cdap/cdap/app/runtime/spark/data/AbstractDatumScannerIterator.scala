@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
-import co.cask.cdap.app.runtime.spark.data
+import io.cdap.cdap.app.runtime.spark.data
 import org.apache.spark.TaskContext
 import org.apache.spark.TaskKilledException
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.plugin;
+package io.cdap.cdap.api.plugin;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import javax.annotation.Nullable;
 

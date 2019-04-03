@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.app;
+package io.cdap.cdap.cli.command.app;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.BatchProgram;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.BatchProgram;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import io.cdap.common.cli.Arguments;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.plugin;
+package io.cdap.cdap.internal.app.runtime.artifact.plugin;
 
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepositoryTest;
-import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryTest;
+import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 
 /**
  * A empty class for the purpose of {@link ArtifactRepositoryTest} only. Have it implements a template API class

@@ -14,36 +14,36 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.client.AuthorizationClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.AuthenticationChannelHandler;
-import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.proto.security.Role;
-import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
-import co.cask.cdap.security.authorization.AuthorizationContextFactory;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.authorization.NoOpAuthorizationContextFactory;
-import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.client.AuthorizationClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.FeatureDisabledException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.AuthenticationChannelHandler;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.security.auth.context.MasterAuthenticationContext;
+import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
+import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.authorization.NoOpAuthorizationContextFactory;
+import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.cdap.http.ChannelPipelineModifier;
@@ -311,7 +311,7 @@ public class AuthorizationHandlerTest {
     try {
       client.dropRole(admins);
       Assert.fail(String.format("Dropped a role %s which does not exists. Should have failed.", admins.getName()));
-    } catch (co.cask.cdap.security.spi.authorization.NotFoundException expected) {
+    } catch (io.cdap.cdap.security.spi.authorization.NotFoundException expected) {
       // expected
     }
 
@@ -323,7 +323,7 @@ public class AuthorizationHandlerTest {
     try {
       client.addRoleToPrincipal(admins, spiderman);
       Assert.fail(String.format("Added role %s to principal %s. Should have failed.", admins, spiderman));
-    } catch (co.cask.cdap.security.spi.authorization.NotFoundException expected) {
+    } catch (io.cdap.cdap.security.spi.authorization.NotFoundException expected) {
       // expected
     }
 
@@ -362,7 +362,7 @@ public class AuthorizationHandlerTest {
       client.removeRoleFromPrincipal(admins, spiderman);
       Assert.fail(String.format("Removed non-existing role %s from principal %s. Should have failed.", admins,
                                 spiderman));
-    } catch (co.cask.cdap.security.spi.authorization.NotFoundException expected) {
+    } catch (io.cdap.cdap.security.spi.authorization.NotFoundException expected) {
       // expected
     }
   }
@@ -472,7 +472,7 @@ public class AuthorizationHandlerTest {
 
   /**
    * Test {@link ChannelInboundHandlerAdapter} to set the username as an HTTP Header
-   * {@link co.cask.cdap.common.conf.Constants.Security.Headers#USER_ID}. In production, this is done in the router by
+   * {@link io.cdap.cdap.common.conf.Constants.Security.Headers#USER_ID}. In production, this is done in the router by
    * SecurityAuthenticationHandler
    */
   private static final class TestUserNameSetter extends ChannelInboundHandlerAdapter {

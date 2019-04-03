@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;

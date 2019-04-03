@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.internal.lang.CallerClassSecurityManager;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
@@ -104,10 +104,10 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (cls.getName().equals(className)) {
         String classLoaderName = cls.getClassLoader().getClass().getName();
         switch (classLoaderName) {
-          case "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader":
+          case "io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader":
             tags = Collections.singletonMap(ORIGIN_KEY, "plugin");
             break;
-          case "co.cask.cdap.internal.app.runtime.ProgramClassLoader":
+          case "io.cdap.cdap.internal.app.runtime.ProgramClassLoader":
             tags = Collections.singletonMap(ORIGIN_KEY, "program");
             break;
           default:

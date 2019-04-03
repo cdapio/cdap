@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto;
+package io.cdap.cdap.report.proto;
 
-import co.cask.cdap.report.proto.summary.ReportSummary;
+import io.cdap.cdap.report.proto.summary.ReportSummary;
 
 import javax.annotation.Nullable;
 

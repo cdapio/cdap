@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.function;
+package io.cdap.cdap.etl.spark.function;
 
-import co.cask.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.JoinElement;
 import org.apache.spark.api.java.function.Function;
 
 import java.util.ArrayList;

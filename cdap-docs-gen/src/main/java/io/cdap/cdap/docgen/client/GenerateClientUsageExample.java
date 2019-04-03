@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.docgen.client;
+package io.cdap.cdap.docgen.client;
 
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.client.DatasetTypeClient;
-import co.cask.cdap.client.MonitorClient;
-import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.QueryClient;
-import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.SystemServiceMeta;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.client.DatasetClient;
+import io.cdap.cdap.client.DatasetModuleClient;
+import io.cdap.cdap.client.DatasetTypeClient;
+import io.cdap.cdap.client.MonitorClient;
+import io.cdap.cdap.client.PreferencesClient;
+import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.client.QueryClient;
+import io.cdap.cdap.client.ServiceClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.SystemServiceMeta;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 

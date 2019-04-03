@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceMeta;
 
 /**
  * No op implementation of naemspace resource deleter

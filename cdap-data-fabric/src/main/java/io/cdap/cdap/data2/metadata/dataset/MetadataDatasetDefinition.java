@@ -13,17 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.metadata.dataset;
+package io.cdap.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.Reconfigurable;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.Reconfigurable;
+import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import com.google.common.base.Joiner;
 
 import java.io.IOException;

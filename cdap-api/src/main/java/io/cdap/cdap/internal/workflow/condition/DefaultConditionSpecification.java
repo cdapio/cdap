@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.workflow.condition;
+package io.cdap.cdap.internal.workflow.condition;
 
-import co.cask.cdap.api.workflow.ConditionSpecification;
+import io.cdap.cdap.api.workflow.ConditionSpecification;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowContext;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.workflow.WorkflowContext;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;

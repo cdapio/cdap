@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.store;
+package io.cdap.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.TableNotFoundException;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

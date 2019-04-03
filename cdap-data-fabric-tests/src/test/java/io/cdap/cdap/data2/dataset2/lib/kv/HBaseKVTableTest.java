@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.kv;
+package io.cdap.cdap.data2.dataset2.lib.kv;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.data.hbase.HBaseTestBase;
+import io.cdap.cdap.data.hbase.HBaseTestFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

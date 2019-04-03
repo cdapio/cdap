@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.namespace;
+package io.cdap.cdap.common.namespace;
 
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.util.List;
 

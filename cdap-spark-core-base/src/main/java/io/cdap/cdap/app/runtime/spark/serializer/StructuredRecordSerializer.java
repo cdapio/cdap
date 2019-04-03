@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.serializer;
+package io.cdap.cdap.app.runtime.spark.serializer;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.format.io.StructuredRecordDatumReader;
-import co.cask.cdap.format.io.StructuredRecordDatumWriter;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.format.io.StructuredRecordDatumReader;
+import io.cdap.cdap.format.io.StructuredRecordDatumWriter;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.Serializer;

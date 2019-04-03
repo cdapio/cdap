@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.dataset.lib.ConditionCodec;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.ConditionCodec;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;

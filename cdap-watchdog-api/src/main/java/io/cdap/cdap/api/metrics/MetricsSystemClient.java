@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package io.cdap.cdap.api.metrics;
 
 import java.io.IOException;
 import java.util.Collection;

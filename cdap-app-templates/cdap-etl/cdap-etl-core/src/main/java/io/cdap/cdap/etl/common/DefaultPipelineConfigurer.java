@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.etl.api.Engine;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
-import co.cask.cdap.etl.api.MultiInputStageConfigurer;
-import co.cask.cdap.etl.api.MultiOutputPipelineConfigurer;
-import co.cask.cdap.etl.api.MultiOutputStageConfigurer;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
+import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
+import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
+import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
 
 import java.util.HashMap;
 import java.util.Map;

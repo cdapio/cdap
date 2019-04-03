@@ -15,12 +15,12 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap;
+package io.cdap.cdap.internal.bootstrap;
 
-import co.cask.cdap.config.Config;
-import co.cask.cdap.config.ConfigNotFoundException;
-import co.cask.cdap.config.ConfigStore;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.config.Config;
+import io.cdap.cdap.config.ConfigNotFoundException;
+import io.cdap.cdap.config.ConfigStore;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 

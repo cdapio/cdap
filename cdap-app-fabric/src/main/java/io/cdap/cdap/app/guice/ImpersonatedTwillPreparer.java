@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.internal.app.runtime.distributed.ForwardingTwillPreparer;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.internal.app.runtime.distributed.ForwardingTwillPreparer;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;

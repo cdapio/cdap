@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.inmemory;
+package io.cdap.cdap.data2.dataset2.module.lib.inmemory;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 
 /**
  * Registers in-memory implementations of the basic datasets

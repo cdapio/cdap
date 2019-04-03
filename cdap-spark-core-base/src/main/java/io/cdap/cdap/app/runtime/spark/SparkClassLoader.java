@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.SparkExecutionContext;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
-import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.SparkExecutionContext;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import com.google.common.base.Preconditions;
 import org.apache.spark.SparkConf;
 

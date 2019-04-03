@@ -17,4 +17,4 @@
 /**
  * Contains classes for running log events processors.
  */
-package co.cask.cdap.logging.run;
+package io.cdap.cdap.logging.run;

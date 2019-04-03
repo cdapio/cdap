@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.util;
+package io.cdap.cdap.cli.util;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.exception.CommandInputError;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.exception.CommandInputError;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -107,7 +107,7 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
    * @param arg The string argument user provided.
    * @param base The base timestamp to relative from if the time format provided is a relative time.
    * @return Timestamp in milliseconds
-   * @throws co.cask.cdap.cli.exception.CommandInputError if failed to parse input.
+   * @throws io.cdap.cdap.cli.exception.CommandInputError if failed to parse input.
    */
   protected long getTimestamp(String arg, long base) {
     try {

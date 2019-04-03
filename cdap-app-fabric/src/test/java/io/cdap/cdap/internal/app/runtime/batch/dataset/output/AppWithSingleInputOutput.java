@@ -14,17 +14,17 @@
  *  the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.output;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.output;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;

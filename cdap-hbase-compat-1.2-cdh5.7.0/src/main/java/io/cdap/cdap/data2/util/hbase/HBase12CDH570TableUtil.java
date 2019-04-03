@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.data2.increment.hbase12cdh570.IncrementHandler;
-import co.cask.cdap.data2.transaction.coprocessor.hbase12cdh570.DefaultTransactionProcessor;
-import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570.MessageTableRegionObserver;
-import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570.PayloadTableRegionObserver;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.spi.hbase.TableDescriptor;
+import io.cdap.cdap.data2.increment.hbase12cdh570.IncrementHandler;
+import io.cdap.cdap.data2.transaction.coprocessor.hbase12cdh570.DefaultTransactionProcessor;
+import io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570.MessageTableRegionObserver;
+import io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570.PayloadTableRegionObserver;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;

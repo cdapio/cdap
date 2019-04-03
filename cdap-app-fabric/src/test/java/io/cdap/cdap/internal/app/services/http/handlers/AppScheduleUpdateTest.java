@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;

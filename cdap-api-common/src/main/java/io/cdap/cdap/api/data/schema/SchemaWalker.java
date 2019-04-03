@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.schema;
+package io.cdap.cdap.api.data.schema;
 
 import java.util.HashSet;
 import java.util.Map;

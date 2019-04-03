@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers.store;
+package io.cdap.cdap.logging.gateway.handlers.store;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;

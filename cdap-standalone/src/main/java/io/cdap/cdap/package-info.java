@@ -17,5 +17,5 @@
 /**
  * Cask Data Application Platform (CDAP) - Standalone mode.
  */
-package co.cask.cdap;
+package io.cdap.cdap;
 

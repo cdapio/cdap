@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.docgen.cli;
+package io.cdap.cdap.docgen.cli;
 
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.system.HelpCommand;
-import co.cask.cdap.cli.util.table.TableRendererConfig;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.system.HelpCommand;
+import io.cdap.cdap.cli.util.table.TableRendererConfig;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;

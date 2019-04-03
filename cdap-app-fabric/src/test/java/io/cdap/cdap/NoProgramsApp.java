@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.AbstractApplication;
 
 /**
  * App with no programs. Used to test deleted program specifications.

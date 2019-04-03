@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.queue;
+package io.cdap.cdap.logging.pipeline.queue;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;

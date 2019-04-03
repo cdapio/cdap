@@ -15,15 +15,15 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.profile.ProfileCreateRequest;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.profile.ProfileCreateRequest;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import com.google.inject.Inject;
 
 /**

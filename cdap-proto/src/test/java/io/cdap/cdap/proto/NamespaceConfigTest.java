@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 import com.google.gson.Gson;
 import org.junit.Assert;

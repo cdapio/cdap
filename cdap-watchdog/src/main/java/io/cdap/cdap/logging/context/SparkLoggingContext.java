@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;
 
 /**
  * Spark logging context

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.read;
+package io.cdap.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 

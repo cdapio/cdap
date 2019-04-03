@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.filter.FilterParser;
-import co.cask.cdap.logging.read.Callback;
-import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.logging.read.ReadRange;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.logging.LoggingConfiguration;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.filter.FilterParser;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.logging.read.ReadRange;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpResponseStatus;

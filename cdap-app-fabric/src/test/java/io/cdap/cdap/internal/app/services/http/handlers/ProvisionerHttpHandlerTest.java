@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.provision.MockProvisioner;
-import co.cask.cdap.proto.provisioner.ProvisionerDetail;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpResponse;

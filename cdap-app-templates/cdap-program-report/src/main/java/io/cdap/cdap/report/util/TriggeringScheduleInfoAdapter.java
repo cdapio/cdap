@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.report.util;
+package io.cdap.cdap.report.util;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -26,7 +26,7 @@ import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 
 /**
- * Helper class to encoded/decode {@link co.cask.cdap.api.schedule.TriggeringScheduleInfo} to/from json.
+ * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from json.
  */
 public class TriggeringScheduleInfoAdapter {
 

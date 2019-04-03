@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
 /**
  * A wrapper around kerberos principal and credentials file path of a user to allow creating UGI remotely.

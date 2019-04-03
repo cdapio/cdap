@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.format;
+package io.cdap.cdap.api.data.format;
 
 /**
  * Names of {@link RecordFormat RecordFormats} built into the platform.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 /**
  * Component Logging Context.

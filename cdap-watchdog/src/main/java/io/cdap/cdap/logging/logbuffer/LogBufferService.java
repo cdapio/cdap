@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package io.cdap.cdap.logging.logbuffer;
 
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.common.HttpExceptionHandler;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.service.RetryOnStartFailureService;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.logging.framework.LogPipelineLoader;
-import co.cask.cdap.logging.framework.LogPipelineSpecification;
-import co.cask.cdap.logging.logbuffer.cleaner.LogBufferCleaner;
-import co.cask.cdap.logging.logbuffer.handler.LogBufferHandler;
-import co.cask.cdap.logging.logbuffer.recover.LogBufferRecoveryService;
-import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.meta.CheckpointManagerFactory;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.logging.framework.LogPipelineLoader;
+import io.cdap.cdap.logging.framework.LogPipelineSpecification;
+import io.cdap.cdap.logging.logbuffer.cleaner.LogBufferCleaner;
+import io.cdap.cdap.logging.logbuffer.handler.LogBufferHandler;
+import io.cdap.cdap.logging.logbuffer.recover.LogBufferRecoveryService;
+import io.cdap.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;

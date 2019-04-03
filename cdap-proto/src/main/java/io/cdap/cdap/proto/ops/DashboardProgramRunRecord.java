@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.ops;
+package io.cdap.cdap.proto.ops;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

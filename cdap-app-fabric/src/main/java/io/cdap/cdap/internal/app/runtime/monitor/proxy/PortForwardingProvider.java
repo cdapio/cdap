@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor.proxy;
+package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

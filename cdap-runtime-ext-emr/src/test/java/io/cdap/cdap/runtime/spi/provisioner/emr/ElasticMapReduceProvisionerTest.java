@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner.emr;
+package io.cdap.cdap.runtime.spi.provisioner.emr;
 
-import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
+import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import org.junit.Assert;
 import org.junit.Test;
 

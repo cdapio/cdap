@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.common.namespace;
+package io.cdap.cdap.common.namespace;
 
-import co.cask.cdap.common.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.NamespaceAlreadyExistsException;
+import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
+import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Admin class for managing a namespace's lifecycle

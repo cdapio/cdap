@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package io.cdap.cdap.logging.pipeline;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import co.cask.cdap.common.io.Syncable;
+import io.cdap.cdap.common.io.Syncable;
 
 import java.io.Flushable;
 import java.io.IOException;

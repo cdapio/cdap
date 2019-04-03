@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentTask;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
 /**
  * Different states attained after validating the token

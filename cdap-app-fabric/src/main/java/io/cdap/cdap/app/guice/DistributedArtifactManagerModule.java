@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.api.artifact.ArtifactManager;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactFinder;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
-import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
-import co.cask.cdap.internal.app.runtime.artifact.RemotePluginFinder;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 

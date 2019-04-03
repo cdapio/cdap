@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.metrics.GetMetricCommand;
-import co.cask.cdap.cli.command.metrics.SearchMetricNamesCommand;
-import co.cask.cdap.cli.command.metrics.SearchMetricTagsCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.metrics.GetMetricCommand;
+import io.cdap.cdap.cli.command.metrics.SearchMetricNamesCommand;
+import io.cdap.cdap.cli.command.metrics.SearchMetricTagsCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

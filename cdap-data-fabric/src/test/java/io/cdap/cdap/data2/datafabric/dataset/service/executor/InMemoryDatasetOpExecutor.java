@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service.executor;
+package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.Updatable;
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.data2.datafabric.dataset.DatasetType;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetType;
+import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.inject.Inject;
 
 import java.io.IOException;

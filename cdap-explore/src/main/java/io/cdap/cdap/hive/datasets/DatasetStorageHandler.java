@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.hive.datasets;
+package io.cdap.cdap.hive.datasets;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.hive.context.CConfCodec;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.hive.context.CConfCodec;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;

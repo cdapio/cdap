@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthConfigImpl;
 import org.apache.geronimo.components.jaspi.impl.ServerAuthContextImpl;
 import org.apache.geronimo.components.jaspi.model.AuthModuleType;

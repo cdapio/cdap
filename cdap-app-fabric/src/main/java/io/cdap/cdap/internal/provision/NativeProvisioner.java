@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.api.dataset.lib.CounterTimeseriesTable;
-import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimeseriesTable;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.external.ExternalDataset;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.runtime.spi.provisioner.Capabilities;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
-import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
-import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
-import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.api.dataset.lib.CounterTimeseriesTable;
+import io.cdap.cdap.api.dataset.lib.IndexedObjectStore;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
+import io.cdap.cdap.api.dataset.lib.ObjectStore;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.TimeseriesTable;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.lib.external.ExternalDataset;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
+import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 
 import java.util.Collections;
 import java.util.Map;

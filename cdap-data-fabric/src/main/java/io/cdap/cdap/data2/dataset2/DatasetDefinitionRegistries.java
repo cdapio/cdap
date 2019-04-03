@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.data2.dataset2.module.lib.DatasetModules;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;

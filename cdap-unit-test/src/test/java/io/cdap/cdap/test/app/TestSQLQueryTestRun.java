@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.common.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

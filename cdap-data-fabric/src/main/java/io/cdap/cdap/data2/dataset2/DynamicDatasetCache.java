@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.TransactionContextFactory;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.RuntimeArguments;
+import io.cdap.cdap.api.common.Scope;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.transaction.TransactionContextFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Objects;
 import com.google.common.io.Closeables;
 import org.apache.tephra.TransactionAware;

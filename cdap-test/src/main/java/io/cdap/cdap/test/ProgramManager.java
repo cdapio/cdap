@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
 
 import java.util.List;
 import java.util.Map;

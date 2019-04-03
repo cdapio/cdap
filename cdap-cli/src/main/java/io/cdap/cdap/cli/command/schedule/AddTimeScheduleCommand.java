@@ -13,26 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.cli.command.schedule;
+package io.cdap.cdap.cli.command.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.ArgumentParser;
-import co.cask.cdap.client.ScheduleClient;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.exception.CommandInputError;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.cli.util.ArgumentParser;
+import io.cdap.cdap.client.ScheduleClient;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;

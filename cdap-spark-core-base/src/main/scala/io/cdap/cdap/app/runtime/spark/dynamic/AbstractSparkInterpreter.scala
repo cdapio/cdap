@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
-import co.cask.cdap.api.spark.dynamic.BindingException
-import co.cask.cdap.api.spark.dynamic.InterpretFailureException
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+import io.cdap.cdap.api.spark.dynamic.BindingException
+import io.cdap.cdap.api.spark.dynamic.InterpretFailureException
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime
@@ -27,8 +27,8 @@ import scala.tools.nsc.interpreter.Results.Incomplete
 import scala.tools.nsc.interpreter.Results.Success
 
 /**
-  * A trait to provide implementation of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]] that uses
-  * [[scala.tools.nsc.interpreter.IMain]] exposed by [[co.cask.cdap.api.spark.dynamic.SparkCompiler]].
+  * A trait to provide implementation of [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]] that uses
+  * [[scala.tools.nsc.interpreter.IMain]] exposed by [[io.cdap.cdap.api.spark.dynamic.SparkCompiler]].
   */
 trait AbstractSparkInterpreter extends SparkInterpreter {
 

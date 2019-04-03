@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.config.guice;
+package io.cdap.cdap.config.guice;
 
-import co.cask.cdap.config.ConfigStore;
-import co.cask.cdap.config.DefaultConfigStore;
+import io.cdap.cdap.config.ConfigStore;
+import io.cdap.cdap.config.DefaultConfigStore;
 import com.google.inject.AbstractModule;
 
 /**

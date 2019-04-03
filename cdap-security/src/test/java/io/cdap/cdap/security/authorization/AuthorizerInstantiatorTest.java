@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.common.FeatureDisabledException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;

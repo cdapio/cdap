@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit;
+package io.cdap.cdap.proto.audit;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Paylod of {@link AuditMessage} based on {@link AuditType}.

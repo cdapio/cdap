@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.log;
+package io.cdap.cdap.etl.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -22,7 +22,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
-import co.cask.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.Constants;
 import org.slf4j.Marker;
 
 import java.util.List;

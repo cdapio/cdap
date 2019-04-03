@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.internal.remote;
+package io.cdap.cdap.common.internal.remote;
 
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.codec.BasicThrowableCodec;
-import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
-import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.WorkflowTokenDetail;
+import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.codec.WorkflowTokenDetailCodec;
+import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

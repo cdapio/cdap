@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
 /**
  * Thrown when an authorizer extension jar is found to be invalid during inspection.

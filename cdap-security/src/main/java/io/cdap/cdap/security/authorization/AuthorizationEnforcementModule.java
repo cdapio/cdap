@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;

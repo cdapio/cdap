@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteExecutionAuthenticator;
-import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteExecutionDiscoveryService;
-import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionAuthenticator;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionDiscoveryService;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import org.apache.twill.discovery.DiscoveryService;

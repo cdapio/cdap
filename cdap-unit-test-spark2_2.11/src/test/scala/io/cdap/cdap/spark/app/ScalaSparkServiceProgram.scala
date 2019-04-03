@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
-import co.cask.cdap.api.spark.AbstractExtendedSpark
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkMain
+import io.cdap.cdap.api.spark.AbstractExtendedSpark
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.SparkMain
 import org.apache.spark.SparkContext
 
 /**

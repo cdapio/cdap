@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.transaction.DistributedTransactionSystemClientService;
-import co.cask.cdap.data2.transaction.TransactionSystemClientService;
-import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.transaction.DistributedTransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

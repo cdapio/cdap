@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.client.app.DatasetWriterService;
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.client.FixedAddressExploreClient;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.test.SingletonExternalResource;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.StandaloneTester;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.client.app.DatasetWriterService;
+import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.client.FixedAddressExploreClient;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.test.SingletonExternalResource;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package io.cdap.cdap.internal.pipeline;
 
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.PipelineFactory;
+import io.cdap.cdap.pipeline.Pipeline;
+import io.cdap.cdap.pipeline.PipelineFactory;
 
 /**
  * A factory for providing synchronous pipeline.

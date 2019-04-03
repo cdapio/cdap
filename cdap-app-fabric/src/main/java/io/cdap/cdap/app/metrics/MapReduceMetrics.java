@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.metrics;
+package io.cdap.cdap.app.metrics;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

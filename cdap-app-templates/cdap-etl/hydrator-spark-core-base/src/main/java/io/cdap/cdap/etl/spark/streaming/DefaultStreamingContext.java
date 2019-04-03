@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming;
+package io.cdap.cdap.etl.spark.streaming;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.InstanceConflictException;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.api.streaming.StreamingContext;
-import co.cask.cdap.etl.common.AbstractStageContext;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.api.streaming.StreamingContext;
+import io.cdap.cdap.etl.common.AbstractStageContext;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;

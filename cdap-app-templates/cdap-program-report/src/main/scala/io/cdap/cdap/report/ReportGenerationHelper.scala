@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report
+package io.cdap.cdap.report
 
 import java.io.{IOException, OutputStreamWriter, PrintWriter}
 import java.nio.charset.StandardCharsets
 import java.util.stream.Collectors
 
-import co.cask.cdap.report.proto.Sort.Order
-import co.cask.cdap.report.proto.summary._
-import co.cask.cdap.report.proto.{Sort, _}
-import co.cask.cdap.report.util.Constants
+import io.cdap.cdap.report.proto.Sort.Order
+import io.cdap.cdap.report.proto.summary._
+import io.cdap.cdap.report.proto.{Sort, _}
+import io.cdap.cdap.report.util.Constants
 import com.databricks.spark._
 import com.google.gson._
 import org.apache.avro.mapred._

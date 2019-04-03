@@ -17,4 +17,4 @@
 /**
  * This package contains implementations and guice-bindings needed for data-fabric runtime.
  */
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;

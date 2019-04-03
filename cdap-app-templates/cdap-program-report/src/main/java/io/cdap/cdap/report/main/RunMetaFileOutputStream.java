@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;

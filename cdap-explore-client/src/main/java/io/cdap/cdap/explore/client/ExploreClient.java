@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.MetaDataInfo;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.MetaDataInfo;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;

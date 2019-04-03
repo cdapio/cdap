@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;
 
 /**
  * Interface implemented by DatasetDefinitions that have a way to reconfigure the dataset properties.

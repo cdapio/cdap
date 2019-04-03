@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.logging.appender.kafka.LogPartitionType;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;

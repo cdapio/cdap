@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactManager;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Factory interface for creating {@link ArtifactManager} that binds to a giving namespace.

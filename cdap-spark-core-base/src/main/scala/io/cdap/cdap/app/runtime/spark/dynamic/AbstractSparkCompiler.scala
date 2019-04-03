@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
-import co.cask.cdap.api.spark.dynamic.CompilationFailureException
-import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.common.lang.ClassLoaders
-import co.cask.cdap.common.lang.CombineClassLoader
-import co.cask.cdap.common.lang.jar.BundleJarUtil
-import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader
-import co.cask.cdap.internal.lang.CallerClassSecurityManager
+import io.cdap.cdap.api.spark.dynamic.CompilationFailureException
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler
+import io.cdap.cdap.common.lang.ClassLoaders
+import io.cdap.cdap.common.lang.CombineClassLoader
+import io.cdap.cdap.common.lang.jar.BundleJarUtil
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader
+import io.cdap.cdap.internal.lang.CallerClassSecurityManager
 
 import java.io.BufferedOutputStream
 import java.io.File
@@ -43,7 +43,7 @@ import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.io.PlainFile
 
 /**
-  * Abstract common base for implementation [[co.cask.cdap.api.spark.dynamic.SparkCompiler]] for different
+  * Abstract common base for implementation [[io.cdap.cdap.api.spark.dynamic.SparkCompiler]] for different
   * Spark version.
   */
 abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) extends SparkCompiler {
@@ -58,7 +58,7 @@ abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) ex
     * Creates a new instance of [[scala.tools.nsc.interpreter.IMain]].
     *
     * @param settings the settings for the IMain
-    * @param errorReporter a [[co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler.ErrorReporter]] for
+    * @param errorReporter a [[io.cdap.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler.ErrorReporter]] for
     *                      error reporting from the IMain
     * @return a new instance of IMain
     */

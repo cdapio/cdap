@@ -17,4 +17,4 @@
 /**
  * This package contains implementations of the dataset system v2.
  */
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;

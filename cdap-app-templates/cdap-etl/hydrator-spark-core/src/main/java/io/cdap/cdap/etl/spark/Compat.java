@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark;
+package io.cdap.cdap.etl.spark;
 
-import co.cask.cdap.etl.spark.function.FlatMapFunc;
-import co.cask.cdap.etl.spark.function.PairFlatMapFunc;
+import io.cdap.cdap.etl.spark.function.FlatMapFunc;
+import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import com.google.common.base.Optional;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;

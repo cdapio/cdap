@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data2.dataset2.lib.table.ObjectStoreDataset;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.data2.dataset2.lib.table.ObjectStoreDataset;
 
 import java.io.IOException;
 import java.util.Map;

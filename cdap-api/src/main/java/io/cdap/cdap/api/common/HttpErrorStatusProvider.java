@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.common;
+package io.cdap.cdap.api.common;
 
 /**
  * Interface to be used by all error related classes which needs to provide a status code.

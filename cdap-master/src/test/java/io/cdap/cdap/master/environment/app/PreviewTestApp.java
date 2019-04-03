@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.app;
+package io.cdap.cdap.master.environment.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 
 /**
  * An app with a workflow that just writes a single tracer value. Used to test preview.

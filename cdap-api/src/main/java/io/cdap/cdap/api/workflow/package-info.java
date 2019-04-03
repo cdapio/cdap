@@ -17,4 +17,4 @@
 /**
  * For constructing workflows.
  */
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;

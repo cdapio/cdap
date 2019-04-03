@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.IOException;
 import java.util.Collections;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowConditionNode;
-import co.cask.cdap.api.workflow.WorkflowForkNode;
-import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowNodeType;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowConditionNode;
+import io.cdap.cdap.api.workflow.WorkflowForkNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

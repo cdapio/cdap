@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.internal.customaction.DefaultCustomActionSpecification;
+import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

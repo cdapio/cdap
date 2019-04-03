@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.api.lineage.field.FieldReadOperation;
-import co.cask.cdap.etl.api.lineage.field.FieldTransformOperation;
-import co.cask.cdap.etl.api.lineage.field.FieldWriteOperation;
-import co.cask.cdap.etl.api.lineage.field.OperationType;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
+import io.cdap.cdap.etl.api.lineage.field.OperationType;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

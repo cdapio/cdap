@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.plugin;
+package io.cdap.cdap.etl.spark.plugin;
 
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.streaming.StreamingContext;
-import co.cask.cdap.etl.api.streaming.StreamingSource;
-import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.common.plugin.Caller;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.streaming.StreamingContext;
+import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.plugin.Caller;
 import org.apache.spark.streaming.api.java.JavaDStream;
 
 import java.util.concurrent.Callable;

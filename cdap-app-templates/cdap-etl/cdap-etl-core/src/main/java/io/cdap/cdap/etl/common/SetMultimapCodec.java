@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;

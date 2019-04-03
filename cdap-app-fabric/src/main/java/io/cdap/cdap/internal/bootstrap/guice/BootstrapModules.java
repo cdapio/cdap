@@ -15,22 +15,22 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.guice;
+package io.cdap.cdap.internal.bootstrap.guice;
 
-import co.cask.cdap.internal.bootstrap.BootstrapConfig;
-import co.cask.cdap.internal.bootstrap.BootstrapConfigProvider;
-import co.cask.cdap.internal.bootstrap.BootstrapService;
-import co.cask.cdap.internal.bootstrap.BootstrapStep;
-import co.cask.cdap.internal.bootstrap.FileBootstrapConfigProvider;
-import co.cask.cdap.internal.bootstrap.InMemoryBootstrapConfigProvider;
-import co.cask.cdap.internal.bootstrap.executor.AppCreator;
-import co.cask.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
-import co.cask.cdap.internal.bootstrap.executor.DefaultNamespaceCreator;
-import co.cask.cdap.internal.bootstrap.executor.NativeProfileCreator;
-import co.cask.cdap.internal.bootstrap.executor.ProgramStarter;
-import co.cask.cdap.internal.bootstrap.executor.SystemArtifactLoader;
-import co.cask.cdap.internal.bootstrap.executor.SystemPreferenceSetter;
-import co.cask.cdap.internal.bootstrap.executor.SystemProfileCreator;
+import io.cdap.cdap.internal.bootstrap.BootstrapConfig;
+import io.cdap.cdap.internal.bootstrap.BootstrapConfigProvider;
+import io.cdap.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.internal.bootstrap.BootstrapStep;
+import io.cdap.cdap.internal.bootstrap.FileBootstrapConfigProvider;
+import io.cdap.cdap.internal.bootstrap.InMemoryBootstrapConfigProvider;
+import io.cdap.cdap.internal.bootstrap.executor.AppCreator;
+import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
+import io.cdap.cdap.internal.bootstrap.executor.DefaultNamespaceCreator;
+import io.cdap.cdap.internal.bootstrap.executor.NativeProfileCreator;
+import io.cdap.cdap.internal.bootstrap.executor.ProgramStarter;
+import io.cdap.cdap.internal.bootstrap.executor.SystemArtifactLoader;
+import io.cdap.cdap.internal.bootstrap.executor.SystemPreferenceSetter;
+import io.cdap.cdap.internal.bootstrap.executor.SystemProfileCreator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.startup;
+package io.cdap.cdap.common.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.startup.check.NoOpCheck;
-import co.cask.cdap.common.startup.check.fail.AlwaysFailCheck;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.startup.check.NoOpCheck;
+import io.cdap.cdap.common.startup.check.fail.AlwaysFailCheck;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;

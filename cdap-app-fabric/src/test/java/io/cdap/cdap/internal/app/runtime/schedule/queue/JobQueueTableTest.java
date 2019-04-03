@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.queue;
+package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTriggerBuilder;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTriggerBuilder;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -75,7 +75,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, byte[] value) {
     values.put(column, value);
@@ -97,7 +97,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, String value) {
     return add(column, Bytes.toBytes(value));
@@ -118,7 +118,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, boolean value) {
     return add(column, Bytes.toBytes(value));
@@ -139,7 +139,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, short value) {
     return add(column, Bytes.toBytes(value));
@@ -160,7 +160,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, int value) {
     return add(column, Bytes.toBytes(value));
@@ -181,7 +181,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, long value) {
     return add(column, Bytes.toBytes(value));
@@ -202,7 +202,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Put}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Put}.
    */
   public Put add(byte[] column, float value) {
     return add(column, Bytes.toBytes(value));
@@ -223,7 +223,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(byte[] column, double value) {
     return add(column, Bytes.toBytes(value));
@@ -254,7 +254,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, byte[] value) {
     return add(Bytes.toBytes(column), value);
@@ -275,7 +275,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, String value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));
@@ -296,7 +296,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, boolean value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));
@@ -317,7 +317,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, short value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));
@@ -338,7 +338,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, int value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));
@@ -359,7 +359,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, long value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));
@@ -380,7 +380,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, float value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));
@@ -401,7 +401,7 @@ public class Put implements Serializable {
    * Write a value to a column.
    * @param column column to write to
    * @param value value to write
-   * @return instance of this {@link co.cask.cdap.api.dataset.table.Put}
+   * @return instance of this {@link io.cdap.cdap.api.dataset.table.Put}
    */
   public Put add(String column, double value) {
     return add(Bytes.toBytes(column), Bytes.toBytes(value));

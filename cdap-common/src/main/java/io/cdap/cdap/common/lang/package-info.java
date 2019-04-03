@@ -17,5 +17,5 @@
 /**
  * Classes related to Java language.
  */
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 

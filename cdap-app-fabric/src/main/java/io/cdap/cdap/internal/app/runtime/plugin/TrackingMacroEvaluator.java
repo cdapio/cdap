@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.plugin;
+package io.cdap.cdap.internal.app.runtime.plugin;
 
-import co.cask.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 
 /**
  * A macro evaluator used strictly for checking if strings contains valid macros.

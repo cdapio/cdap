@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.GatewayFastTestsSuite;
-import co.cask.cdap.gateway.GatewayTestBase;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.GatewayFastTestsSuite;
+import io.cdap.cdap.gateway.GatewayTestBase;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;

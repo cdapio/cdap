@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.inmemory;
+package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
-import co.cask.cdap.data2.dataset2.lib.table.PutValue;
-import co.cask.cdap.data2.dataset2.lib.table.Update;
-import co.cask.cdap.data2.dataset2.lib.table.Updates;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.data2.dataset2.lib.table.IncrementValue;
+import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
+import io.cdap.cdap.data2.dataset2.lib.table.Update;
+import io.cdap.cdap.data2.dataset2.lib.table.Updates;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;

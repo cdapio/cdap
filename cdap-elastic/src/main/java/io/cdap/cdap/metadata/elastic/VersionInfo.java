@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.common.utils.ProjectInfo;
 
 /**
  * Information about the version of this metadata storage provider. It includes the version of CDAP,

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.store;
+package io.cdap.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.ImmutableList;
 import org.apache.tephra.TransactionAware;

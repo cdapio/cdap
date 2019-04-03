@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.metadata;
+package io.cdap.cdap.api.metadata;
 
 import org.junit.Assert;
 import org.junit.Test;

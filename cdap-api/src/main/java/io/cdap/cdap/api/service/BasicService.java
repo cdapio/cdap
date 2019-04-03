@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package io.cdap.cdap.api.service;
 
-import co.cask.cdap.api.service.http.HttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;

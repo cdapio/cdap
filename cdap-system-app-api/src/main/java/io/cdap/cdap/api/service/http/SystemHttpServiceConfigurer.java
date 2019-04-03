@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.SystemTableConfigurer;
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.SystemTableConfigurer;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.util.Map;
 

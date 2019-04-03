@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

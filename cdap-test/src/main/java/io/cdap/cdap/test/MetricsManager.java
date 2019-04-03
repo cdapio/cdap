@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsTags;
-import co.cask.cdap.proto.id.ServiceId;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricSearchQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.RuntimeMetrics;
+import io.cdap.cdap.api.metrics.TagValue;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metrics.MetricsTags;
+import io.cdap.cdap.proto.id.ServiceId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -83,7 +83,7 @@ public class MetricsManager {
    * @param namespace
    * @param applicationId
    * @param serviceId
-   * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
+   * @return {@link io.cdap.cdap.api.metrics.RuntimeMetrics}
    */
   public RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
     ServiceId service = new ServiceId(namespace, applicationId, serviceId);
@@ -99,7 +99,7 @@ public class MetricsManager {
    * @param applicationId
    * @param serviceId
    * @param handlerId
-   * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
+   * @return {@link io.cdap.cdap.api.metrics.RuntimeMetrics}
    */
   public RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
                                                  String handlerId) {

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline
+package io.cdap.cdap.datapipeline
 
-import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
-import co.cask.cdap.etl.batch.BatchPhaseSpec
-import co.cask.cdap.etl.common.{BasicArguments, Constants, DefaultMacroEvaluator}
-import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext
+import io.cdap.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import io.cdap.cdap.etl.batch.BatchPhaseSpec
+import io.cdap.cdap.etl.common.{BasicArguments, Constants, DefaultMacroEvaluator}
+import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext
 import com.google.gson.Gson
 
 /**

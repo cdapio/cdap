@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.cdap.internal.lang.Fields;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.internal.lang.Fields;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

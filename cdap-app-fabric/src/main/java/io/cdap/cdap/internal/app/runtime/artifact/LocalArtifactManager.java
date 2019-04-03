@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.ArtifactManager;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.filesystem.Location;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
 import com.google.common.base.Objects;
 

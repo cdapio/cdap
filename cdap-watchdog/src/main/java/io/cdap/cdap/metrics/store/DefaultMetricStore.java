@@ -14,42 +14,42 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store;
+package io.cdap.cdap.metrics.store;
 
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MetricsMessageId;
-import co.cask.cdap.api.metrics.MetricsProcessorStatus;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
-import co.cask.cdap.data2.dataset2.lib.cube.AggregationAlias;
-import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
-import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
-import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
-import co.cask.cdap.metrics.process.TopicIdMetaKey;
-import co.cask.cdap.metrics.process.TopicProcessMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
+import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
+import io.cdap.cdap.api.dataset.lib.cube.Measurement;
+import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricSearchQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsMessageId;
+import io.cdap.cdap.api.metrics.MetricsProcessorStatus;
+import io.cdap.cdap.api.metrics.TagValue;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.dataset2.lib.cube.Aggregation;
+import io.cdap.cdap.data2.dataset2.lib.cube.AggregationAlias;
+import io.cdap.cdap.data2.dataset2.lib.cube.DefaultAggregation;
+import io.cdap.cdap.data2.dataset2.lib.cube.DefaultCube;
+import io.cdap.cdap.data2.dataset2.lib.cube.FactTableSupplier;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.metrics.process.MetricsConsumerMetaTable;
+import io.cdap.cdap.metrics.process.TopicIdMetaKey;
+import io.cdap.cdap.metrics.process.TopicProcessMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -375,11 +375,11 @@ public class DefaultMetricStore implements MetricStore {
     cube.get().delete(query);
   }
 
-  private List<DimensionValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {
-    return Lists.transform(input, new Function<co.cask.cdap.api.metrics.TagValue, DimensionValue>() {
+  private List<DimensionValue> toTagValues(List<io.cdap.cdap.api.metrics.TagValue> input) {
+    return Lists.transform(input, new Function<io.cdap.cdap.api.metrics.TagValue, DimensionValue>() {
       @Nullable
       @Override
-      public DimensionValue apply(co.cask.cdap.api.metrics.TagValue input) {
+      public DimensionValue apply(io.cdap.cdap.api.metrics.TagValue input) {
         if (input == null) {
           // SHOULD NEVER happen
           throw new NullPointerException();

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
-import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
 

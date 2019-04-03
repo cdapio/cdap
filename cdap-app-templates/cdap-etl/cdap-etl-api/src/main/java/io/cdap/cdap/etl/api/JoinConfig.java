@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
 /**
  * Join configuration to hold information about join to be performed

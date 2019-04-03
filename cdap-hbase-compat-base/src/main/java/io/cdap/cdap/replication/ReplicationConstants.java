@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.replication;
+package io.cdap.cdap.replication;
 
 /**
  * Constants for Replication

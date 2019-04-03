@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
 
 /**
  * Contains the options that the user can pass to the CLI upon launch.

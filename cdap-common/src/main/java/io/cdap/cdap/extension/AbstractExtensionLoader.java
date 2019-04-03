@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.extension;
+package io.cdap.cdap.extension;
 
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;

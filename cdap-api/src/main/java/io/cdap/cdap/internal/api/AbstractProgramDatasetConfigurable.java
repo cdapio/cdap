@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.api;
+package io.cdap.cdap.internal.api;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 
 /**
  * Helper methods to help add stream/dataset to Programs.
@@ -61,7 +61,7 @@ public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfig
    * Calls {@link DatasetConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
    * properties.
    *
-   * @see DatasetConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
+   * @see DatasetConfigurer#createDataset(String, String, io.cdap.cdap.api.dataset.DatasetProperties)
    */
   @Beta
   protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
@@ -72,7 +72,7 @@ public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfig
    * Calls {@link DatasetConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
    * and properties.
    *
-   * @see DatasetConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
+   * @see DatasetConfigurer#createDataset(String, Class, io.cdap.cdap.api.dataset.DatasetProperties)
    */
   protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
                                      DatasetProperties properties) {

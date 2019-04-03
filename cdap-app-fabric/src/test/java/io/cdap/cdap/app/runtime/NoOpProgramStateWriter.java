@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import javax.annotation.Nullable;
 

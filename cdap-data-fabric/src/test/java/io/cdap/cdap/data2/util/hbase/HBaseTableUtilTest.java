@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
-import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
+import io.cdap.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import org.junit.Assert;
 import org.junit.Test;
 

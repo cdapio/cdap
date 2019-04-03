@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.mapreduce.service;
+package io.cdap.cdap.mapreduce.service;
 
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.app.MyKeyValueTableDefinition;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.MapReduceManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 

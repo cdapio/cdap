@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
 /**
  * Exception thrown if an asserted message digest does not match the recomputed value, using the same secret key.

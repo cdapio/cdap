@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.etl.api.validation;
+package io.cdap.cdap.etl.api.validation;
 
 import java.util.ArrayList;
 import java.util.List;

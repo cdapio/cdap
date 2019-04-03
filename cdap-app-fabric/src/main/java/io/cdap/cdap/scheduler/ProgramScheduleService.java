@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.scheduler;
+package io.cdap.cdap.scheduler;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Objects;
 import com.google.inject.Inject;
 

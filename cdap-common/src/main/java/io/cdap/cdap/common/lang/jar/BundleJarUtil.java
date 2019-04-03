@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang.jar;
+package io.cdap.cdap.common.lang.jar;
 
 import org.apache.twill.filesystem.Location;
 

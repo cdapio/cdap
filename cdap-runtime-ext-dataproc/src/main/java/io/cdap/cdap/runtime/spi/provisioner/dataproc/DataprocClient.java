@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner.dataproc;
+package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.provisioner.Node;
-import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
-import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
+import io.cdap.cdap.runtime.spi.provisioner.Node;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -247,10 +247,10 @@ public class DataprocClient implements AutoCloseable {
    * @return the cluster status
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public co.cask.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
+  public io.cdap.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
     throws RetryableProvisionException {
     return getDataprocCluster(name).map(cluster -> convertStatus(cluster.getStatus()))
-      .orElse(co.cask.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
+      .orElse(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
   }
 
   /**
@@ -260,7 +260,7 @@ public class DataprocClient implements AutoCloseable {
    * @return the cluster information if it exists
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public Optional<co.cask.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
+  public Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
     throws RetryableProvisionException, IOException {
     Optional<Cluster> clusterOptional = getDataprocCluster(name);
     if (!clusterOptional.isPresent()) {
@@ -276,7 +276,7 @@ public class DataprocClient implements AutoCloseable {
     for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
       nodes.add(getNode(compute, Node.Type.WORKER, workerName));
     }
-    return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
+    return Optional.of(new io.cdap.cdap.runtime.spi.provisioner.Cluster(
       cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
   }
 
@@ -390,22 +390,22 @@ public class DataprocClient implements AutoCloseable {
     return new Node(nodeName, type, ip, ts, properties);
   }
 
-  private co.cask.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
+  private io.cdap.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
     switch (status.getState()) {
       case ERROR:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.FAILED;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.FAILED;
       case RUNNING:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
       case CREATING:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.CREATING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.CREATING;
       case DELETING:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.DELETING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.DELETING;
       case UPDATING:
         // not sure if this is correct, or how it can get to updating state
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
       default:
         // unrecognized and unknown
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.ORPHANED;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.ORPHANED;
     }
   }
 

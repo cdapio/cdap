@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql;
+package io.cdap.cdap.spi.data.sql;
 
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import co.cask.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.table.field.FieldType;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;

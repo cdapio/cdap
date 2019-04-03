@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.ssh;
+package io.cdap.cdap.common.ssh;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

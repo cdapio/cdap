@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.transaction;
+package io.cdap.cdap.common.transaction;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

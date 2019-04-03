@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.schedule.AddTimeScheduleCommand;
-import co.cask.cdap.cli.command.schedule.DeleteScheduleCommand;
-import co.cask.cdap.cli.command.schedule.GetScheduleStatusCommand;
-import co.cask.cdap.cli.command.schedule.ListWorkflowSchedulesCommand;
-import co.cask.cdap.cli.command.schedule.ResumeScheduleCommand;
-import co.cask.cdap.cli.command.schedule.SuspendScheduleCommand;
-import co.cask.cdap.cli.command.schedule.UpdateTimeScheduleCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.schedule.AddTimeScheduleCommand;
+import io.cdap.cdap.cli.command.schedule.DeleteScheduleCommand;
+import io.cdap.cdap.cli.command.schedule.GetScheduleStatusCommand;
+import io.cdap.cdap.cli.command.schedule.ListWorkflowSchedulesCommand;
+import io.cdap.cdap.cli.command.schedule.ResumeScheduleCommand;
+import io.cdap.cdap.cli.command.schedule.SuspendScheduleCommand;
+import io.cdap.cdap.cli.command.schedule.UpdateTimeScheduleCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

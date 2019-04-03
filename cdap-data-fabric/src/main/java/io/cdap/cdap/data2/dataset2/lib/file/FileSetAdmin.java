@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.file;
+package io.cdap.cdap.data2.dataset2.lib.file;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.Updatable;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
-import co.cask.cdap.api.data.batch.RecordScanner
-import co.cask.cdap.api.data.batch.SplitReader
-import co.cask.cdap.app.runtime.spark.data
+import io.cdap.cdap.api.data.batch.RecordScanner
+import io.cdap.cdap.api.data.batch.SplitReader
+import io.cdap.cdap.app.runtime.spark.data
 
 import java.io.Closeable
 import javax.annotation.Nullable
 
 /**
-  * A Trait for unifying [[co.cask.cdap.api.data.batch.SplitReader]] and [[co.cask.cdap.api.data.batch.RecordScanner]].
+  * A Trait for unifying [[io.cdap.cdap.api.data.batch.SplitReader]] and [[io.cdap.cdap.api.data.batch.RecordScanner]].
   *
   * @tparam T type of the datum read
   */
@@ -52,7 +52,7 @@ trait DatumScanner[T] extends Closeable {
 object DatumScanner {
 
   /**
-    * Implicits conversion from [[co.cask.cdap.api.data.batch.SplitReader]]
+    * Implicits conversion from [[io.cdap.cdap.api.data.batch.SplitReader]]
     * to [[data.DatumScanner]].
     */
   implicit def fromSplitReader[K, V](reader: SplitReader[K, V]) : DatumScanner[(K, V)] = {
@@ -64,7 +64,7 @@ object DatumScanner {
   }
 
   /**
-    * Implicits conversion from [[co.cask.cdap.api.data.batch.RecordScanner]]
+    * Implicits conversion from [[io.cdap.cdap.api.data.batch.RecordScanner]]
     * to [[data.DatumScanner]].
     */
   implicit def fromRecordScanner[T](scanner: RecordScanner[T]) : DatumScanner[T] = {

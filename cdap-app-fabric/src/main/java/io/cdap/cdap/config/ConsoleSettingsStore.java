@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package io.cdap.cdap.config;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;

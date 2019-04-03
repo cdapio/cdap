@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.customaction;
+package io.cdap.cdap.api.customaction;
 
-import co.cask.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.ProgramLifecycle;
 
 /**
  * Defines custom action in the Workflow.

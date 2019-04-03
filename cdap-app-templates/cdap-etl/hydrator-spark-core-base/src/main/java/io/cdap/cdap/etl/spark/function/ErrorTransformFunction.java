@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.function;
+package io.cdap.cdap.etl.spark.function;
 
-import co.cask.cdap.etl.api.ErrorRecord;
-import co.cask.cdap.etl.api.ErrorTransform;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.TrackedTransform;
-import co.cask.cdap.etl.spark.CombinedEmitter;
+import io.cdap.cdap.etl.api.ErrorRecord;
+import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.TrackedTransform;
+import io.cdap.cdap.etl.spark.CombinedEmitter;
 import scala.Tuple2;
 
 /**

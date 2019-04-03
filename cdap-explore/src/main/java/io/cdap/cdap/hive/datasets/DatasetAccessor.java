@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.hive.datasets;
+package io.cdap.cdap.hive.datasets;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.DatasetNotFoundException;
-import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.hive.context.ContextManager;
-import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.common.DatasetNotFoundException;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.hive.context.ContextManager;
+import io.cdap.cdap.hive.context.TxnCodec;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;

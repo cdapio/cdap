@@ -15,12 +15,12 @@
  */
 
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 import java.util.EnumSet;
 

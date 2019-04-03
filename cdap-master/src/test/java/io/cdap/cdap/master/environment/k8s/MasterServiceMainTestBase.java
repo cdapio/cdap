@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.router.NettyRouter;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.router.NettyRouter;
 import com.google.common.collect.Lists;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;

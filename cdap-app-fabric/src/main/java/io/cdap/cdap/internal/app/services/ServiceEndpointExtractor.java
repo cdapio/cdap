@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.internal.lang.MethodVisitor;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.internal.lang.MethodVisitor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;

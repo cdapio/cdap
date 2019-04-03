@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.client.AuthorizationClient;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Role;
-import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.server.BasicAuthenticationHandler;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.StandaloneTester;
+import io.cdap.cdap.client.AuthorizationClient;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.server.BasicAuthenticationHandler;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.cli.CLI;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

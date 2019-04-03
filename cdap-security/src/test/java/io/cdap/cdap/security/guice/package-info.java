@@ -17,4 +17,4 @@
 /**
  * SecurityModule implementation for tests.
  */
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;

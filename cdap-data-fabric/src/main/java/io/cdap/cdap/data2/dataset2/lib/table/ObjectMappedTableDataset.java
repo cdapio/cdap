@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.internal.io.ReflectionPutWriter;
-import co.cask.cdap.internal.io.ReflectionRowReader;
-import co.cask.cdap.internal.io.TypeRepresentation;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.RecordScanner;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.internal.io.ReflectionPutWriter;
+import io.cdap.cdap.internal.io.ReflectionRowReader;
+import io.cdap.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;

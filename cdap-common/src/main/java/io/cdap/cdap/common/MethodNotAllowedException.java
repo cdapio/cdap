@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 

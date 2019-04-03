@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package io.cdap.cdap.internal.pipeline;
 
-import co.cask.cdap.pipeline.Context;
+import io.cdap.cdap.pipeline.Context;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.data.batch.Splits
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.data.batch.Splits
 import org.apache.spark.Partition
 
 import java.io.Externalizable
@@ -26,7 +26,7 @@ import java.io.ObjectOutput
 
 /**
   * Represents one [[org.apache.spark.Partition]] in [[org.apache.spark.rdd.RDD]], which
-  * corresponds to one [[co.cask.cdap.api.data.batch.Split]].
+  * corresponds to one [[io.cdap.cdap.api.data.batch.Split]].
   */
 class SplitPartition(private var _rddId: Int,
                      private var _index: Int,
@@ -38,7 +38,7 @@ class SplitPartition(private var _rddId: Int,
   def this() = this(0, 0, null)
 
   /**
-    * @return the [[co.cask.cdap.api.data.batch.Split]] contained inside this [[org.apache.spark.Partition]].
+    * @return the [[io.cdap.cdap.api.data.batch.Split]] contained inside this [[org.apache.spark.Partition]].
     */
   def split = _split
 

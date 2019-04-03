@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.tephra.InvalidTruncateTimeException;

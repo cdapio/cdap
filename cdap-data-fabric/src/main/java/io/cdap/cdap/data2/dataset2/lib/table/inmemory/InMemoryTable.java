@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.inmemory;
+package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Filter;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset2.lib.table.Update;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.table.ConflictDetection;
+import io.cdap.cdap.api.dataset.table.Filter;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.lib.table.BufferingTable;
+import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import io.cdap.cdap.data2.dataset2.lib.table.Update;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Maps;

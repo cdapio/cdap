@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
+import io.cdap.cdap.api.spark.SparkSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

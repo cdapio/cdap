@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
-import co.cask.cdap.spi.hbase.TableDescriptor;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
+import io.cdap.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import org.apache.hadoop.conf.Configuration;

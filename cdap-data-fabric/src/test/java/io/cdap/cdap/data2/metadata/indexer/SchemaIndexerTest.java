@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.indexer;
+package io.cdap.cdap.data2.metadata.indexer;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;

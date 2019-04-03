@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package io.cdap.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.guice.SecureStoreServerModule;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;

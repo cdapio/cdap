@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report.util;
+package io.cdap.cdap.report.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,8 +23,8 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import static co.cask.cdap.report.util.ReportField.FilterType.RANGE;
-import static co.cask.cdap.report.util.ReportField.FilterType.VALUE;
+import static io.cdap.cdap.report.util.ReportField.FilterType.RANGE;
+import static io.cdap.cdap.report.util.ReportField.FilterType.VALUE;
 
 /**
  * Represents the types of fields in a report.

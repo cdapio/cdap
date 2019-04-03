@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.plugin.EndpointPluginContext;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.plugin.EndpointPluginContext;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.FindPluginHelper;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 

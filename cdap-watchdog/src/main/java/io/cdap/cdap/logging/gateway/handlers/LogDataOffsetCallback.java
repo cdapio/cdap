@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogEvent;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.cdap.http.HttpResponder;

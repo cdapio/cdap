@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;

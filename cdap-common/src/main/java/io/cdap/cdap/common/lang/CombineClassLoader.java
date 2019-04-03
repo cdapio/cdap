@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;

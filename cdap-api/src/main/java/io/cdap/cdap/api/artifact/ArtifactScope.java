@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package io.cdap.cdap.api.artifact;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * The scope of an artifact.

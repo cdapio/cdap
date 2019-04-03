@@ -18,4 +18,4 @@
  * Defines data formats for use in programs and data exploration.
  * APIs are experimental and are subject to change in future releases.
  */
-package co.cask.cdap.api.data.format;
+package io.cdap.cdap.api.data.format;

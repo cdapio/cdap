@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.security.store.DefaultSecureStoreService;
-import co.cask.cdap.security.store.DummySecureStoreService;
-import co.cask.cdap.security.store.FileSecureStoreService;
-import co.cask.cdap.security.store.SecureStoreService;
-import co.cask.cdap.security.store.SecureStoreUtils;
-import co.cask.cdap.security.store.secretmanager.SecretManagerSecureStoreService;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.security.store.DefaultSecureStoreService;
+import io.cdap.cdap.security.store.DummySecureStoreService;
+import io.cdap.cdap.security.store.FileSecureStoreService;
+import io.cdap.cdap.security.store.SecureStoreService;
+import io.cdap.cdap.security.store.SecureStoreUtils;
+import io.cdap.cdap.security.store.secretmanager.SecretManagerSecureStoreService;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

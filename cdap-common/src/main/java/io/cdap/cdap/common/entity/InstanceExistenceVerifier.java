@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.entity;
+package io.cdap.cdap.common.entity;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.InstanceId;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.InstanceId;
 import com.google.inject.Inject;
 
 /**

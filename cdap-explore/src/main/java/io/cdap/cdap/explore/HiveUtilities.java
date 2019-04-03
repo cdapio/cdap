@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore;
+package io.cdap.cdap.explore;
 
-import co.cask.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.ExploreException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;

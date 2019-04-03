@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging.perf;
+package io.cdap.cdap.common.logging.perf;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

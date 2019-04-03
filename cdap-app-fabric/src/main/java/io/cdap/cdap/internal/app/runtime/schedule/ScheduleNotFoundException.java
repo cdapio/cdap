@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 /**
  * Thrown when a schedule is not found.

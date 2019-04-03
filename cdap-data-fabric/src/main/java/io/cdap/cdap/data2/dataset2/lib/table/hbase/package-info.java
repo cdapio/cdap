@@ -17,4 +17,4 @@
 /**
  * This package contains HBase implementations of the table dataset.
  */
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;

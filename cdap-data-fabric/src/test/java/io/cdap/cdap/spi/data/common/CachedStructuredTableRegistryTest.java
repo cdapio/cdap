@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.common;
+package io.cdap.cdap.spi.data.common;
 
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableRegistryTest;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistryTest;
 import org.junit.Assert;
 import org.junit.Test;
 

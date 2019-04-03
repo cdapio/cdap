@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi;
+package io.cdap.cdap.securestore.spi;
 
 /**
  * An Exception that indicates a secret is not found.

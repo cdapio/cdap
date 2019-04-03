@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.builder;
+package io.cdap.cdap.common.builder;
 
 /**
  * Exception that is raised when there is an issue building the object.

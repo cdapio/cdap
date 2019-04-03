@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.schema;
+package io.cdap.cdap.api.data.schema;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.internal.io.SQLSchemaParser;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.internal.io.SQLSchemaParser;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;

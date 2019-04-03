@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
 
 /**
  * Common utility methods when dealing with partitioning field types.

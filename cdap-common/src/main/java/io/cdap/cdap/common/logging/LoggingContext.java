@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 import java.util.Collection;
 import java.util.Map;

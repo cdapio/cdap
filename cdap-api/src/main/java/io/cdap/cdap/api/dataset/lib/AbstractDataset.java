@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
+import io.cdap.cdap.api.metrics.MetricsCollector;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionAwares;

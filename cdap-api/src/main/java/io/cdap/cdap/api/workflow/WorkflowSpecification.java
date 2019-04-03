@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.AbstractProgramSpecification;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.api.AbstractProgramSpecification;
+import io.cdap.cdap.api.common.PropertyProvider;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;

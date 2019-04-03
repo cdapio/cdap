@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.ssh;
+package io.cdap.cdap.common.ssh;
 
 import java.util.Collections;
 import java.util.HashMap;

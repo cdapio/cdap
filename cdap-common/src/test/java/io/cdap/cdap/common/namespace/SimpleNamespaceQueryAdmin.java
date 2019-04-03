@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.namespace;
+package io.cdap.cdap.common.namespace;
 
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.List;

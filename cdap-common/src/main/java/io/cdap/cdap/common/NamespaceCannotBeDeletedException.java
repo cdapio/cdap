@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a namespace cannot be deleted.

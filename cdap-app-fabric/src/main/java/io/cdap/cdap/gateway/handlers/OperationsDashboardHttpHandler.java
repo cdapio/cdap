@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
-import co.cask.cdap.reporting.ProgramHeartbeatService;
-import co.cask.cdap.scheduler.Scheduler;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.ops.DashboardProgramRunRecord;
+import io.cdap.cdap.reporting.ProgramHeartbeatService;
+import io.cdap.cdap.scheduler.Scheduler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

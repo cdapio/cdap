@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.api;
+package io.cdap.cdap.internal.api;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.HashMap;
 import java.util.HashSet;

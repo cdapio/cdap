@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

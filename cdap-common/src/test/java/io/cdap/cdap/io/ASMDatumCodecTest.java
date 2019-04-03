@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.io;
+package io.cdap.cdap.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.internal.io.ASMDatumWriterFactory;
-import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
-import co.cask.cdap.internal.io.ReflectionDatumReader;
-import co.cask.cdap.internal.io.ReflectionDatumWriter;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.common.io.BinaryDecoder;
+import io.cdap.cdap.common.io.BinaryEncoder;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
+import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
+import io.cdap.cdap.internal.io.ReflectionDatumReader;
+import io.cdap.cdap.internal.io.ReflectionDatumWriter;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

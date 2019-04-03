@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.api.app;
+package io.cdap.cdap.api.app;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.api.worker.WorkerSpecification;
+import io.cdap.cdap.api.workflow.Workflow;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 import java.util.Set;

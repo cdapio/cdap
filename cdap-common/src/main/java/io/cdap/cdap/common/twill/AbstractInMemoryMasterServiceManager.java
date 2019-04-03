@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.twill;
+package io.cdap.cdap.common.twill;
 
-import co.cask.cdap.proto.Containers;
-import co.cask.cdap.proto.SystemServiceLiveInfo;
+import io.cdap.cdap.proto.Containers;
+import io.cdap.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.collect.ImmutableList;
 import org.apache.twill.api.logging.LogEntry;
 

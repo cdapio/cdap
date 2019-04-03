@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package io.cdap.cdap.etl.api.batch;
 
 /**
  * Runtime context for batch joiner

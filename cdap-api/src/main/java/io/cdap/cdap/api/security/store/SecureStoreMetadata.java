@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.security.store;
+package io.cdap.cdap.api.security.store;
 
 import java.util.Collections;
 import java.util.HashMap;

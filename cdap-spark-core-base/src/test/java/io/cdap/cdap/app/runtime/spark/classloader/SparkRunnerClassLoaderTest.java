@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.classloader;
+package io.cdap.cdap.app.runtime.spark.classloader;
 
-import co.cask.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.io.Closeables;
 import org.junit.Assert;
 import org.junit.Test;

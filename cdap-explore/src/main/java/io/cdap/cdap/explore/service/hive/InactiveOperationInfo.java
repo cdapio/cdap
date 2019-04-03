@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.hive;
+package io.cdap.cdap.explore.service.hive;
 
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryStatus;
 
 import java.util.List;
 

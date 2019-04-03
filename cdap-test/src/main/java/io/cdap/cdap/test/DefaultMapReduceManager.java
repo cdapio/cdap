@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.ProgramRunStatus;
 
 /**
  * A default implementation of {@link MapReduceManager}.

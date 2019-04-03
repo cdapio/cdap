@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.FakeWorkflow;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.app.FakeWorkflow;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.test.XSlowTests;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for {@link co.cask.cdap.client.ServiceClient}.
+ * Tests for {@link io.cdap.cdap.client.ServiceClient}.
  */
 @Category(XSlowTests.class)
 public class ScheduleClientTestRun extends ClientTestBase {

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.meta;
+package io.cdap.cdap.logging.meta;
 
 import com.google.common.base.Objects;
 

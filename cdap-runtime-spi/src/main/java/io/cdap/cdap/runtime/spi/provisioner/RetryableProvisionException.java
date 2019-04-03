@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner;
 
 /**
  * An provision exception that indicates a failure that may succeed after a retry.

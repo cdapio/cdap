@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.hbase.wd;
+package io.cdap.cdap.hbase.wd;
 
-import co.cask.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -105,7 +105,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
     for (byte[] firstAllDistKey : firstAllDistKeys) {
       // Only salt the row keys, we do not need to salt mask because we have provided first byte as 1
       // which means that this byte in provided row key is NOT fixed
-      fuzzyPairs.add(Pair.newPair(firstAllDistKey, co.cask.cdap.api.common.Bytes.add(new byte[]{1}, pair.getSecond())));
+      fuzzyPairs.add(Pair.newPair(firstAllDistKey, io.cdap.cdap.api.common.Bytes.add(new byte[]{1}, pair.getSecond())));
     }
     return fuzzyPairs;
   }
@@ -123,7 +123,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
       return new byte[0][];
     }
 
-    byte[][] bucketSplits = getAllDistributedKeys(co.cask.cdap.api.common.Bytes.EMPTY_BYTE_ARRAY);
+    byte[][] bucketSplits = getAllDistributedKeys(io.cdap.cdap.api.common.Bytes.EMPTY_BYTE_ARRAY);
     Preconditions.checkArgument(splits >= 1 && splits <= 0xff * bucketSplits.length,
                                 "Number of pre-splits should be in [1.." +
                                   0xff * bucketSplits.length + "] range");

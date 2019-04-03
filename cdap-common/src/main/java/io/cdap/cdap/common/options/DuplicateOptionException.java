@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.options;
+package io.cdap.cdap.common.options;
 
 
 /**

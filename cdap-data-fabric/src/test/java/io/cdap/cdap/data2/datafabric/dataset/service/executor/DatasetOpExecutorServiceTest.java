@@ -14,50 +14,50 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service.executor;
+package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.NamespaceAdminTestModule;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
-import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.TransactionMetricsModule;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.explore.guice.ExploreClientModule;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -89,7 +89,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test for {@link co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService}.
+ * Test for {@link io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService}.
  */
 public class DatasetOpExecutorServiceTest {
 

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.spark.dynamic.SparkCompiler;
-import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler;
 
 import java.util.Arrays;
 

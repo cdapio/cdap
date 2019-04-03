@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetId;
 
 /**
  * Thrown when the user tries to create a dataset, but a dataset already exists by that name.

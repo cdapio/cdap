@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;
 
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.test.MockTwillContext;
-import co.cask.cdap.data.tools.HBaseTableExporter;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.test.MockTwillContext;
+import io.cdap.cdap.data.tools.HBaseTableExporter;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

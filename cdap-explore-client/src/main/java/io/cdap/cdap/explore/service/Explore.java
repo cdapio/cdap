@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryInfo;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableInfo;
-import co.cask.cdap.proto.TableNameInfo;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryInfo;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.TableInfo;
+import io.cdap.cdap.proto.TableNameInfo;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;

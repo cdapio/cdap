@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.zookeeper;
+package io.cdap.cdap.security.zookeeper;
 
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.zookeeper.ZKExtOperations;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;

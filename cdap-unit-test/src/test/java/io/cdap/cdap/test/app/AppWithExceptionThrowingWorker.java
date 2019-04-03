@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.worker.AbstractWorker;
-import co.cask.cdap.api.worker.WorkerContext;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.api.worker.WorkerContext;
 
 /**
  * App with a Worker that throws an exception during initialize/run/destroy methods.

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.submit;
+package io.cdap.cdap.etl.common.submit;
 
-import co.cask.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetContext;
 
 /**
  * Returns some context given a DatasetContext

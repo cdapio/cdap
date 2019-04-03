@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.subscriber;
+package io.cdap.cdap.messaging.subscriber;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.service.AbstractRetryableScheduledService;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

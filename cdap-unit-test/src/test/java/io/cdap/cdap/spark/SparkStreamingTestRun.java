@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.spark;
+package io.cdap.cdap.spark;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.TimeseriesTable;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.kafka.KafkaTester;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.spark.app.KafkaSparkStreaming;
-import co.cask.cdap.spark.app.TestSparkApp;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.TimeseriesTable;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.kafka.KafkaTester;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.spark.app.KafkaSparkStreaming;
+import io.cdap.cdap.spark.app.TestSparkApp;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.kafka.client.Compression;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.internal.app.runtime.batch.dataset.AbstractBatchWritableOutputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
+import io.cdap.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.internal.app.runtime.batch.dataset.AbstractBatchWritableOutputFormat;
+import io.cdap.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 

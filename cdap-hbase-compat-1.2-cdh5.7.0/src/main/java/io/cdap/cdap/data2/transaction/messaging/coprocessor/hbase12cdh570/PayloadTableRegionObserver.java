@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570;
+package io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase12cdh570;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.util.hbase.CConfigurationReader;
-import co.cask.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
-import co.cask.cdap.data2.util.hbase.HBase12CDH570ScanBuilder;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.TopicMetadataCache;
-import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.HBase12CDH570ScanBuilder;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.TopicMetadataCache;
+import io.cdap.cdap.messaging.TopicMetadataCacheSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.hive;
+package io.cdap.cdap.security.hive;
 
-import co.cask.cdap.common.security.YarnTokenUtils;
+import io.cdap.cdap.common.security.YarnTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import org.apache.hadoop.conf.Configuration;

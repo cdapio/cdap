@@ -17,4 +17,4 @@
 /**
  * Guice bindings for metrics.
  */
-package co.cask.cdap.metrics.guice;
+package io.cdap.cdap.metrics.guice;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.system;
+package io.cdap.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.proto.id.DatasetId;
 import org.junit.Assert;
 import org.junit.Test;
 

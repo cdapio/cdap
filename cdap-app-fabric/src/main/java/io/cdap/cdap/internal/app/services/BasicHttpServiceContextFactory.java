@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 
 import javax.annotation.Nullable;
 

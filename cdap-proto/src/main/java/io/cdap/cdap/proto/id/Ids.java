@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
 /**
  * Helper methods for constructing {@link EntityId}s.

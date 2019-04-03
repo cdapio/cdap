@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;

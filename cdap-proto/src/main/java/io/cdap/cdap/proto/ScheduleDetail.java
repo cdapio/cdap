@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 
 import java.util.List;
 import java.util.Map;

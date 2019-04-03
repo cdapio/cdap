@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.service;
+package io.cdap.cdap.app.runtime.spark.service;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
-import co.cask.cdap.api.spark.service.SparkHttpServicePluginContext;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
-import co.cask.cdap.internal.app.PluginWithLocation;
-import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceContext;
+import io.cdap.cdap.api.spark.service.SparkHttpServicePluginContext;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
+import io.cdap.cdap.internal.app.PluginWithLocation;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;

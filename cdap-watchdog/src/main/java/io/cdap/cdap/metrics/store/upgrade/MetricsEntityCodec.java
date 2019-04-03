@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.store.upgrade;
+package io.cdap.cdap.metrics.store.upgrade;
 
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

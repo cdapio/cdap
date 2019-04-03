@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.timeseries;
+package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;

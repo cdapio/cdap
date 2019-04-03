@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.workflow;
+package io.cdap.cdap.internal.app.workflow;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.workflow.Condition;
-import co.cask.cdap.api.workflow.WorkflowConditionNode;
-import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.workflow.Condition;
+import io.cdap.cdap.api.workflow.WorkflowConditionNode;
+import io.cdap.cdap.api.workflow.WorkflowContext;
+import io.cdap.cdap.api.workflow.WorkflowNode;
 
 import java.util.List;
 

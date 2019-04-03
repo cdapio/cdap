@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
  * Provides interface for starting and stopping a server component.

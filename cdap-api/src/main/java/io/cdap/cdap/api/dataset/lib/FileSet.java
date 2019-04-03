@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.dataset.Dataset;
 import org.apache.twill.filesystem.Location;
 
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.Map;
  * or files being used.
  *
  * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
- * properties when the dataset is created. See {@link co.cask.cdap.api.dataset.lib.FileSetProperties}
+ * properties when the dataset is created. See {@link io.cdap.cdap.api.dataset.lib.FileSetProperties}
  * for details. If it is enabled for explore, a Hive external table will be created when the dataset is
  * created. The Hive table is not partitioned, and therefore querying will only work if every path in the
  * fileset is a file (not a subdirectory).
@@ -78,7 +78,7 @@ public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvi
   Map<String, String> getRuntimeArguments();
 
   /**
-   * A variant of {@link co.cask.cdap.api.data.batch.InputFormatProvider#getInputFormatConfiguration}
+   * A variant of {@link io.cdap.cdap.api.data.batch.InputFormatProvider#getInputFormatConfiguration}
    * that allows passing in the input locations (rather than using the input locations that were
    * determined from runtime arguments).
    *

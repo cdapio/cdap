@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ProgramType;
 
 /**
  * Uniquely identifies a service.

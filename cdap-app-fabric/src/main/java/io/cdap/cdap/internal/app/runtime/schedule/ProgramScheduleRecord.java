@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
 
 /**

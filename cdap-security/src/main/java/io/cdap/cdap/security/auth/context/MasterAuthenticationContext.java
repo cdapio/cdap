@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth.context;
+package io.cdap.cdap.security.auth.context;
 
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.security.UserGroupInformation;
 

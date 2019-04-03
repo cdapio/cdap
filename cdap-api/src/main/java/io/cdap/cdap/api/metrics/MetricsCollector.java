@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package io.cdap.cdap.api.metrics;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Collects metrics.

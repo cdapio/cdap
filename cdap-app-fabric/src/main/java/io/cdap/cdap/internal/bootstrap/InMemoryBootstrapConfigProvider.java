@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap;
+package io.cdap.cdap.internal.bootstrap;
 
 /**
  * Stores a {@link BootstrapConfig} in memory and returns it every time.

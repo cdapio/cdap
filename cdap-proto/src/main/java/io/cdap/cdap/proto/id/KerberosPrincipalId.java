@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
-import co.cask.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.element.EntityType;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -25,19 +25,19 @@ import java.util.Objects;
 /**
  * <p>
  * Represents a Kerberos Principal and also extends {@link EntityId} to support granting
- * {@link co.cask.cdap.proto.security.Privilege} and other Authorization operations.
+ * {@link io.cdap.cdap.proto.security.Privilege} and other Authorization operations.
  * </p>
  * <p>
- * Note: This class should not be confused with {@link co.cask.cdap.proto.security.Principal} which represents a
- * user, group or role in CDAP to whom {@link co.cask.cdap.proto.security.Privilege} can be given.
+ * Note: This class should not be confused with {@link io.cdap.cdap.proto.security.Principal} which represents a
+ * user, group or role in CDAP to whom {@link io.cdap.cdap.proto.security.Privilege} can be given.
  * Whereas this {@link KerberosPrincipalId} class represent a Kerberos principal on
- * which {@link co.cask.cdap.proto.security.Action} can be granted to {@link co.cask.cdap.proto.security.Principal} to
- * represent a {@link co.cask.cdap.proto.security.Privilege}.
+ * which {@link io.cdap.cdap.proto.security.Action} can be granted to {@link io.cdap.cdap.proto.security.Principal} to
+ * represent a {@link io.cdap.cdap.proto.security.Privilege}.
  * </p>
  * <p>
- * For example, if a {@link co.cask.cdap.proto.security.Principal} has
- * {@link co.cask.cdap.proto.security.Action#READ} on a {@link KerberosPrincipalId} it signifies that the
- * {@link co.cask.cdap.proto.security.Principal} can READ (use) the {@link KerberosPrincipalId} to impersonate the user
+ * For example, if a {@link io.cdap.cdap.proto.security.Principal} has
+ * {@link io.cdap.cdap.proto.security.Action#READ} on a {@link KerberosPrincipalId} it signifies that the
+ * {@link io.cdap.cdap.proto.security.Principal} can READ (use) the {@link KerberosPrincipalId} to impersonate the user
  * of the {@link KerberosPrincipalId}.
  * </p>
  * <p>

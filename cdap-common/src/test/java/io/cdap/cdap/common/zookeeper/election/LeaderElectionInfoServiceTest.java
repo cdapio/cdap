@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.zookeeper.election;
+package io.cdap.cdap.common.zookeeper.election;
 
-import co.cask.cdap.common.utils.Tasks;
+import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.apache.twill.api.ElectionHandler;

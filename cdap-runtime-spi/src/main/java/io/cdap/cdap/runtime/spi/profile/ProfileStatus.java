@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.profile;
+package io.cdap.cdap.runtime.spi.profile;
 
 /**
  * The status of the profile.

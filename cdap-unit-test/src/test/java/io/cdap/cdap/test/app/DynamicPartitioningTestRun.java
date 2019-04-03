@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.MapReduceManager;
+import io.cdap.cdap.test.SlowTests;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;

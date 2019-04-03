@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.http;
+package io.cdap.cdap.common.http;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

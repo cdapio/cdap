@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.proto.ProgramLiveInfo;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.monitor;
+package io.cdap.cdap.app.runtime.monitor;
 
-import co.cask.cdap.internal.app.runtime.monitor.TrafficRelayServer;
-import co.cask.cdap.internal.app.runtime.monitor.proxy.TestHandler;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
+import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
+import io.cdap.cdap.internal.app.runtime.monitor.proxy.TestHandler;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import io.cdap.http.NettyHttpService;
 import org.junit.Assert;
 import org.junit.Test;

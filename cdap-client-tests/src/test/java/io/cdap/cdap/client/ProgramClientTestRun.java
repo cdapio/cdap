@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.app.DatasetWriterService;
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.PingService;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.BatchProgram;
-import co.cask.cdap.proto.BatchProgramResult;
-import co.cask.cdap.proto.BatchProgramStart;
-import co.cask.cdap.proto.BatchProgramStatus;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.client.app.DatasetWriterService;
+import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.app.PingService;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.BatchProgram;
+import io.cdap.cdap.proto.BatchProgramResult;
+import io.cdap.cdap.proto.BatchProgramStart;
+import io.cdap.cdap.proto.BatchProgramStatus;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Before;

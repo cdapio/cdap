@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security.spi.authorization;
+package io.cdap.cdap.security.spi.authorization;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Role;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Role;
 
 import java.util.Properties;
 import java.util.Set;

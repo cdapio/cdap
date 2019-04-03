@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
 import org.junit.Assert;
 import org.junit.Ignore;

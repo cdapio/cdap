@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.zookeeper.coordination;
+package io.cdap.cdap.common.zookeeper.coordination;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.zookeeper.ZKExtOperations;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Functions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;

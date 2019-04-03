@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.cube;
+package io.cdap.cdap.api.dataset.lib.cube;
 
 /**
  * Function to be used when aggregating multiple data points.

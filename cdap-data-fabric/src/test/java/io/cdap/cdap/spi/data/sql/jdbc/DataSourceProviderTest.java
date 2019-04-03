@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql.jdbc;
+package io.cdap.cdap.spi.data.sql.jdbc;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.test.AppJarHelper;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;

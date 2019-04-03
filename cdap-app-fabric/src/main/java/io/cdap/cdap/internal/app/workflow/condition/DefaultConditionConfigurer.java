@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.workflow.condition;
+package io.cdap.cdap.internal.app.workflow.condition;
 
-import co.cask.cdap.api.workflow.Condition;
-import co.cask.cdap.api.workflow.ConditionConfigurer;
-import co.cask.cdap.api.workflow.ConditionSpecification;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.AbstractConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import co.cask.cdap.internal.workflow.condition.DefaultConditionSpecification;
+import io.cdap.cdap.api.workflow.Condition;
+import io.cdap.cdap.api.workflow.ConditionConfigurer;
+import io.cdap.cdap.api.workflow.ConditionSpecification;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
+import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
+import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 

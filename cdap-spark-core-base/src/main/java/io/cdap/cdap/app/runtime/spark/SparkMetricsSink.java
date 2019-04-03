@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.spark.Spark;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.spark.Spark;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Charsets;

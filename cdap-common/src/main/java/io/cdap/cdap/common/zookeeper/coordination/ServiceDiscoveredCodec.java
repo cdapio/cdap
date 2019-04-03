@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.zookeeper.coordination;
+package io.cdap.cdap.common.zookeeper.coordination;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

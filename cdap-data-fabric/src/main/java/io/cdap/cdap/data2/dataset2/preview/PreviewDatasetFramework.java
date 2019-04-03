@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.preview;
+package io.cdap.cdap.data2.dataset2.preview;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
-import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
+import io.cdap.cdap.data2.dataset2.ForwardingDatasetFramework;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
 
 import java.io.IOException;
 import java.util.Map;

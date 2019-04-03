@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.api.plugin;
+package io.cdap.cdap.api.plugin;
 
 /**
  * Thrown when a {@link PluginConfig} cannot be created from provided {@link PluginProperties}.

@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.CollapsedRelation;
-import co.cask.cdap.data2.metadata.lineage.LineageCollapser;
-import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.CollapsedRelation;
+import io.cdap.cdap.data2.metadata.lineage.LineageCollapser;
+import io.cdap.cdap.data2.metadata.lineage.Relation;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.metadata.lineage.CollapseType;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.cdap.cli.util.table.CsvTableRenderer;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.cli.util.InstanceURIParser;
+import io.cdap.cdap.cli.util.table.CsvTableRenderer;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
 import com.google.common.base.Function;
 import io.cdap.common.cli.CLI;
 import org.junit.Assert;

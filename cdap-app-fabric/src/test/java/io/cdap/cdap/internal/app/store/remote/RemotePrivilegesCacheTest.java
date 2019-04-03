@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store.remote;
+package io.cdap.cdap.internal.app.store.remote;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.BeforeClass;

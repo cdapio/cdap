@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto;
+package io.cdap.cdap.report.proto;
 
 /**
  * ShareId representing the shared report id

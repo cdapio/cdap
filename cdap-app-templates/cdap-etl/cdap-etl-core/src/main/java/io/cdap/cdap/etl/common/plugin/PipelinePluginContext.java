@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.ErrorTransform;
-import co.cask.cdap.etl.api.SplitterTransform;
-import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.action.Action;
-import co.cask.cdap.etl.api.batch.BatchAggregator;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.api.batch.PostAction;
-import co.cask.cdap.etl.common.DefaultStageMetrics;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.PostAction;
+import io.cdap.cdap.etl.common.DefaultStageMetrics;
 
 /**
  * Creates pipeline plugins. Any call made on the plugins will be wrapped so that the context classloader is set

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.DatasetStatePersistor;
 
 import javax.annotation.Nullable;
 

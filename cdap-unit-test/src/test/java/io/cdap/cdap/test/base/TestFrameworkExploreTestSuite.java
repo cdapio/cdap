@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test.base;
+package io.cdap.cdap.test.base;
 
-import co.cask.cdap.common.test.TestSuite;
-import co.cask.cdap.partitioned.PartitionConsumingTestRun;
-import co.cask.cdap.partitioned.PartitionCorrectorTestRun;
-import co.cask.cdap.partitioned.PartitionRollbackTestRun;
-import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.app.DummyBaseCloneTestRun;
-import co.cask.cdap.test.app.DummyBaseTestRun;
-import co.cask.cdap.test.app.DynamicPartitioningTestRun;
-import co.cask.cdap.test.app.TestSQLQueryTestRun;
+import io.cdap.cdap.common.test.TestSuite;
+import io.cdap.cdap.partitioned.PartitionConsumingTestRun;
+import io.cdap.cdap.partitioned.PartitionCorrectorTestRun;
+import io.cdap.cdap.partitioned.PartitionRollbackTestRun;
+import io.cdap.cdap.test.XSlowTests;
+import io.cdap.cdap.test.app.DummyBaseCloneTestRun;
+import io.cdap.cdap.test.app.DummyBaseTestRun;
+import io.cdap.cdap.test.app.DynamicPartitioningTestRun;
+import io.cdap.cdap.test.app.TestSQLQueryTestRun;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

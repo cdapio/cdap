@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.artifact.ArtifactRanges;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.hive.context;
+package io.cdap.cdap.hive.context;
 
-import co.cask.cdap.common.io.Codec;
+import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;

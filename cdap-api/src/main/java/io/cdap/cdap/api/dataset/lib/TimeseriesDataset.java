@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Property;
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.annotation.Property;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Table;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.metrics.Metrics;
 
 import java.io.Externalizable;
 import java.io.IOException;

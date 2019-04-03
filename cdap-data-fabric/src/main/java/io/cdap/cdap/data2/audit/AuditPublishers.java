@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.audit;
+package io.cdap.cdap.data2.audit;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.audit.payload.access.AccessPayload;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.audit.payload.access.AccessPayload;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
@@ -71,25 +71,25 @@ public final class AuditPublishers {
     switch (accessType) {
       case READ:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.READ,
+                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.READ,
                                             accessor));
         break;
       case WRITE:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.WRITE,
+                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.WRITE,
                                             accessor));
         break;
       case READ_WRITE:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.READ,
+                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.READ,
                                             accessor));
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.WRITE,
+                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.WRITE,
                                             accessor));
         break;
       case UNKNOWN:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.UNKNOWN,
+                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.UNKNOWN,
                                             accessor));
         break;
     }

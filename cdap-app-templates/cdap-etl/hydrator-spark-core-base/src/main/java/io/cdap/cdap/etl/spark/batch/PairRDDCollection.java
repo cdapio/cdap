@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.spark.Compat;
-import co.cask.cdap.etl.spark.SparkCollection;
-import co.cask.cdap.etl.spark.SparkPairCollection;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkPairCollection;
 import com.google.common.base.Optional;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;

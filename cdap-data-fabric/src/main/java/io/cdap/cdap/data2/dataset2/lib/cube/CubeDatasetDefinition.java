@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.Reconfigurable;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.Reconfigurable;
+import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -43,8 +43,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Dataset definition of {@link CubeDataset}, the dataset that implements {@link co.cask.cdap.api.dataset.lib.cube.Cube}
- * to store and query {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}s.
+ * Dataset definition of {@link CubeDataset}, the dataset that implements {@link io.cdap.cdap.api.dataset.lib.cube.Cube}
+ * to store and query {@link io.cdap.cdap.api.dataset.lib.cube.CubeFact}s.
  * <p/>
  * Cube dataset can be configured with aggregation resolutions and aggregations. E.g.
     <pre>
@@ -72,7 +72,7 @@ import java.util.Set;
  *
  * Aggregation is defined with list of dimensions to aggregate by and a list of required dimensions
  * (dataset.cube.aggregation.[agg_name].dimensions and dataset.cube.aggregation.[agg_name].requiredDimensions properties
- * respectively). The {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} measurement is aggregated within an aggregation
+ * respectively). The {@link io.cdap.cdap.api.dataset.lib.cube.CubeFact} measurement is aggregated within an aggregation
  * if it contains all required dimensions which non-null value.
  */
 public class CubeDatasetDefinition

@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetAdmin;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.data2.dataset2.lib.file.FileSetAdmin;
 
 /**
- * {@link co.cask.cdap.api.dataset.module.DatasetModule}
- * for {@link co.cask.cdap.api.dataset.lib.TimePartitionedFileSet}.
+ * {@link io.cdap.cdap.api.dataset.module.DatasetModule}
+ * for {@link io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet}.
  */
 public class TimePartitionedFileSetModule implements DatasetModule {
   @Override

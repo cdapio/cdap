@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package io.cdap.cdap.common.security;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Action;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

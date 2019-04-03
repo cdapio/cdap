@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.distributed;
+package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
-import co.cask.cdap.internal.app.runtime.LocalizationUtils;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;

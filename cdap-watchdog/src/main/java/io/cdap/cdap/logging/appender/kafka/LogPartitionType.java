@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.kafka;
+package io.cdap.cdap.logging.appender.kafka;
 
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
-import co.cask.cdap.logging.context.ApplicationLoggingContext;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Type of Log Partition

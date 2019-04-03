@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.hive;
+package io.cdap.cdap.explore.service.hive;
 
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;

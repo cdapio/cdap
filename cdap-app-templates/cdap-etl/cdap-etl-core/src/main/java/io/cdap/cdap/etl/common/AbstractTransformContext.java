@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.etl.api.Lookup;
-import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.api.Lookup;
+import io.cdap.cdap.etl.api.LookupProvider;
+import io.cdap.cdap.etl.api.TransformContext;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.List;
 import java.util.Map;

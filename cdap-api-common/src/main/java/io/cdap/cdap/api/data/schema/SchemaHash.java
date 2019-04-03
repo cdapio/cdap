@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.schema;
+package io.cdap.cdap.api.data.schema;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;

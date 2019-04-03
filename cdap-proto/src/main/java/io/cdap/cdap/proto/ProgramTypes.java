@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.api.worker.WorkerSpecification;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
- * Provides mapping from {@link co.cask.cdap.api.ProgramSpecification} to {@link ProgramType}.
+ * Provides mapping from {@link io.cdap.cdap.api.ProgramSpecification} to {@link ProgramType}.
  */
 public class ProgramTypes {
 

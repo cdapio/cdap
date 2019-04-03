@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
-import co.cask.cdap.explore.service.hive.Hive12ExploreService;
-import co.cask.cdap.explore.service.hive.Hive13ExploreService;
-import co.cask.cdap.explore.service.hive.Hive14ExploreService;
-import co.cask.cdap.hive.ExploreUtils;
-import co.cask.cdap.internal.asm.Classes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.explore.service.hive.Hive12CDH5ExploreService;
+import io.cdap.cdap.explore.service.hive.Hive12ExploreService;
+import io.cdap.cdap.explore.service.hive.Hive13ExploreService;
+import io.cdap.cdap.explore.service.hive.Hive14ExploreService;
+import io.cdap.cdap.hive.ExploreUtils;
+import io.cdap.cdap.internal.asm.Classes;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

@@ -17,4 +17,4 @@
 /**
  * Defines MapReduce jobs.
  */
-package co.cask.cdap.api.mapreduce;
+package io.cdap.cdap.api.mapreduce;

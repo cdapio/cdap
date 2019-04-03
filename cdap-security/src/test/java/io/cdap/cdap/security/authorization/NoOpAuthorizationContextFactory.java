@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.security.authorization;
+package io.cdap.cdap.security.authorization;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.test.NoopAdmin;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.cdap.security.store.DummySecureStoreService;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.common.test.NoopAdmin;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.store.DummySecureStoreService;
 import org.apache.tephra.TransactionFailureException;
 
 import java.util.Map;

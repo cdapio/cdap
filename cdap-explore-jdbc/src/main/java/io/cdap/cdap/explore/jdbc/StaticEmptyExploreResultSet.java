@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.proto.ColumnDesc;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.proto.ColumnDesc;
 import com.google.common.collect.ImmutableList;
 
 import java.sql.ResultSetMetaData;

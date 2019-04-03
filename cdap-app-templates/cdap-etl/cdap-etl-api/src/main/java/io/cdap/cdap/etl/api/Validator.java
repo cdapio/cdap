@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
 /**
  * Utility for obtaining an object which implements a set of validator functions; this object
  * is usually assigned to a variable specified by the
- * {@link co.cask.cdap.etl.api.Validator#getValidatorName} value.
+ * {@link io.cdap.cdap.etl.api.Validator#getValidatorName} value.
  */
 public interface Validator {
 
   /**
-   * Name used as variable name for the Object returned by {@link co.cask.cdap.etl.api.Validator#getValidator}.
+   * Name used as variable name for the Object returned by {@link io.cdap.cdap.etl.api.Validator#getValidator}.
    */
   String getValidatorName();
 

@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.api.app;
+package io.cdap.cdap.api.app;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.api.schedule.TriggerFactory;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.internal.api.AbstractPluginConfigurable;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.api.schedule.TriggerFactory;
+import io.cdap.cdap.api.service.BasicService;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.api.service.http.HttpServiceHandler;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.worker.Worker;
+import io.cdap.cdap.api.workflow.Workflow;
+import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -38,7 +38,7 @@ import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
  * </p>
  *
  * @param <T> {@link Config} config class that represents the configuration of the Application.
- * @see co.cask.cdap.api.app
+ * @see io.cdap.cdap.api.app
  */
 public abstract class AbstractApplication<T extends Config> extends AbstractPluginConfigurable<ApplicationConfigurer>
   implements Application<T> {

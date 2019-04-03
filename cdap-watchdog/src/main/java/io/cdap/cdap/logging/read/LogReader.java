@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.read;
+package io.cdap.cdap.logging.read;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.filter.Filter;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.filter.Filter;
 
 /**
  * Interface to read logs.

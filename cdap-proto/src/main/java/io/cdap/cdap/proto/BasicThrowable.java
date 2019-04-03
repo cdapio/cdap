@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 
 import java.util.Arrays;
 import java.util.Objects;

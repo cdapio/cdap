@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase12cdh570;
+package io.cdap.cdap.data2.increment.hbase12cdh570;
 
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;

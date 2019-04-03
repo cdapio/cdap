@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
 import java.util.Map;
 

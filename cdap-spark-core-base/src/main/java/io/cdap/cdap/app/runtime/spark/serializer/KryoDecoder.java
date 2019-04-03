@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.serializer;
+package io.cdap.cdap.app.runtime.spark.serializer;
 
-import co.cask.cdap.common.io.Decoder;
+import io.cdap.cdap.common.io.Decoder;
 import com.esotericsoftware.kryo.io.Input;
 
 import java.io.IOException;

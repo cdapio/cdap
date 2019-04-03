@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.hive.objectinspector;
+package io.cdap.cdap.hive.objectinspector;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Booleans;

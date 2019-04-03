@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.store;
+package io.cdap.cdap.store;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.OwnerStore;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.OwnerStore;
 import org.junit.Assert;
 import org.junit.Test;
 

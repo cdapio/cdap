@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.module;
+package io.cdap.cdap.api.dataset.module;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,12 +22,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare a parameter to be used in {@link co.cask.cdap.api.dataset.Dataset} constructor
- * which will be injected with {@link co.cask.cdap.api.dataset.Dataset} instance.
+ * Annotation to declare a parameter to be used in {@link io.cdap.cdap.api.dataset.Dataset} constructor
+ * which will be injected with {@link io.cdap.cdap.api.dataset.Dataset} instance.
  *
  * See
- * {@link co.cask.cdap.api.app.ApplicationConfigurer#addDatasetType
- * co.cask.cdap.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
+ * {@link io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType
+ * io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
  * }
  * for details. 
  *

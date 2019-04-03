@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 
 import java.util.Map;
 

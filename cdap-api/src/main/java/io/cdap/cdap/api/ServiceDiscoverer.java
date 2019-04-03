@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
 import java.net.URL;
 import javax.annotation.Nullable;

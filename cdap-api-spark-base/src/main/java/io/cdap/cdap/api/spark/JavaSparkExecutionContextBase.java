@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.SchedulableProgramContext;
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.TaskLocalizationContext;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataWriter;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.api.workflow.WorkflowInfoProvider;
+import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.SchedulableProgramContext;
+import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.TaskLocalizationContext;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
+import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
 import org.apache.spark.Partition;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.tephra.TransactionFailureException;

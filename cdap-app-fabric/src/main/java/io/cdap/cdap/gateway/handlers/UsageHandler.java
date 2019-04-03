@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;

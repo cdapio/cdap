@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.app;
+package io.cdap.cdap.app;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.api.schedule.TriggerFactory;
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.api.schedule.TriggerFactory;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.worker.Worker;
+import io.cdap.cdap.api.workflow.Workflow;
+import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import javax.annotation.Nullable;
 

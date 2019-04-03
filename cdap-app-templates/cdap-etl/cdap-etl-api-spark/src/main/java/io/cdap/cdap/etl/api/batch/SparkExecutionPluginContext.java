@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package io.cdap.cdap.etl.api.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.etl.api.TransformContext;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
+import io.cdap.cdap.etl.api.TransformContext;
 import org.apache.spark.Partition;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;

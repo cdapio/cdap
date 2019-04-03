@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.logging;
+package io.cdap.cdap.logging;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.kafka.KafkaTester;
-import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.kafka.KafkaTester;
+import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;

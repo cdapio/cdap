@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.dataset;
+package io.cdap.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 
 /**
  * Key used to store metadata history.

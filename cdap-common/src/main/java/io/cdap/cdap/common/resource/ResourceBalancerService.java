@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.resource;
+package io.cdap.cdap.common.resource;
 
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
-import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
-import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
-import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
-import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
-import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
+import io.cdap.cdap.common.zookeeper.coordination.PartitionReplica;
+import io.cdap.cdap.common.zookeeper.coordination.ResourceCoordinator;
+import io.cdap.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
+import io.cdap.cdap.common.zookeeper.coordination.ResourceHandler;
+import io.cdap.cdap.common.zookeeper.coordination.ResourceRequirement;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
-import co.cask.cdap.common.io.Codec;
+import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Charsets;
 import org.junit.Assert;
 import org.junit.Test;

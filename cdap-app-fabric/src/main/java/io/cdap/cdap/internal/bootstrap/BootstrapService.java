@@ -15,15 +15,15 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap;
+package io.cdap.cdap.internal.bootstrap;
 
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
-import co.cask.cdap.proto.bootstrap.BootstrapResult;
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
+import io.cdap.cdap.proto.bootstrap.BootstrapResult;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;

@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.datapipeline.service;
+package io.cdap.cdap.datapipeline.service;
 
-import co.cask.cdap.api.service.AbstractService;
+import io.cdap.cdap.api.service.AbstractService;
 
 /**
  * Service that handles pipeline studio operations, like validation and schema propagation.

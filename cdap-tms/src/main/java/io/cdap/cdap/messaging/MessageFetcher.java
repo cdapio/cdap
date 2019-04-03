@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
+package io.cdap.cdap.messaging;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.messaging.data.RawMessage;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;

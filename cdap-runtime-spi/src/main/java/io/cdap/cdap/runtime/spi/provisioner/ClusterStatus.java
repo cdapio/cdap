@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner;
 
 /**
  * Status for clusters.

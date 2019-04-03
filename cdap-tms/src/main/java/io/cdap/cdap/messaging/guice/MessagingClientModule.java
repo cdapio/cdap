@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.guice;
+package io.cdap.cdap.messaging.guice;
 
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.ClientMessagingService;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.client.ClientMessagingService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 

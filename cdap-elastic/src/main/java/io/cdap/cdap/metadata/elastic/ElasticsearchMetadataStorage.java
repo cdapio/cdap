@@ -14,33 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metadata.Cursor;
-import co.cask.cdap.common.metadata.MetadataConflictException;
-import co.cask.cdap.common.metadata.MetadataUtil;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.common.utils.Checksums;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataChange;
-import co.cask.cdap.spi.metadata.MetadataConstants;
-import co.cask.cdap.spi.metadata.MetadataDirective;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.MetadataMutation;
-import co.cask.cdap.spi.metadata.MetadataRecord;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
-import co.cask.cdap.spi.metadata.ScopedName;
-import co.cask.cdap.spi.metadata.ScopedNameOfKind;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.Sorting;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metadata.Cursor;
+import io.cdap.cdap.common.metadata.MetadataConflictException;
+import io.cdap.cdap.common.metadata.MetadataUtil;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.utils.Checksums;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.spi.metadata.MetadataDirective;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.Sorting;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
@@ -459,7 +459,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public co.cask.cdap.spi.metadata.SearchResponse search(SearchRequest request)
+  public io.cdap.cdap.spi.metadata.SearchResponse search(SearchRequest request)
     throws IOException {
     return request.getCursor() != null && !request.getCursor().isEmpty()
       ? doScroll(request) : doSearch(request);
@@ -783,7 +783,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return the search response containing the next page of results.
    */
-  private co.cask.cdap.spi.metadata.SearchResponse doScroll(SearchRequest request)
+  private io.cdap.cdap.spi.metadata.SearchResponse doScroll(SearchRequest request)
     throws IOException {
 
     Cursor cursor = Cursor.fromString(request.getCursor());
@@ -805,7 +805,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     SearchHits hits = searchResponse.getHits();
     List<MetadataRecord> results = fromHits(hits);
     String newCursor = computeCursor(searchResponse, cursor);
-    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, cursor.getOffset(), cursor.getLimit(),
+    return new io.cdap.cdap.spi.metadata.SearchResponse(request, newCursor, cursor.getOffset(), cursor.getLimit(),
                                                         (int) hits.getTotalHits(), results);
   }
 
@@ -833,7 +833,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @param request the search request
    */
-  private co.cask.cdap.spi.metadata.SearchResponse doSearch(SearchRequest request)
+  private io.cdap.cdap.spi.metadata.SearchResponse doSearch(SearchRequest request)
     throws IOException {
 
     org.elasticsearch.action.search.SearchRequest searchRequest =
@@ -848,7 +848,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     SearchHits hits = searchResponse.getHits();
     List<MetadataRecord> results = fromHits(hits);
     String newCursor = computeCursor(searchResponse, request);
-    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, request.getOffset(), request.getLimit(),
+    return new io.cdap.cdap.spi.metadata.SearchResponse(request, newCursor, request.getOffset(), request.getLimit(),
                                                         (int) hits.getTotalHits(), results);
   }
 

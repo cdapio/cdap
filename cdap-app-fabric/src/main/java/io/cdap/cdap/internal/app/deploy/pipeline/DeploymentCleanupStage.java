@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.pipeline.Context;
-import co.cask.cdap.pipeline.Stage;
+import io.cdap.cdap.pipeline.Context;
+import io.cdap.cdap.pipeline.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

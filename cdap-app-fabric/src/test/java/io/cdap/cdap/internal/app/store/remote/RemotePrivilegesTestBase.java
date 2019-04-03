@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store.remote;
+package io.cdap.cdap.internal.app.store.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.InMemoryAuthorizer;
-import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
+import io.cdap.cdap.security.authorization.RemoteAuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.plugins;
+package io.cdap.cdap.logging.plugins;
 
-import co.cask.cdap.common.io.Syncable;
+import io.cdap.cdap.common.io.Syncable;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.security.spi.authentication;
+package io.cdap.cdap.security.spi.authentication;
 
-import co.cask.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Principal;
 
 import javax.annotation.Nullable;
 

@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.data.runtime.DataFabricLevelDBModule;
+import io.cdap.cdap.data.runtime.TransactionMetricsModule;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;

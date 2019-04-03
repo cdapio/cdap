@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package io.cdap.cdap.logging.pipeline;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -23,8 +23,8 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.logging.appender.ForwardingAppender;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.logging.appender.ForwardingAppender;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.master.startup.ExploreServiceResourceKeys;
-import co.cask.cdap.master.startup.ServiceResourceKeys;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.master.startup.ExploreServiceResourceKeys;
+import io.cdap.cdap.master.startup.ServiceResourceKeys;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;

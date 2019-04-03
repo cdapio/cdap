@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer.cleaner;
+package io.cdap.cdap.logging.logbuffer.cleaner;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
-import co.cask.cdap.logging.logbuffer.LogBufferWriter;
-import co.cask.cdap.logging.logbuffer.MockCheckpointManager;
-import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.context.WorkerLoggingContext;
+import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
+import io.cdap.cdap.logging.logbuffer.LogBufferWriter;
+import io.cdap.cdap.logging.logbuffer.MockCheckpointManager;
+import io.cdap.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.ClassRule;

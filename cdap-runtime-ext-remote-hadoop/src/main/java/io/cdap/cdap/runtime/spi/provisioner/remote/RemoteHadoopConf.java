@@ -15,10 +15,10 @@
  *
  */
 
-package co.cask.cdap.runtime.spi.provisioner.remote;
+package io.cdap.cdap.runtime.spi.provisioner.remote;
 
-import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
-import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
+import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

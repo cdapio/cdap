@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.function;
+package io.cdap.cdap.etl.spark.function;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.common.TrackedTransform;
-import co.cask.cdap.etl.common.TransformingEmitter;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.common.TrackedTransform;
+import io.cdap.cdap.etl.common.TransformingEmitter;
 import com.google.common.base.Function;
 import scala.Tuple2;
 

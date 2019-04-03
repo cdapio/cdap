@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.runtime.spi.SparkCompat;
-import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.ssh.SSHContext;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 
 import java.util.Collections;
 import java.util.HashMap;

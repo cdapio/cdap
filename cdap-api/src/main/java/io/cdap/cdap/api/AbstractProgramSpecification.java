@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;

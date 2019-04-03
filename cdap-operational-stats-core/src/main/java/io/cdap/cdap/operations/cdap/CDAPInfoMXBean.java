@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.operations.cdap;
+package io.cdap.cdap.operations.cdap;
 
 import javax.management.MXBean;
 

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;

@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.ConfigTestApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -121,7 +121,7 @@ public class LocalApplicationManagerTest {
       ProgramId programId = desc.getProgramId();
       programByTypes.computeIfAbsent(programId.getType(), k -> new HashSet<>()).add(programId.getProgram());
     }
-    for (co.cask.cdap.api.app.ProgramType programType : co.cask.cdap.api.app.ProgramType.values()) {
+    for (io.cdap.cdap.api.app.ProgramType programType : io.cdap.cdap.api.app.ProgramType.values()) {
       Assert.assertEquals(appSpec.getProgramsByType(programType),
                           programByTypes.getOrDefault(ProgramType.valueOf(programType.name()), Collections.emptySet()));
     }

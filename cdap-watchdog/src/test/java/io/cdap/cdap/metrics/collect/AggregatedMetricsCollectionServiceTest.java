@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import org.junit.Assert;

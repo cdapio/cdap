@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
 import org.apache.twill.api.ResourceSpecification;

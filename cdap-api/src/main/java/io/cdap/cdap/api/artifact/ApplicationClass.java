@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package io.cdap.cdap.api.artifact;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

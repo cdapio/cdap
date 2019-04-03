@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.runtime;
+package io.cdap.cdap.security.runtime;
 
-import co.cask.cdap.common.ServiceBindException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.runtime.DaemonMain;
-import co.cask.cdap.security.guice.SecurityModules;
-import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.server.ExternalAuthenticationServer;
+import io.cdap.cdap.common.ServiceBindException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
@@ -73,7 +73,7 @@ public class AuthenticationServerMain extends DaemonMain {
         // Enable Kerberos login
         SecurityUtil.enableKerberosLogin(configuration);
 
-        co.cask.cdap.common.service.Services.startAndWait(zkClientService,
+        io.cdap.cdap.common.service.Services.startAndWait(zkClientService,
                                                           configuration.getLong(
                                                             Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
                                                           TimeUnit.MILLISECONDS,

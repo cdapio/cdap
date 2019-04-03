@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.queue;
+package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

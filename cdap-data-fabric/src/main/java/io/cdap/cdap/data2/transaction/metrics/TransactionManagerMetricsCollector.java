@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.metrics;
+package io.cdap.cdap.data2.transaction.metrics;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.metrics.TxMetricsCollector;

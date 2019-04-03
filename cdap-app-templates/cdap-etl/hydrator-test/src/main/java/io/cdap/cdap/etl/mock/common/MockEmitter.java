@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.common;
+package io.cdap.cdap.etl.mock.common;
 
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.InvalidEntry;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.InvalidEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;

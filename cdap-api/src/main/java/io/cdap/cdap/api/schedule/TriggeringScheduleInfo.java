@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;
 
 import java.util.List;
 import java.util.Map;

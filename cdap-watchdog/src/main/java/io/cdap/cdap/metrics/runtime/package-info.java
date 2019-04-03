@@ -17,4 +17,4 @@
 /**
  * This package contains classes to run metrics processor and metrics query server.
  */
-package co.cask.cdap.metrics.runtime;
+package io.cdap.cdap.metrics.runtime;

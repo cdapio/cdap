@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.system;
+package io.cdap.cdap.cli.command.system;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
-import co.cask.cdap.cli.util.table.CsvTableRenderer;
-import co.cask.cdap.cli.util.table.TableRenderer;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.table.AltStyleTableRenderer;
+import io.cdap.cdap.cli.util.table.CsvTableRenderer;
+import io.cdap.cdap.cli.util.table.TableRenderer;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;

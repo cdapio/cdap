@@ -14,34 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.internal.audit;
+package io.cdap.cdap.internal.audit;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.codec.AuditMessageTypeAdapter;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
@@ -117,7 +117,7 @@ public class AuditPublishTest {
     // All programs would have metadata change
     for (ProgramType programType : ProgramType.values()) {
       for (String programName : spec.getProgramsByType(programType)) {
-        co.cask.cdap.proto.ProgramType internalProgramType = co.cask.cdap.proto.ProgramType.valueOf(programType.name());
+        io.cdap.cdap.proto.ProgramType internalProgramType = io.cdap.cdap.proto.ProgramType.valueOf(programType.name());
         expectedMetadataChangeEntities.add(appId.program(internalProgramType, programName));
       }
     }

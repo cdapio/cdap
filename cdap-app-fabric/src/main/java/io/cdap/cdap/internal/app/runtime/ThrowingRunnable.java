@@ -15,7 +15,7 @@
  */
 
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
 /**
  * Runnable that can throw an exception.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package io.cdap.cdap.api.artifact;
 
 /**
  * Represents a version range of an artifact.

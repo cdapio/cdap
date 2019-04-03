@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.exception;
+package io.cdap.cdap.cli.exception;
 
 import io.cdap.common.cli.Command;
 

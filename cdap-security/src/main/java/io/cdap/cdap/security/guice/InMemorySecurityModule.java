@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.security.auth.InMemoryKeyManager;
-import co.cask.cdap.security.auth.KeyManager;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.security.auth.InMemoryKeyManager;
+import io.cdap.cdap.security.auth.KeyManager;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;

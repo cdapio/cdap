@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.spi.environment;
+package io.cdap.cdap.master.spi.environment;
 
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;

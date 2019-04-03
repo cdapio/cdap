@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * A System HttpServiceHandler that exposes capabilities beyond those that are not available to user service handlers.

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.metrics;
+package io.cdap.cdap.api.dataset.metrics;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.metrics.MetricsCollector;
 
 /**
- * Defines interface to be implemented by {@link co.cask.cdap.api.dataset.Dataset} implementations to
+ * Defines interface to be implemented by {@link io.cdap.cdap.api.dataset.Dataset} implementations to
  * expose data ops metrics.
  */
 @Beta

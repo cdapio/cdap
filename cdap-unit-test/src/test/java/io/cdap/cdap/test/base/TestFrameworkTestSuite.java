@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.test.base;
+package io.cdap.cdap.test.base;
 
-import co.cask.cdap.admin.AdminAppTestRun;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.TestSuite;
-import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
-import co.cask.cdap.service.DynamicPluginServiceTestRun;
-import co.cask.cdap.service.FileUploadServiceTestRun;
-import co.cask.cdap.service.ServiceArtifactTestRun;
-import co.cask.cdap.service.ServiceLifeCycleTestRun;
-import co.cask.cdap.spark.SparkFileSetTestRun;
-import co.cask.cdap.spark.SparkStreamingTestRun;
-import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
-import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.app.TestFrameworkTestRun;
-import co.cask.cdap.test.messaging.MessagingAppTestRun;
+import io.cdap.cdap.admin.AdminAppTestRun;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.TestSuite;
+import io.cdap.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
+import io.cdap.cdap.service.DynamicPluginServiceTestRun;
+import io.cdap.cdap.service.FileUploadServiceTestRun;
+import io.cdap.cdap.service.ServiceArtifactTestRun;
+import io.cdap.cdap.service.ServiceLifeCycleTestRun;
+import io.cdap.cdap.spark.SparkFileSetTestRun;
+import io.cdap.cdap.spark.SparkStreamingTestRun;
+import io.cdap.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
+import io.cdap.cdap.spark.service.SparkServiceIntegrationTestRun;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.XSlowTests;
+import io.cdap.cdap.test.app.TestFrameworkTestRun;
+import io.cdap.cdap.test.messaging.MessagingAppTestRun;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;

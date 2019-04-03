@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 
 import java.io.IOException;
 

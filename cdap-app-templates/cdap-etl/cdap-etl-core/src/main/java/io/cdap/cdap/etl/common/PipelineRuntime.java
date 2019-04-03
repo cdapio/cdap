@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.customaction.CustomActionContext;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataWriter;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.etl.api.StageContext;
+import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.customaction.CustomActionContext;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.spark.SparkClientContext;
+import io.cdap.cdap.api.workflow.WorkflowContext;
+import io.cdap.cdap.etl.api.StageContext;
 
 import java.util.Optional;
 

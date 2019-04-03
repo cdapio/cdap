@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.InvalidMetadataException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.MetadataMutation;
-import co.cask.cdap.spi.metadata.MetadataRecord;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
-import co.cask.cdap.spi.metadata.ScopedName;
-import co.cask.cdap.spi.metadata.ScopedNameOfKind;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.InvalidMetadataException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 

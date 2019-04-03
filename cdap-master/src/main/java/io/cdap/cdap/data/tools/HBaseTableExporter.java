@@ -13,31 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.tools;
+package io.cdap.cdap.data.tools;
 
-import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreServerModule;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.RemoteUGIProvider;
-import co.cask.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.explore.guice.ExploreClientModule;
+import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -194,7 +194,7 @@ public class HBaseTableExporter {
   private void printHelp() {
     System.out.println();
     System.out.println("Usage: /opt/cdap/master/bin/svc-master " +
-                         "run co.cask.cdap.data.tools.HBaseTableExporter <tablename>");
+                         "run io.cdap.cdap.data.tools.HBaseTableExporter <tablename>");
     System.out.println("Args:");
     System.out.println(" tablename    Name of the table to copy");
   }

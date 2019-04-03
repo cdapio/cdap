@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.startup;
+package io.cdap.cdap.common.startup;
 
 /**
  * Checks something at start up, throwing an exception if the check failed. Run by a {@link CheckRunner}.

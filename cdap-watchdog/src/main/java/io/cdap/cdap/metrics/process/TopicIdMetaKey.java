@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.proto.id.TopicId;
 
 import java.util.Arrays;
 

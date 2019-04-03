@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.runtime;
+package io.cdap.cdap.common.runtime;
 
 import com.google.inject.Module;
 

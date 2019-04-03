@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.lineage.CollapseType;
-import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.metadata.MetadataRecord;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Before;

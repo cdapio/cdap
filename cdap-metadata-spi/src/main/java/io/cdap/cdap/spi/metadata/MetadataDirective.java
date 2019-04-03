@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata;
+package io.cdap.cdap.spi.metadata;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * A directive instructing specific behavior when updating metadata.

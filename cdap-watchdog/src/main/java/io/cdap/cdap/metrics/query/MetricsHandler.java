@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.query;
+package io.cdap.cdap.metrics.query;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;

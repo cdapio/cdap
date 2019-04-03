@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Threads;

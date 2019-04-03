@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.provisioner;
+package io.cdap.cdap.proto.provisioner;
 
 import com.google.gson.annotations.SerializedName;
 

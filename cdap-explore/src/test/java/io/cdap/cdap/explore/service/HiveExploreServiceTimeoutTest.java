@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

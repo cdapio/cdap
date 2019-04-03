@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor.proxy;
+package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.common.http.Channels;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.common.http.Channels;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import com.google.common.io.Closeables;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

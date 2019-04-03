@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.api.metrics.TagValue;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricSearchQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.api.metrics.TagValue;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;

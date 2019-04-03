@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.inmemory;
+package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.data.runtime.TransactionMetricsModule;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTableTest;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;

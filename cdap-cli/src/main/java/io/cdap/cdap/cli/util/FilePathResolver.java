@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.util;
+package io.cdap.cdap.cli.util;
 
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;

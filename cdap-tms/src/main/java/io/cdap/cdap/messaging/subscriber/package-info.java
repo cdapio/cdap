@@ -18,4 +18,4 @@
  * This package contains classes to help writing high level consumers that need to deal with failure
  * and persisting of message id.
  */
-package co.cask.cdap.messaging.subscriber;
+package io.cdap.cdap.messaging.subscriber;

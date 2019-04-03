@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.service;
+package io.cdap.cdap.messaging.service;
 
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.TimeProvider;
-import co.cask.cdap.messaging.MessageFetcher;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.MessagingServiceUtils;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.MessagingServiceUtils;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.MetadataTable;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;

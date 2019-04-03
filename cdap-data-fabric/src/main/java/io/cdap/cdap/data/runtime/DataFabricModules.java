@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.common.runtime.RuntimeModule;
 import com.google.inject.Module;
 
 /**

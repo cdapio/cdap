@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
-import co.cask.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.Plugin;
 import org.apache.twill.filesystem.Location;
 
 /**

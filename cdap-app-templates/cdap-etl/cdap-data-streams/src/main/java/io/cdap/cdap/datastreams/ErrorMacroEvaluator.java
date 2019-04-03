@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.datastreams;
+package io.cdap.cdap.datastreams;
 
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 
 /**
  * Throws an exception if it encounters any macros

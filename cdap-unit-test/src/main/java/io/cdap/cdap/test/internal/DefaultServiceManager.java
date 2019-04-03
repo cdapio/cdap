@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package io.cdap.cdap.test.internal;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.MetricsManager;
-import co.cask.cdap.test.ServiceManager;
+import io.cdap.cdap.api.metrics.RuntimeMetrics;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.internal.AppFabricClient;
+import io.cdap.cdap.proto.ServiceInstances;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.test.AbstractProgramManager;
+import io.cdap.cdap.test.MetricsManager;
+import io.cdap.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.twill.discovery.DiscoveryServiceClient;

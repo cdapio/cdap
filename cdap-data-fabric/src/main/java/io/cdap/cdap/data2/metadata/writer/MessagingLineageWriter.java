@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.codec.OperationTypeAdapter;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.proto.codec.OperationTypeAdapter;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;

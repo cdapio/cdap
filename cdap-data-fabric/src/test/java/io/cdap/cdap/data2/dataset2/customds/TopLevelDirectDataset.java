@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.customds;
+package io.cdap.cdap.data2.dataset2.customds;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.io.IOException;
 

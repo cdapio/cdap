@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Filter;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Result;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.api.dataset.table.TableSplit;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
+import io.cdap.cdap.api.dataset.table.ConflictDetection;
+import io.cdap.cdap.api.dataset.table.Filter;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Result;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.api.dataset.table.TableSplit;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
@@ -57,7 +57,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
 
 /**
- * An abstract {@link TransactionAware} implementation of {@link co.cask.cdap.api.dataset.table.Table} which
+ * An abstract {@link TransactionAware} implementation of {@link io.cdap.cdap.api.dataset.table.Table} which
  * keeps data in memory buffer until transaction commits.
  * <p>
  * Subclasses should implement methods which deal with persistent store. This implementation merges data from persistent
@@ -488,7 +488,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
-   * Also see {@link co.cask.cdap.api.dataset.table.Table#put(byte[], byte[][], byte[][])}.
+   * Also see {@link io.cdap.cdap.api.dataset.table.Table#put(byte[], byte[][], byte[][])}.
    */
   @WriteOnly
   @Override

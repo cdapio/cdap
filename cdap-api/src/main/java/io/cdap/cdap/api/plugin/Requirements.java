@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.plugin;
+package io.cdap.cdap.api.plugin;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 /**
  * A class to encapsulate all the different types of requirements provided by
- * {@link co.cask.cdap.api.annotation.Requirements}.
+ * {@link io.cdap.cdap.api.annotation.Requirements}.
  */
 public class Requirements {
 

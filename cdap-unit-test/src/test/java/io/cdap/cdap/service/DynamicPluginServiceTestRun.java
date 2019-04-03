@@ -15,23 +15,23 @@
  *
  */
 
-package co.cask.cdap.service;
+package io.cdap.cdap.service;
 
-import co.cask.cdap.api.artifact.ArtifactManager;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.service.function.ConstantFunction;
-import co.cask.cdap.service.function.DelegatingFunction;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.service.function.ConstantFunction;
+import io.cdap.cdap.service.function.DelegatingFunction;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.gson.Gson;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;

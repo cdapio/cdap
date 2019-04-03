@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
 import java.util.Collections;
 import java.util.Map;

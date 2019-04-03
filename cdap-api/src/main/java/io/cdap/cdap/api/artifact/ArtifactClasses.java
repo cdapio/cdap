@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package io.cdap.cdap.api.artifact;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.plugin.PluginClass;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 
 /**
  * Base exception for Metadata validation.

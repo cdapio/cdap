@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.nosql.dataset;
+package io.cdap.cdap.spi.data.nosql.dataset;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.data.DatasetContext;
 import com.google.common.base.Throwables;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
@@ -32,7 +32,7 @@ public final class NoSQLTransactionals {
   }
 
   /**
-   * Create a transactional for an entity table. The regular {@link co.cask.cdap.api.Transactionals} class cannot be
+   * Create a transactional for an entity table. The regular {@link io.cdap.cdap.api.Transactionals} class cannot be
    * used due to cyclic dependency between dataset service and NoSQL StructuredTable.
    *
    * @param txClient transaction client
@@ -43,7 +43,7 @@ public final class NoSQLTransactionals {
                                                   TableDatasetSupplier datasetSupplier) {
     return new Transactional() {
       @Override
-      public void execute(co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+      public void execute(io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
         try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext, datasetSupplier)) {
           txContext.start();
@@ -54,7 +54,7 @@ public final class NoSQLTransactionals {
       }
 
       @Override
-      public void execute(int timeout, co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+      public void execute(int timeout, io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
         try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext, datasetSupplier)) {
           txContext.start(timeout);
@@ -65,7 +65,7 @@ public final class NoSQLTransactionals {
       }
 
       private void finishExecute(TransactionContext txContext, DatasetContext dsContext,
-                                 co.cask.cdap.api.TxRunnable runnable)
+                                 io.cdap.cdap.api.TxRunnable runnable)
         throws TransactionFailureException {
         try {
           runnable.run(dsContext);

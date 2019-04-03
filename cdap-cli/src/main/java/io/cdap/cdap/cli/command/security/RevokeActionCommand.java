@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.security;
+package io.cdap.cdap.cli.command.security;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.client.AuthorizationClient;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.Principal;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.client.AuthorizationClient;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;

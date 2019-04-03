@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.remote;
+package io.cdap.cdap.logging.appender.remote;
 
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.logging.appender.AbstractLogPublisher;
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.kafka.LogPartitionType;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.logging.appender.AbstractLogPublisher;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.hash.Hashing;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;

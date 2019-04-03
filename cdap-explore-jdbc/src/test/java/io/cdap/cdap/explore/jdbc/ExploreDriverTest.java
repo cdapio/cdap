@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -75,7 +75,7 @@ public class ExploreDriverTest {
     httpService = new MockHttpService(new MockExploreExecutorHandler());
     httpService.startAndWait();
 
-    Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");
+    Class.forName("io.cdap.cdap.explore.jdbc.ExploreDriver");
     exploreServiceUrl = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "localhost", httpService.getPort());
     exploreServiceUrl += "?namespace=testNamespace";
   }

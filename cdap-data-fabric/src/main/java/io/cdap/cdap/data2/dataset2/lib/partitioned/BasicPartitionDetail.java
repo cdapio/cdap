@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionMetadata;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionMetadata;
 import com.google.common.base.Objects;
 
 /**

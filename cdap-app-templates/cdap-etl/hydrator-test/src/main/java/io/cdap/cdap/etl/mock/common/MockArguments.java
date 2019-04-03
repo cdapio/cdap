@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.common;
+package io.cdap.cdap.etl.mock.common;
 
-import co.cask.cdap.etl.api.action.SettableArguments;
+import io.cdap.cdap.etl.api.action.SettableArguments;
 
 import java.util.HashMap;
 import java.util.Iterator;

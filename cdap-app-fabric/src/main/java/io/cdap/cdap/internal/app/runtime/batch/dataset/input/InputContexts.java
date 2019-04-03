@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
-import co.cask.cdap.api.data.batch.InputContext;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
+import io.cdap.cdap.api.data.batch.InputContext;
+import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 
 /**
  * Utility class that helps determine the {@link InputContext} to be used.

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.guice;
+package io.cdap.cdap.logging.guice;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.logging.gateway.handlers.LogHandler;
-import co.cask.cdap.logging.service.LogQueryService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.logging.gateway.handlers.LogHandler;
+import io.cdap.cdap.logging.service.LogQueryService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;

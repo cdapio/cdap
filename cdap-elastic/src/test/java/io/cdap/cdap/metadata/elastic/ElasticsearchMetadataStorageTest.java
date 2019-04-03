@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metadata.Cursor;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
-import co.cask.cdap.spi.metadata.MetadataMutation.Update;
-import co.cask.cdap.spi.metadata.MetadataRecord;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.MetadataStorageTest;
-import co.cask.cdap.spi.metadata.ScopedName;
-import co.cask.cdap.spi.metadata.ScopedNameOfKind;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metadata.Cursor;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Drop;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MetadataStorageTest;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Closeables;

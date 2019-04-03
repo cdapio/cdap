@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.app;
+package io.cdap.cdap.api.app;
 
-import co.cask.cdap.api.Config;
+import io.cdap.cdap.api.Config;
 
 /**
  * Defines a CDAP Application.

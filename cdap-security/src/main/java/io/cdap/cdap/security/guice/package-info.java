@@ -17,4 +17,4 @@
 /**
  * Classes supporting dependency injection bindings of security classes.
  */
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;

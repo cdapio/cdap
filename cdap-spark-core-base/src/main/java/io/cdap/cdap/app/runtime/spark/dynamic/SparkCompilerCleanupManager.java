@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic;
+package io.cdap.cdap.app.runtime.spark.dynamic;
 
-import co.cask.cdap.api.spark.dynamic.SparkCompiler;
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;

@@ -15,16 +15,16 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap;
+package io.cdap.cdap.internal.bootstrap;
 
-import co.cask.cdap.api.retry.RetryableException;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.bootstrap.executor.BaseStepExecutor;
-import co.cask.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
-import co.cask.cdap.internal.bootstrap.executor.EmptyArguments;
-import co.cask.cdap.proto.bootstrap.BootstrapResult;
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.bootstrap.executor.BaseStepExecutor;
+import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
+import io.cdap.cdap.internal.bootstrap.executor.EmptyArguments;
+import io.cdap.cdap.proto.bootstrap.BootstrapResult;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
 import org.junit.After;
 import org.junit.AfterClass;

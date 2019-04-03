@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.base.Function;
 
 import java.util.Map;

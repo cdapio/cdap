@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.hive;
+package io.cdap.cdap.explore.service.hive;
 
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.security.impersonation.ImpersonationUtils;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import org.slf4j.Logger;

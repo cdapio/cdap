@@ -17,4 +17,4 @@
 /**
  * Runtime common modules.
  */
-package co.cask.cdap.common.runtime;
+package io.cdap.cdap.common.runtime;

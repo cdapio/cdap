@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
-import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
+import io.cdap.cdap.api.data.batch.PartitionedFileSetInputContext;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

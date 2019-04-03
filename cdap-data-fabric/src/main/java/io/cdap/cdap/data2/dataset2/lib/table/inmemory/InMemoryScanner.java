@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.inmemory;
+package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.Result;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.table.Result;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import com.google.common.collect.Sets;
 
 import java.util.Collections;

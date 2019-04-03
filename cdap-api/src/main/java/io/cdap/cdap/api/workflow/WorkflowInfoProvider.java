@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
 import javax.annotation.Nullable;
 

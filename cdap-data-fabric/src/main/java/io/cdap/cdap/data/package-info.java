@@ -17,4 +17,4 @@
 /**
  * This package contains implementations of the data fabric.
  */
-package co.cask.cdap.data;
+package io.cdap.cdap.data;

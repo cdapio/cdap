@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.system;
+package io.cdap.cdap.cli.command.system;
 
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;

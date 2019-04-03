@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer.recover;
+package io.cdap.cdap.logging.logbuffer.recover;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
-import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
+import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
+import io.cdap.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;

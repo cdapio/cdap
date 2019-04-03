@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned;
 
-import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
+import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
+import io.cdap.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.Job;

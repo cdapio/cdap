@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
 
 import com.google.common.util.concurrent.Service;

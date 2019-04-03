@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package io.cdap.cdap.logging.framework;
 
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Collections;

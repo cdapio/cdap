@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package io.cdap.cdap.common.security;
 
 /**
  * Declares which content needs to be audit logged.

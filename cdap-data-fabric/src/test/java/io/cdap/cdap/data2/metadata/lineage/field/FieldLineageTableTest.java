@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package io.cdap.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.InputField;
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.api.lineage.field.ReadOperation;
-import co.cask.cdap.api.lineage.field.TransformOperation;
-import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.InputField;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.TransformOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;

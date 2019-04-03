@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.audit;
+package io.cdap.cdap.data2.audit;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.id.EntityId;
 
 import java.util.ArrayList;
 import java.util.List;

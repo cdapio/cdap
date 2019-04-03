@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.WorkflowId;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
 
 /**
  * Context object, exposing information that may be useful during the construction of
- * {@link co.cask.cdap.api.schedule.TriggerInfo} for a trigger.
+ * {@link io.cdap.cdap.api.schedule.TriggerInfo} for a trigger.
  */
 public class TriggerInfoContext {
 

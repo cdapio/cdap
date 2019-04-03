@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

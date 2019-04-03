@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.queue;
+package io.cdap.cdap.logging.pipeline.queue;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 

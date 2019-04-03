@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

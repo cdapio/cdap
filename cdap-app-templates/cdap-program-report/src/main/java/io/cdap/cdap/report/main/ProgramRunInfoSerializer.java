@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.report.util.Constants;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.report.util.Constants;
 import org.apache.avro.generic.GenericData;
 
 /**

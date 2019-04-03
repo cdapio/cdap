@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.service;
+package io.cdap.cdap.service;
 
 /**
  * Just a dummy class for {@link ServiceArtifactTestRun}.

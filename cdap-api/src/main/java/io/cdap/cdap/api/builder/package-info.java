@@ -17,4 +17,4 @@
 /**
  * Interfaces for constructing specifications.
  */
-package co.cask.cdap.api.builder;
+package io.cdap.cdap.api.builder;

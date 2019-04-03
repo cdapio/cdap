@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.workflow.AbstractCondition;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.workflow.AbstractCondition;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.workflow.WorkflowContext;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

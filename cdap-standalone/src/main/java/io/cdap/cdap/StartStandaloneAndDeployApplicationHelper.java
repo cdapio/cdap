@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
 import java.io.BufferedReader;
 import java.io.IOException;

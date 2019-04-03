@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.retry.RetryableException;
-import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
-import co.cask.cdap.proto.RestartServiceInstancesStatus;
-import co.cask.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
+import io.cdap.cdap.proto.RestartServiceInstancesStatus;
+import io.cdap.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.DiscreteDomains;
 import com.google.common.collect.ImmutableSet;

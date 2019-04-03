@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
-import co.cask.cdap.common.discovery.ServicePayload;
+import io.cdap.cdap.common.discovery.ServicePayload;
 
 /**
  * Class representing the server info for a registered server.

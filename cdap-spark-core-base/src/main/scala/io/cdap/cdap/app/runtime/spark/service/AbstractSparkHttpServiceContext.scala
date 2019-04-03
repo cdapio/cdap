@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.service
+package io.cdap.cdap.app.runtime.spark.service
 
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.service.SparkHttpServiceContext
-import co.cask.cdap.api.spark.service.SparkHttpServicePluginContext
-import co.cask.cdap.app.runtime.spark.SerializableSparkExecutionContext
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.service.SparkHttpServiceContext
+import io.cdap.cdap.api.spark.service.SparkHttpServicePluginContext
+import io.cdap.cdap.app.runtime.spark.SerializableSparkExecutionContext
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaSparkContext
 
 /**
-  * An abstract base class for implementing [[co.cask.cdap.api.spark.service.SparkHttpServiceContext]].
+  * An abstract base class for implementing [[io.cdap.cdap.api.spark.service.SparkHttpServiceContext]].
   */
 abstract class AbstractSparkHttpServiceContext(sec: SparkExecutionContext)
   extends SerializableSparkExecutionContext(sec) with SparkHttpServiceContext {

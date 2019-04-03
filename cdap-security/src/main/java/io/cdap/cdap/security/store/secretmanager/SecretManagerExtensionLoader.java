@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.secretmanager;
+package io.cdap.cdap.security.store.secretmanager;
 
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.extension.AbstractExtensionLoader;
-import co.cask.cdap.securestore.spi.SecretManager;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.securestore.spi.SecretManager;
 
 import java.util.Collections;
 import java.util.Set;
@@ -43,12 +43,12 @@ class SecretManagerExtensionLoader extends AbstractExtensionLoader<String, Secre
     return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return resource.startsWith("co/cask/cdap/securestore/spi");
+        return resource.startsWith("io/cdap/cdap/securestore/spi");
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return packageName.startsWith("co.cask.cdap.securestore.spi");
+        return packageName.startsWith("io.cdap.cdap.securestore.spi");
       }
     };
   }

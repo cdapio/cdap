@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.service.http;
+package io.cdap.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
 
 import java.util.concurrent.Callable;
 

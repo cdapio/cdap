@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report
+package io.cdap.cdap.report
 
-import co.cask.cdap.report.util.Constants
+import io.cdap.cdap.report.util.Constants
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
 /**

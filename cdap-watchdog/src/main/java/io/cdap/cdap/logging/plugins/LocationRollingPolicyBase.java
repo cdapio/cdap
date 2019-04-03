@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.plugins;
+package io.cdap.cdap.logging.plugins;
 
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.rolling.helper.CompressionMode;

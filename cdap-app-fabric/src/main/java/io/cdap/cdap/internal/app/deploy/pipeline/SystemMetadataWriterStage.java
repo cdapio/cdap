@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
+import io.cdap.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
 /**

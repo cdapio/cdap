@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import io.cdap.http.ExceptionHandler;

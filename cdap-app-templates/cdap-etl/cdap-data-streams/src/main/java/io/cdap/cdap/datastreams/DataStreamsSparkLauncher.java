@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.datastreams;
+package io.cdap.cdap.datastreams;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.api.streaming.StreamingSource;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
-import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.SparkClientContext;
+import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.LocationAwareMDCWrapperLogger;
+import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
-import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
-import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.lang.CallerClassSecurityManager;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.plugin.FindPluginHelper;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 
@@ -124,7 +124,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
       ClassLoader classloader = callerClasses[i].getClassLoader();
       if (classloader instanceof PluginClassLoader) {
         // if this is the first time we've seen this plugin artifact, it must be a new plugin parent.
-        co.cask.cdap.api.artifact.ArtifactId pluginCallerArtifactId = ((PluginClassLoader) classloader).getArtifactId();
+        io.cdap.cdap.api.artifact.ArtifactId pluginCallerArtifactId = ((PluginClassLoader) classloader).getArtifactId();
         parents.add((pluginCallerArtifactId.getScope() == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : pluginNamespaceId)
                       .artifact(pluginCallerArtifactId.getName(), pluginCallerArtifactId.getVersion().getVersion()));
       }

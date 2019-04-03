@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.partitioned;
+package io.cdap.cdap.partitioned;
 
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ProgramManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.ProgramManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;

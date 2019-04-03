@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 import java.util.List;
 import java.util.Objects;

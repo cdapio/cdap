@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.conversion;
+package io.cdap.cdap.etl.batch.conversion;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.etl.batch.StructuredRecordWritable;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.batch.StructuredRecordWritable;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.guice;
+package io.cdap.cdap.logging.guice;
 
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.remote.RemoteLogAppender;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 

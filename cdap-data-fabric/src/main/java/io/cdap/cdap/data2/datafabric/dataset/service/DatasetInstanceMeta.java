@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.proto.DatasetTypeMeta;
 
 /**
  * Dataset instance metadata.

@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.AbstractTransactionContext;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.transaction.AbstractTransactionContext;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

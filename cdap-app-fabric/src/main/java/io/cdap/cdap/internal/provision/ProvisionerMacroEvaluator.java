@@ -15,12 +15,12 @@
  *
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.security.store.SecureStore;
 
 /**
  * Evaluates the secure() macro function for provisioner properties.

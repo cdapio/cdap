@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.program;
+package io.cdap.cdap.app.program;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -51,7 +51,7 @@ public final class ManifestFields {
    * Regex for extracting one package name from the Export-Package manifest entry.
    * Refer to OSGI spec r4v43, section 3.6.5 for details. For example:
    *
-   * co.cask.plugin;use:="\"test,test2\"";version="1.0",co.cask.plugin2
+   * io.cdap.plugin;use:="\"test,test2\"";version="1.0",io.cdap.plugin2
    *
    * It basically is a comma separated list of package information.
    * Each package information is started with the package name, followed by number of directives or attributes.
@@ -59,7 +59,7 @@ public final class ManifestFields {
    * * A "directive" is a key value pair separate by ":="
    * A "attribute" is a key value pair separated by "=".
    *
-   * The following regex is for just extracting the package name (e.g. "co.cask.plugin" and "co.cask.plugin2") while
+   * The following regex is for just extracting the package name (e.g. "io.cdap.plugin" and "io.cdap.plugin2") while
    * matching the complete package information pattern.
    */
   private static final Pattern EXPORT_PACKAGE_PATTERN =

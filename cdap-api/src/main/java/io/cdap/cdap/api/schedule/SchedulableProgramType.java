@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;
 
 /**
  * Defines types of programs that can be scheduled by the Application.

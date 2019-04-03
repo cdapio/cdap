@@ -17,4 +17,4 @@
 /**
  * This package contains the classes for testing applications.
  */
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;

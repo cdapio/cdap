@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.namespace.guice;
+package io.cdap.cdap.common.namespace.guice;
 
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.RemoteNamespaceQueryClient;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;
 
 /**
  * The time trigger information to be passed to the triggered program.

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.lib.cube.Interpolator;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;

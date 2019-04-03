@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.entity;
+package io.cdap.cdap.common.entity;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.inject.Inject;
 
 import java.util.Map;

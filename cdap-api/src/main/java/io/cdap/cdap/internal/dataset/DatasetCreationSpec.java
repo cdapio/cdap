@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.dataset;
+package io.cdap.cdap.internal.dataset;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 
 import java.util.Objects;
 

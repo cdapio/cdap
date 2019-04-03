@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.SchemaHash;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.cdap.internal.asm.Methods;
-import co.cask.cdap.internal.asm.Signatures;
-import co.cask.cdap.internal.lang.Fields;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.SchemaHash;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.io.Encoder;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.internal.asm.Methods;
+import io.cdap.cdap.internal.asm.Signatures;
+import io.cdap.cdap.internal.lang.Fields;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
@@ -142,7 +142,7 @@ final class DatumWriterGenerator {
    * Generates a {@link DatumWriter} class for encoding data of the given output type with the given schema.
    * @param outputType Type information of the output data type.
    * @param schema Schema of the output data type.
-   * @return A {@link co.cask.cdap.internal.asm.ClassDefinition} that contains generated class information.
+   * @return A {@link io.cdap.cdap.internal.asm.ClassDefinition} that contains generated class information.
    */
   ClassDefinition generate(TypeToken<?> outputType, Schema schema) {
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -174,7 +174,7 @@ final class DatumWriterGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
     // DEBUG block. Uncomment for debug
-//    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+//    io.cdap.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }
@@ -233,7 +233,7 @@ final class DatumWriterGenerator {
   }
 
   /**
-   * Generates the {@link DatumWriter#encode(Object, co.cask.cdap.common.io.Encoder)} method.
+   * Generates the {@link DatumWriter#encode(Object, io.cdap.cdap.common.io.Encoder)} method.
    * @param outputType Type information of the data type for output
    * @param schema Schema to use for output.
    */

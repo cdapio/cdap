@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.DeleteBuilder;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.PutBuilder;
-import co.cask.cdap.data2.util.hbase.ScanBuilder;
-import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
-import co.cask.cdap.hbase.wd.DistributedScanner;
-import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.DeleteBuilder;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.PutBuilder;
+import io.cdap.cdap.data2.util.hbase.ScanBuilder;
+import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
+import io.cdap.cdap.hbase.wd.DistributedScanner;
+import io.cdap.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;

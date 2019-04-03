@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
 
 /**
- * Thrown when a {@link co.cask.cdap.api.dataset.lib.Partition} is not found on a PartitionedFileSet.
+ * Thrown when a {@link io.cdap.cdap.api.dataset.lib.Partition} is not found on a PartitionedFileSet.
  */
 public class PartitionNotFoundException extends DataSetException {
   private final PartitionKey partitionKey;

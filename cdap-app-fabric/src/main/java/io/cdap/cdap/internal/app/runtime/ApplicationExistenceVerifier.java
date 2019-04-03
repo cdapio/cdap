@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.entity.EntityExistenceVerifier;
+import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.inject.Inject;
 
 /**

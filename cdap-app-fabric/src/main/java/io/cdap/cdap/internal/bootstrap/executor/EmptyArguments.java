@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
 /**
  * A class with nothing in it. Used by a {@link BootstrapStepExecutor} that doesn't need arguments.

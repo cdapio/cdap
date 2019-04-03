@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import co.cask.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**

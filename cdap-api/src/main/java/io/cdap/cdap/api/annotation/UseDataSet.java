@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare that a method uses a {@link co.cask.cdap.api.dataset.Dataset}.
+ * Annotation to declare that a method uses a {@link io.cdap.cdap.api.dataset.Dataset}.
  *
  * <p>
  * Example:
@@ -53,7 +53,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface UseDataSet {
   /**
-   * Returns name of the {@link co.cask.cdap.api.dataset.Dataset}.
+   * Returns name of the {@link io.cdap.cdap.api.dataset.Dataset}.
    */
   String value();
 }

@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.service.AbstractSystemService;
-import co.cask.cdap.api.service.http.AbstractSystemHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.FieldType;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

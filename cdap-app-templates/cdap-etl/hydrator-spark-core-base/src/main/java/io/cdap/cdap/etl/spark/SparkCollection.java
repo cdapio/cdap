@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark;
+package io.cdap.cdap.etl.spark;
 
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.StageStatisticsCollector;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 

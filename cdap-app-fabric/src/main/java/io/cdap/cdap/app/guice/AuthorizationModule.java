@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.DefaultAdmin;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authorization.AuthorizationContextFactory;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
-import co.cask.cdap.security.authorization.DelegatingPrivilegeManager;
-import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
+import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.runtime.DefaultAdmin;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
+import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.security.authorization.DefaultAuthorizationContext;
+import io.cdap.cdap.security.authorization.DelegatingPrivilegeManager;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.Authorizer;
+import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Inject;

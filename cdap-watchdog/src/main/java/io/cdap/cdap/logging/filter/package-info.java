@@ -17,4 +17,4 @@
 /**
  * Contains classes that can be used to filter log events.
  */
-package co.cask.cdap.logging.filter;
+package io.cdap.cdap.logging.filter;

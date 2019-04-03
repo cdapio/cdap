@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store;
+package io.cdap.cdap.messaging.store;
 
 /**
 * Container class for raw bytes corresponding to key, value of the Payload Table.

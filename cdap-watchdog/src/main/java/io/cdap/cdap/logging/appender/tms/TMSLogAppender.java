@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.tms;
+package io.cdap.cdap.logging.appender.tms;
 
-import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.logging.appender.AbstractLogPublisher;
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.kafka.LogPartitionType;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.logging.appender.AbstractLogPublisher;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;

@@ -13,22 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.dataset2.lib.hbase;
+package io.cdap.cdap.data2.dataset2.lib.hbase;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.CoprocessorManager;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseVersion;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.CoprocessorManager;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseVersion;
+import io.cdap.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import io.cdap.cdap.data2.util.hbase.HTableNameConverter;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

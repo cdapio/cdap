@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data;
+package io.cdap.cdap.data;
 
 /**
  * Interface for classes that want the {@link RuntimeProgramContext}.

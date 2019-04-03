@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.lang;
+package io.cdap.cdap.internal.lang;
 
-import co.cask.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;

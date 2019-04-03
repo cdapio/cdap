@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.test;
+package io.cdap.cdap.common.test;
 
-import co.cask.cdap.common.app.MainClassLoader;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.app.MainClassLoader;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.FilterClassLoader;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;

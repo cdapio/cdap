@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.operations.cdap;
+package io.cdap.cdap.operations.cdap;
 
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.operations.OperationalStats;
-import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.operations.OperationalStats;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Predicates;
 import com.google.inject.Injector;
 

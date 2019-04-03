@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.ClassPathResources;
-import co.cask.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.lang.ClassPathResources;
+import io.cdap.cdap.common.lang.FilterClassLoader;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.spark.streaming.StreamingContext;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ public final class SparkResourceFilters {
     @Override
     public boolean acceptResource(final String resource) {
       // All Spark API, Spark, Scala, Akka and Kryo classes should come from parent.
-      if (resource.startsWith("co/cask/cdap/api/spark/")) {
+      if (resource.startsWith("io/cdap/cdap/api/spark/")) {
         return true;
       }
       if (resource.startsWith("scala/")) {
@@ -78,7 +78,7 @@ public final class SparkResourceFilters {
 
     @Override
     public boolean acceptPackage(final String packageName) {
-      if (packageName.equals("co.cask.cdap.api.spark") || packageName.startsWith("co.cask.cdap.api.spark.")) {
+      if (packageName.equals("io.cdap.cdap.api.spark") || packageName.startsWith("io.cdap.cdap.api.spark.")) {
         return true;
       }
       if (packageName.equals("scala") || packageName.startsWith("scala.")) {

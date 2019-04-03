@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.profile;
+package io.cdap.cdap.internal.profile;
 
-import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.metadata.MetadataSubscriberService;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.profile.Profile;
+import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.profile.Profile;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

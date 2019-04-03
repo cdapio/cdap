@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.internal.guava;
+package io.cdap.cdap.common.internal.guava;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming;
+package io.cdap.cdap.etl.spark.streaming;
 
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
-import co.cask.cdap.etl.common.StageStatisticsCollector;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 
 import java.io.Externalizable;
 import java.io.IOException;

@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.client;
+package io.cdap.cdap.security.store.client;
 
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.HttpExceptionHandler;
-import co.cask.cdap.common.SecureKeyNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.security.store.FileSecureStoreService;
-import co.cask.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.SecureKeyNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.security.store.FileSecureStoreService;
+import io.cdap.cdap.security.store.SecureStoreHandler;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.discovery.Discoverable;

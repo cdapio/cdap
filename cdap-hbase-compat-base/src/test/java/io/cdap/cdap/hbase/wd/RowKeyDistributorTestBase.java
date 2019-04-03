@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.hbase.wd;
+package io.cdap.cdap.hbase.wd;
 
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.test.XSlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;

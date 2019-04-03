@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package io.cdap.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.entity.EntityExistenceVerifier;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 

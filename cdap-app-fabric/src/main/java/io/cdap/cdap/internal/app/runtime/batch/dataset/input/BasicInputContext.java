@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset.input;
+package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
-import co.cask.cdap.api.data.batch.InputContext;
+import io.cdap.cdap.api.data.batch.InputContext;
 
 /**
  * A basic implementation of {@link InputContext}.

@@ -17,7 +17,7 @@
 /**
  * Interfaces for Spark interactions.
  */
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
 
 

@@ -1,5 +1,5 @@
 //package com.salesforce.drogon.security;
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 /*
  * Copyright © 2014 Cask Data, Inc.
  *

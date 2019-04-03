@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.common.logging.RedirectedPrintStream;
+import io.cdap.cdap.common.logging.RedirectedPrintStream;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.slf4j.Logger;

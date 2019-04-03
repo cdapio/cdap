@@ -17,4 +17,4 @@
 /**
  * Contains classes for writing log events into avro file.
  */
-package co.cask.cdap.logging.write;
+package io.cdap.cdap.logging.write;

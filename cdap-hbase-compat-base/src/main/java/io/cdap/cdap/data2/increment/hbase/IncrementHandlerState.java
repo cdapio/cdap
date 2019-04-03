@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase;
+package io.cdap.cdap.data2.increment.hbase;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

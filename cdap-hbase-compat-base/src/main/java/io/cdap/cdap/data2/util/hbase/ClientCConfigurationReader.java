@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;

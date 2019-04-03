@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +48,7 @@ public class ProtoTriggerCodecTest {
 
     ProtoTrigger.ProgramStatusTrigger programStatusTrigger =
       new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.WORKER, "myprog"),
-                                            ImmutableSet.of(co.cask.cdap.api.ProgramStatus.FAILED));
+                                            ImmutableSet.of(io.cdap.cdap.api.ProgramStatus.FAILED));
     testTriggerCodec(ProtoTrigger.or(ProtoTrigger.and(partitionTrigger,
                                                       programStatusTrigger.or(timeTrigger, programStatusTrigger)),
                                      timeTrigger, programStatusTrigger));

@@ -17,4 +17,4 @@
 /**
  * This package contains various utilities.
  */
-package co.cask.cdap.common.utils;
+package io.cdap.cdap.common.utils;

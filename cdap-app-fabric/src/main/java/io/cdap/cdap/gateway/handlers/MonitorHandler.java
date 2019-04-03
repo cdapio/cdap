@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.ForbiddenException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.common.twill.MasterServiceManager;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.SystemServiceMeta;
+import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ForbiddenException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.common.twill.MasterServiceManager;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.SystemServiceMeta;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data.dataset;
+package io.cdap.cdap.data.dataset;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 

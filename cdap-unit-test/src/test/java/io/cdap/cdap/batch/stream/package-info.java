@@ -17,4 +17,4 @@
 /**
  * This package contains the classes for testing batch stream integration.
  */
-package co.cask.cdap.batch.stream;
+package io.cdap.cdap.batch.stream;

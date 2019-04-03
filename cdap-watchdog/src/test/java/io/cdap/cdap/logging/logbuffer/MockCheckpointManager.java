@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package io.cdap.cdap.logging.logbuffer;
 
-import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.meta.CheckpointManager;
 
 import java.io.IOException;
 import java.util.Collections;

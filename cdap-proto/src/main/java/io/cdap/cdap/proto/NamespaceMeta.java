@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

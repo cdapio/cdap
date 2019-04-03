@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.options;
+package io.cdap.cdap.common.options;
 
-import co.cask.cdap.common.utils.OSDetector;
+import io.cdap.cdap.common.utils.OSDetector;
 import org.junit.Assert;
 import org.junit.Test;
 

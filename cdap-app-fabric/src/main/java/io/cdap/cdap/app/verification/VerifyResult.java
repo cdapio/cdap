@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.verification;
+package io.cdap.cdap.app.verification;
 
-import co.cask.cdap.error.Errors;
+import io.cdap.cdap.error.Errors;
 
 /**
  * This class defines the result of {@link Verifier#verify(Object)}.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
 /**
  * A special type of {@link Transform} that will get as input all errors emitted by the previous stage.

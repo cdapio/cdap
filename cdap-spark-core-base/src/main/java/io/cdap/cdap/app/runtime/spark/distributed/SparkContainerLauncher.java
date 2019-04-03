@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.distributed;
+package io.cdap.cdap.app.runtime.spark.distributed;
 
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
-import co.cask.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
-import co.cask.cdap.app.runtime.spark.python.SparkPythonUtil;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.logging.StandardOutErrorRedirector;
-import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
+import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
+import io.cdap.cdap.app.runtime.spark.python.SparkPythonUtil;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.logging.StandardOutErrorRedirector;
+import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;

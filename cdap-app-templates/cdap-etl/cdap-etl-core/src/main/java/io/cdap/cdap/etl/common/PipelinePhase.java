@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.artifact.ArtifactVersionRange;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.etl.planner.Dag;
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.etl.planner.Dag;
+import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.base.Joiner;
 
 import java.util.Collection;
@@ -225,7 +225,7 @@ public class PipelinePhase implements Iterable<StageSpec> {
   public static class Builder {
     private final Set<String> supportedPluginTypes;
     private final Set<StageSpec> stages;
-    private final Set<co.cask.cdap.etl.proto.Connection> connections;
+    private final Set<io.cdap.cdap.etl.proto.Connection> connections;
 
     public Builder(Set<String> supportedPluginTypes) {
       this.supportedPluginTypes = supportedPluginTypes;
@@ -252,7 +252,7 @@ public class PipelinePhase implements Iterable<StageSpec> {
     }
 
     public Builder addConnection(String from, String to) {
-      connections.add(new co.cask.cdap.etl.proto.Connection(from, to));
+      connections.add(new io.cdap.cdap.etl.proto.Connection(from, to));
       return this;
     }
 
@@ -263,7 +263,7 @@ public class PipelinePhase implements Iterable<StageSpec> {
       return this;
     }
 
-    public Builder addConnections(Collection<co.cask.cdap.etl.proto.Connection> connections) {
+    public Builder addConnections(Collection<io.cdap.cdap.etl.proto.Connection> connections) {
       this.connections.addAll(connections);
       return this;
     }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
+package io.cdap.cdap.api.spark.service;
 
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginContext;
 
 import java.io.Closeable;
 

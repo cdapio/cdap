@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report.util
+package io.cdap.cdap.report.util
 
-import co.cask.cdap.api.schedule.{TriggerInfo, TriggeringScheduleInfo}
-import co.cask.cdap.report.proto.ProgramRunStartMethod
+import io.cdap.cdap.api.schedule.{TriggerInfo, TriggeringScheduleInfo}
+import io.cdap.cdap.report.proto.ProgramRunStartMethod
 import com.google.gson.GsonBuilder
 
 /**

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;

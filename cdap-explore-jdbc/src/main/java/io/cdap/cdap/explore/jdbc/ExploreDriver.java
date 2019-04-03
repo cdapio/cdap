@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.FixedAddressExploreClient;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.FixedAddressExploreClient;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.extension.AbstractExtensionLoader;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 
 import java.util.Arrays;
 import java.util.HashSet;

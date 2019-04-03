@@ -17,4 +17,4 @@
 /**
  * @deprecated Service discovery.
  */
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;

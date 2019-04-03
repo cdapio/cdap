@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.client.ClientMessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.client.ClientMessagingService;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;

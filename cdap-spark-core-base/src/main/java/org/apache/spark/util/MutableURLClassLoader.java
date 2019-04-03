@@ -16,8 +16,8 @@
 
 package org.apache.spark.util;
 
-import co.cask.cdap.app.runtime.spark.SparkClassLoader;
-import co.cask.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.app.runtime.spark.SparkClassLoader;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

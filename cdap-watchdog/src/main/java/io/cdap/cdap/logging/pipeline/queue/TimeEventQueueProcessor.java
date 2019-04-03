@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.queue;
+package io.cdap.cdap.logging.pipeline.queue;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

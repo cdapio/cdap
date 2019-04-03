@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.app.plugin;
+package io.cdap.cdap.internal.app.runtime.artifact.app.plugin;
 
 /**
  * A dummy class for testing template plugin classloading

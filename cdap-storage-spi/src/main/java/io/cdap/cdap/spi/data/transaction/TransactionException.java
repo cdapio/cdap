@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.transaction;
+package io.cdap.cdap.spi.data.transaction;
 
 /**
  * Exception thrown when a transaction fails to execute.

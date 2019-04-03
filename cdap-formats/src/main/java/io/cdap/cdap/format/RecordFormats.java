@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.format;
+package io.cdap.cdap.format;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.format.Formats;
-import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.data.format.FormatSpecification;
+import io.cdap.cdap.api.data.format.Formats;
+import io.cdap.cdap.api.data.format.RecordFormat;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.twill;
+package io.cdap.cdap.common.twill;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.EventHandler;

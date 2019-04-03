@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.leveldb;
+package io.cdap.cdap.messaging.store.leveldb;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.store.DataCleanupTest;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.DataCleanupTest;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.MetadataTable;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.TableFactory;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;

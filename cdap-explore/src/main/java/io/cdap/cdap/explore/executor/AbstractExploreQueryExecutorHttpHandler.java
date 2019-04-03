@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.executor;
+package io.cdap.cdap.explore.executor;
 
-import co.cask.cdap.proto.QueryInfo;
+import io.cdap.cdap.proto.QueryInfo;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;

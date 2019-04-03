@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.plugin;
+package io.cdap.cdap.etl.spark.plugin;
 
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
-import co.cask.cdap.etl.common.plugin.Caller;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.etl.common.plugin.Caller;
 
 import java.util.concurrent.Callable;
 

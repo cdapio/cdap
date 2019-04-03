@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import org.junit.Test;
 
 /**

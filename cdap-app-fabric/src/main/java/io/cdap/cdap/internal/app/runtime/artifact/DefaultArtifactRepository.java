@@ -14,41 +14,41 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.ArtifactAlreadyExistsException;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.ArtifactRangeNotFoundException;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.conf.ArtifactConfig;
-import co.cask.cdap.common.conf.ArtifactConfigReader;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
-import co.cask.cdap.data2.metadata.writer.MetadataOperation;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.app.spark.SparkCompatReader;
-import co.cask.cdap.proto.artifact.ApplicationClassInfo;
-import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.common.ArtifactAlreadyExistsException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.ArtifactRangeNotFoundException;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.conf.ArtifactConfig;
+import io.cdap.cdap.common.conf.ArtifactConfigReader;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
+import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
+import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
+import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -220,7 +220,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @Override
   public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
     NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
-    Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
+    Predicate<io.cdap.cdap.proto.id.ArtifactId> pluginPredicate,
     int limit, ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName,
                                           pluginPredicate::apply, limit, order);
@@ -704,7 +704,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
-  private void writeSystemMetadata(co.cask.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
+  private void writeSystemMetadata(io.cdap.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
     // add system metadata for artifacts
     ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataPublisher, artifactId, artifactInfo);
     writer.write();

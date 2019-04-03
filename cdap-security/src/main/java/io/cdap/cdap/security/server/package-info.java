@@ -17,4 +17,4 @@
 /**
  * Classes supporting External Authentication for users.
  */
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;

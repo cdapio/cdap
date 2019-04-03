@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ProgramType;
 
 /**
  * A factory for getting a specific type of {@link Trigger}

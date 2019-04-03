@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.verification;
+package io.cdap.cdap.internal.app.verification;
 
-import co.cask.cdap.app.verification.AbstractVerifier;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.app.verification.AbstractVerifier;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 
 /**
  * This class verifies a {@link DatasetCreationSpec}.

@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.explore.service.Explore;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.service.MetaDataInfo;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.explore.service.Explore;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.explore.service.MetaDataInfo;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

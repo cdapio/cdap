@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.app.CompatibleDatasetDeployApp.CompatibleRecord;
-import co.cask.cdap.test.app.DatasetDeployApp.Record;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.SlowTests;
+import io.cdap.cdap.test.TestBase;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.XSlowTests;
+import io.cdap.cdap.test.app.CompatibleDatasetDeployApp.CompatibleRecord;
+import io.cdap.cdap.test.app.DatasetDeployApp.Record;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;

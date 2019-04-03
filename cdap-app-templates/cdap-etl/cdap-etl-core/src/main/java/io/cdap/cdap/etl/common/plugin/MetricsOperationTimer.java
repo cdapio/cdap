@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.common.Constants;
 import com.google.common.base.Stopwatch;
 
 import java.util.concurrent.TimeUnit;

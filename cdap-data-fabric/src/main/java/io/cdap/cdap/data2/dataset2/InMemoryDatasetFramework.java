@@ -14,41 +14,41 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.InstanceConflictException;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.api.dataset.Updatable;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.audit.AuditPublisher;
-import co.cask.cdap.data2.audit.AuditPublishers;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.audit.AuditPublisher;
+import io.cdap.cdap.data2.audit.AuditPublishers;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import io.cdap.cdap.data2.dataset2.module.lib.DatasetModules;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -80,7 +80,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
 
 /**
- * A simple implementation of {@link co.cask.cdap.data2.dataset2.DatasetFramework} that keeps its state in
+ * A simple implementation of {@link io.cdap.cdap.data2.dataset2.DatasetFramework} that keeps its state in
  * memory
  */
 @SuppressWarnings("unchecked")

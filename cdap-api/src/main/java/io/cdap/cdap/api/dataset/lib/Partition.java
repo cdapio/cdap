@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
 import org.apache.twill.filesystem.Location;
 

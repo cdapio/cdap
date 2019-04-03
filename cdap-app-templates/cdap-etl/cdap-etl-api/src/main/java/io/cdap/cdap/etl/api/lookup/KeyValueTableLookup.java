@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.api.lookup;
+package io.cdap.cdap.etl.api.lookup;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.etl.api.Lookup;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.etl.api.Lookup;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.HashMap;

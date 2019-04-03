@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.security.guice.SecurityModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 

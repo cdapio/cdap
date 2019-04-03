@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.store;
+package io.cdap.cdap.store;
 
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.TableNotFoundException;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 

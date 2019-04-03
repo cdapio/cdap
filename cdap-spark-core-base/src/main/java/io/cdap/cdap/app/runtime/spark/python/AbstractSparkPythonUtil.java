@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.python;
+package io.cdap.cdap.app.runtime.spark.python;
 
 import py4j.GatewayServer;
 import py4j.Py4JNetworkException;

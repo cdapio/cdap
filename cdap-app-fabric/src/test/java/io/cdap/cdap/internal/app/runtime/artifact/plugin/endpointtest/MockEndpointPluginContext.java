@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.plugin.endpointtest;
+package io.cdap.cdap.internal.app.runtime.artifact.plugin.endpointtest;
 
 
-import co.cask.cdap.api.plugin.EndpointPluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.api.plugin.EndpointPluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginSelector;
 
 import javax.annotation.Nullable;
 

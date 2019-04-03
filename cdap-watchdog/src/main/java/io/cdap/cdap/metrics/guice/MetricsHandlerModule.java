@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.guice;
+package io.cdap.cdap.metrics.guice;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.metrics.query.MetricsHandler;
-import co.cask.cdap.metrics.query.MetricsQueryService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.metrics.query.MetricsHandler;
+import io.cdap.cdap.metrics.query.MetricsQueryService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;

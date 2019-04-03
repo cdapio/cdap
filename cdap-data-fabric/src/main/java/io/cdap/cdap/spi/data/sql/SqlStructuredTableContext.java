@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql;
+package io.cdap.cdap.spi.data.sql;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.StructuredTableInstantiationException;
-import co.cask.cdap.spi.data.TableNotFoundException;
-import co.cask.cdap.spi.data.common.MetricStructuredTable;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSchema;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.StructuredTableInstantiationException;
+import io.cdap.cdap.spi.data.TableNotFoundException;
+import io.cdap.cdap.spi.data.common.MetricStructuredTable;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.sql.Connection;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.table.field;
+package io.cdap.cdap.spi.data.table.field;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 

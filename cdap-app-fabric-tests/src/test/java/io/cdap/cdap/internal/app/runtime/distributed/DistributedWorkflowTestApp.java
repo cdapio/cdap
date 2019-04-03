@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.customaction.CustomAction;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.customaction.CustomAction;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 
 public class DistributedWorkflowTestApp extends AbstractApplication<Config> {
 

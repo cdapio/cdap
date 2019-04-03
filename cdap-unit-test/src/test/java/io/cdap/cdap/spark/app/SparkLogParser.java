@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
-import co.cask.cdap.spark.app.SparkAppUsingGetDataset.LogKey;
-import co.cask.cdap.spark.app.SparkAppUsingGetDataset.LogStats;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.spark.app.SparkAppUsingGetDataset.LogKey;
+import io.cdap.cdap.spark.app.SparkAppUsingGetDataset.LogStats;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;

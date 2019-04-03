@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.etl.planner;
+package io.cdap.cdap.etl.planner;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.Constants.Connector;
-import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.v2.spec.PipelineSpec;
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.Constants.Connector;
+import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
+import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

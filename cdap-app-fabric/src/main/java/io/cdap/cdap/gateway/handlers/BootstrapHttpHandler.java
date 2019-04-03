@@ -15,10 +15,10 @@
  *
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;

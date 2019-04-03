@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.connector;
+package io.cdap.cdap.etl.batch.connector;
 
 /**
  * Creates single connector sources and sinks.

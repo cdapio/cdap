@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.guice;
+package io.cdap.cdap.common.guice;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.common.twill.TwillAppNames;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.common.Cancellable;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 /**
  * Defines an interface to write the field lineage information for a program run.

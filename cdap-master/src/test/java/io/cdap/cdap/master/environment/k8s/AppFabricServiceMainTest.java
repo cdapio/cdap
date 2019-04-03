@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.gson.Gson;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;

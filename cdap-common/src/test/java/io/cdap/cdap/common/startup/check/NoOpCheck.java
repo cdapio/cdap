@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.startup.check;
+package io.cdap.cdap.common.startup.check;
 
-import co.cask.cdap.common.startup.Check;
+import io.cdap.cdap.common.startup.Check;
 
 /**
  * Check that doesn't do anything.

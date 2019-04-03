@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;

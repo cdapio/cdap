@@ -14,19 +14,19 @@
  * the License
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.proto.id.ServiceId;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.client.ServiceClient;
+import io.cdap.cdap.proto.id.ServiceId;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 /**
  * Abstract class for system http service handlers. System handlers can only be used in applications that are deployed

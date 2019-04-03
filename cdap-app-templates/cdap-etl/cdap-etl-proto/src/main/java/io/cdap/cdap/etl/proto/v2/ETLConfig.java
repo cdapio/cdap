@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v2;
+package io.cdap.cdap.etl.proto.v2;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.UpgradeableConfig;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.UpgradeableConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,9 +52,9 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final Integer numOfRecordsPreview;
   private final Map<String, String> properties;
   // v1 fields to support backwards compatibility
-  private final co.cask.cdap.etl.proto.v1.ETLStage source;
-  private final List<co.cask.cdap.etl.proto.v1.ETLStage> sinks;
-  private final List<co.cask.cdap.etl.proto.v1.ETLStage> transforms;
+  private final io.cdap.cdap.etl.proto.v1.ETLStage source;
+  private final List<io.cdap.cdap.etl.proto.v1.ETLStage> sinks;
+  private final List<io.cdap.cdap.etl.proto.v1.ETLStage> transforms;
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, Resources driverResources, Resources clientResources,
@@ -153,14 +153,14 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     }
     builder.addStage(source.upgradeStage(sourceType, dummyUpgradeContext));
     if (transforms != null) {
-      for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : transforms) {
+      for (io.cdap.cdap.etl.proto.v1.ETLStage v1Stage : transforms) {
         builder.addStage(v1Stage.upgradeStage(Transform.PLUGIN_TYPE, dummyUpgradeContext));
       }
     }
     if (sinks == null || sinks.isEmpty()) {
       throw new IllegalArgumentException("Pipeline does not contain any sinks.");
     }
-    for (co.cask.cdap.etl.proto.v1.ETLStage v1Stage : sinks) {
+    for (io.cdap.cdap.etl.proto.v1.ETLStage v1Stage : sinks) {
       builder.addStage(v1Stage.upgradeStage(sinkType, dummyUpgradeContext));
     }
     return builder;

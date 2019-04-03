@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.preview;
+package io.cdap.cdap.internal.app.preview;
 
-import co.cask.cdap.api.preview.DataTracer;
+import io.cdap.cdap.api.preview.DataTracer;
 
 /**
  * Implementation of the {@link DataTracer} which logs nothing.

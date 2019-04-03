@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.client;
+package io.cdap.cdap.messaging.client;
 
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.Schemas;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.Schemas;
 import com.google.common.base.Throwables;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;

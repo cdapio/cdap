@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.options;
+package io.cdap.cdap.common.options;
 
 /**
  * Raised when the option specified by the type it is associated with is

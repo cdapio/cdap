@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
-import co.cask.cdap.report.ReportGenerationApp;
-import co.cask.cdap.report.util.Constants;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.report.ReportGenerationApp;
+import io.cdap.cdap.report.util.Constants;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;

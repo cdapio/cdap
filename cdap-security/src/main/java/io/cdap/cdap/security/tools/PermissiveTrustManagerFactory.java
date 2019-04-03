@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.tools;
+package io.cdap.cdap.security.tools;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

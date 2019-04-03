@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
 import com.google.common.base.Supplier;
 
@@ -22,7 +22,7 @@ import java.net.InetSocketAddress;
 
 /**
  * An Explore Client that uses the supplied parameters to talk to a server
- * implementing {@link co.cask.cdap.explore.service.Explore} over HTTP.
+ * implementing {@link io.cdap.cdap.explore.service.Explore} over HTTP.
  */
 public class SuppliedAddressExploreClient extends AbstractExploreClient {
 

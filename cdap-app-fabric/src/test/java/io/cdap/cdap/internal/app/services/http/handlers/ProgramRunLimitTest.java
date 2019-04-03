@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithServicesAndWorker;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.AppWithServicesAndWorker;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.test.SlowTests;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

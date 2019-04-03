@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.kafka.run;
+package io.cdap.cdap.kafka.run;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.KafkaConstants;
-import co.cask.cdap.common.runtime.DaemonMain;
-import co.cask.cdap.common.service.Services;
-import co.cask.cdap.common.utils.Networks;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.KafkaConstants;
+import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.common.service.Services;
+import io.cdap.cdap.common.utils.Networks;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.net.InetAddresses;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.indexer;
+package io.cdap.cdap.data2.metadata.indexer;
 
-import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
+import io.cdap.cdap.data2.metadata.dataset.SortInfo;
 
 import java.util.Collections;
 import java.util.Set;

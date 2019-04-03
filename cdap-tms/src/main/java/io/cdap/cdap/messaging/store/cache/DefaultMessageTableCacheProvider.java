@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.cache;
+package io.cdap.cdap.messaging.store.cache;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.messaging.MessagingServiceUtils;
-import co.cask.cdap.messaging.cache.MessageCache;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.messaging.MessagingServiceUtils;
+import io.cdap.cdap.messaging.cache.MessageCache;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 

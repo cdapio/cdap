@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

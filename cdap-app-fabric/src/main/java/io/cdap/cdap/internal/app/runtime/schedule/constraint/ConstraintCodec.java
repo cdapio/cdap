@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.ProtoConstraintCodec;
+import io.cdap.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.proto.ProtoConstraintCodec;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

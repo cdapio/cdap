@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
 /**
  * Utility methods and constants to use in Explore JDBC driver.

@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.element.EntityType;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
 import java.util.Collections;

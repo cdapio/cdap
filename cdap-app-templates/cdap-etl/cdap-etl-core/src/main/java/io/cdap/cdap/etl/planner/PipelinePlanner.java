@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.planner;
+package io.cdap.cdap.etl.planner;
 
-import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.v2.spec.PipelineSpec;
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
+import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;

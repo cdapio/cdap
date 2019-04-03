@@ -16,7 +16,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.guava.reflect;
+package io.cdap.cdap.internal.guava.reflect;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;

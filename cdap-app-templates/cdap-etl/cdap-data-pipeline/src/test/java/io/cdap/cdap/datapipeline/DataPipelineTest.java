@@ -14,96 +14,96 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package io.cdap.cdap.datapipeline;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.writer.MetadataOperation;
-import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
-import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
-import co.cask.cdap.datapipeline.mock.SpamMessage;
-import co.cask.cdap.datapipeline.plugin.PluggableFilterTransform;
-import co.cask.cdap.datapipeline.plugin.ValueFilter;
-import co.cask.cdap.datapipeline.service.ServiceApp;
-import co.cask.cdap.datapipeline.spark.LineFilterProgram;
-import co.cask.cdap.datapipeline.spark.WordCount;
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.api.Engine;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.mock.action.MockAction;
-import co.cask.cdap.etl.mock.alert.NullAlertTransform;
-import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
-import co.cask.cdap.etl.mock.batch.FilterTransform;
-import co.cask.cdap.etl.mock.batch.IncapableSink;
-import co.cask.cdap.etl.mock.batch.IncapableSource;
-import co.cask.cdap.etl.mock.batch.LookupTransform;
-import co.cask.cdap.etl.mock.batch.MockExternalSink;
-import co.cask.cdap.etl.mock.batch.MockExternalSource;
-import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
-import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
-import co.cask.cdap.etl.mock.batch.MockSink;
-import co.cask.cdap.etl.mock.batch.MockSource;
-import co.cask.cdap.etl.mock.batch.NodeStatesAction;
-import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
-import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
-import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
-import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
-import co.cask.cdap.etl.mock.condition.MockCondition;
-import co.cask.cdap.etl.mock.test.HydratorTestBase;
-import co.cask.cdap.etl.mock.transform.DropNullTransform;
-import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
-import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
-import co.cask.cdap.etl.mock.transform.IdentityTransform;
-import co.cask.cdap.etl.mock.transform.NullFieldSplitterTransform;
-import co.cask.cdap.etl.mock.transform.SleepTransform;
-import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.etl.proto.v2.ArgumentMapping;
-import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
-import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.etl.proto.v2.PluginPropertyMapping;
-import co.cask.cdap.etl.proto.v2.TriggeringPropertyMapping;
-import co.cask.cdap.etl.spark.Compat;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.metadata.MetadataAdmin;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.WorkflowManager;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.NodeStatus;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
+import io.cdap.cdap.datapipeline.mock.NaiveBayesClassifier;
+import io.cdap.cdap.datapipeline.mock.NaiveBayesTrainer;
+import io.cdap.cdap.datapipeline.mock.SpamMessage;
+import io.cdap.cdap.datapipeline.plugin.PluggableFilterTransform;
+import io.cdap.cdap.datapipeline.plugin.ValueFilter;
+import io.cdap.cdap.datapipeline.service.ServiceApp;
+import io.cdap.cdap.datapipeline.spark.LineFilterProgram;
+import io.cdap.cdap.datapipeline.spark.WordCount;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.mock.action.MockAction;
+import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
+import io.cdap.cdap.etl.mock.alert.TMSAlertPublisher;
+import io.cdap.cdap.etl.mock.batch.FilterTransform;
+import io.cdap.cdap.etl.mock.batch.IncapableSink;
+import io.cdap.cdap.etl.mock.batch.IncapableSource;
+import io.cdap.cdap.etl.mock.batch.LookupTransform;
+import io.cdap.cdap.etl.mock.batch.MockExternalSink;
+import io.cdap.cdap.etl.mock.batch.MockExternalSource;
+import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSink;
+import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSource;
+import io.cdap.cdap.etl.mock.batch.MockSink;
+import io.cdap.cdap.etl.mock.batch.MockSource;
+import io.cdap.cdap.etl.mock.batch.NodeStatesAction;
+import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.IdentityAggregator;
+import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
+import io.cdap.cdap.etl.mock.condition.MockCondition;
+import io.cdap.cdap.etl.mock.test.HydratorTestBase;
+import io.cdap.cdap.etl.mock.transform.DropNullTransform;
+import io.cdap.cdap.etl.mock.transform.FilterErrorTransform;
+import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
+import io.cdap.cdap.etl.mock.transform.IdentityTransform;
+import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
+import io.cdap.cdap.etl.mock.transform.SleepTransform;
+import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
+import io.cdap.cdap.etl.proto.v2.ArgumentMapping;
+import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
+import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
+import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.metadata.MetadataAdmin;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.WorkflowTokenDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.WorkflowManager;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -156,7 +156,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                                                        Compat.SPARK_COMPAT);
   private static final String WORDCOUNT_PLUGIN = "wordcount";
   private static final String FILTER_PLUGIN = "filterlines";
-  private static final String SPARK_TYPE = co.cask.cdap.etl.common.Constants.SPARK_PROGRAM_PLUGIN_TYPE;
+  private static final String SPARK_TYPE = io.cdap.cdap.etl.common.Constants.SPARK_PROGRAM_PLUGIN_TYPE;
 
   @BeforeClass
   public static void setupTest() throws Exception {
@@ -320,7 +320,7 @@ public class DataPipelineTest extends HydratorTestBase {
       "outputPath", filterOutput.getAbsolutePath(),
       "filterStr", "bad");
 
-    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder()
+    ETLBatchConfig etlConfig = io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder()
       .addStage(new ETLStage("wordcount", new ETLPlugin(WORDCOUNT_PLUGIN, SPARK_TYPE, wordCountProperties, null)))
       .addStage(new ETLStage("filter", new ETLPlugin(FILTER_PLUGIN, SPARK_TYPE, filterProperties, null)))
       .addConnection("wordcount", "filter")
@@ -413,12 +413,12 @@ public class DataPipelineTest extends HydratorTestBase {
     Map<String, String> runtimeArguments = ImmutableMap.of("head-arg", expectedValue1);
     ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
                                                                     expectedValue2));
-    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder()
+    ETLBatchConfig etlConfig = io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder()
       .addStage(action1)
       .setEngine(engine)
       .build();
 
-    AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
+    AppRequest<io.cdap.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
       new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("head");
     ApplicationManager appManager = deployApplication(appId, appRequest);
@@ -525,7 +525,7 @@ public class DataPipelineTest extends HydratorTestBase {
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.of("value", "macroValue");
 
-    AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
+    AppRequest<io.cdap.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
       new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("macroActionTest-" + engine);
     ApplicationManager appManager = deployApplication(appId, appRequest);
@@ -820,7 +820,7 @@ public class DataPipelineTest extends HydratorTestBase {
     for (WorkflowToken.Scope scope : Arrays.asList(WorkflowToken.Scope.SYSTEM, WorkflowToken.Scope.USER)) {
       WorkflowTokenDetail token = workflowManager.getToken(runId, scope, null);
       for (Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData : token.getTokenData().entrySet()) {
-        Assert.assertTrue(!tokenData.getKey().startsWith(co.cask.cdap.etl.common.Constants.StageStatistics.PREFIX));
+        Assert.assertTrue(!tokenData.getKey().startsWith(io.cdap.cdap.etl.common.Constants.StageStatistics.PREFIX));
       }
     }
   }
@@ -910,7 +910,7 @@ public class DataPipelineTest extends HydratorTestBase {
       for (WorkflowToken.Scope scope : Arrays.asList(WorkflowToken.Scope.SYSTEM, WorkflowToken.Scope.USER)) {
         WorkflowTokenDetail token = workflowManager.getToken(runId, scope, null);
         for (Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData : token.getTokenData().entrySet()) {
-          if (tokenData.getKey().startsWith(co.cask.cdap.etl.common.Constants.StageStatistics.PREFIX)) {
+          if (tokenData.getKey().startsWith(io.cdap.cdap.etl.common.Constants.StageStatistics.PREFIX)) {
             foundStatisticsInToken = true;
             break;
           }
@@ -1730,7 +1730,7 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, "sleep.records.in");
     validateMetric(3, appId, "sleep.records.out");
     validateMetric(3, appId, "sink.records.in");
-    Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
+    Assert.assertTrue(getMetric(appId, "sleep." + io.cdap.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
 
     try (CloseableIterator<Message> messages =
       getMessagingContext().getMessageFetcher().fetch(appId.getNamespace(), "sleepTopic", 10, null)) {

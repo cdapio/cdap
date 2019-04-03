@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;

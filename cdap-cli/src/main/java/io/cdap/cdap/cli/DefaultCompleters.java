@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.cli.command.system.RenderAsCommand;
-import co.cask.cdap.cli.completer.element.AppIdCompleter;
-import co.cask.cdap.cli.completer.element.ArtifactNameCompleter;
-import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
-import co.cask.cdap.cli.completer.element.DatasetNameCompleter;
-import co.cask.cdap.cli.completer.element.DatasetTypeNameCompleter;
-import co.cask.cdap.cli.completer.element.EndpointCompleter;
-import co.cask.cdap.cli.completer.element.NamespaceNameCompleter;
-import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.security.Principal;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.cli.command.system.RenderAsCommand;
+import io.cdap.cdap.cli.completer.element.AppIdCompleter;
+import io.cdap.cdap.cli.completer.element.ArtifactNameCompleter;
+import io.cdap.cdap.cli.completer.element.DatasetModuleNameCompleter;
+import io.cdap.cdap.cli.completer.element.DatasetNameCompleter;
+import io.cdap.cdap.cli.completer.element.DatasetTypeNameCompleter;
+import io.cdap.cdap.cli.completer.element.EndpointCompleter;
+import io.cdap.cdap.cli.completer.element.NamespaceNameCompleter;
+import io.cdap.cdap.cli.completer.element.ProgramIdCompleter;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.security.Principal;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.CLIConnectionConfig;
-import co.cask.cdap.cli.LaunchOptions;
-import co.cask.cdap.cli.util.InstanceURIParser;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.CLIConnectionConfig;
+import io.cdap.cdap.cli.LaunchOptions;
+import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 

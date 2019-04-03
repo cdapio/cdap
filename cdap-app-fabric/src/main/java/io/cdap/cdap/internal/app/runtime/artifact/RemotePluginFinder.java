@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.proto.artifact.PluginInfo;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.proto.artifact.PluginInfo;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -97,11 +97,11 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
         }
 
-        SortedMap<co.cask.cdap.api.artifact.ArtifactId, PluginClass> plugins = new TreeMap<>();
+        SortedMap<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> plugins = new TreeMap<>();
 
         for (PluginInfo info : infos) {
           ArtifactSummary artifactSummary = info.getArtifact();
-          co.cask.cdap.api.artifact.ArtifactId pluginArtifactId = new co.cask.cdap.api.artifact.ArtifactId(
+          io.cdap.cdap.api.artifact.ArtifactId pluginArtifactId = new io.cdap.cdap.api.artifact.ArtifactId(
             artifactSummary.getName(), new ArtifactVersion(artifactSummary.getVersion()), artifactSummary.getScope());
           PluginClass pluginClass = new PluginClass(info.getType(), info.getName(), info.getDescription(),
                                                     info.getClassName(), info.getConfigFieldName(),
@@ -109,7 +109,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
           plugins.put(pluginArtifactId, pluginClass);
         }
 
-        Map.Entry<co.cask.cdap.api.artifact.ArtifactId, PluginClass> selected = selector.select(plugins);
+        Map.Entry<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> selected = selector.select(plugins);
         if (selected == null) {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
         }

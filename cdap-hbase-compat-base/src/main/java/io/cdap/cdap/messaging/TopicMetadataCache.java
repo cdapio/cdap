@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.messaging;
+package io.cdap.cdap.messaging;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.CConfigurationReader;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import co.cask.cdap.data2.util.hbase.ScanBuilder;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.HTableNameConverter;
+import io.cdap.cdap.data2.util.hbase.ScanBuilder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;

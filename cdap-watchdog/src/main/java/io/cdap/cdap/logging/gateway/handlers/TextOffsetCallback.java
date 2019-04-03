@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.HttpResponder;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;

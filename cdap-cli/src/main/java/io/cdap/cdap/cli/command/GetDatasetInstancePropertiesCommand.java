@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractCommand;
+import io.cdap.cdap.cli.util.table.Table;
+import io.cdap.cdap.client.DatasetClient;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

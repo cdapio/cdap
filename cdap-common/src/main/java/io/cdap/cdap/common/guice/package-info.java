@@ -17,4 +17,4 @@
 /**
  * Injection modules.
  */
-package co.cask.cdap.common.guice;
+package io.cdap.cdap.common.guice;

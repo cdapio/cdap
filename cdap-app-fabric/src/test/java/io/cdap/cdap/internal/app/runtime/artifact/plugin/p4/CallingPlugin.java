@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.runtime.artifact.plugin.p4;
+package io.cdap.cdap.internal.app.runtime.artifact.plugin.p4;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.EndpointPluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.plugin.EndpointPluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
 
 import java.util.concurrent.Callable;
 import javax.ws.rs.Path;

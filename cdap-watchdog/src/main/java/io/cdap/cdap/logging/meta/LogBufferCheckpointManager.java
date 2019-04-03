@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.meta;
+package io.cdap.cdap.logging.meta;
 
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

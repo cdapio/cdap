@@ -17,4 +17,4 @@
 /**
  * CLI completers, for auto-completion.
  */
-package co.cask.cdap.cli.completer;
+package io.cdap.cdap.cli.completer;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service.executor;
+package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data2.metadata.system.SystemMetadata;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.data2.metadata.system.SystemMetadata;
 
 import javax.annotation.Nullable;
 

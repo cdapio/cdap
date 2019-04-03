@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.audit;
+package io.cdap.cdap.data2.audit;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;

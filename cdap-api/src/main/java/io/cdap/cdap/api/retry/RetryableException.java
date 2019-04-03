@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.retry;
+package io.cdap.cdap.api.retry;
 
 /**
  * An exception that indicates an operation failed in a retryable way. For example, reading from an external system

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata.lineage;
+package io.cdap.cdap.proto.metadata.lineage;
 
 /**
  * Fields on which lineage {@link RelationRecord RelationRecords} can be collapsed.

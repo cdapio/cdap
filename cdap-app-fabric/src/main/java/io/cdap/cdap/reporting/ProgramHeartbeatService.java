@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.reporting;
+package io.cdap.cdap.reporting;
 
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.inject.Inject;
 
 import java.util.Collection;

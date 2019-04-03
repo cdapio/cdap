@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;
 
-import co.cask.cdap.api.worker.Worker;
+import io.cdap.cdap.api.worker.Worker;
 
 import javax.annotation.Nullable;
 

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.io;
+package io.cdap.cdap.io;
 
-import co.cask.cdap.common.io.ByteBuffers;
+import io.cdap.cdap.common.io.ByteBuffers;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import org.junit.Assert;

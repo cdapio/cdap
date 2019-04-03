@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v1;
+package io.cdap.cdap.etl.proto.v1;
 
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 
 import java.util.Collections;
 import java.util.HashMap;

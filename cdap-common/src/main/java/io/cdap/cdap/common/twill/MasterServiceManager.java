@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.twill;
+package io.cdap.cdap.common.twill;
 
-import co.cask.cdap.proto.SystemServiceLiveInfo;
+import io.cdap.cdap.proto.SystemServiceLiveInfo;
 import org.apache.twill.api.logging.LogEntry;
 
 import java.util.Map;

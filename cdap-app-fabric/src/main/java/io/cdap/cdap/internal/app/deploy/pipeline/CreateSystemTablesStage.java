@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 
 /**
- * This {@link co.cask.cdap.pipeline.Stage} is responsible for creating system tables
+ * This {@link io.cdap.cdap.pipeline.Stage} is responsible for creating system tables
  */
 public class CreateSystemTablesStage extends AbstractStage<ApplicationDeployable> {
   private final StructuredTableAdmin structuredTableAdmin;

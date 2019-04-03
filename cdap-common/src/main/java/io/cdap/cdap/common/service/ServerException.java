@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
 /**
  * Raised when there is issue in registering, starting, stopping the service.

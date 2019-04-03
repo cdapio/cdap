@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.PluginInstanceDetail;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.PluginInstanceDetail;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

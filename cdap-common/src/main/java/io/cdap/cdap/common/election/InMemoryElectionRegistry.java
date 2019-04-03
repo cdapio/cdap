@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.election;
+package io.cdap.cdap.common.election;
 
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;

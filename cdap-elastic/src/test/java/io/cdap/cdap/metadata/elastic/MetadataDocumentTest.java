@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import org.junit.Assert;
 import org.junit.Test;
 

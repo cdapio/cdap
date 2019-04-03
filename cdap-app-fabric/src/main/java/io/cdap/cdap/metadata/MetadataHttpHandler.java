@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.data2.metadata.MetadataCompatibility;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataConstants;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
-import co.cask.cdap.spi.metadata.Sorting;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.client.MetadataClient;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.data2.metadata.MetadataCompatibility;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.spi.metadata.Sorting;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;

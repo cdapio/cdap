@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
 
 /**
  * Thrown when a dataset type is not found

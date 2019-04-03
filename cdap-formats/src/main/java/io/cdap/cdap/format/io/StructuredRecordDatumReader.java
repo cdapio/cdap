@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.format.io;
+package io.cdap.cdap.format.io;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.DatumReader;
-import co.cask.cdap.common.io.Decoder;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.DatumReader;
+import io.cdap.cdap.common.io.Decoder;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import org.apache.twill.filesystem.Location;
 

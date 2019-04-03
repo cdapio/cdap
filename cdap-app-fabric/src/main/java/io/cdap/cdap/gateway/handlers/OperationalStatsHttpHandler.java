@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.operations.OperationalStats;
-import co.cask.cdap.operations.OperationalStatsUtils;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.operations.OperationalStats;
+import io.cdap.cdap.operations.OperationalStatsUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

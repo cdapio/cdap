@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data;
+package io.cdap.cdap.data;
 
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import javax.annotation.Nullable;
 

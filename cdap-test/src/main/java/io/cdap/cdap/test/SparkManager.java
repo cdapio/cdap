@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.spark.Spark;
+import io.cdap.cdap.api.spark.Spark;
 
 import java.net.URL;
 import java.util.concurrent.TimeUnit;

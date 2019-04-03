@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.WorkflowTokenDetail;
+import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 
 import java.util.List;
 import java.util.Map;

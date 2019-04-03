@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata;
+package io.cdap.cdap.spi.metadata;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 
 import java.util.Collections;
 import java.util.Map;

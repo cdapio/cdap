@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.api.artifact.ArtifactManager;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactFinder;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import co.cask.cdap.internal.app.runtime.artifact.LocalArtifactManager;
-import co.cask.cdap.internal.app.runtime.artifact.LocalPluginFinder;
-import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
-import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
-import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
-import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
+import io.cdap.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
+import io.cdap.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
+import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;

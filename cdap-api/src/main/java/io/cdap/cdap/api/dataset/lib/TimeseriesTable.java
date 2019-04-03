@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.api.data.batch.IteratorBasedSplitReader;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.data.batch.BatchReadable;
+import io.cdap.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.api.data.batch.IteratorBasedSplitReader;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.table.Table;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -49,7 +49,7 @@ import java.util.Objects;
  *
  * <p>
  * A user can set the time interval length for partitioning data into rows (as defined by 
- * <code>timeIntervalToStorePerRow</code> in the {@link co.cask.cdap.api.dataset.DatasetSpecification} properties).
+ * <code>timeIntervalToStorePerRow</code> in the {@link io.cdap.cdap.api.dataset.DatasetSpecification} properties).
  * This interval should be chosen according to the use case at hand. In general, larger time interval sizes mean
  * faster reading of small-to-medium time ranges (range size up to several time intervals) of entries data,
  * while having slower reading of very small time ranges of entries data (range size a small portion of the time
@@ -96,9 +96,9 @@ import java.util.Objects;
  *   </li>
  *   <li>
  *       The current implementation (including the format of the stored data) is heavily affected by the
- *       {@link co.cask.cdap.api.dataset.table.Table} API which is used "under-the-hood". In particular the
+ *       {@link io.cdap.cdap.api.dataset.table.Table} API which is used "under-the-hood". In particular the
  *       implementation is constrained by the absence of a <code>readHigherOrEq()</code> method in the
- *       {@link co.cask.cdap.api.dataset.table.Table} API, which would return the next row with key greater
+ *       {@link io.cdap.cdap.api.dataset.table.Table} API, which would return the next row with key greater
  *       or equals to the given.
  *   </li>
  *   <li>

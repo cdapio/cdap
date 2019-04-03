@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
-import co.cask.cdap.api.common.RuntimeArguments;
+import io.cdap.cdap.api.common.RuntimeArguments;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,7 +134,7 @@ public abstract class Input {
   }
 
   /**
-   * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.dataset.Dataset} as an input.
+   * An implementation of {@link Input}, which defines a {@link io.cdap.cdap.api.dataset.Dataset} as an input.
    */
   public static class DatasetInput extends Input {
     private final Map<String, String> arguments;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata.lineage;
+package io.cdap.cdap.proto.metadata.lineage;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.InputField;
-import co.cask.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.InputField;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
 
 import java.util.ArrayList;
 import java.util.Collections;

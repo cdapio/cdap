@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.gateway.discovery;
+package io.cdap.cdap.gateway.discovery;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import org.apache.twill.common.Cancellable;

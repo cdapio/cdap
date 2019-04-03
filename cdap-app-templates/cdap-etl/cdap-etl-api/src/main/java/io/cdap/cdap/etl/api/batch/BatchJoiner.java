@@ -15,13 +15,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package io.cdap.cdap.etl.api.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.etl.api.Joiner;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
-import co.cask.cdap.etl.api.StageLifecycle;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.etl.api.Joiner;
+import io.cdap.cdap.etl.api.MultiInputPipelineConfigurable;
+import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
+import io.cdap.cdap.etl.api.StageLifecycle;
 
 /**
  * A {@link Joiner} used for batch programs.

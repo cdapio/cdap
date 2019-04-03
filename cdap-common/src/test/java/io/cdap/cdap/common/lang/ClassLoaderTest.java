@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.annotation.Property;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Property;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.io.SchemaGenerator;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -62,7 +62,7 @@ public class ClassLoaderTest {
     ClassLoader classLoader = new PackageFilterClassLoader(getClass().getClassLoader(), new Predicate<String>() {
       @Override
       public boolean apply(String input) {
-        return input.startsWith("co.cask.cdap.api.");
+        return input.startsWith("io.cdap.cdap.api.");
       }
     });
 
@@ -95,7 +95,7 @@ public class ClassLoaderTest {
   @Test
   public void testCombineClassLoader() throws ClassNotFoundException {
     // Creates a CombineClassLoader with two delegates.
-    // One allows "co.cask.cdap.api.app", the other allows "co.cask.cdap.api.annotation"
+    // One allows "io.cdap.cdap.api.app", the other allows "io.cdap.cdap.api.annotation"
     ClassLoader parent = getClass().getClassLoader();
     ClassLoader classLoader = new CombineClassLoader(null,
       new PackageFilterClassLoader(parent, Predicates.equalTo(Application.class.getPackage().getName())),

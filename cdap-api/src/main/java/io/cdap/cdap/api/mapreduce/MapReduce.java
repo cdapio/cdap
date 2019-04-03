@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.mapreduce;
+package io.cdap.cdap.api.mapreduce;
 
-import co.cask.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.ProgramLifecycle;
 
 /**
  * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing MapReduce jobs

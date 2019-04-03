@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging;
+package io.cdap.cdap.logging;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;

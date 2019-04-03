@@ -14,55 +14,55 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework.distributed;
+package io.cdap.cdap.logging.framework.distributed;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocalLocationModule;
-import co.cask.cdap.common.guice.NamespaceAdminTestModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.test.MockTwillContext;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.kafka.KafkaTester;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.system.LogPathIdentifier;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
-import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.meta.FileMetaDataReader;
-import co.cask.cdap.logging.meta.KafkaCheckpointManager;
-import co.cask.cdap.logging.meta.KafkaOffset;
-import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
-import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.impersonation.CurrentUGIProvider;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.test.MockTwillContext;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.kafka.KafkaTester;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.appender.system.LogPathIdentifier;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.guice.DistributedLogFrameworkModule;
+import io.cdap.cdap.logging.meta.Checkpoint;
+import io.cdap.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.meta.FileMetaDataReader;
+import io.cdap.cdap.logging.meta.KafkaCheckpointManager;
+import io.cdap.cdap.logging.meta.KafkaOffset;
+import io.cdap.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.logging.write.LogLocation;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -152,7 +152,7 @@ public class DistributedLogFrameworkTest {
       publishLog(
         cConf.get(Constants.Logging.KAFKA_TOPIC), context,
         ImmutableList.of(
-          createLoggingEvent("co.cask.test." + i, Level.INFO, "Testing " + i, eventTimeBase - i)
+          createLoggingEvent("io.cdap.test." + i, Level.INFO, "Testing " + i, eventTimeBase - i)
         )
       );
     }

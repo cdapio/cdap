@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.security.AddRoleToPrincipalCommand;
-import co.cask.cdap.cli.command.security.CreateRoleCommand;
-import co.cask.cdap.cli.command.security.DropRoleCommand;
-import co.cask.cdap.cli.command.security.GrantActionCommand;
-import co.cask.cdap.cli.command.security.ListPrivilegesCommand;
-import co.cask.cdap.cli.command.security.ListRolesCommand;
-import co.cask.cdap.cli.command.security.RemoveRoleFromPrincipalCommand;
-import co.cask.cdap.cli.command.security.RevokeActionForPrincipalCommand;
-import co.cask.cdap.cli.command.security.RevokeEntityCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.security.AddRoleToPrincipalCommand;
+import io.cdap.cdap.cli.command.security.CreateRoleCommand;
+import io.cdap.cdap.cli.command.security.DropRoleCommand;
+import io.cdap.cdap.cli.command.security.GrantActionCommand;
+import io.cdap.cdap.cli.command.security.ListPrivilegesCommand;
+import io.cdap.cdap.cli.command.security.ListRolesCommand;
+import io.cdap.cdap.cli.command.security.RemoveRoleFromPrincipalCommand;
+import io.cdap.cdap.cli.command.security.RevokeActionForPrincipalCommand;
+import io.cdap.cdap.cli.command.security.RevokeEntityCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

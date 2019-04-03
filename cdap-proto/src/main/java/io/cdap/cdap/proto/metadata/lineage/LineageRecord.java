@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata.lineage;
+package io.cdap.cdap.proto.metadata.lineage;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

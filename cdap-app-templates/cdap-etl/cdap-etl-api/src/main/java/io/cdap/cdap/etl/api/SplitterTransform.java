@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
 /**
  * A Transform that can split its input among multiple output ports.

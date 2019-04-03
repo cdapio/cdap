@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.module.lib.hbase;
+package io.cdap.cdap.data2.dataset2.module.lib.hbase;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
 
 /**
  * Registers HBase-backed implementations of the basic datasets

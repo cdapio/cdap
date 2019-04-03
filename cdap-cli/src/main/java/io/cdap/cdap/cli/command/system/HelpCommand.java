@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.system;
+package io.cdap.cdap.cli.command.system;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.util.StringStyler;
-import co.cask.cdap.cli.util.table.TableRendererConfig;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.util.StringStyler;
+import io.cdap.cdap.cli.util.table.TableRendererConfig;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;

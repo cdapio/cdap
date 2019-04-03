@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
 import java.io.IOException;
 

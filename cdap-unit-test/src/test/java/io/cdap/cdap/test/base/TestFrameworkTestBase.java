@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.test.base;
+package io.cdap.cdap.test.base;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.TestBase;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.TestBase;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

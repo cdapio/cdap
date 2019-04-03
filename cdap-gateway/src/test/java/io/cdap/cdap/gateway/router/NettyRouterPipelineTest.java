@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.worker.AbstractWorker;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.test.AppJarHelper;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.ning.http.client.AsyncCompletionHandler;

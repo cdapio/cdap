@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v2;
+package io.cdap.cdap.etl.proto.v2;
 
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.UpgradeContext;
 
 import java.util.Objects;
 
@@ -72,9 +72,9 @@ public final class ETLStage {
   public ETLStage upgradeStage(UpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig =
       upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
-    co.cask.cdap.etl.proto.v2.ETLPlugin etlPlugin = new co.cask.cdap.etl.proto.v2.ETLPlugin(
+    io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
       plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
-    return new co.cask.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
+    return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 
   @Override

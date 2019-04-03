@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.config.Config;
-import co.cask.cdap.config.ConfigNotFoundException;
-import co.cask.cdap.config.ConsoleSettingsStore;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.config.Config;
+import io.cdap.cdap.config.ConfigNotFoundException;
+import io.cdap.cdap.config.ConsoleSettingsStore;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;

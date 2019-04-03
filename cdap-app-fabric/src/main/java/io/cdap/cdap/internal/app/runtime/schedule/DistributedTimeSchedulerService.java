@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.service.RetryOnStartFailureService;
-import co.cask.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.RetryStrategies;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;

@@ -15,9 +15,9 @@
  */
 
 
-package co.cask.cdap.etl.batch.preview;
+package io.cdap.cdap.etl.batch.preview;
 
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 

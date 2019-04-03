@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.etl.proto.v2.validation;
+package io.cdap.cdap.etl.proto.v2.validation;
 
-import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
+import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 
 import java.util.Objects;
 

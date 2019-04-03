@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.TaskLocalizationContext;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.TaskLocalizationContext;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -33,7 +33,7 @@ import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 
-import static co.cask.cdap.spark.app.SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME;
+import static io.cdap.cdap.spark.app.SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME;
 
 /**
  * Spark program that uses local files in Java.

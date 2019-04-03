@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner.dataproc;
+package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;

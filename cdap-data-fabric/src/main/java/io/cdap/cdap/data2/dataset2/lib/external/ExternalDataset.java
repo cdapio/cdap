@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.external;
+package io.cdap.cdap.data2.dataset2.lib.external;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.io.IOException;
 import java.util.Collections;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;
 
 import java.io.Closeable;
 

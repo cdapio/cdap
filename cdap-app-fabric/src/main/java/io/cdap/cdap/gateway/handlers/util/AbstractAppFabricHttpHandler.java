@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.util;
+package io.cdap.cdap.gateway.handlers.util;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.internal.UserErrors;
+import io.cdap.cdap.internal.UserMessages;
+import io.cdap.cdap.proto.Instances;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

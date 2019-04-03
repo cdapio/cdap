@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
 import java.security.Permission;
 import java.security.PermissionCollection;

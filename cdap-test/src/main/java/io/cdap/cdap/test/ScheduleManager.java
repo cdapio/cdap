@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 /**
  * This interface is for managing the schedule of a workflow

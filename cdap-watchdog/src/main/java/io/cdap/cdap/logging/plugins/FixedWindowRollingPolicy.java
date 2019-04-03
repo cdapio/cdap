@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.logging.plugins;
+package io.cdap.cdap.logging.plugins;
 
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -17,4 +17,4 @@
 /**
  * Packages for plugins in CDAP.
  */
-package co.cask.cdap.api.plugin;
+package io.cdap.cdap.api.plugin;

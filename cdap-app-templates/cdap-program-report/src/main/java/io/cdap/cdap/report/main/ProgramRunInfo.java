@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
 import javax.annotation.Nullable;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.distributed;
+package io.cdap.cdap.app.runtime.spark.distributed;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Functions;
 import com.google.common.collect.Maps;

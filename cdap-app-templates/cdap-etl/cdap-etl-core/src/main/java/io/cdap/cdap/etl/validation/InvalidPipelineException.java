@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.etl.validation;
+package io.cdap.cdap.etl.validation;
 
-import co.cask.cdap.etl.proto.v2.validation.ValidationError;
+import io.cdap.cdap.etl.proto.v2.validation.ValidationError;
 
 import java.util.ArrayList;
 import java.util.Collections;

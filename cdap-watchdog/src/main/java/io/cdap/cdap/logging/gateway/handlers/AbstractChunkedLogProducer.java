@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.logging.read.LogEvent;
 import com.google.common.collect.Multimap;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;

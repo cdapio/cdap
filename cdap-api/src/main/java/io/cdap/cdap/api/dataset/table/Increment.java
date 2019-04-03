@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -86,7 +86,7 @@ public class Increment {
    * Adds a column and sets the column's value.
    * @param column Column to add.
    * @param value Column value.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Increment}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Increment}.
    */
   public Increment add(byte[] column, long value) {
     values.put(column, value);
@@ -118,7 +118,7 @@ public class Increment {
    * Adds a column and sets the column's value.
    * @param column Column to add.
    * @param value Column value.
-   * @return Instance of this {@link co.cask.cdap.api.dataset.table.Increment}.
+   * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Increment}.
    */
   public Increment add(String column, long value) {
     return add(Bytes.toBytes(column), value);

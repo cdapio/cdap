@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.base.Throwables;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;

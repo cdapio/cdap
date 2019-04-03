@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.explore.executor;
+package io.cdap.cdap.explore.executor;
 
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryResult;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.ExploreService;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryResult;
 import com.google.gson.Gson;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;

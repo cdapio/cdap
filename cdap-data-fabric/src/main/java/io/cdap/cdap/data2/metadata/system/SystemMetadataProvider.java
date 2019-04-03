@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.system;
+package io.cdap.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Collections;

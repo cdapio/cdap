@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service.executor;
+package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
 /**
  * Used to respond to various admin operation requests.

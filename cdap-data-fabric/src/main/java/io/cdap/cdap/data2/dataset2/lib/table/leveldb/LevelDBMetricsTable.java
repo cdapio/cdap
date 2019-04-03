@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 

@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.scheduler.Scheduler;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.scheduler.Scheduler;
 import com.google.common.reflect.TypeToken;
 
 import java.util.HashSet;

@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.app.deploy.spark
+package io.cdap.cdap.app.deploy.spark
 
-import co.cask.cdap.api.spark.Spark
-import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkCompiler
-import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
-import co.cask.cdap.common.id.Id
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator
+import io.cdap.cdap.api.spark.Spark
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler
+import io.cdap.cdap.app.runtime.spark.dynamic.DefaultSparkCompiler
+import io.cdap.cdap.app.runtime.spark.dynamic.URLAdder
+import io.cdap.cdap.common.id.Id
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator
 
 import java.net.URL
 
 import scala.tools.nsc.Settings
 
 /**
-  * The default implementation of [[co.cask.cdap.api.spark.ExtendedSparkConfigurer]].
+  * The default implementation of [[io.cdap.cdap.api.spark.ExtendedSparkConfigurer]].
   */
 class DefaultExtendedSparkConfigurer(spark: Spark,
                                      deployNamespace: Id.Namespace,

@@ -15,6 +15,6 @@
  */
 
 /**
- * Defines deployment of custom {@link co.cask.cdap.api.dataset.Dataset}s to make them available within CDAP.
+ * Defines deployment of custom {@link io.cdap.cdap.api.dataset.Dataset}s to make them available within CDAP.
  */
-package co.cask.cdap.api.dataset.module;
+package io.cdap.cdap.api.dataset.module;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
 import java.lang.reflect.Constructor;
 import java.util.Map;

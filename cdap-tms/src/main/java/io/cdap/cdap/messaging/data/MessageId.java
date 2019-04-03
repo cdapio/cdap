@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.data;
+package io.cdap.cdap.messaging.data;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.util.Arrays;
 

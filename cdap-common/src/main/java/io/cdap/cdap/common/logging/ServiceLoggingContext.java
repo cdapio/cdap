@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 /**
  * Service Logging Context used by different cdap system services such as metrics etc

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.api.ErrorRecord;
-import co.cask.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.ErrorRecord;
+import io.cdap.cdap.etl.common.RecordInfo;
 import com.google.common.collect.Multimap;
 
 import java.util.Set;

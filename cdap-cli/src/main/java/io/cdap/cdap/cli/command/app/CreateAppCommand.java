@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.app;
+package io.cdap.cdap.cli.command.app;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.preview.PreviewConfig;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.cli.util.FilePathResolver;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
+import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;

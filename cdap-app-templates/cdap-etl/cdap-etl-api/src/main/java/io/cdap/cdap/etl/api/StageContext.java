@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.metadata.MetadataReader;
-import co.cask.cdap.api.metadata.MetadataWriter;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.lineage.field.LineageRecorder;
+import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metadata.MetadataReader;
+import io.cdap.cdap.api.metadata.MetadataWriter;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.lineage.field.LineageRecorder;
 
 import java.util.Map;
 import javax.annotation.Nullable;

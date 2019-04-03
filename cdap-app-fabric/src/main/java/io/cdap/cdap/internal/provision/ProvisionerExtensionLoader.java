@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.extension.AbstractExtensionLoader;
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import com.google.inject.Inject;
 
 import java.util.Collections;
@@ -51,12 +51,12 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
     return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return resource.startsWith("co/cask/cdap/runtime/spi");
+        return resource.startsWith("io/cdap/cdap/runtime/spi");
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return packageName.startsWith("co.cask.cdap.runtime.spi");
+        return packageName.startsWith("io.cdap.cdap.runtime.spi");
       }
     };
   }

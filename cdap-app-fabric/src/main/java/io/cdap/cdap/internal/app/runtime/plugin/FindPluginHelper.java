@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.plugin;
+package io.cdap.cdap.internal.app.runtime.plugin;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 

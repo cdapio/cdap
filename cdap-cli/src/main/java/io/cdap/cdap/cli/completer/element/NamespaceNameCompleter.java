@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.completer.element;
+package io.cdap.cdap.cli.completer.element;
 
-import co.cask.cdap.cli.completer.StringsCompleter;
-import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.cli.completer.StringsCompleter;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.proto.NamespaceMeta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;

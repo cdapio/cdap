@@ -13,20 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.store.preview;
+package io.cdap.cdap.internal.app.store.preview;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.app.store.preview.PreviewStore;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

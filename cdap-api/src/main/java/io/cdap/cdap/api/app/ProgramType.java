@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.app;
+package io.cdap.cdap.api.app;
 
 /**
  * Defines types of programs supported by the system.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.python;
+package io.cdap.cdap.app.runtime.spark.python;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

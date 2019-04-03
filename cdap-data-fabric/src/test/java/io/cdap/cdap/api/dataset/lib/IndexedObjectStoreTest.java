@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.collect.ImmutableList;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -32,7 +32,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
+ * Test for {@link io.cdap.cdap.api.dataset.lib.IndexedObjectStore}.
  */
 public class IndexedObjectStoreTest {
   @ClassRule

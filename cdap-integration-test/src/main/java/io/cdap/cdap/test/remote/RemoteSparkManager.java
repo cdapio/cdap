@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.test.remote;
+package io.cdap.cdap.test.remote;
 
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.SparkManager;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.test.AbstractProgramManager;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.SparkManager;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import org.slf4j.Logger;

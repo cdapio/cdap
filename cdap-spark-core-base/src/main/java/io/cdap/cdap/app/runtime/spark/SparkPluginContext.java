@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
 
 import java.io.Externalizable;
 import java.io.IOException;

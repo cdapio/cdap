@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.hbase;
+package io.cdap.cdap.messaging.store.hbase;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
-import co.cask.cdap.hbase.wd.DistributedScanner;
-import co.cask.cdap.messaging.store.AbstractPayloadTable;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.RawPayloadTableEntry;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
+import io.cdap.cdap.hbase.wd.DistributedScanner;
+import io.cdap.cdap.messaging.store.AbstractPayloadTable;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.RawPayloadTableEntry;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;

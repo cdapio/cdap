@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark;
+package io.cdap.cdap.etl.spark;
 
 import com.google.common.base.Optional;
 import org.apache.hadoop.conf.Configuration;

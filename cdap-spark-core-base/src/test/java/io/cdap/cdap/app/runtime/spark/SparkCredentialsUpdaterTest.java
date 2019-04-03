@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.io.Locations;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.io.Locations;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Text;

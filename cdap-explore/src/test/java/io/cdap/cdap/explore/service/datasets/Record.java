@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.datasets;
+package io.cdap.cdap.explore.service.datasets;
 
 /**
  *

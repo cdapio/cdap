@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.api.app.Application;
+import io.cdap.cdap.api.app.Application;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.VersionInfo;
 import org.junit.Assert;

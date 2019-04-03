@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test.messaging;
+package io.cdap.cdap.test.messaging;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessageFetcher;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.worker.AbstractWorker;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;

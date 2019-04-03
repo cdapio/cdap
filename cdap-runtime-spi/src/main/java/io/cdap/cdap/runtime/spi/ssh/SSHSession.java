@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.ssh;
+package io.cdap.cdap.runtime.spi.ssh;
 
 import java.io.Closeable;
 import java.io.IOException;

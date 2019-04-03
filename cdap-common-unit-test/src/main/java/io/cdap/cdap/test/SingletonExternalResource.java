@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 import org.junit.rules.ExternalResource;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.log;
+package io.cdap.cdap.etl.log;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;

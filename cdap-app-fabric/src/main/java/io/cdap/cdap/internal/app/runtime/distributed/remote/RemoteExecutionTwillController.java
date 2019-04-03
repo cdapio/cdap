@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitor;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;

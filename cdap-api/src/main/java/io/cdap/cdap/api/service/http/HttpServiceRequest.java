@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;
 
 import java.nio.ByteBuffer;
 import java.util.List;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.store;
+package io.cdap.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 /**
  *

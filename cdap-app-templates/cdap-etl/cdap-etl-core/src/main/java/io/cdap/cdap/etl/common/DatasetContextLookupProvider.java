@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.etl.api.Lookup;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.etl.api.Lookup;
 
 import java.util.Map;
 

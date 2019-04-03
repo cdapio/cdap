@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.leveldb;
+package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * LevelDB backed implementation for {@link co.cask.cdap.data2.dataset2.lib.table.MetricsTable}
+ * LevelDB backed implementation for {@link io.cdap.cdap.data2.dataset2.lib.table.MetricsTable}
  */
 public class LevelDBMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
 import com.google.common.base.Objects;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.nosql.dataset;
+package io.cdap.cdap.spi.data.nosql.dataset;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 

@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License
  */
-package co.cask.cdap.cli.command.metadata;
+package io.cdap.cdap.cli.command.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.id.EntityId;
 
 /**
  * Helper for CLI to convert string representation of {@link EntityId} used in metadata CLI command

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramController;
 
 import javax.annotation.Nullable;
 

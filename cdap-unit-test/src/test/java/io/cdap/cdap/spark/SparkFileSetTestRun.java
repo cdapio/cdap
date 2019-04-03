@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.spark;
+package io.cdap.cdap.spark;
 
-import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.spark.app.ScalaFileCountSparkProgram;
-import co.cask.cdap.spark.app.SparkAppUsingFileSet;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.common.RuntimeArguments;
+import io.cdap.cdap.api.common.Scope;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionOutput;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.spark.app.ScalaFileCountSparkProgram;
+import io.cdap.cdap.spark.app.SparkAppUsingFileSet;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;

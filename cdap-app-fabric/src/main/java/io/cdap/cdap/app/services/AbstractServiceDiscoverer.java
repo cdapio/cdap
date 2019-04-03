@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.services;
+package io.cdap.cdap.app.services;
 
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;

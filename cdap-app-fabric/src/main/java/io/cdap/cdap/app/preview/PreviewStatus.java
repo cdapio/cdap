@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.BasicThrowable;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

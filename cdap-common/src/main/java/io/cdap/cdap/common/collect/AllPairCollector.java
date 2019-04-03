@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.collect;
+package io.cdap.cdap.common.collect;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;

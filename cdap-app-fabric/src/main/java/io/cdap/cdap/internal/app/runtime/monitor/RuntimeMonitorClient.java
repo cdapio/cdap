@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor;
+package io.cdap.cdap.internal.app.runtime.monitor;
 
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.security.tools.HttpsEnabler;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.security.tools.HttpsEnabler;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;

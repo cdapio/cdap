@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.ArtifactId;
 
 /**
  * Thrown when an artifact already exists.

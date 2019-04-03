@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store;
+package io.cdap.cdap.messaging.store;
 
 import javax.annotation.Nullable;
 

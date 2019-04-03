@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
+import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

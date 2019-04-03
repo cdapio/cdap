@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
 
 /**
  * Represents name and type information of the program.

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata.dataset;
+package io.cdap.cdap.spi.metadata.dataset;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.data2.metadata.dataset.MetadataDataset;
 
 /**
  * Provides a metadata dataset for a given scope.

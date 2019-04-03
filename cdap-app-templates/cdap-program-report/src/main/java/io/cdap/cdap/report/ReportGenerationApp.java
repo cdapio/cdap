@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.report;
+package io.cdap.cdap.report;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 
 /**
  * An application that accepts request to generate reports from program runs.

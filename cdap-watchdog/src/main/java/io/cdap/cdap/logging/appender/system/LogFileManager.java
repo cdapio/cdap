@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.system;
+package io.cdap.cdap.logging.appender.system;
 
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.io.Syncable;
-import co.cask.cdap.logging.meta.FileMetaDataWriter;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.io.Syncable;
+import io.cdap.cdap.logging.meta.FileMetaDataWriter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;

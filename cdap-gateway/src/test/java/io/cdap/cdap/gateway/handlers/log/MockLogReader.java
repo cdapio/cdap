@@ -14,42 +14,42 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.log;
+package io.cdap.cdap.gateway.handlers.log;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.logging.context.ApplicationLoggingContext;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.logging.context.UserServiceLoggingContext;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.context.WorkflowLoggingContext;
-import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.read.Callback;
-import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.logging.read.ReadRange;
-import co.cask.cdap.proto.ProgramRunCluster;
-import co.cask.cdap.proto.ProgramRunClusterStatus;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.context.MapReduceLoggingContext;
+import io.cdap.cdap.logging.context.UserServiceLoggingContext;
+import io.cdap.cdap.logging.context.WorkerLoggingContext;
+import io.cdap.cdap.logging.context.WorkflowLoggingContext;
+import io.cdap.cdap.logging.context.WorkflowProgramLoggingContext;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.logging.read.ReadRange;
+import io.cdap.cdap.proto.ProgramRunCluster;
+import io.cdap.cdap.proto.ProgramRunClusterStatus;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -362,7 +362,7 @@ public class MockLogReader implements LogReader {
     }
 
     for (int i = 0; i < MAX; i++) {
-      LoggingEvent event = new LoggingEvent("co.cask.Test", (ch.qos.logback.classic.Logger) logger, Level.INFO,
+      LoggingEvent event = new LoggingEvent("io.cdap.Test", (ch.qos.logback.classic.Logger) logger, Level.INFO,
                                             programName + "<img>-" + i, null, null);
       Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
                                                                         TAG_TO_STRING_FUNCTION));
@@ -386,7 +386,7 @@ public class MockLogReader implements LogReader {
     // All possible values of " MDC property ".origin
     String[] origins = {"plugin", "program", "system"};
     String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
-    StackTraceElement stackTraceElementNative = new StackTraceElement("co.cask.Test", "testMethod", null, -2);
+    StackTraceElement stackTraceElementNative = new StackTraceElement("io.cdap.Test", "testMethod", null, -2);
     RunId runId = null;
     Long stopTs = null;
     for (int i = 0; i < MAX; ++i) {
@@ -399,7 +399,7 @@ public class MockLogReader implements LogReader {
       }
 
       LoggingEvent event =
-        new LoggingEvent("co.cask.Test",
+        new LoggingEvent("io.cdap.Test",
                          (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
                          i % 2 == 0 ? Level.ERROR : Level.WARN, entityId + "<img>-" + i, null, null);
       event.setTimeStamp(TimeUnit.SECONDS.toMillis(getMockTimeSecs(i)));

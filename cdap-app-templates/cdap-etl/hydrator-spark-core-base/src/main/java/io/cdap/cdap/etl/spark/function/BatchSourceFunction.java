@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.function;
+package io.cdap.cdap.etl.spark.function;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.etl.api.Transformation;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.TrackedTransform;
-import co.cask.cdap.etl.common.preview.LimitingTransform;
-import co.cask.cdap.etl.spark.CombinedEmitter;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.etl.api.Transformation;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.TrackedTransform;
+import io.cdap.cdap.etl.common.preview.LimitingTransform;
+import io.cdap.cdap.etl.spark.CombinedEmitter;
 import scala.Tuple2;
 
 /**

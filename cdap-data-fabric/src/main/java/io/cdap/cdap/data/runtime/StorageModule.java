@@ -15,21 +15,21 @@
  */
 
 
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.common.CachedStructuredTableRegistry;
-import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
-import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.RetryingSqlTransactionRunner;
-import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.jdbc.DataSourceProvider;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.common.CachedStructuredTableRegistry;
+import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
+import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.nosql.NoSqlTransactionRunner;
+import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.RetryingSqlTransactionRunner;
+import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.sql.jdbc.DataSourceProvider;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;

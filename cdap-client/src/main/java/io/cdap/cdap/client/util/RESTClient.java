@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.client.util;
+package io.cdap.cdap.client.util;
 
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.exception.DisconnectedException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.security.authentication.client.AccessToken;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;

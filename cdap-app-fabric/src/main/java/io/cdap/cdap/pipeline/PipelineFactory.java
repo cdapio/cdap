@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.pipeline;
+package io.cdap.cdap.pipeline;
 
 /**
  * A factory interface for creating pipelines. This class allows to
- * implement different {@link co.cask.cdap.pipeline.Pipeline} based on external constraints.
+ * implement different {@link io.cdap.cdap.pipeline.Pipeline} based on external constraints.
  */
 public interface PipelineFactory {
   /**
-   * @return A {@link co.cask.cdap.pipeline.Pipeline} created by the factory.
+   * @return A {@link io.cdap.cdap.pipeline.Pipeline} created by the factory.
    */
   <T> Pipeline<T> getPipeline();
 }

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 

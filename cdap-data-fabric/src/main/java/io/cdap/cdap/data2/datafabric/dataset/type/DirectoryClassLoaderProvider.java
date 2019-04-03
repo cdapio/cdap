@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.type;
+package io.cdap.cdap.data2.datafabric.dataset.type;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

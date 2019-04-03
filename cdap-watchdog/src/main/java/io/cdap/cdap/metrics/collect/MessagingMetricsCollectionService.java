@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;
 
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.BinaryEncoder;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.io.Encoder;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An {@link AggregatedMetricsCollectionService} that uses TMS to publish {@link co.cask.cdap.api.metrics.MetricValues}.
+ * An {@link AggregatedMetricsCollectionService} that uses TMS to publish {@link io.cdap.cdap.api.metrics.MetricValues}.
  */
 @Singleton
 public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService {

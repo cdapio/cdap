@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 /**
  * Managing the worker in an application.

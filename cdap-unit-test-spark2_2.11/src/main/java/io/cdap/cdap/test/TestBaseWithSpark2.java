@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.test.TestRunner;
-import co.cask.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.test.TestRunner;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 
 /**
  * Base class to inherit from for unit-test that need to run Spark2.
- * It provides testing functionality for {@link co.cask.cdap.api.app.Application}.
+ * It provides testing functionality for {@link io.cdap.cdap.api.app.Application}.
  * To clean App Fabric state, you can use the {@link #clear} method.
  * <p>
  * Custom configurations for CDAP can be set by using {@link ClassRule} and {@link TestConfiguration}.

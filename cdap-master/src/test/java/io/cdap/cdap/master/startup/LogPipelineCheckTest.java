@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.framework.InvalidPipelineException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.framework.InvalidPipelineException;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

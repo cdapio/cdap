@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;
 
-import co.cask.cdap.common.app.MainClassLoader;
+import io.cdap.cdap.common.app.MainClassLoader;
 
 import java.net.URL;
 

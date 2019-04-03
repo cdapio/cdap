@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.test;
+package io.cdap.cdap.common.test;
 
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.ProgramResources;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ProgramResources;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import org.apache.twill.api.ClassAcceptor;

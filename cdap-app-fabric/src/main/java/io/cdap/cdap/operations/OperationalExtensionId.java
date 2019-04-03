@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.operations;
+package io.cdap.cdap.operations;
 
 import java.util.Objects;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package io.cdap.cdap.common.security;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

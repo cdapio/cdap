@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.InvalidPluginConfigException;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;

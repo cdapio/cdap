@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.k8s;
+package io.cdap.cdap.internal.app.runtime.k8s;
 
-import co.cask.cdap.common.options.Option;
-import co.cask.cdap.master.environment.k8s.EnvironmentOptions;
+import io.cdap.cdap.common.options.Option;
+import io.cdap.cdap.master.environment.k8s.EnvironmentOptions;
 
 /**
  * Environment options for application service programs.

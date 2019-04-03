@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mapreduce;
+package io.cdap.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.InvalidEntry;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.InvalidEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

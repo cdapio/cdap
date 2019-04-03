@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.transaction.MultiThreadTransactionAware;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.transaction.MultiThreadTransactionAware;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;

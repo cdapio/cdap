@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework.local;
+package io.cdap.cdap.logging.framework.local;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.framework.LocalAppenderContext;
-import co.cask.cdap.logging.framework.LogPipelineLoader;
-import co.cask.cdap.logging.framework.LogPipelineSpecification;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.framework.LocalAppenderContext;
+import io.cdap.cdap.logging.framework.LogPipelineLoader;
+import io.cdap.cdap.logging.framework.LogPipelineSpecification;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 
 /**
  *

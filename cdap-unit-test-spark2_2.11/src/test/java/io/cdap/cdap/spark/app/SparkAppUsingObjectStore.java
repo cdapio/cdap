@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app;
+package io.cdap.cdap.spark.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.ObjectStores;
+import io.cdap.cdap.api.dataset.table.Table;
 import com.google.common.base.Throwables;
 
 /**

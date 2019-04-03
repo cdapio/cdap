@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.util;
+package io.cdap.cdap.cli.util;
 
-import co.cask.cdap.cli.CLIConnectionConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.cli.CLIConnectionConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 
 import java.net.URI;

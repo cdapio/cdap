@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
-import co.cask.cdap.runtime.spi.provisioner.Capabilities;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
-import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
-import co.cask.cdap.runtime.spi.provisioner.PollingStrategies;
-import co.cask.cdap.runtime.spi.provisioner.PollingStrategy;
-import co.cask.cdap.runtime.spi.provisioner.ProgramRun;
-import co.cask.cdap.runtime.spi.provisioner.Provisioner;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
+import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
+import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
+import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import com.google.inject.Singleton;
 
 import java.util.ArrayList;

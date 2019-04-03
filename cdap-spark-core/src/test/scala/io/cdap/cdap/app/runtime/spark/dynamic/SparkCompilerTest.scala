@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 import java.net.URL
 
-import co.cask.cdap.api.spark.dynamic.{SparkCompiler, SparkInterpreter}
+import io.cdap.cdap.api.spark.dynamic.{SparkCompiler, SparkInterpreter}
 
 import scala.reflect.io.{PlainFile, VirtualDirectory}
 import scala.tools.nsc.Settings

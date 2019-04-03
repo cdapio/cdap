@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.logging.guice;
+package io.cdap.cdap.logging.guice;
 
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.logging.framework.distributed.DistributedAppenderContext;
-import co.cask.cdap.logging.framework.distributed.DistributedLogFramework;
-import co.cask.cdap.logging.service.LogSaverStatusService;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.logging.framework.distributed.DistributedAppenderContext;
+import io.cdap.cdap.logging.framework.distributed.DistributedLogFramework;
+import io.cdap.cdap.logging.service.LogSaverStatusService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;

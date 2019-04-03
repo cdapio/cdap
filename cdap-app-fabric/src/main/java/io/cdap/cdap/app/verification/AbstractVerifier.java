@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.verification;
+package io.cdap.cdap.app.verification;
 
-import co.cask.cdap.error.Err;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.error.Err;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
 
 
 /**

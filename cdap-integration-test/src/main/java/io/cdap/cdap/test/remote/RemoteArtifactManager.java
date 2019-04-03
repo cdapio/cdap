@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.test.remote;
+package io.cdap.cdap.test.remote;
 
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.test.ArtifactManager;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.test.ArtifactManager;
 
 import java.util.Map;
 

@@ -17,4 +17,4 @@
 /**
  * Contains classes that work with log events.
  */
-package co.cask.cdap.logging;
+package io.cdap.cdap.logging;

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.zookeeper.ResourceListener;
-import co.cask.cdap.security.zookeeper.SharedResourceCache;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.zookeeper.ResourceListener;
+import io.cdap.cdap.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;

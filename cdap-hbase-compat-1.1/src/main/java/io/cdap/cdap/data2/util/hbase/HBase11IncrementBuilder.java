@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
 /**
  * HBase 1.0 specific implementation for {@link PutBuilder}.

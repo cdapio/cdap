@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;

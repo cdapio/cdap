@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.audit;
+package io.cdap.cdap.data2.audit;
 
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.junit.Assert;
 import org.junit.Test;
 

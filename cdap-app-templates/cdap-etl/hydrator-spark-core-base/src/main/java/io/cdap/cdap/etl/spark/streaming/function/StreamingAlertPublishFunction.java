@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function;
+package io.cdap.cdap.etl.spark.streaming.function;
 
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.api.AlertPublisher;
-import co.cask.cdap.etl.api.AlertPublisherContext;
-import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
-import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.common.DefaultStageMetrics;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.common.TrackedIterator;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.SparkPipelineRuntime;
-import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.AlertPublisher;
+import io.cdap.cdap.etl.api.AlertPublisherContext;
+import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.DefaultStageMetrics;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.common.TrackedIterator;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
+import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.streaming.Time;

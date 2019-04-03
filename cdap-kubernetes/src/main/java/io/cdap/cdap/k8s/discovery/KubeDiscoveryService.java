@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.discovery;
+package io.cdap.cdap.k8s.discovery;
 
-import co.cask.cdap.k8s.common.AbstractWatcherThread;
-import co.cask.cdap.master.spi.discovery.DefaultServiceDiscovered;
+import io.cdap.cdap.k8s.common.AbstractWatcherThread;
+import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Call;
 import io.kubernetes.client.ApiClient;

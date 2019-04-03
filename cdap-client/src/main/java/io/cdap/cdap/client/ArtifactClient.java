@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.ArtifactAlreadyExistsException;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.ArtifactRangeNotFoundException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.artifact.ApplicationClassInfo;
-import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.PluginInfo;
-import co.cask.cdap.proto.artifact.PluginSummary;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.ArtifactAlreadyExistsException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.ArtifactRangeNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
+import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
+import io.cdap.cdap.proto.artifact.PluginInfo;
+import io.cdap.cdap.proto.artifact.PluginSummary;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

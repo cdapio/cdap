@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;
 
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.client.ProgramClient;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.client.ProgramClient;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Command;

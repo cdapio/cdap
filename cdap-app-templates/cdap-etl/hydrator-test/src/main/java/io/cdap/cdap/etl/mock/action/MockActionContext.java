@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.action;
+package io.cdap.cdap.etl.mock.action;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.api.action.ActionContext;
-import co.cask.cdap.etl.api.action.SettableArguments;
-import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.mock.common.MockArguments;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.api.action.ActionContext;
+import io.cdap.cdap.etl.api.action.SettableArguments;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.mock.common.MockArguments;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.net.URL;
 import java.util.Collections;

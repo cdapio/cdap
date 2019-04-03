@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.program.ProgramDescriptor;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;

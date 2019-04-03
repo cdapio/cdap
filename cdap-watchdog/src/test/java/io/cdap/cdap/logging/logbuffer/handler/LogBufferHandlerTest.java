@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer.handler;
+package io.cdap.cdap.logging.logbuffer.handler;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.common.HttpExceptionHandler;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.remote.RemoteLogAppender;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.logbuffer.ConcurrentLogBufferWriter;
-import co.cask.cdap.logging.logbuffer.MockCheckpointManager;
-import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
-import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.logging.pipeline.MockAppender;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
+import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
+import io.cdap.cdap.logging.context.WorkerLoggingContext;
+import io.cdap.cdap.logging.logbuffer.ConcurrentLogBufferWriter;
+import io.cdap.cdap.logging.logbuffer.MockCheckpointManager;
+import io.cdap.cdap.logging.pipeline.LogPipelineTestUtil;
+import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
+import io.cdap.cdap.logging.pipeline.MockAppender;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.http.NettyHttpService;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.condition;
+package io.cdap.cdap.etl.api.condition;
 
 /**
  * Represents statistics associated with the each stage in the pipeline.

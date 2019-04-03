@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package io.cdap.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.api.lineage.field.ReadOperation;
-import co.cask.cdap.api.lineage.field.WriteOperation;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.proto.codec.OperationTypeAdapter;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.proto.codec.OperationTypeAdapter;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.cli.completer.element;
+package io.cdap.cdap.cli.completer.element;
 
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.completer.StringsCompleter;
-import co.cask.cdap.client.DatasetTypeClient;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.completer.StringsCompleter;
+import io.cdap.cdap.client.DatasetTypeClient;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;

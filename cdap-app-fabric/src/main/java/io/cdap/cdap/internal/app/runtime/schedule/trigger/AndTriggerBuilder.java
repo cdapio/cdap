@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.Trigger;
 
 /**
  * A Trigger builder that builds a {@link AndTrigger}.

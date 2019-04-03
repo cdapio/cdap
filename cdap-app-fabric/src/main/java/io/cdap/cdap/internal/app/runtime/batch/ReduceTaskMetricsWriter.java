@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.app.metrics.MapReduceMetrics;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.ReduceContext;
 import org.apache.hadoop.mapreduce.TaskCounter;

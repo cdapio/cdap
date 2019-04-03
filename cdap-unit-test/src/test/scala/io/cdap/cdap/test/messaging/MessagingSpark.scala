@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.test.messaging
+package io.cdap.cdap.test.messaging
 
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
-import co.cask.cdap.api.data.DatasetContext
-import co.cask.cdap.api.messaging.{Message, MessageFetcher}
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import io.cdap.cdap.api.data.DatasetContext
+import io.cdap.cdap.api.messaging.{Message, MessageFetcher}
+import io.cdap.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import com.google.common.base.Stopwatch
 import org.apache.spark.SparkContext
 import org.apache.tephra.TransactionFailureException

@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package io.cdap.cdap.data.tools;
 
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.ImpersonationUtils;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import io.cdap.cdap.data2.util.hbase.HTableNameConverter;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.ImpersonationUtils;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;

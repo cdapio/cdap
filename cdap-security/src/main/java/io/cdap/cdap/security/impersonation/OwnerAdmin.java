@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -137,7 +137,7 @@ public interface OwnerAdmin {
 
   /**
    * <p>Deletes the owner principal for the given {@link EntityId} </p>
-   * <p>This call does not throw {@link co.cask.cdap.common.NotFoundException} if the entity does not
+   * <p>This call does not throw {@link io.cdap.cdap.common.NotFoundException} if the entity does not
    * exists in the store so it's safe to call without checking its existence</p>
    *
    * @param entityId the entity whose owner principal needs to be deleted

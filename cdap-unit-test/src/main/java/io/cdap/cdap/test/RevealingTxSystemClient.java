@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 import com.google.inject.Inject;
 import org.apache.tephra.InvalidTruncateTimeException;

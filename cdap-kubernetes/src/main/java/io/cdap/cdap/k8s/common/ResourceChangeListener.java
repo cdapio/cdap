@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.common;
+package io.cdap.cdap.k8s.common;
 
 /**
  * Listener for listening to changes in K8s resources.

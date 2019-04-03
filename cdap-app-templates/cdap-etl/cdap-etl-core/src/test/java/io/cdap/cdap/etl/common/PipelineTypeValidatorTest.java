@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.Transformation;
-import co.cask.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.Transformation;
+import io.cdap.cdap.etl.api.batch.BatchSink;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.junit.Test;

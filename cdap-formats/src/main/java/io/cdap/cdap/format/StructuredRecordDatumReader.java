@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.format;
+package io.cdap.cdap.format;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.DatumReader;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.metrics;
+package io.cdap.cdap.cli.command.metrics;
 
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.ArgumentParser;
-import co.cask.cdap.client.MetricsClient;
-import co.cask.cdap.proto.MetricTagValue;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.cli.util.ArgumentParser;
+import io.cdap.cdap.client.MetricsClient;
+import io.cdap.cdap.proto.MetricTagValue;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 

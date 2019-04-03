@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.zookeeper.election.LeaderElectionInfoService;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

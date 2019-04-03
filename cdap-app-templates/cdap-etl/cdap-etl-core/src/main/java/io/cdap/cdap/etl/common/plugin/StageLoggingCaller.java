@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.Constants;
 import org.slf4j.MDC;
 
 import java.util.concurrent.Callable;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.registry;
+package io.cdap.cdap.data2.registry;
 
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
 
 /**
  * Class for carrying dataset usage information.

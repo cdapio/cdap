@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
-import co.cask.cdap.app.DefaultApplicationContext;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.DefaultId;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.app.DefaultAppConfigurer;
+import io.cdap.cdap.app.DefaultApplicationContext;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.DefaultId;
 
 /**
  * Util for building app spec for tests.

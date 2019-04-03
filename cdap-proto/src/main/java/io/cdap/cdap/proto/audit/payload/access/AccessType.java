@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit.payload.access;
+package io.cdap.cdap.proto.audit.payload.access;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Type of access on a data entity.

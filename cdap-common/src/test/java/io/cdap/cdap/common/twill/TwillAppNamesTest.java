@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.twill;
+package io.cdap.cdap.common.twill;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.junit.Assert;
 import org.junit.Test;
 

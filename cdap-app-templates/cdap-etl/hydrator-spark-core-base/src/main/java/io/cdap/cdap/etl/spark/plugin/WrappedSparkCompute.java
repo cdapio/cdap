@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.plugin;
+package io.cdap.cdap.etl.spark.plugin;
 
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.common.plugin.Caller;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.common.plugin.Caller;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.util.concurrent.Callable;

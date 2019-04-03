@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner;
 
 import java.util.Collections;
 import java.util.Objects;

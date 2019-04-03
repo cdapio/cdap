@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.proto.profile;
+package io.cdap.cdap.proto.profile;
 
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 
 import java.util.Collections;
 import java.util.Objects;

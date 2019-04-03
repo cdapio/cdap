@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
 

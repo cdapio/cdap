@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.etl.api.MultiOutputEmitter;
-import co.cask.cdap.etl.api.MultiOutputPipelineConfigurer;
-import co.cask.cdap.etl.api.SplitterTransform;
-import co.cask.cdap.etl.api.TransformContext;
+import io.cdap.cdap.etl.api.MultiOutputEmitter;
+import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
+import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.TransformContext;
 
 import java.util.concurrent.Callable;
 

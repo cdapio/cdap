@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.system;
+package io.cdap.cdap.logging.appender.system;
 
 import java.util.Objects;
 

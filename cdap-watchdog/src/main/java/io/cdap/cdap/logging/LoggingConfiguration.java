@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging;
+package io.cdap.cdap.logging;
 
 /**
  * Logging configuration helper.

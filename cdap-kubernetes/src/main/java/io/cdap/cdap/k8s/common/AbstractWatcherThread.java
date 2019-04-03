@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.common;
+package io.cdap.cdap.k8s.common;
 
 import com.google.common.collect.Range;
 import com.google.common.reflect.TypeParameter;

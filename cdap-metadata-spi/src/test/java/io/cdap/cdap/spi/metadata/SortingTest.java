@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata;
+package io.cdap.cdap.spi.metadata;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;

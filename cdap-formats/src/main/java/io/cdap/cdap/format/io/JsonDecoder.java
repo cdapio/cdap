@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.format.io;
+package io.cdap.cdap.format.io;
 
-import co.cask.cdap.common.io.Decoder;
+import io.cdap.cdap.common.io.Decoder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 

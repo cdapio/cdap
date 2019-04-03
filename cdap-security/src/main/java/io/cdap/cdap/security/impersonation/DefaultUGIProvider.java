@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.utils.FileUtils;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.element.EntityType;
+import io.cdap.cdap.common.FeatureDisabledException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.FileUtils;
+import io.cdap.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.proto.element.EntityType;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;

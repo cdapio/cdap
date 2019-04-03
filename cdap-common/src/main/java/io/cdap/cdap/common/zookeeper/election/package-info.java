@@ -17,4 +17,4 @@
 /**
  * Classes to handle leader election.
  */
-package co.cask.cdap.common.zookeeper.election;
+package io.cdap.cdap.common.zookeeper.election;

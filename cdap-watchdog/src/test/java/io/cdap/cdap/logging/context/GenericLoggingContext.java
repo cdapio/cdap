@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;
 
 /**
  * A logging context when the type of entity is not known. This logging context has limited functionality.

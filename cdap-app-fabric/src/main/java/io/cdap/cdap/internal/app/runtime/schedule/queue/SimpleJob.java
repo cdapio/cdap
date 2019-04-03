@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.queue;
+package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.Notification;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.proto.Notification;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 

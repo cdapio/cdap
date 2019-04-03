@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.plugins;
+package io.cdap.cdap.logging.plugins;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Syncable;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Syncable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

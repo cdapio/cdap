@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mapreduce;
+package io.cdap.cdap.etl.batch.mapreduce;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;

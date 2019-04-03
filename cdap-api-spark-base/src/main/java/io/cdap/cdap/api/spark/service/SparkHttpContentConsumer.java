@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
+package io.cdap.cdap.api.spark.service;
 
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.service.http.HttpContentConsumer;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.service.http.HttpContentConsumer;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 
 /**
  * A {@link HttpContentConsumer} for {@link SparkHttpServiceHandler} for large request body consumption.

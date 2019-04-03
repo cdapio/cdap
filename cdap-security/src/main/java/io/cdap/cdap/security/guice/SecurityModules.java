@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;
 
-import co.cask.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.common.runtime.RuntimeModule;
 import com.google.inject.Module;
 
 /**

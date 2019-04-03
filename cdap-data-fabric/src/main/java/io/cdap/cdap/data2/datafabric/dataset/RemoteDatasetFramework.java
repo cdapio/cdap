@@ -14,38 +14,38 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset;
+package io.cdap.cdap.data2.datafabric.dataset;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistries;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistries;
+import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.module.lib.DatasetModules;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.DatasetMeta;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -74,7 +74,7 @@ import java.util.jar.JarOutputStream;
 import javax.annotation.Nullable;
 
 /**
- * {@link co.cask.cdap.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
+ * {@link io.cdap.cdap.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
  */
 @SuppressWarnings("unchecked")
 public class RemoteDatasetFramework implements DatasetFramework {
@@ -258,7 +258,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
       // Create a bundle jar in a temp location
       ClassLoader remembered = ClassLoaders.setContextClassLoader(clz.getClassLoader());
       try {
-        ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
+        ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("io.cdap.cdap.api",
                                                                              "org.apache.hadoop",
                                                                              "org.apache.hbase",
                                                                              "org.apache.hive"));

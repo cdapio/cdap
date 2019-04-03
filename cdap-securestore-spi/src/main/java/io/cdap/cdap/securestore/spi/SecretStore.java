@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi;
+package io.cdap.cdap.securestore.spi;
 
-import co.cask.cdap.securestore.spi.secret.Decoder;
-import co.cask.cdap.securestore.spi.secret.Encoder;
+import io.cdap.cdap.securestore.spi.secret.Decoder;
+import io.cdap.cdap.securestore.spi.secret.Encoder;
 
 import java.io.IOException;
 import java.util.Collection;

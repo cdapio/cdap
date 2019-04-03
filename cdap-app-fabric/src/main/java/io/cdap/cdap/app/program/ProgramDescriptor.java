@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.app.program;
+package io.cdap.cdap.app.program;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 
 /**

@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricType;
-import co.cask.cdap.api.metrics.MetricValue;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MetricsProcessorStatus;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.api.metrics.TagValue;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.internal.io.DatumReaderFactory;
-import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricSearchQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsProcessorStatus;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
+import io.cdap.cdap.api.metrics.TagValue;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.internal.io.DatumReaderFactory;
+import io.cdap.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.metrics.store.MetricDatasetFactory;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.store.StoreDefinition;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
 import org.junit.Test;

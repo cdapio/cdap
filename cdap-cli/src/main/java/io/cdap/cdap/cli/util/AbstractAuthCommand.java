@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.cli.util;
+package io.cdap.cdap.cli.util;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.security.Action;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.exception.CommandInputError;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Action;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
@@ -34,7 +34,7 @@ import java.io.PrintStream;
 import java.util.Set;
 
 /**
- * Abstract command for updating {@link co.cask.cdap.security.authentication.client.AccessToken}.
+ * Abstract command for updating {@link io.cdap.cdap.security.authentication.client.AccessToken}.
  */
 public abstract class AbstractAuthCommand implements Command {
 

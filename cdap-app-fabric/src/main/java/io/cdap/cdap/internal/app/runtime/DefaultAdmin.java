@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.NamespaceSummary;
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.NamespaceSummary;
+import io.cdap.cdap.api.messaging.MessagingAdmin;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.data2.datafabric.dataset.DefaultDatasetManager;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 import java.util.Map;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.profile;
+package io.cdap.cdap.proto.profile;
 
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 
 import java.util.Objects;
 

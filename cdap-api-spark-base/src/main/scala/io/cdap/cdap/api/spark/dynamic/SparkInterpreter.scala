@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.dynamic
+package io.cdap.cdap.api.spark.dynamic
 
-import co.cask.cdap.api.annotation.Beta
+import io.cdap.cdap.api.annotation.Beta
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime
@@ -31,7 +31,7 @@ trait SparkInterpreter extends SparkCompiler {
     * Adds a set of imports to the context.
     *
     * @param imports set of imports
-    * @throws co.cask.cdap.api.spark.dynamic.InterpretFailureException if failed to add the imports
+    * @throws io.cdap.cdap.api.spark.dynamic.InterpretFailureException if failed to add the imports
     */
   @throws(classOf[InterpretFailureException])
   def addImports(imports: String*): Unit
@@ -42,7 +42,7 @@ trait SparkInterpreter extends SparkCompiler {
     * @param name name of the variable
     * @param value value to bind to
     * @tparam T type of the variable, derived from the value type
-    * @throws co.cask.cdap.api.spark.dynamic.BindingException if failed to bind the variable
+    * @throws io.cdap.cdap.api.spark.dynamic.BindingException if failed to bind the variable
     */
   @throws(classOf[BindingException])
   def bind[T: runtime.universe.TypeTag : ClassTag](name: String, value: T): Unit
@@ -54,7 +54,7 @@ trait SparkInterpreter extends SparkCompiler {
     * @param bindType type of the variable
     * @param value value to bind to
     * @param modifiers a list of modifies for the variable, such as `private`, `implicit`, etc.
-    * @throws co.cask.cdap.api.spark.dynamic.BindingException if failed to bind the variable
+    * @throws io.cdap.cdap.api.spark.dynamic.BindingException if failed to bind the variable
     */
   @throws(classOf[BindingException])
   def bind(name: String, bindType: String, value: Any, modifiers: String*): Unit
@@ -63,7 +63,7 @@ trait SparkInterpreter extends SparkCompiler {
     * Interprets a line of source code.
     *
     * @param line the source line to interpret
-    * @throws co.cask.cdap.api.spark.dynamic.InterpretFailureException if the interpretation failed
+    * @throws io.cdap.cdap.api.spark.dynamic.InterpretFailureException if the interpretation failed
     */
   @throws(classOf[InterpretFailureException])
   def interpret(line: String): Unit

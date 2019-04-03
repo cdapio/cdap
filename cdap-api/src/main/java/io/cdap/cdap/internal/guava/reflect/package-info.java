@@ -22,4 +22,4 @@
  * The modification is many about removing dependencies on too many other Guava classes, like immutable collections.
  */
 @javax.annotation.ParametersAreNonnullByDefault
-package co.cask.cdap.internal.guava.reflect;
+package io.cdap.cdap.internal.guava.reflect;

@@ -17,5 +17,5 @@
 /**
  * Contains injectable logging modules.
  */
-package co.cask.cdap.logging.guice;
+package io.cdap.cdap.logging.guice;
 

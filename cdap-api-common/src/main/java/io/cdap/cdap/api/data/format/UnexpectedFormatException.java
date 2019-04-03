@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.format;
+package io.cdap.cdap.api.data.format;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Exception to indicate data is of an unexpected format.

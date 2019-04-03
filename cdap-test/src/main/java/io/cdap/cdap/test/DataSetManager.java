@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 /**
- * Instances of this class are for managing {@link co.cask.cdap.api.dataset.DataSet Datasets}.
+ * Instances of this class are for managing {@link io.cdap.cdap.api.dataset.DataSet Datasets}.
  *
  * <p>
  * <b>Note:</b>

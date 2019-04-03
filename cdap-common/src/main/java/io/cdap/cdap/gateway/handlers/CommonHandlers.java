@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
 import com.google.inject.multibindings.Multibinder;
 import io.cdap.http.HttpHandler;

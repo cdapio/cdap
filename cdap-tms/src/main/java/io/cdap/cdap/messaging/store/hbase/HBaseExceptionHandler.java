@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.hbase;
+package io.cdap.cdap.messaging.store.hbase;
 
 /**
  * Defines a handler for handling exception thrown by HBase operations

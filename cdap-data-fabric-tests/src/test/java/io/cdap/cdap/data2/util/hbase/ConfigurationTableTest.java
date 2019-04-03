@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data.hbase.HBaseTestBase;
+import io.cdap.cdap.data.hbase.HBaseTestFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.test.SlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;

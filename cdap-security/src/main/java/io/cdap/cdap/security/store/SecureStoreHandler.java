@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package io.cdap.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;

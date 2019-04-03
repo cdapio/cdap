@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;

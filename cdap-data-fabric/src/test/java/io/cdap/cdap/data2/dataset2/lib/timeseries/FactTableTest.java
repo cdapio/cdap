@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.dataset2.lib.timeseries;
+package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.MeasureType;
-import co.cask.cdap.api.dataset.lib.cube.Measurement;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
+import io.cdap.cdap.api.dataset.lib.cube.Measurement;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test base for {@link co.cask.cdap.data2.dataset2.lib.timeseries.FactTable}.
+ * Test base for {@link io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable}.
  */
 public class FactTableTest {
 

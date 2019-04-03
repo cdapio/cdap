@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.client;
+package io.cdap.cdap.security.store.client;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.SecureKeyAlreadyExistsException;
-import co.cask.cdap.common.SecureKeyNotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.SecureKeyAlreadyExistsException;
+import io.cdap.cdap.common.SecureKeyNotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

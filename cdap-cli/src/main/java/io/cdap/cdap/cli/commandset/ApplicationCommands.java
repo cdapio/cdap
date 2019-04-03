@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.app.CreateAppCommand;
-import co.cask.cdap.cli.command.app.DeleteAppCommand;
-import co.cask.cdap.cli.command.app.DeployAppCommand;
-import co.cask.cdap.cli.command.app.DeployAppWithConfigFileCommand;
-import co.cask.cdap.cli.command.app.DescribeAppCommand;
-import co.cask.cdap.cli.command.app.ListAppVersionsCommand;
-import co.cask.cdap.cli.command.app.ListAppsCommand;
-import co.cask.cdap.cli.command.app.RestartProgramsCommand;
-import co.cask.cdap.cli.command.app.StartProgramsCommand;
-import co.cask.cdap.cli.command.app.StatusProgramsCommand;
-import co.cask.cdap.cli.command.app.StopProgramsCommand;
-import co.cask.cdap.cli.command.app.UpdateAppCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.app.CreateAppCommand;
+import io.cdap.cdap.cli.command.app.DeleteAppCommand;
+import io.cdap.cdap.cli.command.app.DeployAppCommand;
+import io.cdap.cdap.cli.command.app.DeployAppWithConfigFileCommand;
+import io.cdap.cdap.cli.command.app.DescribeAppCommand;
+import io.cdap.cdap.cli.command.app.ListAppVersionsCommand;
+import io.cdap.cdap.cli.command.app.ListAppsCommand;
+import io.cdap.cdap.cli.command.app.RestartProgramsCommand;
+import io.cdap.cdap.cli.command.app.StartProgramsCommand;
+import io.cdap.cdap.cli.command.app.StatusProgramsCommand;
+import io.cdap.cdap.cli.command.app.StopProgramsCommand;
+import io.cdap.cdap.cli.command.app.UpdateAppCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

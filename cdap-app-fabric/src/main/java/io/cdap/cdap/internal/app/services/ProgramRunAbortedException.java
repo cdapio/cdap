@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
 /**
  * An exception to indicate a program run was aborted abnormally without CDAP knowing.

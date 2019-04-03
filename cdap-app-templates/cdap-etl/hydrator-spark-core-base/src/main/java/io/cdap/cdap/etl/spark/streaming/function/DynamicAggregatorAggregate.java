@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function;
+package io.cdap.cdap.etl.spark.streaming.function;
 
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.spark.Compat;
-import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
-import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
+import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;

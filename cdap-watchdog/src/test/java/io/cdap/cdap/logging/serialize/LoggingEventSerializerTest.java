@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.logging.serialize;
+package io.cdap.cdap.logging.serialize;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import co.cask.cdap.common.logging.ComponentLoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.logging.logback.TestLoggingContext;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.common.logging.ComponentLoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.logging.logback.TestLoggingContext;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;

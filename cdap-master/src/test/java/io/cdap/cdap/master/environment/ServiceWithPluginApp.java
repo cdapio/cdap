@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment;
+package io.cdap.cdap.master.environment;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.service.AbstractService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 
 import java.util.Map;
 import java.util.concurrent.Callable;

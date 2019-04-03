@@ -15,12 +15,12 @@
  *
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 
 import java.util.Collections;
 import java.util.HashMap;

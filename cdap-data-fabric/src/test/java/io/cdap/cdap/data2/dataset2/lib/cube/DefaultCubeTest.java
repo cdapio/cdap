@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

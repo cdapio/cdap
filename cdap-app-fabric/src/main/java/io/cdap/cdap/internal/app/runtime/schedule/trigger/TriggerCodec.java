@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.ProtoTriggerCodec;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.ProtoTriggerCodec;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

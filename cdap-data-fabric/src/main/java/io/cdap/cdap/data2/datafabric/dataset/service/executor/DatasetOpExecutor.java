@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service.executor;
+package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetId;
 
 import java.io.IOException;
 

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v2;
+package io.cdap.cdap.etl.proto.v2;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.Engine;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.proto.Connection;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;

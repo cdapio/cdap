@@ -15,12 +15,12 @@
  *
  */
 
-package co.cask.cdap.etl.proto.v2.spec;
+package io.cdap.cdap.etl.proto.v2.spec;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.Externalizable;

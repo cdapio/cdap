@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package io.cdap.cdap.logging.framework;
 
 /**
  * Exception raised when encountered an error in defining log processing pipeline.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
 import com.google.protobuf.Message;
 import org.apache.hadoop.conf.Configuration;

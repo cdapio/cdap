@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.file;
+package io.cdap.cdap.data2.dataset2.lib.file;
 
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 
 /**
- * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.FileSet}.
+ * {@link io.cdap.cdap.api.dataset.module.DatasetModule} for {@link io.cdap.cdap.api.dataset.lib.FileSet}.
  */
 public class FileSetModule implements DatasetModule {
   @Override

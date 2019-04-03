@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
-import co.cask.cdap.api.retry.RetriesExhaustedException;
+import io.cdap.cdap.api.retry.RetriesExhaustedException;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;

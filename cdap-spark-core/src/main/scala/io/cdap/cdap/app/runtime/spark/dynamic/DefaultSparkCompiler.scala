@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
 import java.io._
 import java.net.{URL, URLClassLoader}
@@ -27,7 +27,7 @@ import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.util.MergedClassPath
 
 /**
-  * A default implementation of [[co.cask.cdap.api.spark.dynamic.SparkCompiler]] for Scala 2.10 that uses Scala
+  * A default implementation of [[io.cdap.cdap.api.spark.dynamic.SparkCompiler]] for Scala 2.10 that uses Scala
   * [[scala.tools.nsc.interpreter.IMain]] for the compilation.
   */
 class DefaultSparkCompiler(settings: Settings,

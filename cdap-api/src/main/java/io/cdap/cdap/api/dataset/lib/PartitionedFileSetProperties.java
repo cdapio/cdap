@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.table.TableProperties;
 
 import java.util.Map;
 import javax.annotation.Nullable;

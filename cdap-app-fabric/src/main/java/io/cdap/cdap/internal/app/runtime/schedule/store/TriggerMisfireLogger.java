@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.store;
+package io.cdap.cdap.internal.app.runtime.schedule.store;
 
 import org.quartz.Trigger;
 import org.quartz.listeners.TriggerListenerSupport;

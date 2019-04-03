@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.plugin.Requirements;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
-import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.security.impersonation.DefaultImpersonator;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.Requirements;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
+import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.security.impersonation.DefaultImpersonator;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.join;
+package io.cdap.cdap.etl.batch.join;
 
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.JoinConfig;
-import co.cask.cdap.etl.api.JoinElement;
-import co.cask.cdap.etl.api.Joiner;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.JoinConfig;
+import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.Joiner;
 import com.google.common.collect.Sets;
 
 import java.util.ArrayList;

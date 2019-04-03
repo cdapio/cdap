@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
  * Extends the ServiceResourceKeys class to override the number of instances for the explore service.

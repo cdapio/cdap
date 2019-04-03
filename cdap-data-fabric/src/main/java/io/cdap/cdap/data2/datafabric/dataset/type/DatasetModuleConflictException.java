@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.type;
+package io.cdap.cdap.data2.datafabric.dataset.type;
 
 /**
  * Thrown when operation on the dataset types cannot be performed due to conflict with

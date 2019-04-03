@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.hive;
+package io.cdap.cdap.hive;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.ConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.hive.context.CConfCodec;
-import co.cask.cdap.hive.context.HConfCodec;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.hive.context.CConfCodec;
+import io.cdap.cdap.hive.context.HConfCodec;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

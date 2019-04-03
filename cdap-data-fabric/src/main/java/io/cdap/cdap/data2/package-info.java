@@ -19,4 +19,4 @@
  * being done incrementally, so old one will stay until all is done. To prevent mess, new sources are placed
  * in separate package
  */
-package co.cask.cdap.data2;
+package io.cdap.cdap.data2;

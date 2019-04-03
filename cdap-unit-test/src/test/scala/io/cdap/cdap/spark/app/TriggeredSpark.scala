@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
-import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo
+import io.cdap.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.verification;
+package io.cdap.cdap.internal.app.verification;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.app.verification.VerifyResult;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.internal.app.runtime.plugin.PluginService;
-import co.cask.cdap.internal.bootstrap.BootstrapService;
-import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.scheduler.CoreSchedulerService;
-import co.cask.cdap.security.tools.HttpsEnabler;
-import co.cask.cdap.security.tools.KeyStores;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginService;
+import io.cdap.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.security.tools.HttpsEnabler;
+import io.cdap.cdap.security.tools.KeyStores;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;

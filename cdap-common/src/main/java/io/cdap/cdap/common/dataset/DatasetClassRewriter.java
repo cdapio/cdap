@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.common.dataset;
+package io.cdap.cdap.common.dataset;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.lang.ClassRewriter;
-import co.cask.cdap.internal.asm.FinallyAdapter;
-import co.cask.cdap.internal.dataset.DatasetRuntimeContext;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.common.lang.ClassRewriter;
+import io.cdap.cdap.internal.asm.FinallyAdapter;
+import io.cdap.cdap.internal.dataset.DatasetRuntimeContext;
 import org.apache.tephra.TransactionAware;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;

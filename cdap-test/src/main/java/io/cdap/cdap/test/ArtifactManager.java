@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.ArtifactId;
 
 import java.util.Map;
 

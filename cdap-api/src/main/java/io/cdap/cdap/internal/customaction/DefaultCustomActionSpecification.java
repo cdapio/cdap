@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.customaction;
+package io.cdap.cdap.internal.customaction;
 
-import co.cask.cdap.api.customaction.CustomActionConfigurer;
-import co.cask.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.api.customaction.CustomActionConfigurer;
+import io.cdap.cdap.api.customaction.CustomActionSpecification;
 
 import java.util.Collections;
 import java.util.HashMap;

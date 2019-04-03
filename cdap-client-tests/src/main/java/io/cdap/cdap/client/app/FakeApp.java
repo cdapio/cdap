@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client.app;
+package io.cdap.cdap.client.app;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ProgramType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 

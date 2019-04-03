@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.CreateNamespaceCommand;
-import co.cask.cdap.cli.command.DeleteNamespaceCommand;
-import co.cask.cdap.cli.command.DescribeNamespaceCommand;
-import co.cask.cdap.cli.command.ListNamespacesCommand;
-import co.cask.cdap.cli.command.UseNamespaceCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.CreateNamespaceCommand;
+import io.cdap.cdap.cli.command.DeleteNamespaceCommand;
+import io.cdap.cdap.cli.command.DescribeNamespaceCommand;
+import io.cdap.cdap.cli.command.ListNamespacesCommand;
+import io.cdap.cdap.cli.command.UseNamespaceCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

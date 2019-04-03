@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.OSDetector;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfigurationUtil;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.OSDetector;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.cli.CommandLine;

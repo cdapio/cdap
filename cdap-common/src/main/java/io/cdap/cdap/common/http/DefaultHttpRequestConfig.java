@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.http;
+package io.cdap.cdap.common.http;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.common.http.HttpRequestConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

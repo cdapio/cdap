@@ -15,19 +15,19 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.internal.provision.MockProvisioner;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.spi.authorization;
+package io.cdap.cdap.security.spi.authorization;
 
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import co.cask.cdap.proto.security.Role;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.proto.security.Role;
 
 import java.net.HttpURLConnection;
 

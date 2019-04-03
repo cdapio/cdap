@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.format;
+package io.cdap.cdap.api.data.format;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.Schema.LogicalType;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.Schema.LogicalType;
 
 import java.io.Serializable;
 import java.text.DateFormat;

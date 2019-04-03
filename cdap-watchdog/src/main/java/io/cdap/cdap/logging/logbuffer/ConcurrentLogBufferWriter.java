@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package io.cdap.cdap.logging.logbuffer;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 

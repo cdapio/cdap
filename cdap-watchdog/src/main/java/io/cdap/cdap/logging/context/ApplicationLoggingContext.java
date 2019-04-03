@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;
 
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.common.logging.NamespaceLoggingContext;
 
 import javax.annotation.Nullable;
 

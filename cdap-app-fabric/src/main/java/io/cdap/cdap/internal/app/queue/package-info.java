@@ -17,4 +17,4 @@
 /**
  * This package contains classes for using data-fabric queue in app-fabric.
  */
-package co.cask.cdap.internal.app.queue;
+package io.cdap.cdap.internal.app.queue;

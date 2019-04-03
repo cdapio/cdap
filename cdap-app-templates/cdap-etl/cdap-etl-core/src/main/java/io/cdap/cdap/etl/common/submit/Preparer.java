@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.submit;
+package io.cdap.cdap.etl.common.submit;
 
 /**
  * Prepares something.

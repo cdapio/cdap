@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule;
+package io.cdap.cdap.internal.schedule;
 
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 
 import java.util.List;
 import java.util.Map;
 
 /**
  * Information for creating a program schedule.
- * See {@link co.cask.cdap.api.app.AbstractApplication#buildSchedule(String, ProgramType, String)}
+ * See {@link io.cdap.cdap.api.app.AbstractApplication#buildSchedule(String, ProgramType, String)}
  * for how to build an instance of this object.
  */
 public class ScheduleCreationSpec {

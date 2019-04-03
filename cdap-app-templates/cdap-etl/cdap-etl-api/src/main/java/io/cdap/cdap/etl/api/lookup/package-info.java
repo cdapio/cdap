@@ -18,4 +18,4 @@
  * Packages for ETL Application Templates.
  *
  */
-package co.cask.cdap.etl.api.lookup;
+package io.cdap.cdap.etl.api.lookup;

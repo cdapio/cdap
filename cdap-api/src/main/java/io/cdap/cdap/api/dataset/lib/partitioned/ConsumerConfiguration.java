@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 
 import java.util.concurrent.TimeUnit;
 

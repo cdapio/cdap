@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
 import java.io.{ByteArrayOutputStream, File}
 import java.nio.file.Files
 
-import co.cask.cdap.api.spark.{AbstractExtendedSpark, SparkExecutionContext, SparkMain}
+import io.cdap.cdap.api.spark.{AbstractExtendedSpark, SparkExecutionContext, SparkMain}
 import com.google.common.io.BaseEncoding
 import org.apache.spark.SparkContext
 
@@ -34,8 +34,8 @@ class ScalaDynamicSpark extends AbstractExtendedSpark with SparkMain {
     """
       package test.dynamic
 
-      import co.cask.cdap.api.common._
-      import co.cask.cdap.api.spark._
+      import io.cdap.cdap.api.common._
+      import io.cdap.cdap.api.spark._
       import org.apache.spark._
 
       object Compute {

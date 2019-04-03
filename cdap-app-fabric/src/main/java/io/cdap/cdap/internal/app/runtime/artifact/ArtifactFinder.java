@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.proto.id.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

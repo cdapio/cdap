@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 /**
  * Information needed to provision a cluster.

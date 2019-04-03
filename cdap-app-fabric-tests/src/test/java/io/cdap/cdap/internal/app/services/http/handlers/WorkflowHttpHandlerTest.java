@@ -14,47 +14,47 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.AppWithWorkflow;
-import co.cask.cdap.ConcurrentWorkflowApp;
-import co.cask.cdap.ConditionalWorkflowApp;
-import co.cask.cdap.PauseResumeWorklowApp;
-import co.cask.cdap.SleepingWorkflowApp;
-import co.cask.cdap.WorkflowAppWithErrorRuns;
-import co.cask.cdap.WorkflowAppWithFork;
-import co.cask.cdap.WorkflowAppWithLocalDatasets;
-import co.cask.cdap.WorkflowAppWithScopedParameters;
-import co.cask.cdap.WorkflowFailureInForkApp;
-import co.cask.cdap.WorkflowTokenTestPutApp;
-import co.cask.cdap.api.customaction.CustomActionSpecification;
-import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
-import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.ConcurrentWorkflowApp;
+import io.cdap.cdap.ConditionalWorkflowApp;
+import io.cdap.cdap.PauseResumeWorklowApp;
+import io.cdap.cdap.SleepingWorkflowApp;
+import io.cdap.cdap.WorkflowAppWithErrorRuns;
+import io.cdap.cdap.WorkflowAppWithFork;
+import io.cdap.cdap.WorkflowAppWithLocalDatasets;
+import io.cdap.cdap.WorkflowAppWithScopedParameters;
+import io.cdap.cdap.WorkflowFailureInForkApp;
+import io.cdap.cdap.WorkflowTokenTestPutApp;
+import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.api.workflow.NodeStatus;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.WorkflowTokenDetail;
+import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.proto.codec.CustomActionSpecificationCodec;
+import io.cdap.cdap.proto.codec.WorkflowTokenDetailCodec;
+import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -203,8 +203,8 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testLocalDatasetDeletion() throws Exception {
-    String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
-    String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
+    String keyValueTableType = "io.cdap.cdap.api.dataset.lib.KeyValueTable";
+    String filesetType = "io.cdap.cdap.api.dataset.lib.FileSet";
     Map<String, String> keyValueTableProperties = ImmutableMap.of("foo", "bar");
     Map<String, String> filesetProperties = ImmutableMap.of("anotherFoo", "anotherBar");
 

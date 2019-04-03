@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.zookeeper;
+package io.cdap.cdap.security.zookeeper;
 
 /**
  * Simple {@link ResourceListener} implementation with no-op implementations.  Implementers interested only

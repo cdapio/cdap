@@ -17,4 +17,4 @@
 /**
  * CLI commands.
  */
-package co.cask.cdap.cli.command;
+package io.cdap.cdap.cli.command;

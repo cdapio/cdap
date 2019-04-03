@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.report.proto;
+package io.cdap.cdap.report.proto;
 
 /**
  * Represents the start method of a program run.

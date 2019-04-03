@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.conf.ConfigurationUtil;
+import io.cdap.cdap.api.data.batch.BatchReadable;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;

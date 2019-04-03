@@ -14,45 +14,45 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.system;
+package io.cdap.cdap.logging.appender.system;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.context.ApplicationLoggingContext;
-import co.cask.cdap.logging.context.UserServiceLoggingContext;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.framework.LocalAppenderContext;
-import co.cask.cdap.logging.guice.LocalLogAppenderModule;
-import co.cask.cdap.logging.meta.FileMetaDataReader;
-import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.logging.LoggingConfiguration;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.logging.context.UserServiceLoggingContext;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.framework.LocalAppenderContext;
+import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
+import io.cdap.cdap.logging.meta.FileMetaDataReader;
+import io.cdap.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.write.LogLocation;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -147,7 +147,7 @@ public class CDAPLogAppenderTest {
 
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     LoggingEvent event =
-      new LoggingEvent("co.cask.Test",
+      new LoggingEvent("io.cdap.Test",
                        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
                        Level.ERROR , "test message", null, null);
     Map<String, String> properties = new HashMap<>();
@@ -218,7 +218,7 @@ public class CDAPLogAppenderTest {
     long currentTimeMillisEvent1 = System.currentTimeMillis();
 
     LoggingEvent event1 =
-      getLoggingEvent("co.cask.Test1",
+      getLoggingEvent("io.cdap.Test1",
                       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
                       Level.ERROR , "test message 1", properties);
 
@@ -230,7 +230,7 @@ public class CDAPLogAppenderTest {
 
     long currentTimeMillisEvent2 = System.currentTimeMillis();
 
-    LoggingEvent event2 = getLoggingEvent("co.cask.Test2",
+    LoggingEvent event2 = getLoggingEvent("io.cdap.Test2",
                                           (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
                                             Logger.ROOT_LOGGER_NAME), Level.ERROR , "test message 2", properties);
     event2.setTimeStamp(currentTimeMillisEvent1 + 1000);
@@ -289,7 +289,7 @@ public class CDAPLogAppenderTest {
     long currentTimeMillisEvent1 = System.currentTimeMillis();
 
     LoggingEvent event1 =
-      getLoggingEvent("co.cask.Test1",
+      getLoggingEvent("io.cdap.Test1",
                       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
                       Level.ERROR , "test message 1", properties);
 
@@ -299,7 +299,7 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.sync();
 
     long currentTimeMillisEvent2 = System.currentTimeMillis();
-    LoggingEvent event2 = getLoggingEvent("co.cask.Test2",
+    LoggingEvent event2 = getLoggingEvent("io.cdap.Test2",
                                           (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
                                             Logger.ROOT_LOGGER_NAME), Level.ERROR , "test message 2", properties);
     event2.setTimeStamp(currentTimeMillisEvent2);

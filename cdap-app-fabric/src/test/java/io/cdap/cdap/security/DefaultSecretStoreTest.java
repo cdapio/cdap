@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
-import co.cask.cdap.data.security.DefaultSecretStore;
-import co.cask.cdap.securestore.spi.SecretNotFoundException;
-import co.cask.cdap.securestore.spi.SecretStore;
-import co.cask.cdap.securestore.spi.secret.Decoder;
-import co.cask.cdap.securestore.spi.secret.Encoder;
+import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.securestore.spi.SecretNotFoundException;
+import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.securestore.spi.secret.Decoder;
+import io.cdap.cdap.securestore.spi.secret.Encoder;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;

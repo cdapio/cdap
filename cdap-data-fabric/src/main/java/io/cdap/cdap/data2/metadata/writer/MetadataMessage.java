@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 

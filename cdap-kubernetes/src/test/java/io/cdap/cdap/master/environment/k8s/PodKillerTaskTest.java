@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
 import org.junit.Ignore;
 import org.junit.Test;

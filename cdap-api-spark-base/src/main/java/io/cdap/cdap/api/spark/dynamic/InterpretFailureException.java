@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.dynamic;
+package io.cdap.cdap.api.spark.dynamic;
 
 /**
  * Exception to indicate there is a code interpretation error.

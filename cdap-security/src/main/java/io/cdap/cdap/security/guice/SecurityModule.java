@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.security.guice;
+package io.cdap.cdap.security.guice;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.security.auth.AccessToken;
-import co.cask.cdap.security.auth.AccessTokenCodec;
-import co.cask.cdap.security.auth.AccessTokenIdentifier;
-import co.cask.cdap.security.auth.AccessTokenIdentifierCodec;
-import co.cask.cdap.security.auth.AccessTokenTransformer;
-import co.cask.cdap.security.auth.AccessTokenValidator;
-import co.cask.cdap.security.auth.KeyIdentifier;
-import co.cask.cdap.security.auth.KeyIdentifierCodec;
-import co.cask.cdap.security.auth.TokenManager;
-import co.cask.cdap.security.auth.TokenValidator;
-import co.cask.cdap.security.server.AuditLogHandler;
-import co.cask.cdap.security.server.ExternalAuthenticationServer;
-import co.cask.cdap.security.server.GrantAccessToken;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
+import io.cdap.cdap.security.auth.AccessTokenIdentifier;
+import io.cdap.cdap.security.auth.AccessTokenIdentifierCodec;
+import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.AccessTokenValidator;
+import io.cdap.cdap.security.auth.KeyIdentifier;
+import io.cdap.cdap.security.auth.KeyIdentifierCodec;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.server.AuditLogHandler;
+import io.cdap.cdap.security.server.ExternalAuthenticationServer;
+import io.cdap.cdap.security.server.GrantAccessToken;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Binder;
 import com.google.inject.Inject;

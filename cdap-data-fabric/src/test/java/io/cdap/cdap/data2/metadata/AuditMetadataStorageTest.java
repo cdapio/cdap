@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata;
+package io.cdap.cdap.data2.metadata;
 
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.audit.AuditTestModule;
-import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.MetadataMutation;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.MetadataStorageTest;
-import co.cask.cdap.spi.metadata.ScopedNameOfKind;
-import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorageTest;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.audit.AuditTestModule;
+import io.cdap.cdap.data2.audit.InMemoryAuditPublisher;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MetadataStorageTest;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.dataset.DatasetMetadataStorageTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -194,13 +194,13 @@ public class AuditMetadataStorageTest extends MetadataStorageTest {
 
   private void generateMetadataUpdates() throws IOException {
     storage.apply(new MetadataMutation.Update(
-      dataset.toMetadataEntity(), new co.cask.cdap.spi.metadata.Metadata(MetadataScope.USER, datasetTags)));
+      dataset.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, datasetTags)));
     storage.apply(new MetadataMutation.Update(
-      app.toMetadataEntity(), new co.cask.cdap.spi.metadata.Metadata(MetadataScope.USER, appProperties)));
+      app.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, appProperties)));
     storage.apply(new MetadataMutation.Update(
-      app.toMetadataEntity(), new co.cask.cdap.spi.metadata.Metadata(MetadataScope.USER, appTags)));
+      app.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, appTags)));
     storage.apply(new MetadataMutation.Update(
-      service.toMetadataEntity(), new co.cask.cdap.spi.metadata.Metadata(MetadataScope.USER, tags)));
+      service.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, tags)));
     storage.apply(new MetadataMutation.Remove(service.toMetadataEntity(), MetadataScope.USER, MetadataKind.TAG));
     storage.apply(new MetadataMutation.Remove(dataset.toMetadataEntity(), datasetTags.stream().map(
       tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag)).collect(Collectors.toSet())));

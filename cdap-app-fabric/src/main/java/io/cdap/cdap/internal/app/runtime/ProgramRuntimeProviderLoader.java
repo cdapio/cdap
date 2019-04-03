@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.extension.AbstractExtensionLoader;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.extension.AbstractExtensionLoader;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;

@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.DatumReader;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.DatumReader;
 import com.google.common.reflect.TypeToken;
 
 /**

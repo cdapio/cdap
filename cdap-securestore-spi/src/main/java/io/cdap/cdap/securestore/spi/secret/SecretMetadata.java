@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi.secret;
+package io.cdap.cdap.securestore.spi.secret;
 
 import java.util.Collections;
 import java.util.HashMap;

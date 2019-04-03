@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.TwillAppNames;
-import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;

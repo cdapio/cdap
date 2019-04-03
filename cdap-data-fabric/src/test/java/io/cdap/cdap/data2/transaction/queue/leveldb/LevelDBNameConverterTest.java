@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.queue.leveldb;
+package io.cdap.cdap.data2.transaction.queue.leveldb;
 
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBNameConverter;
-import co.cask.cdap.data2.util.TableId;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBNameConverter;
+import io.cdap.cdap.data2.util.TableId;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * tests converting level db table name to {@link co.cask.cdap.data2.util.TableId}
+ * tests converting level db table name to {@link io.cdap.cdap.data2.util.TableId}
  */
 public class LevelDBNameConverterTest {
   @Test

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;
 
 /**
  * Similar to {@link ScheduleBuilder}, but allows specifying whether the scheduler should wait until the

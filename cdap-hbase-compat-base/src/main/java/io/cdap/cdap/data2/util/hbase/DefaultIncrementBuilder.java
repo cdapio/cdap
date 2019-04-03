@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Increment;
 

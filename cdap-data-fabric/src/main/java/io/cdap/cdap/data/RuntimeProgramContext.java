@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data;
+package io.cdap.cdap.data;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
 
 import java.io.IOException;
 import java.util.Collection;

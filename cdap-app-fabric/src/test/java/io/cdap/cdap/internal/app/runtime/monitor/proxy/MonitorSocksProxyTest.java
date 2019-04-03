@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor.proxy;
+package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.ssh.DefaultSSHSession;
-import co.cask.cdap.common.ssh.SSHConfig;
-import co.cask.cdap.common.ssh.TestSSHServer;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.runtime.spi.ssh.PortForwarding;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.ssh.DefaultSSHSession;
+import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.common.ssh.TestSSHServer;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.jcraft.jsch.JSch;

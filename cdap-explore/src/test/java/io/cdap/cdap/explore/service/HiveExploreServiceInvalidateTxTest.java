@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.junit.AfterClass;
 import org.junit.Assert;

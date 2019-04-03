@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
 /**
  * Configuration constants for the Elasticsearch metadata storage provider.

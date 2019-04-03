@@ -17,4 +17,4 @@
 /**
  * Classes related to builder.
  */
-package co.cask.cdap.common.builder;
+package io.cdap.cdap.common.builder;

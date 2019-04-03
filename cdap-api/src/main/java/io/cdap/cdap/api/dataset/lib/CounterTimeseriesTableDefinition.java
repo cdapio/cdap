@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.table.Table;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link CounterTimeseriesTable}.
+ * {@link io.cdap.cdap.api.dataset.DatasetDefinition} for {@link CounterTimeseriesTable}.
  */
 @Beta
 public class CounterTimeseriesTableDefinition extends CompositeDatasetDefinition<CounterTimeseriesTable> {

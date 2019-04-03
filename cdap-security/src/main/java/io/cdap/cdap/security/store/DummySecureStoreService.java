@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package io.cdap.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.IOException;

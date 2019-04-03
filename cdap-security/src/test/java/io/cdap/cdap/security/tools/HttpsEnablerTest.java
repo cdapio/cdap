@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.tools;
+package io.cdap.cdap.security.tools;
 
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package io.cdap.cdap.logging.logbuffer;
 
 import java.util.Iterator;
 import javax.annotation.Nullable;

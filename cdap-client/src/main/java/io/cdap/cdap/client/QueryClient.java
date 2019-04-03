@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.client.SuppliedAddressExploreClient;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.common.http.HttpRequestConfig;

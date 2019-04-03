@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.worker;
+package io.cdap.cdap.internal.app.worker;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.api.worker.WorkerConfigurer;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.AbstractConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.worker.Worker;
+import io.cdap.cdap.api.worker.WorkerConfigurer;
+import io.cdap.cdap.api.worker.WorkerSpecification;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 

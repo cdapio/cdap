@@ -17,4 +17,4 @@
 /**
  * Contains classes for running embedded kafka server.
  */
-package co.cask.cdap.kafka.run;
+package io.cdap.cdap.kafka.run;

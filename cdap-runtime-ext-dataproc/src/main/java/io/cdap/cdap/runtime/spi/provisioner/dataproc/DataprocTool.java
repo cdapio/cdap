@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner.dataproc;
+package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import com.google.gson.Gson;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.macro;
+package io.cdap.cdap.api.macro;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Macro evaluator helps to provide macro substitution at runtime.

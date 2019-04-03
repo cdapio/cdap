@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.log;
+package io.cdap.cdap.gateway.handlers.log;
 
-import co.cask.cdap.logging.read.Callback;
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
 
 import java.util.ArrayList;
 

@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.scheduler;
+package io.cdap.cdap.scheduler;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
-import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueue;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.spi.data.transaction.TransactionException;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueue;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -125,7 +125,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     ConstraintCheckerThread(int partition) {
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       scheduleStrategy =
-        co.cask.cdap.common.service.RetryStrategies.exponentialDelay(100, 30000, TimeUnit.MILLISECONDS);
+        io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(100, 30000, TimeUnit.MILLISECONDS);
       this.partition = partition;
     }
 

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.spi.authorization;
+package io.cdap.cdap.security.spi.authorization;
 
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
 
 import java.util.Set;
 

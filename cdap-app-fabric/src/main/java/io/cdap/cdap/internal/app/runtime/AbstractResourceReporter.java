@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.app.runtime.ProgramResourceReporter;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.app.runtime.ProgramResourceReporter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -32,7 +32,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Abstract implementation of a {@link co.cask.cdap.app.runtime.ProgramResourceReporter}
+ * Abstract implementation of a {@link io.cdap.cdap.app.runtime.ProgramResourceReporter}
  * writes out resource metrics at a fixed rate that defaults to 60 seconds, but can be specified
  * in the constructor.
  */

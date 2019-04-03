@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetAdmin;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.explore.client.ExploreFacade;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * Implementation of {@link co.cask.cdap.api.dataset.DatasetAdmin} for
- * {@link co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset} instances.
+ * Implementation of {@link io.cdap.cdap.api.dataset.DatasetAdmin} for
+ * {@link io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset} instances.
  */
 public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
   private final DatasetContext context;

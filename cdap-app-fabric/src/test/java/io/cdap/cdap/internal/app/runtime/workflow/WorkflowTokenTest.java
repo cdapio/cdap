@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.workflow;
+package io.cdap.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 import org.junit.Assert;
 import org.junit.Test;
 

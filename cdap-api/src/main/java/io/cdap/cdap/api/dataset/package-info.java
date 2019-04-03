@@ -17,10 +17,10 @@
 /**
  * Defines APIs for accessing and managing data within CDAP.
  * <p>
- * Implement {@link co.cask.cdap.api.dataset.DatasetDefinition} or {@link co.cask.cdap.api.dataset.Dataset}
+ * Implement {@link io.cdap.cdap.api.dataset.DatasetDefinition} or {@link io.cdap.cdap.api.dataset.Dataset}
  * to define custom data set types.
  * <p>
- * Otherwise, use pre-packaged types available in the {@link co.cask.cdap.api.dataset.lib}  
- * and {@link co.cask.cdap.api.dataset.table} packages.
+ * Otherwise, use pre-packaged types available in the {@link io.cdap.cdap.api.dataset.lib}  
+ * and {@link io.cdap.cdap.api.dataset.table} packages.
  */
-package co.cask.cdap.api.dataset;
+package io.cdap.cdap.api.dataset;

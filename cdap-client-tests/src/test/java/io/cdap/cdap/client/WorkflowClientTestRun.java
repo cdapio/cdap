@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.AppWithWorkflow;
-import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.api.workflow.NodeStatus;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.WorkflowTokenDetail;
+import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.WorkflowId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
@@ -75,8 +75,8 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
   @Test
   public void testWorkflowClient() throws Exception {
-    String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
-    String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
+    String keyValueTableType = "io.cdap.cdap.api.dataset.lib.KeyValueTable";
+    String filesetType = "io.cdap.cdap.api.dataset.lib.FileSet";
 
     String outputPath = new File(TMP_FOLDER.newFolder(), "output").getAbsolutePath();
     Map<String, String> runtimeArgs = ImmutableMap.of("inputPath", createInput("input"),

@@ -17,5 +17,5 @@
 /**
  * Package contains classes that publish log messages to Kafka.
  */
-package co.cask.cdap.logging.appender.kafka;
+package io.cdap.cdap.logging.appender.kafka;
 

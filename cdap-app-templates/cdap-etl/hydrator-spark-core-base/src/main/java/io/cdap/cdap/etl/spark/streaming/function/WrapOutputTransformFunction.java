@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.streaming.function;
+package io.cdap.cdap.etl.spark.streaming.function;
 
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.RecordType;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.RecordType;
 import org.apache.spark.api.java.function.Function;
 
 /**

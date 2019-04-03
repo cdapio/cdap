@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionOutput;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,10 +58,10 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.INPUT_DATASET;
-import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.OUTPUT_DATASET;
-import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.OUTPUT_PARTITION_KEY;
-import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.SCHEMA;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.INPUT_DATASET;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.OUTPUT_DATASET;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.OUTPUT_PARTITION_KEY;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.SCHEMA;
 
 /**
  * This tests that we can use DynamicPartitioner with a PartitionedFileSet using

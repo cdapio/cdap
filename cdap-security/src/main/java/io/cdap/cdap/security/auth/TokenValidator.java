@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
 import com.google.common.util.concurrent.Service;
 
@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.Service;
  */
 public interface TokenValidator extends Service {
   /**
-   * Validates the access token and returns the {@link co.cask.cdap.security.auth.TokenState}
+   * Validates the access token and returns the {@link io.cdap.cdap.security.auth.TokenState}
    * describing the cause to be in this state
    *
    * @param token The token to be validated.

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package io.cdap.cdap.data.runtime.main;
 
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.util.hbase.HBaseVersion;
-import co.cask.cdap.gateway.handlers.util.VersionHelper;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data2.util.hbase.HBaseVersion;
+import io.cdap.cdap.gateway.handlers.util.VersionHelper;
 import org.apache.kafka.clients.KafkaClient;
 
 import java.net.URL;

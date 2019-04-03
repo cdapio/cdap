@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.logging.LoggingUtil;
-import co.cask.cdap.logging.framework.InvalidPipelineException;
-import co.cask.cdap.logging.framework.LogPipelineLoader;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.logging.LoggingUtil;
+import io.cdap.cdap.logging.framework.InvalidPipelineException;
+import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;

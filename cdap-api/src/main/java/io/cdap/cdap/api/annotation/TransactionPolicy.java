@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.RuntimeContext;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

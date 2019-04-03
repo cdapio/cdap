@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.hive;
+package io.cdap.cdap.hive;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.junit.Assert;

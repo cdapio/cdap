@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.PartitionNotFoundException;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
 import java.util.Set;

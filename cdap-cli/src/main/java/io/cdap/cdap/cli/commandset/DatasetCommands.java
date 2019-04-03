@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.CreateDatasetInstanceCommand;
-import co.cask.cdap.cli.command.DeleteDatasetInstanceCommand;
-import co.cask.cdap.cli.command.DeleteDatasetModuleCommand;
-import co.cask.cdap.cli.command.DeployDatasetModuleCommand;
-import co.cask.cdap.cli.command.DescribeDatasetInstanceCommand;
-import co.cask.cdap.cli.command.DescribeDatasetModuleCommand;
-import co.cask.cdap.cli.command.DescribeDatasetTypeCommand;
-import co.cask.cdap.cli.command.GetDatasetInstancePropertiesCommand;
-import co.cask.cdap.cli.command.ListDatasetInstancesCommand;
-import co.cask.cdap.cli.command.ListDatasetModulesCommand;
-import co.cask.cdap.cli.command.ListDatasetTypesCommand;
-import co.cask.cdap.cli.command.SetDatasetInstancePropertiesCommand;
-import co.cask.cdap.cli.command.TruncateDatasetInstanceCommand;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.CreateDatasetInstanceCommand;
+import io.cdap.cdap.cli.command.DeleteDatasetInstanceCommand;
+import io.cdap.cdap.cli.command.DeleteDatasetModuleCommand;
+import io.cdap.cdap.cli.command.DeployDatasetModuleCommand;
+import io.cdap.cdap.cli.command.DescribeDatasetInstanceCommand;
+import io.cdap.cdap.cli.command.DescribeDatasetModuleCommand;
+import io.cdap.cdap.cli.command.DescribeDatasetTypeCommand;
+import io.cdap.cdap.cli.command.GetDatasetInstancePropertiesCommand;
+import io.cdap.cdap.cli.command.ListDatasetInstancesCommand;
+import io.cdap.cdap.cli.command.ListDatasetModulesCommand;
+import io.cdap.cdap.cli.command.ListDatasetTypesCommand;
+import io.cdap.cdap.cli.command.SetDatasetInstancePropertiesCommand;
+import io.cdap.cdap.cli.command.TruncateDatasetInstanceCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

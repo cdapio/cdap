@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package io.cdap.cdap.datapipeline;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.api.lineage.field.FieldReadOperation;
-import co.cask.cdap.etl.api.lineage.field.FieldTransformOperation;
-import co.cask.cdap.etl.api.lineage.field.FieldWriteOperation;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;

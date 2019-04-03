@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package io.cdap.cdap.datapipeline;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.datapipeline.service.StudioService;
-import co.cask.cdap.etl.api.AlertPublisher;
-import co.cask.cdap.etl.api.ErrorTransform;
-import co.cask.cdap.etl.api.SplitterTransform;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.action.Action;
-import co.cask.cdap.etl.api.batch.BatchAggregator;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.api.condition.Condition;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.datapipeline.service.StudioService;
+import io.cdap.cdap.etl.api.AlertPublisher;
+import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 

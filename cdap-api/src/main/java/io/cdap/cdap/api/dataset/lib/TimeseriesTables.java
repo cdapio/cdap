@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 
 /**
  * Utility for describing {@link TimeseriesTable} data set within application configuration.
@@ -38,7 +38,7 @@ public final class TimeseriesTables {
   /**
    * Creates properties for {@link TimeseriesTable} data set instance.
    * @param timeIntervalToStorePerRow time interval to store per row. See {@link TimeseriesTable} for details.
-   * @return {@link co.cask.cdap.api.dataset.DatasetProperties} for the data set
+   * @return {@link io.cdap.cdap.api.dataset.DatasetProperties} for the data set
    */
   public static DatasetProperties timeseriesTableProperties(int timeIntervalToStorePerRow, DatasetProperties props) {
     return DatasetProperties.builder()

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Defines an interface for the Spark job.

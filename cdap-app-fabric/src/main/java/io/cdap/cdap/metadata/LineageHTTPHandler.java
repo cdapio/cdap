@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
-import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
-import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.metadata.lineage.CollapseType;
-import co.cask.cdap.proto.metadata.lineage.Field;
-import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
-import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
-import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.TimeMathParser;
+import io.cdap.cdap.data2.metadata.lineage.Lineage;
+import io.cdap.cdap.data2.metadata.lineage.LineageSerializer;
+import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
+import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.metadata.lineage.Field;
+import io.cdap.cdap.proto.metadata.lineage.FieldLineageDetails;
+import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
+import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

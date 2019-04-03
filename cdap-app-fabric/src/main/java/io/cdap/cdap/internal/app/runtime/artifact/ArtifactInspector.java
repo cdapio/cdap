@@ -14,35 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.plugin.EndpointPluginContext;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.plugin.Requirements;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.plugin.EndpointPluginContext;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.Requirements;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -356,18 +356,18 @@ final class ArtifactInspector {
   }
 
   /**
-   * Get all the {@link co.cask.cdap.api.annotation.Requirements} specified by a plugin as {@link Requirements}.
+   * Get all the {@link io.cdap.cdap.api.annotation.Requirements} specified by a plugin as {@link Requirements}.
    * The requirements are case insensitive and always represented in lowercase.
    *
    * @param cls the plugin class whose requirement needs to be found
    *
    * @return {@link Requirements} containing the requirements specified by the plugin (in lowercase). If the plugin does
-   * not specify any {@link co.cask.cdap.api.annotation.Requirements} then the {@link Requirements} will be empty.
+   * not specify any {@link io.cdap.cdap.api.annotation.Requirements} then the {@link Requirements} will be empty.
    */
   @VisibleForTesting
   Requirements getPluginRequirements(Class<?> cls) {
-    co.cask.cdap.api.annotation.Requirements annotation =
-      cls.getAnnotation(co.cask.cdap.api.annotation.Requirements.class);
+    io.cdap.cdap.api.annotation.Requirements annotation =
+      cls.getAnnotation(io.cdap.cdap.api.annotation.Requirements.class);
     if (annotation == null) {
       return Requirements.EMPTY;
     }

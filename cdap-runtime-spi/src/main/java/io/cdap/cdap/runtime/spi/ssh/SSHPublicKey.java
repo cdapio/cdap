@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.ssh;
+package io.cdap.cdap.runtime.spi.ssh;
 
 /**
  * Contains information of a public key.

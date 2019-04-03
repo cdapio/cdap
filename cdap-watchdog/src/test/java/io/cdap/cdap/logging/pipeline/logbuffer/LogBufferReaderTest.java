@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.logbuffer;
+package io.cdap.cdap.logging.pipeline.logbuffer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
-import co.cask.cdap.logging.logbuffer.LogBufferWriter;
-import co.cask.cdap.logging.logbuffer.recover.LogBufferReader;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.context.WorkerLoggingContext;
+import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
+import io.cdap.cdap.logging.logbuffer.LogBufferWriter;
+import io.cdap.cdap.logging.logbuffer.recover.LogBufferReader;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.ClassRule;

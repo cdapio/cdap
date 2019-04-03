@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.distributed;
+package io.cdap.cdap.app.runtime.spark.distributed;
 
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
-import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.HttpExceptionHandler;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
+import io.cdap.cdap.app.runtime.spark.SparkPackageUtils;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;

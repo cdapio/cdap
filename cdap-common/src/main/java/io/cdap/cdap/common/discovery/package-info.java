@@ -17,5 +17,5 @@
 /**
  * Service discovery classes.
  */
-package co.cask.cdap.common.discovery;
+package io.cdap.cdap.common.discovery;
 

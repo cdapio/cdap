@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 

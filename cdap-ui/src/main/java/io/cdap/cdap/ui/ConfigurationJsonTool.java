@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.ui;
+package io.cdap.cdap.ui;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Configuration;
-import co.cask.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Configuration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.NullOutputStream;

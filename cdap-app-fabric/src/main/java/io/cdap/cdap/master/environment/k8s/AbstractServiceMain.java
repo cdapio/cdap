@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.app.MainClassLoader;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.options.OptionsParser;
-import co.cask.cdap.common.runtime.DaemonMain;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data.runtime.ConstantTransactionSystemClient;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
-import co.cask.cdap.data2.transaction.TransactionSystemClientService;
-import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.guice.RemoteLogAppenderModule;
-import co.cask.cdap.master.environment.DefaultMasterEnvironmentContext;
-import co.cask.cdap.master.environment.MasterEnvironmentExtensionLoader;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.app.MainClassLoader;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.options.OptionsParser;
+import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
+import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
+import io.cdap.cdap.master.environment.DefaultMasterEnvironmentContext;
+import io.cdap.cdap.master.environment.MasterEnvironmentExtensionLoader;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.runtime;
+package io.cdap.cdap.common.runtime;
 
-import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

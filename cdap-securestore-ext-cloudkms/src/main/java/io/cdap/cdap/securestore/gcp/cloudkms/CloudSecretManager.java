@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.gcp.cloudkms;
+package io.cdap.cdap.securestore.gcp.cloudkms;
 
-import co.cask.cdap.securestore.spi.SecretManager;
-import co.cask.cdap.securestore.spi.SecretManagerContext;
-import co.cask.cdap.securestore.spi.SecretNotFoundException;
-import co.cask.cdap.securestore.spi.SecretStore;
-import co.cask.cdap.securestore.spi.secret.Secret;
-import co.cask.cdap.securestore.spi.secret.SecretMetadata;
+import io.cdap.cdap.securestore.spi.SecretManager;
+import io.cdap.cdap.securestore.spi.SecretManagerContext;
+import io.cdap.cdap.securestore.spi.SecretNotFoundException;
+import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.securestore.spi.secret.Secret;
+import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

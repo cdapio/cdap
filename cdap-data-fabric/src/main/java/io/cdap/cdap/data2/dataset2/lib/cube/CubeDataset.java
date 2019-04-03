@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
+import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;

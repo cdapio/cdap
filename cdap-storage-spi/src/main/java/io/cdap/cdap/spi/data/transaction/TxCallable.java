@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.transaction;
+package io.cdap.cdap.spi.data.transaction;
 
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 
 /**
  * A callable that provides a {@link StructuredTableContext} to programs which may be used to get

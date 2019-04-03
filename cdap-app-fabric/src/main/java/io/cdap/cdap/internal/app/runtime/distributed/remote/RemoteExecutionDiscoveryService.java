@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
-import co.cask.cdap.master.spi.discovery.DefaultServiceDiscovered;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
+import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
+import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;

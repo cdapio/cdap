@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package io.cdap.cdap.logging.logbuffer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.appender.LogMessage;
+import io.cdap.cdap.logging.context.WorkerLoggingContext;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.ClassRule;

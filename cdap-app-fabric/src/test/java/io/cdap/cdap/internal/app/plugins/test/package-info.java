@@ -17,4 +17,4 @@
 /**
  * This package is for plugin under testing. No regular test class should goes in this package.
  */
-package co.cask.cdap.internal.app.plugins.test;
+package io.cdap.cdap.internal.app.plugins.test;

@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.worker.WorkerSpecification;
+import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi;
+package io.cdap.cdap.securestore.spi;
 
 import java.util.Map;
 

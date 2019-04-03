@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.app.deploy.Manager;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
-import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
-import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.app.deploy.Manager;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.pipeline.Pipeline;
+import io.cdap.cdap.pipeline.PipelineFactory;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.context;
+package io.cdap.cdap.messaging.context;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.messaging.data.RawMessage;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

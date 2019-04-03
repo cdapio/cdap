@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
 import scala.tools.nsc.Settings
 
 /**
-  * Default implementation of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]] for Scala 2.11.
+  * Default implementation of [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]] for Scala 2.11.
   */
 class DefaultSparkInterpreter(settings: Settings, urlAdder: URLAdder, onClose: () => Unit)
   extends DefaultSparkCompiler(settings, urlAdder, onClose) with AbstractSparkInterpreter {

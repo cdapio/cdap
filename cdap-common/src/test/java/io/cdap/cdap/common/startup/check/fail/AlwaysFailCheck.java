@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.startup.check.fail;
+package io.cdap.cdap.common.startup.check.fail;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.startup.Check;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.startup.Check;
 import com.google.inject.Inject;
 
 /**

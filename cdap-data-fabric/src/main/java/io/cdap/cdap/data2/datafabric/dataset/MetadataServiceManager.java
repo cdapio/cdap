@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset;
+package io.cdap.cdap.data2.datafabric.dataset;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;

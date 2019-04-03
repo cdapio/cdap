@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal;
+package io.cdap.cdap.internal;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;

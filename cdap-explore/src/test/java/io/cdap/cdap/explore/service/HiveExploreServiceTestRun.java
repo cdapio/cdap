@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.ExploreProperties;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.jdbc.ExploreDriver;
-import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
-import co.cask.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
-import co.cask.cdap.hive.datasets.DatasetSerDe;
-import co.cask.cdap.hive.datasets.DatasetStorageHandler;
-import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryInfo;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.TableInfo;
-import co.cask.cdap.proto.TableNameInfo;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.ExploreProperties;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.jdbc.ExploreDriver;
+import io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition;
+import io.cdap.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
+import io.cdap.cdap.hive.datasets.DatasetSerDe;
+import io.cdap.cdap.hive.datasets.DatasetStorageHandler;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryInfo;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
+import io.cdap.cdap.proto.TableInfo;
+import io.cdap.cdap.proto.TableNameInfo;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -65,7 +65,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition.KeyValue;
+import static io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition.KeyValue;
 
 /**
  * Tests Hive13ExploreService.

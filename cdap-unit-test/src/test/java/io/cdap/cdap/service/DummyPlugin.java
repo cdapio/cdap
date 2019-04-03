@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.service;
+package io.cdap.cdap.service;
 
-import co.cask.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.annotation.Plugin;
 
 /**
  * A dummy plugin class for {@link ServiceArtifactTestRun}.

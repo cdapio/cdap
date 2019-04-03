@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.hive;
+package io.cdap.cdap.hive;
 
-import co.cask.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;

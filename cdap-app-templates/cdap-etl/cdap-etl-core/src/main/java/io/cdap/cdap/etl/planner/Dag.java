@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.planner;
+package io.cdap.cdap.etl.planner;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.etl.proto.Connection;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;

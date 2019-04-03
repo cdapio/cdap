@@ -17,4 +17,4 @@
 /**
  *
  */
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;

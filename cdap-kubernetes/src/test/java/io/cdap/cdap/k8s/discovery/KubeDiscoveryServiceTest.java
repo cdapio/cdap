@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.discovery;
+package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;

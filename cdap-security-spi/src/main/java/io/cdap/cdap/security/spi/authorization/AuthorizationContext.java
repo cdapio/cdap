@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.security.spi.authorization;
+package io.cdap.cdap.security.spi.authorization;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.api.Admin;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 
 import java.io.IOException;
 import java.util.Map;

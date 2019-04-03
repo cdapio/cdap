@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metrics;
+package io.cdap.cdap.data2.metrics;
 
 import com.google.common.util.concurrent.Service;
 

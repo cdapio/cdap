@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router.handlers;
+package io.cdap.cdap.gateway.router.handlers;
 
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;

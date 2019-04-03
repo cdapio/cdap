@@ -14,33 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.test.remote;
+package io.cdap.cdap.test.remote;
 
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.PluginInstanceDetail;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.test.AbstractApplicationManager;
-import co.cask.cdap.test.DefaultMapReduceManager;
-import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.WorkerManager;
-import co.cask.cdap.test.WorkflowManager;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.PluginInstanceDetail;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.test.AbstractApplicationManager;
+import io.cdap.cdap.test.DefaultMapReduceManager;
+import io.cdap.cdap.test.MapReduceManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.WorkerManager;
+import io.cdap.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
 import java.util.List;

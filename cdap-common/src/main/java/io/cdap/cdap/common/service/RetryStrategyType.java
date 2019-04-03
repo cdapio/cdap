@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
 /**
  * Types of retry strategies that users can configure for programs.

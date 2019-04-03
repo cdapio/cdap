@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.metadata;
+package io.cdap.cdap.common.metadata;
 
-import co.cask.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 

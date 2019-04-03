@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 
 import java.text.DateFormat;
 import java.text.ParseException;

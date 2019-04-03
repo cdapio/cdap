@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.kafka;
+package io.cdap.cdap.logging.appender.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.logging.KafkaTestBase;
-import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.appender.LoggingTester;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.read.KafkaLogReader;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.logging.KafkaTestBase;
+import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.logging.appender.LoggingTester;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.context.WorkerLoggingContext;
+import io.cdap.cdap.logging.read.KafkaLogReader;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;

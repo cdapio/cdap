@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage.field;
+package io.cdap.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.EndPoint;
 
 import java.util.Objects;
 

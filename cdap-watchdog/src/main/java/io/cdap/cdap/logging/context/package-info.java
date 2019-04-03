@@ -17,4 +17,4 @@
 /**
  * Contains logging context objects for programs.
  */
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;

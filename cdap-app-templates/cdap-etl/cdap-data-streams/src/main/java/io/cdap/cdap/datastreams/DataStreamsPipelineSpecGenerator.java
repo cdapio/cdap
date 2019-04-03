@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.datastreams;
+package io.cdap.cdap.datastreams;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.etl.api.Engine;
-import co.cask.cdap.etl.common.macro.TimeParser;
-import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
-import co.cask.cdap.etl.spec.PipelineSpecGenerator;
-import co.cask.cdap.etl.validation.InvalidPipelineException;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.common.macro.TimeParser;
+import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
+import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
+import io.cdap.cdap.etl.validation.InvalidPipelineException;
 import org.apache.hadoop.fs.Path;
 
 import java.util.Set;

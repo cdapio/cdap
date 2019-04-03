@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.utils;
+package io.cdap.cdap.common.utils;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

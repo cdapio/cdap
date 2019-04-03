@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline.spark
+package io.cdap.cdap.datapipeline.spark
 
-import co.cask.cdap.api.plugin.PluginConfig
+import io.cdap.cdap.api.plugin.PluginConfig
 
 /**
  * Conf for CaskCountProgram.

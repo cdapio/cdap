@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.ConfigResponse;
 
 import javax.annotation.Nullable;
 

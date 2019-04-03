@@ -14,37 +14,37 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.app.deploy.Manager;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateSystemTablesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
-import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
-import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import co.cask.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.pipeline.Context;
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.pipeline.Stage;
-import co.cask.cdap.scheduler.Scheduler;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.app.deploy.Manager;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.CreateSystemTablesStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
+import io.cdap.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.pipeline.Context;
+import io.cdap.cdap.pipeline.Pipeline;
+import io.cdap.cdap.pipeline.PipelineFactory;
+import io.cdap.cdap.pipeline.Stage;
+import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -77,7 +77,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetadataPublisher metadataPublisher;
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
-  private final co.cask.cdap.scheduler.Scheduler programScheduler;
+  private final io.cdap.cdap.scheduler.Scheduler programScheduler;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final StructuredTableAdmin structuredTableAdmin;
 

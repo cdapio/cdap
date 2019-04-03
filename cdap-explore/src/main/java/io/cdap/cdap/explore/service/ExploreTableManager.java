@@ -14,38 +14,38 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.ExploreProperties;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.DatasetNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
-import co.cask.cdap.explore.table.AlterPartitionStatementBuilder;
-import co.cask.cdap.explore.table.AlterStatementBuilder;
-import co.cask.cdap.explore.table.CreateStatementBuilder;
-import co.cask.cdap.explore.utils.ExploreTableNaming;
-import co.cask.cdap.hive.datasets.DatasetStorageHandler;
-import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.data.batch.RecordScannable;
+import io.cdap.cdap.api.data.batch.RecordWritable;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.ExploreProperties;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.common.DatasetNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
+import io.cdap.cdap.explore.table.AlterPartitionStatementBuilder;
+import io.cdap.cdap.explore.table.AlterStatementBuilder;
+import io.cdap.cdap.explore.table.CreateStatementBuilder;
+import io.cdap.cdap.explore.utils.ExploreTableNaming;
+import io.cdap.cdap.hive.datasets.DatasetStorageHandler;
+import io.cdap.cdap.hive.objectinspector.ObjectInspectorFactory;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
@@ -410,7 +410,7 @@ public class ExploreTableManager {
    *
    * @param spec the dataset specification
    * @param datasetId the dataset id
-   * @param serdeProperties properties to be passed to the {@link co.cask.cdap.hive.datasets.DatasetSerDe}
+   * @param serdeProperties properties to be passed to the {@link io.cdap.cdap.hive.datasets.DatasetSerDe}
    * @param shouldErrorOnMissingSchema whether the schema is required.
    * @return a CREATE TABLE statement, or null if the dataset is not explorable
    * @throws UnsupportedTypeException if the schema cannot be represented in Hive

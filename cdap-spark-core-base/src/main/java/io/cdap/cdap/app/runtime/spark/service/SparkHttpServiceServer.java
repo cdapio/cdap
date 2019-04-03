@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.service;
+package io.cdap.cdap.app.runtime.spark.service;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxCallable;
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
-import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
-import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.lang.PropertyFieldSetter;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
-import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
-import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
-import co.cask.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
-import co.cask.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.TxCallable;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceContext;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
+import io.cdap.cdap.common.lang.PropertyFieldSetter;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
+import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
+import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
+import io.cdap.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
+import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

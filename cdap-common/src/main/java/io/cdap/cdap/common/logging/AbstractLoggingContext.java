@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
@@ -89,7 +89,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
   }
 
   /**
-   * @see co.cask.cdap.common.logging.LoggingContext#getSystemTags()
+   * @see io.cdap.cdap.common.logging.LoggingContext#getSystemTags()
    */
   @Override
   public Collection<SystemTag> getSystemTags() {

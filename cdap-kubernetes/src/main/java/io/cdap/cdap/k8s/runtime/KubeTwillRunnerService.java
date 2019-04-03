@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.runtime;
+package io.cdap.cdap.k8s.runtime;
 
-import co.cask.cdap.k8s.common.ResourceChangeListener;
-import co.cask.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.k8s.common.ResourceChangeListener;
+import io.cdap.cdap.master.environment.k8s.PodInfo;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.models.V1Deployment;

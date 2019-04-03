@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import org.apache.hadoop.hbase.HTableDescriptor;
 
 import java.util.Map;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.hbase;
+package io.cdap.cdap.spi.hbase;
 
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.Closeable;
 import java.io.IOException;

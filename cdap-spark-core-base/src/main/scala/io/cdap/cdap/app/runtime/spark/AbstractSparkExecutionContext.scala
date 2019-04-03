@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package io.cdap.cdap.app.runtime.spark
 
 import java.io.Closeable
 import java.io.File
@@ -28,43 +28,43 @@ import java.util.concurrent.TimeUnit
 import java.lang
 import java.util
 
-import co.cask.cdap.api._
-import co.cask.cdap.api.app.ApplicationSpecification
-import co.cask.cdap.api.data.batch.BatchWritable
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter
-import co.cask.cdap.api.data.batch.OutputFormatProvider
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.Metadata
-import co.cask.cdap.api.metadata.MetadataEntity
-import co.cask.cdap.api.metadata.MetadataScope
-import co.cask.cdap.api.metrics.Metrics
-import co.cask.cdap.api.plugin.PluginContext
-import co.cask.cdap.api.preview.DataTracer
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo
-import co.cask.cdap.api.security.store.SecureStore
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.api.spark.JavaSparkExecutionContext
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkSpecification
-import co.cask.cdap.api.workflow.WorkflowInfo
-import co.cask.cdap.api.workflow.WorkflowToken
-import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
-import co.cask.cdap.app.runtime.spark.data.DatasetRDD
-import co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
-import co.cask.cdap.app.runtime.spark.dynamic.SparkClassFileHandler
-import co.cask.cdap.app.runtime.spark.dynamic.SparkCompilerCleanupManager
-import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
-import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
-import co.cask.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
-import co.cask.cdap.app.runtime.spark.service.SparkHttpServiceServer
-import co.cask.cdap.common.conf.ConfigurationUtil
-import co.cask.cdap.common.conf.Constants
-import co.cask.cdap.common.utils.DirUtils
-import co.cask.cdap.data.LineageDatasetContext
-import co.cask.cdap.data2.metadata.lineage.AccessType
-import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
+import io.cdap.cdap.api._
+import io.cdap.cdap.api.app.ApplicationSpecification
+import io.cdap.cdap.api.data.batch.BatchWritable
+import io.cdap.cdap.api.data.batch.DatasetOutputCommitter
+import io.cdap.cdap.api.data.batch.OutputFormatProvider
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.dataset.Dataset
+import io.cdap.cdap.api.messaging.MessagingContext
+import io.cdap.cdap.api.metadata.Metadata
+import io.cdap.cdap.api.metadata.MetadataEntity
+import io.cdap.cdap.api.metadata.MetadataScope
+import io.cdap.cdap.api.metrics.Metrics
+import io.cdap.cdap.api.plugin.PluginContext
+import io.cdap.cdap.api.preview.DataTracer
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
+import io.cdap.cdap.api.security.store.SecureStore
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.SparkSpecification
+import io.cdap.cdap.api.workflow.WorkflowInfo
+import io.cdap.cdap.api.workflow.WorkflowToken
+import io.cdap.cdap.app.runtime.spark.SparkTransactional.TransactionType
+import io.cdap.cdap.app.runtime.spark.data.DatasetRDD
+import io.cdap.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
+import io.cdap.cdap.app.runtime.spark.dynamic.SparkClassFileHandler
+import io.cdap.cdap.app.runtime.spark.dynamic.SparkCompilerCleanupManager
+import io.cdap.cdap.app.runtime.spark.dynamic.URLAdder
+import io.cdap.cdap.app.runtime.spark.preview.SparkDataTracer
+import io.cdap.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
+import io.cdap.cdap.app.runtime.spark.service.SparkHttpServiceServer
+import io.cdap.cdap.common.conf.ConfigurationUtil
+import io.cdap.cdap.common.conf.Constants
+import io.cdap.cdap.common.utils.DirUtils
+import io.cdap.cdap.data.LineageDatasetContext
+import io.cdap.cdap.data2.metadata.lineage.AccessType
+import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.MRJobConfig
 import org.apache.spark.broadcast.Broadcast
@@ -82,7 +82,7 @@ import scala.reflect.ClassTag
 import scala.tools.nsc.Settings
 
 /**
-  * Default implementation of [[co.cask.cdap.api.spark.SparkExecutionContext]].
+  * Default implementation of [[io.cdap.cdap.api.spark.SparkExecutionContext]].
   *
   * @param runtimeContext provides access to CDAP internal services
   * @param localizeResources a Map from name to local file that the user requested to localize during the
@@ -169,7 +169,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   })
 
   /**
-    * If the Spark program has [[co.cask.cdap.api.spark.service.SparkHttpServiceHandler]], block
+    * If the Spark program has [[io.cdap.cdap.api.spark.service.SparkHttpServiceHandler]], block
     * until the [[org.apache.spark.SparkContext]] is being closed explicitly (on shutdown).
     */
   def waitForSparkHttpService(): Unit = {
@@ -394,7 +394,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   }
 
   /**
-    * Creates a [[co.cask.cdap.app.runtime.spark.DatasetCompute]] for the DatasetRDD to use.
+    * Creates a [[io.cdap.cdap.app.runtime.spark.DatasetCompute]] for the DatasetRDD to use.
     */
   protected[spark] def createDatasetCompute(): DatasetCompute = {
     new DatasetCompute {
@@ -460,7 +460,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   }
 
   /**
-    * Submits a job to write a [[org.apache.spark.rdd.RDD]] to a [[co.cask.cdap.api.dataset.Dataset]] record
+    * Submits a job to write a [[org.apache.spark.rdd.RDD]] to a [[io.cdap.cdap.api.dataset.Dataset]] record
     * by record from the RDD.
     *
     * @param rdd the `RDD` to read from
@@ -529,14 +529,14 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
                                                                     rdd: RDD[(K, V)]): Unit
 
   /**
-    * Creates a new [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]].
+    * Creates a new [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]].
     *
     * @param settings settings for the interpreter created. It has the classpath property being populated already.
     * @param classDir the directory to write the compiled class files
-    * @param urlAdder a [[co.cask.cdap.app.runtime.spark.dynamic.URLAdder]] for adding URL to have classes
+    * @param urlAdder a [[io.cdap.cdap.app.runtime.spark.dynamic.URLAdder]] for adding URL to have classes
     *                 visible for the Spark executor.
-    * @param onClose function to call on closing the [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
-    * @return a new instance of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
+    * @param onClose function to call on closing the [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]]
+    * @return a new instance of [[io.cdap.cdap.api.spark.dynamic.SparkInterpreter]]
     */
   protected def createInterpreter(settings: Settings, classDir: File,
                                   urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter
@@ -552,7 +552,7 @@ object AbstractSparkExecutionContext {
 
   /**
     * Creates a [[org.apache.spark.broadcast.Broadcast]] for the base URI
-    * of the [[co.cask.cdap.app.runtime.spark.SparkDriverHttpService]]
+    * of the [[io.cdap.cdap.app.runtime.spark.SparkDriverHttpService]]
     */
   private def getDriveHttpServiceBaseURI(sc: SparkContext, baseURI: URI): Broadcast[URI] = {
     this.synchronized {

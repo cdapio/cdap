@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto;
+package io.cdap.cdap.etl.proto;
 
 /**
  * Upgradeable config for ETL applications, which allows chain upgrading until the latest version is reached.

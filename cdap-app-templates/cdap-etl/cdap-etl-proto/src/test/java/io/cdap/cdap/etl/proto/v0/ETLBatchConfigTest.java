@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v0;
+package io.cdap.cdap.etl.proto.v0;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.v1.Plugin;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.v1.Plugin;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -39,44 +39,44 @@ public class ETLBatchConfigTest {
   public void testUpgrade() throws Exception {
     final ArtifactSelectorConfig artifact = new ArtifactSelectorConfig("SYSTEM", "universal", "1.0.0");
     ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of("p1", "v1"), null);
-    co.cask.cdap.etl.proto.v1.ETLStage sourceNew =
-      new co.cask.cdap.etl.proto.v1.ETLStage("DataGenerator.1",
+    io.cdap.cdap.etl.proto.v1.ETLStage sourceNew =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("DataGenerator.1",
                                              new Plugin(source.getName(), source.getProperties(), artifact),
                                              source.getErrorDatasetName());
 
     ETLStage transform1 = new ETLStage("Script", ImmutableMap.of("script", "something"), null);
-    co.cask.cdap.etl.proto.v1.ETLStage transform1New =
-      new co.cask.cdap.etl.proto.v1.ETLStage("Script.2",
+    io.cdap.cdap.etl.proto.v1.ETLStage transform1New =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("Script.2",
                                              new Plugin(transform1.getName(), transform1.getProperties(), artifact),
                                              transform1.getErrorDatasetName());
 
     ETLStage transform2 = new ETLStage("Script", null, null);
-    co.cask.cdap.etl.proto.v1.ETLStage transform2New =
-      new co.cask.cdap.etl.proto.v1.ETLStage("Script.3",
+    io.cdap.cdap.etl.proto.v1.ETLStage transform2New =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("Script.3",
                                              new Plugin(transform2.getName(), transform2.getProperties(), artifact),
                                              transform2.getErrorDatasetName());
 
     ETLStage transform3 = new ETLStage("Validator", ImmutableMap.of("p1", "v1", "p2", "v2"), "errorDS");
-    co.cask.cdap.etl.proto.v1.ETLStage transform3New =
-      new co.cask.cdap.etl.proto.v1.ETLStage("Validator.4",
+    io.cdap.cdap.etl.proto.v1.ETLStage transform3New =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("Validator.4",
                                              new Plugin(transform3.getName(), transform3.getProperties(), artifact),
                                              transform3.getErrorDatasetName());
 
     ETLStage sink1 = new ETLStage("Table", ImmutableMap.of("rowkey", "xyz"), null);
-    co.cask.cdap.etl.proto.v1.ETLStage sink1New =
-      new co.cask.cdap.etl.proto.v1.ETLStage("Table.5",
+    io.cdap.cdap.etl.proto.v1.ETLStage sink1New =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("Table.5",
                                              new Plugin(sink1.getName(), sink1.getProperties(), artifact),
                                              sink1.getErrorDatasetName());
 
     ETLStage sink2 = new ETLStage("HDFS", ImmutableMap.of("name", "abc"), null);
-    co.cask.cdap.etl.proto.v1.ETLStage sink2New =
-      new co.cask.cdap.etl.proto.v1.ETLStage("HDFS.6",
+    io.cdap.cdap.etl.proto.v1.ETLStage sink2New =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("HDFS.6",
                                              new Plugin(sink2.getName(), sink2.getProperties(), artifact),
                                              sink2.getErrorDatasetName());
 
     ETLStage action = new ETLStage("Email", ImmutableMap.of("email", "slj@example.com"), null);
-    co.cask.cdap.etl.proto.v1.ETLStage actionNew =
-      new co.cask.cdap.etl.proto.v1.ETLStage("Email.1",
+    io.cdap.cdap.etl.proto.v1.ETLStage actionNew =
+      new io.cdap.cdap.etl.proto.v1.ETLStage("Email.1",
                                              new Plugin(action.getName(), action.getProperties(), artifact),
                                              action.getErrorDatasetName());
 
@@ -95,7 +95,7 @@ public class ETLBatchConfigTest {
                                                ImmutableList.of(transform1, transform2, transform3),
                                                resources,
                                                ImmutableList.of(action));
-    co.cask.cdap.etl.proto.v1.ETLBatchConfig configNew = co.cask.cdap.etl.proto.v1.ETLBatchConfig.builder(schedule)
+    io.cdap.cdap.etl.proto.v1.ETLBatchConfig configNew = io.cdap.cdap.etl.proto.v1.ETLBatchConfig.builder(schedule)
       .setSource(sourceNew)
       .addSink(sink1New)
       .addSink(sink2New)

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.etl.api.JoinConfig;
-import co.cask.cdap.etl.api.JoinElement;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
-import co.cask.cdap.etl.api.batch.BatchJoinerContext;
-import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
-import co.cask.cdap.etl.common.TypeChecker;
+import io.cdap.cdap.etl.api.JoinConfig;
+import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
+import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.common.TypeChecker;
 
 import java.util.concurrent.Callable;
 

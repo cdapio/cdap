@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.io;
+package io.cdap.cdap.common.io;
 
-import co.cask.cdap.common.lang.FunctionWithException;
+import io.cdap.cdap.common.lang.FunctionWithException;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -93,7 +93,7 @@ public final class Locations {
    * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given path.
    *
    * @param fs The {@link org.apache.hadoop.fs.FileSystem} for the given path.
-   * @param path The path to create {@link co.cask.cdap.common.io.SeekableInputStream} when requested.
+   * @param path The path to create {@link io.cdap.cdap.common.io.SeekableInputStream} when requested.
    * @return A {@link InputSupplier}.
    */
   public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs, final Path path) {

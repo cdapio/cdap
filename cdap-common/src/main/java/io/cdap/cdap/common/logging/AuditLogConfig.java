@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
 import com.google.common.collect.ImmutableSet;
 import io.netty.handler.codec.http.HttpMethod;
@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  * Audit log content which indicates what additional info is needed for the
- * {@link co.cask.cdap.common.logging.AuditLogEntry}
+ * {@link io.cdap.cdap.common.logging.AuditLogEntry}
  */
 public class AuditLogConfig {
 

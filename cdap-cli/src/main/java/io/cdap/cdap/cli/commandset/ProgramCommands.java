@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.cli.commandset;
+package io.cdap.cdap.cli.commandset;
 
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.command.GetProgramInstancesCommandSet;
-import co.cask.cdap.cli.command.GetProgramLiveInfoCommandSet;
-import co.cask.cdap.cli.command.GetProgramLogsCommandSet;
-import co.cask.cdap.cli.command.GetProgramRunsCommandSet;
-import co.cask.cdap.cli.command.GetProgramRuntimeArgsCommandSet;
-import co.cask.cdap.cli.command.GetProgramStatusCommandSet;
-import co.cask.cdap.cli.command.ListAllProgramsCommand;
-import co.cask.cdap.cli.command.ListProgramsCommandSet;
-import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
-import co.cask.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
-import co.cask.cdap.cli.command.StartProgramCommandSet;
-import co.cask.cdap.cli.command.StopProgramCommandSet;
-import co.cask.cdap.cli.command.WorkflowCommandSet;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.GetProgramInstancesCommandSet;
+import io.cdap.cdap.cli.command.GetProgramLiveInfoCommandSet;
+import io.cdap.cdap.cli.command.GetProgramLogsCommandSet;
+import io.cdap.cdap.cli.command.GetProgramRunsCommandSet;
+import io.cdap.cdap.cli.command.GetProgramRuntimeArgsCommandSet;
+import io.cdap.cdap.cli.command.GetProgramStatusCommandSet;
+import io.cdap.cdap.cli.command.ListAllProgramsCommand;
+import io.cdap.cdap.cli.command.ListProgramsCommandSet;
+import io.cdap.cdap.cli.command.SetProgramInstancesCommandSet;
+import io.cdap.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
+import io.cdap.cdap.cli.command.StartProgramCommandSet;
+import io.cdap.cdap.cli.command.StopProgramCommandSet;
+import io.cdap.cdap.cli.command.WorkflowCommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

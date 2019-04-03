@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.table;
+package io.cdap.cdap.explore.table;
 
-import co.cask.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package io.cdap.cdap.datapipeline;
 
-import co.cask.cdap.api.customaction.CustomAction;
-import co.cask.cdap.api.workflow.Condition;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import io.cdap.cdap.api.customaction.CustomAction;
+import io.cdap.cdap.api.workflow.Condition;
+import io.cdap.cdap.api.workflow.WorkflowConfigurer;
 
 /**
  * Implementation of {@link WorkflowProgramAdder} which adds node to the Workflow trunk.

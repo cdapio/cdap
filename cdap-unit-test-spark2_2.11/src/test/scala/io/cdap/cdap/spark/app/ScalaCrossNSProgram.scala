@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
-import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import io.cdap.cdap.api.common.Bytes
+import io.cdap.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.SparkContext
 

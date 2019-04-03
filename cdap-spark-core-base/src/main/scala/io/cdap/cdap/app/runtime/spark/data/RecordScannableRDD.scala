@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
-import co.cask.cdap.api.data.batch.RecordScannable
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.dataset.Dataset
+import io.cdap.cdap.api.data.batch.RecordScannable
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.dataset.Dataset
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 
@@ -29,7 +29,7 @@ import scala.reflect.ClassTag
 
 /**
   * A [[org.apache.spark.rdd.RDD]] implementation that reads data
-  * through [[co.cask.cdap.api.data.batch.RecordScannable]].
+  * through [[io.cdap.cdap.api.data.batch.RecordScannable]].
   */
 
 class RecordScannableRDD[R: ClassTag](@(transient @param) sc: SparkContext,

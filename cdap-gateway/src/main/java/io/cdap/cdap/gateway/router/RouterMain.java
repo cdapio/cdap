@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.ServiceBindException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.runtime.DaemonMain;
-import co.cask.cdap.security.guice.SecurityModules;
-import co.cask.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.common.ServiceBindException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
@@ -102,7 +102,7 @@ public class RouterMain extends DaemonMain {
   @Override
   public void start() throws Exception {
     LOG.info("Starting Router...");
-    co.cask.cdap.common.service.Services.startAndWait(zkClientService,
+    io.cdap.cdap.common.service.Services.startAndWait(zkClientService,
                                                       cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
                                                       TimeUnit.MILLISECONDS,
                                                       String.format("Connection timed out while trying to start " +

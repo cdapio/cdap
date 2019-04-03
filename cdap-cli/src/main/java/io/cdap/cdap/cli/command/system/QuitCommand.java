@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.system;
+package io.cdap.cdap.cli.command.system;
 
 /**
  * {@link ExitCommand}, but with a different command pattern.

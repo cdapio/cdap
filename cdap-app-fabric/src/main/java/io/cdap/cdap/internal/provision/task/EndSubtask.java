@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.internal.provision.task;
+package io.cdap.cdap.internal.provision.task;
 
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 
 import java.util.Optional;
 

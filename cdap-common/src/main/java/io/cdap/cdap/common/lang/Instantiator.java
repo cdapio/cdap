@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
 /**
  * @param <T> type instantiator

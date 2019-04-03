@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.logging.AuditLogConfig;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.internal.asm.Classes;
+import io.cdap.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.logging.AuditLogConfig;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.internal.asm.Classes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import io.cdap.http.HttpHandler;
@@ -158,7 +158,7 @@ public final class RouterAuditLookUp {
     ClassPath cp = ClassPath.from(cl);
     List<ClassPath.ClassInfo> results = new ArrayList<>();
     for (ClassPath.ClassInfo info : cp.getAllClasses()) {
-      if (!info.getPackageName().startsWith("co.cask.cdap")) {
+      if (!info.getPackageName().startsWith("io.cdap.cdap")) {
         continue;
       }
       if (Classes.isSubTypeOf(info.getName(), HttpHandler.class.getName(), lookup, cache)) {

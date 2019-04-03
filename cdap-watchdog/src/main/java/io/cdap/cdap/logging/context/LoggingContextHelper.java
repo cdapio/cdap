@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.logging.ComponentLoggingContext;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.logging.appender.system.LogPathIdentifier;
-import co.cask.cdap.logging.filter.AndFilter;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.filter.MdcExpression;
-import co.cask.cdap.logging.filter.OrFilter;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.logging.ComponentLoggingContext;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.logging.appender.system.LogPathIdentifier;
+import io.cdap.cdap.logging.filter.AndFilter;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.filter.MdcExpression;
+import io.cdap.cdap.logging.filter.OrFilter;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;

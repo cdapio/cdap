@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsTags;
-import co.cask.cdap.proto.MetricQueryResult;
-import co.cask.cdap.proto.MetricTagValue;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.metrics.RuntimeMetrics;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metrics.MetricsTags;
+import io.cdap.cdap.proto.MetricQueryResult;
+import io.cdap.cdap.proto.MetricTagValue;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

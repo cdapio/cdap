@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.internal.provision.MockProvisioner;
-import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import org.junit.AfterClass;

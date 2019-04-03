@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.distributed;
+package io.cdap.cdap.app.runtime.spark.distributed;
 
 import org.apache.twill.api.Command;
 

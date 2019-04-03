@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.dynamic
+package io.cdap.cdap.api.spark.dynamic
 
-import co.cask.cdap.api.annotation.Beta
+import io.cdap.cdap.api.annotation.Beta
 
 import java.io.File
 import java.io.IOException
@@ -42,7 +42,7 @@ trait SparkCompiler extends AutoCloseable {
     * Compiles the given source code. The source code must have content the same as a valid scala source file.
     *
     * @param source the source string to compile
-    * @throws co.cask.cdap.api.spark.dynamic.CompilationFailureException if compilation failed
+    * @throws io.cdap.cdap.api.spark.dynamic.CompilationFailureException if compilation failed
     */
   @throws(classOf[CompilationFailureException])
   def compile(source: String): Unit
@@ -51,7 +51,7 @@ trait SparkCompiler extends AutoCloseable {
     * Compiles the given scala source file.
     *
     * @param file the file to compile
-    * @throws co.cask.cdap.api.spark.dynamic.CompilationFailureException if compilation failed
+    * @throws io.cdap.cdap.api.spark.dynamic.CompilationFailureException if compilation failed
     */
   @throws(classOf[CompilationFailureException])
   def compile(file: File): Unit

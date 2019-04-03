@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.ssh.DefaultSSHSession;
-import co.cask.cdap.common.ssh.SSHConfig;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
-import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
-import co.cask.cdap.runtime.spi.ssh.SSHProcess;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.ssh.DefaultSSHSession;
+import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
 /**
  * Exception thrown when trying to get information about a Hive table that does not exist.

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.guice;
+package io.cdap.cdap.etl.common.guice;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Joiner;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v0;
+package io.cdap.cdap.etl.proto.v0;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.UpgradeableConfig;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.UpgradeableConfig;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +30,7 @@ import java.util.List;
  * ETL Batch Configuration.
  */
 public final class ETLBatchConfig extends ETLConfig
-  implements UpgradeableConfig<co.cask.cdap.etl.proto.v1.ETLBatchConfig> {
+  implements UpgradeableConfig<io.cdap.cdap.etl.proto.v1.ETLBatchConfig> {
   private final String schedule;
   private final List<ETLStage> actions;
 
@@ -51,10 +51,10 @@ public final class ETLBatchConfig extends ETLConfig
   }
 
   @Override
-  public co.cask.cdap.etl.proto.v1.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
-    co.cask.cdap.etl.proto.v1.ETLBatchConfig.Builder builder =
-      co.cask.cdap.etl.proto.v1.ETLBatchConfig.builder(schedule)
-        .setEngine(co.cask.cdap.etl.proto.v1.ETLBatchConfig.Engine.MAPREDUCE)
+  public io.cdap.cdap.etl.proto.v1.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
+    io.cdap.cdap.etl.proto.v1.ETLBatchConfig.Builder builder =
+      io.cdap.cdap.etl.proto.v1.ETLBatchConfig.builder(schedule)
+        .setEngine(io.cdap.cdap.etl.proto.v1.ETLBatchConfig.Engine.MAPREDUCE)
         .setDriverResources(getResources());
 
     upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE);

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework.distributed;
+package io.cdap.cdap.logging.framework.distributed;
 
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.logging.framework.AbstractAppenderContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.framework.AbstractAppenderContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.filesystem.LocationFactory;

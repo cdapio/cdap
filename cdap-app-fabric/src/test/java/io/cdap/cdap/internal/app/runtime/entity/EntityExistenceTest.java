@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.entity;
+package io.cdap.cdap.internal.app.runtime.entity;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.store.NamespaceStore;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.entity.EntityExistenceVerifier;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.store.NamespaceStore;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;

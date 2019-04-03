@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.lang;
+package io.cdap.cdap.internal.lang;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

@@ -17,4 +17,4 @@
 /**
  * Configuration and specification of workers in CDAP.
  */
-package co.cask.cdap.api.worker;
+package io.cdap.cdap.api.worker;

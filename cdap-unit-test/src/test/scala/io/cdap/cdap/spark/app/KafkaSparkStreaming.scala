@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
-import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.dataset.lib.TimeseriesTable
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import io.cdap.cdap.api.common.Bytes
+import io.cdap.cdap.api.dataset.lib.TimeseriesTable
+import io.cdap.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import kafka.serializer.StringDecoder
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.{Seconds, StreamingContext}

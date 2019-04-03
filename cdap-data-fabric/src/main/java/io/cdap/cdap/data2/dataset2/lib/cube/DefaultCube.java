@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.cube;
+package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.dataset.lib.cube.Cube;
-import co.cask.cdap.api.dataset.lib.cube.CubeDeleteQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeExploreQuery;
-import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
-import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
-import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.lib.timeseries.Fact;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactScan;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactScanResult;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactScanner;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.Cube;
+import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
+import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
+import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.Fact;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScan;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScanResult;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScanner;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Default implementation of {@link co.cask.cdap.api.dataset.lib.cube.Cube}.
+ * Default implementation of {@link io.cdap.cdap.api.dataset.lib.cube.Cube}.
  */
 public class DefaultCube implements Cube, MeteredDataset {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);

@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowInfo;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.spark.AbstractSpark;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.workflow.Value;
+import io.cdap.cdap.api.workflow.WorkflowInfo;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.fs.Path;

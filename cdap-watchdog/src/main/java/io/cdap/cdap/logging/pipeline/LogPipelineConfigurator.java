@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package io.cdap.cdap.logging.pipeline;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
@@ -28,9 +28,9 @@ import ch.qos.logback.core.joran.spi.ActionException;
 import ch.qos.logback.core.joran.spi.InterpretationContext;
 import ch.qos.logback.core.joran.spi.Pattern;
 import ch.qos.logback.core.joran.spi.RuleStore;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Syncable;
-import co.cask.cdap.logging.appender.ForwardingAppender;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Syncable;
+import io.cdap.cdap.logging.appender.ForwardingAppender;
 import org.xml.sax.Attributes;
 
 import java.io.Flushable;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
+package io.cdap.cdap.api.spark.service;
 
 import org.apache.spark.sql.SparkSession;
 

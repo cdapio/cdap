@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.common.DatasetNotFoundException;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.common.DatasetNotFoundException;
+import io.cdap.cdap.common.entity.EntityExistenceVerifier;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 

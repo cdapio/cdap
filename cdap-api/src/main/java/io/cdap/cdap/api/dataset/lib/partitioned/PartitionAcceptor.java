@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 
 /**
  * Defines whether to accept {@link PartitionDetail}s, while iterating over a collection of them.

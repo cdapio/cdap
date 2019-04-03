@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark
+package io.cdap.cdap.api.spark
 
-import co.cask.cdap.api.annotation.Beta
-import co.cask.cdap.api.data.DatasetContext
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.{Transactional, TxRunnable}
+import io.cdap.cdap.api.annotation.Beta
+import io.cdap.cdap.api.data.DatasetContext
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.{Transactional, TxRunnable}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -27,7 +27,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
-  * The trait for Spark program to extend from. It provides access to [[co.cask.cdap.api.spark.SparkExecutionContext]]
+  * The trait for Spark program to extend from. It provides access to [[io.cdap.cdap.api.spark.SparkExecutionContext]]
   * for interacting with CDAP. It also provides extra functions to [[org.apache.spark.SparkContext]] and
   * [[org.apache.spark.rdd.RDD]] through implicit objects.
   *
@@ -95,7 +95,7 @@ trait SparkMain extends Serializable {
 
   /**
     * Implicit class for adding methods to [[org.apache.spark.rdd.RDD]] for saving
-    * data to [[co.cask.cdap.api.dataset.Dataset]].
+    * data to [[io.cdap.cdap.api.dataset.Dataset]].
     *
     * @param rdd the [[org.apache.spark.rdd.RDD]] to operate on
     * @tparam K key type
@@ -104,11 +104,11 @@ trait SparkMain extends Serializable {
   implicit class SparkProgramRDDFunctions[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)]) {
 
     /**
-      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param datasetName name of the Dataset
-      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @param sec the [[io.cdap.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def saveAsDataset(datasetName: String)
                      (implicit sec: SparkExecutionContext): Unit = {
@@ -116,12 +116,12 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param namespace the namespace for the dataset
       * @param datasetName name of the Dataset
-      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @param sec the [[io.cdap.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def saveAsDataset(namespace: String, datasetName: String)
                      (implicit sec: SparkExecutionContext): Unit = {
@@ -129,12 +129,12 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param datasetName name of the Dataset
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
-      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @param sec the [[io.cdap.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def saveAsDataset(datasetName: String, arguments: Map[String, String])
                      (implicit sec: SparkExecutionContext): Unit = {
@@ -142,13 +142,13 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param namespace the namespace for the dataset
       * @param datasetName name of the Dataset
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
-      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @param sec the [[io.cdap.cdap.api.spark.SparkExecutionContext]] of the current execution
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def saveAsDataset(namespace: String, datasetName: String, arguments: Map[String, String])
                      (implicit sec: SparkExecutionContext): Unit = {
@@ -164,13 +164,13 @@ trait SparkMain extends Serializable {
   implicit class SparkProgramContextFunctions(sc: SparkContext) {
 
     /**
-      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param datasetName name of the Dataset
       * @tparam K key type
       * @tparam V value type
       * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def fromDataset[K: ClassTag, V: ClassTag](datasetName: String)
                                              (implicit sec: SparkExecutionContext): RDD[(K, V)] = {
@@ -178,14 +178,14 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param namespace namespace in which the dataset exists
       * @param datasetName name of the Dataset
       * @tparam K key type
       * @tparam V value type
       * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def fromDataset[K: ClassTag, V: ClassTag](namespace: String,
                                               datasetName: String)
@@ -194,14 +194,14 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param datasetName name of the Dataset
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
       * @tparam K key type
       * @tparam V value type
       * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def fromDataset[K: ClassTag, V: ClassTag](datasetName: String,
                                               arguments: Map[String, String])
@@ -210,7 +210,7 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param namespace namespace in which the dataset exists
       * @param datasetName name of the Dataset
@@ -218,7 +218,7 @@ trait SparkMain extends Serializable {
       * @tparam K key type
       * @tparam V value type
       * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def fromDataset[K: ClassTag, V: ClassTag](namespace: String,
                                               datasetName: String,
@@ -228,19 +228,19 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param datasetName name of the Dataset
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
-      * @param splits an [[scala.Option]] of an [[scala.collection.Iterable]] of [[co.cask.cdap.api.data.batch.Split]].
+      * @param splits an [[scala.Option]] of an [[scala.collection.Iterable]] of [[io.cdap.cdap.api.data.batch.Split]].
       *               It provided, it will be used to compute the partitions of the RDD;
       *               default is [[scala.None]] and it is up to the Dataset implementation of
-      *               the [[co.cask.cdap.api.data.batch.BatchReadable]] to decide the partitions
-      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      *               the [[io.cdap.cdap.api.data.batch.BatchReadable]] to decide the partitions
+      * @param sec the [[io.cdap.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @tparam K key type
       * @tparam V value type
       * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def fromDataset[K: ClassTag, V: ClassTag](datasetName: String,
                                               arguments: Map[String, String],
@@ -250,20 +250,20 @@ trait SparkMain extends Serializable {
     }
 
     /**
-      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
+      * Creates a [[org.apache.spark.rdd.RDD]] from the given [[io.cdap.cdap.api.dataset.Dataset]].
       *
       * @param namespace namespace in which the dataset exists
       * @param datasetName name of the Dataset
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
-      * @param splits an [[scala.Option]] of an [[scala.collection.Iterable]] of [[co.cask.cdap.api.data.batch.Split]].
+      * @param splits an [[scala.Option]] of an [[scala.collection.Iterable]] of [[io.cdap.cdap.api.data.batch.Split]].
       *               It provided, it will be used to compute the partitions of the RDD;
       *               default is [[scala.None]] and it is up to the Dataset implementation of
-      *               the [[co.cask.cdap.api.data.batch.BatchReadable]] to decide the partitions
-      * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
+      *               the [[io.cdap.cdap.api.data.batch.BatchReadable]] to decide the partitions
+      * @param sec the [[io.cdap.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @tparam K key type
       * @tparam V value type
       * @return A new [[org.apache.spark.rdd.RDD]] instance that reads from the given Dataset.
-      * @throws co.cask.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
+      * @throws io.cdap.cdap.api.data.DatasetInstantiationException if the Dataset doesn't exist
       */
     def fromDataset[K: ClassTag, V: ClassTag](namespace: String,
                                               datasetName: String,
@@ -283,18 +283,18 @@ trait SparkMain extends Serializable {
       * Executes the given function in a single transaction.
       *
       * @param f the function to execute
-      * @param transactional the [[co.cask.cdap.api.Transactional]] to use for the execution
+      * @param transactional the [[io.cdap.cdap.api.Transactional]] to use for the execution
       */
     def apply[T: ClassTag](f: () => T)(implicit transactional: Transactional): T = {
       apply((context: DatasetContext) => f())
     }
 
     /**
-      * Executes the given function in a single transaction with access to [[co.cask.cdap.api.dataset.Dataset]]
-      * through the [[co.cask.cdap.api.data.DatasetContext]].
+      * Executes the given function in a single transaction with access to [[io.cdap.cdap.api.dataset.Dataset]]
+      * through the [[io.cdap.cdap.api.data.DatasetContext]].
       *
       * @param f the function to execute
-      * @param transactional the [[co.cask.cdap.api.Transactional]] to use for the execution
+      * @param transactional the [[io.cdap.cdap.api.Transactional]] to use for the execution
       */
     def apply[T: ClassTag](f: (DatasetContext) => T)(implicit transactional: Transactional): T = {
       val result = new Array[T](1)

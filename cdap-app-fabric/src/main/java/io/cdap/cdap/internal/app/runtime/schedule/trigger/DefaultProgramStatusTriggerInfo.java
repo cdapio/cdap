@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;

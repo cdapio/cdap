@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mapreduce;
+package io.cdap.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.data.batch.InputContext;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.batch.BatchAggregator;
-import co.cask.cdap.etl.api.batch.BatchJoiner;
-import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.batch.PipeTransformExecutor;
-import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
-import co.cask.cdap.etl.batch.connector.MultiConnectorFactory;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.Destroyables;
-import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.SetMultimapCodec;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.api.data.batch.InputContext;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.batch.BatchPhaseSpec;
+import io.cdap.cdap.etl.batch.PipeTransformExecutor;
+import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
+import io.cdap.cdap.etl.batch.connector.MultiConnectorFactory;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.Destroyables;
+import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.common.SetMultimapCodec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;

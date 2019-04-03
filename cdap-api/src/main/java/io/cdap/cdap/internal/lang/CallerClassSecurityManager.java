@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.lang;
+package io.cdap.cdap.internal.lang;
 
 /**
  * A {@link SecurityManager} to help get access to classes in the call stack.

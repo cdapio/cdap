@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package io.cdap.cdap.app.runtime.spark
 
 import com.google.common.reflect.TypeToken
 import org.apache.spark.SparkConf

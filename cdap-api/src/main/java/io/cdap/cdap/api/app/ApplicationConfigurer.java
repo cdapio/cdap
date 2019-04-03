@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.api.app;
+package io.cdap.cdap.api.app;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.api.schedule.TriggerFactory;
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.api.schedule.TriggerFactory;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.worker.Worker;
+import io.cdap.cdap.api.workflow.Workflow;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
 /**
  * Configures a CDAP Application.

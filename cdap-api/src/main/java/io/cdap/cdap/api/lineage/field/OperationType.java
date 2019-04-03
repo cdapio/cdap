@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.lineage.field;
+package io.cdap.cdap.api.lineage.field;
 
 /**
  * Represents operation types.

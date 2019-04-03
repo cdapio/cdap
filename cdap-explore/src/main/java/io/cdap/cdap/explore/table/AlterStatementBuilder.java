@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.explore.table;
+package io.cdap.cdap.explore.table;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
 

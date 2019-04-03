@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.etl.proto.v2.validation;
+package io.cdap.cdap.etl.proto.v2.validation;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

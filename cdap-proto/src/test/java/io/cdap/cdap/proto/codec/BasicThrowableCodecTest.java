@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.proto.BasicThrowable;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.proto.BasicThrowable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;

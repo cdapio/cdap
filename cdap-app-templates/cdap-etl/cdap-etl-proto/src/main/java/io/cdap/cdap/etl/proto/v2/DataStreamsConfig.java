@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v2;
+package io.cdap.cdap.etl.proto.v2;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.proto.Connection;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.proto.Connection;
 
 import java.util.Map;
 import java.util.Objects;

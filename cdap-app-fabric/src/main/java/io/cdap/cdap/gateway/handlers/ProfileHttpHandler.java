@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.MethodNotAllowedException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.profile.ProfileCreateRequest;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.MethodNotAllowedException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.profile.ProfileCreateRequest;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;

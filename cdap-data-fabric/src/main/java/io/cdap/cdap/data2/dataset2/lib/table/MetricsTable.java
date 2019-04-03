@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package io.cdap.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.table.Scanner;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -43,7 +43,7 @@ public interface MetricsTable extends Dataset {
   /**
    * Write multiple rows, each with multiple individual columns of byte array type to write.
    * TODO: (CDAP-8216) This method is only for storing messageId for
-   * {@link cdap-watchdog.co.cask.cdap.metrics.process.MetricsConsumerMetaTable}. Once (CDAP-8216) is resolved, this
+   * {@link cdap-watchdog.io.cdap.cdap.metrics.process.MetricsConsumerMetaTable}. Once (CDAP-8216) is resolved, this
    * method can be removed.
    */
   void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates);

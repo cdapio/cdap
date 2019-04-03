@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data.hbase;
+package io.cdap.cdap.data.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
 import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
@@ -58,36 +58,36 @@ public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase>
 
   @Override
   protected String getHBase96Classname() {
-    return "co.cask.cdap.data.hbase.HBase96Test";
+    return "io.cdap.cdap.data.hbase.HBase96Test";
   }
 
   @Override
   protected String getHBase98Classname() {
-    return "co.cask.cdap.data.hbase.HBase98Test";
+    return "io.cdap.cdap.data.hbase.HBase98Test";
   }
 
   @Override
   protected String getHBase10Classname() {
-    return "co.cask.cdap.data.hbase.HBase10Test";
+    return "io.cdap.cdap.data.hbase.HBase10Test";
   }
 
   @Override
   protected String getHBase10CDHClassname() {
-    return "co.cask.cdap.data.hbase.HBase10CDHTest";
+    return "io.cdap.cdap.data.hbase.HBase10CDHTest";
   }
 
   @Override
   protected String getHBase11Classname() {
-    return "co.cask.cdap.data.hbase.HBase11Test";
+    return "io.cdap.cdap.data.hbase.HBase11Test";
   }
 
   @Override
   protected String getHBase10CHD550ClassName() {
-    return "co.cask.cdap.data.hbase.HBase10CDH550Test";
+    return "io.cdap.cdap.data.hbase.HBase10CDH550Test";
   }
 
   @Override
   protected String getHBase12CHD570ClassName() {
-    return "co.cask.cdap.data.hbase.HBase12CDH570Test";
+    return "io.cdap.cdap.data.hbase.HBase12CDH570Test";
   }
 }

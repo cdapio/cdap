@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
-import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.gateway.handlers.store.ProgramStore;
+import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.http.HttpHandler;

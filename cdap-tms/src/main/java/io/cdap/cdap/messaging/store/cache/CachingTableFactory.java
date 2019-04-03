@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.cache;
+package io.cdap.cdap.messaging.store.cache;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.store.ForwardingTableFactory;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.ForwardingTableFactory;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.MetadataTable;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.TableFactory;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 

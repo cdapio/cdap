@@ -15,10 +15,10 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.api.retry.RetryableException;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import com.google.inject.Inject;
 
 /**

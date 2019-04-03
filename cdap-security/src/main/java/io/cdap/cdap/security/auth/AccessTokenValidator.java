@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
-import co.cask.cdap.common.io.Codec;
+import io.cdap.cdap.common.io.Codec;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;

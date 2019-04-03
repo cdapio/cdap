@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.test.remote;
+package io.cdap.cdap.test.remote;
 
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.client.ScheduleClient;
-import co.cask.cdap.client.WorkflowClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.ScheduleManager;
-import co.cask.cdap.test.WorkflowManager;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.client.ScheduleClient;
+import io.cdap.cdap.client.WorkflowClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.WorkflowTokenDetail;
+import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.test.AbstractProgramManager;
+import io.cdap.cdap.test.ScheduleManager;
+import io.cdap.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;

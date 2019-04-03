@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.app;
+package io.cdap.cdap.cli.command.app;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.proto.BatchProgram;
-import co.cask.cdap.proto.BatchProgramStart;
-import co.cask.cdap.proto.BatchProgramStatus;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.util.RowMaker;
+import io.cdap.cdap.cli.util.table.Table;
+import io.cdap.cdap.client.ApplicationClient;
+import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.proto.BatchProgram;
+import io.cdap.cdap.proto.BatchProgramStart;
+import io.cdap.cdap.proto.BatchProgramStatus;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.nosql.dataset;
+package io.cdap.cdap.spi.data.nosql.dataset;
 
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.io.IOException;
 import java.util.Map;

@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.batch.Scannables;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.BatchReadable;
+import io.cdap.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.api.data.batch.RecordScannable;
+import io.cdap.cdap.api.data.batch.RecordScanner;
+import io.cdap.cdap.api.data.batch.RecordWritable;
+import io.cdap.cdap.api.data.batch.Scannables;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.dataset.table.Get;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -241,7 +241,7 @@ public class KeyValueTable extends AbstractDataset implements
    * Scans table.
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} of
+   * @return {@link io.cdap.cdap.api.dataset.lib.CloseableIterator} of
    * {@link KeyValue KeyValue&lt;byte[], byte[]&gt;}
    */
   public CloseableIterator<KeyValue<byte[], byte[]>> scan(byte[] startRow, byte[] stopRow) {
@@ -272,7 +272,7 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * {@link co.cask.cdap.api.data.batch.Scannables.RecordMaker} for {@link #createSplitReader(Split)}.
+   * {@link io.cdap.cdap.api.data.batch.Scannables.RecordMaker} for {@link #createSplitReader(Split)}.
    */
   public class KeyValueRecordMaker implements Scannables.RecordMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
     @Override

@@ -17,4 +17,4 @@
 /**
  * Classes for managing collections.
  */
-package co.cask.cdap.common.collect;
+package io.cdap.cdap.common.collect;

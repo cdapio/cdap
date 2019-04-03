@@ -17,4 +17,4 @@
 /**
  * CLI exceptions.
  */
-package co.cask.cdap.cli.exception;
+package io.cdap.cdap.cli.exception;

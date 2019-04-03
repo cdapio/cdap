@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.ssh;
+package io.cdap.cdap.common.ssh;
 
-import co.cask.cdap.runtime.spi.ssh.PortForwarding;
-import co.cask.cdap.runtime.spi.ssh.RemotePortForwarding;
-import co.cask.cdap.runtime.spi.ssh.SSHProcess;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.jcraft.jsch.Channel;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.internal.guava.ClassPath.ResourceInfo;
+import io.cdap.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.test;
+package io.cdap.cdap.common.test;
 
-import co.cask.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
@@ -54,7 +54,7 @@ public final class PluginJarHelper {
       includePackages.add(clazz.getPackage().getName());
     }
 
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
+    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("io.cdap.cdap.api",
                                                                          "org.apache.hadoop",
                                                                          "org.apache.hive",
                                                                          "org.apache.spark"),

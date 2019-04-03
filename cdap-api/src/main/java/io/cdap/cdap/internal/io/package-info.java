@@ -207,5 +207,5 @@
  * </table>
  *
  */
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 

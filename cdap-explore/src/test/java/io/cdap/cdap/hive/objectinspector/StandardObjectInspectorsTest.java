@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package co.cask.cdap.hive.objectinspector;
+package io.cdap.cdap.hive.objectinspector;
 
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;

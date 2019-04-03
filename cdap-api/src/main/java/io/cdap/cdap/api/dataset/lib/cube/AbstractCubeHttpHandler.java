@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.dataset.lib.cube;
+package io.cdap.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -31,10 +31,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * A basic implementation of {@link co.cask.cdap.api.service.http.HttpServiceHandler} that provides endpoints to
+ * A basic implementation of {@link io.cdap.cdap.api.service.http.HttpServiceHandler} that provides endpoints to
  * explore and execute queries in {@link Cube} dataset.
  * <p/>
- * Subclasses must implement {@link co.cask.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler#getCube()} that returns
+ * Subclasses must implement {@link io.cdap.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler#getCube()} that returns
  * {@link Cube} dataset.
  */
 @Beta

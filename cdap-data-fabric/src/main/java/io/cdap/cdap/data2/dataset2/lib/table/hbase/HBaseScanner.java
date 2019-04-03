@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table.hbase;
+package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -67,9 +67,9 @@ public class HBaseScanner implements Scanner {
         Map<byte[], byte[]> rowMap = HBaseTable.getRowMap(result, columnFamily);
         if (rowMap.size() > 0) {
           if (rowKeyDistributor == null) {
-            return new co.cask.cdap.api.dataset.table.Result(result.getRow(), rowMap);
+            return new io.cdap.cdap.api.dataset.table.Result(result.getRow(), rowMap);
           }
-          return new co.cask.cdap.api.dataset.table.Result(result.getRow(), rowMap) {
+          return new io.cdap.cdap.api.dataset.table.Result(result.getRow(), rowMap) {
             @Override
             public byte[] getRow() {
               return rowKeyDistributor.getOriginalKey(result.getRow());

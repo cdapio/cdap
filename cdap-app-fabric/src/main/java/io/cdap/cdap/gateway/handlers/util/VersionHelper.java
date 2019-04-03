@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.util;
+package io.cdap.cdap.gateway.handlers.util;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.spark.SparkCompatReader;
-import co.cask.cdap.proto.ClientVersion;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
+import io.cdap.cdap.proto.ClientVersion;
 import com.google.common.io.Resources;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.zookeeper.version.Info;

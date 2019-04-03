@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.metadata;
+package io.cdap.cdap.common.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;

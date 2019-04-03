@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.Updatable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ import java.util.Map;
 
 /**
  * Implementation of {@link DatasetAdmin} that propagates administrative operations to the given list of
- * {@link co.cask.cdap.api.dataset.DatasetAdmin}s
+ * {@link io.cdap.cdap.api.dataset.DatasetAdmin}s
  */
 @Beta
 public class CompositeDatasetAdmin implements DatasetAdmin, Updatable {

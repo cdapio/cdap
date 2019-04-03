@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.service.http;
+package io.cdap.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.services.ServiceHttpServer;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.service.http.HttpServiceHandler;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.ServiceHttpServer;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;

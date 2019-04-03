@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.dataset;
+package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
-import co.cask.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.api.data.batch.BatchWritable;
 
 import java.io.Closeable;
 

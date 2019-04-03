@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.security.auth.AccessToken;
-import co.cask.cdap.security.auth.AccessTokenCodec;
-import co.cask.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
+import io.cdap.cdap.security.guice.SecurityModules;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;

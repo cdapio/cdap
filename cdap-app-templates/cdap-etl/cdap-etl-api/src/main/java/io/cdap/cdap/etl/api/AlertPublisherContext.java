@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package io.cdap.cdap.etl.api;
 
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.messaging.MessagingAdmin;
+import io.cdap.cdap.api.messaging.MessagingContext;
 
 /**
  * Context for an {@link AlertPublisher}, exposing methods to publish messages to TMS.

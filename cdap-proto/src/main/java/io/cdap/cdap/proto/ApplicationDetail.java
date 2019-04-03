@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;

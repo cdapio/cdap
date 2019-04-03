@@ -14,36 +14,36 @@
  * the License.
  */
 
-package co.cask.cdap.internal.guice;
+package io.cdap.cdap.internal.guice;
 
-import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.guice.MonitorHandlerModule;
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.config.guice.ConfigStoreModule;
-import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.provision.MockProvisionerModule;
-import co.cask.cdap.logging.guice.LocalLogAppenderModule;
-import co.cask.cdap.logging.guice.LogQueryServerModule;
-import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
-import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.metadata.MetadataReaderWriterModules;
-import co.cask.cdap.metadata.MetadataServiceModule;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.metrics.guice.MetricsHandlerModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.app.guice.MonitorHandlerModule;
+import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.config.guice.ConfigStoreModule;
+import io.cdap.cdap.data.runtime.DataFabricModules;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.TransactionExecutorModule;
+import io.cdap.cdap.explore.guice.ExploreClientModule;
+import io.cdap.cdap.internal.provision.MockProvisionerModule;
+import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
+import io.cdap.cdap.logging.guice.LogQueryServerModule;
+import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.MetadataServiceModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 

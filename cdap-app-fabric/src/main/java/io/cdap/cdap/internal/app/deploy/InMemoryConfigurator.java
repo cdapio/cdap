@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
-import co.cask.cdap.app.DefaultApplicationContext;
-import co.cask.cdap.app.deploy.ConfigResponse;
-import co.cask.cdap.app.deploy.Configurator;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.app.DefaultAppConfigurer;
+import io.cdap.cdap.app.DefaultApplicationContext;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -163,7 +163,7 @@ public final class InMemoryConfigurator implements Configurator {
           String missingClass = rootCause.getMessage();
 
           // If the missing class has "spark" in the name, try to see if Spark is available
-          if (missingClass.startsWith("org.apache.spark.") || missingClass.startsWith("co.cask.cdap.api.spark.")) {
+          if (missingClass.startsWith("org.apache.spark.") || missingClass.startsWith("io.cdap.cdap.api.spark.")) {
             // Try to load the SparkContext class, which should be available if Spark is available in the platform
             try {
               artifactClassLoader.loadClass("org.apache.spark.SparkContext");

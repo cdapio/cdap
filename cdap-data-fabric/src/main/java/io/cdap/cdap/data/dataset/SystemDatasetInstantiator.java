@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.data.dataset;
+package io.cdap.cdap.data.dataset;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 

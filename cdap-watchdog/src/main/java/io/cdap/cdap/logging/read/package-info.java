@@ -17,4 +17,4 @@
 /**
  * Contains classes for tailing log events.
  */
-package co.cask.cdap.logging.read;
+package io.cdap.cdap.logging.read;

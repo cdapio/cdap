@@ -17,4 +17,4 @@
 /**
  * API definition for queue for the txds2 system.
  */
-package co.cask.cdap.data2.queue;
+package io.cdap.cdap.data2.queue;

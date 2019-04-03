@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;

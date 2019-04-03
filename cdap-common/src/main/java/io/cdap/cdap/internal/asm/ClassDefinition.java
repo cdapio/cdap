@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.asm;
+package io.cdap.cdap.internal.asm;
 
 import com.google.common.collect.ImmutableList;
 import org.objectweb.asm.Type;

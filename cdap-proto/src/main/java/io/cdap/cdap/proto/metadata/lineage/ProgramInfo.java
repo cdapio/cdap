@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata.lineage;
+package io.cdap.cdap.proto.metadata.lineage;
 
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 import java.util.Objects;
 

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import org.junit.Assert;
 import org.junit.Test;
 

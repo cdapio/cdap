@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.explore.utils;
+package io.cdap.cdap.explore.utils;
 
-import co.cask.cdap.api.dataset.ExploreProperties;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.dataset.ExploreProperties;
+import io.cdap.cdap.proto.id.DatasetId;
 
 import java.util.Map;
 

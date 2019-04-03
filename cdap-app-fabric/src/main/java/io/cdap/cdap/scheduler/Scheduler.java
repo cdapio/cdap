@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.scheduler;
+package io.cdap.cdap.scheduler;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.Collection;
 import java.util.List;
@@ -121,7 +121,7 @@ public interface Scheduler {
 
   /**
    * Update all schedules that can be triggered by the given deleted program. Schedules will be removed if they
-   * contain single {@link co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger}. Schedules with
+   * contain single {@link io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger}. Schedules with
    * composite triggers will be updated if the composite trigger can still be satisfied after the program is deleted,
    * otherwise the schedules will be deleted.
    *

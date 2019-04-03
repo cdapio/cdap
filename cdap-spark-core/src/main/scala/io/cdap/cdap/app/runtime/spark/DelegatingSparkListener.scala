@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package io.cdap.cdap.app.runtime.spark
 
 import org.apache.spark.scheduler.{SparkListener, SparkListenerEvent}
 

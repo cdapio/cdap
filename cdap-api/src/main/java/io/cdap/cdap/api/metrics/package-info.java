@@ -17,5 +17,5 @@
 /**
  * Defines a way to collect user-defined metrics.
  */
-package co.cask.cdap.api.metrics;
+package io.cdap.cdap.api.metrics;
 

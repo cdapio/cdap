@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.Ids;
 import org.junit.Assert;
 import org.junit.Test;
 

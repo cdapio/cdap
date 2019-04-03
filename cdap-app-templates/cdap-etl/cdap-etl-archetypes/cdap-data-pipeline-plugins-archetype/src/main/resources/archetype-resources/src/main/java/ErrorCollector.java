@@ -16,16 +16,16 @@
 
 package $package;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.ErrorRecord;
-import co.cask.cdap.etl.api.ErrorTransform;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.ErrorRecord;
+import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
 
 import java.util.ArrayList;
 import java.util.List;

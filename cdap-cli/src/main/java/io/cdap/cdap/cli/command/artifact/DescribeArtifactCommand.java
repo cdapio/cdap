@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.artifact;
+package io.cdap.cdap.cli.command.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.cli.util.table.Table;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.proto.id.ArtifactId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;

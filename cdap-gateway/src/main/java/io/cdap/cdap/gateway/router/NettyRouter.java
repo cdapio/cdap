@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.ServiceBindException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.gateway.router.handlers.AuditLogHandler;
-import co.cask.cdap.gateway.router.handlers.AuthenticationHandler;
-import co.cask.cdap.gateway.router.handlers.HttpRequestRouter;
-import co.cask.cdap.gateway.router.handlers.HttpStatusRequestHandler;
-import co.cask.cdap.security.auth.AccessTokenTransformer;
-import co.cask.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.common.ServiceBindException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
+import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
+import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
+import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
+import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.TokenValidator;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;

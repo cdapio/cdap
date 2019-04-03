@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.etl.api.Destroyable;
+import io.cdap.cdap.etl.api.Destroyable;
 import com.google.common.base.Throwables;
 
 

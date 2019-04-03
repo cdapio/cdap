@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;

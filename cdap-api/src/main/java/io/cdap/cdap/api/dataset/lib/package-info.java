@@ -15,6 +15,6 @@
  */
 
 /**
- * Collection of {@link co.cask.cdap.api.dataset.Dataset} implementations available out-of-the-box in CDAP.
+ * Collection of {@link io.cdap.cdap.api.dataset.Dataset} implementations available out-of-the-box in CDAP.
  */
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;

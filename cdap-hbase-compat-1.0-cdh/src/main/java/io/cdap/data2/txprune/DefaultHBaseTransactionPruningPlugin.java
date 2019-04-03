@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.data2.txprune;
+package io.cdap.data2.txprune;
 
-import co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor;
-import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10cdh.MessageTableRegionObserver;
+import io.cdap.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor;
+import io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase10cdh.MessageTableRegionObserver;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.tephra.hbase.txprune.HBaseTransactionPruningPlugin;
 import org.apache.tephra.txprune.TransactionPruningPlugin;

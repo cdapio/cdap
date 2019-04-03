@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 
 import java.util.Map;
 import java.util.SortedMap;

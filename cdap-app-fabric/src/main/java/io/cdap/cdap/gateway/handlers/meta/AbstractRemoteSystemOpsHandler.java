@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.meta;
+package io.cdap.cdap.gateway.handlers.meta;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.internal.remote.MethodArgument;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.internal.remote.MethodArgument;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;

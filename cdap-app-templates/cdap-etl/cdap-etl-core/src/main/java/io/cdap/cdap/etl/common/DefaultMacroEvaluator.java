@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.etl.common.macro.LogicalStartTimeMacro;
 
 import javax.annotation.Nullable;
 

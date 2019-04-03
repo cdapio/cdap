@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.plugin;
+package io.cdap.cdap.etl.common.plugin;
 
-import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.MultiOutputEmitter;
+import io.cdap.cdap.etl.api.InvalidEntry;
+import io.cdap.cdap.etl.api.MultiOutputEmitter;
 
 import java.util.Map;
 

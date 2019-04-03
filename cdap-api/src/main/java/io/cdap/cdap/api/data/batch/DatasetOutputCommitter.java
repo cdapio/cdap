@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.batch;
+package io.cdap.cdap.api.data.batch;
 
-import co.cask.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DataSetException;
 
 /**
  * This interface is implemented by a dataset if at the end of a batch job (MapReduce, Spark, ...)

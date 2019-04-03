@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
 import java.util.Collections;
 import java.util.Map;

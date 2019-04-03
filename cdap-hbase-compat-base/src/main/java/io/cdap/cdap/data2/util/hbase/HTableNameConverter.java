@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.HTableDescriptor;

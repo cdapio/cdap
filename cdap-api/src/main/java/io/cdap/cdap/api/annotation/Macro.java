@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to denote if a {@link co.cask.cdap.api.plugin.PluginConfig} field can support macro.
+ * Annotation to denote if a {@link io.cdap.cdap.api.plugin.PluginConfig} field can support macro.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.service.http;
+package io.cdap.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.service.http.HttpContentProducer;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;

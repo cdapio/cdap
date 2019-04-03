@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.program.ProgramTypeMetricTag;
+import io.cdap.cdap.internal.app.runtime.AbstractResourceReporter;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.TwillContext;
 
 import java.util.Collections;

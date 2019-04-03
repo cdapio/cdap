@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.common.io.Encoder;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.io.Encoder;
 
 import java.io.IOException;
 import java.lang.reflect.Array;

@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.internal.io.ReflectionPutWriter;
-import co.cask.cdap.internal.io.ReflectionRowReader;
-import co.cask.cdap.internal.io.ReflectionRowRecordReader;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.internal.io.ReflectionPutWriter;
+import io.cdap.cdap.internal.io.ReflectionRowReader;
+import io.cdap.cdap.internal.io.ReflectionRowRecordReader;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import org.apache.tephra.TransactionAware;

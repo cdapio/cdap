@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.table.Scan;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.batch.BatchReadable;
+import io.cdap.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.api.data.batch.RecordScannable;
+import io.cdap.cdap.api.data.batch.RecordWritable;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.table.Scan;
 
 import java.util.List;
 import javax.annotation.Nullable;

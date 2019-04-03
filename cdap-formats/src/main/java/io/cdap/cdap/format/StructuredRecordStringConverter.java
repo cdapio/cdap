@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.format;
+package io.cdap.cdap.format;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.format.io.JsonDecoder;
-import co.cask.cdap.format.io.JsonEncoder;
-import co.cask.cdap.format.io.JsonStructuredRecordDatumReader;
-import co.cask.cdap.format.io.JsonStructuredRecordDatumWriter;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.format.io.JsonDecoder;
+import io.cdap.cdap.format.io.JsonEncoder;
+import io.cdap.cdap.format.io.JsonStructuredRecordDatumReader;
+import io.cdap.cdap.format.io.JsonStructuredRecordDatumWriter;
 import com.google.common.base.Splitter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;

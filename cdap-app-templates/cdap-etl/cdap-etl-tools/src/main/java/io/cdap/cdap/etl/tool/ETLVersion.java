@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.tool;
+package io.cdap.cdap.etl.tool;
 
 import java.io.InputStream;
 import java.util.Properties;

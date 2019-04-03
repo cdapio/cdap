@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.provision;
+package io.cdap.cdap.internal.provision;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 
 import java.net.URI;
 import java.util.Map;

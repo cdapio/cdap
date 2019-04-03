@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.verification;
+package io.cdap.cdap.internal.app.verification;
 
-import co.cask.cdap.GoodWorkflowApp;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowConditionNode;
-import co.cask.cdap.api.workflow.WorkflowForkNode;
-import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowNodeType;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import io.cdap.cdap.GoodWorkflowApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowConditionNode;
+import io.cdap.cdap.api.workflow.WorkflowForkNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowNodeType;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import org.junit.Assert;
 import org.junit.Test;
 

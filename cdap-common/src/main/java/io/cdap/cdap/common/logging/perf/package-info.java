@@ -17,4 +17,4 @@
 /**
  * This package contains utilities related to time logging.
  */
-package co.cask.cdap.common.logging.perf;
+package io.cdap.cdap.common.logging.perf;

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.reporting;
+package io.cdap.cdap.reporting;
 
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.store.StoreDefinition;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

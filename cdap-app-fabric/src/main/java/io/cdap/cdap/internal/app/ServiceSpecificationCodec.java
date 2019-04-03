@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package io.cdap.cdap.internal.app;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

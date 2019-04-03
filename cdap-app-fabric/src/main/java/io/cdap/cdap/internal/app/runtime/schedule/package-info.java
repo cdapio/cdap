@@ -17,4 +17,4 @@
 /**
  * This package contains class for core schedule.
  */
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;

@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.io.File;
 import java.sql.Connection;

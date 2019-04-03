@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 /**
  * Allows registering system tables for creation.

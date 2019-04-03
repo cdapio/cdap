@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package io.cdap.cdap.app.runtime.spark
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.{lang, util}
 
-import co.cask.cdap.api.TxRunnable
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
-import co.cask.cdap.api.preview.DataTracer
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+import io.cdap.cdap.api.TxRunnable
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
+import io.cdap.cdap.api.preview.DataTracer
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag
 
 /**
-  * A [[co.cask.cdap.api.spark.SparkExecutionContext]] that is Serializable. It delegates all operations to
-  * the [[co.cask.cdap.api.spark.SparkExecutionContext]] in the runtime context.
+  * A [[io.cdap.cdap.api.spark.SparkExecutionContext]] that is Serializable. It delegates all operations to
+  * the [[io.cdap.cdap.api.spark.SparkExecutionContext]] in the runtime context.
   */
 class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) extends SparkExecutionContext
                                                                              with Externalizable {

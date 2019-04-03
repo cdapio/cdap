@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.data
+package io.cdap.cdap.app.runtime.spark.data
 
 import org.apache.spark.TaskContext
 
 /**
-  * Spark 2 implementation of [[co.cask.cdap.app.runtime.spark.data.AbstractDatumScannerIterator]] that doesn't emit
+  * Spark 2 implementation of [[io.cdap.cdap.app.runtime.spark.data.AbstractDatumScannerIterator]] that doesn't emit
   * metrics.
   */
 class DatumScannerIterator[T](context: TaskContext,

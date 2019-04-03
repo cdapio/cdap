@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 
 /**
  * An app that is the same as DatasetDeployApp but uses a different name for its dataset module.

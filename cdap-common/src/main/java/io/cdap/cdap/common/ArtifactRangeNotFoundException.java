@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import com.google.common.base.Joiner;
 
 import java.util.Collection;

@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.profile;
+package io.cdap.cdap.internal.profile;
 
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;

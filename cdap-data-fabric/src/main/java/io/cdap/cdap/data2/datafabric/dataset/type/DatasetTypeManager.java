@@ -14,31 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.type;
+package io.cdap.cdap.data2.datafabric.dataset.type;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.DirectoryClassLoader;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistries;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.TypeConflictException;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.DirectoryClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
+import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
+import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistries;
+import io.cdap.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import io.cdap.cdap.data2.dataset2.TypeConflictException;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
-import co.cask.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.id.SecureKeyId;
 
 /**
  * Thrown when a secure key is not found.

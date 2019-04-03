@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.ProtoConstraintCodec;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.proto.ProtoConstraintCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;

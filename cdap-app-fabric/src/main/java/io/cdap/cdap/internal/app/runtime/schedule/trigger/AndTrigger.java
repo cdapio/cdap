@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.ProgramId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,6 +85,6 @@ public class AndTrigger extends AbstractSatisfiableCompositeTrigger {
       return updatedTriggers.get(0);
     }
     // return a new AND trigger constructed from the updated triggers
-    return new co.cask.cdap.internal.app.runtime.schedule.trigger.AndTrigger(updatedTriggers);
+    return new io.cdap.cdap.internal.app.runtime.schedule.trigger.AndTrigger(updatedTriggers);
   }
 }

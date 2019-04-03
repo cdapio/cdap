@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.client.artifact.plugin;
+package io.cdap.cdap.client.artifact.plugin;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.plugin.PluginConfig;
 
 import java.util.concurrent.Callable;
 

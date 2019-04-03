@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package io.cdap.cdap.internal.app.store;
 
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

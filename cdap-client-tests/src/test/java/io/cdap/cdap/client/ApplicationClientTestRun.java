@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.client.app.AppReturnsArgs;
-import co.cask.cdap.client.app.ConfigurableProgramsApp;
-import co.cask.cdap.client.app.ConfigurableProgramsApp2;
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.FakeDatasetModule;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.DatasetModuleNotFoundException;
-import co.cask.cdap.common.DatasetNotFoundException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.ConfigTestApp;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.client.app.AppReturnsArgs;
+import io.cdap.cdap.client.app.ConfigurableProgramsApp;
+import io.cdap.cdap.client.app.ConfigurableProgramsApp2;
+import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.app.FakeDatasetModule;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.DatasetModuleNotFoundException;
+import io.cdap.cdap.common.DatasetNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.After;

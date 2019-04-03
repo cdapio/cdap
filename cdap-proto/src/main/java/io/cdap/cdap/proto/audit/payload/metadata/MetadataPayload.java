@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.proto.audit.payload.metadata;
+package io.cdap.cdap.proto.audit.payload.metadata;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.proto.audit.AuditPayload;
 
 import java.util.Map;
 import java.util.Objects;

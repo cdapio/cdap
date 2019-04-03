@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.metadata.dataset;
+package io.cdap.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Objects;
 

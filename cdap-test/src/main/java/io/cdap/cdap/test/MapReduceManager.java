@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
-import co.cask.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduce;
 
 /**
  * Instance for this class is for managing a running {@link MapReduce}.

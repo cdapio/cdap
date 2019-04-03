@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.filter;
+package io.cdap.cdap.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Objects;

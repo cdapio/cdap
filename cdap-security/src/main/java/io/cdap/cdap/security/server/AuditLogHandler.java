@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
-import co.cask.cdap.common.logging.AuditLogEntry;
+import io.cdap.cdap.common.logging.AuditLogEntry;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.handler.DefaultHandler;

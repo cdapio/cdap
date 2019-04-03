@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.etl.tool.config;
+package io.cdap.cdap.etl.tool.config;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.artifact.ArtifactVersionRange;
-import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.etl.proto.UpgradeableConfig;
-import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
-import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
-import co.cask.cdap.etl.proto.v2.ETLConfig;
-import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.etl.tool.ETLVersion;
-import co.cask.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.etl.proto.UpgradeableConfig;
+import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
+import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLConfig;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.tool.ETLVersion;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 
@@ -148,9 +148,9 @@ public class Upgrader {
     UpgradeableConfig config;
 
     if (majorVersion == 3 && minorVersion == 2) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLBatchConfig.class);
+      config = GSON.fromJson(configStr, io.cdap.cdap.etl.proto.v0.ETLBatchConfig.class);
     } else if (majorVersion == 3 && minorVersion == 3) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLBatchConfig.class);
+      config = GSON.fromJson(configStr, io.cdap.cdap.etl.proto.v1.ETLBatchConfig.class);
     } else {
       // 3.4.x and up all have the same config format, but the plugin artifacts may need to be upgraded
       ETLBatchConfig batchConfig = GSON.fromJson(configStr, ETLBatchConfig.class);

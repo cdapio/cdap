@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.lib.partitioned.ConcurrentPartitionConsumer;
-import co.cask.cdap.api.dataset.lib.partitioned.ConsumablePartition;
-import co.cask.cdap.api.dataset.lib.partitioned.ConsumerConfiguration;
-import co.cask.cdap.api.dataset.lib.partitioned.ConsumerWorkingSet;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionAcceptor;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionConsumer;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionConsumerResult;
-import co.cask.cdap.api.dataset.lib.partitioned.ProcessState;
-import co.cask.cdap.api.dataset.lib.partitioned.StatePersistor;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.dataset.lib.partitioned.ConcurrentPartitionConsumer;
+import io.cdap.cdap.api.dataset.lib.partitioned.ConsumablePartition;
+import io.cdap.cdap.api.dataset.lib.partitioned.ConsumerConfiguration;
+import io.cdap.cdap.api.dataset.lib.partitioned.ConsumerWorkingSet;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionAcceptor;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionConsumer;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionConsumerResult;
+import io.cdap.cdap.api.dataset.lib.partitioned.ProcessState;
+import io.cdap.cdap.api.dataset.lib.partitioned.StatePersistor;
+import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

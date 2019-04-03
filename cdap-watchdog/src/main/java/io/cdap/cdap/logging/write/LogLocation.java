@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.logging.write;
+package io.cdap.cdap.logging.write;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.io.SeekableInputStream;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.read.Callback;
-import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.serialize.LoggingEvent;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.io.SeekableInputStream;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.serialize.LogSchema;
+import io.cdap.cdap.logging.serialize.LoggingEvent;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

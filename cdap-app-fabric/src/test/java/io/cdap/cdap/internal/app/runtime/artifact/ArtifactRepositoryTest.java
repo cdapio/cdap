@@ -14,52 +14,52 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.macro.Macros;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.plugin.InvalidPluginConfigException;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.conf.ArtifactConfig;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.test.PluginJarHelper;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.plugins.test.TestPlugin;
-import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
-import co.cask.cdap.internal.app.runtime.DefaultPluginContext;
-import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
-import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
-import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
-import co.cask.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
-import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
-import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.macro.Macros;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.conf.ArtifactConfig;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.test.PluginJarHelper;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.plugins.test.TestPlugin;
+import io.cdap.cdap.internal.app.plugins.test.TestPlugin2;
+import io.cdap.cdap.internal.app.runtime.DefaultPluginContext;
+import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
+import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
+import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin1;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin2;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
+import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -194,8 +194,8 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testMultiplePluginClasses() throws InvalidArtifactException {
     DefaultArtifactRepository.validatePluginSet(ImmutableSet.of(
-      new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.of()),
-      new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.of())));
+      new PluginClass("t1", "n1", "", "io.cdap.test1", "cfg", ImmutableMap.of()),
+      new PluginClass("t1", "n1", "", "io.cdap.test2", "cfg", ImmutableMap.of())));
   }
 
   @Test
@@ -214,8 +214,8 @@ public class ArtifactRepositoryTest {
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
     Set<PluginClass> manuallyAddedPlugins1 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", "co.cask.classname", null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
+      new PluginClass("typeA", "manual1", "desc", "io.cdap.classname", null, emptyMap),
+      new PluginClass("typeB", "manual2", "desc", "io.cdap.otherclassname", null, emptyMap)
     );
     File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
@@ -301,10 +301,10 @@ public class ArtifactRepositoryTest {
   public void testExportPackage() {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
-                                     "co.cask.plugin;use:=\"\\\"test,test2\\\"\";version=\"1.0\",co.cask.plugin2");
+                                     "io.cdap.plugin;use:=\"\\\"test,test2\\\"\";version=\"1.0\",io.cdap.plugin2");
 
     Set<String> packages = ManifestFields.getExportPackages(manifest);
-    Assert.assertEquals(ImmutableSet.of("co.cask.plugin", "co.cask.plugin2"), packages);
+    Assert.assertEquals(ImmutableSet.of("io.cdap.plugin", "io.cdap.plugin2"), packages);
   }
 
   @Test
@@ -588,7 +588,7 @@ public class ArtifactRepositoryTest {
   @Test
   public void testGreatGrandparentsAreInvalid() throws Exception {
     // create child artifact
-    co.cask.cdap.proto.id.ArtifactId childId = NamespaceId.DEFAULT.artifact("child", "1.0.0");
+    io.cdap.cdap.proto.id.ArtifactId childId = NamespaceId.DEFAULT.artifact("child", "1.0.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     File jarFile = createPluginJar(Plugin1.class, new File(tmpDir, "child-1.0.0.jar"), manifest);
 
@@ -599,7 +599,7 @@ public class ArtifactRepositoryTest {
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(childId), jarFile, parents, null);
 
     // create grandchild
-    co.cask.cdap.proto.id.ArtifactId grandchildId = NamespaceId.DEFAULT.artifact("grandchild", "1.0.0");
+    io.cdap.cdap.proto.id.ArtifactId grandchildId = NamespaceId.DEFAULT.artifact("grandchild", "1.0.0");
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin2.class.getPackage().getName());
     jarFile = createPluginJar(Plugin2.class, new File(tmpDir, "grandchild-1.0.0.jar"), manifest);
     parents = ImmutableSet.of(new ArtifactRange(
@@ -608,7 +608,7 @@ public class ArtifactRepositoryTest {
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(grandchildId), jarFile, parents, null);
 
     // try and create great grandchild, should fail
-    co.cask.cdap.proto.id.ArtifactId greatGrandchildId = NamespaceId.DEFAULT.artifact("greatgrandchild", "1.0.0");
+    io.cdap.cdap.proto.id.ArtifactId greatGrandchildId = NamespaceId.DEFAULT.artifact("greatgrandchild", "1.0.0");
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin2.class.getPackage().getName());
     jarFile = createPluginJar(Plugin2.class, new File(tmpDir, "greatgrandchild-1.0.0.jar"), manifest);
     parents = ImmutableSet.of(new ArtifactRange(
@@ -625,8 +625,8 @@ public class ArtifactRepositoryTest {
   @Test
   public void testCyclicDependenciesAreInvalid() throws Exception {
     // create a1 artifact that extends app and a2
-    co.cask.cdap.proto.id.ArtifactId a1Id = NamespaceId.DEFAULT.artifact("a1", "1.0.0");
-    co.cask.cdap.proto.id.ArtifactId a2Id = NamespaceId.DEFAULT.artifact("a2", "1.0.0");
+    io.cdap.cdap.proto.id.ArtifactId a1Id = NamespaceId.DEFAULT.artifact("a1", "1.0.0");
+    io.cdap.cdap.proto.id.ArtifactId a2Id = NamespaceId.DEFAULT.artifact("a2", "1.0.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     File jarFile = createPluginJar(Plugin1.class, new File(tmpDir, "a1-1.0.0.jar"), manifest);
     Set<ArtifactRange> parents = ImmutableSet.of(

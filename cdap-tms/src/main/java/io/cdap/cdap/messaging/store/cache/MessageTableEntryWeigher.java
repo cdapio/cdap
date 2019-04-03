@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.cache;
+package io.cdap.cdap.messaging.store.cache;
 
-import co.cask.cdap.messaging.cache.MessageCache;
-import co.cask.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.cache.MessageCache;
+import io.cdap.cdap.messaging.store.MessageTable;
 
 /**
  * A {@link MessageCache.Weigher} for the {@link MessageTable.Entry}.

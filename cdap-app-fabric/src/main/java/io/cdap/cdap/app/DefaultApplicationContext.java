@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app;
+package io.cdap.cdap.app;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.ApplicationContext;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.ApplicationContext;
 
 /**
  * Default Implementation of {@link ApplicationContext}.

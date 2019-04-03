@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
 /**

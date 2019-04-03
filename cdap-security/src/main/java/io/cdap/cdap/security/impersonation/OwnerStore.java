@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 import com.google.common.collect.Sets;
 
 import java.io.IOException;
@@ -32,9 +32,9 @@ import javax.annotation.Nullable;
  * <p>
  * Currently: Owner information is stored for the following entities:
  * <ul>
- * <li>{@link co.cask.cdap.api.dataset.Dataset}</li>
- * <li>{@link co.cask.cdap.api.app.Application}</li>
- * <li>{@link co.cask.cdap.common.conf.Constants.Namespace}</li>
+ * <li>{@link io.cdap.cdap.api.dataset.Dataset}</li>
+ * <li>{@link io.cdap.cdap.api.app.Application}</li>
+ * <li>{@link io.cdap.cdap.common.conf.Constants.Namespace}</li>
  * <p>
  * </ul>
  * </p>

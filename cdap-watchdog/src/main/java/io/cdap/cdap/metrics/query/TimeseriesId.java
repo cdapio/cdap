@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.query;
+package io.cdap.cdap.metrics.query;
 
 import com.google.common.base.Objects;
 

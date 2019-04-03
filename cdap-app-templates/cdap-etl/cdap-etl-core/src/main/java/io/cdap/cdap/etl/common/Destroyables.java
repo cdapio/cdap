@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.etl.api.Destroyable;
+import io.cdap.cdap.etl.api.Destroyable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

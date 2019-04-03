@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.lang.jar;
+package io.cdap.cdap.common.lang.jar;
 
 import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.LocalLocationFactory;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.test.template.plugin;
+package io.cdap.cdap.test.template.plugin;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
 import com.google.common.base.Function;
 
 import javax.annotation.Nullable;

@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.common.entity.DefaultEntityExistenceVerifier;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.entity.InstanceExistenceVerifier;
-import co.cask.cdap.data2.dataset2.DatasetExistenceVerifier;
-import co.cask.cdap.internal.app.namespace.NamespaceExistenceVerifier;
-import co.cask.cdap.internal.app.runtime.ApplicationExistenceVerifier;
-import co.cask.cdap.internal.app.runtime.ProgramExistenceVerifier;
-import co.cask.cdap.internal.app.runtime.ProgramRunExistenceVerifier;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactExistenceVerifier;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.common.entity.DefaultEntityExistenceVerifier;
+import io.cdap.cdap.common.entity.EntityExistenceVerifier;
+import io.cdap.cdap.common.entity.InstanceExistenceVerifier;
+import io.cdap.cdap.data2.dataset2.DatasetExistenceVerifier;
+import io.cdap.cdap.internal.app.namespace.NamespaceExistenceVerifier;
+import io.cdap.cdap.internal.app.runtime.ApplicationExistenceVerifier;
+import io.cdap.cdap.internal.app.runtime.ProgramExistenceVerifier;
+import io.cdap.cdap.internal.app.runtime.ProgramRunExistenceVerifier;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactExistenceVerifier;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;

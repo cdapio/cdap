@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata;
+package io.cdap.cdap.data2.metadata;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.audit.AuditPublisher;
-import co.cask.cdap.data2.audit.AuditPublishers;
-import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataChange;
-import co.cask.cdap.spi.metadata.MetadataMutation;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metadata.MetadataRecord;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data2.audit.AuditPublisher;
+import io.cdap.cdap.data2.audit.AuditPublishers;
+import io.cdap.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

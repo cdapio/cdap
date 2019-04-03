@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor;
+package io.cdap.cdap.internal.app.runtime.monitor;
 
 /**
  * A class containing information about the {@link RuntimeMonitorServer} that are used by the client.

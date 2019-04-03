@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.cli.command.system.VersionCommand;
-import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
-import co.cask.cdap.cli.util.table.TableRenderer;
-import co.cask.cdap.cli.util.table.TableRendererConfig;
-import co.cask.cdap.client.MetaClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.Credential;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.cli.command.system.VersionCommand;
+import io.cdap.cdap.cli.util.FilePathResolver;
+import io.cdap.cdap.cli.util.table.AltStyleTableRenderer;
+import io.cdap.cdap.cli.util.table.TableRenderer;
+import io.cdap.cdap.cli.util.table.TableRendererConfig;
+import io.cdap.cdap.client.MetaClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.client.exception.DisconnectedException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authentication.client.AccessToken;
+import io.cdap.cdap.security.authentication.client.AuthenticationClient;
+import io.cdap.cdap.security.authentication.client.Credential;
+import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;

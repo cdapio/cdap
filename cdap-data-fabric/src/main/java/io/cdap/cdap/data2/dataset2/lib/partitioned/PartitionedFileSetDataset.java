@@ -14,52 +14,52 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
-import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.PartitionNotFoundException;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionMetadata;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.data.RuntimeProgramContext;
-import co.cask.cdap.data.RuntimeProgramContextAware;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
-import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
+import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.PartitionNotFoundException;
+import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.dataset.lib.FileSetArguments;
+import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.lib.PartitionAlreadyExistsException;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerResult;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionMetadata;
+import io.cdap.cdap.api.dataset.lib.PartitionOutput;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.data.RuntimeProgramContext;
+import io.cdap.cdap.data.RuntimeProgramContextAware;
+import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
+import io.cdap.cdap.explore.client.ExploreFacade;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -925,7 +925,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     checkNotExternal();
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey == null) {
-      return "co.cask.cdap.internal.app.runtime.batch.dataset.partitioned.DynamicPartitioningOutputFormat";
+      return "io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned.DynamicPartitioningOutputFormat";
     }
     return files.getOutputFormatClassName();
   }
@@ -1063,7 +1063,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
       try {
         transactional.execute(new TxRunnable() {
           @Override
-          public void run(co.cask.cdap.api.data.DatasetContext context) throws Exception {
+          public void run(io.cdap.cdap.api.data.DatasetContext context) throws Exception {
             PartitionedFileSetDataset pfs = context.getDataset(datasetName);
             pfs.disableExplore();
             pfs.enableExplore(true); // truncating = true, because this is like truncating
@@ -1085,7 +1085,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
       try {
         transactional.execute(new TxRunnable() {
           @Override
-          public void run(co.cask.cdap.api.data.DatasetContext context) throws Exception {
+          public void run(io.cdap.cdap.api.data.DatasetContext context) throws Exception {
             final PartitionedFileSetDataset pfs = context.getDataset(datasetName);
             // compute start row for the scan, reset remembered start key to null
             byte[] startRow = startKey.get() == null ? null : generateRowKey(startKey.get(), pfs.getPartitioning());

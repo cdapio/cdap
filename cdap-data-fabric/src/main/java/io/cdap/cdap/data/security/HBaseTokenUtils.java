@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.security;
+package io.cdap.cdap.data.security;
 
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;

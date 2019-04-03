@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 

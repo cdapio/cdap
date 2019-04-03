@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package io.cdap.cdap.proto.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactVersionRange;
-import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Utility class for parsing {@link ArtifactRange}

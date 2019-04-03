@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers;
+package io.cdap.cdap.logging.gateway.handlers;
 
-import co.cask.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogEvent;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.http.HttpResponder;

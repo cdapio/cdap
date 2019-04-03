@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata;
+package io.cdap.cdap.proto.metadata;
 
-import co.cask.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.EntityScope;
 
 import java.util.List;
 import java.util.Set;

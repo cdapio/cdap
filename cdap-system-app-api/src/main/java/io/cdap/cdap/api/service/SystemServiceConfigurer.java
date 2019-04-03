@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package io.cdap.cdap.api.service;
 
-import co.cask.cdap.api.SystemTableConfigurer;
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.SystemTableConfigurer;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Configurer for system application services, allowing additional capabilities beyond those available to user services.

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.hbase.wd;
+package io.cdap.cdap.hbase.wd;
 
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.test.XSlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;

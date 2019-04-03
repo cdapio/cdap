@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test;
+package io.cdap.cdap.test;
 
 /**
  * Used to define unit-tests that could run for more than 30 seconds

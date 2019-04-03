@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.io.DatumReader;
-import co.cask.cdap.common.io.DatumWriter;
-import co.cask.cdap.common.io.Decoder;
-import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.internal.io.DatumReaderFactory;
-import co.cask.cdap.internal.io.DatumWriterFactory;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.BinaryDecoder;
+import io.cdap.cdap.common.io.BinaryEncoder;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.io.DatumReader;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.io.Decoder;
+import io.cdap.cdap.common.io.Encoder;
+import io.cdap.cdap.internal.io.DatumReaderFactory;
+import io.cdap.cdap.internal.io.DatumWriterFactory;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 

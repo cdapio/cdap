@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.cache;
+package io.cdap.cdap.messaging.store.cache;
 
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.TimeProvider;
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.cache.MessageCache;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.store.MessageFilter;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.TransactionMessageFilter;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.cache.MessageCache;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.store.MessageFilter;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.TransactionMessageFilter;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.LinkedListMultimap;

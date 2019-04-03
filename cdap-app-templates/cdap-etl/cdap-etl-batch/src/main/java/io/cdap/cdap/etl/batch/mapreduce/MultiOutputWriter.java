@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mapreduce;
+package io.cdap.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 
 import java.util.Map;
 

@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.Lineage;
+import io.cdap.cdap.data2.metadata.lineage.LineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.Relation;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;

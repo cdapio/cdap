@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data;
+package io.cdap.cdap.spi.data;
 
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.table;
+package io.cdap.cdap.api.dataset.table;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Split;
 
 import java.io.DataInput;
 import java.io.DataOutput;

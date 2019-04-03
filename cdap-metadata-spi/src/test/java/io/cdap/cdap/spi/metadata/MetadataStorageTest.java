@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata;
+package io.cdap.cdap.spi.metadata;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.spi.metadata.MetadataMutation.Create;
-import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
-import co.cask.cdap.spi.metadata.MetadataMutation.Remove;
-import co.cask.cdap.spi.metadata.MetadataMutation.Update;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Create;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Drop;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Remove;
+import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,14 +56,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
-import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
-import static co.cask.cdap.api.metadata.MetadataScope.USER;
-import static co.cask.cdap.spi.metadata.MetadataConstants.CREATION_TIME_KEY;
-import static co.cask.cdap.spi.metadata.MetadataConstants.DESCRIPTION_KEY;
-import static co.cask.cdap.spi.metadata.MetadataConstants.ENTITY_NAME_KEY;
-import static co.cask.cdap.spi.metadata.MetadataConstants.TTL_KEY;
-import static co.cask.cdap.spi.metadata.MetadataKind.PROPERTY;
-import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.spi.metadata.MetadataConstants.CREATION_TIME_KEY;
+import static io.cdap.cdap.spi.metadata.MetadataConstants.DESCRIPTION_KEY;
+import static io.cdap.cdap.spi.metadata.MetadataConstants.ENTITY_NAME_KEY;
+import static io.cdap.cdap.spi.metadata.MetadataConstants.TTL_KEY;
+import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
+import static io.cdap.cdap.spi.metadata.MetadataKind.TAG;
 
 /**
  * Tests for Metadata SPI implementations.

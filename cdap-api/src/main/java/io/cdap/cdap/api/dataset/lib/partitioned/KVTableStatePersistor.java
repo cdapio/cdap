@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.lib.DatasetStatePersistor;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 
 /**
  * An implementation of {@link DatasetStatePersistor} that uses a row of a {@link KeyValueTable} for persistence.

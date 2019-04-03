@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.app.deploy.spark
+package io.cdap.cdap.app.deploy.spark
 
-import co.cask.cdap.api.annotation.TransactionControl
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint
-import co.cask.cdap.api.spark.ExtendedSparkConfigurer
-import co.cask.cdap.api.spark.Spark
-import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification
-import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.api.spark.service.SparkHttpServiceHandler
-import co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
-import co.cask.cdap.common.id.Id
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator
-import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory
-import co.cask.cdap.internal.app.services.ServiceEndpointExtractor
-import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer
-import co.cask.cdap.internal.lang.Reflections
-import co.cask.cdap.internal.specification.DataSetFieldExtractor
-import co.cask.cdap.internal.specification.PropertyFieldExtractor
+import io.cdap.cdap.api.annotation.TransactionControl
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint
+import io.cdap.cdap.api.spark.ExtendedSparkConfigurer
+import io.cdap.cdap.api.spark.Spark
+import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler
+import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler
+import io.cdap.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
+import io.cdap.cdap.common.id.Id
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator
+import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory
+import io.cdap.cdap.internal.app.services.ServiceEndpointExtractor
+import io.cdap.cdap.internal.app.spark.DefaultSparkConfigurer
+import io.cdap.cdap.internal.lang.Reflections
+import io.cdap.cdap.internal.specification.DataSetFieldExtractor
+import io.cdap.cdap.internal.specification.PropertyFieldExtractor
 
 import java.lang
 import java.util
@@ -42,7 +42,7 @@ import scala.collection.mutable
 import scala.tools.nsc.Settings
 
 /**
-  * Abstract class to provide common implementation for [[co.cask.cdap.api.spark.ExtendedSparkConfigurer]].
+  * Abstract class to provide common implementation for [[io.cdap.cdap.api.spark.ExtendedSparkConfigurer]].
   */
 abstract class AbstractExtendedSparkConfigurer(spark: Spark,
                                                deployNamespace: Id.Namespace,

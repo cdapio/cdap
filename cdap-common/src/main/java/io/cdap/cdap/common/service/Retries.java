@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.service;
+package io.cdap.cdap.common.service;
 
-import co.cask.cdap.api.retry.RetriesExhaustedException;
-import co.cask.cdap.api.retry.RetryableException;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
+import io.cdap.cdap.api.retry.RetriesExhaustedException;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

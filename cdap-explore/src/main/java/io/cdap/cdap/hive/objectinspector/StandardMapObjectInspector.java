@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.hive.objectinspector;
+package io.cdap.cdap.hive.objectinspector;
 
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.SettableMapObjectInspector;

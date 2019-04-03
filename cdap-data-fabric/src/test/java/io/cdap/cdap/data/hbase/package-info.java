@@ -17,4 +17,4 @@
 /**
  * Hbase test base.
  */
-package co.cask.cdap.data.hbase;
+package io.cdap.cdap.data.hbase;

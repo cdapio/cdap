@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.hive.context;
+package io.cdap.cdap.hive.context;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 

@@ -15,11 +15,11 @@
  *
  */
 
-package co.cask.cdap.etl.proto.v2.spec;
+package io.cdap.cdap.etl.proto.v2.spec;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.v2.ETLConfig;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

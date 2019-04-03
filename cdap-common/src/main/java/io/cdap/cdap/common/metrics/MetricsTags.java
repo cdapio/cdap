@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.metrics;
+package io.cdap.cdap.common.metrics;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.ServiceId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.ServiceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 

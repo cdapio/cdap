@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package io.cdap.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.module.DatasetType;
-import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.module.DatasetType;
+import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -43,10 +43,10 @@ import java.util.Map;
  * Wraps implementation of {@link Dataset} into a {@link DatasetModule}.
  *
  * This allows for easier implementation of simple datasets without requiring to implement {@link DatasetDefinition},
- * {@link co.cask.cdap.api.dataset.DatasetAdmin}, etc. when the implementation uses existing dataset types.
+ * {@link io.cdap.cdap.api.dataset.DatasetAdmin}, etc. when the implementation uses existing dataset types.
  *
  * NOTE: all admin ops of the dataset will be delegated to embedded datasets;
- *       {@link co.cask.cdap.api.dataset.DatasetProperties} will be propagated to embedded datasets as well
+ *       {@link io.cdap.cdap.api.dataset.DatasetProperties} will be propagated to embedded datasets as well
  *
  * NOTE: must have exactly one constructor with parameter types of
  *       (DatasetSpecification, [0..n] @EmbeddedDataset Dataset)

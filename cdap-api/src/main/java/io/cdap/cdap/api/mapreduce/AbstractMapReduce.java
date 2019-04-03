@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.mapreduce;
+package io.cdap.cdap.api.mapreduce;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.internal.api.AbstractPluginConfigurable;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

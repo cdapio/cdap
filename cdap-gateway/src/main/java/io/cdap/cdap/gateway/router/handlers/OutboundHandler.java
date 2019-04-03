@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router.handlers;
+package io.cdap.cdap.gateway.router.handlers;
 
-import co.cask.cdap.common.http.Channels;
+import io.cdap.cdap.common.http.Channels;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;

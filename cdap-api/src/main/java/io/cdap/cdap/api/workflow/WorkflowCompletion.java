@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.workflow;
+package io.cdap.cdap.api.workflow;
 
 /**
  * The WorkflowCompletion interface provides onSuccess() and onFailure() methods.

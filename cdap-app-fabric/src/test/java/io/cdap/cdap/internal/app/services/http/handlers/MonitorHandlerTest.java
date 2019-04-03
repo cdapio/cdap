@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.RestartServiceInstancesStatus;
-import co.cask.cdap.proto.SystemServiceMeta;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.RestartServiceInstancesStatus;
+import io.cdap.cdap.proto.SystemServiceMeta;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;

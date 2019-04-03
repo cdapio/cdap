@@ -14,7 +14,7 @@
  * the License
  */
 
-package co.cask.cdap.security.server;
+package io.cdap.cdap.security.server;
 
 import com.google.common.base.Throwables;
 import org.eclipse.jetty.plus.jaas.spi.LdapLoginModule;

@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.data2.audit;
+package io.cdap.cdap.data2.audit;
 
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import com.google.inject.Inject;

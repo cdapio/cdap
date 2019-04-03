@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.queue;
+package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
-import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.spi.data.table.field.Range;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

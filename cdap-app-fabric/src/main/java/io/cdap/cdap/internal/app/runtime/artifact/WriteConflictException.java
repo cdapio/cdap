@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.id.Id;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.id.Id;
 
 /**
  * Thrown when there is a write conflict adding an artifact, such as when multiple writers are trying to

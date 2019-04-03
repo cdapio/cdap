@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 import java.util.ArrayList;
 import java.util.Arrays;

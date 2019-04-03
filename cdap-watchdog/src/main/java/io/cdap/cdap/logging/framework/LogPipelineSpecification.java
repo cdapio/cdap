@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package io.cdap.cdap.logging.framework;
 
 import ch.qos.logback.classic.LoggerContext;
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 import java.net.URL;
 

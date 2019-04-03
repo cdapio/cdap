@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.coprocessor;
+package io.cdap.cdap.data2.transaction.coprocessor;
 
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.Service;

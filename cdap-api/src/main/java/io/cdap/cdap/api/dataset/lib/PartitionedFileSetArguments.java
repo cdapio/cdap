@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
-import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

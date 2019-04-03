@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.runtime.spark.preview;
+package io.cdap.cdap.app.runtime.spark.preview;
 
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 
 import java.io.Externalizable;
 import java.io.IOException;

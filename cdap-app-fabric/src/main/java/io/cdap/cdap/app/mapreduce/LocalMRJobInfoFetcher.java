@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.app.mapreduce;
+package io.cdap.cdap.app.mapreduce;
 
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.MRJobInfo;
-import co.cask.cdap.proto.MRTaskInfo;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.app.metrics.MapReduceMetrics;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.MRJobInfo;
+import io.cdap.cdap.proto.MRTaskInfo;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;

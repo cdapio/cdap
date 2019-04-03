@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
 /**
- * Exception thrown when {@link co.cask.cdap.proto.QueryHandle} is not found.
+ * Exception thrown when {@link io.cdap.cdap.proto.QueryHandle} is not found.
  */
 public class HandleNotFoundException extends Exception {
   private final boolean isInactive;

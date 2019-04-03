@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline.spark
+package io.cdap.cdap.datapipeline.spark
 
-import co.cask.cdap.api.annotation.{Name, Plugin}
-import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
-import co.cask.cdap.datapipeline.ExternalSparkProgram
-import co.cask.cdap.etl.common.Constants
+import io.cdap.cdap.api.annotation.{Name, Plugin}
+import io.cdap.cdap.api.spark.{SparkExecutionContext, SparkMain}
+import io.cdap.cdap.datapipeline.ExternalSparkProgram
+import io.cdap.cdap.etl.common.Constants
 import org.apache.spark.SparkContext
 
 /**

@@ -14,47 +14,47 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.guice.DistributedProgramContainerModule;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.program.StateChangeListener;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
-import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
-import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.appender.loader.LogAppenderLoaderService;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.messaging.server.MessagingHttpService;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.program.Programs;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.StateChangeListener;
+import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
+import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -248,11 +248,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     cConf.clear();
     cConf.addResource(new File(systemArgs.getOption(ProgramOptionConstants.CDAP_CONF_FILE)).toURI().toURL());
 
-    maxStopSeconds = cConf.getLong(co.cask.cdap.common.conf.Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
+    maxStopSeconds = cConf.getLong(io.cdap.cdap.common.conf.Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
 
     if (clusterMode == ClusterMode.ISOLATED) {
       String hostName = context.getHost().getCanonicalHostName();
-      cConf.set(co.cask.cdap.common.conf.Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);
+      cConf.set(io.cdap.cdap.common.conf.Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);
     }
 
     injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));

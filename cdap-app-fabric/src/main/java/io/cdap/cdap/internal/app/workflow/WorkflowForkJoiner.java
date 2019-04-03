@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.workflow;
+package io.cdap.cdap.internal.app.workflow;
 
-import co.cask.cdap.api.workflow.WorkflowForkNode;
-import co.cask.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowForkNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
 
 import java.util.List;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store;
+package io.cdap.cdap.messaging.store;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.proto.id.TopicId;
 
 /**
  * An immutable implementation of {@link PayloadTable.Entry}.

@@ -14,34 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.report;
+package io.cdap.cdap.report;
 
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.spark.AbstractExtendedSpark;
-import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
-import co.cask.cdap.api.spark.service.SparkHttpServiceContext;
-import co.cask.cdap.api.spark.service.SparkHttpServiceHandler;
-import co.cask.cdap.report.main.SparkPersistRunRecordMain;
-import co.cask.cdap.report.proto.Filter;
-import co.cask.cdap.report.proto.FilterCodec;
-import co.cask.cdap.report.proto.ReportContent;
-import co.cask.cdap.report.proto.ReportGenerationInfo;
-import co.cask.cdap.report.proto.ReportGenerationRequest;
-import co.cask.cdap.report.proto.ReportIdentifier;
-import co.cask.cdap.report.proto.ReportList;
-import co.cask.cdap.report.proto.ReportMetaInfo;
-import co.cask.cdap.report.proto.ReportSaveRequest;
-import co.cask.cdap.report.proto.ReportStatus;
-import co.cask.cdap.report.proto.ReportStatusInfo;
-import co.cask.cdap.report.proto.ShareId;
-import co.cask.cdap.report.proto.ValueFilter;
-import co.cask.cdap.report.proto.summary.ReportSummary;
-import co.cask.cdap.report.util.Constants;
-import co.cask.cdap.report.util.ReportField;
-import co.cask.cdap.report.util.ReportIds;
+import io.cdap.cdap.api.Transactionals;
+import io.cdap.cdap.api.dataset.lib.FileSet;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.spark.AbstractExtendedSpark;
+import io.cdap.cdap.api.spark.service.AbstractSparkHttpServiceHandler;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceContext;
+import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler;
+import io.cdap.cdap.report.main.SparkPersistRunRecordMain;
+import io.cdap.cdap.report.proto.Filter;
+import io.cdap.cdap.report.proto.FilterCodec;
+import io.cdap.cdap.report.proto.ReportContent;
+import io.cdap.cdap.report.proto.ReportGenerationInfo;
+import io.cdap.cdap.report.proto.ReportGenerationRequest;
+import io.cdap.cdap.report.proto.ReportIdentifier;
+import io.cdap.cdap.report.proto.ReportList;
+import io.cdap.cdap.report.proto.ReportMetaInfo;
+import io.cdap.cdap.report.proto.ReportSaveRequest;
+import io.cdap.cdap.report.proto.ReportStatus;
+import io.cdap.cdap.report.proto.ReportStatusInfo;
+import io.cdap.cdap.report.proto.ShareId;
+import io.cdap.cdap.report.proto.ValueFilter;
+import io.cdap.cdap.report.proto.summary.ReportSummary;
+import io.cdap.cdap.report.util.Constants;
+import io.cdap.cdap.report.util.ReportField;
+import io.cdap.cdap.report.util.ReportIds;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -98,7 +98,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
-import static co.cask.cdap.report.util.Constants.LocationName;
+import static io.cdap.cdap.report.util.Constants.LocationName;
 
 /**
  * A Spark program for generating reports, querying for report statuses, and reading reports.

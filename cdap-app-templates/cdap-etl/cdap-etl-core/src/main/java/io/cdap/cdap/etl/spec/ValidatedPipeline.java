@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spec;
+package io.cdap.cdap.etl.spec;
 
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.v2.ETLConfig;
-import co.cask.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.v2.ETLConfig;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.Workflow;
+import io.cdap.cdap.api.workflow.NodeStatus;
+import io.cdap.cdap.api.workflow.Workflow;
 
 import javax.annotation.Nullable;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.http;
+package io.cdap.cdap.common.http;
 
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;

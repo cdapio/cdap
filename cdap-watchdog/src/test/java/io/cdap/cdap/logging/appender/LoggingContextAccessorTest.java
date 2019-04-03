@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
-import co.cask.cdap.logging.context.ApplicationLoggingContext;
-import co.cask.cdap.logging.context.GenericLoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.logging.context.GenericLoggingContext;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
 import org.junit.Test;

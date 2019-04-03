@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common;
+package io.cdap.cdap.common;
 
 /**
  * Thrown when an artifact is invalid.

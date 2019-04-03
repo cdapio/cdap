@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.common.id;
+package io.cdap.cdap.common.id;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.QueryId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.WorkerId;
-import co.cask.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.QueryId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.proto.id.WorkerId;
+import io.cdap.cdap.proto.id.WorkflowId;
 
 import java.util.regex.Pattern;
 
@@ -571,8 +571,8 @@ public abstract class Id implements EntityIdCompatible {
       return String.format("%s-%s", name, version.getVersion());
     }
 
-    public co.cask.cdap.api.artifact.ArtifactId toArtifactId() {
-      return new co.cask.cdap.api.artifact.ArtifactId(
+    public io.cdap.cdap.api.artifact.ArtifactId toArtifactId() {
+      return new io.cdap.cdap.api.artifact.ArtifactId(
         name, version, Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
     }
 
@@ -584,7 +584,7 @@ public abstract class Id implements EntityIdCompatible {
       return new Artifact(namespace, name, version);
     }
 
-    public static Artifact from(Id.Namespace namespace, co.cask.cdap.api.artifact.ArtifactId id) {
+    public static Artifact from(Id.Namespace namespace, io.cdap.cdap.api.artifact.ArtifactId id) {
       return new Artifact(ArtifactScope.SYSTEM.equals(id.getScope()) ? Namespace.SYSTEM : namespace,
                           id.getName(), id.getVersion());
     }

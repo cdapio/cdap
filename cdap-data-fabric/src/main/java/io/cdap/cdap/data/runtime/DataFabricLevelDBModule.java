@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
-import co.cask.cdap.data2.transaction.TransactionSystemClientService;
-import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
+import io.cdap.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;

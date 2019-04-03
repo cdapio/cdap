@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.guice;
+package io.cdap.cdap.app.guice;
 
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;

@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.workflow.NodeValue;
-import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.workflow.NodeValue;
+import io.cdap.cdap.api.workflow.Value;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 
 import java.util.ArrayList;
 import java.util.Collections;

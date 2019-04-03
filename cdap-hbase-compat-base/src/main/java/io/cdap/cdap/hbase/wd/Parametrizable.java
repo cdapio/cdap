@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.hbase.wd;
+package io.cdap.cdap.hbase.wd;
 
 /**
  * Defines interface for storing object parameters in a String object to later restore the object by applying them to

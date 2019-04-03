@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.plugins;
+package io.cdap.cdap.logging.plugins;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
@@ -23,10 +23,10 @@ import ch.qos.logback.core.rolling.RollingPolicy;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.TriggeringPolicy;
 import ch.qos.logback.core.spi.FilterReply;
-import co.cask.cdap.api.logging.AppenderContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Syncable;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Syncable;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;

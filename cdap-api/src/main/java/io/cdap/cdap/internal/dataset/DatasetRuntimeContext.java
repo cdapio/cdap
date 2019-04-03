@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.dataset;
+package io.cdap.cdap.internal.dataset;
 
-import co.cask.cdap.api.annotation.ReadOnly;
-import co.cask.cdap.api.annotation.ReadWrite;
-import co.cask.cdap.api.annotation.WriteOnly;
-import co.cask.cdap.internal.lang.CallerClassSecurityManager;
+import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.ReadWrite;
+import io.cdap.cdap.api.annotation.WriteOnly;
+import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +76,7 @@ public abstract class DatasetRuntimeContext implements AutoCloseable {
     }
     // This is the guard against if someone tries to call this method outside of CDAP system (e.g. from user code)
     if (callerClasses[2].getClassLoader() != DatasetRuntimeContext.class.getClassLoader()
-      || !callerClasses[2].getName().equals("co.cask.cdap.data2.dataset2.DefaultDatasetRuntimeContext")) {
+      || !callerClasses[2].getName().equals("io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext")) {
       throw new IllegalAccessError("Not allow to set context from " + callerClasses[2]);
     }
 

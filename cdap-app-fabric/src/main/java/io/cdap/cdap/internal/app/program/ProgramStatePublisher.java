@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.program;
+package io.cdap.cdap.internal.app.program;
 
-import co.cask.cdap.proto.Notification;
+import io.cdap.cdap.proto.Notification;
 
 import java.util.Map;
 

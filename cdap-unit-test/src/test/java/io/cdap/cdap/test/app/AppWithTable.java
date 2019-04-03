@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.service.BasicService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 
 /**
  * Simple app with table dataset.

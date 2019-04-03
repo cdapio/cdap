@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.mapreduce;
+package io.cdap.cdap.api.mapreduce;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.ProgramConfigurer;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.ProgramConfigurer;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link MapReduce}.

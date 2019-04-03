@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.instance;
+package io.cdap.cdap.data2.datafabric.dataset.instance;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.inject.Inject;
 
 import java.util.Collection;

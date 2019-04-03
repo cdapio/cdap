@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -102,7 +102,7 @@ public class ConsumerWorkingSet {
   public void populate(PartitionedFileSet partitionedFileSet, ConsumerConfiguration configuration) {
     int numToPopulate = configuration.getMaxWorkingSetSize() - partitions.size();
     Predicate<PartitionDetail> predicate = configuration.getPartitionPredicate();
-    co.cask.cdap.api.dataset.lib.PartitionConsumerResult result =
+    io.cdap.cdap.api.dataset.lib.PartitionConsumerResult result =
       partitionedFileSet.consumePartitions(partitionConsumerState, numToPopulate, predicate);
     List<PartitionDetail> partitions = result.getPartitions();
     for (PartitionDetail partition : partitions) {

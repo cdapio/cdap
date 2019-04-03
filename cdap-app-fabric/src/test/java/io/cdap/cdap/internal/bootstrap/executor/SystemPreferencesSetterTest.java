@@ -15,11 +15,11 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.junit.After;

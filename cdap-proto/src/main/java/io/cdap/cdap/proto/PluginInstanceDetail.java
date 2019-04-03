@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.Plugin;
 
 /**
  * Represents a plugin instance in an HTTP Response

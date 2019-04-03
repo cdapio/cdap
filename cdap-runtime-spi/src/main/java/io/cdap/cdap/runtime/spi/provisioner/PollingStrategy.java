@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.runtime.spi.provisioner;
+package io.cdap.cdap.runtime.spi.provisioner;
 
 /**
  * Defines how CDAP should poll for cluster status while waiting for a cluster to change state.

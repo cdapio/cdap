@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.preview;
+package io.cdap.cdap.app.preview;
 
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
  * DataTracerFactory will be injected in the Program context classes. This may not be directly used by Applications.

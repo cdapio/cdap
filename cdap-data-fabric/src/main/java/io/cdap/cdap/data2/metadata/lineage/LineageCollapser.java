@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage;
+package io.cdap.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.metadata.lineage.CollapseType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

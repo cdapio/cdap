@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.LineageTable;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageTable;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.LineageTable;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageTable;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.slf4j.Logger;

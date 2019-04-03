@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package io.cdap.cdap.security;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.DelegationTokensUpdater;
-import co.cask.cdap.common.security.YarnTokenUtils;
-import co.cask.cdap.data.security.HBaseTokenUtils;
-import co.cask.cdap.hive.ExploreUtils;
-import co.cask.cdap.security.hive.HiveTokenUtils;
-import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.DelegationTokensUpdater;
+import io.cdap.cdap.common.security.YarnTokenUtils;
+import io.cdap.cdap.data.security.HBaseTokenUtils;
+import io.cdap.cdap.hive.ExploreUtils;
+import io.cdap.cdap.security.hive.HiveTokenUtils;
+import io.cdap.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;

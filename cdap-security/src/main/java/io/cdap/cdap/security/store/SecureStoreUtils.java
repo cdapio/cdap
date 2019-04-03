@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package io.cdap.cdap.security.store;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 
 /**
  * Utility class for secure store.
@@ -26,7 +26,7 @@ public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
   private static final String NONE = "none";
-  private static final String KMS_CLASS_NAME = "co.cask.cdap.security.store.KMSSecureStoreService";
+  private static final String KMS_CLASS_NAME = "io.cdap.cdap.security.store.KMSSecureStoreService";
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));

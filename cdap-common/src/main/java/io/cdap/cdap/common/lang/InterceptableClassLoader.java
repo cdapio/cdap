@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

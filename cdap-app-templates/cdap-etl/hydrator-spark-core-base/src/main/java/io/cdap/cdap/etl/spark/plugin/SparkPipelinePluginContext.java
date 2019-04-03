@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.plugin;
+package io.cdap.cdap.etl.spark.plugin;
 
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
-import co.cask.cdap.api.spark.SparkMain;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkSink;
-import co.cask.cdap.etl.api.streaming.StreamingSource;
-import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.common.plugin.Caller;
-import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.spark.JavaSparkMain;
+import io.cdap.cdap.api.spark.SparkMain;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.plugin.Caller;
+import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 
 /**
  * Wraps spark specific plugin types.

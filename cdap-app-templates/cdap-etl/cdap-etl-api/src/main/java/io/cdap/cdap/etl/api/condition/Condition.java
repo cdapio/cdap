@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.condition;
+package io.cdap.cdap.etl.api.condition;
 
-import co.cask.cdap.etl.api.PipelineConfigurable;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.PipelineConfigurable;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
 
 /**
  * Represents condition to be executed in the pipeline.

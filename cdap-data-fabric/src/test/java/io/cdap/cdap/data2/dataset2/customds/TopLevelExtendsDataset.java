@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.customds;
+package io.cdap.cdap.data2.dataset2.customds;
 
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.Dataset;
 
 /**
  *

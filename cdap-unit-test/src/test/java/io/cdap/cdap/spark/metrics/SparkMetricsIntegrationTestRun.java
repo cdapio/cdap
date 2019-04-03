@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.spark.metrics;
+package io.cdap.cdap.spark.metrics;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.XSlowTests;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;

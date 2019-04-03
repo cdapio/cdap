@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.test.PluginJarHelper;
-import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
-import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
-import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.test.PluginJarHelper;
+import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
+import io.cdap.cdap.internal.app.runtime.artifact.plugin.Plugin1;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -109,8 +109,8 @@ public abstract class PluginFinderTestBase extends AppFabricTestBase {
     // Use a different selector that returns the first entry, hence expect the SYSTEM one being returned
     entry = finder.findPlugin(NamespaceId.DEFAULT, appArtifactId, "dummy", "Plugin1", new PluginSelector() {
       @Override
-      public Map.Entry<co.cask.cdap.api.artifact.ArtifactId, PluginClass> select(
-        SortedMap<co.cask.cdap.api.artifact.ArtifactId, PluginClass> plugins) {
+      public Map.Entry<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> select(
+        SortedMap<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> plugins) {
         return plugins.entrySet().iterator().next();
       }
     });

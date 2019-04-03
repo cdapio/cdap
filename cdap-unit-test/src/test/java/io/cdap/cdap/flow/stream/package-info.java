@@ -17,4 +17,4 @@
 /**
  * This package contains the classes for testing flow stream integration.
  */
-package co.cask.cdap.flow.stream;
+package io.cdap.cdap.flow.stream;

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.explore.service.Explore;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.explore.service.Explore;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static co.cask.cdap.common.conf.Constants.Service;
+import static io.cdap.cdap.common.conf.Constants.Service;
 
 /**
  * An Explore Client that talks to a server implementing {@link Explore} over HTTP,

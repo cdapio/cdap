@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.spi.metadata.dataset;
+package io.cdap.cdap.spi.metadata.dataset;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.Cursor;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.spi.metadata.Metadata;
-import co.cask.cdap.spi.metadata.MetadataChange;
-import co.cask.cdap.spi.metadata.MetadataDirective;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.MetadataMutation;
-import co.cask.cdap.spi.metadata.MetadataRecord;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
-import co.cask.cdap.spi.metadata.ScopedName;
-import co.cask.cdap.spi.metadata.ScopedNameOfKind;
-import co.cask.cdap.spi.metadata.SearchRequest;
-import co.cask.cdap.spi.metadata.SearchResponse;
-import co.cask.cdap.spi.metadata.Sorting;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metadata.Cursor;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.metadata.dataset.MetadataDataset;
+import io.cdap.cdap.data2.metadata.dataset.SortInfo;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataDirective;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.spi.metadata.Sorting;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -58,10 +58,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
-import static co.cask.cdap.api.metadata.MetadataScope.USER;
-import static co.cask.cdap.spi.metadata.MetadataKind.PROPERTY;
-import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
+import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
+import static io.cdap.cdap.api.metadata.MetadataScope.USER;
+import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
+import static io.cdap.cdap.spi.metadata.MetadataKind.TAG;
 
 /**
  * A dataset-based implementation of the Metadata SPI.
@@ -376,7 +376,7 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     boolean showHidden = cursor != null ? cursor.isShowHidden() : request.isShowHidden();
     MetadataScope scope = cursor != null ? cursor.getScope() : request.getScope();
 
-    MetadataSearchResponse response = search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
+    MetadataSearchResponse response = search(new io.cdap.cdap.data2.metadata.dataset.SearchRequest(
       namespaceAndScopes.getFirst(),
       query, types, sortInfo,
       cursorOffsetAndLimits.getOffsetToRequest(),
@@ -393,7 +393,7 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     List<MetadataRecord> results =
       response.getResults().stream().limit(limitToRespond).map(record -> {
         Metadata metadata = Metadata.EMPTY;
-        for (Map.Entry<MetadataScope, co.cask.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
+        for (Map.Entry<MetadataScope, io.cdap.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
           Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(), entry.getValue().getProperties());
           metadata = mergeDisjointMetadata(metadata, toAdd);
         }

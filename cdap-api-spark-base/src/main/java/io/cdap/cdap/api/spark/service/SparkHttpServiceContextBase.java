@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
+package io.cdap.cdap.api.spark.service;
 
-import co.cask.cdap.api.spark.SparkExecutionContext;
+import io.cdap.cdap.api.spark.SparkExecutionContext;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 

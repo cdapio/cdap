@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
 
 /**
  * Defines program lifecycle.
@@ -27,7 +27,7 @@ public interface ProgramLifecycle<T extends RuntimeContext> {
   /**
    *  Initializes a Program.
    *  <p>
-   *    This method will be called only once per {@link co.cask.cdap.api.ProgramLifecycle} instance.
+   *    This method will be called only once per {@link io.cdap.cdap.api.ProgramLifecycle} instance.
    *  </p>
    *  @param context An instance of {@link RuntimeContext}
    *  @throws Exception If there is any error during initialization.

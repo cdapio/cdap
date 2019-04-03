@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
 
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.data2.metadata.writer.MetadataMessage;
-import co.cask.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 
 import java.io.IOException;
 

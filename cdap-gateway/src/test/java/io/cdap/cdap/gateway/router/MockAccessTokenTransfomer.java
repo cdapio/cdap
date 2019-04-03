@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.security.auth.AccessTokenIdentifier;
-import co.cask.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.AccessTokenIdentifier;
+import io.cdap.cdap.security.auth.AccessTokenTransformer;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;

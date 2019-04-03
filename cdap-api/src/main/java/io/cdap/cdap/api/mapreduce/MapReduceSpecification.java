@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.mapreduce;
+package io.cdap.cdap.api.mapreduce;
 
-import co.cask.cdap.api.AbstractProgramSpecification;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.AbstractProgramSpecification;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.common.PropertyProvider;
+import io.cdap.cdap.api.plugin.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public class MapReduceSpecification extends AbstractProgramSpecification impleme
   }
 
   /**
-   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset DataSets} that
+   * @return An immutable set of {@link io.cdap.cdap.api.dataset.Dataset DataSets} that
    *         are used by the {@link MapReduce}.
    */
   public Set<String> getDataSets() {

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 

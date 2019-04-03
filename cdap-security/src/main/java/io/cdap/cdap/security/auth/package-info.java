@@ -17,4 +17,4 @@
 /**
  * Classes related to authentication of clients and daemons.
  */
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;

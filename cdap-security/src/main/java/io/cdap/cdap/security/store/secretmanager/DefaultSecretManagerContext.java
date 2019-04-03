@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.secretmanager;
+package io.cdap.cdap.security.store.secretmanager;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.securestore.spi.SecretManagerContext;
-import co.cask.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.securestore.spi.SecretManagerContext;
+import io.cdap.cdap.securestore.spi.SecretStore;
 
 import java.util.Collections;
 import java.util.Map;

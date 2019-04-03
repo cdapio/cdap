@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.master.startup;
+package io.cdap.cdap.master.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.common.startup.CheckRunner;
-import co.cask.cdap.common.startup.ConfigurationLogger;
-import co.cask.cdap.data.runtime.main.ClientVersions;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.internal.app.spark.SparkCompatReader;
-import co.cask.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.startup.CheckRunner;
+import io.cdap.cdap.common.startup.ConfigurationLogger;
+import io.cdap.cdap.data.runtime.main.ClientVersions;
+import io.cdap.cdap.explore.service.ExploreServiceUtils;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.lineage.field;
+package io.cdap.cdap.etl.api.lineage.field;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.lineage.field.EndPoint;
 
 import java.util.ArrayList;
 import java.util.Arrays;

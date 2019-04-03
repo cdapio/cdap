@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main.transaction;
+package io.cdap.cdap.data.runtime.main.transaction;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.PingHandler;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.http.HttpResponder;

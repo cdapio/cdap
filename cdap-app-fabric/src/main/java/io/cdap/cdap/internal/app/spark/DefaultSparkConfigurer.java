@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.spark;
+package io.cdap.cdap.internal.app.spark;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.spark.SparkConfigurer;
-import co.cask.cdap.api.spark.SparkHttpServiceHandlerSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.app.AbstractConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.spark.SparkConfigurer;
+import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
+import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 
 import java.util.Collections;

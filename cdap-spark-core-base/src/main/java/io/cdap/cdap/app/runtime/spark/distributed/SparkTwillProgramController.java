@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.distributed;
+package io.cdap.cdap.app.runtime.spark.distributed;
 
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;

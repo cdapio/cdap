@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.spark.batch;
+package io.cdap.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.etl.api.Lookup;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.common.AbstractTransformContext;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
+import io.cdap.cdap.etl.api.Lookup;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.common.AbstractTransformContext;
+import io.cdap.cdap.etl.common.DatasetContextLookupProvider;
+import io.cdap.cdap.etl.common.PipelineRuntime;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 

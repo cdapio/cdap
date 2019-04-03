@@ -14,9 +14,9 @@
  *  the License.
  */
 
-package co.cask.cdap.io;
+package io.cdap.cdap.io;
 
-import co.cask.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
 

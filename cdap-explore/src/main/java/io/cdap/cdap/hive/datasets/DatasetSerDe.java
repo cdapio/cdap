@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.hive.datasets;
+package io.cdap.cdap.hive.datasets;
 
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.hive.context.ContextManager;
-import co.cask.cdap.hive.serde.ObjectDeserializer;
-import co.cask.cdap.hive.serde.ObjectSerializer;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.proto.id.DatasetId;
+import io.cdap.cdap.api.data.batch.RecordScannable;
+import io.cdap.cdap.api.data.batch.RecordWritable;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.hive.context.ContextManager;
+import io.cdap.cdap.hive.serde.ObjectDeserializer;
+import io.cdap.cdap.hive.serde.ObjectSerializer;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.proto.id.DatasetId;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;

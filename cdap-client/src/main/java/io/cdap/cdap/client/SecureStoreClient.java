@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.SecureKeyAlreadyExistsException;
-import co.cask.cdap.common.SecureKeyNotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.SecureKeyAlreadyExistsException;
+import io.cdap.cdap.common.SecureKeyNotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;

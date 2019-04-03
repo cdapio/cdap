@@ -17,4 +17,4 @@
 /**
  * Implementation of a Cube dataset in CDAP.
  */
-package co.cask.cdap.api.dataset.lib.cube;
+package io.cdap.cdap.api.dataset.lib.cube;

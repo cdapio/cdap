@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.error;
+package io.cdap.cdap.error;
 
 /**
  *

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package io.cdap.cdap.data2.metadata.writer;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.proto.security.Principal;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.proto.security.Principal;
 
 import javax.annotation.Nullable;
 

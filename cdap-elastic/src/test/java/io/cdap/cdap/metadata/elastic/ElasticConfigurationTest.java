@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package io.cdap.cdap.metadata.elastic;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.Checksums;
-import co.cask.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.utils.Checksums;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.apache.http.HttpHost;

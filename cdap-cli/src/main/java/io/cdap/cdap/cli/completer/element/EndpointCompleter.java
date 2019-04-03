@@ -14,7 +14,7 @@
  * the License
  */
 
-package co.cask.cdap.cli.completer.element;
+package io.cdap.cdap.cli.completer.element;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;

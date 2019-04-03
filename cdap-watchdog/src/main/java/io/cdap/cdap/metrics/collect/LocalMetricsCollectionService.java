@@ -13,15 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.collect;
+package io.cdap.cdap.metrics.collect;
 
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * A {@link co.cask.cdap.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
+ * A {@link io.cdap.cdap.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
  * It also has a scheduling job that clean up old metrics periodically.
  */
 @Singleton

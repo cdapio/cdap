@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.secretmanager;
+package io.cdap.cdap.security.store.secretmanager;
 
-import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.SecureKeyNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.securestore.spi.SecretManager;
-import co.cask.cdap.securestore.spi.SecretManagerContext;
-import co.cask.cdap.securestore.spi.SecretNotFoundException;
-import co.cask.cdap.securestore.spi.SecretStore;
-import co.cask.cdap.securestore.spi.secret.Secret;
-import co.cask.cdap.securestore.spi.secret.SecretMetadata;
-import co.cask.cdap.security.store.SecureStoreService;
+import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.SecureKeyNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.securestore.spi.SecretManager;
+import io.cdap.cdap.securestore.spi.SecretManagerContext;
+import io.cdap.cdap.securestore.spi.SecretNotFoundException;
+import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.securestore.spi.secret.Secret;
+import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
+import io.cdap.cdap.security.store.SecureStoreService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;

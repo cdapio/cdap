@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.admin;
+package io.cdap.cdap.admin;
 
 /**
  * A dummy plugin that doesn't do anything.

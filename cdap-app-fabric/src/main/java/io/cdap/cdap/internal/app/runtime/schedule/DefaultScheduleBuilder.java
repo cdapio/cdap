@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.ConstraintProgramScheduleBuilder;
-import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.schedule.TriggerFactory;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerBuilder;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.schedule.ConstraintProgramScheduleBuilder;
+import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.schedule.TriggerFactory;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerBuilder;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.ProtoConstraint;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;

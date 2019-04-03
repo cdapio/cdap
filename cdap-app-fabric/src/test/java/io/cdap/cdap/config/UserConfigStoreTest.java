@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.config;
+package io.cdap.cdap.config;
 
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.After;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
 /**
  * An {@link EntityId} which has a parent {@link EntityId}.

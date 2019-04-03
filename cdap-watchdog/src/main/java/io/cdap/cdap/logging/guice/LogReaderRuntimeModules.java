@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.logging.guice;
+package io.cdap.cdap.logging.guice;
 
-import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.logging.read.DistributedLogReader;
-import co.cask.cdap.logging.read.FileLogReader;
-import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.security.impersonation.RemoteUGIProvider;
-import co.cask.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.logging.read.DistributedLogReader;
+import io.cdap.cdap.logging.read.FileLogReader;
+import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;

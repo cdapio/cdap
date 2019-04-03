@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.queue;
+package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import co.cask.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
 
 /**

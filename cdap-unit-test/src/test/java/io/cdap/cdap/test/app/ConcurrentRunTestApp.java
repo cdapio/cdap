@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.worker.AbstractWorker;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
+import io.cdap.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import java.io.File;

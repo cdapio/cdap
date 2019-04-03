@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.ColumnDesc;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;

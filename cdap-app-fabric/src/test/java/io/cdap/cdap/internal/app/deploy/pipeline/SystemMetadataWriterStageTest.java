@@ -14,29 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.WorkflowAppWithFork;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.api.workflow.WorkflowNodeType;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.pipeline.StageContext;
-import co.cask.cdap.metadata.MetadataSubscriberService;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.metadata.MetadataKind;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.Read;
+import io.cdap.cdap.WorkflowAppWithFork;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowNodeType;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.pipeline.StageContext;
+import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;

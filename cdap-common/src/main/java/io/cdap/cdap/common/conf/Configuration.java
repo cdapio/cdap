@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.common.utils.DirUtils;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.gson.stream.JsonWriter;
 import org.slf4j.Logger;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.serialize;
+package io.cdap.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import org.apache.avro.Schema;

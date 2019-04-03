@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import com.google.inject.Inject;
 
 /**

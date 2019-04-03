@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset.service;
+package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.module.DatasetType;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+import io.cdap.cdap.api.dataset.module.DatasetType;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.Service;
 import io.cdap.http.BodyConsumer;
 

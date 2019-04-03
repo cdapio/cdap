@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.security;
+package io.cdap.cdap.cli.command.security;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.client.AuthorizationClient;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.client.AuthorizationClient;
 import com.google.inject.Inject;
 
 /**

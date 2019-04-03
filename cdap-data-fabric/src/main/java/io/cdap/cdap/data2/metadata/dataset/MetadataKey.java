@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.metadata.dataset;
+package io.cdap.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.common.metadata.MetadataUtil;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.common.metadata.MetadataUtil;
+import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 
 import javax.annotation.Nullable;
 

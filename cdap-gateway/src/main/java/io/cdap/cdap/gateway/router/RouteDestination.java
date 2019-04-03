@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

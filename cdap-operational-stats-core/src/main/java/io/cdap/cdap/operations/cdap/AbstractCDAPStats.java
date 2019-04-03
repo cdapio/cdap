@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.operations.cdap;
+package io.cdap.cdap.operations.cdap;
 
-import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.operations.AbstractOperationalStats;
-import co.cask.cdap.operations.OperationalStats;
+import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.operations.AbstractOperationalStats;
+import io.cdap.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 
 /**

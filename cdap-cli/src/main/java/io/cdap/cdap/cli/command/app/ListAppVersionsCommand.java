@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command.app;
+package io.cdap.cdap.cli.command.app;
 
-import co.cask.cdap.cli.ArgumentName;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.util.AbstractAuthCommand;
-import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.ApplicationClient;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.cli.util.RowMaker;
+import io.cdap.cdap.cli.util.table.Table;
+import io.cdap.cdap.client.ApplicationClient;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;

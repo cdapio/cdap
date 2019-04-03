@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.distributed;
+package io.cdap.cdap.messaging.distributed;
 
-import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.messaging.MessageFetcher;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.RollbackDetail;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.server.MessagingHttpService;
-import co.cask.cdap.messaging.service.CoreMessagingService;
-import co.cask.cdap.messaging.store.ForwardingTableFactory;
-import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.messaging.store.cache.MessageTableCacheProvider;
-import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.messaging.service.CoreMessagingService;
+import io.cdap.cdap.messaging.store.ForwardingTableFactory;
+import io.cdap.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
+import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

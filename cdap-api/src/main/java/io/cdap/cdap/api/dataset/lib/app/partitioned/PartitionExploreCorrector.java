@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.app.partitioned;
+package io.cdap.cdap.api.dataset.lib.app.partitioned;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.worker.AbstractWorker;
 import org.apache.tephra.TransactionFailureException;
 
 import java.util.concurrent.atomic.AtomicReference;

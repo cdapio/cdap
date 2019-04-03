@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package io.cdap.cdap.common.logging;
 
-import co.cask.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.common.utils.TimeProvider;
 import com.google.common.base.Supplier;
 import org.junit.Assert;
 import org.junit.Test;

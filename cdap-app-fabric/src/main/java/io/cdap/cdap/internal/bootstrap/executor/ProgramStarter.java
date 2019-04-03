@@ -15,15 +15,15 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.slf4j.Logger;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.ssh;
+package io.cdap.cdap.common.ssh;
 
-import co.cask.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import com.jcraft.jsch.ChannelDirectTCPIP;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;

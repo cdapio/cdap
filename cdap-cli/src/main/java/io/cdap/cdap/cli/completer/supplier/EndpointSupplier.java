@@ -14,13 +14,13 @@
  * the License
  */
 
-package co.cask.cdap.cli.completer.supplier;
+package io.cdap.cdap.cli.completer.supplier;
 
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.completer.element.EndpointCompleter;
-import co.cask.cdap.cli.completer.element.HttpEndpointPrefixCompleter;
-import co.cask.cdap.cli.completer.element.HttpMethodPrefixCompleter;
-import co.cask.cdap.client.ServiceClient;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.completer.element.EndpointCompleter;
+import io.cdap.cdap.cli.completer.element.HttpEndpointPrefixCompleter;
+import io.cdap.cdap.cli.completer.element.HttpMethodPrefixCompleter;
+import io.cdap.cdap.client.ServiceClient;
 import com.google.inject.Inject;
 import io.cdap.common.cli.supplier.CompleterSupplier;
 import jline.console.completer.Completer;

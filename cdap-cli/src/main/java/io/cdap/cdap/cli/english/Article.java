@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.english;
+package io.cdap.cdap.cli.english;
 
 /**
  * English article.

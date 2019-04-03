@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store.remote;
+package io.cdap.cdap.internal.app.store.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.namespace.RemoteNamespaceQueryClient;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.proto.NamespaceConfig;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;

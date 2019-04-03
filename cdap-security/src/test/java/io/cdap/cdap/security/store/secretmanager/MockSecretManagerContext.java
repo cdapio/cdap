@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security.store.secretmanager;
+package io.cdap.cdap.security.store.secretmanager;
 
-import co.cask.cdap.securestore.spi.SecretManagerContext;
-import co.cask.cdap.securestore.spi.SecretNotFoundException;
-import co.cask.cdap.securestore.spi.SecretStore;
-import co.cask.cdap.securestore.spi.secret.Decoder;
-import co.cask.cdap.securestore.spi.secret.Encoder;
+import io.cdap.cdap.securestore.spi.SecretManagerContext;
+import io.cdap.cdap.securestore.spi.SecretNotFoundException;
+import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.securestore.spi.secret.Decoder;
+import io.cdap.cdap.securestore.spi.secret.Encoder;
 
 import java.io.IOException;
 import java.util.Collection;

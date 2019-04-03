@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.common.PropertyProvider;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 
 import java.util.ArrayList;
 import java.util.Collections;

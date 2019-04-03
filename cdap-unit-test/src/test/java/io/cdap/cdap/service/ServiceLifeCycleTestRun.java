@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.service;
+package io.cdap.cdap.service;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.TestConfiguration;
-import co.cask.cdap.test.app.ServiceLifecycleApp;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.metrics.MetricDataQuery;
+import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.TestConfiguration;
+import io.cdap.cdap.test.app.ServiceLifecycleApp;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.common;
+package io.cdap.cdap.spi.data.common;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.spi.data.InvalidFieldException;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Range;
 
 import java.io.IOException;
 import java.util.Collection;

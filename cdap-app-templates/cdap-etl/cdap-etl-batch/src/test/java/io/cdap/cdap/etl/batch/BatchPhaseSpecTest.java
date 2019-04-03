@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;

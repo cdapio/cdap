@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
 /**
  * State of the cluster for a program run

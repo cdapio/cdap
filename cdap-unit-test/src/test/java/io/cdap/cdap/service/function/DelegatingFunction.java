@@ -15,15 +15,15 @@
  *
  */
 
-package co.cask.cdap.service.function;
+package io.cdap.cdap.service.function;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.service.DynamicPluginServiceApp;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.service.DynamicPluginServiceApp;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Type;

@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.lineage.field.Operation;
-import co.cask.cdap.api.lineage.field.OperationType;
-import co.cask.cdap.api.lineage.field.ReadOperation;
-import co.cask.cdap.api.lineage.field.TransformOperation;
-import co.cask.cdap.api.lineage.field.WriteOperation;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.OperationType;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.TransformOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

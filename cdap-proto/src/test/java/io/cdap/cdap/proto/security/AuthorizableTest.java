@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.SecureKeyId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -128,7 +128,7 @@ public class AuthorizableTest {
 
   @Test
   public void testDataset() {
-    DatasetId datasetId = new DatasetId("ns", "co.cask.test_dataset");
+    DatasetId datasetId = new DatasetId("ns", "io.cdap.test_dataset");
     Authorizable authorizable = Authorizable.fromEntityId(datasetId);
     Assert.assertEquals(datasetId.toString(), authorizable.toString());
 
@@ -151,7 +151,7 @@ public class AuthorizableTest {
 
   @Test
   public void testDatasetType() {
-    DatasetTypeId datasetTypeId = new DatasetTypeId("ns", "co.cask.test_datasetType");
+    DatasetTypeId datasetTypeId = new DatasetTypeId("ns", "io.cdap.test_datasetType");
     Authorizable authorizable = Authorizable.fromEntityId(datasetTypeId);
     Assert.assertEquals(datasetTypeId.toString(), authorizable.toString());
 
@@ -161,7 +161,7 @@ public class AuthorizableTest {
 
   @Test
   public void testDatasetModule() {
-    DatasetModuleId datasetModuleId = new DatasetModuleId("ns", "co.cask.test_datasetModule");
+    DatasetModuleId datasetModuleId = new DatasetModuleId("ns", "io.cdap.test_datasetModule");
     Authorizable authorizable = Authorizable.fromEntityId(datasetModuleId);
     Assert.assertEquals(datasetModuleId.toString(), authorizable.toString());
 

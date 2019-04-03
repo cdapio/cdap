@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.ServiceException;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.security.TokenSecureStoreRenewer;
-import co.cask.cdap.security.impersonation.ImpersonationRequest;
-import co.cask.cdap.security.impersonation.ImpersonationUtils;
-import co.cask.cdap.security.impersonation.PrincipalCredentials;
-import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.impersonation.UGIWithPrincipal;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ServiceException;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.impersonation.ImpersonationRequest;
+import io.cdap.cdap.security.impersonation.ImpersonationUtils;
+import io.cdap.cdap.security.impersonation.PrincipalCredentials;
+import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.impersonation.UGIWithPrincipal;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;

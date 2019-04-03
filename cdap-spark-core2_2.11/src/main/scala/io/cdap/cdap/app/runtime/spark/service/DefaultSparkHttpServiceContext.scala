@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.service
+package io.cdap.cdap.app.runtime.spark.service
 
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.SparkSession
 
 /**
-  * Default implementation of the [[co.cask.cdap.api.spark.service.SparkHttpServiceContext]].
+  * Default implementation of the [[io.cdap.cdap.api.spark.service.SparkHttpServiceContext]].
   */
 class DefaultSparkHttpServiceContext(sec: SparkExecutionContext) extends AbstractSparkHttpServiceContext(sec) {
 

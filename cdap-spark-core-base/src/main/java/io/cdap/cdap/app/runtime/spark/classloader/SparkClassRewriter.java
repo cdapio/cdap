@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.classloader;
+package io.cdap.cdap.app.runtime.spark.classloader;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
-import co.cask.cdap.common.lang.ClassRewriter;
-import co.cask.cdap.common.logging.RedirectedPrintStream;
-import co.cask.cdap.internal.asm.Classes;
-import co.cask.cdap.internal.asm.Methods;
-import co.cask.cdap.internal.asm.Signatures;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.spark.SparkPackageUtils;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
+import io.cdap.cdap.common.lang.ClassRewriter;
+import io.cdap.cdap.common.logging.RedirectedPrintStream;
+import io.cdap.cdap.internal.asm.Classes;
+import io.cdap.cdap.internal.asm.Methods;
+import io.cdap.cdap.internal.asm.Signatures;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -71,9 +71,9 @@ public class SparkClassRewriter implements ClassRewriter {
   // Define some of the class types used for bytecode rewriting purpose. Cannot be referred with .class since
   // those classes may not be available to the ClassLoader of this class (they are loadable from this ClassLoader).
   private static final Type SPARK_RUNTIME_ENV_TYPE =
-    Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeEnv");
+    Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkRuntimeEnv");
   private static final Type SPARK_RUNTIME_UTILS_TYPE =
-    Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeUtils");
+    Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkRuntimeUtils");
   private static final Type SPARK_CONTEXT_TYPE = Type.getObjectType("org/apache/spark/SparkContext");
   private static final Type SPARK_STREAMING_CONTEXT_TYPE =
     Type.getObjectType("org/apache/spark/streaming/StreamingContext");
@@ -101,9 +101,9 @@ public class SparkClassRewriter implements ClassRewriter {
     Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
   private static final Type KRYO_TYPE = Type.getObjectType("com/esotericsoftware/kryo/Kryo");
   private static final Type SCHEMA_SERIALIZER_TYPE =
-    Type.getObjectType("co/cask/cdap/app/runtime/spark/serializer/SchemaSerializer");
+    Type.getObjectType("io/cdap/cdap/app/runtime/spark/serializer/SchemaSerializer");
   private static final Type STRUCTURED_RECORD_SERIALIZER_TYPE =
-    Type.getObjectType("co/cask/cdap/app/runtime/spark/serializer/StructuredRecordSerializer");
+    Type.getObjectType("io/cdap/cdap/app/runtime/spark/serializer/StructuredRecordSerializer");
   private static final Type SPARK_DISK_STORE = Type.getObjectType("org/apache/spark/storage/DiskStore");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
@@ -618,7 +618,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
           final Type sparkUserAppExceptionType = Type.getObjectType("org/apache/spark/SparkUserAppException");
           final Type throwableType = Type.getType(Throwable.class);
-          final Type completionType = Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkProgramCompletion");
+          final Type completionType = Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkProgramCompletion");
           final Label tryLabel = newLabel();
           final Label tryEndLabel = newLabel();
           final Label catchLabel = newLabel();
@@ -1170,8 +1170,8 @@ public class SparkClassRewriter implements ClassRewriter {
       //   System.out|System.err
       // );
       Type runtimeContextProviderType =
-        Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContextProvider");
-      Type runtimeContextType = Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContext");
+        Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkRuntimeContextProvider");
+      Type runtimeContextType = Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkRuntimeContext");
       Type loggerFactoryType = Type.getType(LoggerFactory.class);
       Type loggerType = Type.getType(Logger.class);
       Type redirectedPrintStreamType = Type.getType(RedirectedPrintStream.class);

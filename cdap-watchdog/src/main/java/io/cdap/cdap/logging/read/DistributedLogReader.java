@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.logging.read;
+package io.cdap.cdap.logging.read;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.kafka.StringPartitioner;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.meta.CheckpointManagerFactory;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.appender.kafka.StringPartitioner;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.meta.CheckpointManager;
+import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

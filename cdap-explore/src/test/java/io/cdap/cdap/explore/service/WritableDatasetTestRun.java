@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.service.datasets.KeyExtendedStructValueTableDefinition;
-import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
-import co.cask.cdap.explore.service.datasets.KeyValueTableDefinition;
-import co.cask.cdap.explore.service.datasets.WritableKeyStructValueTableDefinition;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.service.datasets.KeyExtendedStructValueTableDefinition;
+import io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition;
+import io.cdap.cdap.explore.service.datasets.KeyValueTableDefinition;
+import io.cdap.cdap.explore.service.datasets.WritableKeyStructValueTableDefinition;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;

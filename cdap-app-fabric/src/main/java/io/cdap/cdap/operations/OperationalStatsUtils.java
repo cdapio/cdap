@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.operations;
+package io.cdap.cdap.operations;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 public final class OperationalStatsUtils {
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsUtils.class);
 
-  public static final String JMX_DOMAIN = "co.cask.cdap.operations";
+  public static final String JMX_DOMAIN = "io.cdap.cdap.operations";
   public static final String SERVICE_NAME_KEY = "name";
   public static final String STAT_TYPE_KEY = "type";
   public static final String STAT_TYPE_INFO = "info";

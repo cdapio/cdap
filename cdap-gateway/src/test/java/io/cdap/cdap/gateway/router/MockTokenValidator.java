@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.security.auth.TokenState;
-import co.cask.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.auth.TokenState;
+import io.cdap.cdap.security.auth.TokenValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractService;
 

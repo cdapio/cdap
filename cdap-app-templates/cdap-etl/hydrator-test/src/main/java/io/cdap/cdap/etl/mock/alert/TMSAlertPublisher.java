@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.etl.mock.alert;
+package io.cdap.cdap.etl.mock.alert;
 
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.messaging.MessagePublisher;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.etl.api.Alert;
-import co.cask.cdap.etl.api.AlertPublisher;
-import co.cask.cdap.etl.api.AlertPublisherContext;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.messaging.MessagePublisher;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.AlertPublisher;
+import io.cdap.cdap.etl.api.AlertPublisherContext;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import com.google.gson.Gson;
 
 import java.util.HashMap;

@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.RuntimeArguments;
+import io.cdap.cdap.api.common.Scope;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.TimePartitionDetail;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
+import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionAware;
@@ -46,8 +46,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static co.cask.cdap.internal.app.runtime.batch.AppWithPartitionedFileSet.PARTITIONED;
-import static co.cask.cdap.internal.app.runtime.batch.AppWithTimePartitionedFileSet.TIME_PARTITIONED;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithPartitionedFileSet.PARTITIONED;
+import static io.cdap.cdap.internal.app.runtime.batch.AppWithTimePartitionedFileSet.TIME_PARTITIONED;
 
 /**
  * This tests that we can read and write time-partitioned file sets with map/reduce, using the partition

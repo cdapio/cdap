@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction;
+package io.cdap.cdap.data2.transaction;
 
-import co.cask.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.RetryStrategy;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 

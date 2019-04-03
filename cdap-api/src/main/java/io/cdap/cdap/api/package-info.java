@@ -18,4 +18,4 @@
  * Interfaces for program and resource specifications, program lifecycle, runtime context and processors.
  *
  */
-package co.cask.cdap.api;
+package io.cdap.cdap.api;

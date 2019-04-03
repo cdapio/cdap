@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.provision.MockProvisioner;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.provisioner.ProvisionerDetail;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
-import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;

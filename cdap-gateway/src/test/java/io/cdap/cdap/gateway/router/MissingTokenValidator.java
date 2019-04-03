@@ -15,15 +15,15 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.security.auth.TokenState;
-import co.cask.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.auth.TokenState;
+import io.cdap.cdap.security.auth.TokenValidator;
 import com.google.common.util.concurrent.AbstractService;
 
 /**
- * Simple {@link co.cask.cdap.security.auth.TokenValidator} implementation for test cases, which always
- * returns {@link co.cask.cdap.security.auth.TokenState#MISSING} for all tokens.
+ * Simple {@link io.cdap.cdap.security.auth.TokenValidator} implementation for test cases, which always
+ * returns {@link io.cdap.cdap.security.auth.TokenState#MISSING} for all tokens.
  */
 public class MissingTokenValidator extends AbstractService implements TokenValidator {
   @Override

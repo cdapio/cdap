@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.internal.lang.Reflections;
+import io.cdap.cdap.internal.lang.Reflections;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;

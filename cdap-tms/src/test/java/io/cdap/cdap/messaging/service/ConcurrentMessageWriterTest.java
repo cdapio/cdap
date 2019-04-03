@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.service;
+package io.cdap.cdap.messaging.service;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.common.utils.TimeProvider;
-import co.cask.cdap.messaging.StoreRequest;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.data.RawMessage;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;

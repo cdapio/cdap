@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.plugin;
+package io.cdap.cdap.api.plugin;
 
-import co.cask.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactId;
 
 import java.util.ArrayList;
 import java.util.Collections;

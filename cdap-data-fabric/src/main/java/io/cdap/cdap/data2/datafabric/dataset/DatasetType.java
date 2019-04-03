@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.data2.datafabric.dataset;
+package io.cdap.cdap.data2.datafabric.dataset;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.IncompatibleUpdateException;
-import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
+import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
  * Provides access to {@link DatasetDefinition} while removing burden of managing classloader separatelly.
- * @param <D> type of {@link Dataset} that {@link co.cask.cdap.api.dataset.DatasetDefinition} creates
- * @param <A> type of {@link DatasetAdmin} that {@link co.cask.cdap.api.dataset.DatasetDefinition} creates
+ * @param <D> type of {@link Dataset} that {@link io.cdap.cdap.api.dataset.DatasetDefinition} creates
+ * @param <A> type of {@link DatasetAdmin} that {@link io.cdap.cdap.api.dataset.DatasetDefinition} creates
  */
 public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
 

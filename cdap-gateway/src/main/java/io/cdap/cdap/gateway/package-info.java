@@ -17,4 +17,4 @@
 /**
  * Gateway Interfaces.
  */
-package co.cask.cdap.gateway;
+package io.cdap.cdap.gateway;

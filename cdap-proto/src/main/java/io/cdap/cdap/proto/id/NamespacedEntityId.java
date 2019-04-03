@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.id;
+package io.cdap.cdap.proto.id;
 
-import co.cask.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.element.EntityType;
 
 /**
  * An {@link EntityId} which belongs to a namespace.

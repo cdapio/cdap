@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.preview;
+package io.cdap.cdap.internal.app.preview;
 
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.app.store.preview.PreviewStore;
-import co.cask.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
  * Default implementation of {@link DataTracer}, the data are preserved using {@link PreviewStore}

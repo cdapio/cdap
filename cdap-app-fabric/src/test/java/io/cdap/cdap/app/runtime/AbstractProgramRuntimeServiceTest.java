@@ -14,34 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.proto.ProgramLiveInfo;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -96,7 +96,7 @@ public class AbstractProgramRuntimeServiceTest {
 
       @Override
       protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-        co.cask.cdap.api.artifact.ArtifactId id = new co.cask.cdap.api.artifact.ArtifactId(
+        io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
           "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
         return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
                                   new ArtifactMeta(ArtifactClasses.builder().build()));
@@ -163,7 +163,7 @@ public class AbstractProgramRuntimeServiceTest {
 
       @Override
       protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-        co.cask.cdap.api.artifact.ArtifactId id = new co.cask.cdap.api.artifact.ArtifactId(
+        io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
           "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
         return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
                                   new ArtifactMeta(ArtifactClasses.builder().build()));

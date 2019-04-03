@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.internal.UserErrors;
+import io.cdap.cdap.internal.UserMessages;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

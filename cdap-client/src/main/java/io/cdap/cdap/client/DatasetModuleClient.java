@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.DatasetModuleAlreadyExistsException;
-import co.cask.cdap.common.DatasetModuleCannotBeDeletedException;
-import co.cask.cdap.common.DatasetModuleNotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.DatasetModuleAlreadyExistsException;
+import io.cdap.cdap.common.DatasetModuleCannotBeDeletedException;
+import io.cdap.cdap.common.DatasetModuleNotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import io.cdap.common.http.HttpMethod;

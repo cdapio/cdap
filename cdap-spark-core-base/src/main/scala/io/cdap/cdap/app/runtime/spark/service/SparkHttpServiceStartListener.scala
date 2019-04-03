@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.service
+package io.cdap.cdap.app.runtime.spark.service
 
 import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.scheduler.SparkListenerApplicationStart
@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory
 
 /**
   * A [[org.apache.spark.scheduler.SparkListener]] to optionally start a
-  * [[co.cask.cdap.app.runtime.spark.service.SparkHttpServiceServer]] if
-  * [[co.cask.cdap.api.spark.service.SparkHttpServiceHandler]] is used.
+  * [[io.cdap.cdap.app.runtime.spark.service.SparkHttpServiceServer]] if
+  * [[io.cdap.cdap.api.spark.service.SparkHttpServiceHandler]] is used.
   */
 class SparkHttpServiceStartListener extends SparkListener {
 

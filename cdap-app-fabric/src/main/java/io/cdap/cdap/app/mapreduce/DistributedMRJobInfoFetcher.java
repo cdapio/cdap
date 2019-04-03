@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.mapreduce;
+package io.cdap.cdap.app.mapreduce;
 
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.MRJobInfo;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.MRJobInfo;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

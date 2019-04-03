@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.serialize;
+package io.cdap.cdap.logging.serialize;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.logging.LoggingUtil;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.logging.LoggingUtil;
 import com.google.common.base.Throwables;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;

@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.runtime;
+package io.cdap.cdap.metrics.runtime;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.resource.ResourceBalancerService;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.resource.ResourceBalancerService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

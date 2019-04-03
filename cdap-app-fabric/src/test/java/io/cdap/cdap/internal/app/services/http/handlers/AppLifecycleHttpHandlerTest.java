@@ -14,33 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.AppWithDataset;
-import co.cask.cdap.AppWithDatasetDuplicate;
-import co.cask.cdap.AppWithNoServices;
-import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.profile.Profile;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.AppWithDataset;
+import io.cdap.cdap.AppWithDatasetDuplicate;
+import io.cdap.cdap.AppWithNoServices;
+import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.ConfigTestApp;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.profile.Profile;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
@@ -371,7 +371,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Validate the programs
     JsonArray programs = result.get("programs").getAsJsonArray();
-    int totalPrograms = Arrays.stream(co.cask.cdap.api.app.ProgramType.values())
+    int totalPrograms = Arrays.stream(io.cdap.cdap.api.app.ProgramType.values())
       .mapToInt(type -> spec.getProgramsByType(type).size())
       .reduce(0, (l, r) -> l + r);
     Assert.assertEquals(totalPrograms, programs.size());
@@ -381,7 +381,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         .map(JsonObject.class::cast)
         .allMatch(obj -> {
           String type = obj.get("type").getAsString().toUpperCase();
-          co.cask.cdap.api.app.ProgramType programType = co.cask.cdap.api.app.ProgramType.valueOf(type);
+          io.cdap.cdap.api.app.ProgramType programType = io.cdap.cdap.api.app.ProgramType.valueOf(type);
           return spec.getProgramsByType(programType).contains(obj.get("name").getAsString());
         })
     );

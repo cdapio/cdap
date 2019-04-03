@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.internal.remote;
+package io.cdap.cdap.common.internal.remote;
 
 import com.google.gson.JsonElement;
 

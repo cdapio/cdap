@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common.preview;
+package io.cdap.cdap.etl.common.preview;
 
-import co.cask.cdap.etl.api.Destroyable;
-import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.Transformation;
+import io.cdap.cdap.etl.api.Destroyable;
+import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.Transformation;
 
 /**
  * A {@link Transformation} that delegates transform operations while restricting the number of input emitted.

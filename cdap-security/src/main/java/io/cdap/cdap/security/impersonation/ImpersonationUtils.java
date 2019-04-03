@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package io.cdap.cdap.security.impersonation;
 
-import co.cask.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.NamespaceMeta;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;

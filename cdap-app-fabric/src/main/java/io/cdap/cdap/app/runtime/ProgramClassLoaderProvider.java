@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
+import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 
 /**
  * A provider for for program classloading creation.

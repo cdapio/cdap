@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app.plugin;
+package io.cdap.cdap.spark.app.plugin;
 
 /**
  * User defined transform

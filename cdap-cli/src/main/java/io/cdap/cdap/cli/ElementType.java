@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.cli;
+package io.cdap.cdap.cli;
 
-import co.cask.cdap.cli.english.Noun;
-import co.cask.cdap.cli.english.Word;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.cli.english.Noun;
+import io.cdap.cdap.cli.english.Word;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.common.collect.Sets;
 
 import java.util.Set;

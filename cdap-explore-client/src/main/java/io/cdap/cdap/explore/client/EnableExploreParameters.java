@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 
 /**
  * This class represents the body of an HTTP request to enable a dataset for Explore.

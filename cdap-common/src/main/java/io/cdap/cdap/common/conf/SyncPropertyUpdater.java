@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import javax.annotation.Nullable;
 
 /**
- * A {@link co.cask.cdap.common.conf.PropertyUpdater} that computes property value synchronously.
+ * A {@link io.cdap.cdap.common.conf.PropertyUpdater} that computes property value synchronously.
  *
  * @param <T> Type of property value
  */

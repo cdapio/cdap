@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.client.app.AppReturnsArgs;
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.PingService;
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.app.program.ManifestFields;
+import io.cdap.cdap.client.app.AppReturnsArgs;
+import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.app.PingService;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;

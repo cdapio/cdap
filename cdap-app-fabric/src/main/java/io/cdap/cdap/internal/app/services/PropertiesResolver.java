@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.security.impersonation.ImpersonationInfo;
-import co.cask.cdap.security.impersonation.OwnerAdmin;
-import co.cask.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.app.runtime.scheduler.SchedulerQueueResolver;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.security.impersonation.ImpersonationInfo;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.common.annotations.VisibleForTesting;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.runtime;
+package io.cdap.cdap.k8s.runtime;
 
 import java.util.concurrent.TimeUnit;
 

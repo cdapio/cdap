@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.builder;
+package io.cdap.cdap.api.builder;
 
 import java.util.Map;
 

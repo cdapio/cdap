@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsContext;
 
 import java.util.Set;
 

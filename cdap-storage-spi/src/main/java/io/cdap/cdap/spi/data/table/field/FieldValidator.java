@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.table.field;
+package io.cdap.cdap.spi.data.table.field;
 
-import co.cask.cdap.spi.data.InvalidFieldException;
-import co.cask.cdap.spi.data.table.StructuredTableSchema;
+import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 
 import java.util.Collection;
 import java.util.List;

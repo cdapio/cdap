@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data.startup;
+package io.cdap.cdap.data.startup;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.apache.tephra.TxConstants;
 import org.junit.Test;
 

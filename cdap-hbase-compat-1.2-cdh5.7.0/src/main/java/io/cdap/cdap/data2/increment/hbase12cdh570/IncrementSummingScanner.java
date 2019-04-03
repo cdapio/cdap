@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase12cdh570;
+package io.cdap.cdap.data2.increment.hbase12cdh570;
 
-import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
+import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
 import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

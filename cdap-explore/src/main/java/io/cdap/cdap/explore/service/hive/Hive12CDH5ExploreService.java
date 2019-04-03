@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service.hive;
+package io.cdap.cdap.explore.service.hive;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.HiveUtilities;
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.explore.HiveUtilities;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.explore.service.HandleNotFoundException;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -48,7 +48,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * Hive 12 patched for CDH5 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
+ * Hive 12 patched for CDH5 implementation of {@link io.cdap.cdap.explore.service.ExploreService}.
  * There is only 1 change compared to Hive 13 implementation -
  * <ol>
  *   <li>{@link org.apache.hive.service.cli.CLIService#getOperationStatus(org.apache.hive.service.cli.OperationHandle)}

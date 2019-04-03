@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.internal.io.TypeRepresentation;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.SchemaGenerator;
+import io.cdap.cdap.internal.io.TypeRepresentation;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -138,8 +138,8 @@ public class ObjectMappedTableProperties {
     /**
      * Sets the column type for the row key column in the corresponding Hive table for an ObjectMappedTable.
      * By default, the type of the row key in your Hive table will be binary. You can set the type using this
-     * method. Only {@link co.cask.cdap.api.data.schema.Schema.Type#BYTES Schema.Type.BYTES} and
-     * {@link co.cask.cdap.api.data.schema.Schema.Type#STRING Schema.Type.STRING} are allowed.
+     * method. Only {@link io.cdap.cdap.api.data.schema.Schema.Type#BYTES Schema.Type.BYTES} and
+     * {@link io.cdap.cdap.api.data.schema.Schema.Type#STRING Schema.Type.STRING} are allowed.
      *
      * For example, if you are storing an Object with a single string field named "id", the corresponding
      * Hive table will have a schema of (rowkey binary, id string). If you set the type to a string using this method,

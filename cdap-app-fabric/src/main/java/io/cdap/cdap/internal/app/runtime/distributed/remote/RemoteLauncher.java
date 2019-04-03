@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import org.apache.twill.internal.Constants;
 import org.apache.twill.launcher.TwillLauncher;

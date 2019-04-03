@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.logging.gateway.handlers.store;
+package io.cdap.cdap.logging.gateway.handlers.store;
 
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.spi.data.StructuredRow;
-import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.Fields;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.data.StructuredRow;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.gson.Gson;
 
 import java.io.IOException;

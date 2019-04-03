@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi;
+package io.cdap.cdap.securestore.spi;
 
-import co.cask.cdap.securestore.gcp.cloudkms.SecretInfo;
-import co.cask.cdap.securestore.gcp.cloudkms.SecretInfoCodec;
+import io.cdap.cdap.securestore.gcp.cloudkms.SecretInfo;
+import io.cdap.cdap.securestore.gcp.cloudkms.SecretInfoCodec;
 import org.junit.Assert;
 import org.junit.Test;
 

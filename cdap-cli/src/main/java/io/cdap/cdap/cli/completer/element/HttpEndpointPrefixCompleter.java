@@ -14,17 +14,17 @@
  * the License
  */
 
-package co.cask.cdap.cli.completer.element;
+package io.cdap.cdap.cli.completer.element;
 
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ProgramIdArgument;
-import co.cask.cdap.cli.util.ArgumentParser;
-import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ProgramIdArgument;
+import io.cdap.cdap.cli.util.ArgumentParser;
+import io.cdap.cdap.client.ServiceClient;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.cli.completers.PrefixCompleter;
 
 import java.io.IOException;

@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.SecureKeyNotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.test.SingletonExternalResource;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.StandaloneTester;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.SecureKeyNotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
+import io.cdap.cdap.test.SingletonExternalResource;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;

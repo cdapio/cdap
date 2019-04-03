@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.cli.util;
+package io.cdap.cdap.cli.util;
 
-import co.cask.cdap.cli.ProgramIdArgument;
+import io.cdap.cdap.cli.ProgramIdArgument;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;

@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.sql.datasources.dataset
+package io.cdap.cdap.app.runtime.spark.sql.datasources.dataset
 
-import co.cask.cdap.api.data.batch.RecordScannable
-import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.data.batch.Splits
-import co.cask.cdap.api.data.format.StructuredRecord
-import co.cask.cdap.api.data.schema.UnsupportedTypeException
-import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.api.spark.sql.DataFrames
-import co.cask.cdap.app.runtime.spark.SparkClassLoader
-import co.cask.cdap.app.runtime.spark.data.RecordScannableRDD
-import co.cask.cdap.proto.id.DatasetId
+import io.cdap.cdap.api.data.batch.RecordScannable
+import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.data.batch.Splits
+import io.cdap.cdap.api.data.format.StructuredRecord
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException
+import io.cdap.cdap.api.dataset.Dataset
+import io.cdap.cdap.api.spark.sql.DataFrames
+import io.cdap.cdap.app.runtime.spark.SparkClassLoader
+import io.cdap.cdap.app.runtime.spark.data.RecordScannableRDD
+import io.cdap.cdap.proto.id.DatasetId
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SQLContext

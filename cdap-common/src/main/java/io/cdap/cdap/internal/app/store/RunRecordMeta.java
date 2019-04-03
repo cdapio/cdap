@@ -13,15 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.store;
+package io.cdap.cdap.internal.app.store;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.proto.ProgramRunCluster;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.proto.ProgramRunCluster;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 

@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.service.http;
+package io.cdap.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.service.http.HttpContentConsumer;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
-import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.cdap.internal.asm.Methods;
-import co.cask.cdap.internal.asm.Signatures;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.service.http.HttpContentConsumer;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.internal.asm.Methods;
+import io.cdap.cdap.internal.asm.Signatures;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
@@ -178,7 +178,7 @@ final class HttpHandlerGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
     // DEBUG block. Uncomment for debug
-    // co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+    // io.cdap.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.security.auth;
+package io.cdap.cdap.security.auth;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.io.Codec;
-import co.cask.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.slf4j.Logger;

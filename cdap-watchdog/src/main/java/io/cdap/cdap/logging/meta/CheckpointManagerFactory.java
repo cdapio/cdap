@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.meta;
+package io.cdap.cdap.logging.meta;
 
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 

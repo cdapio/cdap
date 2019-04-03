@@ -14,16 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.hive.datasets;
+package io.cdap.cdap.hive.datasets;
 
-import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.DatasetNotFoundException;
-import co.cask.cdap.format.StructuredRecordStringConverter;
+import io.cdap.cdap.api.data.batch.RecordWritable;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.common.DatasetNotFoundException;
+import io.cdap.cdap.format.StructuredRecordStringConverter;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;

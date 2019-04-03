@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.proto;
+package io.cdap.cdap.proto;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.workflow.NodeStatus;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.workflow.NodeStatus;
 
 import java.util.EnumSet;
 import java.util.Set;

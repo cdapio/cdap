@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.utils;
+package io.cdap.cdap.common.utils;
 
 import java.io.IOException;
 import java.net.Socket;

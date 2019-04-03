@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package io.cdap.cdap.test.internal;
 
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.WorkerManager;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.AppFabricClient;
+import io.cdap.cdap.test.AbstractProgramManager;
+import io.cdap.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 

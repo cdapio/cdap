@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark.service;
+package io.cdap.cdap.api.spark.service;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.spark.ExtendedSparkConfigurer;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.spark.SparkMain;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.annotation.TransactionControl;
+import io.cdap.cdap.api.annotation.TransactionPolicy;
+import io.cdap.cdap.api.spark.ExtendedSparkConfigurer;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.spark.SparkMain;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

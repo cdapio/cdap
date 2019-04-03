@@ -14,26 +14,26 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.hbase;
+package io.cdap.cdap.messaging.store.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.guice.NamespaceAdminTestModule;
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data2.util.hbase.ConfigurationReader;
-import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.PayloadTableTest;
-import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
+import io.cdap.cdap.data.hbase.HBaseTestBase;
+import io.cdap.cdap.data2.util.hbase.ConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.ConfigurationWriter;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.store.MetadataTable;
+import io.cdap.cdap.messaging.store.PayloadTable;
+import io.cdap.cdap.messaging.store.PayloadTableTest;
+import io.cdap.cdap.messaging.store.TableFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;

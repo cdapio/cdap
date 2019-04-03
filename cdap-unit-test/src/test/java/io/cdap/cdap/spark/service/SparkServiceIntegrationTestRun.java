@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.spark.service;
+package io.cdap.cdap.spark.service;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.DataSetManager;
+import io.cdap.cdap.test.ServiceManager;
+import io.cdap.cdap.test.SparkManager;
+import io.cdap.cdap.test.XSlowTests;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Throwables;
 import org.apache.commons.io.Charsets;
 import org.junit.Assert;

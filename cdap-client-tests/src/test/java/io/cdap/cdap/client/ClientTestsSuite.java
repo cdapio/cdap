@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.test.TestSuite;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.client.common.ClientTestBase;
+import io.cdap.cdap.common.test.TestSuite;
+import io.cdap.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

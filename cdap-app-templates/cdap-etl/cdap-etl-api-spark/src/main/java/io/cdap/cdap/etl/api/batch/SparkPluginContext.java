@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.batch;
+package io.cdap.cdap.etl.api.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
 import org.apache.spark.SparkConf;
 
 /**

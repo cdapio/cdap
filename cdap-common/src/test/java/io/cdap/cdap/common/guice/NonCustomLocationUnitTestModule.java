@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.guice;
+package io.cdap.cdap.common.guice;
 
-import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
-import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
-import co.cask.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.common.namespace.DefaultNamespacePathLocator;
+import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.namespace.NoLookupNamespacePathLocator;
+import io.cdap.cdap.proto.NamespaceMeta;
 
 /**
  * Location Factory guice binding for unit tests. It extends from the

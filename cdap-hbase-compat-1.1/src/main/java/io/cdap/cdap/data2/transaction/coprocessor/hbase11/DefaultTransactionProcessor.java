@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.coprocessor.hbase11;
+package io.cdap.cdap.data2.transaction.coprocessor.hbase11;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
-import co.cask.cdap.data2.increment.hbase11.IncrementTxFilter;
-import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCache;
-import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
-import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
+import io.cdap.cdap.data2.increment.hbase11.IncrementTxFilter;
+import io.cdap.cdap.data2.transaction.coprocessor.CConfigurationCache;
+import io.cdap.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
+import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -53,7 +53,7 @@ import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link org.apache.tephra.hbase.coprocessor.TransactionProcessor}
- * coprocessor that uses {@link co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCache}
+ * coprocessor that uses {@link io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCache}
  * to automatically refresh transaction state.
  */
 public class DefaultTransactionProcessor extends TransactionProcessor {

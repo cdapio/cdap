@@ -14,72 +14,72 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.NotImplementedException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.security.AuditDetail;
-import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.BatchProgram;
-import co.cask.cdap.proto.BatchProgramCount;
-import co.cask.cdap.proto.BatchProgramHistory;
-import co.cask.cdap.proto.BatchProgramResult;
-import co.cask.cdap.proto.BatchProgramStart;
-import co.cask.cdap.proto.BatchProgramStatus;
-import co.cask.cdap.proto.BatchRunnable;
-import co.cask.cdap.proto.BatchRunnableInstances;
-import co.cask.cdap.proto.Containers;
-import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.MRJobInfo;
-import co.cask.cdap.proto.NotRunningProgramLiveInfo;
-import co.cask.cdap.proto.ProgramHistory;
-import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.RunCountResult;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.scheduler.ProgramScheduleService;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.NotImplementedException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.BatchProgram;
+import io.cdap.cdap.proto.BatchProgramCount;
+import io.cdap.cdap.proto.BatchProgramHistory;
+import io.cdap.cdap.proto.BatchProgramResult;
+import io.cdap.cdap.proto.BatchProgramStart;
+import io.cdap.cdap.proto.BatchProgramStatus;
+import io.cdap.cdap.proto.BatchRunnable;
+import io.cdap.cdap.proto.BatchRunnableInstances;
+import io.cdap.cdap.proto.Containers;
+import io.cdap.cdap.proto.Instances;
+import io.cdap.cdap.proto.MRJobInfo;
+import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
+import io.cdap.cdap.proto.ProgramHistory;
+import io.cdap.cdap.proto.ProgramLiveInfo;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.RunCountResult;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ServiceInstances;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -614,11 +614,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       .app(triggerAppName, triggerAppVersion)
       .program(programType, triggerProgramName);
 
-    Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
+    Set<io.cdap.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
     if (triggerProgramStatuses != null) {
       try {
         for (String status : triggerProgramStatuses.split(",")) {
-          queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
+          queryProgramStatuses.add(io.cdap.cdap.api.ProgramStatus.valueOf(status));
         }
       } catch (Exception e) {
         throw new BadRequestException(String.format("Unable to parse program statuses '%s'. Must be comma separated " +
@@ -627,7 +627,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     } else {
       // Query for schedules with all the statuses if no query status is specified
-      Collections.addAll(queryProgramStatuses, co.cask.cdap.api.ProgramStatus.values());
+      Collections.addAll(queryProgramStatuses, io.cdap.cdap.api.ProgramStatus.values());
     }
 
     List<ScheduleDetail> details = programScheduleService.findTriggeredBy(triggerProgramId, queryProgramStatuses)
@@ -681,7 +681,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Get schedules in a given application, optionally filtered by the given
-   * {@link co.cask.cdap.proto.ProtoTrigger.Type}.
+   * {@link io.cdap.cdap.proto.ProtoTrigger.Type}.
    * @param namespaceId namespace of the application to get schedules from
    * @param appName name of the application to get schedules from
    * @param appVersion version of the application to get schedules from

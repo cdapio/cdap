@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package io.cdap.cdap.app.runtime;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.ProgramType;
 import com.google.inject.Injector;
 
 import java.lang.annotation.ElementType;

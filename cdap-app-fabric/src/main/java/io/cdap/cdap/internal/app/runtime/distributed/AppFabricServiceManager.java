@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.MasterServiceManager;
-import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
-import co.cask.cdap.proto.Containers;
-import co.cask.cdap.proto.SystemServiceLiveInfo;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.twill.MasterServiceManager;
+import io.cdap.cdap.common.zookeeper.election.LeaderElectionInfoService;
+import io.cdap.cdap.proto.Containers;
+import io.cdap.cdap.proto.SystemServiceLiveInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.logging.LogEntry;

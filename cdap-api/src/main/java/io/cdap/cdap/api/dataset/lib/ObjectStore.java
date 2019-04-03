@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib;
+package io.cdap.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.batch.BatchReadable;
+import io.cdap.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.util.List;
 
@@ -85,7 +85,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * Scans table.
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} over
+   * @return {@link io.cdap.cdap.api.dataset.lib.CloseableIterator} over
    * {@link KeyValue KeyValue&lt;byte[], T&gt;}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.subscriber;
+package io.cdap.cdap.messaging.subscriber;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.common.utils.TimeBoundIterator;
-import co.cask.cdap.proto.id.TopicId;
-import co.cask.cdap.spi.data.StructuredTableContext;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.spi.data.transaction.TxCallable;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.TimeBoundIterator;
+import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxCallable;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.registry;
+package io.cdap.cdap.data2.registry;
 
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Store program -> dataset/stream usage information. Differs from UsageRegistry in that UsageRegistry does not have

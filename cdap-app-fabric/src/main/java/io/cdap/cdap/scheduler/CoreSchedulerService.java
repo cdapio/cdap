@@ -14,45 +14,45 @@
  * the License.
  */
 
-package co.cask.cdap.scheduler;
+package io.cdap.cdap.scheduler;
 
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProfileConflictException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.service.RetryOnStartFailureService;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
-import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.store.profile.ProfileStore;
-import co.cask.cdap.internal.profile.AdminEventPublisher;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.runtime.spi.profile.ProfileStatus;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.data.transaction.TransactionException;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
+import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.store.profile.ProfileStore;
+import io.cdap.cdap.internal.profile.AdminEventPublisher;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -134,7 +134,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         timeSchedulerService.stopAndWait();
         LOG.info("Stopped core scheduler service.");
       }
-    }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
+    }, io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
     this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
   }
 

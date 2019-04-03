@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router.handlers;
+package io.cdap.cdap.gateway.router.handlers;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.AuditLogConfig;
-import co.cask.cdap.common.logging.AuditLogEntry;
-import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.gateway.router.RouterAuditLookUp;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.AuditLogConfig;
+import io.cdap.cdap.common.logging.AuditLogEntry;
+import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.gateway.router.RouterAuditLookUp;
 import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;

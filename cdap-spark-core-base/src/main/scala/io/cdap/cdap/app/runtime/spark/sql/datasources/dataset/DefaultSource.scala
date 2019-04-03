@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.sql.datasources.dataset
+package io.cdap.cdap.app.runtime.spark.sql.datasources.dataset
 
-import co.cask.cdap.api.data.batch.RecordScannable
-import co.cask.cdap.api.data.batch.RecordWritable
-import co.cask.cdap.api.data.format.StructuredRecord
-import co.cask.cdap.api.data.schema.Schema
-import co.cask.cdap.api.data.schema.UnsupportedTypeException
-import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.api.dataset.DatasetProperties
-import co.cask.cdap.api.dataset.DatasetSpecification
-import co.cask.cdap.api.dataset.InstanceNotFoundException
-import co.cask.cdap.api.spark.sql.DataFrames
-import co.cask.cdap.app.runtime.spark.SparkClassLoader
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContext
-import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
-import co.cask.cdap.data2.metadata.lineage.AccessType
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator
-import co.cask.cdap.proto.id.DatasetId
-import co.cask.cdap.proto.id.NamespaceId
+import io.cdap.cdap.api.data.batch.RecordScannable
+import io.cdap.cdap.api.data.batch.RecordWritable
+import io.cdap.cdap.api.data.format.StructuredRecord
+import io.cdap.cdap.api.data.schema.Schema
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException
+import io.cdap.cdap.api.dataset.Dataset
+import io.cdap.cdap.api.dataset.DatasetProperties
+import io.cdap.cdap.api.dataset.DatasetSpecification
+import io.cdap.cdap.api.dataset.InstanceNotFoundException
+import io.cdap.cdap.api.spark.sql.DataFrames
+import io.cdap.cdap.app.runtime.spark.SparkClassLoader
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider
+import io.cdap.cdap.data2.metadata.lineage.AccessType
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator
+import io.cdap.cdap.proto.id.DatasetId
+import io.cdap.cdap.proto.id.NamespaceId
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Encoders
@@ -151,7 +151,7 @@ class DefaultSource extends RelationProvider
   }
 
   /**
-    * Creates a [[co.cask.cdap.proto.id.DatasetId]] from the parameters.
+    * Creates a [[io.cdap.cdap.proto.id.DatasetId]] from the parameters.
     *
     * @param parameters the parameters provided to the query. The dataset name is from the `path` parameter
     * @param namespaceId the namespace of the current program execution

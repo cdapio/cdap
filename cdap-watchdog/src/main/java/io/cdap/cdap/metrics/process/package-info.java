@@ -17,4 +17,4 @@
 /**
  * This package contains classes to process collected metrics.
  */
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;

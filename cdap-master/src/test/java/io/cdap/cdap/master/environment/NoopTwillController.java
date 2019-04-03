@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment;
+package io.cdap.cdap.master.environment;
 
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;

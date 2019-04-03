@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.util.hbase;
+package io.cdap.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
@@ -129,7 +129,7 @@ public class CoprocessorManager {
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
           // other than those comes with HBase, Java, fastutil, and gson
-          if (className.startsWith("co.cask") || className.startsWith("it.unimi.dsi.fastutil")
+          if (className.startsWith("io.cdap") || className.startsWith("it.unimi.dsi.fastutil")
             || className.startsWith("org.apache.tephra") || className.startsWith("com.google.gson")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);

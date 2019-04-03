@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.format;
+package io.cdap.cdap.format;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.RecordFormat;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 
 import java.nio.ByteBuffer;

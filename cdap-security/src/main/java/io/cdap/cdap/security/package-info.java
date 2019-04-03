@@ -17,4 +17,4 @@
 /**
  * Classes to secure CDAP.
  */
-package co.cask.cdap.security;
+package io.cdap.cdap.security;

@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package io.cdap.cdap.api.spark;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.ProgramConfigurer;
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.plugin.PluginConfigurer;
+import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.ProgramConfigurer;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.RuntimeContext;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link Spark}.
@@ -33,8 +33,8 @@ public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, P
   /**
    * Sets the Spark program class name in specification.
    * The provided class should have a {@code static void main(String[])} method. It can also implements
-   * the {@code co.cask.cdap.api.spark.SparkMain} interface for Spark program written in Scala or
-   * the {@code co.cask.cdap.api.spark.JavaSparkMain} for Spark program written in Java, as defined in the
+   * the {@code io.cdap.cdap.api.spark.SparkMain} interface for Spark program written in Scala or
+   * the {@code io.cdap.cdap.api.spark.JavaSparkMain} for Spark program written in Java, as defined in the
    * {@code cdap-api-spark} module.
    *
    * @param className the fully qualified name of Spark program class.

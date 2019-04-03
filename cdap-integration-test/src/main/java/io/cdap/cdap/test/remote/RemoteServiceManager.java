@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.test.remote;
+package io.cdap.cdap.test.remote;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.client.MetricsClient;
-import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.ServiceManager;
+import io.cdap.cdap.api.metrics.RuntimeMetrics;
+import io.cdap.cdap.client.MetricsClient;
+import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.client.ServiceClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.test.AbstractProgramManager;
+import io.cdap.cdap.test.ServiceManager;
 import com.google.common.base.Throwables;
 
 import java.net.URL;

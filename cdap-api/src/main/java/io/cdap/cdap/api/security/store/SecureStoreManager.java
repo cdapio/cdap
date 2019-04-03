@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.security.store;
+package io.cdap.cdap.api.security.store;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.IOException;
 import java.util.Map;

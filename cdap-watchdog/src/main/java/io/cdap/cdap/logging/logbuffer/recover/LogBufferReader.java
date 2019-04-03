@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer.recover;
+package io.cdap.cdap.logging.logbuffer.recover;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
+import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.io.Closeables;
 
 import java.io.BufferedInputStream;

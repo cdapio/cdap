@@ -14,32 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.datastreams;
+package io.cdap.cdap.datastreams;
 
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.JoinElement;
-import co.cask.cdap.etl.api.streaming.StreamingContext;
-import co.cask.cdap.etl.api.streaming.StreamingSource;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.StageStatisticsCollector;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
-import co.cask.cdap.etl.spark.SparkCollection;
-import co.cask.cdap.etl.spark.SparkPairCollection;
-import co.cask.cdap.etl.spark.SparkPipelineRunner;
-import co.cask.cdap.etl.spark.function.PluginFunctionContext;
-import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
-import co.cask.cdap.etl.spark.streaming.DStreamCollection;
-import co.cask.cdap.etl.spark.streaming.DefaultStreamingContext;
-import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
-import co.cask.cdap.etl.spark.streaming.PairDStreamCollection;
-import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
-import co.cask.cdap.etl.spark.streaming.function.DynamicJoinMerge;
-import co.cask.cdap.etl.spark.streaming.function.DynamicJoinOn;
-import co.cask.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
-import co.cask.cdap.etl.spark.streaming.function.preview.LimitingFunction;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.streaming.StreamingContext;
+import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkPairCollection;
+import io.cdap.cdap.etl.spark.SparkPipelineRunner;
+import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
+import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import io.cdap.cdap.etl.spark.streaming.DStreamCollection;
+import io.cdap.cdap.etl.spark.streaming.DefaultStreamingContext;
+import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
+import io.cdap.cdap.etl.spark.streaming.PairDStreamCollection;
+import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
+import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinMerge;
+import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinOn;
+import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
+import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;

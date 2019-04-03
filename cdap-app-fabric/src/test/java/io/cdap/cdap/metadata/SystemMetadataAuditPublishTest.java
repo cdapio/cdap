@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package io.cdap.cdap.metadata;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.metadata.Metadata;
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.audit.AuditTestModule;
-import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.audit.AuditMessage;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.scheduler.Scheduler;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.metadata.Metadata;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.audit.AuditTestModule;
+import io.cdap.cdap.data2.audit.InMemoryAuditPublisher;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.audit.AuditMessage;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.scheduler.Scheduler;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;

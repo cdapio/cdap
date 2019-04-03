@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.async;
+package io.cdap.cdap.common.async;
 
 import java.util.List;
 import java.util.Optional;

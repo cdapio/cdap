@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package io.cdap.cdap.etl.batch;
 
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.AlertPublisher;
-import co.cask.cdap.etl.batch.connector.AlertPublisherSink;
-import co.cask.cdap.etl.batch.connector.ConnectorFactory;
-import co.cask.cdap.etl.batch.connector.ConnectorSink;
-import co.cask.cdap.etl.batch.connector.ConnectorSource;
-import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.plugin.PluginContext;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.AlertPublisher;
+import io.cdap.cdap.etl.batch.connector.AlertPublisherSink;
+import io.cdap.cdap.etl.batch.connector.ConnectorFactory;
+import io.cdap.cdap.etl.batch.connector.ConnectorSink;
+import io.cdap.cdap.etl.batch.connector.ConnectorSource;
+import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.HashSet;
 import java.util.Set;

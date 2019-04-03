@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.etl.api.Aggregator;
-import co.cask.cdap.etl.api.Joiner;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.api.Aggregator;
+import io.cdap.cdap.etl.api.Joiner;
 import com.google.common.reflect.TypeToken;
 
 /**

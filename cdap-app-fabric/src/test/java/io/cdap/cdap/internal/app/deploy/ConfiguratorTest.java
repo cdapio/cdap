@@ -14,34 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy;
+package io.cdap.cdap.internal.app.deploy;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
-import co.cask.cdap.app.deploy.ConfigResponse;
-import co.cask.cdap.app.deploy.Configurator;
-import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.impersonation.DefaultImpersonator;
-import co.cask.cdap.security.impersonation.EntityImpersonator;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.ConfigTestApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
+import io.cdap.cdap.app.runtime.DummyProgramRunnerFactory;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
+import io.cdap.cdap.security.impersonation.DefaultImpersonator;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -63,8 +63,8 @@ import java.util.concurrent.TimeUnit;
  * Tests the configurators.
  *
  * NOTE: Until we can build the JAR it's difficult to test other configurators
- * {@link co.cask.cdap.internal.app.deploy.InMemoryConfigurator} &
- * {@link co.cask.cdap.internal.app.deploy.SandboxConfigurator}
+ * {@link io.cdap.cdap.internal.app.deploy.InMemoryConfigurator} &
+ * {@link io.cdap.cdap.internal.app.deploy.SandboxConfigurator}
  */
 public class ConfiguratorTest {
 

@@ -17,4 +17,4 @@
 /**
  * Classes to handle REST calls to meta data stores.
  */
-package co.cask.cdap.gateway.handlers.meta;
+package io.cdap.cdap.gateway.handlers.meta;

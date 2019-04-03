@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.TriggerInfo;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerInfoCodec;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoCodec;
+import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -31,7 +31,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 
 /**
- * Helper class to encoded/decode {@link co.cask.cdap.api.schedule.TriggeringScheduleInfo} to/from json.
+ * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from json.
  */
 public class TriggeringScheduleInfoAdapter {
 

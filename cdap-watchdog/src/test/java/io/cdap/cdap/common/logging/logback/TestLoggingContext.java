@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging.logback;
+package io.cdap.cdap.common.logging.logback;
 
-import co.cask.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
 
 /**
  * Logging context used for testing purpose.

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers.hooks;
+package io.cdap.cdap.gateway.handlers.hooks;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.gateway.GatewayFastTestsSuite;
-import co.cask.cdap.gateway.GatewayTestBase;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.gateway.GatewayFastTestsSuite;
+import io.cdap.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;

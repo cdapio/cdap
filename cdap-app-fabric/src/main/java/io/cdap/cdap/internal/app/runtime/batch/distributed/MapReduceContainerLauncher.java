@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch.distributed;
+package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
-import co.cask.cdap.common.app.MainClassLoader;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import io.cdap.cdap.common.app.MainClassLoader;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -102,7 +102,7 @@ public class MapReduceContainerLauncher {
       // Invoke MapReduceClassLoader.getTaskContextProvider()
       classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
       // Invoke StandardOutErrorRedirector.redirectToLogger()
-      classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
+      classLoader.loadClass("io.cdap.cdap.common.logging.StandardOutErrorRedirector")
         .getDeclaredMethod("redirectToLogger", String.class)
         .invoke(null, mainClassName);
 

@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.client.app.AllProgramsApp;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
-import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.metadata.lineage.CollapseType;
-import co.cask.cdap.proto.metadata.lineage.LineageRecord;
-import co.cask.cdap.test.SlowTests;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.client.app.AllProgramsApp;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.Lineage;
+import io.cdap.cdap.data2.metadata.lineage.LineageSerializer;
+import io.cdap.cdap.data2.metadata.lineage.Relation;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
+import io.cdap.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;

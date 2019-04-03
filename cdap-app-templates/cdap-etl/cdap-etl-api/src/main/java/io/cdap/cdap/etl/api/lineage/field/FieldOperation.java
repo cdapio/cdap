@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.lineage.field;
+package io.cdap.cdap.etl.api.lineage.field;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 import java.util.Objects;
 

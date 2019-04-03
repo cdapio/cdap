@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule;
+package io.cdap.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 
 import java.util.HashMap;

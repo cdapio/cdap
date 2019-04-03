@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
 import org.apache.spark.SparkContext
 
 /**
-  * A Spark program that has a static main method instead of extending from [[co.cask.cdap.api.spark.SparkMain]].
+  * A Spark program that has a static main method instead of extending from [[io.cdap.cdap.api.spark.SparkMain]].
   */
 object ScalaClassicSparkProgram {
 

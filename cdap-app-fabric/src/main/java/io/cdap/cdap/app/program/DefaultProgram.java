@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.program;
+package io.cdap.cdap.app.program;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.Closeable;

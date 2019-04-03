@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi;
+package io.cdap.cdap.runtime.spi;
 
 
 /**

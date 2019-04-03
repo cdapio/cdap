@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.partitioned;
+package io.cdap.cdap.api.dataset.lib.partitioned;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;

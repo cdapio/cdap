@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package io.cdap.cdap.data.tools;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.data2.util.hbase.CoprocessorManager;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.data2.util.hbase.CoprocessorManager;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.cli.BasicParser;

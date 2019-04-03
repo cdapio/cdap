@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment;
+package io.cdap.cdap.master.environment;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.sql;
+package io.cdap.cdap.spi.data.sql;
 
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableRegistryTest;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistryTest;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

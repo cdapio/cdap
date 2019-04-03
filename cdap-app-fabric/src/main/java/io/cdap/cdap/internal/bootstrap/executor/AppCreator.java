@@ -15,20 +15,20 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.retry.RetryableException;
-import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;

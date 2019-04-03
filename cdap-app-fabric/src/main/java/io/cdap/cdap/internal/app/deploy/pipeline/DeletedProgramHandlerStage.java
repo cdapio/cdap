@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricsSystemClient;
-import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.metadata.writer.MetadataOperation;
-import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProgramTypes;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.scheduler.Scheduler;
+import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
+import io.cdap.cdap.pipeline.AbstractStage;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ProgramTypes;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.scheduler.Scheduler;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

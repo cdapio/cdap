@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.explore.table;
+package io.cdap.cdap.explore.table;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;

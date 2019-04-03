@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains implementations of {@link co.cask.cdap.api.messaging.MessagingContext} to be used
+ * This package contains implementations of {@link io.cdap.cdap.api.messaging.MessagingContext} to be used
  * in multi-threaded environment.
  */
-package co.cask.cdap.messaging.context;
+package io.cdap.cdap.messaging.context;

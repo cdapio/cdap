@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
-import co.cask.cdap.api.service.http.HttpServiceRequest
-import co.cask.cdap.api.service.http.HttpServiceResponder
-import co.cask.cdap.api.spark.service.AbstractSparkHttpServiceHandler
+import io.cdap.cdap.api.service.http.HttpServiceRequest
+import io.cdap.cdap.api.service.http.HttpServiceResponder
+import io.cdap.cdap.api.spark.service.AbstractSparkHttpServiceHandler
 
 import javax.ws.rs.GET
 import javax.ws.rs.Path

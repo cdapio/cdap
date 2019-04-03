@@ -15,12 +15,12 @@
  *
  */
 
-package co.cask.cdap.etl.proto.v2.spec;
+package io.cdap.cdap.etl.proto.v2.spec;
 
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.api.SplitterTransform;
-import co.cask.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
 
 import java.io.Serializable;
 import java.util.Collections;

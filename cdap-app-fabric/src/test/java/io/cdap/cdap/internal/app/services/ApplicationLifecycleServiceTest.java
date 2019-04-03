@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package io.cdap.cdap.internal.app.services;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.AppWithProgramsUsingGuava;
-import co.cask.cdap.MissingMapReduceWorkflowApp;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ProgramResources;
-import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.AppWithProgramsUsingGuava;
+import io.cdap.cdap.MissingMapReduceWorkflowApp;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.ProgramResources;
+import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -121,7 +121,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
   /**
    * Some tests for owner information storage/propagation during app deployment.
-   * More tests at handler level {@link co.cask.cdap.internal.app.services.http.handlers.AppLifecycleHttpHandlerTest}
+   * More tests at handler level {@link io.cdap.cdap.internal.app.services.http.handlers.AppLifecycleHttpHandlerTest}
    */
   @Test
   public void testOwner() throws Exception {

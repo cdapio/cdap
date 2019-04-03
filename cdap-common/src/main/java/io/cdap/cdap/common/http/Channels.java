@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.http;
+package io.cdap.cdap.common.http;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;

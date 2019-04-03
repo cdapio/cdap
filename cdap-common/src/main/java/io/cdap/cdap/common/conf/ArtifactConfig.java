@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.common.conf;
+package io.cdap.cdap.common.conf;
 
-import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.proto.artifact.ArtifactRanges;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;

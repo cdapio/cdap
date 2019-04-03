@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package io.cdap.cdap.api;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.preview.DataTracer;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.preview.DataTracer;
 import org.apache.twill.api.RunId;
 
 import java.util.Map;

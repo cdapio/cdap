@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.HttpExceptionHandler;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;

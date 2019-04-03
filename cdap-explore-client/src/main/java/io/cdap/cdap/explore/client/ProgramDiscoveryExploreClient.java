@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package io.cdap.cdap.explore.client;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 

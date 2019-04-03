@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package io.cdap.cdap.explore.jdbc;
 
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.explore.service.MetaDataInfo;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.service.MetaDataInfo;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;

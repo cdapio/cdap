@@ -15,9 +15,9 @@
  *
  */
 
-package co.cask.cdap.internal.bootstrap.executor;
+package io.cdap.cdap.internal.bootstrap.executor;
 
-import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
 
 /**

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package io.cdap.cdap.api.annotation;
 
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

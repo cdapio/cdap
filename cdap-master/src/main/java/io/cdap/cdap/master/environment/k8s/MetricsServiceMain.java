@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.DFSLocationModule;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.metrics.guice.MetricsHandlerModule;
-import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import co.cask.cdap.metrics.process.MetricsAdminSubscriberService;
-import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
-import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
+import io.cdap.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import io.cdap.cdap.metrics.process.MetricsAdminSubscriberService;
+import io.cdap.cdap.metrics.process.MetricsProcessorStatusService;
+import io.cdap.cdap.metrics.query.MetricsQueryService;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import com.google.inject.Module;

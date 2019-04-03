@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package io.cdap.cdap.internal.app.runtime;
 
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Charsets;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;

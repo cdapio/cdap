@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package io.cdap.cdap.master.environment.k8s;
 
-import co.cask.cdap.k8s.discovery.KubeDiscoveryService;
-import co.cask.cdap.k8s.runtime.KubeTwillRunnerService;
-import co.cask.cdap.master.spi.environment.MasterEnvironment;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
-import co.cask.cdap.master.spi.environment.MasterEnvironmentTask;
+import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
+import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.kubernetes.client.ApiException;

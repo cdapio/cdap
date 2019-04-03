@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.security;
+package io.cdap.cdap.proto.security;
 
-import co.cask.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.Beta;
 
 /**
  * Represents a {@link Role} that can be added to a {@link Principal user} or {@link Principal group}.

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.guice;
+package io.cdap.cdap.metrics.guice;
 
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.metrics.store.DefaultMetricDatasetFactory;
+import io.cdap.cdap.metrics.store.DefaultMetricStore;
+import io.cdap.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 

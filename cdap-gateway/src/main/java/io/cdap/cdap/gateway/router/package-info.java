@@ -17,4 +17,4 @@
 /**
  * Router to route requests to Discoverable Gateways.
  */
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;

@@ -17,4 +17,4 @@
 /**
  * This package contains in-memory implementations of the table dataset.
  */
-package co.cask.cdap.data2.dataset2.lib.table.inmemory;
+package io.cdap.cdap.data2.dataset2.lib.table.inmemory;

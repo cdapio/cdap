@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package io.cdap.cdap.api.service;
 
-import co.cask.cdap.api.AbstractProgramSpecification;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.AbstractProgramSpecification;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 
 import java.util.Collections;
 import java.util.HashMap;

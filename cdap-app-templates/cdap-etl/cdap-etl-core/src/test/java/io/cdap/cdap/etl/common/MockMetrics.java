@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.metrics.Metrics;
+import io.cdap.cdap.api.metrics.Metrics;
 import com.google.common.collect.Maps;
 
 import java.util.Map;

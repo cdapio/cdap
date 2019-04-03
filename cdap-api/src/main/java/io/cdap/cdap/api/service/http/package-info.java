@@ -15,7 +15,7 @@
  */
 
 /**
- * Defines a service for handling HTTP requests. Refer to {@link co.cask.cdap.api.service.http.HttpServiceHandler}
+ * Defines a service for handling HTTP requests. Refer to {@link io.cdap.cdap.api.service.http.HttpServiceHandler}
  * for details.
  */
-package co.cask.cdap.api.service.http;
+package io.cdap.cdap.api.service.http;

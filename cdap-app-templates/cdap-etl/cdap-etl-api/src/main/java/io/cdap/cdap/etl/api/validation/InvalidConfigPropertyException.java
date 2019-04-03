@@ -15,7 +15,7 @@
  *
  */
 
-package co.cask.cdap.etl.api.validation;
+package io.cdap.cdap.etl.api.validation;
 
 /**
  * Indicates a config property is invalid.

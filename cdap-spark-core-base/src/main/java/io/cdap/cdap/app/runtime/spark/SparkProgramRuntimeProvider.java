@@ -14,19 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package io.cdap.cdap.app.runtime.spark;
 
-import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
-import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.internal.app.spark.SparkCompatReader;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
+import io.cdap.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;

@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.store;
+package io.cdap.cdap.internal.app.store;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
-import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.StoreDefinition;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
+import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.store.DefaultNamespaceStore;
+import io.cdap.cdap.store.StoreDefinition;
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;

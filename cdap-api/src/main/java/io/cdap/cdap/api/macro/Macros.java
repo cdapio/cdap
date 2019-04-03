@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.macro;
+package io.cdap.cdap.api.macro;
 
 import java.io.Serializable;
 import java.util.HashSet;

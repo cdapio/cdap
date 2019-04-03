@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.explore.guice;
+package io.cdap.cdap.explore.guice;
 
-import co.cask.cdap.explore.client.DiscoveryExploreClient;
-import co.cask.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.explore.client.DiscoveryExploreClient;
+import io.cdap.cdap.explore.client.ExploreClient;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 

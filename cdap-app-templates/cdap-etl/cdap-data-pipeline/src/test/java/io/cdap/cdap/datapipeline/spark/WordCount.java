@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline.spark;
+package io.cdap.cdap.datapipeline.spark;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;

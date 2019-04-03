@@ -14,62 +14,62 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.AppWithMultipleSchedules;
-import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.AppWithServices;
-import co.cask.cdap.AppWithWorker;
-import co.cask.cdap.AppWithWorkflow;
-import co.cask.cdap.DummyAppWithTrackingTable;
-import co.cask.cdap.SleepingWorkflowApp;
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.internal.app.ServiceSpecificationCodec;
-import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.provision.MockProvisioner;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.BatchProgramHistory;
-import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramRunClusterStatus;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.XSlowTests;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.AppWithMultipleSchedules;
+import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.AppWithWorker;
+import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.DummyAppWithTrackingTable;
+import io.cdap.cdap.SleepingWorkflowApp;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import io.cdap.cdap.internal.app.ServiceSpecificationCodec;
+import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.provision.MockProvisioner;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.BatchProgramHistory;
+import io.cdap.cdap.proto.Instances;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramRunClusterStatus;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ServiceInstances;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.test.SlowTests;
+import io.cdap.cdap.test.XSlowTests;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -549,7 +549,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       startProgram(workflowId, args);
 
       // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
-      waitState(workflowId, co.cask.cdap.proto.ProgramStatus.STARTING.name());
+      waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
 
       stopProgram(workflowId);
       waitState(workflowId, STOPPED);
@@ -577,7 +577,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       startProgram(workflowId, args);
 
       // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
-      waitState(workflowId, co.cask.cdap.proto.ProgramStatus.STARTING.name());
+      waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
       List<RunRecord> runRecords = getProgramRuns(workflowId, ProgramRunStatus.PENDING);
       Assert.assertEquals(1, runRecords.size());
       String runId = runRecords.iterator().next().getPid();
@@ -861,7 +861,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ApplicationSpecification allProgramSpec = Specifications.from(new AllProgramsApp());
 
     // verify list by namespace
-    for (co.cask.cdap.api.app.ProgramType type : co.cask.cdap.api.app.ProgramType.values()) {
+    for (io.cdap.cdap.api.app.ProgramType type : io.cdap.cdap.api.app.ProgramType.values()) {
       Set<String> programsByType = allProgramSpec.getProgramsByType(type);
       verifyProgramList(TEST_NAMESPACE1, ProgramType.valueOf(type.name()), programsByType.size());
     }
@@ -869,7 +869,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     verifyProgramList(TEST_NAMESPACE2, ProgramType.SERVICE, 1);
 
     // verify list by app
-    for (co.cask.cdap.api.app.ProgramType type : co.cask.cdap.api.app.ProgramType.values()) {
+    for (io.cdap.cdap.api.app.ProgramType type : io.cdap.cdap.api.app.ProgramType.values()) {
       Set<String> programsByType = allProgramSpec.getProgramsByType(type);
       verifyProgramList(TEST_NAMESPACE1, AllProgramsApp.NAME, ProgramType.valueOf(type.name()), programsByType.size());
     }

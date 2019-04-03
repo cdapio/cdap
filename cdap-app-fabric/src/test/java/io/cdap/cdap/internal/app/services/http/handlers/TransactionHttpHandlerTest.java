@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services.http.handlers;
+package io.cdap.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;

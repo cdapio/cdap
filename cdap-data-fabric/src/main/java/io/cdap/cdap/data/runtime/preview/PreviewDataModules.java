@@ -13,28 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.runtime.preview;
+package io.cdap.cdap.data.runtime.preview;
 
-import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.preview.PreviewDatasetFramework;
-import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
-import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
-import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
-import co.cask.cdap.data2.registry.NoOpUsageRegistry;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.data2.registry.UsageWriter;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
+import io.cdap.cdap.data.runtime.DataFabricLevelDBModule;
+import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.preview.PreviewDatasetFramework;
+import io.cdap.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.LineageStoreReader;
+import io.cdap.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageReader;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
+import io.cdap.cdap.data2.metadata.writer.LineageWriter;
+import io.cdap.cdap.data2.metadata.writer.NoOpLineageWriter;
+import io.cdap.cdap.data2.registry.NoOpUsageRegistry;
+import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.data2.registry.UsageWriter;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;

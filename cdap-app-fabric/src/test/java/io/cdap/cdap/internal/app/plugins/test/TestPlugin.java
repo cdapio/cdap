@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.plugins.test;
+package io.cdap.cdap.internal.app.plugins.test;
 
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.plugin.PluginConfig;
 import com.google.common.base.Joiner;
 
 import java.util.concurrent.Callable;

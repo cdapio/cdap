@@ -14,47 +14,47 @@
  * the License.
  */
 
-package co.cask.cdap.app;
+package io.cdap.cdap.app;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.api.schedule.TriggerFactory;
-import co.cask.cdap.api.service.Service;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.SystemServiceConfigurer;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
-import co.cask.cdap.internal.app.AbstractConfigurer;
-import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
-import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
-import co.cask.cdap.internal.app.services.DefaultSystemTableConfigurer;
-import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
-import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
-import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationConfigurer;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.schedule.ScheduleBuilder;
+import io.cdap.cdap.api.schedule.TriggerFactory;
+import io.cdap.cdap.api.service.Service;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.SystemServiceConfigurer;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.api.worker.Worker;
+import io.cdap.cdap.api.worker.WorkerSpecification;
+import io.cdap.cdap.api.workflow.Workflow;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
+import io.cdap.cdap.internal.app.AbstractConfigurer;
+import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
+import io.cdap.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
+import io.cdap.cdap.internal.app.services.DefaultServiceConfigurer;
+import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
+import io.cdap.cdap.internal.app.spark.DefaultSparkConfigurer;
+import io.cdap.cdap.internal.app.worker.DefaultWorkerConfigurer;
+import io.cdap.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
@@ -137,12 +137,12 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     // It is a bit hacky here to look for the DefaultExtendedSparkConfigurer implementation through the
     // SparkRunnerClassloader directly (CDAP-11797)
     ClassLoader sparkRunnerClassLoader = ClassLoaders.findByName(
-      spark.getClass().getClassLoader(), "co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
+      spark.getClass().getClassLoader(), "io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
 
     if (sparkRunnerClassLoader != null) {
       try {
         configurer = (DefaultSparkConfigurer) sparkRunnerClassLoader
-          .loadClass("co.cask.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
+          .loadClass("io.cdap.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
           .getConstructor(Spark.class, Id.Namespace.class, Id.Artifact.class,
                           ArtifactRepository.class, PluginInstantiator.class)
           .newInstance(spark, deployNamespace, artifactId, artifactRepository, pluginInstantiator);

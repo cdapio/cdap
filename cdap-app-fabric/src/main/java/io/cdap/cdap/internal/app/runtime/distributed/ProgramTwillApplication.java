@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.twill.TwillAppNames;
-import co.cask.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.twill.TwillAppNames;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import org.apache.twill.api.EventHandler;

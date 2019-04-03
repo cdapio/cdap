@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store.cache;
+package io.cdap.cdap.messaging.store.cache;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.utils.TimeProvider;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.cache.MessageCache;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.store.ImmutableMessageTableEntry;
-import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.messaging.store.leveldb.LevelDBMessageTableTest;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.cache.MessageCache;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.store.ImmutableMessageTableEntry;
+import io.cdap.cdap.messaging.store.MessageTable;
+import io.cdap.cdap.messaging.store.leveldb.LevelDBMessageTableTest;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

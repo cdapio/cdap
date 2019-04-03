@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto.v1;
+package io.cdap.cdap.etl.proto.v1;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.proto.Connection;
+import io.cdap.cdap.etl.proto.UpgradeContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -126,7 +126,7 @@ public class ETLConfig extends Config {
     return stageLoggingEnabled == null ? true : stageLoggingEnabled;
   }
 
-  protected <T extends co.cask.cdap.etl.proto.v2.ETLConfig.Builder> T upgradeBase(T builder,
+  protected <T extends io.cdap.cdap.etl.proto.v2.ETLConfig.Builder> T upgradeBase(T builder,
                                                                                   UpgradeContext upgradeContext,
                                                                                   String sourceType,
                                                                                   String sinkType) {

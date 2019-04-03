@@ -15,10 +15,10 @@
  */
 
 
-package co.cask.cdap.gateway.router;
+package io.cdap.cdap.gateway.router;
 
 /**
- * Expected number of paths annotated with {@link co.cask.cdap.common.security.AuditPolicy}
+ * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}
  */
 public final class ExpectedNumberOfAuditPolicyPaths {
   public static final int EXPECTED_PATH_NUMBER = 68;

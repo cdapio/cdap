@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.dynamic
+package io.cdap.cdap.app.runtime.spark.dynamic
 
 import java.net.URL
 
@@ -24,7 +24,7 @@ import scala.tools.nsc.interpreter.ReplReporter
 import scala.tools.nsc.io.AbstractFile
 
 /**
-  * A default implementation of [[co.cask.cdap.api.spark.dynamic.SparkCompiler]] for Scala 2.11 that uses Scala
+  * A default implementation of [[io.cdap.cdap.api.spark.dynamic.SparkCompiler]] for Scala 2.11 that uses Scala
   * [[scala.tools.nsc.interpreter.IMain]] for the compilation.
   */
 

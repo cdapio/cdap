@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.partitioned;
+package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.dataset.lib.Partition;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.api.dataset.lib.Partition;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerResult;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
+import io.cdap.cdap.api.dataset.lib.PartitionDetail;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.util.List;
 import javax.annotation.Nullable;

@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package io.cdap.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.InputContext;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
-import co.cask.cdap.api.dataset.lib.PartitionFilter;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.ProgramLifecycle;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.common.RuntimeArguments;
+import io.cdap.cdap.api.common.Scope;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.InputContext;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.data.batch.PartitionedFileSetInputContext;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import io.cdap.cdap.api.dataset.lib.Partitioning;
+import io.cdap.cdap.api.dataset.table.Put;
+import io.cdap.cdap.api.dataset.table.Row;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

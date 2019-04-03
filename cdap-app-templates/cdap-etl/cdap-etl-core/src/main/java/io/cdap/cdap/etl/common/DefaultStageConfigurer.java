@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.common;
+package io.cdap.cdap.etl.common;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.api.MultiInputStageConfigurer;
-import co.cask.cdap.etl.api.MultiOutputStageConfigurer;
-import co.cask.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
+import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * This stores the input schemas that is passed to this stage from other stages in the pipeline and
  * the output schema that could be sent to the next stages from this stage.
- * Currently we only allow multiple input/output schema per stage except for {@link co.cask.cdap.etl.api.Joiner}
+ * Currently we only allow multiple input/output schema per stage except for {@link io.cdap.cdap.etl.api.Joiner}
  * where we allow multiple input schemas
  */
 public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer, MultiOutputStageConfigurer {

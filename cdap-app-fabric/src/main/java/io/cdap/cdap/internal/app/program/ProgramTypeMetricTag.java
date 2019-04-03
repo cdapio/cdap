@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.program;
+package io.cdap.cdap.internal.app.program;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramType;
 
 /**
  * Helper class for getting the program type id to use when emitting metrics.

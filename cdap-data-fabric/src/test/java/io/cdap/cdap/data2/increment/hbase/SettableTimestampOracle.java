@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase;
+package io.cdap.cdap.data2.increment.hbase;
 
 /**
  * Implementation of {@link TimestampOracle} that allows setting the current time.  This is useful

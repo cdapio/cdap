@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.common.metadata;
+package io.cdap.cdap.common.metadata;
 
-import co.cask.cdap.api.common.HttpErrorStatusProvider;
-import co.cask.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;

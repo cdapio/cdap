@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package io.cdap.cdap.logging.logbuffer;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.io.Closeables;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;

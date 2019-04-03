@@ -17,4 +17,4 @@
 /**
  * This package contains classes for interact with ZooKeeper.
  */
-package co.cask.cdap.common.zookeeper;
+package io.cdap.cdap.common.zookeeper;

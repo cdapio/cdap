@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor;
+package io.cdap.cdap.internal.app.runtime.monitor;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;

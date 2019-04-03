@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.lang;
+package io.cdap.cdap.common.lang;
 
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.service.SystemServiceConfigurer;
-import co.cask.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.service.SystemServiceConfigurer;
+import io.cdap.cdap.common.internal.guava.ClassPath;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;

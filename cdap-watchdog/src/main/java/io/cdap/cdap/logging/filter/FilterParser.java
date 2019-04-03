@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.filter;
+package io.cdap.cdap.logging.filter;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

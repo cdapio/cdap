@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap;
+package io.cdap.cdap;
 
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 
 /**
  * App with anonymous Workflow

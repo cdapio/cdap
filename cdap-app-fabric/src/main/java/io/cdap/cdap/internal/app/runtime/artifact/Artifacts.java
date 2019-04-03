@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.internal.lang.Reflections;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
@@ -64,12 +64,12 @@ public final class Artifacts {
   }
 
   /**
-   * Converts a {@link ArtifactId} to {@link co.cask.cdap.proto.id.ArtifactId}.
+   * Converts a {@link ArtifactId} to {@link io.cdap.cdap.proto.id.ArtifactId}.
    *
    * @param namespaceId the user namespace to use
    * @param artifactId the artifact id to convert
    */
-  public static co.cask.cdap.proto.id.ArtifactId toArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
+  public static io.cdap.cdap.proto.id.ArtifactId toArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
     ArtifactScope scope = artifactId.getScope();
     NamespaceId artifactNamespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : namespaceId;
     return artifactNamespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion());

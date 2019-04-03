@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.kafka;
+package io.cdap.cdap.logging.appender.kafka;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;

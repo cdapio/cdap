@@ -14,27 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.client;
+package io.cdap.cdap.client;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Authorizable;
-import co.cask.cdap.proto.security.GrantRequest;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.proto.security.RevokeRequest;
-import co.cask.cdap.proto.security.Role;
-import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
-import co.cask.cdap.security.spi.authorization.AlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.FeatureDisabledException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.GrantRequest;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Privilege;
+import io.cdap.cdap.proto.security.RevokeRequest;
+import io.cdap.cdap.proto.security.Role;
+import io.cdap.cdap.security.spi.authorization.AbstractAuthorizer;
+import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -138,7 +138,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   @Override
   public void dropRole(Role role) throws IOException, FeatureDisabledException, UnauthenticatedException,
-    UnauthorizedException, NotFoundException, co.cask.cdap.security.spi.authorization.NotFoundException {
+    UnauthorizedException, NotFoundException, io.cdap.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
@@ -159,7 +159,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
     UnauthenticatedException, UnauthorizedException, NotFoundException,
-    co.cask.cdap.security.spi.authorization.NotFoundException {
+    io.cdap.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
@@ -169,7 +169,7 @@ public class AuthorizationClient extends AbstractAuthorizer {
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws IOException, FeatureDisabledException,
     UnauthenticatedException, UnauthorizedException, NotFoundException,
-    co.cask.cdap.security.spi.authorization.NotFoundException {
+    io.cdap.cdap.security.spi.authorization.NotFoundException {
     URL url = config.resolveURLV3(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
                                                 principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
@@ -198,10 +198,10 @@ public class AuthorizationClient extends AbstractAuthorizer {
 
   private void executeExistingRolesRequest(Role role, HttpRequest request) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException,
-    co.cask.cdap.security.spi.authorization.NotFoundException {
+    io.cdap.cdap.security.spi.authorization.NotFoundException {
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_NOT_FOUND);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new co.cask.cdap.security.spi.authorization.NotFoundException(role);
+      throw new io.cdap.cdap.security.spi.authorization.NotFoundException(role);
     }
   }
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.io;
+package io.cdap.cdap.common.io;
 
 import java.io.FileInputStream;
 import java.io.IOException;

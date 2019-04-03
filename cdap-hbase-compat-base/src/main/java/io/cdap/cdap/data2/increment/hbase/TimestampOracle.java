@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.increment.hbase;
+package io.cdap.cdap.data2.increment.hbase;
 
 import java.util.concurrent.atomic.AtomicLong;
 

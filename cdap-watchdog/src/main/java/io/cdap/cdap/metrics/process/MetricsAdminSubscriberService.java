@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.metrics.process;
+package io.cdap.cdap.metrics.process;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.messaging.subscriber.AbstractMessagingPollingService;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.api.messaging.MessagingContext;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
+import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.subscriber.AbstractMessagingPollingService;
+import io.cdap.cdap.metrics.store.MetricDatasetFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;

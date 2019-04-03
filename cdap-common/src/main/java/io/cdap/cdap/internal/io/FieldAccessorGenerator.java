@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+package io.cdap.cdap.internal.io;
 
-import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.cdap.internal.asm.Methods;
-import co.cask.cdap.internal.lang.Fields;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.internal.asm.Methods;
+import io.cdap.cdap.internal.lang.Fields;
 import com.google.common.base.Throwables;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
@@ -55,7 +55,7 @@ final class FieldAccessorGenerator {
                                 classType.getName(),
                                 field.getName());
     if (name.startsWith("java.") || name.startsWith("javax.")) {
-      name = "co.cask.cdap." + name;
+      name = "io.cdap.cdap." + name;
       publicOnly = true;
     }
     this.className = name.replace('.', '/');
@@ -81,7 +81,7 @@ final class FieldAccessorGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
     // DEBUG block. Uncomment for debug
-//    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+//    io.cdap.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }

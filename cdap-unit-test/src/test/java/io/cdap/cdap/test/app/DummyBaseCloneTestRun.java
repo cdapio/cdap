@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.test.app;
+package io.cdap.cdap.test.app;
 
-import co.cask.cdap.test.base.TestFrameworkTestBase;
+import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;

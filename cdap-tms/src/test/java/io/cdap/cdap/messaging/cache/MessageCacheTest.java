@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.cache;
+package io.cdap.cdap.messaging.cache;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.messaging.store.MessageFilter;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.messaging.store.MessageFilter;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;

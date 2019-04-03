@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package io.cdap.cdap.gateway.handlers;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.proto.ConfigEntry;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.ConfigEntry;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;

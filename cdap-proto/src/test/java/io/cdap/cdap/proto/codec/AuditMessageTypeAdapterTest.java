@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package io.cdap.cdap.proto.codec;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.proto.audit.AuditPayload;
-import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.audit.AuditPayload;
+import io.cdap.cdap.proto.audit.AuditType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
@@ -32,7 +32,7 @@ import java.util.Objects;
 public class AuditMessageTypeAdapterTest {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(co.cask.cdap.proto.audit.AuditMessage.class, new AuditMessageTypeAdapter())
+    .registerTypeAdapter(io.cdap.cdap.proto.audit.AuditMessage.class, new AuditMessageTypeAdapter())
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
@@ -43,11 +43,11 @@ public class AuditMessageTypeAdapterTest {
     MetadataEntity metadataEntity = datasetId.toMetadataEntity();
     AuditMessage v1AuditMessage = new AuditMessage(1000L, datasetId, "user1",
                                                    AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD);
-    co.cask.cdap.proto.audit.AuditMessage expectedV2AuditMessage =
-      new co.cask.cdap.proto.audit.AuditMessage(1000L, metadataEntity, "user1",
+    io.cdap.cdap.proto.audit.AuditMessage expectedV2AuditMessage =
+      new io.cdap.cdap.proto.audit.AuditMessage(1000L, metadataEntity, "user1",
                                                 AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD);
-    co.cask.cdap.proto.audit.AuditMessage actualV2AuditMessage =
-      GSON.fromJson(GSON.toJson(v1AuditMessage), co.cask.cdap.proto.audit.AuditMessage.class);
+    io.cdap.cdap.proto.audit.AuditMessage actualV2AuditMessage =
+      GSON.fromJson(GSON.toJson(v1AuditMessage), io.cdap.cdap.proto.audit.AuditMessage.class);
     Assert.assertEquals(expectedV2AuditMessage, actualV2AuditMessage);
   }
 }

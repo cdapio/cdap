@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset.lib.cube;
+package io.cdap.cdap.api.dataset.lib.cube;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.batch.BatchWritable;
+import io.cdap.cdap.api.dataset.Dataset;
 
 import java.util.Collection;
 import java.util.List;

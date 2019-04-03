@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.utils;
+package io.cdap.cdap.common.utils;
 
 import org.junit.Assert;
 import org.junit.Test;

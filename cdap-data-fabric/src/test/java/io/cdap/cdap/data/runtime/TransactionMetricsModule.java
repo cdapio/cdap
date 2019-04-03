@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime;
+package io.cdap.cdap.data.runtime;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 
 /**
- * Binds the {@link co.cask.cdap.api.metrics.MetricsCollectionService} to a no-op implementation.
+ * Binds the {@link io.cdap.cdap.api.metrics.MetricsCollectionService} to a no-op implementation.
  */
 // TODO: replace the common MetricsCollectionService interface with a transactions specific one
 public class TransactionMetricsModule extends AbstractModule {

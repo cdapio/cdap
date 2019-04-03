@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.zookeeper;
+package io.cdap.cdap.common.zookeeper;
 
-import co.cask.cdap.common.async.AsyncFunctions;
-import co.cask.cdap.common.io.Codec;
+import io.cdap.cdap.common.async.AsyncFunctions;
+import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AsyncFunction;

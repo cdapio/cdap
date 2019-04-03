@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
-import co.cask.cdap.common.service.AbstractRetryableScheduledService;
-import co.cask.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
+import io.cdap.cdap.common.service.RetryStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.logging.context;
+package io.cdap.cdap.logging.context;
 
-import co.cask.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ProgramType;
 
 /**
  * Logging context to be used by programs running inside Workflow.

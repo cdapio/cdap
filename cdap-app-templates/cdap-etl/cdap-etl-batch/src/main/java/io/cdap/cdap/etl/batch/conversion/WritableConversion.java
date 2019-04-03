@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.conversion;
+package io.cdap.cdap.etl.batch.conversion;
 
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.io.Writable;

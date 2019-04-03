@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.report.main;
+package io.cdap.cdap.report.main;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 
 import java.util.Map;
 import javax.annotation.Nullable;

@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.classloader;
+package io.cdap.cdap.app.runtime.spark.classloader;
 
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.ClassPathResources;
+import io.cdap.cdap.api.spark.Spark;
+import io.cdap.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ClassPathResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,9 +161,9 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     // Also need to define janino class for code compilation to avoid leaking classloader
     // Also the fasterxml and codahale classes to avoid leaking classloader when Spark SQL is used;
     // it has a LRUCache inside that would caches object class.
-    if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
-        && !name.startsWith("co.cask.cdap.app.deploy.spark.")
-        && !name.startsWith("co.cask.cdap.app.runtime.spark.")
+    if (API_CLASSES.contains(name) || (!name.startsWith("io.cdap.cdap.api.spark.")
+        && !name.startsWith("io.cdap.cdap.app.deploy.spark.")
+        && !name.startsWith("io.cdap.cdap.app.runtime.spark.")
         && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
         && !name.startsWith("akka.") && !name.startsWith("com.typesafe.")
         && !name.startsWith("com.esotericsoftware.")    // For Kryo and reflectasm

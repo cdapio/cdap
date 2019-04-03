@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package io.cdap.cdap.explore.service;
 
-import co.cask.cdap.explore.service.hive.OperationInfo;
-import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.explore.service.hive.OperationInfo;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.Service;
 
 import java.sql.SQLException;

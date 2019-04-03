@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.replication;
+package io.cdap.cdap.data2.replication;
 
-import co.cask.cdap.replication.ReplicationConstants;
-import co.cask.cdap.replication.StatusUtils;
+import io.cdap.cdap.replication.ReplicationConstants;
+import io.cdap.cdap.replication.StatusUtils;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.TableName;

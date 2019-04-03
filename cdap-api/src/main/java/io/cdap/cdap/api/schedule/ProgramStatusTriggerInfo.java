@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package io.cdap.cdap.api.schedule;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 import org.apache.twill.api.RunId;
 
 import java.util.Collections;

@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.runtime.spi.provisioner.emr;
+package io.cdap.cdap.runtime.spi.provisioner.emr;
 
-import co.cask.cdap.runtime.spi.provisioner.Node;
+import io.cdap.cdap.runtime.spi.provisioner.Node;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.DeleteKeyPairRequest;
@@ -137,14 +137,14 @@ public class EMRClient implements AutoCloseable {
    * @param id the cluster id
    * @return the cluster information if it exists
    */
-  public Optional<co.cask.cdap.runtime.spi.provisioner.Cluster> getCluster(String id) {
+  public Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> getCluster(String id) {
     Cluster cluster = describeCluster(id);
 
     List<Node> nodes = new ArrayList<>();
     nodes.add(new Node("id", Node.Type.MASTER, cluster.getMasterPublicDnsName(),
                        System.currentTimeMillis(), Collections.emptyMap()));
 
-    return Optional.of(new co.cask.cdap.runtime.spi.provisioner.Cluster(
+    return Optional.of(new io.cdap.cdap.runtime.spi.provisioner.Cluster(
       cluster.getId(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
   }
 
@@ -154,7 +154,7 @@ public class EMRClient implements AutoCloseable {
    * @param id the cluster id
    * @return the cluster status
    */
-  public co.cask.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String id) {
+  public io.cdap.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String id) {
     return convertStatus(describeCluster(id).getStatus());
   }
 
@@ -179,23 +179,23 @@ public class EMRClient implements AutoCloseable {
     throw new IllegalStateException("Multiple clusters with the name '" + name + "': " + clustersWithSameName);
   }
 
-  private co.cask.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
+  private io.cdap.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
     switch (ClusterState.fromValue(status.getState())) {
       case BOOTSTRAPPING:
       case STARTING:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.CREATING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.CREATING;
       case WAITING:
       case RUNNING:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
       case TERMINATING:
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.DELETING;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.DELETING;
       case TERMINATED:
       case TERMINATED_WITH_ERRORS:
         // we don't returned FAILED, because then that means we will attempt to delete it
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS;
       default:
         // unrecognized and unknown
-        return co.cask.cdap.runtime.spi.provisioner.ClusterStatus.ORPHANED;
+        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.ORPHANED;
     }
   }
 

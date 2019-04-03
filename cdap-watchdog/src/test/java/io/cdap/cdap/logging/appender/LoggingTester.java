@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender;
+package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
-import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.NamespaceLoggingContext;
-import co.cask.cdap.logging.context.ApplicationLoggingContext;
-import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.read.Callback;
-import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.logging.read.ReadRange;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.NamespaceLoggingContext;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
+import io.cdap.cdap.logging.filter.Filter;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
+import io.cdap.cdap.logging.read.LogOffset;
+import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.logging.read.ReadRange;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.slf4j.Logger;

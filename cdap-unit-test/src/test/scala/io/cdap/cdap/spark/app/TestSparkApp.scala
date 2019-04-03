@@ -14,18 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package io.cdap.cdap.spark.app
 
 
-import co.cask.cdap.api.annotation.{Property, UseDataSet}
-import co.cask.cdap.api.app.{AbstractApplication, ProgramType}
-import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.customaction.AbstractCustomAction
-import co.cask.cdap.api.data.schema.Schema
-import co.cask.cdap.api.dataset.lib._
-import co.cask.cdap.api.spark.AbstractSpark
-import co.cask.cdap.api.workflow.AbstractWorkflow
-import co.cask.cdap.api.{Config, ProgramStatus}
+import io.cdap.cdap.api.annotation.{Property, UseDataSet}
+import io.cdap.cdap.api.app.{AbstractApplication, ProgramType}
+import io.cdap.cdap.api.common.Bytes
+import io.cdap.cdap.api.customaction.AbstractCustomAction
+import io.cdap.cdap.api.data.schema.Schema
+import io.cdap.cdap.api.dataset.lib._
+import io.cdap.cdap.api.spark.AbstractSpark
+import io.cdap.cdap.api.workflow.AbstractWorkflow
+import io.cdap.cdap.api.{Config, ProgramStatus}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._
@@ -100,7 +100,7 @@ class TestSparkApp extends AbstractApplication[Config] {
     @UseDataSet("ResultTable")
     var resultTable: KeyValueTable = _
     @Property
-    val mainClassName = "co.cask.cdap.spark.app.ScalaClassicSparkProgram"
+    val mainClassName = "io.cdap.cdap.spark.app.ScalaClassicSparkProgram"
 
     override protected def configure {
       setMainClassName(mainClassName)
