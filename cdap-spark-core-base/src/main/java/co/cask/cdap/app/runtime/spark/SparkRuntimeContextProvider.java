@@ -178,13 +178,18 @@ public final class SparkRuntimeContextProvider {
       Preconditions.checkState(!contextConfig.isLocal(programOptions),
                                "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
 
+      ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
+
       // Create the program
       Program program = createProgram(cConf, contextConfig);
 
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
+
       ProxySelector oldProxySelector = ProxySelector.getDefault();
-      ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-      Authenticator.setDefault(injector.getInstance(Authenticator.class));
+      if (clusterMode == ClusterMode.ISOLATED) {
+        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
+        Authenticator.setDefault(injector.getInstance(Authenticator.class));
+      }
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       SparkServiceAnnouncer serviceAnnouncer = injector.getInstance(SparkServiceAnnouncer.class);
@@ -192,7 +197,7 @@ public final class SparkRuntimeContextProvider {
       Deque<Service> coreServices = new LinkedList<>();
       coreServices.add(new LogAppenderService(injector.getInstance(LogAppenderInitializer.class), programOptions));
 
-      if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE) {
+      if (clusterMode == ClusterMode.ON_PREMISE) {
         // Add ZK for discovery and Kafka
         coreServices.add(injector.getInstance(ZKClientService.class));
         // Add the Kafka client for logs collection
