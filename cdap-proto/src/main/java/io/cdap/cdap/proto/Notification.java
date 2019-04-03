@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.proto;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.Collection;
 import java.util.HashMap;

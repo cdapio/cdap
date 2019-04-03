@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.security.guice.SecurityModules;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 
 /**
  * Tests for InMemoryTokenManager that ensure that keys are maintained in memory and can be used to create

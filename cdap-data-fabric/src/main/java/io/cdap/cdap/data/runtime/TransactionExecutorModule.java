@@ -15,8 +15,8 @@
  */
 package io.cdap.cdap.data.runtime;
 
-import io.cdap.cdap.data2.transaction.TransactionExecutorFactory;
 import com.google.inject.AbstractModule;
+import io.cdap.cdap.data2.transaction.TransactionExecutorFactory;
 
 /**
  * Module to implement DynamicTransactionExecutorFactory.

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.UnsupportedPluginFinder;
@@ -30,10 +34,6 @@ import io.cdap.cdap.internal.app.runtime.distributed.AbstractProgramTwillRunnabl
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunnable;
 

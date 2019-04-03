@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
@@ -30,10 +34,6 @@ import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;

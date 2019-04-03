@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.datafabric.dataset;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
@@ -36,8 +38,6 @@ import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;

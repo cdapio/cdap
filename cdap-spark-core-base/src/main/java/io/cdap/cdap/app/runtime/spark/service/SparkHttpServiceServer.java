@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.service;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxCallable;
@@ -38,7 +39,6 @@ import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

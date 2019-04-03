@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.store.Store;
@@ -45,10 +49,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
-import com.google.inject.name.Named;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys an Application.

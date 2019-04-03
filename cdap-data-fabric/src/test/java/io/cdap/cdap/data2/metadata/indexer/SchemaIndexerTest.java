@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.metadata.indexer;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

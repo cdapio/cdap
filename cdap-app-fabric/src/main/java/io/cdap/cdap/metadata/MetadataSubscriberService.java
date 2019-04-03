@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -62,10 +66,6 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

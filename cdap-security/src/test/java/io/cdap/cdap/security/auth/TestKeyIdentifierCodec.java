@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.guice.FileBasedSecurityModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.file;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -26,8 +28,6 @@ import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;

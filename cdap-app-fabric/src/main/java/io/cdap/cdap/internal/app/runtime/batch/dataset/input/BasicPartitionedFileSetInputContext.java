@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.data.batch.PartitionedFileSetInputContext;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;

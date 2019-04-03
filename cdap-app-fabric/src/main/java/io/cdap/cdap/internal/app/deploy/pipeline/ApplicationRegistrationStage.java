@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
 import io.cdap.cdap.api.service.ServiceSpecification;
@@ -29,7 +30,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
-import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.Collection;

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ProtoTriggerCodec;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 

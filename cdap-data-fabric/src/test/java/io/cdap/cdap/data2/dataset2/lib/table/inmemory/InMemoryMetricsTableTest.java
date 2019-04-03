@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -32,10 +36,6 @@ import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 import org.junit.BeforeClass;
 
 /**

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.batch.connector;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetArguments;
@@ -27,7 +28,6 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.common.Constants;
-import com.google.gson.Gson;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;

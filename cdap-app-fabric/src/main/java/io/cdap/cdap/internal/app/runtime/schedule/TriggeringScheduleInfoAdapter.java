@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -23,11 +28,6 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoCodec;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 
 /**

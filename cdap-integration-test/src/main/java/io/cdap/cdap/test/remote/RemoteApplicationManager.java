@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -41,7 +42,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.WorkflowManager;
-import com.google.common.base.Throwables;
 
 import java.util.List;
 import java.util.Map;

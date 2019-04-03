@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.spark.streaming.StreamingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

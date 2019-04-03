@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.test;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -53,13 +60,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.test.internal.ApplicationManagerFactory;
 import io.cdap.cdap.test.internal.ArtifactManagerFactory;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import com.google.common.reflect.TypeToken;
-import com.google.inject.Inject;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;

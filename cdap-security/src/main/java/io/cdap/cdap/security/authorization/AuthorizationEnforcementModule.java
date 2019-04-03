@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.security.authorization;
 
-import io.cdap.cdap.common.runtime.RuntimeModule;
-import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 
 /**
  * A module that contains bindings for {@link AuthorizationEnforcer}.

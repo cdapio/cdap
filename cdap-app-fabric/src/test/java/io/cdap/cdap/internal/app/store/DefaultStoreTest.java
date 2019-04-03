@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithNoServices;
 import io.cdap.cdap.AppWithServices;
@@ -59,13 +66,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.store.DefaultNamespaceStore;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.spi.data.InvalidFieldException;
@@ -24,7 +25,6 @@ import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.Collection;

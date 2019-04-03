@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
@@ -44,11 +49,6 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.tephra.TransactionAware;

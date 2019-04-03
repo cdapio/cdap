@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.metrics.runtime;
 
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.resource.ResourceBalancerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.ZKClient;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -31,8 +33,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 
 import java.io.IOException;
 import java.util.Collections;

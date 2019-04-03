@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -91,13 +98,6 @@ import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

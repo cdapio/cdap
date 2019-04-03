@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.spark.SparkProgramRunner;
@@ -30,10 +34,6 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.junit.Test;

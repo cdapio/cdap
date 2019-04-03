@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -28,8 +30,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -15,14 +15,14 @@
  */
 package io.cdap.cdap.internal.app.store.preview;
 
-import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.internal.AppFabricTestHelper;
-import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.id.ApplicationId;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.ApplicationId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;

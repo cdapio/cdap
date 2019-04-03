@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.messaging.server;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -24,11 +29,6 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;

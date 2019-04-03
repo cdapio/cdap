@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.guice;
 
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
 import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
@@ -24,8 +26,6 @@ import io.cdap.cdap.internal.io.FieldAccessorFactory;
 import io.cdap.cdap.internal.io.ReflectionDatumReaderFactory;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 
 /**
  * A Guice module for IO related classes bindings.

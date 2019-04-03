@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.security;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -25,9 +28,6 @@ import io.cdap.cdap.data.security.HBaseTokenUtils;
 import io.cdap.cdap.hive.ExploreUtils;
 import io.cdap.cdap.security.hive.HiveTokenUtils;
 import io.cdap.cdap.security.hive.JobHistoryServerTokenUtils;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;

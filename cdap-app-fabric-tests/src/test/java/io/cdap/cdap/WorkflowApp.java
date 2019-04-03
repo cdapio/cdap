@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.annotation.Property;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -29,7 +30,6 @@ import io.cdap.cdap.api.workflow.NodeValue;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.runtime.batch.WordCount;
 import io.cdap.cdap.runtime.WorkflowTest;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;

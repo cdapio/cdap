@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.operations.cdap;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.operations.OperationalStats;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.util.Arrays;

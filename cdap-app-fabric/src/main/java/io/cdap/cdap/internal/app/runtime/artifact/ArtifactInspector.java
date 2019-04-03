@@ -16,6 +16,17 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Primitives;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -43,17 +54,6 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.primitives.Primitives;
-import com.google.common.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;

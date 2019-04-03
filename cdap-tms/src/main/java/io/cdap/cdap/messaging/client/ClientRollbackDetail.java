@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.messaging.client;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
-import com.google.common.base.Throwables;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -34,9 +37,6 @@ import io.cdap.cdap.data2.util.hbase.TableDescriptorBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;

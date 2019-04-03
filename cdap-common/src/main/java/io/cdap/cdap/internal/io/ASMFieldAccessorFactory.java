@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.io;
 
-import io.cdap.cdap.internal.asm.ClassDefinition;
-import io.cdap.cdap.internal.lang.Fields;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.internal.lang.Fields;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;

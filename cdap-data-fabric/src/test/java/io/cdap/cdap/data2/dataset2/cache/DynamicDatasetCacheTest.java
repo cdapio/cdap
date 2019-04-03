@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.cache;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
@@ -25,10 +29,6 @@ import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;

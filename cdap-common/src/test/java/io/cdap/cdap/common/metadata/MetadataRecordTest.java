@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.metadata;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
@@ -28,8 +30,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.proto.id.WorkerId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

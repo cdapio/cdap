@@ -15,6 +15,13 @@
  */
 package io.cdap.cdap.data2.metadata.dataset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -38,13 +45,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;

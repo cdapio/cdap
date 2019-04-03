@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.metrics.store;
 
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
 import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
@@ -50,14 +58,6 @@ import io.cdap.cdap.metrics.process.TopicIdMetaKey;
 import io.cdap.cdap.metrics.process.TopicProcessMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collection;

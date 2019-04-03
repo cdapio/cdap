@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.explore.jdbc;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.proto.ColumnDesc;
-import com.google.common.collect.ImmutableList;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;

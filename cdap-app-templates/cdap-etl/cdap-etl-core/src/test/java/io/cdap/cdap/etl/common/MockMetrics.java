@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.etl.common;
 
-import io.cdap.cdap.api.metrics.Metrics;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.api.metrics.Metrics;
 
 import java.util.Map;
 

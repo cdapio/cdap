@@ -17,14 +17,14 @@
 package io.cdap.cdap.spi.data.sql.jdbc;
 
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;

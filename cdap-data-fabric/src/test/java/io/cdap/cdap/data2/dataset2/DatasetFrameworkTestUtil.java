@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
@@ -35,11 +40,6 @@ import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;

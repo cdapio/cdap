@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.test;
 
-import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;

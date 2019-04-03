@@ -16,13 +16,6 @@
 
 package io.cdap.cdap.common.conf;
 
-import io.cdap.cdap.api.artifact.ArtifactRange;
-import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
-import io.cdap.cdap.api.plugin.PluginClass;
-import io.cdap.cdap.common.InvalidArtifactException;
-import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.proto.artifact.ArtifactRanges;
-import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -37,6 +30,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.File;
 import java.io.IOException;

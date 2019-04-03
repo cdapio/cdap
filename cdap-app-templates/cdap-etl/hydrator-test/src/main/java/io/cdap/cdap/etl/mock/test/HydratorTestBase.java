@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.mock.test;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.Transform;
@@ -60,7 +61,6 @@ import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.test.TestBase;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 

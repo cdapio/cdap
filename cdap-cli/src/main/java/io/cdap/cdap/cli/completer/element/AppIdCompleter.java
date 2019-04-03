@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.cli.completer.element;
 
+import com.google.common.base.Supplier;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.completer.StringsCompleter;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Supplier;
 
 import java.io.IOException;
 import java.util.ArrayList;

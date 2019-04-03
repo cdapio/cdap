@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.test;
 
-import io.cdap.cdap.common.lang.ClassLoaders;
-import io.cdap.cdap.common.lang.ProgramResources;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ProgramResources;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

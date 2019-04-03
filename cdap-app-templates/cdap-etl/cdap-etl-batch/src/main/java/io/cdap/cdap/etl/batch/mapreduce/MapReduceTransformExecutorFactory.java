@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.batch.mapreduce;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
@@ -63,9 +66,6 @@ import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
 import io.cdap.cdap.etl.common.preview.LimitingTransform;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;

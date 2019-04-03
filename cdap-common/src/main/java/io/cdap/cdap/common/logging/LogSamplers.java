@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.common.logging;
 
-import io.cdap.cdap.common.utils.TimeProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AtomicDouble;
+import io.cdap.cdap.common.utils.TimeProvider;
 import org.slf4j.spi.LocationAwareLogger;
 
 import java.util.Arrays;

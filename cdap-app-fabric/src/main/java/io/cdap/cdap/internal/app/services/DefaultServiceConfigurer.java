@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.SystemTableConfigurer;
 import io.cdap.cdap.api.annotation.TransactionControl;
@@ -34,11 +39,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 
 import java.util.List;
 import java.util.Map;

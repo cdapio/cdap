@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.AppWithDatasetDuplicate;
@@ -41,11 +46,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpResponse;
 import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;

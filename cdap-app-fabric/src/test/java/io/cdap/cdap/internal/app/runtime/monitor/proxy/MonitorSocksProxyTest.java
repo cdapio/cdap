@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
+import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.KeyPair;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
@@ -23,10 +27,6 @@ import io.cdap.cdap.common.ssh.TestSSHServer;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
-import com.google.common.base.Strings;
-import com.google.common.io.ByteStreams;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.KeyPair;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

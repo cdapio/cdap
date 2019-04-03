@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.explore.table;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.utils.ProjectInfo;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

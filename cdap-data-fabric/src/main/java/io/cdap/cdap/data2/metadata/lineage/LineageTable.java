@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.metadata.lineage;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.ProgramType;
@@ -31,9 +34,6 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

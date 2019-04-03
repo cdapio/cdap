@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 

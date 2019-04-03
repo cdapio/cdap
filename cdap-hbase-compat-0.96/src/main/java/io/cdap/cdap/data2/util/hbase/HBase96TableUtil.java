@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.data2.increment.hbase96.IncrementHandler;
 import io.cdap.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProcessor;
 import io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase96.MessageTableRegionObserver;
@@ -23,8 +25,6 @@ import io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase96.PayloadTable
 import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.hbase.TableDescriptor;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;

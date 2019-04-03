@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.store;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -25,7 +26,6 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

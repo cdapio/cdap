@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import io.cdap.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 /**
  * Uniquely identifies a Job.

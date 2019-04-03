@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.mapreduce.MapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
@@ -52,12 +58,6 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.UserGroupInformation;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -25,8 +27,6 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

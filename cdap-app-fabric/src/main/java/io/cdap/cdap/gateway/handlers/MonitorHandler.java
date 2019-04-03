@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.inject.Inject;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
@@ -27,10 +31,6 @@ import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.SystemServiceMeta;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import com.google.inject.Inject;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;

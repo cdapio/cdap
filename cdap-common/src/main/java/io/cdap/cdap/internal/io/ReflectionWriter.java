@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.io;
 
-import io.cdap.cdap.api.data.schema.Schema;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.data.schema.Schema;
 
 import java.io.IOException;
 import java.lang.reflect.Field;

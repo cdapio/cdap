@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.explore.client.SuppliedAddressExploreClient;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Supplier;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.common.http.HttpRequestConfig;
 
 import javax.inject.Inject;

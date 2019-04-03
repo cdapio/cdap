@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.messaging.distributed;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import io.cdap.cdap.common.twill.MasterServiceManager;
-import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 

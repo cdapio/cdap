@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.etl.batch.mapreduce;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
+import com.google.common.collect.SetMultimap;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.TransactionControl;
@@ -42,12 +48,6 @@ import io.cdap.cdap.etl.common.submit.Finisher;
 import io.cdap.cdap.etl.log.LogStageInjector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-import com.google.common.collect.SetMultimap;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;

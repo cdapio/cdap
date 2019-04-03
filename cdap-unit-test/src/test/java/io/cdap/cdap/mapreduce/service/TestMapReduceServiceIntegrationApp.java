@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.mapreduce.service;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Input;
@@ -27,8 +29,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
-import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;

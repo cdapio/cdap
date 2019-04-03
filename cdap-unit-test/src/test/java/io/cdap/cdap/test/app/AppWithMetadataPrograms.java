@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.metadata.Metadata;
@@ -29,8 +31,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;

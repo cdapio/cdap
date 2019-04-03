@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.app.runtime.spark.dynamic;
 
-import io.cdap.cdap.api.spark.dynamic.SparkCompiler;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.api.spark.dynamic.SparkCompiler;
 
 import java.io.Closeable;
 import java.lang.ref.WeakReference;

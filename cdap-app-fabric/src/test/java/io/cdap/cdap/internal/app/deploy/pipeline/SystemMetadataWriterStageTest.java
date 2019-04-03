@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.inject.Injector;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -37,10 +41,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.explore.executor;
 
-import io.cdap.cdap.explore.service.ExploreException;
-import io.cdap.cdap.proto.QueryHandle;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.explore.service.ExploreException;
+import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

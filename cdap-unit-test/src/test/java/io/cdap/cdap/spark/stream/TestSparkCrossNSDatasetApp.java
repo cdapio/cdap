@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.spark.stream;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
-import com.google.common.base.Strings;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 

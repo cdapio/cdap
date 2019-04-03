@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command.artifact;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
@@ -26,7 +27,6 @@ import io.cdap.cdap.common.conf.ArtifactConfigReader;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.File;

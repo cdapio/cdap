@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.logging.read.LogEvent;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.logging.read.LogEvent;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;

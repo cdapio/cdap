@@ -15,6 +15,8 @@
  */
 package io.cdap.cdap.cli.command.schedule;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.cli.ArgumentName;
@@ -33,8 +35,6 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

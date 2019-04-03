@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.provision;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -36,10 +40,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.net.URI;

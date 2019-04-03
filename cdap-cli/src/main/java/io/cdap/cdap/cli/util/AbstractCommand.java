@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.util;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.cli.CLIConfig;
-import io.cdap.cdap.cli.exception.CommandInputError;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.common.cli.util.Parser;
 
 import java.nio.ByteBuffer;

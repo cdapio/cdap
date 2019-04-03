@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.worker;
 
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.worker.WorkerContext;
@@ -27,9 +30,6 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.lang.Reflections;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.data2.dataset2.lib.kv;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

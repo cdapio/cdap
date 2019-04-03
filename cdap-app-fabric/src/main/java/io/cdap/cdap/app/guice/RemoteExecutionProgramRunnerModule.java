@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.Key;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -26,10 +30,6 @@ import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwill
 import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.inject.Key;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.MapBinder;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 

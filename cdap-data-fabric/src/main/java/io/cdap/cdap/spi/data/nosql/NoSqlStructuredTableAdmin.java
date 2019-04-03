@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -30,8 +32,6 @@ import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

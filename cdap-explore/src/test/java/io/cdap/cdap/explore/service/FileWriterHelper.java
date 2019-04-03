@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.explore.service;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;

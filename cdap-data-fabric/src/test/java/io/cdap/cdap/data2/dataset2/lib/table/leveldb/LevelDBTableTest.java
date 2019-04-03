@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -31,9 +34,6 @@ import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
-import com.google.common.base.Preconditions;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

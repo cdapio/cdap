@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.data.runtime;
 
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -42,13 +49,6 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import io.cdap.cdap.store.DefaultOwnerStore;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
-import com.google.inject.name.Names;
 
 /**
  * DataSets framework bindings

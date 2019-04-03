@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.partitioned;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
@@ -27,7 +28,6 @@ import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import io.cdap.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;

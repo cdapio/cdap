@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.security;
 
-import io.cdap.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.SecurityUtil;

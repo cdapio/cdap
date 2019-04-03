@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import io.cdap.cdap.api.dataset.lib.cube.Measurement;
-import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
 import java.util.Collections;

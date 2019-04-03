@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.service.Service;
 import io.cdap.cdap.api.service.ServiceSpecification;
@@ -29,9 +32,6 @@ import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

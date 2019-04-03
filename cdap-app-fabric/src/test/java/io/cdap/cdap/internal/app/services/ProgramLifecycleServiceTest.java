@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -36,8 +38,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

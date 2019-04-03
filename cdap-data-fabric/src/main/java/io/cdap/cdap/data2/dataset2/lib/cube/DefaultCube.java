@@ -16,6 +16,15 @@
 
 package io.cdap.cdap.data2.dataset2.lib.cube;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
 import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
@@ -33,15 +42,6 @@ import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScan;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScanResult;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactScanner;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.PeekingIterator;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.messaging.server;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterators;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
@@ -37,11 +42,6 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterators;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.DiscoveryServiceClient;

@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;

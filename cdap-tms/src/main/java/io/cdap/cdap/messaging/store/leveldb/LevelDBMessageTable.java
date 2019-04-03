@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -26,7 +27,6 @@ import io.cdap.cdap.messaging.store.ImmutableMessageTableEntry;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.RawMessageTableEntry;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Preconditions;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;

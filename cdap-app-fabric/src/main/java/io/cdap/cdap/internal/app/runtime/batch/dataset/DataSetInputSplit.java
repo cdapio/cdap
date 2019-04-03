@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.Splits;
 import io.cdap.cdap.api.dataset.Dataset;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 

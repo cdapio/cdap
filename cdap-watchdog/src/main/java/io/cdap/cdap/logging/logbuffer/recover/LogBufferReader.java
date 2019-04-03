@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.logging.logbuffer.recover;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
 import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.io.Closeables;
 
 import java.io.BufferedInputStream;
 import java.io.Closeable;

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.security;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.securestore.spi.secret.Decoder;
 import io.cdap.cdap.securestore.spi.secret.Encoder;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 

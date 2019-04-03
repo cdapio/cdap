@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.completer.element;
 
+import com.google.common.base.Supplier;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.completer.StringsCompleter;
 import io.cdap.cdap.client.ArtifactClient;
-import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 
 import java.util.Collection;
 import java.util.List;

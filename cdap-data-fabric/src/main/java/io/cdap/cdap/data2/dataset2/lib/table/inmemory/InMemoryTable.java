@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.common.Bytes;
@@ -30,9 +33,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.BufferingTable;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.Update;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Maps;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.TransactionControl;
@@ -43,7 +44,6 @@ import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.test.RevealingTxSystemClient;
 import io.cdap.cdap.test.RevealingTxSystemClient.RevealingTransaction;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;

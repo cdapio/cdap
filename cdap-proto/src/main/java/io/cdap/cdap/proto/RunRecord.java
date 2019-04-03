@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.proto;
 
-import io.cdap.cdap.proto.id.ProfileId;
 import com.google.gson.annotations.SerializedName;
+import io.cdap.cdap.proto.id.ProfileId;
 
 import java.util.Collections;
 import java.util.HashMap;

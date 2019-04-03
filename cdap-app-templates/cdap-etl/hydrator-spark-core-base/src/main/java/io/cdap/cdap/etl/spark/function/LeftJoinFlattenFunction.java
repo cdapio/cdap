@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.etl.spark.function;
 
-import io.cdap.cdap.etl.api.JoinElement;
 import com.google.common.base.Optional;
+import io.cdap.cdap.etl.api.JoinElement;
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -24,8 +26,6 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.FilePathResolver;
 import io.cdap.cdap.client.DatasetModuleClient;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.File;

@@ -15,10 +15,10 @@
  */
 package io.cdap.cdap.internal.specification;
 
+import com.google.gson.internal.Primitives;
 import io.cdap.cdap.api.annotation.Property;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.lang.FieldVisitor;
-import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;

@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -34,11 +39,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.Map;

@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.explore.jdbc;
 
-import io.cdap.cdap.proto.ColumnDesc;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.proto.ColumnDesc;
 import org.junit.Assert;
 import org.junit.Test;
 

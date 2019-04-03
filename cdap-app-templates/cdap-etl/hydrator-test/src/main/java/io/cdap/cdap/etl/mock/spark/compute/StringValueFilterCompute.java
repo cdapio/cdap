@@ -32,10 +32,8 @@ import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.rdd.RDD;
-import scala.collection.JavaConversions;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 

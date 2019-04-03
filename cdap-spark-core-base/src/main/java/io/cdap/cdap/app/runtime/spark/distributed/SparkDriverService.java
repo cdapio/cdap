@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.runtime.spark.SparkCredentialsUpdater;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
@@ -23,9 +26,6 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;

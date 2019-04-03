@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.collect.SetMultimap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -48,9 +51,6 @@ import io.cdap.cdap.etl.common.submit.JoinerContextProvider;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.SetMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

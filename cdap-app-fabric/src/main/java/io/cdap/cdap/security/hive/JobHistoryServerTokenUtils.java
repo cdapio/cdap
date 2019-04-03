@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.hive;
 
-import io.cdap.cdap.common.security.YarnTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
+import io.cdap.cdap.common.security.YarnTokenUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.ClientCache;

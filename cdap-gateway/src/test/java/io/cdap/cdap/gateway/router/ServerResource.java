@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import com.google.common.base.Throwables;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;

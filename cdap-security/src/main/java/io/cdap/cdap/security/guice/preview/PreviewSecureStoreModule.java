@@ -15,9 +15,9 @@
  */
 package io.cdap.cdap.security.guice.preview;
 
+import com.google.inject.AbstractModule;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
-import com.google.inject.AbstractModule;
 
 /**
  * Provides Guice bindings for SecureStore in preview mode.

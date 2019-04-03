@@ -17,6 +17,9 @@
 package io.cdap.cdap.logging.appender.tms;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -42,9 +45,6 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.tephra.TxConstants;
 import org.junit.AfterClass;
 import org.junit.Assert;

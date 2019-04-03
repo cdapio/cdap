@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
@@ -24,10 +28,6 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.spark.app.SparkAppUsingGetDataset.LogKey;
 import io.cdap.cdap.spark.app.SparkAppUsingGetDataset.LogStats;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;

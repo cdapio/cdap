@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.mapreduce;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValues;
@@ -32,9 +35,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;

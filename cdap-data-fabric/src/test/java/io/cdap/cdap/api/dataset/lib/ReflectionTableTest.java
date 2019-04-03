@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
+import com.google.common.base.Objects;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -29,8 +31,6 @@ import io.cdap.cdap.internal.io.ReflectionRowReader;
 import io.cdap.cdap.internal.io.ReflectionRowRecordReader;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.base.Objects;
-import com.google.common.reflect.TypeToken;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;

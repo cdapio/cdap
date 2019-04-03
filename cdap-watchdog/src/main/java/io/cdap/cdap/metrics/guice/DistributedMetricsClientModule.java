@@ -15,6 +15,11 @@
  */
 package io.cdap.cdap.metrics.guice;
 
+import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -26,11 +31,6 @@ import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
-import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
 
 /**
  * Guice module for binding classes for metrics client that publish metrics to TMS.

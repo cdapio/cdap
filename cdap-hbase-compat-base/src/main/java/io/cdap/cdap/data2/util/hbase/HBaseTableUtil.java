@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,12 +34,6 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.ClusterStatus;

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.data2.metadata.lineage;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutor;
 
 import java.util.Set;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.lineage.CollapsedRelation;
 import io.cdap.cdap.data2.metadata.lineage.LineageCollapser;
@@ -24,7 +25,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
-import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Test;

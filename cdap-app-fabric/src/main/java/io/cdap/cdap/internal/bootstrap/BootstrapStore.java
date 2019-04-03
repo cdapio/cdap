@@ -17,12 +17,12 @@
 
 package io.cdap.cdap.internal.bootstrap;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.config.Config;
 import io.cdap.cdap.config.ConfigNotFoundException;
 import io.cdap.cdap.config.ConfigStore;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 
 import java.util.Collections;
 

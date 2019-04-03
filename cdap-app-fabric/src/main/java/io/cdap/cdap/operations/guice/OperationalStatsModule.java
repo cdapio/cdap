@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.operations.guice;
 
-import io.cdap.cdap.operations.OperationalStatsService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.operations.OperationalStatsService;
 
 /**
  * Guice module for operational stats.

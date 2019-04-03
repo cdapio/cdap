@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.store.remote;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
@@ -29,8 +31,6 @@ import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
-import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;

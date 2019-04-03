@@ -15,8 +15,8 @@
  */
 package io.cdap.cdap.common.conf;
 
-import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Charsets;
+import io.cdap.cdap.common.io.Codec;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.gson.Gson;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;

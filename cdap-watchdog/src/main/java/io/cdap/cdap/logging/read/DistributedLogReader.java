@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.logging.read;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -24,7 +25,6 @@ import io.cdap.cdap.logging.appender.kafka.StringPartitioner;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.meta.CheckpointManager;
 import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

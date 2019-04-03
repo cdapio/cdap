@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.explore.executor;
 
-import io.cdap.cdap.proto.QueryInfo;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
@@ -24,6 +23,7 @@ import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.proto.QueryInfo;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;

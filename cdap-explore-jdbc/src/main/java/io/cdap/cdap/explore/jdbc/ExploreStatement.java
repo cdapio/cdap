@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.explore.jdbc;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.explore.service.HandleNotFoundException;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

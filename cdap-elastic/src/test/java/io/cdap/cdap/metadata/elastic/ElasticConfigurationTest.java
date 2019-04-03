@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.metadata.elastic;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.Checksums;
 import io.cdap.cdap.common.utils.ProjectInfo;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;

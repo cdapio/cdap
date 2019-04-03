@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.command.metrics;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.proto.MetricTagValue;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

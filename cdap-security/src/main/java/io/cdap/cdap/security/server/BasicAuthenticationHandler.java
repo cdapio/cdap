@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.server;
 
-import io.cdap.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.common.conf.Constants;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.HashLoginService;

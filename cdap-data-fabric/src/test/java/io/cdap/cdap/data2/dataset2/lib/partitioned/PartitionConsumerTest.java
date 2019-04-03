@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.dataset.lib.Partition;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
@@ -35,10 +39,6 @@ import io.cdap.cdap.api.dataset.lib.partitioned.ProcessState;
 import io.cdap.cdap.api.dataset.lib.partitioned.StatePersistor;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;

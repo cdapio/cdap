@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -44,11 +49,6 @@ import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;

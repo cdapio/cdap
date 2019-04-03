@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.metrics;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -28,9 +31,6 @@ import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 
 import java.util.Collection;

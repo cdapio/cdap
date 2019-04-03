@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.increment.hbase10cdh550;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
 import io.cdap.cdap.data2.increment.hbase.TimestampOracle;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;

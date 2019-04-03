@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -34,9 +37,6 @@ import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.junit.After;
 import org.junit.AfterClass;

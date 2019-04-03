@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.extension;
 
-import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -26,6 +24,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.utils.DirUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

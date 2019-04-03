@@ -16,6 +16,18 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
+import com.google.common.base.Defaults;
+import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
+import com.google.common.primitives.Primitives;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
@@ -38,18 +50,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.lang.FieldVisitor;
 import io.cdap.cdap.internal.lang.Fields;
 import io.cdap.cdap.internal.lang.Reflections;
-import com.google.common.base.Defaults;
-import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
-import com.google.common.primitives.Primitives;
-import com.google.common.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

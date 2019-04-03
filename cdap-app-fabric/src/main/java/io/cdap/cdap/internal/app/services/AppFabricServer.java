@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -34,11 +39,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.security.tools.HttpsEnabler;
 import io.cdap.cdap.security.tools.KeyStores;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import io.cdap.http.HandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;

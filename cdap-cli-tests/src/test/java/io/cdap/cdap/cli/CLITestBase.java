@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.cli;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
-import com.google.common.base.Function;
 import io.cdap.common.cli.CLI;
 import org.junit.Assert;
 import org.junit.ClassRule;

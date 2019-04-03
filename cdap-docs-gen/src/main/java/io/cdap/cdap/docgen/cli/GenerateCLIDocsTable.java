@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.docgen.cli;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.LaunchOptions;
 import io.cdap.cdap.cli.commandset.DefaultCommands;
@@ -23,9 +26,6 @@ import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.cli.util.table.TableRenderer;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.cdap.common.cli.Command;
 
 import java.io.IOException;

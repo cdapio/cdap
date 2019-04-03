@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.inject.Module;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 
 /**

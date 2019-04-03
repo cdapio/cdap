@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -26,7 +27,6 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
-import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.util.Map;

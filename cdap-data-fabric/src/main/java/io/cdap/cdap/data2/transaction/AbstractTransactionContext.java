@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data2.transaction;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;

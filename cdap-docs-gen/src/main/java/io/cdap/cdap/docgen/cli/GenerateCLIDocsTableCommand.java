@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.docgen.cli;
 
-import io.cdap.cdap.cli.CommandCategory;
-import io.cdap.cdap.cli.command.system.HelpCommand;
-import io.cdap.cdap.cli.util.table.TableRendererConfig;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
@@ -28,6 +25,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.system.HelpCommand;
+import io.cdap.cdap.cli.util.table.TableRendererConfig;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;

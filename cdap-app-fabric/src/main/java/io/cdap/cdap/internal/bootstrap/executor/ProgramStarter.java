@@ -17,6 +17,8 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
@@ -24,8 +26,6 @@ import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

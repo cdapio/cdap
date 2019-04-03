@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.service;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
+import com.google.common.hash.Hashing;
+import com.google.common.io.BaseEncoding;
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
@@ -30,11 +35,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
-import com.google.common.hash.Hashing;
-import com.google.common.io.BaseEncoding;
-import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;

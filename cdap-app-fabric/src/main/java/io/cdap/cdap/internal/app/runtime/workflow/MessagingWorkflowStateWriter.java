@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.workflow;
 
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -30,8 +32,6 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 
 /**
  * An implementation of {@link WorkflowStateWriter} that writes to TMS.

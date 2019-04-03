@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import io.cdap.cdap.api.dataset.DatasetDefinition;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
 
 /**
  * this is a hack for initializing system-level datasets for now

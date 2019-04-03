@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.cube;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
@@ -29,7 +30,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.util.Collection;

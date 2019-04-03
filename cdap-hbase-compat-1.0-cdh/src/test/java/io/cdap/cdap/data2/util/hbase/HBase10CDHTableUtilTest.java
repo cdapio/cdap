@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import org.junit.experimental.categories.Category;
 
 /**

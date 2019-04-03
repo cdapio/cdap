@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.format.io;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.io.Encoder;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.lang.reflect.Array;

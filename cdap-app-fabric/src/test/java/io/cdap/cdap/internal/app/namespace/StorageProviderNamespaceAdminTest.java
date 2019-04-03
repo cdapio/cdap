@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.DefaultNamespacePathLocator;
@@ -28,10 +32,6 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.NamespaceStore;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginProperties;
@@ -28,7 +29,6 @@ import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.plugin.Caller;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
-import com.google.gson.Gson;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;

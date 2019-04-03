@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.explore.service.datasets;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.api.data.batch.Split;
@@ -31,7 +32,6 @@ import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.List;

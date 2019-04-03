@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.security.hive;
 
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.hive.ExploreUtils;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;

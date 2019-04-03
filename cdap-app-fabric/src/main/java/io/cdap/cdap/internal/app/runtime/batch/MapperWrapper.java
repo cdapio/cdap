@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.common.conf.Constants;
@@ -29,8 +31,6 @@ import io.cdap.cdap.internal.app.runtime.batch.dataset.input.InputContexts;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.input.MultiInputTaggedSplit;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.input.TaggedInputSplit;
 import io.cdap.cdap.internal.lang.Reflections;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;

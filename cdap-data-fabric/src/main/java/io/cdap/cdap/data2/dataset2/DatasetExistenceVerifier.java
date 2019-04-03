@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.dataset2;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.common.entity.EntityExistenceVerifier;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
 
 /**
  * {@link EntityExistenceVerifier} for {@link DatasetId datasets}.

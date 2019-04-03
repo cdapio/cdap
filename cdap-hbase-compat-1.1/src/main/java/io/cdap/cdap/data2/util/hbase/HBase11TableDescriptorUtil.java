@@ -21,7 +21,6 @@ import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
 import io.cdap.cdap.spi.hbase.TableDescriptor;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;

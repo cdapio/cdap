@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -27,7 +28,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.Configs;
 import org.junit.Assert;
 import org.junit.Test;

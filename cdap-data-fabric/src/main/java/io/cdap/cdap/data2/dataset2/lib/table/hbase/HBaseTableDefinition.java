@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 

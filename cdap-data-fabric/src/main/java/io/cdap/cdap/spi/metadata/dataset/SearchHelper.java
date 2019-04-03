@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.spi.metadata.dataset;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
@@ -41,12 +47,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;

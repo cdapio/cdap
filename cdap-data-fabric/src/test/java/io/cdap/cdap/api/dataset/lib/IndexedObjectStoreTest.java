@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.collect.ImmutableList;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
 import org.junit.Assert;

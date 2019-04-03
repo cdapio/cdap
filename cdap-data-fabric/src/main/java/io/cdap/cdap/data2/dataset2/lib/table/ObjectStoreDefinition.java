@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -29,10 +33,6 @@ import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.ObjectStore;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.Map;

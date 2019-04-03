@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.k8s.discovery;
 
-import io.cdap.cdap.k8s.common.AbstractWatcherThread;
-import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Call;
+import io.cdap.cdap.k8s.common.AbstractWatcherThread;
+import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;

@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import com.google.gson.Gson;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.spark.api.java.JavaPairRDD;

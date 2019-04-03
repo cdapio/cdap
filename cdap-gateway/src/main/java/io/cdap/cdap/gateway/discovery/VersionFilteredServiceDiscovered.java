@@ -15,9 +15,9 @@
  */
 package io.cdap.cdap.gateway.discovery;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;

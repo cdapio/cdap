@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.common.service;
 
-import io.cdap.cdap.api.retry.RetriesExhaustedException;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import io.cdap.cdap.api.retry.RetriesExhaustedException;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;

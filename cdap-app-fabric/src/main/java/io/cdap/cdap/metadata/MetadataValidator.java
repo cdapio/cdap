@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.base.CharMatcher;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.base.CharMatcher;
 
 import java.util.Map;
 import java.util.Set;

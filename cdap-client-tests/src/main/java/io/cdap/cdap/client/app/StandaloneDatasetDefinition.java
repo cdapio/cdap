@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client.app;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.Map;

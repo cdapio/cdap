@@ -18,11 +18,11 @@ package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 
 import java.util.Collections;
 import java.util.Map;

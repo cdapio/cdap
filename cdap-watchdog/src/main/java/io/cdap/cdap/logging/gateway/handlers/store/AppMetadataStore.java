@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.logging.gateway.handlers.store;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.proto.ProgramType;
@@ -26,7 +27,6 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;

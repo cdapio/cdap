@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.security.store.secretmanager;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -32,10 +36,6 @@ import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import io.cdap.cdap.security.store.SecureStoreService;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

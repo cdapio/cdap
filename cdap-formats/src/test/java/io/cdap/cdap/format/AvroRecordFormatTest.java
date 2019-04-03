@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.format;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.FormatSpecification;
 import io.cdap.cdap.api.data.format.Formats;
 import io.cdap.cdap.api.data.format.RecordFormat;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;

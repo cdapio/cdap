@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 
 /**
  * Default implementation of {@link DatasetDefinitionRegistryFactory} that creates instance

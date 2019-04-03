@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.batch.Input;
@@ -27,9 +30,6 @@ import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;

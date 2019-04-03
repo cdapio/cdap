@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.hadoop.yarn.api.ApplicationConstants;

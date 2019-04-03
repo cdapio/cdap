@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.etl.batch.conversion;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.batch.StructuredRecordWritable;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DoubleWritable;

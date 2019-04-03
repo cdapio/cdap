@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.tool.config;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -30,8 +32,6 @@ import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.tool.ETLVersion;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
 
 import java.util.Set;
 

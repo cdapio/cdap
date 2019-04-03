@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.metrics;
 
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.metrics.MetricValues;
@@ -31,12 +37,6 @@ import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;

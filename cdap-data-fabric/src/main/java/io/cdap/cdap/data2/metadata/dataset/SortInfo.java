@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.metadata.dataset;
 
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.spi.metadata.MetadataConstants;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 
 import java.util.Iterator;
 import java.util.Objects;

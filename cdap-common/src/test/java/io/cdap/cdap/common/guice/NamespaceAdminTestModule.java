@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.common.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
 
 /**
  * A guice module to provide bindings for {@link NamespaceAdmin} and {@link NamespaceQueryAdmin} for unit-test.

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data.runtime;
 
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 
 /**
  * Binds the {@link io.cdap.cdap.api.metrics.MetricsCollectionService} to a no-op implementation.

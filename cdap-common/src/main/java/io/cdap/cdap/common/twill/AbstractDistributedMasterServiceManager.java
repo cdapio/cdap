@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.common.twill;
 
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;

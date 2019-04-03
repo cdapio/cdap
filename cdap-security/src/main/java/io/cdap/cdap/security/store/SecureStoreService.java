@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.store;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
-import com.google.common.util.concurrent.Service;
 
 /**
  * Secure store service.

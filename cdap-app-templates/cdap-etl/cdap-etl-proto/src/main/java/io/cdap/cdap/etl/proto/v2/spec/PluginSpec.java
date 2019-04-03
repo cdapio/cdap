@@ -17,11 +17,11 @@
 
 package io.cdap.cdap.etl.proto.v2.spec;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.Externalizable;
 import java.io.IOException;

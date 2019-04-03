@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition;
@@ -23,8 +25,6 @@ import io.cdap.cdap.proto.ColumnDesc;
 import io.cdap.cdap.proto.QueryResult;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

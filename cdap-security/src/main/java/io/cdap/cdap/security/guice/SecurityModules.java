@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.guice;
 
-import io.cdap.cdap.common.runtime.RuntimeModule;
 import com.google.inject.Module;
+import io.cdap.cdap.common.runtime.RuntimeModule;
 
 /**
  * Security guice modules

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -34,7 +35,6 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

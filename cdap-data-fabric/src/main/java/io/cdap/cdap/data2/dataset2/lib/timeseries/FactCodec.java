@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

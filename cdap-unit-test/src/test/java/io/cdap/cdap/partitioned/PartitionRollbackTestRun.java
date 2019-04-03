@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.partitioned;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
@@ -29,9 +32,6 @@ import io.cdap.cdap.test.MapReduceManager;
 import io.cdap.cdap.test.UnitTestManager;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;

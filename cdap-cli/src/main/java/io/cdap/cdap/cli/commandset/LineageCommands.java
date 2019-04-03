@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.commandset;
 
-import io.cdap.cdap.cli.Categorized;
-import io.cdap.cdap.cli.CommandCategory;
-import io.cdap.cdap.cli.command.lineage.GetDatasetLineageCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.cli.Categorized;
+import io.cdap.cdap.cli.CommandCategory;
+import io.cdap.cdap.cli.command.lineage.GetDatasetLineageCommand;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

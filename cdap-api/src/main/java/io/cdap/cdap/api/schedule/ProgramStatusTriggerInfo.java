@@ -22,8 +22,6 @@ import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import org.apache.twill.api.RunId;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 

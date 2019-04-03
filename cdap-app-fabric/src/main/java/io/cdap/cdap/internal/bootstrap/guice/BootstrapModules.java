@@ -17,6 +17,10 @@
 
 package io.cdap.cdap.internal.bootstrap.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.internal.bootstrap.BootstrapConfig;
 import io.cdap.cdap.internal.bootstrap.BootstrapConfigProvider;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
@@ -31,10 +35,6 @@ import io.cdap.cdap.internal.bootstrap.executor.ProgramStarter;
 import io.cdap.cdap.internal.bootstrap.executor.SystemArtifactLoader;
 import io.cdap.cdap.internal.bootstrap.executor.SystemPreferenceSetter;
 import io.cdap.cdap.internal.bootstrap.executor.SystemProfileCreator;
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.MapBinder;
 
 /**
  * Guice bindings for bootstrap classes. Binds {@link BootstrapService} as a singleton and binds

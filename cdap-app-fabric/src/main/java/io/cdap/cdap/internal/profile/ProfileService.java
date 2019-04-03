@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.profile;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.MethodNotAllowedException;
@@ -39,7 +40,6 @@ import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

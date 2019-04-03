@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -38,11 +43,6 @@ import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.TableAssert;
 import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.Transaction;

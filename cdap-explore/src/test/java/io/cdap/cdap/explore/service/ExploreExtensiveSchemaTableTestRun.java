@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.explore.service.datasets.ExtensiveSchemaTableDefinition;
@@ -24,9 +27,6 @@ import io.cdap.cdap.proto.QueryResult;
 import io.cdap.cdap.proto.TableInfo;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.junit.AfterClass;
 import org.junit.Assert;

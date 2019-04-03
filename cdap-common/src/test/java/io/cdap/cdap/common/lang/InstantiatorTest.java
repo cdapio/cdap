@@ -15,10 +15,10 @@
  */
 package io.cdap.cdap.common.lang;
 
-import io.cdap.cdap.internal.lang.FieldVisitor;
-import io.cdap.cdap.internal.lang.Reflections;
 import com.google.common.base.Defaults;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.internal.lang.FieldVisitor;
+import io.cdap.cdap.internal.lang.Reflections;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

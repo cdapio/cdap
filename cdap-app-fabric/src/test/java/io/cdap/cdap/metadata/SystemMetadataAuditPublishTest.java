@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
@@ -33,9 +36,6 @@ import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.Scheduler;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

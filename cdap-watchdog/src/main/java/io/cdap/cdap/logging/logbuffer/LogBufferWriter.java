@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.logging.logbuffer;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.io.Closeables;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

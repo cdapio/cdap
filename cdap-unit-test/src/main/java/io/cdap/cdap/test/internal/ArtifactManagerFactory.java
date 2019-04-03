@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.test.internal;
 
-import io.cdap.cdap.proto.id.ArtifactId;
-import io.cdap.cdap.test.ArtifactManager;
 import com.google.inject.Guice;
 import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.test.ArtifactManager;
 
 /**
  * A {@link Guice} factory to create {@link ArtifactManager}.

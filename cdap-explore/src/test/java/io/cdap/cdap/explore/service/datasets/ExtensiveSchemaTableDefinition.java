@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.explore.service.datasets;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.RecordScannable;
 import io.cdap.cdap.api.data.batch.RecordScanner;
@@ -32,7 +33,6 @@ import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.client.util;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.exception.DisconnectedException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.master.spi.environment;
 
-import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;

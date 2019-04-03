@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.master.startup;
 
+import com.google.inject.Inject;
+import com.google.inject.ProvisionException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.startup.Check;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.data2.util.hbase.HBaseVersion;
-import com.google.inject.Inject;
-import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;

@@ -15,12 +15,12 @@
  */
 package io.cdap.cdap.proto.id;
 
-import io.cdap.cdap.api.metadata.MetadataEntity;
-import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

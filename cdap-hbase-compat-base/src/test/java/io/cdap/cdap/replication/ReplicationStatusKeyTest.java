@@ -16,11 +16,9 @@
 
 package io.cdap.cdap.replication;
 
-import io.cdap.cdap.api.common.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 /**

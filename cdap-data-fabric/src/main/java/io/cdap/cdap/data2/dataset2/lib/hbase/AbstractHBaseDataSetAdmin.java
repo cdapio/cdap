@@ -15,6 +15,12 @@
  */
 package io.cdap.cdap.data2.dataset2.lib.hbase;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -29,12 +35,6 @@ import io.cdap.cdap.data2.util.hbase.HTableNameConverter;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;

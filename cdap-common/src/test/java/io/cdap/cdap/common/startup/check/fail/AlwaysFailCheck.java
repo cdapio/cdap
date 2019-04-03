@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.startup.check.fail;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.startup.Check;
-import com.google.inject.Inject;
 
 /**
  * Check that always throws an exception with a configurable message. Used to check injection.

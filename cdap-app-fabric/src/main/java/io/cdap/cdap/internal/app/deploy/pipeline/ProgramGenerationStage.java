@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.collect.Iterables;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -23,8 +25,6 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProgramTypes;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.collect.Iterables;
-import com.google.common.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.List;

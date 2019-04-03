@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.dataset.lib.PartitionKey;
-import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.dataset.lib.PartitionKey;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import org.junit.Assert;
 import org.junit.Test;
 

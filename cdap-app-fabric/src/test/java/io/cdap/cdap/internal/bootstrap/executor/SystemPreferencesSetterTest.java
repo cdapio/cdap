@@ -17,11 +17,11 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.gson.Gson;
+import com.google.inject.Injector;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
-import com.google.gson.Gson;
-import com.google.inject.Injector;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;

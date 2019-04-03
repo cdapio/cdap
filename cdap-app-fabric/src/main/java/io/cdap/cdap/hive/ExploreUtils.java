@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.hive;
 
-import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.common.utils.DirUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

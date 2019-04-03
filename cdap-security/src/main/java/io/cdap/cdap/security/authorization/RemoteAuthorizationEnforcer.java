@@ -16,17 +16,6 @@
 
 package io.cdap.cdap.security.authorization;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
-import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.proto.security.AuthorizationPrivilege;
-import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.proto.security.VisibilityRequest;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -42,6 +31,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.proto.security.AuthorizationPrivilege;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.VisibilityRequest;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import org.apache.twill.discovery.DiscoveryServiceClient;

@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.messaging.store.cache;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
@@ -30,12 +36,6 @@ import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBMessageTableTest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.junit.Assert;
 import org.junit.BeforeClass;

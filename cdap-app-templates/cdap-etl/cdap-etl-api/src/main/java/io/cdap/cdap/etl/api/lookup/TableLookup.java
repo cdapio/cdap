@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.etl.api.lookup;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.etl.api.Lookup;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.HashMap;
 import java.util.Map;

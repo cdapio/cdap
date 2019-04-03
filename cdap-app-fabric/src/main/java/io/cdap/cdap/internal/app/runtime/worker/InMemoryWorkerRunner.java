@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.worker;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.worker.WorkerSpecification;
@@ -27,9 +30,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.AbstractInMemoryProgramRunner;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 /**
  * For running {@link Worker}. Only used in in-memory/standalone mode.

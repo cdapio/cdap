@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -25,12 +31,6 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.security.guice.SecurityModules;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;

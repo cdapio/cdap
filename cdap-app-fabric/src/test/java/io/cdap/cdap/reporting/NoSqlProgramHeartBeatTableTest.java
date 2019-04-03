@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.reporting;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

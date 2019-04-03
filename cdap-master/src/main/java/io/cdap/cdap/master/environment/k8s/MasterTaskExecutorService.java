@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.util.concurrent.AbstractScheduledService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

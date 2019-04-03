@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.inject.Inject;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;

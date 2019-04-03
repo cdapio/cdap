@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.transaction.coprocessor;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.CoprocessorCConfigurationReader;
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;

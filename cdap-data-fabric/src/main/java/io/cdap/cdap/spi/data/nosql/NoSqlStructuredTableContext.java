@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.common.base.Joiner;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.lib.IndexedTable;
@@ -28,7 +29,6 @@ import io.cdap.cdap.spi.data.common.MetricStructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-import com.google.common.base.Joiner;
 
 import java.util.HashMap;
 import java.util.Map;

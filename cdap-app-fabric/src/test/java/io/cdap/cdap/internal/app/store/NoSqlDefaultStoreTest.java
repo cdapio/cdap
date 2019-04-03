@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.store;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.store.DefaultNamespaceStore;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

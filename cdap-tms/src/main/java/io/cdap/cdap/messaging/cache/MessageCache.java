@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.messaging.cache;
 
-import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.messaging.store.MessageFilter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.messaging.store.MessageFilter;
 
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;

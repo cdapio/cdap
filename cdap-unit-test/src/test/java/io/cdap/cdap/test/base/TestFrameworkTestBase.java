@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.test.base;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -32,10 +36,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.TestBase;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.Assert;

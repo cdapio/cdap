@@ -16,18 +16,18 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import io.cdap.cdap.proto.DatasetInstanceConfiguration;
-import io.cdap.cdap.proto.DatasetModuleMeta;
-import io.cdap.cdap.proto.DatasetTypeMeta;
-import io.cdap.cdap.proto.id.DatasetModuleId;
-import io.cdap.cdap.proto.id.DatasetTypeId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.proto.DatasetInstanceConfiguration;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetTypeMeta;
+import io.cdap.cdap.proto.id.DatasetModuleId;
+import io.cdap.cdap.proto.id.DatasetTypeId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

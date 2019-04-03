@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.test.internal;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.RuntimeMetrics;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
@@ -25,8 +27,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.cdap.test.ServiceManager;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.net.URL;

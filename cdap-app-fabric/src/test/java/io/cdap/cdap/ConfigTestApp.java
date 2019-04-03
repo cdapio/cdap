@@ -16,6 +16,8 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.Property;
@@ -26,8 +28,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;

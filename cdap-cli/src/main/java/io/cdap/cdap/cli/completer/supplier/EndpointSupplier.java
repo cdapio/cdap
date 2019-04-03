@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.completer.supplier;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.completer.element.EndpointCompleter;
 import io.cdap.cdap.cli.completer.element.HttpEndpointPrefixCompleter;
 import io.cdap.cdap.cli.completer.element.HttpMethodPrefixCompleter;
 import io.cdap.cdap.client.ServiceClient;
-import com.google.inject.Inject;
 import io.cdap.common.cli.supplier.CompleterSupplier;
 import jline.console.completer.Completer;
 

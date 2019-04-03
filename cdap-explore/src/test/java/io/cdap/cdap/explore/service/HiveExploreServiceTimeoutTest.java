@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -25,9 +28,6 @@ import io.cdap.cdap.proto.ColumnDesc;
 import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.tephra.Transaction;
 import org.junit.AfterClass;
 import org.junit.Assert;

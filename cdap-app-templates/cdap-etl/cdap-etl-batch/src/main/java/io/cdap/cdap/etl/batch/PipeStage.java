@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.etl.batch;
 
-import io.cdap.cdap.etl.api.Destroyable;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.etl.api.Destroyable;
 
 
 /**

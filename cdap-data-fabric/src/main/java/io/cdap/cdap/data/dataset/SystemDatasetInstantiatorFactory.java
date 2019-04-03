@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data.dataset;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 import javax.annotation.Nullable;

@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.api.Config;
@@ -60,11 +65,6 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import io.cdap.common.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;

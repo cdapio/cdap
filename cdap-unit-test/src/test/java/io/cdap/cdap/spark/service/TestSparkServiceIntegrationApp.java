@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.service;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -26,7 +27,6 @@ import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
-import com.google.common.io.Closeables;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;

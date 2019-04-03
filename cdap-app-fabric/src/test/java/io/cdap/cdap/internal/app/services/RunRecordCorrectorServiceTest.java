@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.WorkflowAppWithLocalDataset;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
@@ -49,7 +50,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;

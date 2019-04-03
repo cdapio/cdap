@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.mock.transform;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -27,7 +28,6 @@ import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;

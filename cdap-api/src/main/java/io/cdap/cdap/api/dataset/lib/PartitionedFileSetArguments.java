@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
-import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
-import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
+import io.cdap.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

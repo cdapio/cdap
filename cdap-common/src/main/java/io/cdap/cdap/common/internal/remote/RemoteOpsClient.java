@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
@@ -23,9 +26,6 @@ import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.codec.WorkflowTokenDetailCodec;
 import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

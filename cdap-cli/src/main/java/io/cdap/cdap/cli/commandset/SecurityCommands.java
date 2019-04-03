@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.commandset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.security.AddRoleToPrincipalCommand;
@@ -27,9 +30,6 @@ import io.cdap.cdap.cli.command.security.ListRolesCommand;
 import io.cdap.cdap.cli.command.security.RemoveRoleFromPrincipalCommand;
 import io.cdap.cdap.cli.command.security.RevokeActionForPrincipalCommand;
 import io.cdap.cdap.cli.command.security.RevokeEntityCommand;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

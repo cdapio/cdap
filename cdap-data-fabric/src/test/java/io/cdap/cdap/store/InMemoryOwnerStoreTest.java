@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.store;
 
-import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
-import io.cdap.cdap.security.impersonation.OwnerStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
+import io.cdap.cdap.security.impersonation.OwnerStore;
 import org.junit.BeforeClass;
 
 /**

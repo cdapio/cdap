@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.security.auth.context;
 
-import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;

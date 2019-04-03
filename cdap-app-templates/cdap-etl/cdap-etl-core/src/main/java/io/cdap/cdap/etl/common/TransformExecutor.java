@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.etl.api.Destroyable;
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.Transformation;
-import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
 import java.util.HashMap;

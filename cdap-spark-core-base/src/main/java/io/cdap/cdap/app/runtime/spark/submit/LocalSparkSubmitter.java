@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.app.runtime.spark.submit;
 
-import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 
 import java.util.Map;
 import java.util.regex.Matcher;

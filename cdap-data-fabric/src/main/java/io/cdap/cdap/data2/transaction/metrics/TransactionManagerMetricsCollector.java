@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.transaction.metrics;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.apache.tephra.metrics.TxMetricsCollector;
 
 import java.util.function.Supplier;

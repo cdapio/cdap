@@ -17,14 +17,14 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.gson.JsonObject;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.gson.JsonObject;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

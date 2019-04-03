@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.hive.datasets;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.RecordScannable;
 import io.cdap.cdap.api.data.batch.RecordScanner;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.Splits;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.shims.ShimLoader;

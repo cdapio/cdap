@@ -16,11 +16,6 @@
 
 package io.cdap.cdap.internal.app;
 
-import io.cdap.cdap.api.Resources;
-import io.cdap.cdap.api.plugin.Plugin;
-import io.cdap.cdap.api.service.ServiceSpecification;
-import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
-import io.cdap.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -29,6 +24,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
+import io.cdap.cdap.proto.codec.AbstractSpecificationCodec;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillSpecification;

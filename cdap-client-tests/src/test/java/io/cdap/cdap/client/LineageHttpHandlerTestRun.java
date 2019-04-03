@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.client.app.AllProgramsApp;
 import io.cdap.cdap.common.BadRequestException;
@@ -36,9 +39,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Test;

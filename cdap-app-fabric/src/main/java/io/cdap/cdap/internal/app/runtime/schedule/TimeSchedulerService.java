@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.util.concurrent.Service;
 
 import java.util.List;
 

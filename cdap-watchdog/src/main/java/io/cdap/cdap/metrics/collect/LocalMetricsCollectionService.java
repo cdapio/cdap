@@ -15,6 +15,10 @@
  */
 package io.cdap.cdap.metrics.collect;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -22,10 +26,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 
 import java.util.ArrayList;

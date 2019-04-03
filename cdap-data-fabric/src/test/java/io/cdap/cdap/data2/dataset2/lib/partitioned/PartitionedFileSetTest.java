@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.PartitionNotFoundException;
@@ -38,12 +44,6 @@ import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;

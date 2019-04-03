@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.twill.internal.utils.Instances;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

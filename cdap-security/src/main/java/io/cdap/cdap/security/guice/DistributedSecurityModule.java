@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.security.guice;
 
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.DistributedKeyManager;
 import io.cdap.cdap.security.auth.KeyIdentifier;
 import io.cdap.cdap.security.auth.KeyManager;
-import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**

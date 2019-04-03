@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.entity.EntityExistenceVerifier;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
 
 /**
  * {@link EntityExistenceVerifier} for {@link NamespaceId namespaces}.

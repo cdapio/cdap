@@ -15,10 +15,10 @@
  */
 package io.cdap.cdap.etl.api.lookup;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.etl.api.Lookup;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.HashMap;
 import java.util.Map;

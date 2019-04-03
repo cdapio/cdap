@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.gateway.router;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.common.conf.Constants;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.conf.Constants;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;

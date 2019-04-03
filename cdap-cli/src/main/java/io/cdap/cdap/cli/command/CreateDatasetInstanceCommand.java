@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -25,8 +27,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.DatasetClient;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

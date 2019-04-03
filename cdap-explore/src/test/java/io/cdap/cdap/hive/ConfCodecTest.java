@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.hive;
 
+import com.google.common.collect.Maps;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.ConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.hive.context.CConfCodec;
 import io.cdap.cdap.hive.context.HConfCodec;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;

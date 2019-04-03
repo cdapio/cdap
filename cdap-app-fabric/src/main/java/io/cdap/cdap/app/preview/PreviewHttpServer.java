@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -27,8 +29,6 @@ import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;

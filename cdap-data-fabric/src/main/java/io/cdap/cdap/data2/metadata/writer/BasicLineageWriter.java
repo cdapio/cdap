@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
@@ -25,8 +27,6 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

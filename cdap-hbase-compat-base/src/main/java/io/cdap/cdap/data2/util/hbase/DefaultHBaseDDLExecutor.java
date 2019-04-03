@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
 import io.cdap.cdap.spi.hbase.TableDescriptor;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -28,8 +30,6 @@ import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

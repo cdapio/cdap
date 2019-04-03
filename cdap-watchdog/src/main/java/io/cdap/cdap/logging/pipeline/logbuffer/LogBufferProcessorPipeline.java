@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.logging.pipeline.logbuffer;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
@@ -27,8 +29,6 @@ import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.queue.ProcessedEventMetadata;
 import io.cdap.cdap.logging.pipeline.queue.ProcessorEvent;
 import io.cdap.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

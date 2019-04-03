@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
-import com.google.inject.Inject;
 
 import java.util.Set;
 

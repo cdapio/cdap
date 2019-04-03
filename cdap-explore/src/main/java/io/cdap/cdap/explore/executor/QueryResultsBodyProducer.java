@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.explore.executor;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.explore.service.ExploreService;
 import io.cdap.cdap.explore.service.HandleNotFoundException;
 import io.cdap.cdap.proto.ColumnDesc;
 import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.cdap.proto.QueryResult;
-import com.google.gson.Gson;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;

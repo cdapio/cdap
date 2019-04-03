@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.UseDataSet;
@@ -38,7 +39,6 @@ import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowInfo;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;

@@ -15,9 +15,9 @@
  */
 package io.cdap.cdap.app.store.preview;
 
+import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.gson.JsonElement;
 
 import java.util.List;
 import java.util.Map;

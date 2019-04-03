@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.operations.cdap;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.operations.OperationalStats;
-import com.google.inject.Injector;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 

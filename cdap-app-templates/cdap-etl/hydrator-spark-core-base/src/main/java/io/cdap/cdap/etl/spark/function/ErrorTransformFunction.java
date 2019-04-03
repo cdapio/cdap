@@ -21,7 +21,6 @@ import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
-import scala.Tuple2;
 
 /**
  * Function that uses an ErrorTransform to perform a flatmap.

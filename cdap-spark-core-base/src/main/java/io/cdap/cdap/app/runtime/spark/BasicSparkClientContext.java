@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramState;
@@ -46,8 +48,6 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import org.apache.spark.SparkConf;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;

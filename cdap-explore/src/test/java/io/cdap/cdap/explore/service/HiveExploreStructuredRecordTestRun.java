@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -39,7 +40,6 @@ import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

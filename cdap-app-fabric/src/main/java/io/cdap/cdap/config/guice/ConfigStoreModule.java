@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.config.guice;
 
+import com.google.inject.AbstractModule;
 import io.cdap.cdap.config.ConfigStore;
 import io.cdap.cdap.config.DefaultConfigStore;
-import com.google.inject.AbstractModule;
 
 /**
  * Configuration Store Guice Modules.

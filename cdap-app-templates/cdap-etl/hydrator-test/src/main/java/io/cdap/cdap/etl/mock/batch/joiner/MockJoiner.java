@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.mock.batch.joiner;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -30,8 +32,6 @@ import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 
 import java.util.ArrayList;
 import java.util.HashMap;

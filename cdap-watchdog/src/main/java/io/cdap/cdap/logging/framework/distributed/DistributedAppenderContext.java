@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.logging.framework.distributed;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.framework.AbstractAppenderContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**

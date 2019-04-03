@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProtoTrigger;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

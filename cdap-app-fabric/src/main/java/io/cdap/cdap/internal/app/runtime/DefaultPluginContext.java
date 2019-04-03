@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -23,8 +25,6 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.util.Map;

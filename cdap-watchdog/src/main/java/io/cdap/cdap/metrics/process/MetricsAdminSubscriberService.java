@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.metrics.process;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -31,9 +34,6 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingPollingService;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

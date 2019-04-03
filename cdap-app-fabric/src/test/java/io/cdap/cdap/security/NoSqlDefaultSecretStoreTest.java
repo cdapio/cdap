@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.security;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

@@ -15,8 +15,8 @@
  */
 package io.cdap.cdap.common.zookeeper.coordination;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.primitives.Ints;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.twill.discovery.Discoverable;
 
 import java.net.InetSocketAddress;

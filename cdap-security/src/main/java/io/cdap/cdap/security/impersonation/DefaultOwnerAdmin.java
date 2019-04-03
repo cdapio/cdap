@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -26,7 +27,6 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

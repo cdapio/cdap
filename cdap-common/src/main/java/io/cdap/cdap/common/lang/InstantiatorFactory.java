@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.lang;
 
-import io.cdap.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -25,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.internal.lang.Reflections;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Constructor;

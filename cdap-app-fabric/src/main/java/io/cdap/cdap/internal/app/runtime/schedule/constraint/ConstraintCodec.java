@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.proto.ProtoConstraint;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 

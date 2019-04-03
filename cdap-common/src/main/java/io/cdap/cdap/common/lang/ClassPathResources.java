@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.common.lang;
 
-import io.cdap.cdap.common.internal.guava.ClassPath;
-import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 

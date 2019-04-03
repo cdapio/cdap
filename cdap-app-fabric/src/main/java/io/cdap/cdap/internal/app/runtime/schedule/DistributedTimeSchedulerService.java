@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
-import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.common.service.RetryOnStartFailureService;
-import io.cdap.cdap.common.service.RetryStrategies;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.RetryStrategies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

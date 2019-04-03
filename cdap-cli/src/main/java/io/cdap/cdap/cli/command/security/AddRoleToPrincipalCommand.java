@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.cli.command.security;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.AuthorizationClient;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

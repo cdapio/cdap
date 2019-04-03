@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.messaging.service;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 
 import java.io.Closeable;
 import java.io.IOException;

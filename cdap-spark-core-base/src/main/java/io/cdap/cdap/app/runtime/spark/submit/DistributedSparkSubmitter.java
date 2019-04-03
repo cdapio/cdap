@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.submit;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
@@ -25,7 +26,6 @@ import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;

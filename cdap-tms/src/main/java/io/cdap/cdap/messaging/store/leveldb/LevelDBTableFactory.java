@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -27,9 +30,6 @@ import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;

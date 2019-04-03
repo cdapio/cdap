@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.service.Service;
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.cli.ArgumentName;
@@ -30,8 +32,6 @@ import io.cdap.cdap.cli.util.RowMaker;
 import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.proto.id.ServiceId;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

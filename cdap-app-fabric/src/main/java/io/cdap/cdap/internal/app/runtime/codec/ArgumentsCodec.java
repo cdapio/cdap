@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.codec;
 
-import io.cdap.cdap.app.runtime.Arguments;
-import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -25,6 +23,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.internal.app.runtime.BasicArguments;
 
 import java.lang.reflect.Type;
 import java.util.Map;

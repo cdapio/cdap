@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.service;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -25,7 +26,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Throwables;
 import org.apache.commons.io.Charsets;
 import org.junit.Assert;
 import org.junit.Test;

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.test;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
@@ -27,10 +31,6 @@ import io.cdap.cdap.api.metrics.TagValue;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.metrics.MetricsTags;
 import io.cdap.cdap.proto.id.ServiceId;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 
 import java.util.ArrayList;
 import java.util.Collection;

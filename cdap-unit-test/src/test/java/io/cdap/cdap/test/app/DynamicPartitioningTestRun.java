@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.InstanceNotFoundException;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
@@ -32,7 +33,6 @@ import io.cdap.cdap.test.MapReduceManager;
 import io.cdap.cdap.test.SlowTests;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;

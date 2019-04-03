@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -31,9 +34,6 @@ import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

@@ -22,7 +22,6 @@ import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.StageMetrics;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Wrapper around another emitter that tracks how many records were emitted.

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.dataset.lib.ConditionCodec;
-import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.dataset.lib.ConditionCodec;
+import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.common.security;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.common.lang.ClassRewriter;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
-import com.google.inject.Inject;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -25,7 +26,6 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import com.google.common.reflect.TypeToken;
 
 /**
  * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic

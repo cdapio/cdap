@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.batch.condition;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
@@ -29,7 +30,6 @@ import io.cdap.cdap.etl.common.AbstractStageContext;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

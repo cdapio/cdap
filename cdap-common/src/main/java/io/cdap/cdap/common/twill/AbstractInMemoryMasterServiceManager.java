@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.twill;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
-import com.google.common.collect.ImmutableList;
 import org.apache.twill.api.logging.LogEntry;
 
 import java.util.Map;

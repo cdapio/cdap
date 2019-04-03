@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.base.CharMatcher;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
-import com.google.common.base.CharMatcher;
 
 import javax.annotation.Nullable;
 

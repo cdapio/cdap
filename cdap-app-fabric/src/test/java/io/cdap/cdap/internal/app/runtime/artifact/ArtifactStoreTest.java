@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
@@ -45,13 +52,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;

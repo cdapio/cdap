@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.DiscreteDomains;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Ranges;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -30,14 +38,6 @@ import io.cdap.cdap.proto.RestartServiceInstancesStatus;
 import io.cdap.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.DiscreteDomains;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Ranges;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

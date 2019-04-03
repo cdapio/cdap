@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.logging.logbuffer.cleaner;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
 import io.cdap.cdap.logging.meta.CheckpointManager;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

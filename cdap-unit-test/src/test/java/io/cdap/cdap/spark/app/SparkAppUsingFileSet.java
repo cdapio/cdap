@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
@@ -31,7 +32,6 @@ import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.spark.FileCountSparkProgram;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;

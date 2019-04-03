@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.metrics;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
-import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.util.Collections;
 import java.util.Map;

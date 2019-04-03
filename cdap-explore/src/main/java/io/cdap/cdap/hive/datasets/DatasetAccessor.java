@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.hive.datasets;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -26,8 +28,6 @@ import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.hive.context.ContextManager;
 import io.cdap.cdap.hive.context.TxnCodec;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;

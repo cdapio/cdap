@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.messaging.guice;
 
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.client.ClientMessagingService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.client.ClientMessagingService;
 
 /**
  * The Guice module to provide binding for messaging system client.

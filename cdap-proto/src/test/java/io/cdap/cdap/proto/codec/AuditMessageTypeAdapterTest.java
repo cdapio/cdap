@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.proto.codec;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.audit.AuditPayload;
 import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.collect.SetMultimap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
@@ -35,9 +38,6 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.submit.CompositeFinisher;
 import io.cdap.cdap.etl.common.submit.Finisher;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.SetMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

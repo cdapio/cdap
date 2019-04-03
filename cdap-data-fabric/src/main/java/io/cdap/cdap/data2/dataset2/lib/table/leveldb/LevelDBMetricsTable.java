@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.table.Scanner;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Map;

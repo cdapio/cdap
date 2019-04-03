@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.explore.service.datasets;
 
+import com.google.common.base.Objects;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.RecordWritable;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -28,8 +30,6 @@ import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.table.Table;
-import com.google.common.base.Objects;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

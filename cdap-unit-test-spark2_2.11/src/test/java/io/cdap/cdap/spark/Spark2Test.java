@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.spark;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
@@ -51,10 +55,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestBaseWithSpark2;
 import io.cdap.cdap.test.TestConfiguration;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

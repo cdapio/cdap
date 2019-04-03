@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -32,7 +33,6 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.FieldValidator;
 import io.cdap.cdap.spi.data.table.field.Range;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

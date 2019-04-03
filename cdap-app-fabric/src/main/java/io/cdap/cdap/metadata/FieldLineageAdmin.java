@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -44,11 +49,6 @@ import io.cdap.cdap.proto.metadata.lineage.ProgramFieldOperationInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramInfo;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

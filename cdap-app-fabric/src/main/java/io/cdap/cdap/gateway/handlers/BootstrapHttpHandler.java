@@ -17,9 +17,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
-import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

@@ -17,15 +17,15 @@
 package io.cdap.cdap.common.ssh;
 
 
-import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
-import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
-import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.base.Splitter;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

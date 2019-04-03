@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.service.function;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.service.DynamicPluginServiceApp;
-import com.google.gson.Gson;
 
 import java.lang.reflect.Type;
 import java.util.Map;

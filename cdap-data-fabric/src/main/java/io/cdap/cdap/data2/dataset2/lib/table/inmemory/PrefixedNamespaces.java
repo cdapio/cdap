@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
+import com.google.common.base.Joiner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import com.google.common.base.Joiner;
 
 /**
  * Defines a prefix-based namespace strategy for in-memory and LevelDB tables.

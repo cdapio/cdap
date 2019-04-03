@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.format.io;
 
+import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.Encoder;
-import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.util.Map;

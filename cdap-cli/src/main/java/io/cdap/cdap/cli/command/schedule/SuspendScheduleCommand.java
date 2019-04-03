@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.cli.command.schedule;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.english.Article;
@@ -23,7 +24,6 @@ import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.proto.id.ScheduleId;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

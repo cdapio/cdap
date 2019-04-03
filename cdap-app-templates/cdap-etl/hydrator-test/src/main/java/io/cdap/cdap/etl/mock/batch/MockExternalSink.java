@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.mock.batch;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.batch.Output;
@@ -32,7 +33,6 @@ import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import io.cdap.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 

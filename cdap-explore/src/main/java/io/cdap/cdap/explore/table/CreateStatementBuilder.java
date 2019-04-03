@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.explore.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.FieldTypes;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
 
 import java.lang.reflect.Type;

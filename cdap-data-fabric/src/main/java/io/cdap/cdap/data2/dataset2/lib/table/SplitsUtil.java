@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.util.Collections;
 import java.util.List;

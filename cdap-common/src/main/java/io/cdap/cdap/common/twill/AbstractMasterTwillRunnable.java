@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.common.twill;
 
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +24,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.AbstractTwillRunnable;

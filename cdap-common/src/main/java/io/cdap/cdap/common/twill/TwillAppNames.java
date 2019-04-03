@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.twill;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Preconditions;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

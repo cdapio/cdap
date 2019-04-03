@@ -19,12 +19,12 @@ package io.cdap.cdap.logging.appender.system;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
@@ -30,7 +31,6 @@ import io.cdap.cdap.proto.ProgramTypes;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.Scheduler;
-import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

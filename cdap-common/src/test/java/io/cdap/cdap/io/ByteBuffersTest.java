@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.io;
 
-import io.cdap.cdap.common.io.ByteBuffers;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import io.cdap.cdap.common.io.ByteBuffers;
 import org.junit.Assert;
 import org.junit.Test;
 

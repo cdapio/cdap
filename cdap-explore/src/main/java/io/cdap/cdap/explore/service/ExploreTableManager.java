@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.data.batch.RecordScannable;
 import io.cdap.cdap.api.data.batch.RecordWritable;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -46,10 +50,6 @@ import io.cdap.cdap.hive.objectinspector.ObjectInspectorFactory;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;

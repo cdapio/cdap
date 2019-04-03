@@ -16,6 +16,7 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
@@ -30,7 +31,6 @@ import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.runtime.batch.WordCount;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

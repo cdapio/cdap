@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
@@ -28,7 +29,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
-import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Before;
 

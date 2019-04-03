@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.commandset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.CreateDatasetInstanceCommand;
@@ -31,9 +34,6 @@ import io.cdap.cdap.cli.command.ListDatasetModulesCommand;
 import io.cdap.cdap.cli.command.ListDatasetTypesCommand;
 import io.cdap.cdap.cli.command.SetDatasetInstancePropertiesCommand;
 import io.cdap.cdap.cli.command.TruncateDatasetInstanceCommand;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

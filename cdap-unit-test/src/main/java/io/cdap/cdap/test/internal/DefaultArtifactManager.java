@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.test.internal;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.test.ArtifactManager;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 
 import java.util.Map;
 

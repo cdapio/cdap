@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
-import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.api.dataset.lib.PartitionConsumerState;
 import org.junit.Assert;
 import org.junit.Test;
 

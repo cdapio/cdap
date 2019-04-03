@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.store;
 
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -26,8 +28,6 @@ import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;

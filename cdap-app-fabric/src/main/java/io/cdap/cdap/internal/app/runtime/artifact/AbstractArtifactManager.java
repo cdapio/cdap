@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
@@ -24,7 +25,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
-import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

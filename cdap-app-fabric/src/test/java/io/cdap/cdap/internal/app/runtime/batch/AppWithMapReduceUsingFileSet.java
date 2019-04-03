@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.batch.Input;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;

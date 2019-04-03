@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data.tools;
 
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -36,9 +39,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;

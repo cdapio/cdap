@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.metadata;
 
-import io.cdap.cdap.api.metadata.MetadataScope;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.metadata.MetadataScope;
 
 import java.util.Objects;
 import java.util.Set;

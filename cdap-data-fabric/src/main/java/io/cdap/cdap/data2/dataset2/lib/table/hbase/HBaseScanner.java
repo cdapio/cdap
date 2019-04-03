@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.slf4j.Logger;

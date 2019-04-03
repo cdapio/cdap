@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common;
 
-import io.cdap.cdap.api.common.HttpErrorStatusProvider;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.ExceptionHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

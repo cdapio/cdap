@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
-import com.google.common.base.Objects;
 
 /**
  * Holds application metadata

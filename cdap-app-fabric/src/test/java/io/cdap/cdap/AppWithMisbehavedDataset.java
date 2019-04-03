@@ -16,6 +16,7 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -26,7 +27,6 @@ import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.worker.AbstractWorker;
-import com.google.common.base.Throwables;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionFailureException;
 

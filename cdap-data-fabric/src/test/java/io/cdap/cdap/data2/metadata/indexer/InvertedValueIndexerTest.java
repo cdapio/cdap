@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.metadata.indexer;
 
-import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
-import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 

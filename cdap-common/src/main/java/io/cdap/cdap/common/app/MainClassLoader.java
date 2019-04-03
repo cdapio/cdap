@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.common.app;
 
+import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
@@ -25,9 +28,6 @@ import io.cdap.cdap.common.lang.InterceptableClassLoader;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.Classes;
-import com.google.common.base.Function;
-import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

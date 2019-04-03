@@ -16,11 +16,6 @@
 
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.lineage.field.Operation;
-import io.cdap.cdap.api.lineage.field.OperationType;
-import io.cdap.cdap.api.lineage.field.ReadOperation;
-import io.cdap.cdap.api.lineage.field.TransformOperation;
-import io.cdap.cdap.api.lineage.field.WriteOperation;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -28,6 +23,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.OperationType;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.TransformOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
 
 import java.lang.reflect.Type;
 

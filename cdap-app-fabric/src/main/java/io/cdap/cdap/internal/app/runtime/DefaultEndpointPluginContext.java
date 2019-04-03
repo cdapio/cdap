@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.plugin.EndpointPluginContext;
@@ -30,8 +32,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.Map;

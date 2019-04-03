@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.lineage;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -24,8 +26,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;

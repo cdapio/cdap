@@ -17,11 +17,11 @@
 package io.cdap.cdap.logging.appender.system;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.io.Closeables;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.serialize.LoggingEvent;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;

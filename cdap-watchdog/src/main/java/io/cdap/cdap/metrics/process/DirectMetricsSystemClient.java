@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metrics.process;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.metrics.TagValue;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collection;

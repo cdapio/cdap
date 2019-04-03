@@ -15,6 +15,9 @@
  */
 package io.cdap.cdap.etl.batch.customaction;
 
+import com.google.common.collect.SetMultimap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.customaction.CustomActionContext;
@@ -33,9 +36,6 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.SetMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;

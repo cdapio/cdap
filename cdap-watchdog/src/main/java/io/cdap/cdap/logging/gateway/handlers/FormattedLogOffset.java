@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import io.cdap.cdap.logging.read.LogOffset;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.logging.read.LogOffset;
 
 /**
  * Formatted LogOffset

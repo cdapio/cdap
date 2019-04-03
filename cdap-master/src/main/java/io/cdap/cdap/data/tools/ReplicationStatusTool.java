@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.data.tools;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -27,9 +30,6 @@ import io.cdap.cdap.data2.util.hbase.ScanBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.replication.ReplicationConstants;
 import io.cdap.cdap.replication.ReplicationStatusKey;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;

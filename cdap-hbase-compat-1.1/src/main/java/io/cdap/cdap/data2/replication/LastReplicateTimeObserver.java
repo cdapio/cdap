@@ -26,7 +26,6 @@ import org.apache.hadoop.hbase.coprocessor.BaseRegionServerObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionServerCoprocessorEnvironment;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

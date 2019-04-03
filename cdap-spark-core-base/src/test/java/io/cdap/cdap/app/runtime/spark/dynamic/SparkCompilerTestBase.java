@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.app.runtime.spark.dynamic;
 
+import com.google.common.base.Joiner;
+import com.google.common.io.Files;
 import io.cdap.cdap.api.spark.dynamic.CompilationFailureException;
 import io.cdap.cdap.api.spark.dynamic.InterpretFailureException;
 import io.cdap.cdap.api.spark.dynamic.SparkCompiler;
 import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
-import com.google.common.base.Joiner;
-import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;

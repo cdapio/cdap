@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -31,11 +36,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.security.tools.HttpsEnabler;
 import io.cdap.cdap.security.tools.KeyStores;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;

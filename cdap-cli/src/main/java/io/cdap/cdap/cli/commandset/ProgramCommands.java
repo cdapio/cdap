@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.commandset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.GetProgramInstancesCommandSet;
@@ -31,9 +34,6 @@ import io.cdap.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
 import io.cdap.cdap.cli.command.StartProgramCommandSet;
 import io.cdap.cdap.cli.command.StopProgramCommandSet;
 import io.cdap.cdap.cli.command.WorkflowCommandSet;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

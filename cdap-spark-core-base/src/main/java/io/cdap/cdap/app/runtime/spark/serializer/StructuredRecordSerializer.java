@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.app.runtime.spark.serializer;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.format.io.StructuredRecordDatumReader;
-import io.cdap.cdap.format.io.StructuredRecordDatumWriter;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.format.io.StructuredRecordDatumReader;
+import io.cdap.cdap.format.io.StructuredRecordDatumWriter;
 
 import java.io.IOException;
 

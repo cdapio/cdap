@@ -17,6 +17,11 @@
 
 package io.cdap.cdap.data.runtime;
 
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -30,11 +35,6 @@ import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.jdbc.DataSourceProvider;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
 
 import javax.sql.DataSource;
 

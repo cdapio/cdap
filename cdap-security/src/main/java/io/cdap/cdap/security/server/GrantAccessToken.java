@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.security.server;
 
+import com.google.common.base.Charsets;
+import com.google.gson.JsonObject;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenIdentifier;
 import io.cdap.cdap.security.auth.TokenManager;
-import com.google.common.base.Charsets;
-import com.google.gson.JsonObject;
-import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;

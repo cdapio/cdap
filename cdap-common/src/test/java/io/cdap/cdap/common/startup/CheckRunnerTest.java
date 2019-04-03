@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.common.startup;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.startup.check.NoOpCheck;
 import io.cdap.cdap.common.startup.check.fail.AlwaysFailCheck;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

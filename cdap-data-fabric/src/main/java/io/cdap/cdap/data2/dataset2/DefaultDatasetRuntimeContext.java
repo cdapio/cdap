@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -31,7 +32,6 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableDatasetDefinition;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.common.Cancellable;
 
 import java.lang.annotation.Annotation;

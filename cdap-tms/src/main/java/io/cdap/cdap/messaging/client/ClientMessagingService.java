@@ -16,6 +16,15 @@
 
 package io.cdap.cdap.messaging.client;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
+import com.google.common.net.HttpHeaders;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -34,15 +43,6 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
-import com.google.common.net.HttpHeaders;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.inject.Inject;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;

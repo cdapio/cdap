@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HConstants;

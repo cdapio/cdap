@@ -18,6 +18,7 @@ package io.cdap.cdap.logging.appender;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.NamespaceLoggingContext;
@@ -29,7 +30,6 @@ import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.read.ReadRange;
-import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

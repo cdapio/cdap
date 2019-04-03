@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.messaging.distributed;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -34,9 +37,6 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.zookeeper.LeaderElection;

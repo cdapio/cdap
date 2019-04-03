@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.common.namespace;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 

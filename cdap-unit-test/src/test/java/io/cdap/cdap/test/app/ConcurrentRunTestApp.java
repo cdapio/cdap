@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import java.io.File;
 import java.util.concurrent.CountDownLatch;

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.dataset2.lib.cube;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
 
 /**
  * Guice binding for {@link MetadataReader} and {@link MetadataWriter} for service binding see

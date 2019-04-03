@@ -17,7 +17,6 @@
 package io.cdap.cdap.api;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.dataset.DatasetManager;
 import io.cdap.cdap.api.messaging.MessagingAdmin;
 import io.cdap.cdap.api.security.store.SecureStoreManager;

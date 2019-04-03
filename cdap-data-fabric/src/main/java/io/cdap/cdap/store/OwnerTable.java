@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.store;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -32,7 +33,6 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
-import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.Optional;

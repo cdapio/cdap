@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.WorkflowClient;
@@ -33,7 +34,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.ScheduleManager;
 import io.cdap.cdap.test.WorkflowManager;
-import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.util.List;

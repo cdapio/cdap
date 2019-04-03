@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.messaging.store.cache;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,10 +32,6 @@ import io.cdap.cdap.messaging.store.MessageFilter;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.TransactionMessageFilter;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;

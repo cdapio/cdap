@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.app.store;
 
-import io.cdap.cdap.proto.RestartServiceInstancesStatus;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.proto.RestartServiceInstancesStatus;
 
 import javax.annotation.Nullable;
 

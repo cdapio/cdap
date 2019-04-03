@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -25,8 +27,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

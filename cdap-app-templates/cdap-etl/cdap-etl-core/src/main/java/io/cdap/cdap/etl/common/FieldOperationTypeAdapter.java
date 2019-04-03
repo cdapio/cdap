@@ -16,11 +16,6 @@
 
 package io.cdap.cdap.etl.common;
 
-import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
-import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
-import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
-import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
-import io.cdap.cdap.etl.api.lineage.field.OperationType;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -28,6 +23,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
+import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
+import io.cdap.cdap.etl.api.lineage.field.OperationType;
 
 import java.lang.reflect.Type;
 

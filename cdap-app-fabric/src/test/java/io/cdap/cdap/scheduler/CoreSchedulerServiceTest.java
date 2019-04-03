@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.scheduler;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AppWithFrequentScheduledWorkflows;
 import io.cdap.cdap.AppWithMultipleSchedules;
 import io.cdap.cdap.api.Config;
@@ -81,14 +89,6 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpResponse;
 import org.junit.AfterClass;
 import org.junit.Assert;

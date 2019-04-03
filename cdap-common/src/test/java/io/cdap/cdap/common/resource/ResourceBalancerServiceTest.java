@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.resource;
 
-import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.common.utils.Tasks;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.store.remote;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.authorization.RemoteAuthorizationEnforcer;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 

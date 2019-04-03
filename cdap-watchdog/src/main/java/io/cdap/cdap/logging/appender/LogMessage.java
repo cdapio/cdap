@@ -20,8 +20,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import io.cdap.cdap.common.logging.LoggingContext;
 import com.google.common.base.Objects;
+import io.cdap.cdap.common.logging.LoggingContext;
 import org.slf4j.Marker;
 
 import java.util.Map;

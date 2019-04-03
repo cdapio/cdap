@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
@@ -33,8 +35,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 

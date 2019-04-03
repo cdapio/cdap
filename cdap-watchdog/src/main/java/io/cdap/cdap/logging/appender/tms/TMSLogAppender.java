@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.logging.appender.tms;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.hash.Hashing;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -30,9 +33,6 @@ import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.Hashing;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.AbstractMap;

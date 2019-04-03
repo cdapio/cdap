@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.kv;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.common.Bytes;
@@ -26,8 +28,6 @@ import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Map;

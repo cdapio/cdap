@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.etl.batch;
 
+import com.google.common.collect.Multimap;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.ErrorRecord;
 import io.cdap.cdap.etl.common.RecordInfo;
-import com.google.common.collect.Multimap;
 
 import java.util.Set;
 

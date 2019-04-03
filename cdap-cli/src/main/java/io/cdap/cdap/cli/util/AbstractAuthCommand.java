@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.util;
 
+import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -24,9 +27,6 @@ import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Action;
-import com.google.common.base.Function;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 

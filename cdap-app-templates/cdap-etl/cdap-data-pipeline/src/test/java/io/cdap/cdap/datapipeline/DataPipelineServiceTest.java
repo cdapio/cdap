@@ -17,6 +17,8 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -52,8 +54,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.ObjectStores;
 import io.cdap.cdap.api.dataset.table.Table;
-import com.google.common.base.Throwables;
 
 /**
  * A dummy app with spark program in scala which counts the characters in a string

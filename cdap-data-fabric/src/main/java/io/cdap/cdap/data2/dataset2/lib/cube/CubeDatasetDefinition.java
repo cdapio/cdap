@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.cube;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -29,9 +32,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.Arrays;

@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -29,9 +32,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.inject.Inject;
 
 /**
  * Creates an application if it doesn't already exist.

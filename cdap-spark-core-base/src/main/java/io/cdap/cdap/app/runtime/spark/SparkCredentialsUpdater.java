@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.common.io.LocationStatus;
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.io.Processor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.cdap.common.io.LocationStatus;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.io.Processor;
 import org.apache.hadoop.hdfs.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;

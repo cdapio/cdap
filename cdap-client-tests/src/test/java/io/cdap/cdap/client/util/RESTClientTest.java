@@ -17,6 +17,11 @@
 
 package io.cdap.cdap.client.util;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
+import com.google.inject.matcher.Matcher;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -24,11 +29,6 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
-import com.google.inject.matcher.Matcher;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

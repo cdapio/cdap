@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -27,7 +28,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.common.ssh;
 
-import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
-import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
-import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
-import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.jcraft.jsch.Channel;
@@ -28,6 +24,10 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
+import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
+import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.internal.io;
 
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.common.io.DatumWriter;
-import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
-import io.cdap.cdap.internal.asm.ClassDefinition;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -27,6 +23,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
+import io.cdap.cdap.internal.asm.ClassDefinition;
 
 import java.util.Map;
 import javax.inject.Inject;

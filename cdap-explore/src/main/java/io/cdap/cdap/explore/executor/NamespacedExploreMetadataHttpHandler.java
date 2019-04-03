@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.explore.executor;
 
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
@@ -29,8 +31,6 @@ import io.cdap.cdap.explore.utils.TablesArgs;
 import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.Impersonator;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;

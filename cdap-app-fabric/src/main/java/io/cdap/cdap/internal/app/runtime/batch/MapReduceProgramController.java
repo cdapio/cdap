@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.runtime.WorkflowDataProvider;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.mapreduce.Job;
 
 import java.io.IOException;

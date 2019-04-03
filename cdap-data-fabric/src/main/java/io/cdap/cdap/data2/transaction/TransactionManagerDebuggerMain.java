@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.transaction;
 
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.OSDetector;
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;

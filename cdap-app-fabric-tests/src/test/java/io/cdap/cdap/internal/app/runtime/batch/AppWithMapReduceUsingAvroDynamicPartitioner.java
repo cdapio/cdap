@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Input;
@@ -31,9 +34,6 @@ import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.mapred.AvroKey;

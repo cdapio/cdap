@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
+import com.google.common.collect.Multimap;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.logging.read.LogEvent;
-import com.google.common.collect.Multimap;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

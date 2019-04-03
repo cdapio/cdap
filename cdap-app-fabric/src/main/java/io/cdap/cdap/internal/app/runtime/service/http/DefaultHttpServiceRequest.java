@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.FullHttpRequest;

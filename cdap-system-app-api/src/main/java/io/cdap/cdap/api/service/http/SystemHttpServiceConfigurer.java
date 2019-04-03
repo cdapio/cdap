@@ -19,8 +19,6 @@ package io.cdap.cdap.api.service.http;
 import io.cdap.cdap.api.SystemTableConfigurer;
 import io.cdap.cdap.api.annotation.Beta;
 
-import java.util.Map;
-
 /**
  * System HttpServiceConfigurer that provides capabilities beyond those available to user configurers.
  * A system configurer can only be used by applications that are deployed in the system namespace.

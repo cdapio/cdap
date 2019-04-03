@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -34,11 +39,6 @@ import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.api.dataset.table.TableSplit;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.conf.Constants;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.slf4j.Logger;

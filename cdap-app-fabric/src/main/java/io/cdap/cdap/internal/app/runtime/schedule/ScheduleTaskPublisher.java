@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;

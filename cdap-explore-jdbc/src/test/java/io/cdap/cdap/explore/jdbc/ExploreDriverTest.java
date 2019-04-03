@@ -16,11 +16,6 @@
 
 package io.cdap.cdap.explore.jdbc;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.proto.ColumnDesc;
-import io.cdap.cdap.proto.QueryHandle;
-import io.cdap.cdap.proto.QueryResult;
-import io.cdap.cdap.proto.QueryStatus;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -28,6 +23,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ColumnDesc;
+import io.cdap.cdap.proto.QueryHandle;
+import io.cdap.cdap.proto.QueryResult;
+import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

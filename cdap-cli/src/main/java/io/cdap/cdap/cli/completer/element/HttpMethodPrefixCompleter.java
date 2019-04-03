@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.completer.element;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ProgramIdArgument;
@@ -25,7 +26,6 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.Lists;
 import io.cdap.common.cli.completers.PrefixCompleter;
 
 import java.io.IOException;

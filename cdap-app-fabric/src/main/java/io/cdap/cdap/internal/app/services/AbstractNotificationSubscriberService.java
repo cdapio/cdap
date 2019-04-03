@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -28,8 +30,6 @@ import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import org.apache.tephra.TxConstants;
 
 /**

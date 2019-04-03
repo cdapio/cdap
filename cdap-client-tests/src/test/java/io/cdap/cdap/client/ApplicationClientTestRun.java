@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -38,8 +40,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

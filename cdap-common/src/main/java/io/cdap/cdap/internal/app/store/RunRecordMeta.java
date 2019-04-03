@@ -15,6 +15,8 @@
  */
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.base.Objects;
+import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.proto.ProgramRunCluster;
@@ -22,8 +24,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Objects;
-import com.google.gson.annotations.SerializedName;
 
 import java.util.Arrays;
 import java.util.Collections;

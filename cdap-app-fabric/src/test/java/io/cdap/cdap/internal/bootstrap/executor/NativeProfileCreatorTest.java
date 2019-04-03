@@ -17,14 +17,14 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.gson.JsonObject;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
-import com.google.gson.JsonObject;
-import com.google.inject.Injector;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;

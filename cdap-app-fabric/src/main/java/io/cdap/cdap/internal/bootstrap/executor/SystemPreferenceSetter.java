@@ -17,13 +17,13 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.config.PreferencesService;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 
 import java.util.Collections;
 import java.util.HashMap;

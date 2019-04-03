@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.store.remote;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
@@ -38,9 +41,6 @@ import io.cdap.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

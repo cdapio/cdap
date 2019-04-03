@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.io;
 
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.common.lang.Instantiator;
-import io.cdap.cdap.common.lang.InstantiatorFactory;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.lang.Instantiator;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
 
 import java.io.IOException;
 import java.net.URI;

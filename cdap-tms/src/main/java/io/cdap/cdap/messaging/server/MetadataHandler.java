@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.messaging.server;
 
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.TopicMetadata;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

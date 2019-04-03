@@ -15,12 +15,12 @@
  */
 package io.cdap.cdap.common.guice;
 
+import com.google.inject.AbstractModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;

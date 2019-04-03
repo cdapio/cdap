@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -57,10 +61,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestConfiguration;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

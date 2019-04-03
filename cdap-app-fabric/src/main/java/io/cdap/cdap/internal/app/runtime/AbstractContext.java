@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.RuntimeContext;
@@ -103,12 +109,6 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.derby.iapi.services.i18n.MessageService;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionConflictException;

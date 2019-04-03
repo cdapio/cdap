@@ -16,6 +16,16 @@
 
 package io.cdap.cdap.spi.metadata.dataset;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Closeables;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -41,16 +51,6 @@ import io.cdap.cdap.spi.metadata.MetadataStorageTest;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.Scopes;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;

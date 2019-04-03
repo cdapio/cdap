@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.app.PingService;
 import io.cdap.cdap.client.common.ClientTestBase;
@@ -30,7 +31,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

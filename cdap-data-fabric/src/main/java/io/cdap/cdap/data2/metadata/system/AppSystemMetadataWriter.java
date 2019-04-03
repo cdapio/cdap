@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.system;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -26,8 +28,6 @@ import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Collections;
 import java.util.HashSet;

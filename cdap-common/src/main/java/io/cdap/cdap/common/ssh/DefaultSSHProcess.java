@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.common.ssh;
 
+import com.jcraft.jsch.ChannelExec;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
-import com.jcraft.jsch.ChannelExec;
 
 import java.io.IOException;
 import java.io.InputStream;

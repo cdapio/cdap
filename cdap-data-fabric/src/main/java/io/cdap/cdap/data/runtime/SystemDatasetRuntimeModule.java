@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.data.runtime;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Module;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
@@ -49,14 +57,6 @@ import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
-import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Module;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 
 /**
  * Provides guice bindings for {@link DatasetModule} that are by default available in the system.

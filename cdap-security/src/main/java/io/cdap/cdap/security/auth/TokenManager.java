@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.security.auth;
 
-import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.io.Codec;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;

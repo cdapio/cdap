@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.logging.appender.kafka;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -23,7 +24,6 @@ import io.cdap.cdap.logging.appender.AbstractLogPublisher;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.inject.Inject;
 import kafka.producer.KeyedMessage;
 
 import java.util.List;

@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -26,11 +31,6 @@ import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
 import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import io.cdap.cdap.security.auth.AccessTokenTransformer;
 import io.cdap.cdap.security.auth.TokenValidator;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import io.cdap.http.SSLConfig;
 import io.cdap.http.SSLHandlerFactory;
 import io.netty.bootstrap.ServerBootstrap;

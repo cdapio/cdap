@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.inject.Inject;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
@@ -28,9 +31,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.store.NamespaceStore;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.inject.Inject;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;

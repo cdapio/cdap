@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.metrics.store.upgrade;
 
-import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.data2.dataset2.lib.timeseries.EntityTable;
 
 import java.util.Arrays;
 import java.util.EnumMap;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.format;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Put;
-import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
 import javax.annotation.Nullable;

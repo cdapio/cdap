@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.client.config;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import io.cdap.cdap.client.exception.DisconnectedException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import io.cdap.common.http.HttpRequestConfig;
 
 import java.net.MalformedURLException;

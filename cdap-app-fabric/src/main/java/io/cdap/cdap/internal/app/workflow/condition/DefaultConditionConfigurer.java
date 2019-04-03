@@ -15,6 +15,8 @@
  */
 package io.cdap.cdap.internal.app.workflow.condition;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.workflow.Condition;
 import io.cdap.cdap.api.workflow.ConditionConfigurer;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
@@ -26,8 +28,6 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
 import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import java.util.HashMap;
 import java.util.HashSet;

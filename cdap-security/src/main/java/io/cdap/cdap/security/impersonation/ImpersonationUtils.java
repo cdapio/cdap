@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import io.cdap.cdap.proto.NamespaceMeta;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.proto.NamespaceMeta;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

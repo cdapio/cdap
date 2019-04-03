@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -26,7 +27,6 @@ import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import com.google.common.base.Strings;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;

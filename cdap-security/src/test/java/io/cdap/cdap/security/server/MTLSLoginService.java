@@ -17,11 +17,9 @@ package io.cdap.cdap.security.server;
  */
 
 import com.google.common.collect.Maps;
-
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.server.UserIdentity;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

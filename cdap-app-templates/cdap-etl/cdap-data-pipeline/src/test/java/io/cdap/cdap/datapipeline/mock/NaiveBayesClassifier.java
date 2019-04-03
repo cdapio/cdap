@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline.mock;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -25,7 +26,6 @@ import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
-import com.google.common.collect.Lists;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark.dynamic;
 
-import io.cdap.cdap.common.NotFoundException;
 import com.google.common.io.Closeables;
 import com.google.common.io.Resources;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpHandler;

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.base.Joiner;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,10 +35,6 @@ import io.cdap.cdap.proto.metadata.lineage.Field;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageDetails;
 import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
-import com.google.common.base.Joiner;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

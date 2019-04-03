@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data.runtime.main.transaction;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.gateway.handlers.PingHandler;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;

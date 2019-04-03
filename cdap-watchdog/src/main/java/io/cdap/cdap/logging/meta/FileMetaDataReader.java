@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.logging.meta;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.Longs;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.logging.appender.system.LogPathIdentifier;
@@ -29,10 +33,6 @@ import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Longs;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;

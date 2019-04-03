@@ -16,14 +16,6 @@
 
 package io.cdap.cdap.internal.io;
 
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.data.schema.SchemaHash;
-import io.cdap.cdap.common.io.DatumWriter;
-import io.cdap.cdap.common.io.Encoder;
-import io.cdap.cdap.internal.asm.ClassDefinition;
-import io.cdap.cdap.internal.asm.Methods;
-import io.cdap.cdap.internal.asm.Signatures;
-import io.cdap.cdap.internal.lang.Fields;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
@@ -35,6 +27,14 @@ import com.google.common.primitives.Longs;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.SchemaHash;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.io.Encoder;
+import io.cdap.cdap.internal.asm.ClassDefinition;
+import io.cdap.cdap.internal.asm.Methods;
+import io.cdap.cdap.internal.asm.Signatures;
+import io.cdap.cdap.internal.lang.Fields;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;

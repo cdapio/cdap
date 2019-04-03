@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.common.logging;
 
-import io.cdap.cdap.common.utils.TimeProvider;
 import com.google.common.base.Supplier;
+import io.cdap.cdap.common.utils.TimeProvider;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.gateway.handlers.meta;
 
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.internal.remote.MethodArgument;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.internal.remote.MethodArgument;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -27,7 +28,6 @@ import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.spark.SparkClientContext;
-import com.google.common.base.Preconditions;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;

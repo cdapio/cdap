@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.base.Suppliers;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -24,9 +27,6 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.security.server.LDAPLoginModule;
-import com.google.common.base.Suppliers;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Injector;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;

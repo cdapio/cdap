@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.spi.data.sql;
 
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 
 import java.io.File;
 import java.io.IOException;

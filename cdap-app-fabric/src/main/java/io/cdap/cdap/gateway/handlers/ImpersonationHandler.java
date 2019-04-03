@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
@@ -26,9 +29,6 @@ import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.PrincipalCredentials;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UGIWithPrincipal;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;

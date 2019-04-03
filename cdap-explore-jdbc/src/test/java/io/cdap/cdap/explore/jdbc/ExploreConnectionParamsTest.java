@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.explore.jdbc;
 
-import io.cdap.cdap.common.conf.Constants;
 import com.google.common.collect.ImmutableMultimap;
+import io.cdap.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 

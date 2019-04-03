@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.registry;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Objects;
 
 /**
  * Key used to keep track of whether a particular usage has been recorded already or not (for UsageRegistry).

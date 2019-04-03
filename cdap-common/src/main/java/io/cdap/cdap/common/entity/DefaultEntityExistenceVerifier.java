@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.entity;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.EntityId;
-import com.google.inject.Inject;
 
 import java.util.Map;
 

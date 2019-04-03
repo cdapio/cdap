@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;

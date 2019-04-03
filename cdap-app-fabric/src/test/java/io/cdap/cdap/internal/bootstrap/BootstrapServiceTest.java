@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.internal.bootstrap;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -25,7 +26,6 @@ import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import io.cdap.cdap.internal.bootstrap.executor.EmptyArguments;
 import io.cdap.cdap.proto.bootstrap.BootstrapResult;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
-import com.google.gson.JsonObject;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;

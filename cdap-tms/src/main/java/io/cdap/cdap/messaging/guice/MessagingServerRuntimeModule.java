@@ -16,6 +16,15 @@
 
 package io.cdap.cdap.messaging.guice;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -38,15 +47,6 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import io.cdap.http.HttpHandler;
 
 import javax.annotation.Nullable;

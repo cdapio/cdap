@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.metadata;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.http.HttpHandler;
 
 import java.util.Set;

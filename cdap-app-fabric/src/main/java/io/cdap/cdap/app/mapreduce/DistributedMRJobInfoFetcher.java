@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.mapreduce;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.MRJobInfo;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

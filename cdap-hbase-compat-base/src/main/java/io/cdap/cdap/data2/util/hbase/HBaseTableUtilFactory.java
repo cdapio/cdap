@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import com.google.inject.Inject;
 
 /**
  * Factory for HBase version-specific {@link HBaseTableUtil} instances.

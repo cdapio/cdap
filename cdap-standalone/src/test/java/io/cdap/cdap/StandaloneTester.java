@@ -16,6 +16,7 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -27,7 +28,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;

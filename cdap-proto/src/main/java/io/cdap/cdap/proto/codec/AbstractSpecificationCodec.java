@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.internal.guava.reflect.TypeParameter;
-import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.internal.guava.reflect.TypeParameter;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.Collections;

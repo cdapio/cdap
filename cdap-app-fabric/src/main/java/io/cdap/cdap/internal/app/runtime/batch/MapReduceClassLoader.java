@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -37,13 +44,6 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.context.MapReduceLoggingContext;
 import io.cdap.cdap.logging.context.WorkflowProgramLoggingContext;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;

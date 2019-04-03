@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.workflow.WorkflowActionNode;
-import io.cdap.cdap.api.workflow.WorkflowConditionNode;
-import io.cdap.cdap.api.workflow.WorkflowForkNode;
-import io.cdap.cdap.api.workflow.WorkflowNode;
-import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowConditionNode;
+import io.cdap.cdap.api.workflow.WorkflowForkNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowNodeType;
 
 import java.lang.reflect.Type;
 

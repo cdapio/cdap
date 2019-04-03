@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.internal.app;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
@@ -28,12 +34,6 @@ import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.codec.AbstractSpecificationCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 import java.util.Map;

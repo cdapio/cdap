@@ -15,9 +15,9 @@
  */
 package io.cdap.cdap.internal.io;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.DatumReader;
-import com.google.common.reflect.TypeToken;
 
 /**
  * Factory for creating instance of {@link DatumReader}.

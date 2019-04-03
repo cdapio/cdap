@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

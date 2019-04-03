@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -27,10 +31,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.DatasetClient;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

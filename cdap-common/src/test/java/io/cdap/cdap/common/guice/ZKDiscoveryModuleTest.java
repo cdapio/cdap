@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.guice;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;

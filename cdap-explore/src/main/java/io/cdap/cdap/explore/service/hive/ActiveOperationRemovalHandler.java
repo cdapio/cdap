@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.explore.service.hive;
 
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

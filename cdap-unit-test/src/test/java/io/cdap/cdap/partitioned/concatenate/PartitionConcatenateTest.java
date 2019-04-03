@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.partitioned.concatenate;
 
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionOutput;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

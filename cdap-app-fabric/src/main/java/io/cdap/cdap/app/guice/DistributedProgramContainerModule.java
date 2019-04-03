@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -67,12 +73,6 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.tools.KeyStores;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
-import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
-import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;

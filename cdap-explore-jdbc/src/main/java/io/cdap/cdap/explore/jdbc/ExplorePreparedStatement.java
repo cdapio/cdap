@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.explore.jdbc;
 
-import io.cdap.cdap.explore.client.ExploreClient;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.explore.client.ExploreClient;
 
 import java.io.InputStream;
 import java.io.Reader;

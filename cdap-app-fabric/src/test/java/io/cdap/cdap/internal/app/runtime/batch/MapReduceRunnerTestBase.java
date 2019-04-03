@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -44,10 +48,6 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
-import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;

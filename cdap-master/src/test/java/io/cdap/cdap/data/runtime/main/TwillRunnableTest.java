@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data.runtime.main;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.test.MockTwillContext;
 import io.cdap.cdap.data.tools.HBaseTableExporter;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.app.runtime.scheduler;
 
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
-import com.google.common.base.Strings;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import javax.annotation.Nullable;

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.gateway.router.handlers;
 
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
@@ -24,10 +28,6 @@ import io.cdap.cdap.security.auth.AccessTokenTransformer;
 import io.cdap.cdap.security.auth.TokenState;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.server.GrantAccessToken;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;

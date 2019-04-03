@@ -17,13 +17,13 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;

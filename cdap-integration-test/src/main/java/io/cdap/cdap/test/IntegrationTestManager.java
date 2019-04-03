@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.test;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -60,11 +65,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.test.remote.RemoteApplicationManager;
 import io.cdap.cdap.test.remote.RemoteArtifactManager;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

@@ -17,6 +17,9 @@
 package io.cdap.cdap.logging.appender.remote;
 
 
+import com.google.common.hash.Hashing;
+import com.google.common.net.HttpHeaders;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -27,9 +30,6 @@ import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.hash.Hashing;
-import com.google.common.net.HttpHeaders;
-import com.google.inject.Inject;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

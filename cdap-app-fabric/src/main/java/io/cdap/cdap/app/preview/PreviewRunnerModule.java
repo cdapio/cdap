@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.Store;
@@ -57,10 +61,6 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 /**
  * Provides bindings required to create injector for running preview.

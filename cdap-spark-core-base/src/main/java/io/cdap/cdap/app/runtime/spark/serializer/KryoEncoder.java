@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark.serializer;
 
+import com.esotericsoftware.kryo.io.Output;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Encoder;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

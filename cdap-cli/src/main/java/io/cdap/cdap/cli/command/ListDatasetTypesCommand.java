@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
@@ -24,9 +27,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.DatasetTypeClient;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
@@ -29,9 +32,6 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;

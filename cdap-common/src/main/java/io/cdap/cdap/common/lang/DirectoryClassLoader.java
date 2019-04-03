@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.common.lang;
 
-import io.cdap.cdap.common.utils.DirUtils;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.common.utils.DirUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

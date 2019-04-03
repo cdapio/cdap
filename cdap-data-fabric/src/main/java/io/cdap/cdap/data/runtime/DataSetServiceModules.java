@@ -16,6 +16,17 @@
 
 package io.cdap.cdap.data.runtime;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -35,17 +46,6 @@ import io.cdap.cdap.data2.metrics.DatasetMetricsReporter;
 import io.cdap.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import io.cdap.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import io.cdap.http.HttpHandler;
 
 import java.util.Map;

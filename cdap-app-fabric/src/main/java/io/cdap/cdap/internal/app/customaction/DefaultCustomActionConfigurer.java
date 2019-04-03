@@ -15,6 +15,8 @@
  */
 package io.cdap.cdap.internal.app.customaction;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.customaction.CustomActionConfigurer;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
@@ -26,8 +28,6 @@ import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 
 import java.util.HashMap;
 import java.util.HashSet;

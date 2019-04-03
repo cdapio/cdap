@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.InvalidMetadataException;
@@ -34,8 +36,6 @@ import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;

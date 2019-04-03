@@ -25,7 +25,6 @@ import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.SparkConf;
 
-import java.util.List;
 import javax.annotation.Nullable;
 /**
  * Implementation of SparkPluginContext that delegates to a SparkContext.

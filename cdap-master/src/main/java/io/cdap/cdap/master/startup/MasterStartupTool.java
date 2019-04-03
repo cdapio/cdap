@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.master.startup;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -30,12 +36,6 @@ import io.cdap.cdap.data.runtime.main.ClientVersions;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

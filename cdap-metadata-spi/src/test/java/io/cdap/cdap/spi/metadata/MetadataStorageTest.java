@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.spi.metadata;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -25,12 +31,6 @@ import io.cdap.cdap.spi.metadata.MetadataMutation.Drop;
 import io.cdap.cdap.spi.metadata.MetadataMutation.Remove;
 import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;

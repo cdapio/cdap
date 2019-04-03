@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
@@ -25,7 +26,6 @@ import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.reflect.TypeToken;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;

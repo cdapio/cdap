@@ -20,7 +20,6 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.StageLifecycle;
-import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import io.cdap.cdap.etl.api.Transformation;
 
 /**

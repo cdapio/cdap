@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.security.UserGroupInformation;

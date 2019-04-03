@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.config;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
@@ -30,8 +32,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 

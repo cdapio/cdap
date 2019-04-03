@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.service;
 
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.service.Service;
@@ -25,10 +29,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

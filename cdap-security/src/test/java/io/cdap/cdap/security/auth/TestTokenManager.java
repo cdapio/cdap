@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

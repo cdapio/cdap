@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.logging.logbuffer.recover;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LogSamplers;
@@ -24,8 +26,6 @@ import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
 import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
 import io.cdap.cdap.logging.meta.CheckpointManager;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

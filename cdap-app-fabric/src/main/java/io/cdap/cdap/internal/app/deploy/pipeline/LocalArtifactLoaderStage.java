@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.store.Store;
@@ -36,10 +40,6 @@ import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.twill.filesystem.Location;
 
 import java.util.concurrent.TimeUnit;

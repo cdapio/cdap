@@ -17,10 +17,10 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
-import io.cdap.cdap.internal.AppFabricTestHelper;
-import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

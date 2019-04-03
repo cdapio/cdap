@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.gateway.handlers.util;
 
+import com.google.common.io.Resources;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.ClientVersion;
-import com.google.common.io.Resources;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.zookeeper.version.Info;
 import org.slf4j.Logger;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,7 +29,6 @@ import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
-import com.google.common.collect.Iterables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

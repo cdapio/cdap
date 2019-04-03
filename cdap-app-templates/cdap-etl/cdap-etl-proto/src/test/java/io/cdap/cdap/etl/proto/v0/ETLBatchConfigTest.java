@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.etl.proto.v0;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.v1.Plugin;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.store;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -47,11 +52,6 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;

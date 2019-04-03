@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command.app;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -27,8 +29,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

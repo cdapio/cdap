@@ -17,10 +17,8 @@
 package io.cdap.cdap.etl.spark.function;
 
 import io.cdap.cdap.etl.api.SplitterTransform;
-import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
-import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
 
 /**

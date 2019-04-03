@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.provision;
 
+import com.google.inject.Singleton;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
@@ -29,7 +30,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
-import com.google.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collections;

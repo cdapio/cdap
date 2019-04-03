@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.common.guice;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
 import io.cdap.cdap.common.utils.Tasks;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.zookeeper.DefaultZKClientService;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;

@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.emr;
 
-import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
-import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.util.Map;
 import java.util.Optional;

@@ -15,9 +15,6 @@
  */
 package io.cdap.cdap.common.guice;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.KafkaConstants;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,6 +26,9 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.KafkaConstants;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.client.ZKBrokerService;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;

@@ -15,6 +15,11 @@
  */
 package io.cdap.cdap.metrics.collect;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
+import com.google.inject.Module;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -29,11 +34,6 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.MetricsTestBase;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
-import com.google.inject.Module;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.util.Map;

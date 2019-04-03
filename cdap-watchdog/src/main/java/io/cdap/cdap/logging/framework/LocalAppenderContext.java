@@ -18,9 +18,7 @@ package io.cdap.cdap.logging.framework;
 
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**

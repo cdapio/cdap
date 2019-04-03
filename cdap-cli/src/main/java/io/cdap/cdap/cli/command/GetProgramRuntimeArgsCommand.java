@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -24,7 +25,6 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.gson.Gson;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

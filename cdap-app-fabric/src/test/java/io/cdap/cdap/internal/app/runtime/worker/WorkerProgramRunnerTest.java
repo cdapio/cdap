@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.worker;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Injector;
 import io.cdap.cdap.AppWithMisbehavedDataset;
 import io.cdap.cdap.AppWithWorker;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -44,10 +48,6 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Injector;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionManager;

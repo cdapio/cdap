@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -24,7 +25,6 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.Scheduler;
-import com.google.common.reflect.TypeToken;
 
 import java.util.HashSet;
 import java.util.Set;

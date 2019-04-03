@@ -17,11 +17,11 @@
 
 package io.cdap.cdap.internal.bootstrap;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -35,12 +41,6 @@ import io.cdap.cdap.proto.ColumnDesc;
 import io.cdap.cdap.proto.QueryResult;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;

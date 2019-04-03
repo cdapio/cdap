@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -26,7 +27,6 @@ import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import io.cdap.cdap.test.SingletonExternalResource;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;

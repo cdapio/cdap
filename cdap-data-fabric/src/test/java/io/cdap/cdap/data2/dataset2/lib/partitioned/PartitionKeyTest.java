@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
-import com.google.common.base.Function;
 import org.junit.Assert;
 import org.junit.Test;
 

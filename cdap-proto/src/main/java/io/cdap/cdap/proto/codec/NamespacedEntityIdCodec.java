@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.proto.codec;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -27,11 +32,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.proto.id.WorkerId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 

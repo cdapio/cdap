@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
-import io.cdap.cdap.app.deploy.ConfigResponse;
-import io.cdap.cdap.app.deploy.Configurator;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import io.cdap.cdap.app.deploy.ConfigResponse;
+import io.cdap.cdap.app.deploy.Configurator;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;

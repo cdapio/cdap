@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.config;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -30,8 +32,6 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

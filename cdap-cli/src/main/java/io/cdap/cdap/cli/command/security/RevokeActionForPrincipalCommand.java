@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.cli.command.security;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.client.AuthorizationClient;
-import com.google.inject.Inject;
 
 /**
  * Revokes a principal's permission to perform certain actions on an entity.

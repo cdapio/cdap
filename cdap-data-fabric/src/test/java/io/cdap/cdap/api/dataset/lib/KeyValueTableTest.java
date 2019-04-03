@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.SplitReader;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.collect.Sets;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.junit.AfterClass;

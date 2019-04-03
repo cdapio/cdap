@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -26,7 +27,6 @@ import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
-import com.google.inject.Inject;
 
 /**
  * Common configuration and reconfiguration for all Table implementations.

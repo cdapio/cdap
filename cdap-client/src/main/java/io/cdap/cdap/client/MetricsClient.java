@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.metrics.RuntimeMetrics;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -27,14 +35,6 @@ import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.MetricTagValue;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;

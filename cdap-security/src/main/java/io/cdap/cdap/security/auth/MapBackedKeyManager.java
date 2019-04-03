@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.auth;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.common.conf.CConfiguration;
 
 import java.util.Map;
 

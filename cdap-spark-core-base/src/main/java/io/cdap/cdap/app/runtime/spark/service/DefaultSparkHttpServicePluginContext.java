@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.app.runtime.spark.service;
 
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -34,14 +42,6 @@ import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.PluginWithLocation;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.apache.spark.TaskContext;
 import org.apache.spark.util.TaskCompletionListener;
 import org.apache.twill.filesystem.Location;

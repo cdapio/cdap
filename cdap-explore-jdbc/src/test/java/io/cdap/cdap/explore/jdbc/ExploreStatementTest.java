@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.explore.jdbc;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.MockExploreClient;
 import io.cdap.cdap.proto.ColumnDesc;
 import io.cdap.cdap.proto.QueryResult;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 

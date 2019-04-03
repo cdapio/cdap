@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.client.AuthorizationClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
@@ -44,8 +46,6 @@ import io.cdap.cdap.security.authorization.NoOpAuthorizationContextFactory;
 import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelHandlerContext;

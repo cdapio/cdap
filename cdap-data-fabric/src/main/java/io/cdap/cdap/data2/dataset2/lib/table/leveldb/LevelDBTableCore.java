@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Result;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import com.google.common.base.Throwables;
 import org.apache.tephra.Transaction;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;

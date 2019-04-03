@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.api.data.batch.BatchReadable;
-import io.cdap.cdap.api.data.batch.Split;
-import io.cdap.cdap.api.data.batch.SplitReader;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.BatchReadable;
+import io.cdap.cdap.api.data.batch.Split;
+import io.cdap.cdap.api.data.batch.SplitReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;

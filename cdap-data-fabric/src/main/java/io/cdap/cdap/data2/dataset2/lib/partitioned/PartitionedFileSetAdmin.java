@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.inject.Provider;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.Map;

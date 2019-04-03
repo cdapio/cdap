@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
@@ -32,9 +35,6 @@ import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.WorkflowStatsComparison;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

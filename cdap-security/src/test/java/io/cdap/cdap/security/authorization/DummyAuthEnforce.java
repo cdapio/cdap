@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
@@ -24,8 +26,6 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.security.Action;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.name.Named;
 
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;

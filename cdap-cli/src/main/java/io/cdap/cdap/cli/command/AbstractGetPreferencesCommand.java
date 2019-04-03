@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.base.Joiner;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.cli.util.AbstractCommand;
@@ -23,7 +24,6 @@ import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Joiner;
 import io.cdap.common.cli.Arguments;
 
 import java.io.IOException;

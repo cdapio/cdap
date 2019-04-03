@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.spark.AbstractSpark;
@@ -28,7 +29,6 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;

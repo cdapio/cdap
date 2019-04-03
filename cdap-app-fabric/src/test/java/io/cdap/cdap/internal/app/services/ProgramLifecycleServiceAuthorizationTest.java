@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -36,8 +38,6 @@ import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

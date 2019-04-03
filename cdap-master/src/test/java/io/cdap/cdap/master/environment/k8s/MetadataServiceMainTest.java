@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.metadata.MetadataScope;
@@ -30,7 +31,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.inject.Injector;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;

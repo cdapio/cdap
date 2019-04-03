@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.dataset.lib.DynamicPartitioner;
 import io.cdap.cdap.api.dataset.lib.Partition;
 import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 

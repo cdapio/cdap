@@ -16,13 +16,6 @@
 
 package io.cdap.cdap.common.metadata;
 
-import io.cdap.cdap.api.metadata.MetadataEntity;
-import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.UnauthenticatedException;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +24,13 @@ import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

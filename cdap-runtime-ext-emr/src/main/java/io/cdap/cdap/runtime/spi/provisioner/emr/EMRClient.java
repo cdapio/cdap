@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.emr;
 
-import io.cdap.cdap.runtime.spi.provisioner.Node;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.DeleteKeyPairRequest;
@@ -35,6 +34,7 @@ import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.runtime.spi.provisioner.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

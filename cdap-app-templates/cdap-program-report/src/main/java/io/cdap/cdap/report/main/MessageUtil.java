@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.report.main;
 
+import com.google.common.primitives.Longs;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.report.proto.Filter;
 import io.cdap.cdap.report.proto.FilterCodec;
 import io.cdap.cdap.report.util.Constants;
-import com.google.common.primitives.Longs;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;

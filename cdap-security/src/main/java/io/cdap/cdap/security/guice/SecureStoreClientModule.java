@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.security.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.security.store.client.RemoteSecureStore;
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
 
 /**
  * The Guice module to provide binding for secure store client.

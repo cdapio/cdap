@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client.app;
 
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -44,7 +45,6 @@ import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

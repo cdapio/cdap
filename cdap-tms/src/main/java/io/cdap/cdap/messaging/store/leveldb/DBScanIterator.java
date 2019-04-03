@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
-import com.google.common.base.Throwables;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
 

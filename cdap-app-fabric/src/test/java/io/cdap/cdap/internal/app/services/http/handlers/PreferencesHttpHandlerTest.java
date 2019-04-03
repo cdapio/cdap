@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -27,8 +29,6 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

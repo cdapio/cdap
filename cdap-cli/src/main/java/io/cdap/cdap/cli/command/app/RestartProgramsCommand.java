@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command.app;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.client.ApplicationClient;
@@ -24,7 +25,6 @@ import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramStart;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

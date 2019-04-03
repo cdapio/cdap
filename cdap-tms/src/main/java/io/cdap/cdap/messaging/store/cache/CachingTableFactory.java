@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.messaging.store.cache;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.store.ForwardingTableFactory;
@@ -23,8 +25,6 @@ import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.TableFactory;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 import java.io.IOException;
 

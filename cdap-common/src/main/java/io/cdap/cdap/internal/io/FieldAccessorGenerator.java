@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.io;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.cdap.internal.asm.Methods;
 import io.cdap.cdap.internal.lang.Fields;
-import com.google.common.base.Throwables;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;

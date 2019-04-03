@@ -15,6 +15,14 @@
  */
 package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
@@ -25,14 +33,6 @@ import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

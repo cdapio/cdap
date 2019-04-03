@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.explore.table;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.common.utils.ProjectInfo;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 

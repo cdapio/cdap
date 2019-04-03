@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataException;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.MetadataCompatibility;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Map;

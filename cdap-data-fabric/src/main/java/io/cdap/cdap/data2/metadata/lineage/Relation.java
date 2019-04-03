@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.metadata.lineage;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
 import java.util.Collections;

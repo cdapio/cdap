@@ -15,8 +15,8 @@
  */
 package io.cdap.cdap.data.runtime.main;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.inject.Injector;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.junit.Test;

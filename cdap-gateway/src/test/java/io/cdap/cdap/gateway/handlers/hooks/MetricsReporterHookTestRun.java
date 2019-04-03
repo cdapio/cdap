@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.gateway.handlers.hooks;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.gateway.GatewayFastTestsSuite;
-import io.cdap.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.gateway.GatewayFastTestsSuite;
+import io.cdap.cdap.gateway.GatewayTestBase;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;

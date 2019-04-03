@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.Transactional;
@@ -33,9 +36,6 @@ import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;

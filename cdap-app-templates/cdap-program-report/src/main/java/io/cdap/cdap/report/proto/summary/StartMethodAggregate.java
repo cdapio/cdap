@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.report.proto.summary;
 
-import io.cdap.cdap.report.proto.ProgramRunStartMethod;
 import com.google.common.base.Objects;
+import io.cdap.cdap.report.proto.ProgramRunStartMethod;
 
 /**
  * Represents an aggregate of program runs by the start method.

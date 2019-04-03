@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
@@ -25,9 +28,6 @@ import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 
 import java.util.HashMap;
 import java.util.Map;

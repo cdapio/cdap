@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.collect.ImmutableList;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;

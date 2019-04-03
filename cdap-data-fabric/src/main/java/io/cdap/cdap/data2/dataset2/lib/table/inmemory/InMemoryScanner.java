@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Result;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import com.google.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.Iterator;

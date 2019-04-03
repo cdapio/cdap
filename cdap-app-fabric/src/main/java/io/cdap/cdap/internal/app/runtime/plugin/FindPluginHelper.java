@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.util.Map;

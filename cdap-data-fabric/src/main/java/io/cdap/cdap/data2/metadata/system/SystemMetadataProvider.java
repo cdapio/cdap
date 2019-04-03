@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.metadata.system;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Collections;
 import java.util.Map;

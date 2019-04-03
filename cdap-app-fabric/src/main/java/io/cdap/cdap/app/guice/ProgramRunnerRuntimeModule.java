@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.app.guice;
 
-import io.cdap.cdap.app.runtime.ProgramStateWriter;
-import io.cdap.cdap.common.runtime.RuntimeModule;
-import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 
 /**
  *

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -28,7 +29,6 @@ import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.util.Collections;

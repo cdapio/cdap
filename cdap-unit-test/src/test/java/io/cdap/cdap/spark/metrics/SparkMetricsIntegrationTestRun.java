@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spark.metrics;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
@@ -29,8 +31,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

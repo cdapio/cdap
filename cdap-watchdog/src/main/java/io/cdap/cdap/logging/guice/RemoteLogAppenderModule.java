@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.logging.guice;
 
-import io.cdap.cdap.logging.appender.LogAppender;
-import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
 
 /**
  * A Guice module to provide binding for {@link LogAppender} that pushes log entries to log saver.

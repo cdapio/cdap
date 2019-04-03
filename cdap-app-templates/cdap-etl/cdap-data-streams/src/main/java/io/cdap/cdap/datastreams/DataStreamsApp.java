@@ -16,16 +16,15 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.AbstractApplication;
-import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.validation.InvalidPipelineException;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Data Streams Application.

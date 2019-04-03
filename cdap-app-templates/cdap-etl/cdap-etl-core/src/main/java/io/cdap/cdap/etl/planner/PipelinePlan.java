@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.etl.planner;
 
-import io.cdap.cdap.etl.common.PipelinePhase;
-import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.proto.Connection;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;

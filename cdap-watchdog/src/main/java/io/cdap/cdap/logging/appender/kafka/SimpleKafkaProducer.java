@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.logging.appender.kafka;
 
+import com.google.common.util.concurrent.Futures;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.LoggingConfiguration;
-import com.google.common.util.concurrent.Futures;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
@@ -27,7 +27,6 @@ import org.apache.twill.common.Threads;
 
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

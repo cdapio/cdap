@@ -16,6 +16,15 @@
 
 package io.cdap.cdap.security.guice;
 
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
@@ -33,15 +42,6 @@ import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.server.AuditLogHandler;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import io.cdap.cdap.security.server.GrantAccessToken;
-import com.google.common.reflect.TypeToken;
-import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

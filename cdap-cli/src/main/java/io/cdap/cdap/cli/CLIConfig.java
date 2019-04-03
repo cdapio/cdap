@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.cli;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.cli.command.system.VersionCommand;
 import io.cdap.cdap.cli.util.FilePathResolver;
 import io.cdap.cdap.cli.util.table.AltStyleTableRenderer;
@@ -32,14 +40,6 @@ import io.cdap.cdap.security.authentication.client.AuthenticationClient;
 import io.cdap.cdap.security.authentication.client.Credential;
 import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Charsets;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
 

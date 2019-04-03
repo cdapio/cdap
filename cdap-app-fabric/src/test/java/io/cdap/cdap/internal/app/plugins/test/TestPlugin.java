@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.plugins.test;
 
+import com.google.common.base.Joiner;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import com.google.common.base.Joiner;
 
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;

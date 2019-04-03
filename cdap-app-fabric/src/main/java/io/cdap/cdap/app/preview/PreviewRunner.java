@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.gson.JsonElement;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.gson.JsonElement;
 
 import java.util.List;
 import java.util.Map;

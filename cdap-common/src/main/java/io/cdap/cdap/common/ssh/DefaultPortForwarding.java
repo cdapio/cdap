@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.ssh;
 
-import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import com.jcraft.jsch.ChannelDirectTCPIP;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

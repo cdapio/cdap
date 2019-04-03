@@ -15,6 +15,11 @@
  */
 package io.cdap.cdap.data.tools;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -38,11 +43,6 @@ import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

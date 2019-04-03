@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.scheduler;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ConflictException;
@@ -37,12 +43,6 @@ import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

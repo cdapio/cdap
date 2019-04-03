@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.explore.service.hive;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -25,10 +29,6 @@ import io.cdap.cdap.explore.service.ExploreException;
 import io.cdap.cdap.explore.service.HandleNotFoundException;
 import io.cdap.cdap.proto.QueryResult;
 import io.cdap.cdap.proto.QueryStatus;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;

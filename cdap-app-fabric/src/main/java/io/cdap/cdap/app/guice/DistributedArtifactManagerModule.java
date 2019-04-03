@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
-import com.google.inject.AbstractModule;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 /**
  * Guice module for bindings for artifacts and plugins supports for program API.

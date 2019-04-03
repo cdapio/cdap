@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -35,7 +36,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.profile;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
@@ -29,8 +31,6 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.TopicMetadata;
@@ -24,8 +26,6 @@ import io.cdap.cdap.messaging.store.MetadataTableTest;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

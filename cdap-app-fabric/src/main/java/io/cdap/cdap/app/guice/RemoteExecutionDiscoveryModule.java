@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionAuthenticator;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionDiscoveryService;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 

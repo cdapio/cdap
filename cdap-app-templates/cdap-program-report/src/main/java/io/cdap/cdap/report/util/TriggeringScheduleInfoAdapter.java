@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.report.util;
 
-import io.cdap.cdap.api.schedule.TriggerInfo;
-import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
-import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 
 /**
  * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from json.

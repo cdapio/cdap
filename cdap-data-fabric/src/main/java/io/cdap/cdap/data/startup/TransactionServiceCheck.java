@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data.startup;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.startup.Check;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;

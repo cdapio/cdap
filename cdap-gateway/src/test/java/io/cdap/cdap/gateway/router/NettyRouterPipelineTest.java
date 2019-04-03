@@ -16,11 +16,6 @@
 
 package io.cdap.cdap.gateway.router;
 
-import io.cdap.cdap.api.app.AbstractApplication;
-import io.cdap.cdap.api.worker.AbstractWorker;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.test.AppJarHelper;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -31,6 +26,11 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.worker.AbstractWorker;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.test.AppJarHelper;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -38,10 +42,6 @@ import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 import java.util.Arrays;
 import java.util.List;

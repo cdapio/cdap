@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.etl.planner;
 
-import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.etl.proto.Connection;
 import org.junit.Assert;
 import org.junit.Test;
 

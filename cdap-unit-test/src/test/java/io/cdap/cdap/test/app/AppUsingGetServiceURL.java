@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -30,9 +33,6 @@ import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.worker.WorkerContext;
 import io.cdap.cdap.common.utils.Tasks;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

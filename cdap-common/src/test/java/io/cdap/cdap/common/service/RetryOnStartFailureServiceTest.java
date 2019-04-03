@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.service;
 
-import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.common.utils.Tasks;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;

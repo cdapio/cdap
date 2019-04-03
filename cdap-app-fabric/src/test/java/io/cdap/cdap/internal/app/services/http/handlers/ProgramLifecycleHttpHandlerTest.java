@@ -16,6 +16,15 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithMultipleSchedules;
 import io.cdap.cdap.AppWithSchedule;
@@ -70,15 +79,6 @@ import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.test.SlowTests;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;

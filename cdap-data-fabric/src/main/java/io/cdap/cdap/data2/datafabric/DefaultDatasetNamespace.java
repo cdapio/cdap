@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.data2.datafabric;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetNamespace;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
 

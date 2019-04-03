@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command.app;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -30,8 +32,6 @@ import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import io.cdap.common.cli.Arguments;
 
 import java.io.IOException;

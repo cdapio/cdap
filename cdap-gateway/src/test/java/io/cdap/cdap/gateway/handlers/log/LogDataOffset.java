@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers.log;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.logging.gateway.handlers.LogData;
 import io.cdap.cdap.logging.read.LogOffset;
-import com.google.common.base.Objects;
 
 /**
  * Test Log object that contains {@link LogData} and {@link LogOffset}.

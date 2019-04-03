@@ -15,12 +15,12 @@
  */
 package io.cdap.cdap.etl.common;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.etl.api.Lookup;
-import com.google.common.base.Function;
 
 import java.util.Map;
 import java.util.Set;

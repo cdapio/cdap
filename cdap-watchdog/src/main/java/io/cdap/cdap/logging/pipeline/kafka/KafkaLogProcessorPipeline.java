@@ -17,6 +17,8 @@
 package io.cdap.cdap.logging.pipeline.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
@@ -28,8 +30,6 @@ import io.cdap.cdap.logging.pipeline.queue.ProcessedEventMetadata;
 import io.cdap.cdap.logging.pipeline.queue.ProcessorEvent;
 import io.cdap.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

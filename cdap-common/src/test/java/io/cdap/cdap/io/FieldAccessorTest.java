@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.io;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.FieldAccessor;
 import io.cdap.cdap.internal.io.FieldAccessorFactory;
-import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 

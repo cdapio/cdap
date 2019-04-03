@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli;
 
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.cli.command.system.RenderAsCommand;
@@ -30,9 +33,6 @@ import io.cdap.cdap.cli.completer.element.ProgramIdCompleter;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.security.Principal;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Injector;
 import jline.console.completer.Completer;
 import jline.console.completer.EnumCompleter;
 import jline.console.completer.FileNameCompleter;

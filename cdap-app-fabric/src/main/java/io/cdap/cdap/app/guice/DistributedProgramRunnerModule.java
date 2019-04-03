@@ -15,6 +15,9 @@
  */
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -26,9 +29,6 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedServiceProgramRu
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.MapBinder;
 import org.apache.twill.api.TwillRunner;
 
 /**

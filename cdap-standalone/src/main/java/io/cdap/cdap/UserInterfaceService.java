@@ -15,15 +15,15 @@
  */
 package io.cdap.cdap;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Configuration;
-import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.ui.ConfigurationJsonTool;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Configuration;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.ui.ConfigurationJsonTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

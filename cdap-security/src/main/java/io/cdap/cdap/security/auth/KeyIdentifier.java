@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.auth;
 
-import io.cdap.cdap.api.data.schema.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.api.data.schema.Schema;
 
 import java.util.Arrays;
 import java.util.Map;

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.metrics.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.metrics.store.DefaultMetricDatasetFactory;
 import io.cdap.cdap.metrics.store.DefaultMetricStore;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
 
 /**
  * Guice module for providing bindings for {@link MetricStore} and {@link MetricDatasetFactory}.

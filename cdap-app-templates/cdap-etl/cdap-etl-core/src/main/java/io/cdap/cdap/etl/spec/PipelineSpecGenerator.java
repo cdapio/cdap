@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.etl.spec;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
@@ -50,11 +55,6 @@ import io.cdap.cdap.etl.proto.v2.validation.InvalidConfigPropertyError;
 import io.cdap.cdap.etl.proto.v2.validation.PluginNotFoundError;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationError;
 import io.cdap.cdap.etl.validation.InvalidPipelineException;
-import com.google.common.base.Joiner;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
 
 import java.util.ArrayList;
 import java.util.HashMap;

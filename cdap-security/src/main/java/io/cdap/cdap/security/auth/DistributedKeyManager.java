@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.zookeeper.ResourceListener;
 import io.cdap.cdap.security.zookeeper.SharedResourceCache;
-import com.google.common.base.Throwables;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;

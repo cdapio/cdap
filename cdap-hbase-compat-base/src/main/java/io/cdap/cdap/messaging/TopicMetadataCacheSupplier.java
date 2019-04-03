@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.messaging;
 
+import com.google.common.base.Supplier;
 import io.cdap.cdap.data2.transaction.coprocessor.CacheSupplier;
 import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.ScanBuilder;
-import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.tephra.coprocessor.ReferenceCountedSupplier;
 

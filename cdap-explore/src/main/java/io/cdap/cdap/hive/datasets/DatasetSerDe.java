@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.hive.datasets;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.data.batch.RecordScannable;
 import io.cdap.cdap.api.data.batch.RecordWritable;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -32,7 +33,6 @@ import io.cdap.cdap.hive.serde.ObjectSerializer;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;

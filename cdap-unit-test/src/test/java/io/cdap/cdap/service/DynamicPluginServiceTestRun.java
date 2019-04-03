@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.service;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.service.Service;
@@ -32,7 +33,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.service;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metadata.MetadataReader;
@@ -48,9 +51,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
-import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;

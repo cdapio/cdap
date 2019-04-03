@@ -18,8 +18,6 @@ package io.cdap.cdap.api.workflow;
 
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
-import io.cdap.cdap.api.mapreduce.MapReduce;
-import io.cdap.cdap.api.mapreduce.MapReduceContext;
 
 import java.util.Map;
 

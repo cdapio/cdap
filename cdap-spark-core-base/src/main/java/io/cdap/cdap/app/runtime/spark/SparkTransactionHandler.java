@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.data2.transaction.Transactions;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;

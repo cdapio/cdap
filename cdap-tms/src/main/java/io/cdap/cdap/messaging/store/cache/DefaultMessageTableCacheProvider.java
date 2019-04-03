@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.messaging.store.cache;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -24,8 +26,6 @@ import io.cdap.cdap.messaging.MessagingServiceUtils;
 import io.cdap.cdap.messaging.cache.MessageCache;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
 
 import java.util.Collection;
 import java.util.HashMap;

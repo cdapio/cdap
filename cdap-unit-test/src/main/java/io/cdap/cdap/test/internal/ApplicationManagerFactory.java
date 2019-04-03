@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.test.internal;
 
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.test.ApplicationManager;
-import com.google.inject.assistedinject.Assisted;
 
 /**
  *

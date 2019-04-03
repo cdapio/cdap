@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.logging.logbuffer;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,14 +43,6 @@ import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;

@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1Container;

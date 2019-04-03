@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
@@ -40,8 +42,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Assert;

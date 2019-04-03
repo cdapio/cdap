@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.dataset.InstanceNotFoundException;
-import io.cdap.cdap.proto.BasicThrowable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.dataset.InstanceNotFoundException;
+import io.cdap.cdap.proto.BasicThrowable;
 import org.junit.Assert;
 import org.junit.Test;
 

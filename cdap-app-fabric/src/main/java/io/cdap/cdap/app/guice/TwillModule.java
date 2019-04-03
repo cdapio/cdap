@@ -15,14 +15,14 @@
  */
 package io.cdap.cdap.app.guice;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.security.TokenSecureStoreRenewer;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.TokenSecureStoreRenewer;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillRunner;

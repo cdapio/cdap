@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.common.http.Channels;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
-import com.google.common.io.Closeables;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;

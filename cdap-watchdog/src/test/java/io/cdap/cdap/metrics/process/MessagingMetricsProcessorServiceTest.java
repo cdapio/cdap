@@ -31,7 +31,6 @@ import io.cdap.cdap.api.metrics.TagValue;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
-import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxCallable;
@@ -52,7 +53,6 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.common.reflect.TypeToken;
 import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;

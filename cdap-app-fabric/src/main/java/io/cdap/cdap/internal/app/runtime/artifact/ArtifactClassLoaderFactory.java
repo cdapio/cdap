@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramRunner;
@@ -29,8 +31,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

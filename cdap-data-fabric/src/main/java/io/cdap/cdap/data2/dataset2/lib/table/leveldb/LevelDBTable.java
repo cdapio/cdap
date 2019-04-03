@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.common.Bytes;
@@ -32,7 +33,6 @@ import io.cdap.cdap.data2.dataset2.lib.table.IncrementValue;
 import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
 import io.cdap.cdap.data2.dataset2.lib.table.Update;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
-import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Map;

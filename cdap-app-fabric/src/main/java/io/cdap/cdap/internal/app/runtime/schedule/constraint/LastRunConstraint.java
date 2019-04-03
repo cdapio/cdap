@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraint;
-import com.google.common.collect.Iterables;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;

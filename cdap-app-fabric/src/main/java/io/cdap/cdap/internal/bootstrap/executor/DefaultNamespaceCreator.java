@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -24,7 +25,6 @@ import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

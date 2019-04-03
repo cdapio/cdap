@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -28,8 +30,6 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import org.apache.spark.SparkContext;
 import org.apache.spark.rdd.RDD;
 import org.apache.tephra.Transaction;

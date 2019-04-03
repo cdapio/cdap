@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.common.conf;
 
-import io.cdap.cdap.api.artifact.ArtifactRange;
-import io.cdap.cdap.api.plugin.PluginClass;
-import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -28,6 +24,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
 
 import java.lang.reflect.Type;
 import java.util.Map;

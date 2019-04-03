@@ -16,17 +16,17 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.data2.dataset2.lib.table.IncrementValue;
-import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
-import io.cdap.cdap.data2.dataset2.lib.table.Update;
-import io.cdap.cdap.data2.dataset2.lib.table.Updates;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Longs;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.data2.dataset2.lib.table.IncrementValue;
+import io.cdap.cdap.data2.dataset2.lib.table.PutValue;
+import io.cdap.cdap.data2.dataset2.lib.table.Update;
+import io.cdap.cdap.data2.dataset2.lib.table.Updates;
 import org.apache.tephra.Transaction;
 
 import java.util.Arrays;

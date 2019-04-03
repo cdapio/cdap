@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.PrivateModule;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.common.entity.DefaultEntityExistenceVerifier;
 import io.cdap.cdap.common.entity.EntityExistenceVerifier;
 import io.cdap.cdap.common.entity.InstanceExistenceVerifier;
@@ -33,9 +36,6 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.inject.PrivateModule;
-import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.MapBinder;
 
 /**
  * {@link PrivateModule} for {@link EntityExistenceVerifier} bindings.

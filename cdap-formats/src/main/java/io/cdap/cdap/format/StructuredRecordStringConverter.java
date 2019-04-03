@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.format;
 
+import com.google.common.base.Splitter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.format.io.JsonDecoder;
 import io.cdap.cdap.format.io.JsonEncoder;
 import io.cdap.cdap.format.io.JsonStructuredRecordDatumReader;
 import io.cdap.cdap.format.io.JsonStructuredRecordDatumWriter;
-import com.google.common.base.Splitter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.StringReader;

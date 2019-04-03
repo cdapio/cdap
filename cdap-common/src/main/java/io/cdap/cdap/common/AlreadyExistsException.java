@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.common;
 
-import io.cdap.cdap.proto.id.EntityId;
-
 import javax.annotation.Nullable;
 
 /**

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.metrics.process;
 
-import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 
 /**
  * Message envelope for metrics administrative messages on TMS.

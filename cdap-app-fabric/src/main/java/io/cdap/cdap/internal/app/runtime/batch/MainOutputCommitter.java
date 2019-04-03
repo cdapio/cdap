@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -31,8 +33,6 @@ import io.cdap.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Throwables;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;

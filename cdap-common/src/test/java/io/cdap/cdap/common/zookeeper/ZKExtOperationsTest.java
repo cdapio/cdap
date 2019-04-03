@@ -15,11 +15,11 @@
  */
 package io.cdap.cdap.common.zookeeper;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Function;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.io.Codec;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;

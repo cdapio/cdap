@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
-import io.cdap.cdap.app.program.ProgramDescriptor;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.app.program.ProgramDescriptor;
 
 import java.util.List;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.config;
 
+import com.google.common.base.Joiner;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.common.base.Joiner;
-import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

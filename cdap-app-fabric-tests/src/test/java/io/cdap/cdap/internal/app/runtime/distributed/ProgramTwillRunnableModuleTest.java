@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
@@ -32,10 +36,6 @@ import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.junit.Test;

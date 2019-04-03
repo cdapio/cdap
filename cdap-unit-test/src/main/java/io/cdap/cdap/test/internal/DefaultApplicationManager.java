@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.test.internal;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.id.Id;
@@ -42,9 +45,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.WorkflowManager;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.List;

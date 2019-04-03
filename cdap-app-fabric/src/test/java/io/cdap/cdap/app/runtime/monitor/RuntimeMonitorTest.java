@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.app.runtime.monitor;
 
+import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -54,12 +60,6 @@ import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.util.Modules;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;

@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.lib.file;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
@@ -31,11 +36,6 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;

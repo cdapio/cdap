@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.ConstraintProgramScheduleBuilder;
@@ -31,7 +32,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerBuilder;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProtoConstraint;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -54,14 +62,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;

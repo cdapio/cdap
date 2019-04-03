@@ -15,12 +15,6 @@
  */
 package io.cdap.cdap.metrics.collect;
 
-import io.cdap.cdap.api.metrics.MetricType;
-import io.cdap.cdap.api.metrics.MetricValue;
-import io.cdap.cdap.api.metrics.MetricValues;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.common.conf.Constants;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,6 +24,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.api.metrics.MetricType;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

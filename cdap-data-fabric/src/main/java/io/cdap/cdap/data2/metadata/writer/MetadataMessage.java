@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.proto.id.EntityId;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.EntityId;
 
 /**
  * A container for messages in the metadata topic configured by {@link Constants.Metadata#MESSAGING_TOPIC}.

@@ -17,8 +17,8 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
-import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
+import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 
 /**
  * Executes a bootstrap step.

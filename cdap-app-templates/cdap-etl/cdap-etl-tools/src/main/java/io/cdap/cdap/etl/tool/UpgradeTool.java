@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.tool;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.ArtifactClient;
@@ -31,9 +34,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;

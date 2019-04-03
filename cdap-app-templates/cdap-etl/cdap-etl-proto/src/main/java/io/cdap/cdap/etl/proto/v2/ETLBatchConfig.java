@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.etl.proto.v2;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.proto.Connection;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.Collection;

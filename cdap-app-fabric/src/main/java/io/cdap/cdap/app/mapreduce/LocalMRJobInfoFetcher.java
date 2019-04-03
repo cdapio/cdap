@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.app.mapreduce;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
@@ -25,14 +33,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.MRJobInfo;
 import io.cdap.cdap.proto.MRTaskInfo;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
-import com.google.inject.Inject;
 import org.apache.hadoop.mapreduce.TaskCounter;
 
 import java.io.IOException;

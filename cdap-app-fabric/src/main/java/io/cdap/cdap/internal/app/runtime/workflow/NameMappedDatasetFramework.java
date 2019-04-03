@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.workflow;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -29,7 +30,6 @@ import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
-import com.google.common.base.Function;
 
 import java.io.IOException;
 import java.util.Collections;

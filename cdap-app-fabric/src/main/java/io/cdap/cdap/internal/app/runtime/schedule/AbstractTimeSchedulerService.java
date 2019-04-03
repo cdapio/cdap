@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
@@ -23,8 +25,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCom
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

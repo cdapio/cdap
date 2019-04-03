@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.config;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -24,8 +26,6 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

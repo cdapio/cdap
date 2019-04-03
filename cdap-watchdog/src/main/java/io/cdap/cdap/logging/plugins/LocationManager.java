@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.logging.plugins;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Syncable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Syncable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;

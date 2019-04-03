@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.lineage.field.ReadOperation;
@@ -27,8 +29,6 @@ import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.Connection;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 
 import java.util.ArrayList;
 import java.util.HashMap;

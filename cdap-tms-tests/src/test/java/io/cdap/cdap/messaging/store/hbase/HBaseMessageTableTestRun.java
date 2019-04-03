@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.messaging.store.hbase;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -34,8 +36,6 @@ import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.PackageFilterClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 
 import java.io.File;
 import java.util.Set;

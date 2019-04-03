@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
@@ -29,9 +32,6 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;

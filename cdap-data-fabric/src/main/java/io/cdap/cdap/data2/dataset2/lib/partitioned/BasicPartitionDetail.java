@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionMetadata;
-import com.google.common.base.Objects;
 
 /**
  * Implementation of Partition, with associated metadata.

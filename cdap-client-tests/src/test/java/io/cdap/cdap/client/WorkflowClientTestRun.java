@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.api.workflow.NodeStatus;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -34,8 +36,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

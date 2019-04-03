@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.nosql;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -28,7 +29,6 @@ import io.cdap.cdap.spi.data.nosql.dataset.TableDatasetSupplier;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TxRunnable;
-import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;

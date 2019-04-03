@@ -22,7 +22,6 @@ import org.eclipse.jetty.util.security.Credential;
 
 import java.security.Principal;
 import java.util.Map;
-
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 

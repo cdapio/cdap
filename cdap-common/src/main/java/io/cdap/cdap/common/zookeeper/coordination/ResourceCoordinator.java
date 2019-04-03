@@ -15,8 +15,6 @@
  */
 package io.cdap.cdap.common.zookeeper.coordination;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Functions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -29,6 +27,8 @@ import com.google.common.collect.TreeMultimap;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;

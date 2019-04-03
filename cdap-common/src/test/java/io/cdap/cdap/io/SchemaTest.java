@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.io;
 
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
-import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.avro.LogicalTypes;
 import org.codehaus.jackson.node.IntNode;
 import org.codehaus.jackson.node.TextNode;

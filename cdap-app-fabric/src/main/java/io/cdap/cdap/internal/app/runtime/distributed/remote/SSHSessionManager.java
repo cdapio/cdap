@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
@@ -25,7 +26,6 @@ import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
-import com.google.common.io.Closeables;
 import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;

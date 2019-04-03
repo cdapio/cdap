@@ -16,6 +16,18 @@
 
 package io.cdap.cdap.service;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.io.ByteStreams;
+import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
@@ -33,18 +45,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.app.ServiceLifecycleApp;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.io.ByteStreams;
-import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

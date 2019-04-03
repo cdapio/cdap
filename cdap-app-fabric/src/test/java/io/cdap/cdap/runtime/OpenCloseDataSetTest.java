@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.runtime;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import io.cdap.cdap.DummyAppWithTrackingTable;
 import io.cdap.cdap.TrackingTable;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -32,10 +36,6 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

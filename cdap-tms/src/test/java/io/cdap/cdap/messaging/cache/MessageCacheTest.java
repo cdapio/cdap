@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.messaging.cache;
 
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.messaging.store.MessageFilter;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.Assert;
 import org.junit.Test;
 

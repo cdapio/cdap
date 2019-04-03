@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.authorization;
 
-import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 
 import java.util.Properties;
 

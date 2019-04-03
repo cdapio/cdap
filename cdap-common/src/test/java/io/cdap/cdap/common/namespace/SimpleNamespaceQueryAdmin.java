@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.namespace;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;

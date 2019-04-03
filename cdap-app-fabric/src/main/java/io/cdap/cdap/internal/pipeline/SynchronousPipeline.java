@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.pipeline;
 
-import io.cdap.cdap.pipeline.Pipeline;
-import io.cdap.cdap.pipeline.Stage;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.cdap.cdap.pipeline.Pipeline;
+import io.cdap.cdap.pipeline.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

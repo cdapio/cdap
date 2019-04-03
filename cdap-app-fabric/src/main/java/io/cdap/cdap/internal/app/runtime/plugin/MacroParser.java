@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
-import io.cdap.cdap.api.macro.InvalidMacroException;
-import io.cdap.cdap.api.macro.MacroEvaluator;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 
 import java.util.Collection;
 import java.util.Collections;

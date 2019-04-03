@@ -16,6 +16,10 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
@@ -25,10 +29,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectStores;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

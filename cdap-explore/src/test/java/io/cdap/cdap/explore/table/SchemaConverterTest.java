@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.explore.table;
 
-import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import org.junit.Assert;
 import org.junit.Test;
 

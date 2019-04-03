@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import io.cdap.cdap.api.data.batch.Split;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.data.batch.Split;
 
 import java.util.List;
 import java.util.Map;

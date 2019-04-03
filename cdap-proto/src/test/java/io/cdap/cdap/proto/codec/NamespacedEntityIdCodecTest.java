@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.proto.codec;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -28,8 +30,6 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.proto.id.WorkerId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

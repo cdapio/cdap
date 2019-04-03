@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.io.Files;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -40,8 +42,6 @@ import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.io.Files;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;

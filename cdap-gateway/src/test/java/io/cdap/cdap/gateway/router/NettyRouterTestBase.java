@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.gateway.router;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -36,6 +32,10 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChannelPipelineModifier;

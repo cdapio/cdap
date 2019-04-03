@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.security;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.Config;
@@ -82,14 +90,6 @@ import io.cdap.cdap.test.app.CrossNsDatasetAccessApp;
 import io.cdap.cdap.test.app.DatasetCrossNSAccessWithMAPApp;
 import io.cdap.cdap.test.app.DummyApp;
 import io.cdap.cdap.test.artifacts.plugins.ToStringPlugin;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

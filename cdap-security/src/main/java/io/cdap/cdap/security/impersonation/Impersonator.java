@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import com.google.inject.ImplementedBy;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import com.google.inject.ImplementedBy;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;

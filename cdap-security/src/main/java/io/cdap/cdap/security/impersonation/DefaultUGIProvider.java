@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -24,7 +25,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.element.EntityType;
-import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.filesystem.Location;

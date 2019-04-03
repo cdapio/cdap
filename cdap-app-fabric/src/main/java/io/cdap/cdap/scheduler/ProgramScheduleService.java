@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.scheduler;
 
+import com.google.common.base.Objects;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.AlreadyExistsException;
@@ -38,8 +40,6 @@ import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Objects;
-import com.google.inject.Inject;
 
 import java.util.Collection;
 import java.util.HashSet;

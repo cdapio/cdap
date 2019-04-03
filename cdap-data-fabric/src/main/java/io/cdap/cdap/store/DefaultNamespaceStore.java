@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.store;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 
 import java.util.List;
 import javax.annotation.Nullable;

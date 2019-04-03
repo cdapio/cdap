@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.messaging.service;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.utils.TimeProvider;
@@ -25,10 +29,6 @@ import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;

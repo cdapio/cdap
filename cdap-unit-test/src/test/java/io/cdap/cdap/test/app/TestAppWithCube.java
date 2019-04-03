@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
@@ -31,10 +35,6 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SlowTests;
 import io.cdap.cdap.test.TestBase;
 import io.cdap.cdap.test.TestConfiguration;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

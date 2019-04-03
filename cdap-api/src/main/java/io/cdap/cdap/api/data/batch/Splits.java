@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.api.data.batch;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

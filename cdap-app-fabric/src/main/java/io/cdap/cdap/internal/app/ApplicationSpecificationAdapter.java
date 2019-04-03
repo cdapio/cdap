@@ -16,6 +16,16 @@
 
 package io.cdap.cdap.internal.app;
 
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -41,16 +51,6 @@ import io.cdap.cdap.proto.codec.SparkSpecificationCodec;
 import io.cdap.cdap.proto.codec.WorkerSpecificationCodec;
 import io.cdap.cdap.proto.codec.WorkflowNodeCodec;
 import io.cdap.cdap.proto.codec.WorkflowSpecificationCodec;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.collect.SetMultimap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -46,9 +49,6 @@ import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.SetMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.BufferedReader;

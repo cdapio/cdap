@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.annotations.VisibleForTesting;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.commons.lang.StringUtils;

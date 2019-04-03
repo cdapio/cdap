@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.common.namespace;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import com.google.inject.Inject;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.HttpHandler;

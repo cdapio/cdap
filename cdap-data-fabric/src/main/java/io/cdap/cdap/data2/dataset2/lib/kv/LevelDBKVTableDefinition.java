@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.kv;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.common.Bytes;
@@ -30,8 +32,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
 import org.iq80.leveldb.DB;
 
 import java.io.IOException;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.worker.WorkerContext;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
-import com.google.common.base.Preconditions;
 
 /**
  * App that with programs that use a guava library (Preconditions) in their initialize method.

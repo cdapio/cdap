@@ -15,6 +15,12 @@
  */
 package io.cdap.cdap.metrics.guice;
 
+import com.google.inject.Module;
+import com.google.inject.PrivateBinder;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
@@ -24,12 +30,6 @@ import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
 import io.cdap.cdap.metrics.process.DirectMetricsSystemClient;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import com.google.inject.Module;
-import com.google.inject.PrivateBinder;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 
 /**
  * A {@link RuntimeModule} that defines Guice modules for metrics collection in different runtime mode.

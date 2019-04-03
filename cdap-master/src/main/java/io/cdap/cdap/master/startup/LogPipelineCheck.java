@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.master.startup;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.framework.InvalidPipelineException;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

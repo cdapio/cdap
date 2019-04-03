@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.app.program;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramRunner;
@@ -22,7 +23,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;

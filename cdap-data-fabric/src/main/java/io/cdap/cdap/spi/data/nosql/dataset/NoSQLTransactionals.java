@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.spi.data.nosql.dataset;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.data.DatasetContext;
-import com.google.common.base.Throwables;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,8 +25,6 @@ import io.cdap.cdap.proto.ConfigEntry;
 import io.cdap.cdap.proto.Version;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

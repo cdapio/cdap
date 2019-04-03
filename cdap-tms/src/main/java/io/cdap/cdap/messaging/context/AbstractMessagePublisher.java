@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.messaging.context;
 
+import com.google.common.collect.Iterators;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.Iterators;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.messaging.service;
 
-import io.cdap.cdap.common.utils.TimeProvider;
-import io.cdap.cdap.messaging.StoreRequest;
-import io.cdap.cdap.messaging.TopicMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.TopicMetadata;
 
 import java.io.Closeable;
 import java.io.IOException;

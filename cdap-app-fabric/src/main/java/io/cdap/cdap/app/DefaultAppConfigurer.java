@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -55,9 +58,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

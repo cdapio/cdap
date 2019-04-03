@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -35,7 +36,6 @@ import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;

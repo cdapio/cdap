@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.spark;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.spark.SparkConfigurer;
@@ -28,7 +29,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.base.Preconditions;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.commandset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.ConnectCommand;
@@ -23,9 +26,6 @@ import io.cdap.cdap.cli.command.system.ExitCommand;
 import io.cdap.cdap.cli.command.system.QuitCommand;
 import io.cdap.cdap.cli.command.system.RenderAsCommand;
 import io.cdap.cdap.cli.command.system.VersionCommand;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

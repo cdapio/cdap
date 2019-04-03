@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.api.dataset.table;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.ExploreProperties;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.Map;

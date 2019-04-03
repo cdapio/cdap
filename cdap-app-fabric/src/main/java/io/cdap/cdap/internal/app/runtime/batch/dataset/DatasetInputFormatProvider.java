@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.conf.ConfigurationUtil;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.slf4j.Logger;

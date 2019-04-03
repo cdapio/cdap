@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -26,7 +27,6 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;

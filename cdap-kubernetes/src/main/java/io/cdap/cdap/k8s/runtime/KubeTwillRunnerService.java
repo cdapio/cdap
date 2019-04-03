@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
-import com.google.common.util.concurrent.Uninterruptibles;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.models.V1DeploymentCondition;

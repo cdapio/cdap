@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.slf4j.Logger;

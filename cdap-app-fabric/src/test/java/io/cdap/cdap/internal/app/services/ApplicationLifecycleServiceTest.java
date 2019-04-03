@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
@@ -36,8 +38,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;

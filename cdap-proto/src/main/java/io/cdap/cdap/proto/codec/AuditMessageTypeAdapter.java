@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.proto.codec;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.audit.AuditMessage;
 import io.cdap.cdap.proto.audit.AuditPayload;
@@ -23,11 +28,6 @@ import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.audit.payload.access.AccessPayload;
 import io.cdap.cdap.proto.audit.payload.metadata.MetadataPayload;
 import io.cdap.cdap.proto.id.EntityId;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 
 import java.lang.reflect.Type;
 

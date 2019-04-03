@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.namespace;
 
+import com.google.inject.ImplementedBy;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.ImplementedBy;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.system;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.api.data.batch.BatchWritable;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
@@ -31,8 +33,6 @@ import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

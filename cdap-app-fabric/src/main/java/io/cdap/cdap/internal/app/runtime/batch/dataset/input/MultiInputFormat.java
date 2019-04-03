@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
-import io.cdap.cdap.common.conf.ConfigurationUtil;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.common.conf.ConfigurationUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapreduce.InputFormat;

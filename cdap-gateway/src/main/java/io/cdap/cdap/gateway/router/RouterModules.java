@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.gateway.router;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.runtime.RuntimeModule;
-import io.cdap.cdap.common.utils.Networks;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.common.utils.Networks;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

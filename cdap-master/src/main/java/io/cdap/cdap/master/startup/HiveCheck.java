@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.master.startup;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.startup.Check;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

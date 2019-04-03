@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.explore.service.hive;
 
-import io.cdap.cdap.proto.QueryStatus;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.proto.QueryStatus;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;

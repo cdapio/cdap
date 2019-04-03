@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
+import com.google.common.io.CharStreams;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -29,8 +31,6 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.WorkflowContext;
-import com.google.common.base.Throwables;
-import com.google.common.io.CharStreams;
 import org.apache.tephra.TransactionFailureException;
 import org.junit.Assert;
 

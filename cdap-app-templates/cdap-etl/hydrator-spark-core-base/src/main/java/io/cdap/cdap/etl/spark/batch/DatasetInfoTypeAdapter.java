@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import io.cdap.cdap.api.data.batch.Split;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
@@ -27,6 +26,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.api.data.batch.Split;
 
 import java.lang.reflect.Type;
 import java.util.List;

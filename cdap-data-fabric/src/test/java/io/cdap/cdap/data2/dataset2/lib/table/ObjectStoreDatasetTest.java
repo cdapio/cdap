@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.SplitReader;
@@ -34,11 +39,6 @@ import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.TypeRepresentation;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.junit.AfterClass;

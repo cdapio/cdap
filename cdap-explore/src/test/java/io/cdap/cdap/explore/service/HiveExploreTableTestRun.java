@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -32,7 +33,6 @@ import io.cdap.cdap.proto.QueryResult;
 import io.cdap.cdap.proto.QueryStatus;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.junit.Assert;

@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.logging.AuditLogConfig;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.internal.asm.Classes;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.internal.PatternPathRouterWithGroups;
 import io.netty.handler.codec.http.HttpMethod;

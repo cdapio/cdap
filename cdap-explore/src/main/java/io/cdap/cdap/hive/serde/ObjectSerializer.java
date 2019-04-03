@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.hive.serde;
 
-import io.cdap.cdap.api.data.schema.Schema;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.data.schema.Schema;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hadoop.hive.serde2.io.HiveBaseCharWritable;

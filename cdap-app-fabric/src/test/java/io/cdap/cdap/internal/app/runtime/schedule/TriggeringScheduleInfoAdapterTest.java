@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
@@ -27,10 +31,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultPartitionTrigge
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultProgramStatusTriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

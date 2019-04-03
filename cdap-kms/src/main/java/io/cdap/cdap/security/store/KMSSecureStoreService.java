@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.security.store;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.AlreadyExistsException;
@@ -25,10 +29,6 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.DelegationTokensUpdater;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
-import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
 import org.apache.hadoop.crypto.key.KeyProviderDelegationTokenExtension;

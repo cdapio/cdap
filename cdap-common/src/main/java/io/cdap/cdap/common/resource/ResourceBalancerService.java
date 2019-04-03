@@ -15,6 +15,11 @@
  */
 package io.cdap.cdap.common.resource;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.SettableFuture;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
@@ -23,11 +28,6 @@ import io.cdap.cdap.common.zookeeper.coordination.ResourceCoordinator;
 import io.cdap.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import io.cdap.cdap.common.zookeeper.coordination.ResourceHandler;
 import io.cdap.cdap.common.zookeeper.coordination.ResourceRequirement;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;

@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.cli.command;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -28,7 +29,6 @@ import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.Lists;
 import io.cdap.common.cli.Arguments;
 
 import java.io.IOException;

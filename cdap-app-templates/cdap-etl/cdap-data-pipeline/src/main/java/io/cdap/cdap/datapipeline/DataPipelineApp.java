@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
@@ -34,8 +36,6 @@ import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 

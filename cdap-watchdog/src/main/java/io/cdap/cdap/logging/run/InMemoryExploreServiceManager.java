@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.logging.run;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractInMemoryMasterServiceManager;
-import com.google.inject.Inject;
 
 /**
  * In memory explore service manager.

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import io.cdap.cdap.api.common.Bytes;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;

@@ -17,8 +17,8 @@
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
 
-import io.cdap.cdap.data2.util.TableId;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.data2.util.TableId;
 
 /**
  * Utility Class for LevelDB Table names.

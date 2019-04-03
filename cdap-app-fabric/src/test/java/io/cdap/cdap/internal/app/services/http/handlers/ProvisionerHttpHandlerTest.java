@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableList;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;

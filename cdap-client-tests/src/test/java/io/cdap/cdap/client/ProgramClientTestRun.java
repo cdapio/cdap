@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.client.app.DatasetWriterService;
 import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.app.PingService;
@@ -30,7 +31,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

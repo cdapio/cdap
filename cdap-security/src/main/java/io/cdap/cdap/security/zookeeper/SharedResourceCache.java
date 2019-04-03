@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.security.zookeeper;
 
-import io.cdap.cdap.common.io.Codec;
-import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -27,6 +25,8 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.NodeData;

@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.api.mapreduce;
 
-import io.cdap.cdap.api.ProgramLifecycle;
-
 /**
  * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing MapReduce jobs
  * that rely on the Hadoop MapReduce APIs.

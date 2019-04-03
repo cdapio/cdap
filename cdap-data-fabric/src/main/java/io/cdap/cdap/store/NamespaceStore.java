@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.store;
 
+import com.google.inject.ImplementedBy;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.ImplementedBy;
 
 import java.util.List;
 import javax.annotation.Nullable;

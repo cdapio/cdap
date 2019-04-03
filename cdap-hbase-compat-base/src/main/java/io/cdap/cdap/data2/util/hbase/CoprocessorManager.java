@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
+import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
-import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;

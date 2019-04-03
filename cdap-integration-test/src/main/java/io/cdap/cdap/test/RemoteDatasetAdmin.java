@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.client.DatasetClient;
 import io.cdap.cdap.common.DatasetAlreadyExistsException;
@@ -25,7 +26,6 @@ import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Throwables;
 
 import java.io.IOException;
 

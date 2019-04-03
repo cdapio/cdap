@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
+import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
@@ -26,9 +29,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

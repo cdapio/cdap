@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.Inject;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -36,13 +43,6 @@ import io.cdap.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.inject.Inject;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Named;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;

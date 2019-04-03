@@ -15,8 +15,8 @@
  */
 package io.cdap.cdap.data.runtime;
 
-import io.cdap.cdap.common.runtime.RuntimeModule;
 import com.google.inject.Module;
+import io.cdap.cdap.common.runtime.RuntimeModule;
 
 /**
  * DataFabricModules defines all of the bindings for the different data

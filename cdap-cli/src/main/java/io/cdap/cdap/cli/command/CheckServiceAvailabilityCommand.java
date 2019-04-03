@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.service.Service;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
@@ -27,7 +28,6 @@ import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.proto.id.ServiceId;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

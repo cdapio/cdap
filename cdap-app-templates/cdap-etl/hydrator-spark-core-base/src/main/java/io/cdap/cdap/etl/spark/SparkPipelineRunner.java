@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.spark;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -51,8 +53,6 @@ import io.cdap.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OutputPassFilter;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

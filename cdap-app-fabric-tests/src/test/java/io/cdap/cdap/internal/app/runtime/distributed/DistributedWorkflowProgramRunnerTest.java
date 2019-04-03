@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.DefaultAppConfigurer;
@@ -61,10 +65,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.ResourceSpecification;

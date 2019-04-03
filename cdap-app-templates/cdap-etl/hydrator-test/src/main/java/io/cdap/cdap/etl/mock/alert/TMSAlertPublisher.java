@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.mock.alert;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.messaging.MessagePublisher;
@@ -26,9 +27,7 @@ import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.AlertPublisherContext;
-import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
-import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Iterator;

@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.common.lang;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.annotation.Property;
 import io.cdap.cdap.api.app.Application;
@@ -25,13 +32,6 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.namespace.guice;
 
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 
 /**
  * Guice module to provide binding for {@link NamespaceQueryAdmin}.

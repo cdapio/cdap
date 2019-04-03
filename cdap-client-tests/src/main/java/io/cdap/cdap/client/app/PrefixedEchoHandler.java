@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.client.app;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;

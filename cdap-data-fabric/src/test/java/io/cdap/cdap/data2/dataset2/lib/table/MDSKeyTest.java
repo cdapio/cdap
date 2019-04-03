@@ -17,8 +17,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.common.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 

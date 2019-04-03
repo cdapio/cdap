@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.etl.batch.connector;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.common.Constants;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedReader;

@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -30,9 +33,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.List;

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.explore.guice;
 
-import io.cdap.cdap.explore.client.DiscoveryExploreClient;
-import io.cdap.cdap.explore.client.ExploreClient;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.explore.client.DiscoveryExploreClient;
+import io.cdap.cdap.explore.client.ExploreClient;
 
 /**
  * Explore client Guice module.

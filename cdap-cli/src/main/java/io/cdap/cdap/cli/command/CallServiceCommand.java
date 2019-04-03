@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.service.Service;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
@@ -31,10 +35,6 @@ import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.proto.id.ServiceId;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;

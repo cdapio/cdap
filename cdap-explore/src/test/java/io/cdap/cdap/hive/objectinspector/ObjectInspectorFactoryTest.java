@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.hive.objectinspector;
 
-import io.cdap.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;

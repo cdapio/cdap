@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.api.spark.Spark;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.spark.Spark;
 import org.apache.spark.SparkConf;
 import org.apache.spark.metrics.sink.Sink;
 import org.slf4j.Logger;

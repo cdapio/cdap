@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.admin;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
@@ -39,8 +41,6 @@ import io.cdap.cdap.test.ProgramManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

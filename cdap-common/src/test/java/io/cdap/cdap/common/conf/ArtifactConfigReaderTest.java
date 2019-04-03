@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.common.conf;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.plugin.PluginClass;
@@ -23,10 +27,6 @@ import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;

@@ -16,6 +16,7 @@
 
 package net.fake.test.app;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -29,7 +30,6 @@ import io.cdap.cdap.api.service.BasicService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;

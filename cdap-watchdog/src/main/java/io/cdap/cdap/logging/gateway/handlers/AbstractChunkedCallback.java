@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import io.cdap.cdap.logging.read.Callback;
-import io.cdap.cdap.logging.read.LogEvent;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.logging.read.Callback;
+import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.Unpooled;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -29,8 +31,6 @@ import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;

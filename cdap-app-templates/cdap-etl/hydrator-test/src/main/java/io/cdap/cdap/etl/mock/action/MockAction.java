@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.mock.action;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -32,7 +33,6 @@ import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.DataSetManager;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata.elastic;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.SchemaWalker;
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.ScopedName;
-import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
@@ -34,8 +36,6 @@ import io.cdap.cdap.api.spark.service.SparkHttpContentConsumer;
 import io.cdap.cdap.api.spark.service.SparkHttpServiceContext;
 import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler;
 import io.cdap.cdap.api.spark.service.SparkHttpServicePluginContext;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;

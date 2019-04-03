@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.etl.proto.v2.spec;
 
-import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.proto.v2.ETLStage;

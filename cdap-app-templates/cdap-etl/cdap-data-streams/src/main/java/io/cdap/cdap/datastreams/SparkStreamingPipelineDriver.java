@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
@@ -43,10 +47,6 @@ import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.StreamingCompat;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;

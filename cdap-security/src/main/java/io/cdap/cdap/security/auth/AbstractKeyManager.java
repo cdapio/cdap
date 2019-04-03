@@ -17,12 +17,12 @@
 package io.cdap.cdap.security.auth;
 
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

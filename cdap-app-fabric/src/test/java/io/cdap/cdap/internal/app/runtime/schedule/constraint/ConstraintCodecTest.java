@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProtoConstraint;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

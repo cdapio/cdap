@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.mock.condition;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
@@ -32,7 +33,6 @@ import io.cdap.cdap.etl.api.condition.ConditionContext;
 import io.cdap.cdap.etl.api.condition.StageStatistics;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.test.DataSetManager;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;

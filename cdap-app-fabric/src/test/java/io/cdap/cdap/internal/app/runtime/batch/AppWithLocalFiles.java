@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.batch.Input;
@@ -25,8 +27,6 @@ import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;

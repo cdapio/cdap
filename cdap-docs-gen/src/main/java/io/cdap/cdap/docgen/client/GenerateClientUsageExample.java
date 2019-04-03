@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.docgen.client;
 
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.DatasetClient;
@@ -38,8 +40,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
 import java.util.List;

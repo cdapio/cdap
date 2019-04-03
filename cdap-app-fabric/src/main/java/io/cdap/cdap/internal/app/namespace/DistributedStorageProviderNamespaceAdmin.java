@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -27,9 +30,6 @@ import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;

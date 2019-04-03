@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.conf;
 
-import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

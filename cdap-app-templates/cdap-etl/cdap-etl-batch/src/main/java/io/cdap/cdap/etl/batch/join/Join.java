@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.etl.batch.join;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.JoinConfig;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.Joiner;
-import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.HashMap;

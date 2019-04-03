@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.cli.commandset;
 
-import io.cdap.cdap.cli.command.ExecuteQueryCommand;
-import io.cdap.cdap.cli.command.PreferencesCommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.cli.command.ExecuteQueryCommand;
+import io.cdap.cdap.cli.command.PreferencesCommandSet;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

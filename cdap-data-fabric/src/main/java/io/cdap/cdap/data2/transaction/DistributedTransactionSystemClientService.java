@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.transaction;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;

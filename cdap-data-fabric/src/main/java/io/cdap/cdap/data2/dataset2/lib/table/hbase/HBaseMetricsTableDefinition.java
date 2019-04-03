@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -31,11 +36,6 @@ import io.cdap.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;

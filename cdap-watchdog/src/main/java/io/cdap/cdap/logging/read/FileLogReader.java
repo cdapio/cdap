@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.logging.read;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -24,12 +30,6 @@ import io.cdap.cdap.logging.filter.AndFilter;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.meta.FileMetaDataReader;
 import io.cdap.cdap.logging.write.LogLocation;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

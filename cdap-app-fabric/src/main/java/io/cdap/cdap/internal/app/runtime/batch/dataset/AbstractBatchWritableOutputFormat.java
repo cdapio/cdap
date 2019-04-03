@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
-import io.cdap.cdap.api.data.batch.BatchWritable;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.data.batch.BatchWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;

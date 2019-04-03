@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -26,7 +27,6 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableMap;
 import io.cdap.common.http.HttpMethod;
 import org.junit.Assert;
 import org.junit.ClassRule;

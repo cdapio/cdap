@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

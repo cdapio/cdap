@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.spi.data.common;
 
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

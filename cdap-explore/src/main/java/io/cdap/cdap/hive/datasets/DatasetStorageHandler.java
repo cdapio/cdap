@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.hive.datasets;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.ConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.hive.context.CConfCodec;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.SerDe;

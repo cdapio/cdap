@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security;
 
+import com.google.common.base.Charsets;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -29,7 +30,6 @@ import io.cdap.cdap.api.service.AbstractService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.filesystem.Location;

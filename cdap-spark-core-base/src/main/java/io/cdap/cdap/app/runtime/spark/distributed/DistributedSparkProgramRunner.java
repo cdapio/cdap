@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.spark.Spark;
@@ -44,9 +47,6 @@ import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;

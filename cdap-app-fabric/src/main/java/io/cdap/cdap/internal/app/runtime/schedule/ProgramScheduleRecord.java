@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ScheduleId;
-import com.google.common.base.Objects;
 
 /**
  * Represents all information for a schedule in the schedule store.

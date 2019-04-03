@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Longs;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.PercentileInformation;
@@ -29,12 +35,6 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Longs;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 
 import java.io.IOException;

@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -28,9 +31,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.inject.Injector;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;

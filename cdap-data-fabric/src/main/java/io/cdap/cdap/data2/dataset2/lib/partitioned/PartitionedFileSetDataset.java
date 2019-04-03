@@ -16,6 +16,18 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
@@ -60,18 +72,6 @@ import io.cdap.cdap.data.RuntimeProgramContextAware;
 import io.cdap.cdap.data2.dataset2.lib.file.FileSetDataset;
 import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Futures;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.Provider;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;

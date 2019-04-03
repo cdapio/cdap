@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.profile;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
@@ -49,9 +52,6 @@ import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;

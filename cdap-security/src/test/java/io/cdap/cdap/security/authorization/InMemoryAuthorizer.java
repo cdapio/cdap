@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -32,8 +34,6 @@ import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.NotFoundException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.HashSet;

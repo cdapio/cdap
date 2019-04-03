@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.explore.service.hive.OperationInfo;
 import io.cdap.cdap.proto.QueryHandle;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.util.concurrent.Service;
 
 import java.sql.SQLException;
 

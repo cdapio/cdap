@@ -15,14 +15,14 @@
  */
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.workflow.ConditionSpecification;
-import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
+import io.cdap.cdap.api.workflow.ConditionSpecification;
+import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
 
 import java.lang.reflect.Type;
 import java.util.Map;

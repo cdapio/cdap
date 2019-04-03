@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.data.runtime.main;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.multibindings.MapBinder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;

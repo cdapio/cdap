@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.explore.client.ExploreFacade;
-import com.google.inject.Inject;
 
 /**
  * Manages namespaces on local underlying systems.

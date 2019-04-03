@@ -17,11 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.submit;
 
 
-import io.cdap.cdap.api.spark.SparkSpecification;
-import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
-import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
-import io.cdap.cdap.common.lang.ClassLoaders;
-import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -31,6 +26,11 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.api.spark.SparkSpecification;
+import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

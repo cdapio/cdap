@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.logging.guice;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.logging.gateway.handlers.LogHandler;
-import io.cdap.cdap.logging.service.LogQueryService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.logging.gateway.handlers.LogHandler;
+import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.http.HttpHandler;
 
 /**

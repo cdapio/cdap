@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.workflow;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.inject.Inject;
 
 /**
  * Implementation of {@link WorkflowStateWriter} that writes to {@link AppMetadataStore} directly.

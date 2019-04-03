@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.common.conf;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.api.common.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
 

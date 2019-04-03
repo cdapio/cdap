@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metadata.Metadata;
@@ -29,7 +30,6 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.common.plugin.Caller;
 import io.cdap.cdap.etl.common.plugin.NoStageLoggingCaller;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.common.base.Throwables;
 
 import java.net.URL;
 import java.util.Collections;

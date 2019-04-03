@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark.classloader;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.app.program.Program;
@@ -26,9 +29,6 @@ import io.cdap.cdap.common.logging.RedirectedPrintStream;
 import io.cdap.cdap.internal.asm.Classes;
 import io.cdap.cdap.internal.asm.Methods;
 import io.cdap.cdap.internal.asm.Signatures;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -26,8 +28,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;

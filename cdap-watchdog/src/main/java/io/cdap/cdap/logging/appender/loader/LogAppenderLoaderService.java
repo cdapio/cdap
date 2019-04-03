@@ -22,13 +22,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 

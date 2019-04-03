@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.cli.command.app;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.cli.ArgumentName;
@@ -28,10 +32,6 @@ import io.cdap.cdap.cli.util.FilePathResolver;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.File;

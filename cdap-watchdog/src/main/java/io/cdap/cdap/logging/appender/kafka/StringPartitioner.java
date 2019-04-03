@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.logging.appender.kafka;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import kafka.producer.Partitioner;
 import kafka.utils.VerifiableProperties;
 

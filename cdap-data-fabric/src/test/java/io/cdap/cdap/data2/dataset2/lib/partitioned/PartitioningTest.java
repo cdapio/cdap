@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 

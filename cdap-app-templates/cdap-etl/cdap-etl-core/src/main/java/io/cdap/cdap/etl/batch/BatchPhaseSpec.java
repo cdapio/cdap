@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.etl.batch;
 
-import io.cdap.cdap.api.Resources;
-import io.cdap.cdap.etl.common.PipelinePhase;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.common.PipelinePhase;
 
 import java.util.Map;
 

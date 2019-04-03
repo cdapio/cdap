@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramController;
@@ -27,9 +30,6 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Provider;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
-import io.cdap.cdap.internal.lang.MethodVisitor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
+import io.cdap.cdap.internal.lang.MethodVisitor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

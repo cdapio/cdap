@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
-import io.cdap.cdap.data2.util.TableId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.data2.util.TableId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.explore.client;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -25,7 +26,6 @@ import io.cdap.cdap.explore.service.MetaDataInfo;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
 import java.util.List;

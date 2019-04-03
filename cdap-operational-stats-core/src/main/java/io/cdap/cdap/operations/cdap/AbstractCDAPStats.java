@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.operations.cdap;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.operations.AbstractOperationalStats;
 import io.cdap.cdap.operations.OperationalStats;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Base class for CDAP {@link OperationalStats}.

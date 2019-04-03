@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
@@ -26,7 +27,6 @@ import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.collect.Lists;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

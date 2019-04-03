@@ -15,8 +15,8 @@
  */
 package io.cdap.cdap.hbase.wd;
 
-import io.cdap.cdap.common.utils.ImmutablePair;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;

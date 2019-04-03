@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramState;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.common.RuntimeArguments;
@@ -51,7 +52,6 @@ import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.tephra.TransactionSystemClient;

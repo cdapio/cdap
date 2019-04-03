@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.proto;
 
-import io.cdap.cdap.api.dataset.DatasetSpecification;
 import com.google.gson.annotations.SerializedName;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 
 import javax.annotation.Nullable;
 

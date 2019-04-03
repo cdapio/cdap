@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.http.HttpContentConsumer;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.service.http.HttpContentProducer;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
-import com.google.common.base.Preconditions;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HandlerContext;

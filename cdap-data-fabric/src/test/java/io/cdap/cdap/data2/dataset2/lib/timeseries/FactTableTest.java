@@ -15,6 +15,14 @@
  */
 package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import io.cdap.cdap.api.dataset.lib.cube.MeasureType;
@@ -25,14 +33,6 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
 import org.junit.Assert;
 import org.junit.Test;
 

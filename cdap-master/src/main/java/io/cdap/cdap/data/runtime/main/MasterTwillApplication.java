@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.data.runtime.main;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
@@ -27,12 +33,6 @@ import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceSpecification;

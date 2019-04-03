@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.security.auth;
 
-import io.cdap.cdap.common.io.Codec;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.io.Codec;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.IOException;

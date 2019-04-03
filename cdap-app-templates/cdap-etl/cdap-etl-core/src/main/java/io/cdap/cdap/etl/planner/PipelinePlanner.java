@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.etl.planner;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.PipelinePhase;
@@ -23,11 +28,6 @@ import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.HashMap;

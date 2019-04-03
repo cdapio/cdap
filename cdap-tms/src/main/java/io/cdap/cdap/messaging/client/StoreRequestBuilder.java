@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.messaging.client;
 
-import io.cdap.cdap.messaging.StoreRequest;
-import io.cdap.cdap.proto.id.TopicId;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.proto.id.TopicId;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;

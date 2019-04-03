@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.increment.hbase;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data.hbase.HBaseTestBase;
 import io.cdap.cdap.data.hbase.HBaseTestFactory;
@@ -24,8 +26,6 @@ import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;

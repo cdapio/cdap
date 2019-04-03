@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.metrics.collect;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

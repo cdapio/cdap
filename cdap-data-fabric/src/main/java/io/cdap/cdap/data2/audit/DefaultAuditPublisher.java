@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.audit;
 
+import com.google.common.base.Objects;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -33,9 +36,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import com.google.common.base.Objects;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.gateway.handlers.metrics;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValues;
@@ -25,13 +32,6 @@ import io.cdap.cdap.app.metrics.MapReduceMetrics;
 import io.cdap.cdap.app.metrics.ProgramUserMetrics;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.MetricQueryResult;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;

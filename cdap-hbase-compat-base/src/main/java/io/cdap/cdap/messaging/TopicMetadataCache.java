@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.messaging;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,10 +27,6 @@ import io.cdap.cdap.data2.util.TableId;
 import io.cdap.cdap.data2.util.hbase.CConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.HTableNameConverter;
 import io.cdap.cdap.data2.util.hbase.ScanBuilder;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableNotFoundException;

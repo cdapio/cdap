@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -23,7 +24,6 @@ import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.inject.Inject;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;

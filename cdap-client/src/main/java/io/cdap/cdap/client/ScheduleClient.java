@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -32,9 +35,6 @@ import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

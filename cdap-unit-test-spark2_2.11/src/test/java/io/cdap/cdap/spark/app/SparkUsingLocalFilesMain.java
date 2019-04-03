@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import io.cdap.cdap.api.TaskLocalizationContext;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;

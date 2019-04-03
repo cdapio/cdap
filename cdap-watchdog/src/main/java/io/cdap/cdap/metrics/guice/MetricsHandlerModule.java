@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.metrics.guice;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.metrics.query.MetricsHandler;
-import io.cdap.cdap.metrics.query.MetricsQueryService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.metrics.query.MetricsHandler;
+import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.http.HttpHandler;
 
 /**

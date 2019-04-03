@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.hive.context;
 
-import io.cdap.cdap.common.io.Codec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import io.cdap.cdap.common.io.Codec;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;

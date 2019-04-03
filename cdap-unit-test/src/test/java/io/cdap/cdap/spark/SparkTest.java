@@ -16,6 +16,15 @@
 
 package io.cdap.cdap.spark;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
@@ -53,15 +62,6 @@ import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;

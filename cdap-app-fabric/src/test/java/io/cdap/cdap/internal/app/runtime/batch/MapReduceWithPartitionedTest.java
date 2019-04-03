@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.common.Scope;
@@ -33,8 +35,6 @@ import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;

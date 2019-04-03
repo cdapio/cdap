@@ -15,6 +15,8 @@
  */
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -25,8 +27,6 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.ClassRule;

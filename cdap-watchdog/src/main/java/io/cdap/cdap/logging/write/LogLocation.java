@@ -17,6 +17,10 @@
 package io.cdap.cdap.logging.write;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.io.SeekableInputStream;
@@ -30,10 +34,6 @@ import io.cdap.cdap.logging.serialize.LogSchema;
 import io.cdap.cdap.logging.serialize.LoggingEvent;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.Impersonator;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.SeekableInput;
 import org.apache.avro.generic.GenericDatumReader;

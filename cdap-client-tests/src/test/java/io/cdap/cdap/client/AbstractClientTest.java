@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -30,11 +35,6 @@ import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

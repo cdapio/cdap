@@ -16,30 +16,13 @@
 
 package io.cdap.cdap.logging.gateway.handlers.store;
 
-import io.cdap.cdap.api.Transactional;
-import io.cdap.cdap.api.Transactionals;
-import io.cdap.cdap.api.dataset.DatasetProperties;
-import io.cdap.cdap.api.dataset.table.Table;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
-import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
-import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
-import io.cdap.cdap.data2.transaction.Transactions;
+import com.google.inject.Inject;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
-import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTable;
-import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionSystemClient;
 
 /**
  * This is to for log handler to access run records. Log handler cannot use Store directly because watchdog module

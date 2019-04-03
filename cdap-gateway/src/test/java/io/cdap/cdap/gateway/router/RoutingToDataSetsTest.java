@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteStreams;
+import com.google.common.net.InetAddresses;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -24,11 +29,6 @@ import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AccessTokenTransformer;
 import io.cdap.cdap.security.guice.SecurityModules;
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
-import com.google.common.net.InetAddresses;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

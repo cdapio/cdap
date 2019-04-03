@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.partitioned;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -32,7 +33,6 @@ import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;

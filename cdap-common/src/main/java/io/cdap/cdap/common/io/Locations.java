@@ -15,13 +15,13 @@
  */
 package io.cdap.cdap.common.io;
 
-import io.cdap.cdap.common.lang.FunctionWithException;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import io.cdap.cdap.common.lang.FunctionWithException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileContext;

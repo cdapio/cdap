@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
@@ -38,10 +42,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;

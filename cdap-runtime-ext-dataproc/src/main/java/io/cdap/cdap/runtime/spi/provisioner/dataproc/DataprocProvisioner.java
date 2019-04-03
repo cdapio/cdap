@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -29,8 +31,6 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.store;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.UnmodifiableIterator;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
@@ -26,8 +28,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.UnmodifiableIterator;
 import org.apache.commons.io.Charsets;
 import org.junit.Assert;
 import org.junit.Before;

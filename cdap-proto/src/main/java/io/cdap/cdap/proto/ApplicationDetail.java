@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.proto;
 
+import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
-import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.List;

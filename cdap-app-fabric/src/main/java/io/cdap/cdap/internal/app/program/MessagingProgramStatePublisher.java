@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.program;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -28,9 +31,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.command.system;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.table.AltStyleTableRenderer;
 import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.cli.util.table.TableRenderer;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 

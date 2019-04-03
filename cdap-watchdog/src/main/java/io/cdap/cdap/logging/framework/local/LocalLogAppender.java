@@ -19,6 +19,8 @@ package io.cdap.cdap.logging.framework.local;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -30,8 +32,6 @@ import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import io.cdap.cdap.logging.framework.LogPipelineSpecification;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;

@@ -17,11 +17,11 @@
 
 package io.cdap.cdap.etl.proto.v2.spec;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
 import java.util.HashMap;

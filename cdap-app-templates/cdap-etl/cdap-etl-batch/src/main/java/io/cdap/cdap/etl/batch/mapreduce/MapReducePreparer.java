@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.batch.mapreduce;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
@@ -44,7 +45,6 @@ import io.cdap.cdap.etl.common.submit.Finisher;
 import io.cdap.cdap.etl.common.submit.JoinerContextProvider;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;

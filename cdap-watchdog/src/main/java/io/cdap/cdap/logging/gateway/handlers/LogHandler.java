@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -27,8 +29,6 @@ import io.cdap.cdap.logging.gateway.handlers.store.ProgramStore;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;

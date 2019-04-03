@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.explore.service;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.junit.Assert;

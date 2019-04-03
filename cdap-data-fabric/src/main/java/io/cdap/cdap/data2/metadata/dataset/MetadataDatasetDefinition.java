@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.data2.metadata.dataset;
 
+import com.google.common.base.Joiner;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.dataset.Reconfigurable;
 import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import com.google.common.base.Joiner;
 
 import java.io.IOException;
 import java.util.Map;

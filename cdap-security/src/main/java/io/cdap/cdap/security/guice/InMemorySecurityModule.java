@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.security.guice;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.security.auth.InMemoryKeyManager;
-import io.cdap.cdap.security.auth.KeyManager;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.security.auth.InMemoryKeyManager;
+import io.cdap.cdap.security.auth.KeyManager;
 
 /**
  * Guice bindings for InMemoryKeyManagers. This extends {@code SecurityModule} to provide

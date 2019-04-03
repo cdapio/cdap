@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.worker.WorkerConfigurer;
@@ -26,8 +28,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 
 import java.util.HashMap;
 import java.util.Map;

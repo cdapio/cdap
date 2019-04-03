@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.service;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.service.Service;
 import io.cdap.cdap.api.service.ServiceSpecification;
@@ -26,9 +29,6 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.AbstractInMemoryProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 /**
  * For running {@link Service}. Only used in in-memory/standalone mode.

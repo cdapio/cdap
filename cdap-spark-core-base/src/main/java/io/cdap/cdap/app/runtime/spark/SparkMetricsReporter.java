@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.api.metrics.MetricsContext;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -25,6 +24,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

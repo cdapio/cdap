@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data.runtime;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.data2.transaction.DynamicTransactionExecutor;
 import io.cdap.cdap.data2.transaction.TransactionContextFactory;
 import io.cdap.cdap.data2.transaction.TransactionExecutorFactory;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;

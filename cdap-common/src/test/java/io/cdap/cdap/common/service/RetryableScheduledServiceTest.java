@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.service;
 
-import io.cdap.cdap.api.retry.RetriesExhaustedException;
-import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.retry.RetriesExhaustedException;
+import io.cdap.cdap.common.utils.Tasks;
 import org.junit.Assert;
 import org.junit.Test;
 

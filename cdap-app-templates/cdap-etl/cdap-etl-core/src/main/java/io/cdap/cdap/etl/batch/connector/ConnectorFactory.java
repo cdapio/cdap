@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.etl.batch.connector;
 
-import io.cdap.cdap.api.data.schema.Schema;
-
-import javax.annotation.Nullable;
-
 /**
  * Creates ConnectorSources and ConnectorSinks
  */

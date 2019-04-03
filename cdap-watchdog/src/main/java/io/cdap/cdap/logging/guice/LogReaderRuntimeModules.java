@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.logging.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.logging.read.DistributedLogReader;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.security.impersonation.RemoteUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
-import com.google.inject.Scopes;
 
 /**
  * A {@link RuntimeModule} for providing guice modules for {@link LogReader}.

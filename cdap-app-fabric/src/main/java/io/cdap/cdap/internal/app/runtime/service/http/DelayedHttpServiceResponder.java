@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.api.service.http.HttpContentProducer;
-import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

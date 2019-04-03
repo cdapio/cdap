@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionFailureException;

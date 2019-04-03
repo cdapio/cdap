@@ -15,14 +15,14 @@
  */
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.api.customaction.CustomActionSpecification;
-import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
+import io.cdap.cdap.api.customaction.CustomActionSpecification;
+import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
 
 import java.lang.reflect.Type;
 import java.util.Map;

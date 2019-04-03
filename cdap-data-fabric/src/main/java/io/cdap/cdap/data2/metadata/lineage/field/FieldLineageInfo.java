@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -25,10 +29,6 @@ import io.cdap.cdap.api.lineage.field.TransformOperation;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.common.utils.Checksums;
 import io.cdap.cdap.proto.codec.OperationTypeAdapter;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

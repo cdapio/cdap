@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.logging.meta;
 
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 /**
  * Creates {@link CheckpointManager}s.

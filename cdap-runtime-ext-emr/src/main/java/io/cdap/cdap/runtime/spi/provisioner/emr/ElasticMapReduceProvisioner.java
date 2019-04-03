@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.emr;
 
+import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -28,8 +30,6 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

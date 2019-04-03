@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Joiner;
+import com.google.inject.Injector;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,9 +32,6 @@ import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.base.Joiner;
-import com.google.inject.Injector;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

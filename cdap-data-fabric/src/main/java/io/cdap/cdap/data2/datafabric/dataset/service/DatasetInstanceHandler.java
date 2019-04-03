@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.DatasetAlreadyExistsException;
 import io.cdap.cdap.common.DatasetTypeNotFoundException;
 import io.cdap.cdap.common.HandlerException;
@@ -28,8 +30,6 @@ import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.id.DatasetId;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

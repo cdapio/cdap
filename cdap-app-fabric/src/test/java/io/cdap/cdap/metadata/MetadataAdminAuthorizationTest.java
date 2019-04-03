@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.ObjectMappedTable;
@@ -40,7 +41,6 @@ import io.cdap.cdap.security.authorization.InMemoryAuthorizer;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.spi.metadata.SearchRequest;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

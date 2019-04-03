@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.deploy.pipeline;
 
+import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
-import com.google.gson.annotations.SerializedName;
 import org.apache.twill.filesystem.Location;
 
 import java.util.Collection;

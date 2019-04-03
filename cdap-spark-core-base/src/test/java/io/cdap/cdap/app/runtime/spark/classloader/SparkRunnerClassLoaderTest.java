@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.app.runtime.spark.classloader;
 
-import io.cdap.cdap.common.lang.ClassLoaders;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import org.junit.Assert;
 import org.junit.Test;
 

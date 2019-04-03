@@ -17,9 +17,9 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import com.google.inject.Inject;
 
 /**
  * Loads system artifacts.

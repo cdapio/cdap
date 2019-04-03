@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import io.cdap.cdap.logging.read.LogEvent;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;

@@ -16,16 +16,6 @@
 
 package io.cdap.cdap.security.server;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
-import io.cdap.cdap.common.io.Codec;
-import io.cdap.cdap.security.auth.AccessToken;
-import io.cdap.cdap.security.auth.AccessTokenCodec;
-import io.cdap.cdap.security.guice.SecurityModules;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
@@ -36,6 +26,16 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
+import io.cdap.cdap.security.guice.SecurityModules;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.hbase.HBaseConfiguration;

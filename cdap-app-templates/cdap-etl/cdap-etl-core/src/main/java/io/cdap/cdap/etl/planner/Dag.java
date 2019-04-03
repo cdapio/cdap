@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.etl.planner;
 
-import io.cdap.cdap.api.Predicate;
-import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.api.Predicate;
+import io.cdap.cdap.etl.proto.Connection;
 
 import java.util.ArrayList;
 import java.util.Collection;

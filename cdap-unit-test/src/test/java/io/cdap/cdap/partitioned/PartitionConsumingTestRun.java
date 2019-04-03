@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.partitioned;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionFilter;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
@@ -26,9 +29,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.ProgramManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.cli.command.metadata;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.cli.ArgumentName;
@@ -23,10 +27,6 @@ import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.util.AbstractCommand;
 import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.MetadataClient;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

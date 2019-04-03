@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.WorkflowClient;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

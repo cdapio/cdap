@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.ElementType;
 import io.cdap.cdap.client.PreferencesClient;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

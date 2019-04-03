@@ -17,11 +17,11 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.twill.HadoopClassExcluder;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import com.google.common.collect.Iterables;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillRunnable;

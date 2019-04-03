@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 import java.util.ServiceLoader;
 import java.util.Set;

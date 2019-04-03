@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.provision;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
@@ -23,9 +26,6 @@ import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.KeyPair;
 import org.apache.twill.filesystem.Location;
 
 import java.io.ByteArrayOutputStream;

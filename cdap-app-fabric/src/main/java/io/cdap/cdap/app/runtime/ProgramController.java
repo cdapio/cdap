@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.runtime;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 

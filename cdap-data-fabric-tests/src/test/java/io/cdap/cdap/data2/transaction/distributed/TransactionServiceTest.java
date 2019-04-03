@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.transaction.distributed;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -42,11 +47,6 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.tephra.DefaultTransactionExecutor;

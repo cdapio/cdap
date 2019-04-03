@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.app.program;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Provides information about a program.

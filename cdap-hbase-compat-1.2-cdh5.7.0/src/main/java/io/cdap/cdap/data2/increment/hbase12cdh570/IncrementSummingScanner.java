@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data2.increment.hbase12cdh570;
 
-import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;

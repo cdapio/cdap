@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command.artifact;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.cli.ArgumentName;
@@ -25,8 +27,6 @@ import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.RowMaker;
 import io.cdap.cdap.cli.util.table.Table;
 import io.cdap.cdap.client.ArtifactClient;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;

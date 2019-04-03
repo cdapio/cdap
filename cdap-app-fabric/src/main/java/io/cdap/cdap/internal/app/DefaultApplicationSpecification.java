@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -28,8 +30,6 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
 import java.util.Set;

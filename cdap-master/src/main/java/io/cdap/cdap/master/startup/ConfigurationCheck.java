@@ -16,17 +16,17 @@
 
 package io.cdap.cdap.master.startup;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
 import io.cdap.cdap.proto.id.EntityId;
-import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
-import com.google.inject.Inject;
 import kafka.common.Topic;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TxConstants;

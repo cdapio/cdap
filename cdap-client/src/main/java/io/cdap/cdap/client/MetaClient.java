@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.ConfigEntry;
 import io.cdap.cdap.proto.Version;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;

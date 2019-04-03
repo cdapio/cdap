@@ -16,7 +16,6 @@
 package io.cdap.cdap.report.main;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 
 import java.util.Map;
 import javax.annotation.Nullable;

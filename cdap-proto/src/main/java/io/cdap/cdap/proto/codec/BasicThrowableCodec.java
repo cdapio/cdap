@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.proto.codec;
 
-import io.cdap.cdap.proto.BasicThrowable;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
+import io.cdap.cdap.proto.BasicThrowable;
 
 import java.lang.reflect.Type;
 

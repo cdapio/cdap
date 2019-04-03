@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.kafka.run;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.net.InetAddresses;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
 import io.cdap.cdap.common.runtime.DaemonMain;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.net.InetAddresses;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;

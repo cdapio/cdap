@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.common.HttpExceptionHandler;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 

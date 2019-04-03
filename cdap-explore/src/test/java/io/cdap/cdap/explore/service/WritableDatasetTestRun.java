@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
@@ -27,9 +30,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.tephra.Transaction;
 import org.junit.AfterClass;
 import org.junit.Assert;

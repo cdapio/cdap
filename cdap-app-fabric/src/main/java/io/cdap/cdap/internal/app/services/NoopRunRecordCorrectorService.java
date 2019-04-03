@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import com.google.inject.Inject;
 
 /**
  * A run record corrector that does not correct run records at all.

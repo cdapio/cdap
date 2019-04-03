@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
@@ -49,9 +52,6 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.reporting.ProgramHeartbeatTable;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.AfterClass;

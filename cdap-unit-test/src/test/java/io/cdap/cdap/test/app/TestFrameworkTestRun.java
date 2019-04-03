@@ -16,6 +16,17 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.AppUsingNamespace;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.Application;
@@ -73,17 +84,6 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.cdap.test.artifacts.AppWithPlugin;
 import io.cdap.cdap.test.artifacts.plugins.ToStringPlugin;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

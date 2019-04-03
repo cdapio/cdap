@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.commandset;
 
-import io.cdap.cdap.cli.command.CallServiceCommand;
-import io.cdap.cdap.cli.command.CheckServiceAvailabilityCommand;
-import io.cdap.cdap.cli.command.GetServiceEndpointsCommand;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.cli.command.CallServiceCommand;
+import io.cdap.cdap.cli.command.CheckServiceAvailabilityCommand;
+import io.cdap.cdap.cli.command.GetServiceEndpointsCommand;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

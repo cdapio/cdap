@@ -16,6 +16,16 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import com.google.common.hash.Hashing;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.Transactionals;
@@ -53,16 +63,6 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.NoopAdmin;
 import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import com.google.common.hash.Hashing;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
-import com.google.common.reflect.TypeToken;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TransactionFailureException;

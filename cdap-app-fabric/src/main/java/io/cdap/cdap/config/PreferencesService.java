@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.config;
 
+import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
@@ -37,8 +39,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.common.collect.Sets;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.HashMap;

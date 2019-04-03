@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.Module;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
-import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 
 /**
  * Namespace admin modules

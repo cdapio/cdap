@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 

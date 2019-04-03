@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.AbstractInMemoryMasterServiceManager;
-import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 
 /**

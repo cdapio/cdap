@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.report.main;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.report.util.Constants;
-import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

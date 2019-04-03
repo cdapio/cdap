@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.increment.hbase;
 
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;

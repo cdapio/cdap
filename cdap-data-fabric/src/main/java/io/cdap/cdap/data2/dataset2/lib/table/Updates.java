@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import com.google.common.base.Function;
 
 import java.util.Map;
 import java.util.NavigableMap;

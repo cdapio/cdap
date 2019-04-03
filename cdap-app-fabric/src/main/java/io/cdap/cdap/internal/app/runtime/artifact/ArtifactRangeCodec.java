@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
-import io.cdap.cdap.api.artifact.ArtifactRange;
-import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
-import io.cdap.cdap.proto.artifact.ArtifactRanges;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -26,6 +23,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
 
 import java.lang.reflect.Type;
 

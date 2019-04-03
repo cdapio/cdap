@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.service;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.TopicMetadata;
@@ -24,7 +25,6 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

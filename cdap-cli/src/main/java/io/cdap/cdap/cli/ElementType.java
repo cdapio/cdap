@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.cli;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.cli.english.Noun;
 import io.cdap.cdap.cli.english.Word;
 import io.cdap.cdap.proto.ProgramType;
-import com.google.common.collect.Sets;
 
 import java.util.Set;
 

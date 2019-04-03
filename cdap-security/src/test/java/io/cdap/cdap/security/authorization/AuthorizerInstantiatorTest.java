@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,8 +25,6 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.ClassRule;

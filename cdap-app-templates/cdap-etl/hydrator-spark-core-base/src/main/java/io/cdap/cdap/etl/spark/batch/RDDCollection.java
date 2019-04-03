@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.Alert;
@@ -46,8 +48,6 @@ import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
 import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
-import com.google.common.base.Throwables;
-import com.google.gson.Gson;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;

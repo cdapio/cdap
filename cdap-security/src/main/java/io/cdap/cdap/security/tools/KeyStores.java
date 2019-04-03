@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.tools;
 
+import com.google.common.hash.Hashing;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import com.google.common.hash.Hashing;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.twill.filesystem.Location;
 import sun.security.x509.AlgorithmId;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import org.junit.Test;
 
 import java.lang.reflect.Type;

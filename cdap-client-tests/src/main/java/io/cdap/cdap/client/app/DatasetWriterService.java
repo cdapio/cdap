@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.client.app;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

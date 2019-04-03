@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -26,8 +28,6 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.data2.dataset2.TableAssert;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.junit.Assert;

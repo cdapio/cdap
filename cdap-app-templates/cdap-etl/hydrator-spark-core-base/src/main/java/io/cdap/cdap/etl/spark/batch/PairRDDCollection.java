@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.Optional;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
-import com.google.common.base.Optional;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;

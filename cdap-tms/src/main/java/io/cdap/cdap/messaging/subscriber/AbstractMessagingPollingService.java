@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.subscriber;
 
+import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
@@ -31,7 +32,6 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

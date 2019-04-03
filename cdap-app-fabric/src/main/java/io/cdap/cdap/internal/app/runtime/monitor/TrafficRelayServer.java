@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
-import io.cdap.cdap.internal.app.runtime.monitor.proxy.SimpleRelayChannelHandler;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.cdap.internal.app.runtime.monitor.proxy.SimpleRelayChannelHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

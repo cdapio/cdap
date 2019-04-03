@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.authorization;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -29,7 +30,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;

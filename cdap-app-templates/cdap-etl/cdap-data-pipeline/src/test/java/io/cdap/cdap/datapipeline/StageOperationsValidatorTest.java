@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.logging.guice;
 
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.logging.framework.distributed.DistributedAppenderContext;
 import io.cdap.cdap.logging.framework.distributed.DistributedLogFramework;
 import io.cdap.cdap.logging.service.LogSaverStatusService;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import io.cdap.http.HttpHandler;
 
 /**

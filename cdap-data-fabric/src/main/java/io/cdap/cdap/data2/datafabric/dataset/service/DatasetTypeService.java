@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.module.DatasetType;
 import io.cdap.cdap.common.NotFoundException;
@@ -25,7 +26,6 @@ import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.util.concurrent.Service;
 import io.cdap.http.BodyConsumer;
 
 import java.io.IOException;

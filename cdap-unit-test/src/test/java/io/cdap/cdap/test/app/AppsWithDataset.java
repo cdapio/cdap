@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -40,7 +41,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

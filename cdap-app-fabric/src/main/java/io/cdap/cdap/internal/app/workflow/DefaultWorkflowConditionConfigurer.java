@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.workflow;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
@@ -32,8 +34,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
 import io.cdap.cdap.internal.workflow.condition.DefaultConditionSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import java.util.HashMap;
 import java.util.HashSet;

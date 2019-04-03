@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.spi.data.sql;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Sets;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

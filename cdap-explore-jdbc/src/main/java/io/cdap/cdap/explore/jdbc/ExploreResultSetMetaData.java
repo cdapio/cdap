@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.explore.jdbc;
 
-import io.cdap.cdap.proto.ColumnDesc;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.proto.ColumnDesc;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
-import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
-import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
+import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;

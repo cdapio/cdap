@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -40,7 +41,6 @@ import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.partitioned;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import io.cdap.cdap.api.dataset.lib.TimePartitionOutput;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -24,7 +25,6 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 

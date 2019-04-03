@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.cli.command.artifact;
 
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
@@ -27,8 +29,6 @@ import io.cdap.cdap.cli.util.FilePathResolver;
 import io.cdap.cdap.client.ArtifactClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.common.cli.Arguments;
 
 import java.io.File;

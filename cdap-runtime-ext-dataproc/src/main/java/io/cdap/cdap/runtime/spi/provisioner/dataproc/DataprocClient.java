@@ -16,9 +16,6 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import io.cdap.cdap.runtime.spi.provisioner.Node;
-import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -47,6 +44,9 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import io.cdap.cdap.runtime.spi.provisioner.Node;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.IOException;
 import java.nio.file.Path;

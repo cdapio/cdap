@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.admin;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.NamespaceSummary;
 import io.cdap.cdap.api.RuntimeContext;
@@ -45,9 +48,6 @@ import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -67,7 +67,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;

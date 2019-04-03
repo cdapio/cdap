@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.guice;
 
+import com.google.inject.AbstractModule;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
@@ -44,7 +45,6 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
-import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;

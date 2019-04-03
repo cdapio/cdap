@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.common;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.master.startup.ExploreServiceResourceKeys;
 import io.cdap.cdap.master.startup.ServiceResourceKeys;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 

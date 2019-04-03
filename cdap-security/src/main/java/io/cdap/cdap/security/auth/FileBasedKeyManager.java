@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;

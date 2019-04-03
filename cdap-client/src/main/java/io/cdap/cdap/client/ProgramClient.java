@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
@@ -47,11 +52,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

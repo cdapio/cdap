@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.logging;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -34,9 +37,6 @@ import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.AbstractModule;
 import org.apache.tephra.runtime.TransactionModules;
 import org.junit.ClassRule;
 

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import com.google.common.util.concurrent.AbstractIdleService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;

@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.cli.util;
 
-import io.cdap.cdap.cli.ProgramIdArgument;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import io.cdap.cdap.cli.ProgramIdArgument;
 import io.cdap.common.cli.util.Parser;
 
 import java.util.ArrayList;

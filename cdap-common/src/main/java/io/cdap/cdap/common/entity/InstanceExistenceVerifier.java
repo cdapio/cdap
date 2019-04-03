@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.common.entity;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.InstanceId;
-import com.google.inject.Inject;
 
 /**
  * {@link EntityExistenceVerifier} for {@link InstanceId}.

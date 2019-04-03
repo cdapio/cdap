@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.provision;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
-import com.google.inject.Inject;
 
 import java.util.Collections;
 import java.util.HashMap;

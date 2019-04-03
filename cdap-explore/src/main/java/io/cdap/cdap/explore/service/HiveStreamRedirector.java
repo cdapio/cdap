@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.explore.service;
 
-import io.cdap.cdap.common.logging.RedirectedPrintStream;
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.common.logging.RedirectedPrintStream;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -28,7 +30,6 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditPublisher;
 import io.cdap.cdap.data2.audit.AuditPublishers;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
-import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext;
@@ -43,8 +44,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

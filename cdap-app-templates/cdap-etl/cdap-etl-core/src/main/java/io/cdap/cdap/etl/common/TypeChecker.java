@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.Aggregator;
 import io.cdap.cdap.etl.api.Joiner;
-import com.google.common.reflect.TypeToken;
 
 /**
  * Helper for checking parameter types.

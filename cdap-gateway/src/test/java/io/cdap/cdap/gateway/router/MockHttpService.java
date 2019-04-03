@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.gateway.router;
 
-import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;

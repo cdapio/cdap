@@ -16,17 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.app.runtime.ProgramRunner;
-import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
-import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
-import io.cdap.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.lang.ClassLoaders;
-import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.internal.app.spark.SparkCompatReader;
-import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.runtime.spi.SparkCompat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -39,6 +28,17 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.spi.InstanceBinding;
+import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
+import io.cdap.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

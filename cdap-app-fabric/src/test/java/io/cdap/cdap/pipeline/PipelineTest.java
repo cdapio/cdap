@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.pipeline;
 
-import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import org.junit.Assert;
 import org.junit.Test;
 

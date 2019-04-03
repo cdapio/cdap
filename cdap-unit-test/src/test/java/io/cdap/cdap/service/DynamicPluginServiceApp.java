@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.service;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -29,7 +30,6 @@ import io.cdap.cdap.api.service.http.HttpContentProducer;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-import com.google.gson.Gson;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;

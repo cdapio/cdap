@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.security.guice;
 
+import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -27,14 +35,6 @@ import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreUtils;
 import io.cdap.cdap.security.store.secretmanager.SecretManagerSecureStoreService;
-import com.google.common.base.Strings;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 
 /**
  * Server side guice bindings for secure store service related classes.

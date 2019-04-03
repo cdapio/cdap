@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.partitioned;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.Resources;
@@ -48,10 +52,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.worker.AbstractWorker;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

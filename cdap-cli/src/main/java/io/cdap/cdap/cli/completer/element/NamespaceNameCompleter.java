@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.cli.completer.element;
 
-import io.cdap.cdap.cli.completer.StringsCompleter;
-import io.cdap.cdap.client.NamespaceClient;
-import io.cdap.cdap.proto.NamespaceMeta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.cdap.cli.completer.StringsCompleter;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.proto.NamespaceMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;

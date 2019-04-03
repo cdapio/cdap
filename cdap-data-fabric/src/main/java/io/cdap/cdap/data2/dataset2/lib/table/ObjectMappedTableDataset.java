@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -39,8 +41,6 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.internal.io.ReflectionPutWriter;
 import io.cdap.cdap.internal.io.ReflectionRowReader;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

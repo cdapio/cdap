@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.messaging.server;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -31,8 +33,6 @@ import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Inject;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;

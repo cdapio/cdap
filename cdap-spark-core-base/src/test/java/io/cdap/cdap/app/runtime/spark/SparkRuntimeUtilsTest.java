@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.api.common.Bytes;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import io.cdap.cdap.api.common.Bytes;
 import org.apache.spark.SparkConf;
 import org.junit.Assert;
 import org.junit.ClassRule;

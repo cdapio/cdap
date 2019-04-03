@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.profile;
 
+import com.google.common.base.Joiner;
+import com.google.inject.Injector;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
@@ -30,9 +33,6 @@ import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.base.Joiner;
-import com.google.inject.Injector;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

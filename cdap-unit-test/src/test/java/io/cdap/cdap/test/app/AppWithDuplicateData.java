@@ -18,7 +18,6 @@ package io.cdap.cdap.test.app;
 
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
-import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.plugin.PluginProperties;

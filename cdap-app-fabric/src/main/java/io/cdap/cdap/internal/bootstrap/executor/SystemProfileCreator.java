@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.internal.bootstrap.executor;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -24,7 +25,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
-import com.google.inject.Inject;
 
 /**
  * Creates a system profile if it doesn't already exist.

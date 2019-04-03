@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.cli.command;
 
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -23,10 +27,6 @@ import io.cdap.cdap.cli.english.Article;
 import io.cdap.cdap.cli.english.Fragment;
 import io.cdap.cdap.client.PreferencesClient;
 import io.cdap.cdap.common.BadRequestException;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import io.cdap.common.cli.Arguments;
 
 import java.io.File;

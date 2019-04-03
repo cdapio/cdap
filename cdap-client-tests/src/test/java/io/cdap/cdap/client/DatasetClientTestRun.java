@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.client.app.StandaloneDataset;
 import io.cdap.cdap.client.app.StandaloneDatasetModule;
@@ -34,7 +35,6 @@ import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

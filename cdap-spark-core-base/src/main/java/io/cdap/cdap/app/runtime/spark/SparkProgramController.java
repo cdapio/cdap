@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -23,7 +24,6 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.WorkflowDataProvider;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import com.google.common.util.concurrent.Service;
 
 import java.util.Set;
 

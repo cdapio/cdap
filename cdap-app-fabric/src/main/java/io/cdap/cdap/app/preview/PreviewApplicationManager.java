@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,9 +38,6 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys a Preview Application.

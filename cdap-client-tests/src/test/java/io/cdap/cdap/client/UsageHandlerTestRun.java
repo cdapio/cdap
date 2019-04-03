@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.base.Charsets;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.client.app.AllProgramsApp;
 import io.cdap.cdap.client.common.ClientTestBase;
@@ -26,9 +29,6 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Charsets;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

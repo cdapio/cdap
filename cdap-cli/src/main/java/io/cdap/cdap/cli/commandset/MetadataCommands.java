@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.cli.commandset;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.metadata.AddMetadataPropertiesCommand;
@@ -29,9 +32,6 @@ import io.cdap.cdap.cli.command.metadata.RemoveMetadataPropertyCommand;
 import io.cdap.cdap.cli.command.metadata.RemoveMetadataTagCommand;
 import io.cdap.cdap.cli.command.metadata.RemoveMetadataTagsCommand;
 import io.cdap.cdap.cli.command.metadata.SearchMetadataCommand;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 

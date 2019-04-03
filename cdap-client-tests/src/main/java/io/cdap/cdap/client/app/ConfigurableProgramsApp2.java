@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.client.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
-import com.google.common.base.Throwables;
 import org.apache.tephra.TransactionFailureException;
 
 import javax.annotation.Nullable;

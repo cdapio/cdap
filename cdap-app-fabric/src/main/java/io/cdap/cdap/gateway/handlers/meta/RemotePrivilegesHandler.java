@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers.meta;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.internal.remote.MethodArgument;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
@@ -27,9 +30,6 @@ import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.VisibilityRequest;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.inject.TypeLiteral;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;

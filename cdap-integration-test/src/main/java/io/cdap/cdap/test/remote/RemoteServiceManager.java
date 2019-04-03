@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.RuntimeMetrics;
 import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.client.ProgramClient;
@@ -27,7 +28,6 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.test.AbstractProgramManager;
 import io.cdap.cdap.test.ServiceManager;
-import com.google.common.base.Throwables;
 
 import java.net.URL;
 import java.util.concurrent.Callable;

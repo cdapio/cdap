@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
@@ -33,9 +36,6 @@ import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;

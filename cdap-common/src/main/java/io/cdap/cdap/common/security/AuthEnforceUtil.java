@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.security;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -27,7 +28,6 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Preconditions;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;

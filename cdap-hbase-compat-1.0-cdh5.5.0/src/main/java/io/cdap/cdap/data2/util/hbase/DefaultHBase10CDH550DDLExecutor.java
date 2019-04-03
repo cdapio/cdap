@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.util.hbase;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.hbase.TableDescriptor;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;

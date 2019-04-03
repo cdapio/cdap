@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.messaging;
 
+import com.google.common.collect.Iterators;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
@@ -33,7 +34,6 @@ import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.collect.Iterators;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;

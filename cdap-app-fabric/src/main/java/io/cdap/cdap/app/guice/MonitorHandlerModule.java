@@ -16,6 +16,17 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
+import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.conf.Constants;
@@ -46,17 +57,6 @@ import io.cdap.cdap.logging.run.LogSaverStatusServiceManager;
 import io.cdap.cdap.messaging.distributed.MessagingServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsServiceManager;
-import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.MapBinder;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import io.cdap.http.HttpHandler;
 
 import java.util.Map;

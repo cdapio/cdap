@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.common.zookeeper.election;
 
-import io.cdap.cdap.common.utils.Tasks;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.common.utils.Tasks;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.DefaultZKClientService;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;

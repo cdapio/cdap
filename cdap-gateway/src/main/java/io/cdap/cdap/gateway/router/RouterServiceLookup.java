@@ -16,17 +16,17 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.gateway.discovery.VersionFilteredServiceDiscovered;
-import com.google.common.base.Strings;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;

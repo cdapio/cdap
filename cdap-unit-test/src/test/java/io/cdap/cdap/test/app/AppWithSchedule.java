@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.dataset.lib.ObjectStores;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

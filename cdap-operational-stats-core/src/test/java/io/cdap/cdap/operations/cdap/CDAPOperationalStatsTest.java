@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.operations.cdap;
 
+import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -26,7 +27,6 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.operations.OperationalStats;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.inject.Injector;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;

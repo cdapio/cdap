@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.util.Set;

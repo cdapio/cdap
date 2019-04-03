@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data.runtime;
 
+import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import com.google.inject.Provider;
 import org.apache.tephra.TransactionSystemClient;
 
 /**

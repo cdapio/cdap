@@ -16,6 +16,7 @@
 
 package io.cdap.cdap;
 
+import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -27,7 +28,6 @@ import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.internal.app.runtime.batch.WordCount;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;

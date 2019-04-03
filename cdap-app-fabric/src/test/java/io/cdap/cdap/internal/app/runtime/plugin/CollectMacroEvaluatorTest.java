@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
-import io.cdap.cdap.api.macro.MacroFunction;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.macro.MacroFunction;
 import org.junit.Assert;
 import org.junit.Test;
 

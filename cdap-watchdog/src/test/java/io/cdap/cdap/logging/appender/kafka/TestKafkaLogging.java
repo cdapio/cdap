@@ -17,6 +17,11 @@
 package io.cdap.cdap.logging.appender.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.base.Function;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -29,11 +34,6 @@ import io.cdap.cdap.logging.context.WorkerLoggingContext;
 import io.cdap.cdap.logging.read.KafkaLogReader;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import io.cdap.cdap.test.SlowTests;
-import com.google.common.base.Function;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.Assert;
 import org.junit.BeforeClass;

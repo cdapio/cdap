@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.data2.dataset2.cache;
 
+import com.google.common.collect.ImmutableSortedMap;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
-import com.google.common.collect.ImmutableSortedMap;
 import org.apache.tephra.Transaction;
 
 import java.util.Map;

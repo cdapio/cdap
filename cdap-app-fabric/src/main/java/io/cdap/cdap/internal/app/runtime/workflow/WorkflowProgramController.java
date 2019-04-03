@@ -15,10 +15,10 @@
  */
 package io.cdap.cdap.internal.app.runtime.workflow;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;

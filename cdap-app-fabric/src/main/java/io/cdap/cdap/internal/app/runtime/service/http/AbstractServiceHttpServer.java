@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
@@ -28,9 +31,6 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.ServiceHttpServer;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.api.ServiceAnnouncer;

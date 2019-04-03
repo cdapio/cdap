@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spark;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.TimeseriesTable;
 import io.cdap.cdap.common.conf.Constants;
@@ -29,8 +31,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaPublisher;
 import org.junit.ClassRule;

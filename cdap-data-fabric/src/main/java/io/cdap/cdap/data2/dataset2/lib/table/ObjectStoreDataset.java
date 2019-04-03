@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -37,8 +39,6 @@ import io.cdap.cdap.common.io.BinaryEncoder;
 import io.cdap.cdap.internal.io.ReflectionDatumReader;
 import io.cdap.cdap.internal.io.ReflectionDatumWriter;
 import io.cdap.cdap.internal.io.TypeRepresentation;
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

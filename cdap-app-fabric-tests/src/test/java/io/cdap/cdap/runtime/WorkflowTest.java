@@ -15,6 +15,12 @@
  */
 package io.cdap.cdap.runtime;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.inject.Injector;
 import io.cdap.cdap.AppWithAnonymousWorkflow;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.MissingSparkWorkflowApp;
@@ -38,12 +44,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
 import org.junit.After;
 import org.junit.Assert;

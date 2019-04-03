@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.net.InetAddresses;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -23,9 +26,6 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AccessTokenTransformer;
 import io.cdap.cdap.security.guice.SecurityModules;
-import com.google.common.net.InetAddresses;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import io.cdap.common.http.HttpRequests;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.apache.http.conn.ClientConnectionManager;

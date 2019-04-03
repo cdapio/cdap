@@ -16,6 +16,14 @@
 
 package io.cdap.cdap.logging.framework.distributed;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -29,14 +37,6 @@ import io.cdap.cdap.logging.meta.CheckpointManagerFactory;
 import io.cdap.cdap.logging.pipeline.LogProcessorPipelineContext;
 import io.cdap.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import io.cdap.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.kafka.client.BrokerService;

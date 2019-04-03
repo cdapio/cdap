@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.etl.spark.function;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformingEmitter;
-import com.google.common.base.Function;
 import scala.Tuple2;
 
 /**

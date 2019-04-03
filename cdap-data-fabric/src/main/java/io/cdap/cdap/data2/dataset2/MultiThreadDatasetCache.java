@@ -16,12 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import io.cdap.cdap.api.data.DatasetInstantiationException;
-import io.cdap.cdap.api.dataset.Dataset;
-import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.common.transaction.MultiThreadTransactionAware;
-import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
-import io.cdap.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -29,6 +23,12 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import io.cdap.cdap.api.data.DatasetInstantiationException;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.transaction.MultiThreadTransactionAware;
+import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;

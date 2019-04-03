@@ -15,11 +15,11 @@
  */
 package io.cdap.cdap.internal.app.preview;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.proto.id.ApplicationId;
-import com.google.inject.Inject;
 
 /**
  * Default implementation of {@link DataTracerFactory}

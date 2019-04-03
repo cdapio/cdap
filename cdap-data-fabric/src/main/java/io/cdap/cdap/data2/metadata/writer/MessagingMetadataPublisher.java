@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
@@ -28,7 +29,6 @@ import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

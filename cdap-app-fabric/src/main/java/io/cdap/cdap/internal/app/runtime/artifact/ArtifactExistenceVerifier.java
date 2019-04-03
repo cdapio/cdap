@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.entity.EntityExistenceVerifier;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.id.ArtifactId;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 

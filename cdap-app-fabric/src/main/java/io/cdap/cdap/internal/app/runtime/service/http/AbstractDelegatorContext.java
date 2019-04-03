@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.api.service.http.HttpContentConsumer;
-import io.cdap.cdap.api.service.http.HttpContentProducer;
-import io.cdap.cdap.common.lang.InstantiatorFactory;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.service.http.HttpContentConsumer;
+import io.cdap.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.common.lang.InstantiatorFactory;
 import org.apache.twill.common.Cancellable;
 
 import java.io.Closeable;

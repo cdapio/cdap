@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.etl.batch;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.ErrorRecord;
@@ -24,11 +29,6 @@ import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import io.cdap.cdap.etl.common.BasicErrorRecord;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.RecordType;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

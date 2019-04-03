@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset.output;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharStreams;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;

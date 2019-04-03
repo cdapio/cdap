@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.test;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -47,13 +54,6 @@ import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.security.authentication.client.AuthenticationClient;
 import io.cdap.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

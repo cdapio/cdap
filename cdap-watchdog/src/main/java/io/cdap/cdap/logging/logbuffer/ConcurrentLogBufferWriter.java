@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.logging.logbuffer;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
-import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
 
 import java.io.Closeable;
 import java.io.IOException;

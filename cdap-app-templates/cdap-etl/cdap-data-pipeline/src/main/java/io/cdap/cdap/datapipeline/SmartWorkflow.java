@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -87,11 +92,6 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.batch.ETLSpark;
 import io.cdap.cdap.etl.validation.InvalidPipelineException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

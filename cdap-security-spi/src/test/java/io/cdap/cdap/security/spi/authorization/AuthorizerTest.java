@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.security.spi.authorization;
 
-import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
@@ -24,7 +23,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Privilege;
 import io.cdap.cdap.proto.security.Role;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;

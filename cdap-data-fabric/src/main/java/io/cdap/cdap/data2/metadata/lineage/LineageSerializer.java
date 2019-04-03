@@ -16,6 +16,11 @@
 
 package io.cdap.cdap.data2.metadata.lineage;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -24,11 +29,6 @@ import io.cdap.cdap.proto.metadata.lineage.DataRecord;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import io.cdap.cdap.proto.metadata.lineage.ProgramRecord;
 import io.cdap.cdap.proto.metadata.lineage.RelationRecord;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import org.apache.twill.api.RunId;
 
 import java.util.HashMap;

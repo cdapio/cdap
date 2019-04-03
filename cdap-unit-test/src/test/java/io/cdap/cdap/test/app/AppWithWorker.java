@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -23,7 +24,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.worker.WorkerContext;
-import com.google.common.base.Throwables;
 import org.apache.tephra.TransactionFailureException;
 
 import java.util.concurrent.TimeUnit;

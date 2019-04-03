@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.gateway.router;
 
-import io.cdap.cdap.security.auth.TokenState;
-import io.cdap.cdap.security.auth.TokenValidator;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractService;
+import io.cdap.cdap.security.auth.TokenState;
+import io.cdap.cdap.security.auth.TokenValidator;
 
 /**
  * Simple {@link TokenValidator} implementation for test cases, which always returns

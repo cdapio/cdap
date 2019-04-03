@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.hbase;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -38,7 +39,6 @@ import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
 import io.cdap.cdap.hbase.wd.DistributedScanner;
 import io.cdap.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;

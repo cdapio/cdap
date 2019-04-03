@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.data2.audit;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.audit.AuditPayload;
 import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.audit.payload.access.AccessPayload;
 import io.cdap.cdap.proto.id.EntityId;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

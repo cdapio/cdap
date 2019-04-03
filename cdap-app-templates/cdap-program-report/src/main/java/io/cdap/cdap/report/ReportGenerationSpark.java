@@ -16,6 +16,13 @@
 
 package io.cdap.cdap.report;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
@@ -42,13 +49,6 @@ import io.cdap.cdap.report.proto.summary.ReportSummary;
 import io.cdap.cdap.report.util.Constants;
 import io.cdap.cdap.report.util.ReportField;
 import io.cdap.cdap.report.util.ReportIds;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;

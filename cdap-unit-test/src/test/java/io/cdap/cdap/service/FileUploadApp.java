@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.service;
 
+import com.google.common.base.Throwables;
+import com.google.common.io.BaseEncoding;
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -31,9 +34,6 @@ import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpContentConsumer;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Throwables;
-import com.google.common.io.BaseEncoding;
-import com.google.common.io.Closeables;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.twill.filesystem.Location;
 

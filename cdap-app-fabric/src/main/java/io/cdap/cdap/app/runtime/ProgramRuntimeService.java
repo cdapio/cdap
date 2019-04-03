@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.app.runtime;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
 import java.util.List;

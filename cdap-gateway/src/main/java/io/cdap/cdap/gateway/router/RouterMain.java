@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Futures;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -26,10 +30,6 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Futures;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;

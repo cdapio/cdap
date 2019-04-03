@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.operations.cdap;
 
+import com.google.common.base.Predicates;
+import com.google.inject.Injector;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -26,8 +28,6 @@ import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
-import com.google.common.base.Predicates;
-import com.google.inject.Injector;
 
 import java.util.EnumSet;
 import java.util.List;

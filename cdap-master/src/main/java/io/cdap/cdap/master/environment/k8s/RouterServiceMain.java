@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -27,9 +30,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.SecurityModules;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 
 import java.util.Arrays;
 import java.util.List;

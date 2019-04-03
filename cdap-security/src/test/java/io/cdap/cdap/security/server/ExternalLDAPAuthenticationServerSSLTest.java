@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.security.server;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.security.tools.HttpsEnabler;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.security.tools.HttpsEnabler;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -38,10 +42,6 @@ import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.api.dataset.table.TableSplit;
 import io.cdap.cdap.format.RecordPutTransformer;
 import io.cdap.cdap.internal.io.ReflectionRowRecordReader;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Lists;
 import org.apache.tephra.TransactionAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

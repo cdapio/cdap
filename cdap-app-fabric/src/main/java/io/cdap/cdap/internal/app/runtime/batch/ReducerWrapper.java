@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
@@ -24,7 +25,6 @@ import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
 import io.cdap.cdap.internal.lang.Reflections;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;

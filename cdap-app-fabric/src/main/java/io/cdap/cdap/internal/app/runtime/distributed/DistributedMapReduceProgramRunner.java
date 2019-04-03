@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
@@ -29,8 +31,6 @@ import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;

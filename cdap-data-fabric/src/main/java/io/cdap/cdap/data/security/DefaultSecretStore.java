@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data.security;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.SecretStore;
@@ -29,8 +31,6 @@ import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.ArrayList;

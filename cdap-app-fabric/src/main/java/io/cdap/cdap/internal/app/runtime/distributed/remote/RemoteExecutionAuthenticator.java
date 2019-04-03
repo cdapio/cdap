@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Networks;
-import com.google.inject.Inject;
 
 import java.net.Authenticator;
 import java.net.InetSocketAddress;

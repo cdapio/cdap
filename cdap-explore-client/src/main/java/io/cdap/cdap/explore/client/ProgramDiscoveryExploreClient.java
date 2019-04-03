@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.explore.client;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.HashMap;

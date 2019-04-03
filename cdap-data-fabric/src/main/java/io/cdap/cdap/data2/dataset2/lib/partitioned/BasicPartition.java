@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2.lib.partitioned;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.api.dataset.lib.Partition;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
-import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
 /**

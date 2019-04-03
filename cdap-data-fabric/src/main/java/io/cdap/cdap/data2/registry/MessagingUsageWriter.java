@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.registry;
 
+import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
@@ -30,9 +33,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
-import com.google.inject.Inject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.stream.StreamSupport;

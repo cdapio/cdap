@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
 import io.cdap.cdap.proto.EntityScope;
@@ -27,7 +28,6 @@ import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 

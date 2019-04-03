@@ -16,14 +16,14 @@
 
 package io.cdap.cdap.common.lang;
 
-import io.cdap.cdap.api.app.Application;
-import io.cdap.cdap.api.service.SystemServiceConfigurer;
-import io.cdap.cdap.common.internal.guava.ClassPath;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.service.SystemServiceConfigurer;
+import io.cdap.cdap.common.internal.guava.ClassPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.io.BinaryDecoder;
 import io.cdap.cdap.common.io.BinaryEncoder;
@@ -26,8 +28,6 @@ import io.cdap.cdap.common.io.Decoder;
 import io.cdap.cdap.common.io.Encoder;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
-import com.google.common.reflect.TypeToken;
-import com.google.inject.Inject;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

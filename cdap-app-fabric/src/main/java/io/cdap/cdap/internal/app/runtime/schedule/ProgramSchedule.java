@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -23,7 +24,6 @@ import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import com.google.common.base.Objects;
 
 import java.util.List;
 import java.util.Map;

@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.client.app;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 import java.util.List;
 import javax.annotation.Nullable;

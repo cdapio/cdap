@@ -18,13 +18,13 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.api.logging.LogEntry;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;

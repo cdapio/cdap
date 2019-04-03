@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.metadata;
 
+import com.google.common.collect.Maps;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.dataset.SortInfo;
@@ -26,7 +27,6 @@ import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import io.cdap.cdap.spi.metadata.Sorting;
-import com.google.common.collect.Maps;
 
 import java.util.Collections;
 import java.util.EnumSet;

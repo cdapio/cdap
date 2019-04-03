@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.base.Joiner;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
@@ -24,7 +25,6 @@ import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import com.google.common.base.Joiner;
 
 import java.util.Collection;
 import java.util.Collections;

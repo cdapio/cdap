@@ -15,11 +15,11 @@
  */
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.common.util.concurrent.Futures;
 import io.cdap.cdap.app.runtime.LogLevelUpdater;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;

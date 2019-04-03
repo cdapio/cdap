@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.common.io.Locations;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.io.Locations;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;

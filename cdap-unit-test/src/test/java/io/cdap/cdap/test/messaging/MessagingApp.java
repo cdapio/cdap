@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.test.messaging;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -25,10 +29,6 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.worker.AbstractWorker;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

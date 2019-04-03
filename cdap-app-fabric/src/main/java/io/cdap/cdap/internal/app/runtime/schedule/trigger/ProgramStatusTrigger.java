@@ -17,6 +17,10 @@
 package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.TriggerInfo;
@@ -29,10 +33,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 
 import java.util.Arrays;
 import java.util.Collections;

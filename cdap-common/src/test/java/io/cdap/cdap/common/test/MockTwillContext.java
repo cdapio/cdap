@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.common.test;
 
-import io.cdap.cdap.common.app.RunIds;
 import com.google.common.base.Throwables;
+import io.cdap.cdap.common.app.RunIds;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillContext;

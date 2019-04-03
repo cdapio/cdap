@@ -17,6 +17,10 @@
 package io.cdap.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -27,10 +31,6 @@ import io.cdap.cdap.logging.filter.AndFilter;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.kafka.KafkaConsumer;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

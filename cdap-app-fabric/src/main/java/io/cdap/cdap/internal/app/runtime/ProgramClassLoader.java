@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.base.Function;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -23,7 +24,6 @@ import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.internal.asm.Classes;
-import com.google.common.base.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

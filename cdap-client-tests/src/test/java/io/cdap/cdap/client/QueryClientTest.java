@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.client;
 
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.client.app.DatasetWriterService;
@@ -32,8 +34,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.test.SingletonExternalResource;
 import io.cdap.cdap.test.XSlowTests;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;

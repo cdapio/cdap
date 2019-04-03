@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.service;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import com.google.common.base.Objects;
 import org.apache.twill.api.RunId;
 
 import javax.annotation.Nullable;

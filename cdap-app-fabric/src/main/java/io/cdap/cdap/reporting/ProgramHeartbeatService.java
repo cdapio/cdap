@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.reporting;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import com.google.inject.Inject;
 
 import java.util.Collection;
 import java.util.Set;

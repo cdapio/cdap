@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.logging.appender.system;
 
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.io.Syncable;
-import io.cdap.cdap.logging.meta.FileMetaDataWriter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.io.Syncable;
+import io.cdap.cdap.logging.meta.FileMetaDataWriter;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;

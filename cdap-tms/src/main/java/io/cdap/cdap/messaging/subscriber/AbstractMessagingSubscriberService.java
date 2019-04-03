@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.subscriber;
 
+import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.ImmutablePair;
@@ -25,7 +26,6 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
-import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

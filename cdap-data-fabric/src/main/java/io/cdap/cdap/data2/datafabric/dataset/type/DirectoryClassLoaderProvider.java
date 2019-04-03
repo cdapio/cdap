@@ -16,12 +16,6 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.type;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.proto.DatasetModuleMeta;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -29,6 +23,12 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.common.lang.DirectoryClassLoader;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

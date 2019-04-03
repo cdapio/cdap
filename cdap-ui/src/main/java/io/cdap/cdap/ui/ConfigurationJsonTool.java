@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.ui;
 
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Configuration;
-import io.cdap.cdap.common.conf.SConfiguration;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.NullOutputStream;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Configuration;
+import io.cdap.cdap.common.conf.SConfiguration;
 
 import java.io.PrintStream;
 import java.util.Map;

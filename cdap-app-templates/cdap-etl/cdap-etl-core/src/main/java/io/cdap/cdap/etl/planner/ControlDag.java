@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.etl.planner;
 
-import io.cdap.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.etl.proto.Connection;
 
 import java.util.Collection;
 import java.util.HashMap;

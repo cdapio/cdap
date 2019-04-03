@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.metrics.collect;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -30,10 +34,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

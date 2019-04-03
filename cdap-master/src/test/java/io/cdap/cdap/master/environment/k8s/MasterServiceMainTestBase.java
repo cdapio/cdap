@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.router.NettyRouter;
-import com.google.common.collect.Lists;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.store.client;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.HttpExceptionHandler;
@@ -27,7 +28,6 @@ import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreHandler;
-import com.google.common.collect.ImmutableMap;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
