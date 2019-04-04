@@ -453,7 +453,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
           session.copy(new ByteArrayInputStream(scriptContent),
                        targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
-          LOG.info("Starting runnable {} with SSH on {}", runnableName, session.getAddress().getHostName());
+          LOG.info("Starting runnable {} for runId {} with SSH", runnableName, programRunId);
           session.executeAndWait(targetPath + "/launcher.sh");
         }
       } finally {
