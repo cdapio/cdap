@@ -70,6 +70,7 @@ export default class DatabaseBrowser extends Component {
         connectionId: database.connectionId,
         loading: database.loading,
         tables: database.tables,
+        search: '',
       });
     });
   }
@@ -191,10 +192,10 @@ export default class DatabaseBrowser extends Component {
             </div>
           </div>
           <div className="database-content-body">
-            {tables.map((table) => {
+            {tables.map((table, i) => {
               return (
                 <div
-                  key={table.name}
+                  key={`${table.name}-${i}`}
                   className="row content-row"
                   onClick={this.prepTable.bind(this, table.name)}
                 >
