@@ -248,7 +248,7 @@ const HYDRATOR_DEFAULT_VALUES = {
   schedule: '0 * * * *',
   resources: {
     virtualCores: 1,
-    memoryMB: 1024,
+    memoryMB: 2048,
   },
   numOfRecordsPreview: 100,
   previewTimeoutInMin: 2,
