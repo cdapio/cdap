@@ -27,18 +27,10 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 let pollingObservable;
 let systemServiceSubscription;
 let retries = 0;
+const BACKEND_STATUS_POLL_INTERVAL = 10000;
+const MAX_RETRIES_BEFORE_SHOWING_ERROR_IN_UI = 3;
 
 const parseAndDispatchBackendStatus = (response) => {
-  /*
-    We handle,
-      - 1XX Information
-      - 2XX Success
-      - 3XX Redirection Status codes
-  */
-  if (retries < 3) {
-    retries += 1;
-    return;
-  }
   let loadingState = LoadingIndicatorStore.getState().loading;
   if (response.status <= 399) {
     if ([BACKENDSTATUS.NODESERVERDOWN].indexOf(loadingState.status) !== -1) {
@@ -65,6 +57,25 @@ const parseAndDispatchBackendStatus = (response) => {
       });
       retries = 0;
     }
+  }
+  /*
+    We handle,
+      - 1XX Information
+      - 2XX Success
+      - 3XX Redirection Status codes
+
+    We wait for the backend down error to resolve itself.
+    We poll every 10 seconds for /backendstatus endpoint as hearbeat api
+
+    On 200 response we reset the retries
+
+    On > 399 response we retry for 3 times (total of 30 seconds wait time)
+    After 3 retries if the backend is still down we show the error message in
+    the UI. Otherwise if it resolves itself (like 502 gateway error) then we do nothing.
+  */
+  if (retries < MAX_RETRIES_BEFORE_SHOWING_ERROR_IN_UI) {
+    retries += 1;
+    return;
   }
   if (response.status === 404 && loadingState.status !== BACKENDSTATUS.NODESERVERDOWN) {
     dispatchNodeServerDown();
@@ -128,7 +139,7 @@ const startPolling = () => {
   pollSystemServices();
   stopPolling();
   startServicePolling();
-  pollingObservable = Observable.interval(2000)
+  pollingObservable = Observable.interval(BACKEND_STATUS_POLL_INTERVAL)
     .mergeMap(() =>
       Observable.fromPromise(fetch('/backendstatus', getRequestInfo())).catch((error) => {
         dispatchNodeServerDown();
