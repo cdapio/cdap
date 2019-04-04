@@ -331,13 +331,34 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
 
     SearchRequest request2 = SearchRequest.of("t*").setCursor(response.getCursor()).build();
     SearchResponse response2 = mds.search(request2);
-    Assert.assertEquals(5, response.getResults().size());
+    Assert.assertEquals(5, response2.getResults().size());
+
+    // it works despite a cursor and an offset (which is equal to the cursor's)
+    SearchRequest request2a = SearchRequest.of("t*").setCursor(response.getCursor()).setOffset(5).build();
+    SearchResponse response2a = mds.search(request2a);
+    Assert.assertEquals(5, response2a.getOffset());
+    Assert.assertEquals(5, response2a.getLimit());
+    Assert.assertEquals(response2.getResults(), response2a.getResults());
+
+    // it works despite a cursor and an offset (which is different from the cursor's)
+    SearchRequest request2b = SearchRequest.of("t*").setCursor(response.getCursor()).setOffset(8).build();
+    SearchResponse response2b = mds.search(request2b);
+    Assert.assertEquals(5, response2b.getOffset());
+    Assert.assertEquals(5, response2b.getLimit());
+    Assert.assertEquals(response2.getResults(), response2b.getResults());
 
     // sleep 1 sec longer than the configured scroll timeout to invalidate cursor
     TimeUnit.SECONDS.sleep(3);
     SearchResponse response3 = mds.search(request2);
     Assert.assertEquals(response2.getResults(), response3.getResults());
     Assert.assertEquals(response2.getCursor(), response3.getCursor());
+
+    // it works despite an expired cursor and an offset (which is different from the cursor's)
+    SearchRequest request3a = SearchRequest.of("t*").setCursor(response.getCursor()).setOffset(8).build();
+    SearchResponse response3a = mds.search(request3a);
+    Assert.assertEquals(5, response3a.getOffset());
+    Assert.assertEquals(5, response3a.getLimit());
+    Assert.assertEquals(response2.getResults(), response3a.getResults());
 
     // create a nonsense cursor and search with that
     Cursor cursor = Cursor.fromString(response.getCursor());

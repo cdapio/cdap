@@ -838,8 +838,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
     org.elasticsearch.action.search.SearchRequest searchRequest =
       new org.elasticsearch.action.search.SearchRequest(indexName);
-    searchRequest.source(createSearchSource(request));
-    if (request.isCursorRequested()) {
+    SearchSourceBuilder searchSource = createSearchSource(request);
+    searchRequest.source(searchSource);
+    // only request a scroll if the offset is 0. Elastic will throw otherwise
+    if (request.isCursorRequested() && searchSource.from() == 0) {
       searchRequest.scroll(scrollTimeout);
     }
     LOG.debug("Executing search request {}", searchRequest);
