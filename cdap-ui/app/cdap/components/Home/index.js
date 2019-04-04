@@ -87,6 +87,10 @@ const PipelineList = Loadable({
   loader: () => import(/* webpackChunkName: "PipelineList" */ 'components/PipelineList'),
   loading: LoadingSVGCentered,
 });
+const SecureKeys = Loadable({
+  loader: () => import(/* webpackChunkName: "PipelineList" */ 'components/SecureKeys'),
+  loading: LoadingSVGCentered,
+});
 
 export default class Home extends Component {
   componentWillMount() {
@@ -133,6 +137,7 @@ export default class Home extends Component {
             component={ProfileDetailView}
           />
           <Route path="/ns/:namespace/pipelines" component={PipelineList} />
+          <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route component={Page404} />
         </Switch>
       </div>

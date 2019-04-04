@@ -15,6 +15,7 @@
  */
 
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 import { MySecureKeyApi } from 'api/securekey';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -28,7 +29,10 @@ require('./SecureKeyTextarea.scss');
 const PREFIX = 'features.AbstractWidget.SecureKeyTextarea';
 
 export default class SecureKeyTextarea extends Component {
-  static propTypes = WIDGET_PROPTYPES;
+  static propTypes = {
+    ...WIDGET_PROPTYPES,
+    inputTextType: PropTypes.oneOf(['textarea', 'text', 'password']),
+  };
   static defaultProps = DEFAULT_WIDGET_PROPS;
 
   state = {
@@ -161,16 +165,33 @@ export default class SecureKeyTextarea extends Component {
     );
   };
 
-  render() {
-    return (
-      <div className="secure-key-textarea-widget">
+  renderInput = () => {
+    if (this.props.inputTextType === 'textarea') {
+      return (
         <textarea
           className="form-control raw-text-input"
           onChange={this.props.onChange}
           value={this.props.value}
           {...this.props.widgetProps}
         />
+      );
+    }
 
+    return (
+      <input
+        type={this.props.inputTextType}
+        className="form-control raw-text-input"
+        onChange={this.props.onChange}
+        value={this.props.value}
+        {...this.props.widgetProps}
+      />
+    );
+  };
+
+  render() {
+    return (
+      <div className="secure-key-textarea-widget">
+        {this.renderInput()}
         {this.renderSecureKey()}
       </div>
     );
