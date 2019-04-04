@@ -201,8 +201,8 @@ class SparkRuntimeContext(object):
           gateway = JavaGateway(gateway_client = GatewayClient(port = gatewayPort), auto_convert = True)
           cls._onDemandCallback = True
 
-        java_import(gateway.jvm, "co.cask.cdap.app.runtime.spark.*")
-        java_import(gateway.jvm, "co.cask.cdap.app.runtime.spark.python.*")
+        java_import(gateway.jvm, "io.cdap.cdap.app.runtime.spark.*")
+        java_import(gateway.jvm, "io.cdap.cdap.app.runtime.spark.python.*")
 
         if driver and not cls._onDemandCallback:
           # For py4j 0.10+ (used by Spark 2.0), use the official API to set set callback port on the gateway server

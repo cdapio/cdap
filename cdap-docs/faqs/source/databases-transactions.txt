@@ -90,11 +90,11 @@ What does the "transaction...is not in progress" message mean?
 If you are seeing transaction related errors::
 
   [warn 2015/08/10 22:50:53.299 IST <DatasetTypeManager STARTING> tid=0x24] Transaction 1231000000 is not in progress.
-  co.cask.tephra.TransactionNotInProgressException: canCommit() is called for transaction 1231000000 
+  io.cdap.tephra.TransactionNotInProgressException: canCommit() is called for transaction 1231000000 
   that is not in progress (it is known to be invalid)
-    at co.cask.tephra.TransactionManager.commit(TransactionManager.java:842)
-    at co.cask.tephra.inmemory.InMemoryTxSystemClient.commit(InMemoryTxSystemClient.java:73)
-    at co.cask.tephra.TransactionContext.commit(TransactionContext.java:265)
+    at io.cdap.tephra.TransactionManager.commit(TransactionManager.java:842)
+    at io.cdap.tephra.inmemory.InMemoryTxSystemClient.commit(InMemoryTxSystemClient.java:73)
+    at io.cdap.tephra.TransactionContext.commit(TransactionContext.java:265)
     ...
 	
 The message ``(it is known to be invalid)`` indicates that the transaction has timed out.

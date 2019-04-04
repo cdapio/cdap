@@ -1,0 +1,82 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.internal.app.runtime.schedule.trigger;
+
+import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.schedule.TriggerInfo;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.id.DatasetId;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * A Trigger that schedules a ProgramSchedule, when a certain number of partitions are added to a PartitionedFileSet.
+ */
+public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements SatisfiableTrigger {
+
+  public PartitionTrigger(DatasetId dataset, int numPartitions) {
+    super(dataset, numPartitions);
+  }
+
+  @Override
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
+    return getPartitionsCount(notifications) >= numPartitions;
+  }
+
+  private int getPartitionsCount(List<Notification> notifications) {
+    int partitionsCount = 0;
+    for (Notification notification : notifications) {
+      if (!notification.getNotificationType().equals(Notification.Type.PARTITION)) {
+        continue;
+      }
+      String datasetId = notification.getProperties().get(Notification.DATASET_ID);
+      if (!dataset.toString().equals(datasetId)) {
+        continue;
+      }
+      String numPartitionsString = notification.getProperties().get(Notification.NUM_PARTITIONS);
+      if (numPartitionsString != null) {
+        partitionsCount += Integer.parseInt(numPartitionsString);
+      }
+    }
+    return partitionsCount;
+  }
+
+  @Override
+  public Set<String> getTriggerKeys() {
+    return ImmutableSet.of(Schedulers.triggerKeyForPartition(dataset));
+  }
+
+  @Override
+  public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
+    TriggerInfo triggerInfo =
+      new DefaultPartitionTriggerInfo(dataset.getNamespace(), dataset.getDataset(), numPartitions,
+                                      getPartitionsCount(context.getNotifications()));
+    return Collections.singletonList(triggerInfo);
+  }
+
+  @Override
+  public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
+                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+    // no-op
+  }
+}

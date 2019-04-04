@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
@@ -31,38 +31,38 @@
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.etl.batch.ETLBatchApplication</app.main.class>
+    <app.main.class>io.cdap.cdap.etl.batch.ETLBatchApplication</app.main.class>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api-spark</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-formats</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>hydrator-spark-core</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -77,7 +77,7 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
@@ -114,7 +114,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>hydrator-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -139,7 +139,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <_exportcontents>co.cask.cdap.etl.api.*</_exportcontents>
+              <_exportcontents>io.cdap.cdap.etl.api.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>

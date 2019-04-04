@@ -76,7 +76,7 @@ memory (in megabytes) and the number of virtual cores assigned.
 For example, in the :ref:`Spark Page Rank <examples-spark-page-rank>` example, in the configuration of
 the ``PageRankSpark``, the amount of memory is specified:
 
-.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
    :lines: 110-122
    :dedent: 2
@@ -237,7 +237,7 @@ In Scala, custom object conversion is done through an implicit conversion functi
 .. highlight:: java
 
 In Java, you can read custom objects from a stream by providing a ``decoderType`` extended from
-:javadoc:`StreamEventDecoder <co/cask/cdap/api/stream/StreamEventDecoder>`::
+:javadoc:`StreamEventDecoder <io/cdap/cdap/api/stream/StreamEventDecoder>`::
 
     sec.fromStream(streamName, startTime, endTime, decoderType, keyType, valueType);
 
@@ -404,7 +404,7 @@ To use Spark1, you must add the ``cdap-api-spark`` Maven dependency::
 
     . . .
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark</artifactId>
       <version>${cdap.version}</version>
     </dependency>
@@ -414,7 +414,7 @@ To use Spark2, you must add the ``cdap-api-spark2_2.11`` Maven dependency::
 
     . . .
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${cdap.version}</version>
     </dependency>

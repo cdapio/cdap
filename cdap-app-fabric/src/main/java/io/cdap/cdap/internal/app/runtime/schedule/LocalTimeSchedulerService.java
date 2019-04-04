@@ -1,0 +1,44 @@
+/*
+ * Copyright © 2014 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.internal.app.runtime.schedule;
+
+import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * LocalTimeSchedulerService - noop for pre and post hooks.
+ */
+public final class LocalTimeSchedulerService extends AbstractTimeSchedulerService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LocalTimeSchedulerService.class);
+
+  @Inject
+  public LocalTimeSchedulerService(TimeScheduler timeScheduler) {
+    super(timeScheduler);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    startSchedulers();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    stopScheduler();
+  }
+}

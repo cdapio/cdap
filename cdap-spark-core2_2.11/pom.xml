@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
@@ -33,24 +33,24 @@
   <dependencies>
     <!-- CAUTION. When adding new dependencies, pay attention to the scope and the copy-dependencies section -->
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-spark-python</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -388,7 +388,7 @@
                 <configuration>
                   <artifactSet>
                     <excludes>
-                      <exclude>co.cask.cdap:*</exclude>
+                      <exclude>io.cdap.cdap:*</exclude>
                     </excludes>
                   </artifactSet>
                   <createDependencyReducedPom>false</createDependencyReducedPom>

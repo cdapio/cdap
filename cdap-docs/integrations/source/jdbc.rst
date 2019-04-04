@@ -16,11 +16,11 @@ CDAP provides a JDBC driver to make integrations with external programs and thir
 The JDBC driver is a JAR that is bundled with the CDAP Sandbox. You can find it in the ``libexec``
 directory of your Sandbox installation at::
 
-  libexec/co.cask.cdap.cdap-explore-jdbc-<version>.jar
+  libexec/io.cdap.cdap.cdap-explore-jdbc-<version>.jar
 
 If you don't have a CDAP Sandbox and only want to connect to an existing instance of CDAP,
 you can download the CDAP JDBC driver from `this link
-<https://repo1.maven.org/maven2/co/cask/cdap/cdap-explore-jdbc/>`__.
+<https://repo1.maven.org/maven2/io/cdap/cdap/cdap-explore-jdbc/>`__.
 Go to the directory matching the version of your running CDAP instance, and download the file
 with the matching version number::
 
@@ -35,7 +35,7 @@ If you are using Maven, you can simply add a dependency in your file ``pom.xml``
   <dependencies>
     ...
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-explore-jdbc</artifactId>
       <version><!-- Version of CDAP you want the JDBC driver to query --></version>
     </dependency>
@@ -46,7 +46,7 @@ Here is a snippet of Java code that uses the CDAP JDBC driver to connect to a ru
 and executes a query over a CDAP dataset ``mydataset``::
 
   // First, register the driver once in your application
-  Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");
+  Class.forName("io.cdap.cdap.explore.jdbc.ExploreDriver");
 
   // If your CDAP instance requires an authentication token for connection, specify it here.
   // Replace <cdap-host> and <authentication_token> as appropriate to your installation.

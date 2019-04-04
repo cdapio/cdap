@@ -19,7 +19,7 @@ Interface
 =========
 Interface of ``HBaseDDLExecutor``. Note that this is a *Beta* feature and subject to change without notice.
 
-.. literalinclude:: /../../../cdap-hbase-spi/src/main/java/co/cask/cdap/spi/hbase/HBaseDDLExecutor.java
+.. literalinclude:: /../../../cdap-hbase-spi/src/main/java/io/cdap/cdap/spi/hbase/HBaseDDLExecutor.java
    :language: java
    :lines: 27-
 
@@ -45,11 +45,11 @@ Sample implementation of ``HBaseDDLExecutor``, for HBase version 1.0.0-cdh5.5.1:
    */
   package com.example.hbase.ddlexecutor;
  
-  import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
-  import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
-  import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-  import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
-  import co.cask.cdap.spi.hbase.TableDescriptor;
+  import io.cdap.cdap.spi.hbase.ColumnFamilyDescriptor;
+  import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
+  import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+  import io.cdap.cdap.spi.hbase.HBaseDDLExecutorContext;
+  import io.cdap.cdap.spi.hbase.TableDescriptor;
   import com.google.common.base.Preconditions;
   import com.google.common.base.Stopwatch;
   import org.apache.hadoop.conf.Configuration;
@@ -335,7 +335,7 @@ Corresponding ``pom.xml``. Configure the property ``hbase-client`` (currently ``
            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
  
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>HBaseDDLExecutorExtension</artifactId>
     <version>1.0-SNAPSHOT</version>
  
@@ -362,7 +362,7 @@ Corresponding ``pom.xml``. Configure the property ``hbase-client`` (currently ``
  
     <dependencies>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-hbase-spi</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>

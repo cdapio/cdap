@@ -15,7 +15,7 @@
  */
 
 // Note: Strictly speaking, JSON does not allow comments, but GSON and Elasticsearch appear to be tolerant.
-// This file directly corresponds to the structure of co.cask.cdap.metadata.elastic.MetadataDocument.
+// This file directly corresponds to the structure of io.cdap.cdap.metadata.elastic.MetadataDocument.
 {
   "_meta": {
     "cdap_version": "CDAP_VERSION",

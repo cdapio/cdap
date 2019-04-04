@@ -21,7 +21,7 @@
   <!-- Shouldn't change -->
   <contextName>cdap</contextName>
 
-  <appender name="CDAP" class="co.cask.cdap.logging.appender.system.CDAPLogAppender">
+  <appender name="CDAP" class="io.cdap.cdap.logging.appender.system.CDAPLogAppender">
     <dirPermissions>${dir.permissions}</dirPermissions>
     <filePermissions>${file.permissions}</filePermissions>
     <syncIntervalBytes>${file.sync.interval.bytes}</syncIntervalBytes>
@@ -32,7 +32,7 @@
     <fileCleanupBatchSize>${file.cleanup.batch.size}</fileCleanupBatchSize>
   </appender>
 
-  <appender name="METRICS" class="co.cask.cdap.logging.appender.system.MetricsLogAppender"/>
+  <appender name="METRICS" class="io.cdap.cdap.logging.appender.system.MetricsLogAppender"/>
 
   <root level="ALL">
     <appender-ref ref="CDAP"/>

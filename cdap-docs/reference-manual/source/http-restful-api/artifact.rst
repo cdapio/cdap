@@ -195,7 +195,7 @@ artifact (pretty-printed and reformatted to fit):
       "classes": {
         "apps": [
           {
-            "className": "co.cask.cdap.examples.wordcount.WordCount",
+            "className": "io.cdap.cdap.examples.wordcount.WordCount",
             "configSchema": {
               "fields": [
                 { "name": "stream", "type": [ "string", "null" ] },
@@ -204,7 +204,7 @@ artifact (pretty-printed and reformatted to fit):
                 { "name": "wordCountTable", "type": [ "string", "null" ] },
                 { "name": "wordStatsTable", "type": [ "string", "null" ] }
               ],
-              "name": "co.cask.cdap.examples.wordcount.WordCount$WordCountConfig",
+              "name": "io.cdap.cdap.examples.wordcount.WordCount$WordCountConfig",
               "type": "record"
             },
             "description": ""
@@ -480,7 +480,7 @@ of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
             "type": "transform",
             "description": "Parses logs from any input source for relevant information such as
                 URI, IP, browser, device, HTTP status code, and timestamp.",
-            "className": "co.cask.hydrator.plugin.transform.LogParserTransform",
+            "className": "io.cdap.hydrator.plugin.transform.LogParserTransform",
             "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-pipelines-version|",
@@ -563,7 +563,7 @@ of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
             "name": "JavaScript",
             "type": "transform",
             "description": "Executes user-provided JavaScript that transforms one record into zero or more records.",
-            "className": "co.cask.hydrator.plugin.transform.JavaScriptTransform",
+            "className": "io.cdap.hydrator.plugin.transform.JavaScriptTransform",
             "artifact": {
                 "name": "core-plugins",
                 "version": "|cdap-pipelines-version|",
@@ -711,7 +711,7 @@ as well as the class name. Example output (pretty-printed and reformatted to fit
           "scope": "SYSTEM",
           "version": "|release|"
         },
-        "className": "co.cask.cdap.datapipeline.DataPipelineApp"
+        "className": "io.cdap.cdap.datapipeline.DataPipelineApp"
       },
       {
         "artifact": {
@@ -719,7 +719,7 @@ as well as the class name. Example output (pretty-printed and reformatted to fit
           "scope": "SYSTEM",
           "version": "|release|"
         },
-        "className": "co.cask.cdap.datastreams.DataStreamsApp"
+        "className": "io.cdap.cdap.datastreams.DataStreamsApp"
       },
       . . .
       {
@@ -728,7 +728,7 @@ as well as the class name. Example output (pretty-printed and reformatted to fit
           "scope": "USER",
           "version": "|release|"
         },
-        "className": "co.cask.cdap.examples.purchase.PurchaseApp"
+        "className": "io.cdap.cdap.examples.purchase.PurchaseApp"
       },
     ]
 
@@ -762,7 +762,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/classes/apps/co.cask.cdap.examples.wordcount.WordCount
+    |$| GET /v3/namespaces/default/classes/apps/io.cdap.cdap.examples.wordcount.WordCount
 
     [
       {
@@ -771,7 +771,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
           "scope": "USER",
           "version": "|version|"
         },
-        "className": "co.cask.cdap.examples.wordcount.WordCount",
+        "className": "io.cdap.cdap.examples.wordcount.WordCount",
         "configSchema": {
           "fields": [
             { "name": "stream", "type": [ "string", "null" ] },
@@ -780,7 +780,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
             { "name": "wordCountTable", "type": [ "string", "null" ] },
             { "name": "wordStatsTable", "type": [ "string", "null" ] },
           ],
-          "name": "co.cask.cdap.examples.wordcount.WordCount$WordCountConfig",
+          "name": "io.cdap.cdap.examples.wordcount.WordCount$WordCountConfig",
           "type": "record"
         }
       }

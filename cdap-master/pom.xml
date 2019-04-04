@@ -22,7 +22,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
@@ -33,7 +33,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-master-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -52,57 +52,57 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-gateway</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-watchdog-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-watchdog</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-security</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-explore-client</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-explore</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-tms</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -198,27 +198,27 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-hbase-compat-0.98</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
@@ -258,56 +258,56 @@
       <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
       <dependencies>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-api-spark</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-api-spark2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-spark-core</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-spark-core2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <!-- Add dependencies on various extensions to make sure they are built before master -->
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-operational-stats-core</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-emr</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-dataproc</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-cloudkms</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
@@ -463,7 +463,7 @@
                         ${project.parent.basedir}/cdap-kms/target/
                       </directory>
                       <includes>
-                        <include>co.cask.cdap.cdap-kms-${project.version}.jar</include>
+                        <include>io.cdap.cdap.cdap-kms-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -486,8 +486,8 @@
                       </directory>
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>
-                        <include>co.cask.cdap.cdap-api-spark*.jar</include>
-                        <include>co.cask.cdap.cdap-spark-*.jar</include>
+                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
+                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -508,8 +508,8 @@
                       </directory>
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>
-                        <include>co.cask.cdap.cdap-api-spark*.jar</include>
-                        <include>co.cask.cdap.cdap-spark-*.jar</include>
+                        <include>io.cdap.cdap.cdap-api-spark*.jar</include>
+                        <include>io.cdap.cdap.cdap-spark-*.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -531,7 +531,7 @@
                         ${project.parent.basedir}/cdap-operational-stats-core/target/
                       </directory>
                       <includes>
-                        <include>co.cask.cdap.cdap-operational-stats-core-${project.version}.jar</include>
+                        <include>io.cdap.cdap.cdap-operational-stats-core-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -763,7 +763,7 @@
       <dependencies>
         <!-- Adding the cdap-kubernetes as dependency to make sure it is built before cdap-master -->
         <dependency>
-          <groupId>co.cask.cdap</groupId>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-kubernetes</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>

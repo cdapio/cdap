@@ -33,7 +33,7 @@ The SportResults Application
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``SportResults``:
 
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
+.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/SportResults.java
     :language: java
     :lines: 29-
 
@@ -64,7 +64,7 @@ UploadService
 This service has two handler methods: one to upload and another to download a partition of the *results*
 dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` annotation:
 
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
+.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
     :language: java
     :lines: 72-73
     :dedent: 4
@@ -85,7 +85,7 @@ Let's take a closer look at the upload method:
     by calling the ``addPartition`` method of the PartitionOutput.
   - In the ``onError`` method, it does cleanup by removing the partially written file and responds with an error status.
 
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
+.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
     :language: java
     :lines: 106-171
     :dedent: 4
@@ -102,7 +102,7 @@ the *totals* PartitionedFileSet. The ``initialize`` method prepares the MapReduc
 - It constructs an output partition key for the new partition, and instantiates the *totals* dataset
   with arguments specifying that partition key.
 
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
+.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/ScoreCounter.java
     :language: java
     :lines: 48-86
     :append: ...

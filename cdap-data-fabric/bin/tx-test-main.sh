@@ -148,7 +148,7 @@ if [ $# -ne 1 ]; then
 fi
 
 if [ "x$1" == "xstart" ]; then
-  java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.data2.transaction.TransactionServiceMain "$@" <$loglog >>$loglog 2>&1 &
+  java -cp ${CLASSPATH} -Dscript=$script io.cdap.cdap.data2.transaction.TransactionServiceMain "$@" <$loglog >>$loglog 2>&1 &
   echo $! >$pid
   exit 0
 fi

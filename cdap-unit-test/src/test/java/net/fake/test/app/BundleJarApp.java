@@ -16,20 +16,20 @@
 
 package net.fake.test.app;
 
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.service.BasicService;
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.annotation.UseDataSet;
+import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.mapreduce.MapReduceContext;
+import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.service.BasicService;
+import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -49,7 +49,7 @@ import javax.ws.rs.PathParam;
 public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
   public static final String EXPECTED_LOAD_TEST_CLASSES_OUTPUT =
-    "hello_HelloWorld__co_cask_cdap_api_schedule_Trigger";
+    "hello_HelloWorld__io_cdap_cdap_api_schedule_Trigger";
 
   @Override
   public void configure() {

@@ -1,0 +1,153 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.internal.app.runtime.artifact;
+
+import com.google.common.collect.Lists;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.proto.artifact.ArtifactRanges;
+import io.cdap.cdap.proto.id.NamespaceId;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.List;
+
+/**
+ */
+public class ArtifactRangeTest {
+
+  @Test(expected = InvalidArtifactRangeException.class)
+  public void testExtraCharactersAtEnd() throws InvalidArtifactRangeException {
+    ArtifactRanges.parseArtifactRange("system:cdap-etl-batch[3.5.0,3.6.0],system:cdap-data-pipeline[3.5.0,3.6.0]");
+  }
+
+  @Test
+  public void testWhitespace() throws InvalidArtifactRangeException {
+    ArtifactRange range = ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(),
+                                                            "name[ 1.0.0 , 2.0.0 )");
+    Assert.assertEquals(new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "name",
+                                          new ArtifactVersion("1.0.0"), true,
+                                          new ArtifactVersion("2.0.0"), false),
+                        range);
+  }
+
+  @Test
+  public void testIsInRange() {
+    ArtifactRange range = new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "test",
+      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("0.0.9")));
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("0.9.0")));
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("0.9")));
+    // 1 < 1.0 < 1.0.0-SNAPSHOT < 1.0.0
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("1")));
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("1.0")));
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("1.0.0-SNAPSHOT")));
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("1.0.0")));
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("1.0.1-SNAPSHOT")));
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("1.0.1")));
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("1.1.0")));
+    // 2 < 2.0 < 2.0.0-SNAPSHOT < 2.0.0
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("2")));
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("2.0")));
+    Assert.assertTrue(range.versionIsInRange(new ArtifactVersion("2.0.0-SNAPSHOT")));
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("2.0.0")));
+    Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("2.0.1")));
+  }
+
+  @Test
+  public void testVersionParse() throws InvalidArtifactRangeException {
+    ArtifactRange expected = new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "test",
+      new ArtifactVersion("1.0.0"), true, new ArtifactVersion("2.0.0-SNAPSHOT"), false);
+    ArtifactRange actual = ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(),
+                                                             "test[1.0.0,2.0.0-SNAPSHOT)");
+    Assert.assertEquals(expected, actual);
+
+    expected = new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "test",
+      new ArtifactVersion("0.1.0-SNAPSHOT"), false, new ArtifactVersion("1.0.0"), true);
+    actual = ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(),
+                                               "test(0.1.0-SNAPSHOT,1.0.0]");
+    Assert.assertEquals(expected, actual);
+
+    // test compatible with toString
+    Assert.assertEquals(expected, ArtifactRanges.parseArtifactRange(expected.toString()));
+  }
+
+  @Test
+  public void testLowerVersionGreaterThanUpper() {
+    List<String> invalidRanges = Lists.newArrayList(
+      "test[1.0.0,0.9.9]",
+      "test[1.0.0,1.0.0-SNAPSHOT]",
+      "test[1.0.0,1.0.0)",
+      "test(1.0.0,0.9.9)",
+      "test(1.0.0,1.0.0-SNAPSHOT)",
+      "test(1.0.2,1.0.0]"
+    );
+
+    for (String invalidRange : invalidRanges) {
+      try {
+        ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+      try {
+        ArtifactRanges.parseArtifactRange("system:" + invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+    }
+  }
+
+  @Test
+  public void testParseInvalid() {
+    List<String> invalidRanges = Lists.newArrayList(
+      // can't find '[' or '('
+      "test-1.0.0,2.0.0]",
+      // can't find ',' between versions
+      "test[1.0.0:2.0.0]",
+      // no ending ']' or ')'
+      "test[1.0.0,2.0.0",
+      // invalid lower version
+      "tes[t1.0.0,2.0.0]",
+      // missing versions
+      "test(,1.0.0)",
+      "test(1.0.0,)",
+      // invalid name
+      "te$t[1.0.0,2.0.0)",
+      // namespace only is InvalidArtifactRangeException and not an out of bounds exception
+      "default:"
+    );
+
+    for (String invalidRange : invalidRanges) {
+      try {
+        ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+      try {
+        ArtifactRanges.parseArtifactRange("system:" + invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+    }
+  }
+}

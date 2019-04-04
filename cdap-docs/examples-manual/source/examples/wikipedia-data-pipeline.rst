@@ -61,7 +61,7 @@ The WikipediaPipeline Application
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``WikipediaPipelineApp``:
 
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/io/cdap/cdap/examples/wikipedia/WikipediaPipelineApp.java
    :language: java
    :lines: 28-83
 

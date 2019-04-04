@@ -29,7 +29,7 @@ for you to use in tests with your custom plugins. To use the module, add a depen
 your ``pom.xml``::
 
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>hydrator-test</artifactId>
       <version>${cdap.version}</version>
       <scope>test</scope>

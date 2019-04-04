@@ -184,7 +184,7 @@ HTTP PUT request::
 with a JSON map in the request body consisting of pairs of logger names and log levels,
 such as::
 
-  '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+  '{ "io.cdap.cdap":"ERROR", "ROOT":"TRACE" }'
 
 .. list-table::
    :widths: 20 80
@@ -202,10 +202,10 @@ log levels of the ``dataset.service`` as they run on the same node.
 For example::
 
   PUT /v3/system/services/metrics.processor/loglevels \
-      -d '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+      -d '{ "io.cdap.cdap":"ERROR", "ROOT":"TRACE" }'
 
 will update the log levels of the system service *metrics.processor* with the log level of
-``co.cask.cdap`` changed to ``ERROR`` and the log level of ``ROOT`` changed to ``TRACE``.
+``io.cdap.cdap`` changed to ``ERROR`` and the log level of ``ROOT`` changed to ``TRACE``.
 
 .. _http-restful-api-system-service-logging-resetting:
 
@@ -222,7 +222,7 @@ an HTTP PUT request::
 with an optional JSON array in the request body consisting of the logger names to be
 reset, such as::
 
-  '[ "co.cask.cdap", "ROOT" ]'
+  '[ "io.cdap.cdap", "ROOT" ]'
 
 If the body is not provided or is empty, it will reset the log levels of all logger names.
 
@@ -242,10 +242,10 @@ log levels of the ``dataset.service`` as they run on the same node.
 For example::
 
   POST /v3/system/services/metrics.processor/resetloglevels \
-      -d '[ "co.cask.cdap", "ROOT" ]'
+      -d '[ "io.cdap.cdap", "ROOT" ]'
 
 will reset the log level of the system service *metrics.processor* with log levels of
-``co.cask.cdap`` and ``ROOT`` reset back to what they were when the *metrics.processor*
+``io.cdap.cdap`` and ``ROOT`` reset back to what they were when the *metrics.processor*
 service was started.
 
 
@@ -280,7 +280,7 @@ To set the log levels of a flowlet in the run of a flow in a particular version 
 
 and, in all cases, with a JSON map in the request body consisting of pairs of logger names and log levels, such as::
 
-  '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+  '{ "io.cdap.cdap":"ERROR", "ROOT":"TRACE" }'
 
 .. list-table::
    :widths: 20 80
@@ -308,10 +308,10 @@ and, in all cases, with a JSON map in the request body consisting of pairs of lo
 For example::
 
   PUT /v3/namespaces/default/apps/SportResults/services/UploadService/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/loglevels \
-      -d '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+      -d '{ "io.cdap.cdap":"ERROR", "ROOT":"TRACE" }'
 
 will update the log levels of the service *UploadService* in the *SportResults* application with
-the log level of ``co.cask.cdap`` changed to ``ERROR``
+the log level of ``io.cdap.cdap`` changed to ``ERROR``
 and log level of ``ROOT`` changed to ``TRACE``.
 
 .. _http-restful-api-program-logging-resetting:
@@ -338,7 +338,7 @@ To reset the log levels of a flowlet in the run of a flow in a particular versio
 
 and, in all cases, with an optional JSON array in the request body consisting of the logger names to be reset, such as::
 
-  '[ "co.cask.cdap", "ROOT" ]'
+  '[ "io.cdap.cdap", "ROOT" ]'
 
 If the body is not provided or is empty, it will reset the log levels of all logger names.
 
@@ -368,8 +368,8 @@ If the body is not provided or is empty, it will reset the log levels of all log
 For example::
 
   POST /v3/namespaces/default/apps/SportResults/services/UploadService/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/resetloglevels \
-      -d '[ "co.cask.cdap", "ROOT" ]'
+      -d '[ "io.cdap.cdap", "ROOT" ]'
 
 will reset the log level of the service *UploadService* in the *SportResults* application
-with the log levels of ``co.cask.cdap`` and ``ROOT`` reset back to
+with the log levels of ``io.cdap.cdap`` and ``ROOT`` reset back to
 what they were when the flow was started.

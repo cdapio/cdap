@@ -1,0 +1,101 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.cli.command.artifact;
+
+import com.google.gson.Gson;
+import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.cli.ArgumentName;
+import io.cdap.cdap.cli.CLIConfig;
+import io.cdap.cdap.cli.ElementType;
+import io.cdap.cdap.cli.english.Article;
+import io.cdap.cdap.cli.english.Fragment;
+import io.cdap.cdap.cli.util.AbstractAuthCommand;
+import io.cdap.cdap.cli.util.FilePathResolver;
+import io.cdap.cdap.client.ArtifactClient;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.common.cli.Arguments;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.util.Map;
+
+/**
+ * Sets properties for an artifact.
+ */
+public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
+  private static final Gson GSON = new Gson();
+  private final ArtifactClient artifactClient;
+  private final FilePathResolver resolver;
+
+  @Inject
+  public SetArtifactPropertiesCommand(ArtifactClient artifactClient, CLIConfig cliConfig, FilePathResolver resolver) {
+    super(cliConfig);
+    this.artifactClient = artifactClient;
+    this.resolver = resolver;
+  }
+
+  @Override
+  public void perform(Arguments arguments, PrintStream output) throws Exception {
+
+    String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
+    String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
+    String scopeStr = arguments.get(ArgumentName.SCOPE.toString());
+    ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
+
+    NamespaceId namespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : cliConfig.getCurrentNamespace();
+    ArtifactId artifactId = namespace.artifact(artifactName, artifactVersion);
+
+    String propertiesFilePath = arguments.get(ArgumentName.LOCAL_FILE_PATH.toString());
+    File propertiesFile = resolver.resolvePathToFile(propertiesFilePath);
+    try (Reader reader = new FileReader(propertiesFile)) {
+      ArtifactProperties properties;
+      try {
+        properties = GSON.fromJson(reader, ArtifactProperties.class);
+      } catch (Exception e) {
+        throw new RuntimeException("Error parsing file contents. Please check that it is a valid JSON object, " +
+                                     "and that it contains a 'properties' key whose value is a JSON object of the " +
+                                     "artifact properties.", e);
+      }
+      artifactClient.writeProperties(artifactId, properties.properties);
+    }
+  }
+
+  @Override
+  public String getPattern() {
+    return String.format("set artifact properties <%s> <%s> <%s> <%s>",
+                         ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION,
+                         ArgumentName.SCOPE, ArgumentName.LOCAL_FILE_PATH);
+  }
+
+  @Override
+  public String getDescription() {
+    return String.format(
+      "Sets properties of %s. " +
+        "The properties file must contain a JSON object with a 'properties' key whose value is a JSON object " +
+        "of the properties for the artifact.",
+      Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
+  }
+
+  // for deserialization
+  private static class ArtifactProperties {
+    Map<String, String> properties;
+  }
+}

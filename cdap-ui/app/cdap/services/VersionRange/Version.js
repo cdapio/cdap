@@ -15,7 +15,7 @@
  */
 
 // FE implementation of ArtifactVersion java class
-// co.cask.cdap.api.artifact.ArtifactVersion
+// io.cdap.cdap.api.artifact.ArtifactVersion
 //
 // [major].[minor].[fix](-)[suffix]
 

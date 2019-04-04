@@ -198,7 +198,7 @@ CDAP must be running when you run the command:
 
   .. parsed-literal::
   
-    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -e /tmp/failedUpgrades upgrade
+    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar io.cdap.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -e /tmp/failedUpgrades upgrade
 
 The first argument is the host and port for the :ref:`CDAP router
 <appendix-cdap-default-router>`. The second argument is a directory to write the
@@ -212,7 +212,7 @@ You can also upgrade just the ETL applications within a specific namespace:
 
   .. parsed-literal::
   
-    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -n <namespace-id> upgrade
+    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar io.cdap.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -n <namespace-id> upgrade
 
 You can also upgrade just one ETL application:
 
@@ -220,7 +220,7 @@ You can also upgrade just one ETL application:
 
   .. parsed-literal::
   
-    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -n <namespace-id> -p <app-name> upgrade
+    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar io.cdap.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -n <namespace-id> -p <app-name> upgrade
 
 If you have authentication turned on, you also need to store an access token in a file and pass the file to the tool:
 
@@ -228,7 +228,7 @@ If you have authentication turned on, you also need to store an access token in 
 
   .. parsed-literal::
   
-    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -a <tokenfile> upgrade
+    |$| java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar io.cdap.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -a <tokenfile> upgrade
 
 For instance, if you have obtained an access token (as shown in the example in the
 `security documentation <testing-security>`) such as::

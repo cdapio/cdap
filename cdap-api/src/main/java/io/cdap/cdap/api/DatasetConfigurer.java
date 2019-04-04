@@ -1,0 +1,90 @@
+/*
+ * Copyright © 2015-2019 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.api;
+
+import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
+
+/**
+ * Provides the ability to add datasets.
+ */
+public interface DatasetConfigurer {
+
+  /**
+   * Adds a {@link DatasetModule} to be deployed automatically (if absent in the CDAP namespace) during application
+   * deployment.
+   *
+   * @param moduleName Name of the module to deploy
+   * @param moduleClass Class of the module
+   */
+  @Beta
+  void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass);
+
+  /**
+   * Adds a {@link DatasetModule} to be deployed automatically during application
+   * deployment, using {@link Dataset} as a base for the {@link DatasetModule}.
+   * The module will have a single dataset type identical to the name of the class in the datasetClass parameter.
+   *
+   * @param datasetClass Class of the dataset; module name will be the same as the class in the parameter
+   */
+  @Beta
+  void addDatasetType(Class<? extends Dataset> datasetClass);
+
+  /**
+   * Adds a Dataset instance, created automatically if absent in the CDAP namespace. If the Dataset instance
+   * already exists, this updates the existing instance with the new properties.
+   * See {@link io.cdap.cdap.api.dataset.DatasetDefinition} for details.
+   *
+   * @param datasetName name of the dataset instance
+   * @param typeName name of the dataset type
+   * @param properties dataset instance properties
+   */
+  @Beta
+  void createDataset(String datasetName, String typeName, DatasetProperties properties);
+
+  /**
+   * Adds a Dataset instance with {@link DatasetProperties#EMPTY} created automatically if absent in the CDAP namespace.
+   * If the Dataset instance already exists, this updates the existing instance with the new properties.
+   *
+   * @param datasetName name of the dataset instance
+   * @param typeName name of the dataset type
+   */
+  void createDataset(String datasetName, String typeName);
+
+  /**
+   * Deploys a Dataset type using the datasetClass parameter (see {@link #addDatasetType(Class)}), then
+   * adds a Dataset instance, if absent in the CDAP namespace, or if the Dataset instance already exists,
+   * updates the existing instance with the new properties.
+   *
+   * @param datasetName dataset instance name
+   * @param datasetClass dataset class to create the Dataset type from
+   * @param props dataset instance properties
+   */
+  void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props);
+
+  /**
+   * Deploys a Dataset type using the datasetClass parameter (see {@link #addDatasetType(Class)}), then
+   * adds a Dataset instance, if absent in the CDAP namespace, or if the Dataset instance already exists,
+   * updates the existing instance with empty properties.
+   *
+   * @param datasetName dataset instance name
+   * @param datasetClass dataset class to create the Dataset type from
+   */
+  void createDataset(String datasetName, Class<? extends Dataset> datasetClass);
+}

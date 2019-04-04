@@ -88,7 +88,7 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 
     ERROR [main:c.c.c.StandaloneMain@268] - Failed to start CDAP Sandbox
     java.lang.NoSuchMethodError:
-    co.cask.cdap.UserInterfaceService.getServiceName()Ljava/lang/String
+    io.cdap.cdap.UserInterfaceService.getServiceName()Ljava/lang/String
 
   then you have downloaded the CDAP Sandbox version of CDAP, which is not intended
   to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
@@ -199,7 +199,7 @@ The CDAP Master log shows an error about the dataset service not being found.
 If you see an error such as::
 
     2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71]
-    - Failed to access app.meta table co.cask.cdap.api.dataset.DatasetManagementException:
+    - Failed to access app.meta table io.cdap.cdap.api.dataset.DatasetManagementException:
     Cannot retrieve dataset instance app.meta info, details: Response code: 407,
     message:'Proxy Authentication Required',
     body: '<HTML><HEAD> <TITLE>Access Denied</TITLE> </HEAD>
@@ -224,7 +224,7 @@ If the CDAP services on a Distributed CDAP installation wouldn't start up due to
 the logs for ``cdap-master`` under ``/var/log/cdap/master*.log`` errors such as these::
 
  "Exception in thread "main" java.lang.NoClassDefFoundError:
-   co.cask.cdap.data.runtime.main.MasterServiceMain
+   io.cdap.cdap.data.runtime.main.MasterServiceMain
      at gnu.java.lang.MainThread.run(libgcj.so.10)"
 
 Things to check as possible solutions:

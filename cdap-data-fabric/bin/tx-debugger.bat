@@ -79,7 +79,7 @@ if "%tokenFileProvided%" == "false" if exist %auth_file% (
   set TOKEN_FILE_OPTS=--token-file %auth_file%
 )
 
-%JAVACMD% %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath %CLASSPATH% co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain %*
+%JAVACMD% %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath %CLASSPATH% io.cdap.cdap.data2.transaction.TransactionManagerDebuggerMain %*
 
 :FINALLY
 SET "PATH=%ORIG_PATH%"

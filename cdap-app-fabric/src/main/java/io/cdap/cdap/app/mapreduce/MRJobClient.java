@@ -1,0 +1,120 @@
+/*
+ * Copyright © 2015-2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.app.mapreduce;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.MRJobInfo;
+import io.cdap.cdap.proto.MRTaskInfo;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.TaskReport;
+import org.apache.hadoop.mapreduce.TaskCounter;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Wrapper around Hadoop JobClient that operates with CDAP Program RunIds.
+ * This class is responsible for the MapReduce RunId->JobId mapping logic as well as to simplify the response
+ * from the Job History Server.
+ */
+public class MRJobClient implements MRJobInfoFetcher {
+  private final Configuration hConf;
+
+  @Inject
+  public MRJobClient(CConfiguration cConf, Configuration hConf) {
+    int numRetries = cConf.getInt(Constants.AppFabric.MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES);
+    this.hConf = new Configuration(hConf);
+    // Override a cloned hConf's configuration of IPC Client max retries based upon value in CConf to avoid longer
+    // amounts of retrying (this is helpful especially when the Job History Server is not installed)
+    this.hConf.setInt(CommonConfigurationKeysPublic.IPC_CLIENT_CONNECT_MAX_RETRIES_KEY, numRetries);
+  }
+
+  /**
+   * @param runId for which information will be returned.
+   * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
+   * @throws IOException if there is failure to communicate through the JobClient.
+   * @throws NotFoundException if a Job with the given runId is not found.
+   */
+  @Override
+  public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException {
+    Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
+
+    JobClient jobClient = new JobClient(hConf);
+    JobStatus[] jobs = jobClient.getAllJobs();
+
+    JobStatus thisJob = findJobForRunId(jobs, runId.toEntityId());
+
+    RunningJob runningJob = jobClient.getJob(thisJob.getJobID());
+    if (runningJob == null) {
+      throw new IllegalStateException(String.format("JobClient returned null for RunId: '%s', JobId: '%s'",
+                                                    runId, thisJob.getJobID()));
+    }
+    Counters counters = runningJob.getCounters();
+
+    TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());
+    TaskReport[] reduceTaskReports = jobClient.getReduceTaskReports(thisJob.getJobID());
+
+    return new MRJobInfo(runningJob.mapProgress(), runningJob.reduceProgress(),
+                         groupToMap(counters.getGroup(TaskCounter.class.getName())),
+                         toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports), true);
+  }
+
+  private JobStatus findJobForRunId(JobStatus[] jobs, ProgramRunId runId) throws NotFoundException {
+    for (JobStatus job : jobs) {
+      if (job.getJobName().startsWith(runId.getRun())) {
+        return job;
+      }
+    }
+    throw new NotFoundException(runId);
+  }
+
+  // Converts a TaskReport to a simplified version of it - a MRTaskInfo.
+  private List<MRTaskInfo> toMRTaskInfos(TaskReport[] taskReports) {
+    List<MRTaskInfo> taskInfos = Lists.newArrayList();
+
+    for (TaskReport taskReport : taskReports) {
+      taskInfos.add(new MRTaskInfo(taskReport.getTaskId(), taskReport.getState(),
+                                   taskReport.getStartTime(), taskReport.getFinishTime(), taskReport.getProgress(),
+                                   groupToMap(taskReport.getCounters().getGroup(TaskCounter.class.getName()))));
+    }
+    return taskInfos;
+  }
+
+  // Given a Group object, returns a Map<CounterName, Value>
+  private Map<String, Long> groupToMap(Counters.Group counterGroup) {
+    Map<String, Long> counters = Maps.newHashMap();
+    for (Counters.Counter counter : counterGroup) {
+      counters.put(counter.getName(), counter.getValue());
+    }
+    return counters;
+  }
+}

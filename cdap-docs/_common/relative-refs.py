@@ -30,11 +30,11 @@
 
     If prefix is defined and the link starts with the prefix, it will be stripped off:
     
-        http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html
+        http://docs.cask.co/cdap/current/en/reference-manual/javadocs/io/cdap/cdap/api/ClientLocalizationContext.html
 
     becomes
     
-        [../]reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html
+        [../]reference-manual/javadocs/io/cdap/cdap/api/ClientLocalizationContext.html
     
     This allows for easy copy and paste from existing Javadocs.
     
@@ -44,17 +44,17 @@
       
     Examples: (All will produce the same final references, but with different titles shown)
     
-    :javadoc:`http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html`
+    :javadoc:`http://docs.cask.co/cdap/current/en/reference-manual/javadocs/io/cdap/cdap/api/ClientLocalizationContext.html`
 
-    :javadoc:`<http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html>`
+    :javadoc:`<http://docs.cask.co/cdap/current/en/reference-manual/javadocs/io/cdap/cdap/api/ClientLocalizationContext.html>`
 
-    :javadoc:`ClientLocalizationContext <http://docs.cask.co/cdap/current/en/reference-manual/javadocs/co/cask/cdap/api/ClientLocalizationContext.html>`
+    :javadoc:`ClientLocalizationContext <http://docs.cask.co/cdap/current/en/reference-manual/javadocs/io/cdap/cdap/api/ClientLocalizationContext.html>`
 
-    :javadoc:`ClientLocalizationContext <co/cask/cdap/api/ClientLocalizationContext>`
+    :javadoc:`ClientLocalizationContext <io/cdap/cdap/api/ClientLocalizationContext>`
 
-    :javadoc:`co/cask/cdap/api/ClientLocalizationContext`
+    :javadoc:`io/cdap/cdap/api/ClientLocalizationContext`
 
-    :javadoc:`<co/cask/cdap/api/ClientLocalizationContext>`
+    :javadoc:`<io/cdap/cdap/api/ClientLocalizationContext>`
 
     :copyright: Copyright 2017 Cask Data, Inc.
     :license: Apache License 2.0

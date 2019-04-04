@@ -26,7 +26,7 @@ The best way to start developing a CDAP application is by using the Maven archet
   .. tabbed-parsed-literal::
 
     $ mvn archetype:generate \
-        -DarchetypeGroupId=co.cask.cdap \
+        -DarchetypeGroupId=io.cdap.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
         |archetype-repository| \
         |archetype-version| \
@@ -38,7 +38,7 @@ The best way to start developing a CDAP application is by using the Maven archet
   .. tabbed-parsed-literal::
 
     $ mvn archetype:generate \
-        -DarchetypeGroupId=co.cask.cdap \
+        -DarchetypeGroupId=io.cdap.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
         |archetype-version| \
         -DartifactId=myExampleApp \
@@ -56,7 +56,7 @@ For an application that contains a MapReduce program, set the ``archetypeArtifac
 
 **Note:** Replace the *artifactId* (``myExampleApp``) and *groupId* parameters
 (``org.example.app``) with your own app name and organization, but the *groupId* must not
-be replaced with ``co.cask.cdap``.
+be replaced with ``io.cdap.cdap``.
 
 Complete examples for each archetype:
 
@@ -66,22 +66,22 @@ Complete examples for each archetype:
 
   .. CDAP Application
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-app-archetype |archetype-repository-version|
+  $ mvn archetype:generate -DarchetypeGroupId=io.cdap.cdap -DarchetypeArtifactId=cdap-app-archetype |archetype-repository-version|
 
   .. MapReduce Program
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-mapreduce-archetype |archetype-repository-version|
+  $ mvn archetype:generate -DarchetypeGroupId=io.cdap.cdap -DarchetypeArtifactId=cdap-mapreduce-archetype |archetype-repository-version|
 
   .. Spark Program (Java)
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-java-archetype |archetype-repository-version|
+  $ mvn archetype:generate -DarchetypeGroupId=io.cdap.cdap -DarchetypeArtifactId=cdap-spark-java-archetype |archetype-repository-version|
 
   .. Spark Program (Scala)
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype |archetype-repository-version|
+  $ mvn archetype:generate -DarchetypeGroupId=io.cdap.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype |archetype-repository-version|
 
 When prompted, complete the values for *groupId* and *artifactId* parameters. Enter for the *groupId* parameter your
-own organization; it must not be replaced with ``co.cask.cdap``. (The *version* and *package* parameters can be either
+own organization; it must not be replaced with ``io.cdap.cdap``. (The *version* and *package* parameters can be either
 specified or you can use the Maven defaults.)
 
 Maven supplies a guide to the naming convention used above at https://maven.apache.org/guides/mini/guide-naming-conventions.html.
@@ -132,7 +132,7 @@ To do so, follow these steps:
 
    1. Select ``Run > Edit`` Configurations...
    #. Add a new "Application" run configuration.
-   #. Set "Main class" to be ``co.cask.cdap.StandaloneMain``.
+   #. Set "Main class" to be ``io.cdap.cdap.StandaloneMain``.
    #. Set "VM options" to ``-Xmx1024m`` (for in-memory MapReduce jobs).
    #. Click "OK".
    #. You can now use this run configuration to start an instance of CDAP Sandbox.

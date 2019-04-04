@@ -274,7 +274,7 @@ To configure basic authentication add these properties to ``cdap-site.xml``:
 ========================================================== =========================== ======================================
 Property                                                   Value                       Description
 ========================================================== =========================== ======================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+``security.authentication.handlerClassName``               ``io.cdap.cdap.security.``\ Name of the class handling
                                                            ``server.``                 authentication
                                                            ``BasicAuthentication``\
                                                            ``Handler``
@@ -300,11 +300,11 @@ properties to ``cdap-site.xml``:
 ========================================================== =========================== ======================================
 Property                                                   Value                       Description
 ========================================================== =========================== ======================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+``security.authentication.handlerClassName``               ``io.cdap.cdap.security.``\ Name of the class handling
                                                            ``server.``                 authentication
                                                            ``LDAPAuthentication``\
                                                            ``Handler``
-``security.authentication.loginmodule.className``          ``co.cask.cdap.security.``\ Name of a class used as a custom login
+``security.authentication.loginmodule.className``          ``io.cdap.cdap.security.``\ Name of a class used as a custom login
                                                            ``server.``                 module for authentication
                                                            ``LDAPLoginModule``
 ``security.authentication.handler.debug``                  ``false``                   Set to ``true`` to enable debugging
@@ -395,7 +395,7 @@ these properties to ``cdap-site.xml``:
 ========================================================== =========================== ======================================
 Property                                                   Value                       Description
 ========================================================== =========================== ======================================
-``security.authentication.handlerClassName``               ``co.cask.cdap.security.``\ Name of the class handling
+``security.authentication.handlerClassName``               ``io.cdap.cdap.security.``\ Name of the class handling
                                                            ``server.``                 authentication
                                                            ``JASPIAuthentication``\
                                                            ``Handler``

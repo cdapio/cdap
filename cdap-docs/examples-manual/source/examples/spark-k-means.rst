@@ -33,7 +33,7 @@ The *SparkKMeans* Application
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SparkKMeansApp``:
 
-.. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
+.. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/io/cdap/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
    :lines: 52-84
    :append: . . .

@@ -75,7 +75,7 @@ and then restart CDAP:
 
 #. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
-     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run io.cdap.cdap.data.tools.UpgradeTool upgrade
 
    Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
    to a previous version are not possible. Also, note that authorization is disabled in the *UpgradeTool*
@@ -104,7 +104,7 @@ and then restart CDAP:
    You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
    it will run unattended and not prompt for continuing::
 
-     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade force
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run io.cdap.cdap.data.tools.UpgradeTool upgrade force
 
 #. Restart the CDAP processes::
 
@@ -189,7 +189,7 @@ get upgraded correctly and HBase regionservers may crash.**
 #. Run the *Post-Hadoop Upgrade Tasks* |---| to upgrade CDAP for the new version of Hadoop |---| by running
    the *CDAP Upgrade Tool*, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
-    $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
+    $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run io.cdap.cdap.data.tools.UpgradeTool upgrade_hbase
 
 #. Enable all CDAP tables; from an HBase shell, run this command::
 

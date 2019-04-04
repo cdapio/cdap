@@ -26,7 +26,7 @@ However, metadata can still be added, updated or deleted in this case.
 Programs
 ========
 Metadata can be accessed from *MapReduce*, *Spark*, *Workers* and *Service* through methods from the
-`MetadataReader <../../reference-manual/javadocs/co/cask/cdap/api/metadata/MetadataReader.html>`__ object,
+`MetadataReader <../../reference-manual/javadocs/io/cdap/cdap/api/metadata/MetadataReader.html>`__ object,
 which are available via the appropriate program context object in your program. The program context object can
 be obtained by invoking the ``getContext()`` method inside the ``initialize`` method of your program.
 
@@ -45,7 +45,7 @@ The following example shows how you can retrieve the metadata of an entity in a 
   }
 
 You can also annotate metadata to an entity through methods from the
-`MetadataWriter <../../reference-manual/javadocs/co/cask/cdap/api/metadata/MetadataWriter.html>`__
+`MetadataWriter <../../reference-manual/javadocs/io/cdap/cdap/api/metadata/MetadataWriter.html>`__
 object, which are also available through the same program context object as above.
 
 The following example shows how you can annotate metadata to entity in a *MapReduce* program::
@@ -67,7 +67,7 @@ The following example shows how you can annotate metadata to entity in a *MapRed
 Plugins
 =======
 Metadata can be accessed from a *Plugin* through methods from the
-`MetadataReader <../../reference-manual/javadocs/co/cask/cdap/api/metadata/MetadataReader.html>`__ object,
+`MetadataReader <../../reference-manual/javadocs/io/cdap/cdap/api/metadata/MetadataReader.html>`__ object,
 which are available via the appropriate context provided to in ``prepareRun`` stage.
 
 The following example shows how you can retrieve the metadata of an entity in a *Plugin*::
@@ -85,7 +85,7 @@ The following example shows how you can retrieve the metadata of an entity in a 
   }
 
 You can also annotate metadata to an entity through methods from the
-`MetadataWriter <../../reference-manual/javadocs/co/cask/cdap/api/metadata/MetadataWriter.html>`__
+`MetadataWriter <../../reference-manual/javadocs/io/cdap/cdap/api/metadata/MetadataWriter.html>`__
 object, which are also available through the same context object as above.
 
 The following example shows how you can annotate metadata to entity in a *Plugin*::

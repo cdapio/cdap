@@ -29,7 +29,7 @@ The FileSetExample Application
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``FileSetExample``:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetExample.java
     :language: java
     :lines: 33-
 
@@ -47,7 +47,7 @@ This service has one method to upload and another to download a file.
 Both of these methods have two arguments: the name of the FileSet and the relative path within that FileSet.
 For example, the ``read`` method returns the contents of the requested file for a GET request:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
     :language: java
     :lines: 79-102
     :dedent: 4
@@ -71,7 +71,7 @@ The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the r
 by the ``path`` query parameter. See the section on :ref:`Handling Large Requests <services-content-consumer>`
 and the :ref:`Sport Results Example <examples-sport-results>` for a more detailed explanation:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
     :language: java
     :lines: 110-159
     :dedent: 4
@@ -81,7 +81,7 @@ operations, including creating, updating, truncating, and dropping file sets. Th
 the program context's ``getAdmin()`` interface. For example, the service has an endpoint that creates a new file set,
 either by cloning an existing file set's dataset properties, or using the properties submitted in the request body:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
     :language: java
     :lines: 171-201
     :dedent: 4
@@ -92,7 +92,7 @@ MapReduce over Files
 *lines* FileSet and writes its output to the *counts* FileSet. Alternatively, the names of the input and output
 dataset can also be given as runtime arguments:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/WordCount.java
     :language: java
     :lines: 33-65
     :append: ...

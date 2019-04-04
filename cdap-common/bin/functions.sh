@@ -406,7 +406,7 @@ cdap_set_classpath() {
 #   Any changes to this function must be compatible with the CSD's invocation
 #
 cdap_set_hbase() {
-  local readonly __compat __compatlib __class=co.cask.cdap.data2.util.hbase.HBaseVersion
+  local readonly __compat __compatlib __class=io.cdap.cdap.data2.util.hbase.HBaseVersion
   HBASE_VERSION=${HBASE_VERSION:-$("${JAVA}" -cp ${CLASSPATH} ${__class} 2>/dev/null)}
   case ${HBASE_VERSION} in
     0.96*) __compat=hbase-compat-0.96 ;;
@@ -817,7 +817,7 @@ cdap_start_java() {
     __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
     if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
-      "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${JVM_OPTS[@]} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
+      "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${JVM_OPTS[@]} -cp ${CLASSPATH} io.cdap.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
       if [ $? -ne 0 ]; then
         die "Master startup checks failed. Please check ${__logfile} to address issues."
       fi
@@ -926,7 +926,7 @@ cdap_check_and_set_classpath_for_dev_environment() {
 #
 cdap_context() {
   local readonly __context __version=$(cdap_version)
-  if [[ -e ${CDAP_HOME}/lib/co.cask.cdap.cdap-standalone-${__version}.jar ]]; then
+  if [[ -e ${CDAP_HOME}/lib/io.cdap.cdap.cdap-standalone-${__version}.jar ]]; then
     __context=sdk
   else
     __context=distributed
@@ -1094,12 +1094,12 @@ cdap_sdk_start() {
   echo -n "$(date) Starting CDAP Sandbox ..."
   if ${__foreground}; then
     # this eval is needed to get around the double quote issue in KILL_ON_OOM_OPTS
-    eval "nice -1 \"${JAVA}\" ${KILL_ON_OOM_OPTS} ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath \"${CLASSPATH}\" co.cask.cdap.StandaloneMain | tee -a \"${LOG_DIR}\"/cdap.log"
+    eval "nice -1 \"${JAVA}\" ${KILL_ON_OOM_OPTS} ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath \"${CLASSPATH}\" io.cdap.cdap.StandaloneMain | tee -a \"${LOG_DIR}\"/cdap.log"
     __ret=${?}
     return ${__ret}
   else
     # this eval is needed to get around the double quote issue in KILL_ON_OOM_OPTS
-    eval "nohup nice -1 \"${JAVA}\" ${KILL_ON_OOM_OPTS} ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath \"${CLASSPATH}\" co.cask.cdap.StandaloneMain </dev/null >>\"${LOG_DIR}\"/cdap.log 2>&1 &"
+    eval "nohup nice -1 \"${JAVA}\" ${KILL_ON_OOM_OPTS} ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath \"${CLASSPATH}\" io.cdap.cdap.StandaloneMain </dev/null >>\"${LOG_DIR}\"/cdap.log 2>&1 &"
     __ret=${?}
     __pid=${!}
     sleep 2 # wait for JVM spin up
@@ -1140,7 +1140,7 @@ cdap_sdk_start() {
 # Starts CDAP Auth Server service
 #
 cdap_auth() {
-  local readonly MAIN_CLASS=co.cask.cdap.security.runtime.AuthenticationServerMain
+  local readonly MAIN_CLASS=io.cdap.cdap.security.runtime.AuthenticationServerMain
   local readonly MAIN_CLASS_ARGS=
   local readonly JAVA_HEAP_VAR=AUTH_JAVA_HEAPMAX
   local readonly JAVA_OPTS_VAR=AUTH_JAVA_OPTS
@@ -1154,7 +1154,7 @@ cdap_auth() {
 # Starts CDAP Kafka service
 #
 cdap_kafka() {
-  local readonly MAIN_CLASS=co.cask.cdap.kafka.run.KafkaServerMain
+  local readonly MAIN_CLASS=io.cdap.cdap.kafka.run.KafkaServerMain
   local readonly MAIN_CLASS_ARGS=
   local readonly JAVA_HEAP_VAR=KAFKA_JAVA_HEAPMAX
   local readonly JAVA_OPTS_VAR=KAFKA_JAVA_OPTS
@@ -1167,7 +1167,7 @@ cdap_kafka() {
 # Starts CDAP Master service
 #
 cdap_master() {
-  local readonly MAIN_CLASS=co.cask.cdap.data.runtime.main.MasterServiceMain
+  local readonly MAIN_CLASS=io.cdap.cdap.data.runtime.main.MasterServiceMain
   local readonly MAIN_CLASS_ARGS="start"
   local readonly JAVA_HEAP_VAR=MASTER_JAVA_HEAPMAX
   local readonly JAVA_OPTS_VAR=MASTER_JAVA_OPTS
@@ -1182,7 +1182,7 @@ cdap_master() {
 # Starts CDAP Router service
 #
 cdap_router() {
-  local readonly MAIN_CLASS=co.cask.cdap.gateway.router.RouterMain
+  local readonly MAIN_CLASS=io.cdap.cdap.gateway.router.RouterMain
   local readonly MAIN_CLASS_ARGS=
   local readonly JAVA_HEAP_VAR=ROUTER_JAVA_HEAPMAX
   local readonly JAVA_OPTS_VAR=ROUTER_JAVA_OPTS
@@ -1219,7 +1219,7 @@ cdap_ui() {
 #
 cdap_cli() {
   local readonly __path __libexec __lib __version __script="$(basename ${0}):cdap_cli"
-  local readonly __class="co.cask.cdap.cli.CLIMain"
+  local readonly __class="io.cdap.cdap.cli.CLIMain"
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
   if [[ -d ${__path}/cli/lib ]]; then
@@ -1231,8 +1231,8 @@ cdap_cli() {
     __lib=${__path}/lib
     __version=$(cdap_version)
   fi
-  CLI_CP=${__libexec}/co.cask.cdap.cdap-cli-${__version}.jar
-  CLI_CP+=:${__lib}/co.cask.cdap.cdap-cli-${__version}.jar
+  CLI_CP=${__libexec}/io.cdap.cdap.cdap-cli-${__version}.jar
+  CLI_CP+=:${__lib}/io.cdap.cdap.cdap-cli-${__version}.jar
   if [[ ${CLASSPATH} == '' ]]; then
     CLASSPATH=${CLI_CP}
   else
@@ -1252,7 +1252,7 @@ cdap_cli() {
 cdap_config_tool() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_config_tool"
   local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
-  local readonly __ret __class=co.cask.cdap.ui.ConfigurationJsonTool
+  local readonly __ret __class=io.cdap.cdap.ui.ConfigurationJsonTool
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
   if [[ -d ${__path}/ui/lib ]]; then
@@ -1292,7 +1292,7 @@ cdap_config_tool() {
 # cdap_upgrade_tool [arguments]
 #
 cdap_upgrade_tool() {
-  local readonly __ret __class=co.cask.cdap.data.tools.UpgradeTool
+  local readonly __ret __class=io.cdap.cdap.data.tools.UpgradeTool
 
   # check arguments
   if [[ ${1} == 'hbase' ]]; then
@@ -1349,7 +1349,7 @@ cdap_setup() {
 # cdap_setup_coprocessors [arguments]
 #
 cdap_setup_coprocessors() {
-  local readonly __ret __class=co.cask.cdap.data.tools.CoprocessorBuildTool
+  local readonly __ret __class=io.cdap.cdap.data.tools.CoprocessorBuildTool
 
   cdap_run_class ${__class} check ${@}
   __ret=${?}
@@ -1360,7 +1360,7 @@ cdap_setup_coprocessors() {
 cdap_tx_debugger() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
   local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
-  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
+  local readonly __ret __class=io.cdap.cdap.data2.transaction.TransactionManagerDebuggerMain
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
   if [[ -d ${__path}/master/libexec ]]; then

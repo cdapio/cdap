@@ -96,7 +96,7 @@ def _load_deprecated_items(deprecated_url):
     soup = BeautifulSoup(page, 'html.parser')
     deprecated_items = dict()
     i = 0
-    for a in soup.select('a[href^="co/cask/cdap"]'):
+    for a in soup.select('a[href^="io/cdap/cdap"]'):
         line = None 
         if a.contents:
             line = str(a.contents[0]).strip()

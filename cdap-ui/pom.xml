@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
     <version>6.0.0-SNAPSHOT</version>
   </parent>
@@ -30,7 +30,7 @@
   <name>CDAP UI</name>
 
   <properties>
-    <app.main.class>co.cask.cdap.ui.ConfigurationJsonTool</app.main.class>
+    <app.main.class>io.cdap.cdap.ui.ConfigurationJsonTool</app.main.class>
     <!--
       Note: Do not update this while bumping versions for a CDAP release.
       Only update this when releasing a new UI pack.
@@ -40,12 +40,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>

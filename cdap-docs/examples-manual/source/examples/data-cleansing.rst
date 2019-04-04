@@ -28,7 +28,7 @@ The Data Cleansing Application
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``DataCleansing``:
 
-.. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
+.. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/io/cdap/cdap/examples/datacleansing/DataCleansing.java
    :language: java
    :lines: 33-
 
@@ -125,7 +125,7 @@ Optionally, to specify a custom schema to match records against, the JSON of the
 specified as an additional runtime argument to the MapReduce with the key ``'schema.key'``.
 Otherwise, this is the default schema that is matched against the records:
 
-.. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
+.. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/io/cdap/cdap/examples/datacleansing/DataCleansingMapReduce.java
     :language: java
     :lines: 134-138
     :dedent: 4

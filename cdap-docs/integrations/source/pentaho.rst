@@ -12,14 +12,14 @@ transformations of data coming from various sources. Let's see how to connect it
 CDAP datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 
 #. Before opening the *Pentaho Data Integration* application, copy the
-   ``co.cask.cdap.cdap-explore-jdbc-``\ |literal-release|\ ``.jar``
+   ``io.cdap.cdap.cdap-explore-jdbc-``\ |literal-release|\ ``.jar``
    file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
 #. In the ``General`` section, select a ``Connection Name``, such as ``CDAP Sandbox``. For the ``Connection Type``, select
    ``Generic database``. Select ``Native (JDBC)`` for the ``Access`` field. In this example, where we connect to
    a CDAP Sandbox, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:11015``.
-   In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
+   In the field ``Custom Driver Class Name``, enter ``io.cdap.cdap.explore.jdbc.ExploreDriver``.
 
    .. image:: _images/jdbc/pentaho_add_connection.png
       :width: 6in

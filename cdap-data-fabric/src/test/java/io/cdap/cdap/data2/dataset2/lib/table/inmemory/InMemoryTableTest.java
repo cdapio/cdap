@@ -1,0 +1,53 @@
+/*
+ * Copyright © 2014-2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.data2.dataset2.lib.table.inmemory;
+
+import io.cdap.cdap.api.dataset.DatasetAdmin;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.table.ConflictDetection;
+import io.cdap.cdap.api.dataset.table.TableProperties;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.dataset2.lib.table.BufferingTableTest;
+
+import java.util.Map;
+
+/**
+ *
+ */
+public class InMemoryTableTest extends BufferingTableTest<InMemoryTable> {
+
+  private static final CConfiguration cConf = CConfiguration.create();
+
+  @Override
+  protected InMemoryTable getTable(DatasetContext datasetContext, String name,
+                                   DatasetProperties props, Map<String, String> runtimeArguments) throws Exception {
+    ConflictDetection conflictLevel = TableProperties.getConflictDetection(props, ConflictDetection.ROW);
+    return new InMemoryTable(datasetContext, name, conflictLevel, cConf);
+  }
+
+  @Override
+  protected DatasetAdmin getTableAdmin(DatasetContext datasetContext, String name,
+                                       DatasetProperties ignored) throws Exception {
+    return new InMemoryTableAdmin(datasetContext, name, cConf);
+  }
+
+  @Override
+  protected boolean isReadlessIncrementSupported() {
+    return false;
+  }
+}

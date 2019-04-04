@@ -35,7 +35,7 @@ The *SpamClassifier* Application
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SpamClassifier``:
 
-.. literalinclude:: /../../../cdap-examples/SpamClassifier/src/main/java/co/cask/cdap/examples/sparkstreaming/SpamClassifier.java
+.. literalinclude:: /../../../cdap-examples/SpamClassifier/src/main/java/io/cdap/cdap/examples/sparkstreaming/SpamClassifier.java
    :language: java
    :lines: 40-66
    :append: . . .

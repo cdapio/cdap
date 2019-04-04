@@ -14,11 +14,11 @@
  * the License.
  */
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.gateway.discovery.VersionFilteredServiceDiscovered;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.gateway.discovery.VersionFilteredServiceDiscovered;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;

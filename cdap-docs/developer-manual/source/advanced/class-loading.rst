@@ -98,10 +98,10 @@ provided depend on the program type.
 
 All :ref:`program types <building-blocks>` have access to:
 
-- the ``cdap-api`` classes :javadoc:`CDAP API classes <co/cask/cdap/api/package-summary.html>` as well as the
+- the ``cdap-api`` classes :javadoc:`CDAP API classes <io/cdap/cdap/api/package-summary.html>` as well as the
   libraries that ``cdap-api`` depends on:
 
-  - ``co.cask.cdap.cdap-api-common``
+  - ``io.cdap.cdap.cdap-api-common``
   - ``com.google.code.findbugs.jsr305``
   - ``com.google.code.gson.gson``
   - ``org.slf4j.slf4j-api``

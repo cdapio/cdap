@@ -203,7 +203,7 @@ and the number of virtual cores assigned.
 For example, in the :ref:`Purchase <examples-purchase>` example, in the configuration of
 the ``PurchaseHistoryService``, the amount of memory is specified:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryService.java
    :language: java
    :lines: 40-46
 

@@ -44,13 +44,13 @@ This command will create a project from an archetype:
   .. parsed-literal::
 
     |$| mvn archetype:generate \\
-          -DarchetypeGroupId=co.cask.cdap \\
+          -DarchetypeGroupId=io.cdap.cdap \\
           -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype \\
           -DarchetypeVersion=\ |release| \\
           -DgroupId=org.example.plugin
           
 **Note:** Replace the *groupId* parameter (``org.example.plugin``) with your own
-organization, but it must not be replaced with ``co.cask.cdap``.
+organization, but it must not be replaced with ``io.cdap.cdap``.
 
 Complete examples for each archetype:
 
@@ -58,7 +58,7 @@ Complete examples for each archetype:
 
   .. parsed-literal::
 
-    $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
+    $ mvn archetype:generate -DarchetypeGroupId=io.cdap.cdap -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
   
 Maven supplies a guide to the naming convention used above at
 https://maven.apache.org/guides/mini/guide-naming-conventions.html.
@@ -74,7 +74,7 @@ These annotations are used for plugin classes:
 
 - ``@Description``: Annotation used to add a description of the plugin.
 
-- ``@Requirements``: Annotation used to specify the `Requirements <../../../reference-manual/javadocs/co/cask/cdap/api/annotation/Requirements.html>`__ needed by a plugin to run successfully.
+- ``@Requirements``: Annotation used to specify the `Requirements <../../../reference-manual/javadocs/io/cdap/cdap/api/annotation/Requirements.html>`__ needed by a plugin to run successfully.
 
 Plugin Configuration
 ====================

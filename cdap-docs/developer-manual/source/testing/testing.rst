@@ -32,7 +32,7 @@ in one of two ways:
 
     . . .
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
       <version>${cdap.version}</version>
       <scope>test</scope>
@@ -52,7 +52,7 @@ with ``cdap-unit-test2_2.11``::
 
     . . .
     <dependency>
-      <groupId>co.cask.cdap</groupId>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test2_2.11</artifactId>
       <version>${cdap.version}</version>
       <scope>test</scope>
