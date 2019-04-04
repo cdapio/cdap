@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
@@ -107,6 +106,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -390,10 +390,10 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
-    try {
-      Path tempDir = java.nio.file.Paths.get(cConf.get(io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR),
-                                             cConf.get(io.cdap.cdap.common.conf.Constants.AppFabric.TEMP_DIR))
-                                        .toAbsolutePath();
+    Callable<Void> startupTask = () -> {
+      Path tempDir = java.nio.file.Paths.get(
+        cConf.get(io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR),
+        cConf.get(io.cdap.cdap.common.conf.Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
       Path stagingDir = Files.createTempDirectory(tempDir, programRunId.getRun());
 
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(
@@ -454,23 +454,16 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
                        targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
           LOG.info("Starting runnable {} with SSH on {}", runnableName, session.getAddress().getHostName());
-
-          // Create the controller first. If the creation failed, the process won't get started.
-          RemoteExecutionTwillController controller = controllerFactory.create();
           session.executeAndWait(targetPath + "/launcher.sh");
-
-          // Starts monitoring after launching the remote process.
-          controller.getRuntimeMonitor().start();
-
-          return controller;
         }
       } finally {
         cancelLoggingContext.cancel();
         DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
       }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+      return null;
+    };
+
+    return controllerFactory.create(startupTask, timeout, timeoutUnit);
   }
 
   /**

@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import org.apache.twill.api.TwillController;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+
 /**
  * A package local interface for creating instance of {@link RemoteExecutionTwillController}.
  */
@@ -23,6 +29,12 @@ interface RemoteExecutionTwillControllerFactory {
 
   /**
    * Creates a new instance of {@link RemoteExecutionTwillController}.
+   *
+   * @param startupTask an optional task to run to start the program execution.
+   *                    This task will be executed asynchronously.
+   * @param timeout the maximum amount of time for the startup task to complete
+   * @param timeoutUnit the time unit for the timeout
+   * @return a {@link TwillController} controlling and reflecting the state of the program execution
    */
-  RemoteExecutionTwillController create();
+  TwillController create(@Nullable Callable<Void> startupTask, long timeout, TimeUnit timeoutUnit);
 }
