@@ -21,15 +21,16 @@ import DashboardStore, {
 } from 'components/OpsDashboard/store/DashboardStore';
 import moment from 'moment-timezone';
 import { humanReadableDate } from 'services/helpers';
+import numeral from 'numeral';
 
 const AXIS_BUFFER = 1.1;
 
 export function renderGraph(selector, containerWidth, containerHeight, data, viewByOption) {
   let margin = {
     top: 45,
-    right: 50,
+    right: 60,
     bottom: 40,
-    left: 40,
+    left: 60,
   };
   let width = containerWidth - margin.left - margin.right,
     height = containerHeight - margin.top - margin.bottom;
@@ -199,22 +200,14 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .append('g')
     .attr('class', 'axis axis-y-left')
     .attr('font-size', ticksFontSize)
-    .call(
-      d3.axisLeft(yLeft).tickFormat((e) => {
-        // showing only integers
-        if (Math.floor(e) !== e) {
-          return;
-        }
-        return e;
-      })
-    );
+    .call(d3.axisLeft(yLeft).tickFormat(tickFormat));
 
   // Y Axis Left Legend
   chart
     .append('g')
     .attr('class', 'legend axis-y-left-legend')
     .append('text')
-    .attr('transform', `translate(-${legendOffset}, ${height / 2}) rotate(-90)`)
+    .attr('transform', `translate(-${legendOffset + ticksFontSize * 2}, ${height / 2}) rotate(-90)`)
     .text('# of runs');
 
   // Y Axis Right
@@ -223,7 +216,12 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .attr('class', 'axis axis-y-right')
     .attr('transform', `translate(${width}, 0)`)
     .attr('font-size', ticksFontSize)
-    .call(d3.axisRight(yRight).tickSizeOuter(-width));
+    .call(
+      d3
+        .axisRight(yRight)
+        .tickSizeOuter(-width)
+        .tickFormat(tickFormat)
+    );
 
   // Y Axis Right Legend
   chart
@@ -232,7 +230,7 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .append('text')
     .attr(
       'transform',
-      `translate(${width + legendOffset + ticksFontSize}, ${height / 2}) rotate(-90)`
+      `translate(${width + legendOffset + ticksFontSize * 3}, ${height / 2}) rotate(-90)`
     )
     .text('Delay (seconds)');
 
@@ -410,5 +408,18 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     let y = yLeft(d.failed);
     y = y - (height - yLeft(d.successful));
     return y;
+  }
+
+  function tickFormat(d) {
+    if (d <= 999) {
+      // removing decimal ticks
+      if (parseInt(d) !== d) {
+        return;
+      }
+
+      return d;
+    }
+
+    return numeral(d).format('0.0a');
   }
 }
