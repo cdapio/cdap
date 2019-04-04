@@ -81,9 +81,6 @@ export default class LoadingIndicator extends Component {
           <div>
             <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
             <div>{T.translate(`${PREFIX}.restartUI`)}</div>
-            <div>
-              <span>{T.translate(`${PREFIX}.contactadmin`)}</span>
-            </div>
           </div>
         );
       } else {

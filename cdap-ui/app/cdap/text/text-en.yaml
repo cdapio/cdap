@@ -1540,7 +1540,7 @@ features:
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
     restartCDAP: Refresh the page and if the problem persists, restart {productName}
-    restartUI: Restart the UI; or
+    restartUI: Restart the UI
     servicesDown: A few system services are down
     serviceDown: The system service {serviceName} is down
     systemDashboard: View system services dashboard
