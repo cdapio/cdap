@@ -87,6 +87,12 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
         type: AddFeatureActions.updateConfigurationList,
         payload: list
       });
+    },
+    setAvailableSinks: (list) => {
+      dispatch({
+        type: AddFeatureActions.setAvailableSinks,
+        payload: list
+      });
     }
   };
 };

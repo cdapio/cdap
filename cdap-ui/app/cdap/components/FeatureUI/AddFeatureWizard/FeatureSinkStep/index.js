@@ -19,7 +19,6 @@ import AddFeatureActions from '../../../../services/WizardStores/AddFeature/AddF
 import SinkSelector from '../../SinkSelector';
 import AddFeatureStore from '../../../../services/WizardStores/AddFeature/AddFeatureStore';
 
-
 const mapStateToSelectSinkProps = (state) => {
   return {
     availableSinks: state.featureState.availableSinks,
@@ -32,7 +31,7 @@ const mapDispatchToSelectSinkProps = (dispatch) => {
     setSinkProperties: (sinkProperties) => {
       dispatch({
         type: AddFeatureActions.setSinkProperties,
-        payload: schemas
+        payload: sinkProperties
       });
     }
   };

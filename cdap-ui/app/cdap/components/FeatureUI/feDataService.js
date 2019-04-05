@@ -42,6 +42,7 @@ const FEDataServiceApi = {
   featureCorrelationData: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/correlation/:coefficientType/score/targetfeature/get`),
   saveFeaturePipeline: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/selected/create/pipeline`),
   detectProperties:  serviceCreator(dataSrc, "POST", "REQUEST",`${dataPrepSchemaService}/dataset/selected/schema/identified/get`),
+  availableSinks: serviceCreator(dataSrc, "GET", "REQUEST",`${autoFeatureGenerationService}/feature/generation/configparams/datasink/get`)
 };
 
 

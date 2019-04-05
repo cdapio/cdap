@@ -210,6 +210,7 @@ const featureState = (state = defaultState, action = defaultAction) => {
       };
       break;
   }
+  console.log("feature state =>" , state );
   return {
     ...state,
     __complete: isFeatureComplete(state)

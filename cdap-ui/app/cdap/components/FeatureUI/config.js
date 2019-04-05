@@ -30,6 +30,7 @@ export const GET_PIPELINE = "GET_PIPELINE";
 export const GET_SCHEMA = "GET_SCHEMA";
 export const GET_PROPERTY = "GET_PROPERTY";
 export const GET_CONFIGURATION = "GET_CONFIGURATION";
+export const GET_SINKS = "GET_SINKS";
 export const SAVE_PIPELINE = "SAVE_PIPELINE";
 export const CREATE_PIPELINE = "CREATE_PIPELINE";
 export const CLONE_PIPELINE = "CLONE_PIPELINE";
@@ -45,6 +46,7 @@ export const ERROR_MESSAGES = {
   GET_SCHEMA: "Error in getting dataset schemas",
   GET_PROPERTY: "Error in getting metadata configurations",
   GET_CONFIGURATION: "Error in getting engine configurations",
+  GET_SINKS: "Error in getting sinks",
   SAVE_PIPELINE: "Error in saving pipeline",
   CREATE_PIPELINE: "Error in creating pipeline",
   READ_PIPELINE: "Error in getting pipeline configurations",
