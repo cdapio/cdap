@@ -16,10 +16,67 @@
 
 .sink-step-container {
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
   width: 100%;
-  height: calc(100% - 40px);
-  overflow: auto;
-  border-bottom: 1px solid #e2e2e2;
-  margin-bottom: 8px;
+  .list-row {
+    display: flex;
+    padding-bottom: 10px;
+    align-items: center;
+    .name {
+      width: 300px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 0.25rem;
+      line-height: 2.5;
+      padding-left: 10px;
+      height: 32px;
+      display: inline;
+      font-weight: 500;
+    }
+    .colon {
+      height: 32px;
+      padding: 4px 10px;
+      color: grey;
+    }
+    .value {
+      width: 250px;
+      height: 32px;
+    }
+    .field-info {
+      padding-top: 7px;
+      padding-left: 10px;
+    }
+  }
+  .config-container {
+    padding: 10px;
+  }
+  .config-header-label {
+    margin-bottom: 5px;
+    padding: 5px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333333;
+    background: #eeeeee;
+    .form-check-input{
+      position: relative;
+      margin-right: 0.5rem;
+    }
+  }
+  .advance-control {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 15px;
+    background: #eeeeee;
+    font-size: 30px;
+    margin-bottom: 5px;
+  }
+
+  .config-item-container {
+    padding: 15px;
+    margin-right: 10px;
+    box-shadow: 0px 3px 2px 0px #bbbbbb;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+  }
 }

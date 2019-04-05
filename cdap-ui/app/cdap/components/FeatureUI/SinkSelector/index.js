@@ -16,6 +16,8 @@
 import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import PropTypes from 'prop-types';
+import { Input } from 'reactstrap';
+import InfoTip from '../InfoTip';
 
 require('./SinkSelector.scss');
 
@@ -25,6 +27,11 @@ class SinkSelector extends React.Component {
   constructor(props) {
     super(props);
     this.configPropList = [];
+    this.state = {
+      sink: ''
+    };
+    this.onSinkChange = this.onSinkChange.bind(this);
+    this.onValueUpdated = this.onValueUpdated.bind(this);
   }
 
   componentDidMount() {
@@ -36,9 +43,65 @@ class SinkSelector extends React.Component {
   updateConfiguration() {
   }
 
+  onSinkChange(evt) {
+    this.setState({
+      sink: evt.target.value
+    });
+  }
+
+  onValueUpdated(item, evt) {
+    console.log(item + '=== '+ evt.target.value);
+  }
+
   render() {
     return (
-      <div className = 'sink-step-container'>
+      <div className='sink-step-container'>
+        {
+          (this.props.availableSinks).map((item) => {
+            return (
+              <div className="config-container">
+                <div className="config-header-label" key={item.paramName}>
+                  <Input
+                    type="radio"
+                    value={item.paramName}
+                    min="0"
+                    onChange={this.onSinkChange}
+                    checked={this.state.sink === item.paramName}
+                  />
+                  <span>{item.displayName}</span>
+                </div>
+
+                {
+                  this.state.sink === item.paramName &&
+                    <div className="config-item-container">
+                    {
+                      (item.subParams).map(param => {
+                        return (
+                          <div className='list-row' key={param.paramName}>
+                            <div className='name'>{param.displayName}
+                                {
+                                  param.isMandatory && <i className = "fa fa-asterisk mandatory"></i>
+                                }
+                            </div>
+                            <div className='colon'>:</div>
+                            <Input className='value' type="text" name="value"
+                              placeholder={'Enter '+ param.displayName + ' value'}
+                              defaultValue={param.defaultValue}
+                              onChange={this.onValueUpdated.bind(this, param)} />
+                            {
+                              param.description &&
+                              <InfoTip id = {param.paramName + "_InfoTip"} description = {param.description}></InfoTip>
+                            }
+                          </div>
+                        )
+                      })
+                    }
+                  </div>
+                }
+              </div>
+            );
+          })
+        }
       </div>
     );
   }
