@@ -32,11 +32,13 @@ const defaultState = {
   featureName: '',
   availableSchemas: [],
   availableProperties: [],
+  availableSinks: [],
   availableConfigurations: [],
   selectedSchemas: [],
   detectedProperties: [],
   propertyMap: new Map(),
   configurationList: [],
+  sinkProperties: new Map(),
   __complete: false,
   __skipped: false,
   __error: false
@@ -129,6 +131,12 @@ const featureState = (state = defaultState, action = defaultAction) => {
         availableProperties: action.payload
       };
       break;
+    case AddFeatureActions.setAvailableSinks:
+      state = {
+        ...state,
+        availableSinks: action.payload
+      };
+      break;
     case AddFeatureActions.setAvailableConfigurations:
       state = {
         ...state,
@@ -193,6 +201,12 @@ const featureState = (state = defaultState, action = defaultAction) => {
       state = {
         ...state,
         detectedProperties: action.payload
+      };
+      break;
+    case AddFeatureActions.setSinkProperties:
+      state = {
+        ...state,
+        sinkProperties: action.payload
       };
       break;
   }
