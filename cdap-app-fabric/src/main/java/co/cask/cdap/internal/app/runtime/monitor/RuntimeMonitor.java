@@ -24,6 +24,8 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -66,6 +68,7 @@ import java.util.stream.Stream;
 public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitor.class);
+  private static final Logger SAMPLING_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(30));
 
   private static final Gson GSON = new Gson();
 
@@ -181,9 +184,11 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     Map<String, Deque<MonitorMessage>> monitorResponses;
     try {
       monitorResponses = monitorClient.fetchMessages(topicsToRequest);
+      SAMPLING_LOGGER.debug("Fetched {} messages for {}", monitorResponses.size(), programRunId);
     } catch (ServiceUnavailableException | IOException e) {
       // If the remote process is still running, just try to poll again in the next cycle
       if (remoteProcessController.isRunning()) {
+        LOG.error("Got exception fetching messages for {}", programRunId, e);
         return pollTimeMillis;
       }
 
@@ -256,6 +261,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
       updateTopicToRequest(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, monitorMessages);
       monitorResponses.remove(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     }
+    LOG.debug("Got programFinishTime {} for program {}", programFinishTime, programRunId);
   }
 
   /**
