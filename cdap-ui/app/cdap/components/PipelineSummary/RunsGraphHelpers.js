@@ -54,22 +54,13 @@ export function getXDomain({ xDomainType, runsLimit, totalRunsCount, start, end 
 }
 
 export function getYDomain(data = {}) {
-  let maxYDomain = { y: 1 },
-    minYDomain = { y: 0 };
+  let maxYDomain = { y: 1 };
   if (data.length > 1) {
     maxYDomain = cloneDeep(
       data.reduce((prev, curr) => {
         return prev.y > curr.y ? prev : curr;
       })
     );
-    minYDomain = cloneDeep(
-      data.reduce((prev, curr) => {
-        return prev.y < curr.y ? prev : curr;
-      })
-    );
-    if (maxYDomain.y === minYDomain.y) {
-      minYDomain.y = 0;
-    }
   }
   if (data.length === 1) {
     maxYDomain = data[0];
@@ -78,7 +69,9 @@ export function getYDomain(data = {}) {
   const MULTIPLIER = 1.1; // adding 10% top padding on the graph
   const maxDomain = maxYDomain.y * MULTIPLIER;
 
-  return [minYDomain.y, maxDomain];
+  // The lower bound of the domain can always be 0 as we
+  // won't have negative values in the metrics graphs
+  return [0, maxDomain];
 }
 
 export function getYAxisProps(data) {
