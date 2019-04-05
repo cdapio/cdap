@@ -190,12 +190,11 @@ public class DefaultSSHSession implements SSHSession {
       Channel channel = session.openChannel("exec");
       ((ChannelExec) channel).setCommand(command);
 
-      channel.connect();
-
-      // get I/O streams for remote scp
+      // Get I/O streams for remote scp. This has to be done before connecting the channel,
+      // otherwise data received from remote server might get dropped, resulting in reading from the input stream hanged
       try (OutputStream out = channel.getOutputStream();
            InputStream in = channel.getInputStream()) {
-
+        channel.connect();
         checkAck(in);
 
         if (preserveTimestamp) {
