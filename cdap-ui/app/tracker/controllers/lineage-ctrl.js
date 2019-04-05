@@ -108,7 +108,8 @@ class TrackerLineageController{
       scope: this.$scope,
       start: this.timeRange.start,
       end: this.timeRange.end,
-      levels: 1
+      levels: 1,
+      rollup: 'workflow'
     };
 
     this.myTrackerApi.getLineage(params)
