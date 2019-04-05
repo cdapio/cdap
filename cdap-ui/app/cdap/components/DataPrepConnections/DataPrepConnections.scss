@@ -57,6 +57,7 @@ $expanded-menu-icon-width: 40px;
       left: 0;
       right: 0;
       bottom: 55px;
+      border-bottom: 1px solid $connections-panel-border-color;
       overflow-y: auto;
 
       .menu-item {
