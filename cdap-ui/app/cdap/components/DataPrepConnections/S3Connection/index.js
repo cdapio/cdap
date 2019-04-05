@@ -27,6 +27,8 @@ import { objectQuery } from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
 import ee from 'event-emitter';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import SecureKeyText from 'components/AbstractWidget/SecureKey/SecureKeyText';
+
 const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
@@ -281,6 +283,14 @@ export default class S3Connection extends Component {
     });
   }
 
+  handleAccessSecretChange = (property) => {
+    return (value) => {
+      this.setState({
+        [property]: value,
+      });
+    };
+  };
+
   renderTestButton() {
     let disabled =
       !this.state.name ||
@@ -363,12 +373,12 @@ export default class S3Connection extends Component {
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <input
-                  type="text"
-                  className="form-control"
+                <SecureKeyText
                   value={this.state.accessKeyId}
-                  onChange={this.handleChange.bind(this, 'accessKeyId')}
-                  placeholder={T.translate(`${PREFIX}.Placeholders.accessKeyId`)}
+                  onChange={this.handleAccessSecretChange('accessKeyId')}
+                  widgetProps={{
+                    placeholder: T.translate(`${PREFIX}.Placeholders.accessKeyId`),
+                  }}
                 />
               </div>
             </div>
@@ -381,12 +391,12 @@ export default class S3Connection extends Component {
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <input
-                  type="text"
-                  className="form-control"
+                <SecureKeyText
                   value={this.state.accessSecretKey}
-                  onChange={this.handleChange.bind(this, 'accessSecretKey')}
-                  placeholder={T.translate(`${PREFIX}.Placeholders.accessSecretKey`)}
+                  onChange={this.handleAccessSecretChange('accessSecretKey')}
+                  widgetProps={{
+                    placeholder: T.translate(`${PREFIX}.Placeholders.accessSecretKey`),
+                  }}
                 />
               </div>
             </div>

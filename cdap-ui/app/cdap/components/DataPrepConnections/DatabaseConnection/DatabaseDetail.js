@@ -29,6 +29,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import uuidV4 from 'uuid/v4';
 import LoadingSVG from 'components/LoadingSVG';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import SecureKeyPassword from 'components/AbstractWidget/SecureKey/SecureKeyPassword';
 
 const CONN_TYPE = {
   basic: 'BASIC',
@@ -144,12 +145,18 @@ export default class DatabaseDetail extends Component {
     e.preventDefault();
   }
 
-  handleChange(key, e) {
+  handleChange = (key, e) => {
     this.setState({
       [key]: e.target.value,
       connectionResult: null,
     });
-  }
+  };
+
+  handlePasswordChange = (password) => {
+    this.setState({
+      password,
+    });
+  };
 
   handleDatabaseChange(e) {
     this.setState({
@@ -339,12 +346,7 @@ export default class DatabaseDetail extends Component {
       <div className="form-group row">
         <label className={LABEL_COL_CLASS}>{T.translate(`${PREFIX}.password`)}</label>
         <div className={INPUT_COL_CLASS}>
-          <input
-            type="password"
-            className="form-control"
-            value={this.state.password}
-            onChange={this.handleChange.bind(this, 'password')}
-          />
+          <SecureKeyPassword value={this.state.password} onChange={this.handlePasswordChange} />
         </div>
       </div>
     );

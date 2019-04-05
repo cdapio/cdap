@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,13 @@
  * the License.
  */
 
-import { apiCreator } from 'services/resource-helper';
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-const dataSrc = DataSourceConfigurer.getInstance();
+import React from 'react';
+import SecureKey from 'components/AbstractWidget/SecureKey';
+import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 
-const basepath = '/namespaces/:namespace/securekeys';
-const keyPath = `${basepath}/:key`;
+export default function SecureKeyTextarea(props) {
+  return <SecureKey inputTextType="textarea" {...props} />;
+}
 
-export const MySecureKeyApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  add: apiCreator(dataSrc, 'PUT', 'REQUEST', keyPath),
-  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', keyPath),
-};
+SecureKeyTextarea.propTypes = WIDGET_PROPTYPES;
+SecureKeyTextarea.defaultProps = DEFAULT_WIDGET_PROPS;
