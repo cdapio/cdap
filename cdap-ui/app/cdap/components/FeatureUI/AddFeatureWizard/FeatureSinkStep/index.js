@@ -22,57 +22,19 @@ import AddFeatureStore from '../../../../services/WizardStores/AddFeature/AddFea
 
 const mapStateToSelectSinkProps = (state) => {
   return {
-    availableSchemas: state.featureState.availableSchemas,
-    selectedSchemas: state.featureState.selectedSchemas,
-    propertyMap: state.featureState.propertyMap,
-    detectedProperties: state.featureState.detectedProperties,
+    availableSinks: state.featureState.availableSinks,
+    sinkProperties: state.featureState.sinkProperties,
   };
 };
 
 const mapDispatchToSelectSinkProps = (dispatch) => {
   return {
-    setAvailableSchemas: (schemas) => {
+    setSinkProperties: (sinkProperties) => {
       dispatch({
-        type: AddFeatureActions.setAvailableSchemas,
+        type: AddFeatureActions.setSinkProperties,
         payload: schemas
       });
-    },
-    addSelectedSchema: (schema) => {
-      dispatch({
-        type: AddFeatureActions.addSelectedSchema,
-        payload: schema
-      });
-    },
-    updateSelectedSchema: (schema) => {
-      dispatch({
-        type: AddFeatureActions.updateSelectedSchema,
-        payload: schema
-      });
-    },
-    setSelectedSchemas: (schemas) => {
-      dispatch({
-        type: AddFeatureActions.setSelectedSchemas,
-        payload: schemas
-      });
-    },
-    updatePropertyMap: (schema) => {
-      dispatch({
-        type: AddFeatureActions.updatePropertyMap,
-        payload: schema
-      });
-    },
-    deleteSelectedSchema: (schema) => {
-      dispatch({
-        type: AddFeatureActions.deleteSelectedSchema,
-        payload: schema
-      });
-    },
-    setDetectedProperties: (value) => {
-      dispatch({
-        type: AddFeatureActions.setDetectedProperties,
-        payload: value
-      });
-    },
+    }
   };
 };
 
