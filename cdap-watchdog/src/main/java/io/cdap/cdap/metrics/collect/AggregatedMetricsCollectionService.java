@@ -126,7 +126,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   private void publishMetrics(long currentTimeMillis) {
     long timestamp = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
 
-    LOG.trace("Start log collection for timestamp {}", timestamp);
+    LOG.trace("Start metrics collection for timestamp {}", timestamp);
 
     Iterator<MetricValues> metrics = getMetrics(timestamp);
     try {
@@ -139,7 +139,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     while (metrics.hasNext()) {
       metrics.next();
     }
-    LOG.trace("Completed log collection for timestamp {}", timestamp);
+    LOG.trace("Completed metrics collection for timestamp {}", timestamp);
   }
 
   @Override
@@ -228,11 +228,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
     @Override
     public void increment(String metricName, long value) {
+      LOG.trace("Increment () for metric name {} for tags {}", value, metricName, tags);
       emitters.getUnchecked(tags).getUnchecked(metricName).increment(value);
     }
 
     @Override
     public void gauge(String metricName, long value) {
+      LOG.trace("Gauge () for metric name {} for tags {}", value, metricName, tags);
       emitters.getUnchecked(tags).getUnchecked(metricName).gauge(value);
     }
 
