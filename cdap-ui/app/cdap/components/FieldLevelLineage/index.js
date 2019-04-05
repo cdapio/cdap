@@ -26,6 +26,7 @@ import TopPanel from 'components/FieldLevelLineage/TopPanel';
 import T from 'i18n-react';
 import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
+import './FieldLevelLineage.scss';
 
 const PREFIX = 'commons';
 
