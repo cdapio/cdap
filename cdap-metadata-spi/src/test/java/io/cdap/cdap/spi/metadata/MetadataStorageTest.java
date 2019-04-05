@@ -1380,6 +1380,11 @@ public abstract class MetadataStorageTest {
     cursor = validateCursorAndOffset(mds, 12, 2, cursor, true, 4, 12, 4, true, true);
     validateCursorAndOffset(mds, 1, 1, cursor, true, 4, 16, 4, false, false);
 
+    // ensure that we can start searching without cursor, with offset, and request a cursor
+    // whether a cursor is returned, is implementation dependent
+    cursor = validateCursorAndOffset(mds, 4, 4, null, true, 4, 4, 4, true, null);
+    validateCursorAndOffset(mds, 8, 4, cursor, true, 4, 8, 4, true, null);
+
     // clean up
     mds.batch(records.stream().map(MetadataRecord::getEntity).map(Drop::new).collect(Collectors.toList()));
   }
@@ -1388,7 +1393,7 @@ public abstract class MetadataStorageTest {
   private String validateCursorAndOffset(MetadataStorage mds,
                                          int offset, int limit, String cursor, boolean requestCursor,
                                          int expectedResults, int expectedOffset, int expectedLimit,
-                                         boolean expectMore, boolean expectCursor)
+                                         boolean expectMore, Boolean expectCursor)
     throws IOException {
     SearchResponse response = mds.search(SearchRequest.of("*")
                                            .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
@@ -1399,9 +1404,11 @@ public abstract class MetadataStorageTest {
     Assert.assertEquals(expectedOffset, response.getOffset());
     Assert.assertEquals(expectedLimit, response.getLimit());
     Assert.assertEquals(expectMore, response.getTotalResults() > response.getOffset() + response.getResults().size());
-    Assert.assertEquals(expectCursor, null != response.getCursor());
-    if (expectCursor) {
-      validateCursor(response.getCursor(), expectedOffset + expectedLimit, expectedLimit);
+    if (expectCursor != null) {
+      Assert.assertEquals(expectCursor, null != response.getCursor());
+      if (expectCursor) {
+        validateCursor(response.getCursor(), expectedOffset + expectedLimit, expectedLimit);
+      }
     }
     return response.getCursor();
   }

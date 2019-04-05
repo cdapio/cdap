@@ -23,11 +23,7 @@ import Typography from '@material-ui/core/Typography';
 import NamespaceStore from 'services/NamespaceStore';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
-import {
-  search,
-  updateQueryString,
-  nextPage,
-} from 'components/EntityListView/SearchStore/ActionCreator';
+import { search, updateQueryString } from 'components/EntityListView/SearchStore/ActionCreator';
 import Mousetrap from 'mousetrap';
 
 require('./EntityListInfo.scss');
@@ -56,7 +52,7 @@ export default class EntityListInfo extends Component {
         offset: currentPage * limit,
       },
     });
-    nextPage();
+    search();
     updateQueryString();
   }
   goToPreviousPage() {
