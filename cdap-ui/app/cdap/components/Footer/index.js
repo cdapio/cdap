@@ -16,12 +16,14 @@
 
 import React from 'react';
 import { Theme } from 'services/ThemeHelper';
-
+import If from '../If';
 require('./Footer.scss');
 
 export default function Footer() {
   const footerText = Theme.footerText;
   const footerUrl = Theme.footerLink;
+  // 'project-id-30-characters-name1/instance-id-30-characters-name';
+  const instanceMetadataId = window.CDAP_CONFIG.instanceMetadataId;
   return (
     <footer className="app-footer">
       <p className="text-center text-muted">
@@ -29,6 +31,9 @@ export default function Footer() {
           {footerText}
         </a>
       </p>
+      <If condition={instanceMetadataId}>
+        <p className="instance-metadata-id">Instance Id: {instanceMetadataId}</p>
+      </If>
     </footer>
   );
 }
