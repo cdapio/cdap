@@ -30,6 +30,8 @@ const AddFeatureActions = {
   updatePropertyMap: 'UPDATE-PROPERTY-MAP',
   updateConfigurationList: 'UPDATE-CONFIGURATION-LIST',
   setDetectedProperties: 'SET-DETECTED-PROPERTIES',
+  setSinkConfigurations: 'SET-SINK-CONFIGURATIONS',
+
 };
 
 export default AddFeatureActions;

@@ -171,6 +171,11 @@ export function getFeatureObject(props) {
       }
     });
   }
+  if (!isEmpty(props.sinkConfigurations)) {
+      for(let property in props.sinkConfigurations) {
+        featureObject[property] = props.sinkConfigurations[property];
+      }
+  }
   return featureObject;
 }
 

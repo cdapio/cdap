@@ -38,7 +38,7 @@ const defaultState = {
   detectedProperties: [],
   propertyMap: new Map(),
   configurationList: [],
-  sinkProperties: new Map(),
+  sinkConfigurations: {},
   __complete: false,
   __skipped: false,
   __error: false
@@ -95,6 +95,22 @@ const isFeatureComplete = (state) => {
           }
         } else {
           return false;
+        }
+      }
+    }
+  }
+  if(isEmpty(state.sinkConfigurations)) {
+    return false;
+  } else {
+    for(let property in state.sinkConfigurations) {
+      if(property) {
+        const initialSinkConfig = find(state.sinkConfigurations, { paramName: property });
+        if (!isNil(initialSinkConfig)) {
+          for(let subParams of initialSinkConfig.subParams) {
+            if(subParams.isMandatory && isEmpty(state.sinkConfigurations[property][subParams.paramName])) {
+              return false;
+            }
+          }
         }
       }
     }
@@ -203,10 +219,10 @@ const featureState = (state = defaultState, action = defaultAction) => {
         detectedProperties: action.payload
       };
       break;
-    case AddFeatureActions.setSinkProperties:
+    case AddFeatureActions.setSinkConfigurations:
       state = {
         ...state,
-        sinkProperties: action.payload
+        sinkConfigurations: action.payload
       };
       break;
   }

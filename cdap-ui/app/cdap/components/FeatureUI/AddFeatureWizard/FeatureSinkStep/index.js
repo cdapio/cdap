@@ -22,16 +22,16 @@ import AddFeatureStore from '../../../../services/WizardStores/AddFeature/AddFea
 const mapStateToSelectSinkProps = (state) => {
   return {
     availableSinks: state.featureState.availableSinks,
-    sinkProperties: state.featureState.sinkProperties,
+    sinkConfigurations: state.featureState.sinkConfigurations,
   };
 };
 
 const mapDispatchToSelectSinkProps = (dispatch) => {
   return {
-    setSinkProperties: (sinkProperties) => {
+    setSinkConfigurations: (configurations) => {
       dispatch({
-        type: AddFeatureActions.setSinkProperties,
-        payload: sinkProperties
+        type: AddFeatureActions.setSinkConfigurations,
+        payload: configurations
       });
     }
   };

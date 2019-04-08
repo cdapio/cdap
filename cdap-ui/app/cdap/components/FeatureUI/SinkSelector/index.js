@@ -17,6 +17,7 @@ import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import PropTypes from 'prop-types';
 import { Input } from 'reactstrap';
+import { isNil, isEmpty } from 'lodash';
 import InfoTip from '../InfoTip';
 
 require('./SinkSelector.scss');
@@ -24,9 +25,11 @@ require('./SinkSelector.scss');
 class SinkSelector extends React.Component {
   availableSinks;
   sinkConfigurations;
+  configMap;
   constructor(props) {
     super(props);
     this.configPropList = [];
+    this.configMap = {};
     this.state = {
       sink: ''
     };
@@ -36,11 +39,49 @@ class SinkSelector extends React.Component {
 
   componentDidMount() {
     this.availableSinks = cloneDeep(this.props.availableSinks);
+    if (!isEmpty(this.availableSinks)) {
+      this.availableSinks.forEach(element => {
+        if (isNil(this.configMap[element.paramName])) {
+          this.configMap[element.paramName] = {};
+        }
+        if (!isEmpty(element.subParams)) {
+          element.subParams.forEach(subElement => {
+            if(!isEmpty(subElement.defaultValue)) {
+              this.configMap[element.paramName][subElement.paramName] = subElement.defaultValue;
+            }
+          });
+        }
+      });
+    }
     this.sinkConfigurations = cloneDeep(this.props.sinkConfigurations);
+    if (!isNil(this.sinkConfigurations)) {
+      for(let property in this.sinkConfigurations) {
+        if(property) {
+          if (isNil(this.configMap[property])) {
+            this.configMap[property] = {};
+          }
+          this.configMap[property] = this.sinkConfigurations[property];
+          this.setState({
+            sink: property
+          })
+        }
+      }
+    }
   }
 
 
   updateConfiguration() {
+    if (!isEmpty(this.state.sink)) {
+      const sinkConfigurations = {};
+      sinkConfigurations[this.state.sink] = {};
+      if (!isNil(this.configMap[this.state.sink])) {
+        sinkConfigurations[this.state.sink] = this.configMap[this.state.sink];
+      }
+      this.sinkConfigurations = sinkConfigurations;
+      console.log("Update store with Sink -> ", this.sinkConfigurations);
+      this.props.setSinkConfigurations(this.sinkConfigurations);
+    }
+
   }
 
   onSinkChange(evt) {
@@ -49,8 +90,13 @@ class SinkSelector extends React.Component {
     });
   }
 
-  onValueUpdated(item, evt) {
-    console.log(item + '=== '+ evt.target.value);
+  onValueUpdated(parent, child, evt) {
+    const value = evt.target.value;
+    if (isNil(this.configMap[parent])) {
+      this.configMap[parent] = {};
+    }
+    this.configMap[parent][child] = value;
+    this.updateConfiguration();
   }
 
   render() {
@@ -73,24 +119,24 @@ class SinkSelector extends React.Component {
 
                 {
                   this.state.sink === item.paramName &&
-                    <div className="config-item-container">
+                  <div className="config-item-container">
                     {
                       (item.subParams).map(param => {
                         return (
                           <div className='list-row' key={param.paramName}>
                             <div className='name'>{param.displayName}
-                                {
-                                  param.isMandatory && <i className = "fa fa-asterisk mandatory"></i>
-                                }
+                              {
+                                param.isMandatory && <i className="fa fa-asterisk mandatory"></i>
+                              }
                             </div>
                             <div className='colon'>:</div>
                             <Input className='value' type="text" name="value"
-                              placeholder={'Enter '+ param.displayName + ' value'}
-                              defaultValue={param.defaultValue}
-                              onChange={this.onValueUpdated.bind(this, param)} />
+                              placeholder={'Enter ' + param.displayName + ' value'}
+                              defaultValue={isNil(this.configMap[item.paramName][param.paramName])?'':this.configMap[item.paramName][param.paramName]}
+                              onChange={this.onValueUpdated.bind(this, item.paramName, param.paramName)} />
                             {
                               param.description &&
-                              <InfoTip id = {param.paramName + "_InfoTip"} description = {param.description}></InfoTip>
+                              <InfoTip id={param.paramName + "_InfoTip"} description={param.description}></InfoTip>
                             }
                           </div>
                         )
