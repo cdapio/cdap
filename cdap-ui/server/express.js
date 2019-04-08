@@ -240,6 +240,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV,
       authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false,
+      instanceMetadataId: cdapConfig['instance.metadata.id'],
     });
 
     res.header({
