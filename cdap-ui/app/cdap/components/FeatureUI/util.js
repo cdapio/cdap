@@ -172,9 +172,9 @@ export function getFeatureObject(props) {
     });
   }
   if (!isEmpty(props.sinkConfigurations)) {
-      for(let property in props.sinkConfigurations) {
-        featureObject[property] = props.sinkConfigurations[property];
-      }
+    for (let property in props.sinkConfigurations) {
+      featureObject[property] = props.sinkConfigurations[property];
+    }
   }
   return featureObject;
 }
@@ -191,7 +191,7 @@ export function getErrorMessage(error, defaultMessage) {
   if (!isEmpty(error.message)) {
     errorMessage = errorMessage + "\n" + error.message;
   } else if (error.response && !isEmpty(error.response.message)) {
-    errorMessage =  errorMessage + "\n" + error.response.message;
+    errorMessage = errorMessage + "\n" + error.response.message;
   }
   return errorMessage;
 }
