@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .service('WidgetFactory', function() {
+  .service('WidgetFactory', function () {
     this.registry = {
       'number': {
         element: '<my-number-widget></my-number-widget>',
@@ -259,6 +259,21 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'config': 'myconfig'
+        }
+      },
+      'content-filter': {
+        element: '<my-content-filter></my-content-filter>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig'
+        }
+      },
+      'multi-keyvalue': {
+        element: '<my-multi-key-value></my-multi-key-value>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'input-schema': 'inputSchema'
         }
       }
     };

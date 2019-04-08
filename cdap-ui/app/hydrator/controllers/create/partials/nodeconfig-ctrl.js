@@ -40,6 +40,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.LogViewerStore = LogViewerStore;
     this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
+    this.contentFilterWidgetWiseLastEvent = {};
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -119,6 +120,7 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     let vm = this;
 
+
     this.EventPipe.on('dataset.selected', (schema, format, datasetAlreadyExists, datasetId) => {
       if (datasetAlreadyExists) {
         vm.datasetAlreadyExists = datasetAlreadyExists;
@@ -136,7 +138,55 @@ class HydratorPlusPlusNodeConfigCtrl {
       }
     });
 
+    this.EventPipe.on('content-filter.changed', (widgetName, widgetValue) => {
+      this.contentFilterWidgetWiseLastEvent[widgetName] = widgetValue;
+    });
+
+    this.EventPipe.on('content-filter.destroyed', (widgetName) => {
+      if(this.contentFilterWidgetWiseLastEvent.hasOwnProperty(widgetName)) {
+        delete(this.contentFilterWidgetWiseLastEvent[widgetName]);
+      }
+    });
+
   }
+
+  shouldHideWidgetBasedOnFilter(widget) {
+    if(widget.hasOwnProperty('widget-attributes') && widget['widget-attributes'].hasOwnProperty('filters')) {
+      try {
+        let filters = widget['widget-attributes']['filters'];
+        for(let index = 0; index < filters.length; index++) {
+          let filter = filters[index];
+
+          if(filter.hasOwnProperty('widget-name') && filter.hasOwnProperty('filter-values')) {
+            let filterWidgetName = filter['widget-name'];
+            let filterValues = filter['filter-values'];
+
+            // If the content filter widget is just created and no event has beed emitted yet
+            // then keep the widget hidden.
+            if(!this.contentFilterWidgetWiseLastEvent.hasOwnProperty(filterWidgetName)) {
+              return true;
+            }
+
+            // If emitted value of a content filter widget is present in current widget's filter array
+            // then hide it.
+            if(filterValues.indexOf(this.contentFilterWidgetWiseLastEvent[filterWidgetName]) !== -1) {
+              return false;
+            }
+          }
+        }
+        // By default hide everything.
+        return true;
+      } catch(e) {
+        console.log('Error', e);
+        // If any mismatch/error happens due to invalid widget-attributes then by default do
+        // not hide the widget.
+        return true;
+      }
+    }
+    // By default no need to hide a widget
+    return false;
+  }
+
   showContents() {
     if (angular.isArray(this.state.watchers)) {
       this.state.watchers.forEach(watcher => watcher());
