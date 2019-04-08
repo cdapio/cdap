@@ -180,13 +180,13 @@ function getTheme(): IThemeObj {
   let theme: IThemeObj = {};
   const DEFAULT_THEME_JSON: IThemeJSON = {
     'spec-version': '1.0',
-    'is-customer-MWC': true,
+    'is-customer-MWC': false,
   };
 
   const themeJSON = window.CDAP_UI_THEME || DEFAULT_THEME_JSON;
   const specVersion = themeJSON['spec-version'] || '1.0';
-  if (window.CDAP_UI_THEME['is-customer-MWC']) {
-    theme.isCustomerMWC = window.CDAP_UI_THEME['is-customer-MWC'];
+  if (themeJSON['is-customer-MWC'] !== undefined) {
+    theme.isCustomerMWC = themeJSON['is-customer-MWC'];
   }
   if (specVersion === '1.0') {
     theme = {
