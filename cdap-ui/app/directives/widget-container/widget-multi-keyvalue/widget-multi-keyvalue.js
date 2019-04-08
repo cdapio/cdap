@@ -151,9 +151,10 @@ angular.module(PKG.name + '.commons')
         // Refill the values by desearilizing the model when popup opens.
         function addPropertiesFromModel() {
           try {
-            if($scope.model === undefined || $scope.model === '' || $scope.model === null) {
+            if($scope.model === undefined || $scope.model === '' || $scope.model === null || $scope.model.includes('undefined')) {
               return;
             }
+            console.log('Incoming model', $scope.model);
             let keyValuePairs = $scope.model.split($scope.keyValuePairSeparator);
             keyValuePairs.map(pair => {
               let keyValue = pair.split($scope.keyValueSeparator);
