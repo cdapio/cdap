@@ -22,10 +22,12 @@
   overflow: auto;
   border-bottom: 1px solid #e2e2e2;
   margin-bottom: 8px;
+
   .list-row {
     display: flex;
     padding-bottom: 10px;
     align-items: center;
+
     .name {
       width: 300px;
       border: 1px solid rgba(0, 0, 0, 0.15);
@@ -36,23 +38,28 @@
       display: inline;
       font-weight: 500;
     }
+
     .colon {
       height: 32px;
       padding: 4px 10px;
       color: grey;
     }
+
     .value {
       width: 250px;
       height: 32px;
     }
+
     .field-info {
       padding-top: 7px;
       padding-left: 10px;
     }
   }
+
   .config-container {
     padding: 10px;
   }
+
   .config-header-label {
     margin-bottom: 5px;
     padding: 5px 20px;
@@ -60,11 +67,13 @@
     font-weight: 500;
     color: #333333;
     background: #eeeeee;
-    .form-check-input{
+
+    .form-check-input {
       position: relative;
       margin-right: 0.5rem;
     }
   }
+
   .advance-control {
     display: flex;
     flex-direction: row;

@@ -46,7 +46,7 @@ class SinkSelector extends React.Component {
         }
         if (!isEmpty(element.subParams)) {
           element.subParams.forEach(subElement => {
-            if(!isEmpty(subElement.defaultValue)) {
+            if (!isEmpty(subElement.defaultValue)) {
               this.configMap[element.paramName][subElement.paramName] = subElement.defaultValue;
             }
           });
@@ -55,15 +55,15 @@ class SinkSelector extends React.Component {
     }
     this.sinkConfigurations = cloneDeep(this.props.sinkConfigurations);
     if (!isNil(this.sinkConfigurations)) {
-      for(let property in this.sinkConfigurations) {
-        if(property) {
+      for (let property in this.sinkConfigurations) {
+        if (property) {
           if (isNil(this.configMap[property])) {
             this.configMap[property] = {};
           }
           this.configMap[property] = this.sinkConfigurations[property];
           this.setState({
             sink: property
-          })
+          });
         }
       }
     }
@@ -132,14 +132,14 @@ class SinkSelector extends React.Component {
                             <div className='colon'>:</div>
                             <Input className='value' type="text" name="value"
                               placeholder={'Enter ' + param.displayName + ' value'}
-                              defaultValue={isNil(this.configMap[item.paramName][param.paramName])?'':this.configMap[item.paramName][param.paramName]}
+                              defaultValue={isNil(this.configMap[item.paramName][param.paramName]) ? '' : this.configMap[item.paramName][param.paramName]}
                               onChange={this.onValueUpdated.bind(this, item.paramName, param.paramName)} />
                             {
                               param.description &&
                               <InfoTip id={param.paramName + "_InfoTip"} description={param.description}></InfoTip>
                             }
                           </div>
-                        )
+                        );
                       })
                     }
                   </div>
@@ -155,5 +155,6 @@ class SinkSelector extends React.Component {
 export default SinkSelector;
 SinkSelector.propTypes = {
   availableSinks: PropTypes.array,
-  sinkConfigurations: PropTypes.any
+  sinkConfigurations: PropTypes.any,
+  setSinkConfigurations: PropTypes.func
 };
