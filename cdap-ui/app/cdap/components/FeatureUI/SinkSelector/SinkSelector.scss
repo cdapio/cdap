@@ -17,7 +17,11 @@
 .sink-step-container {
   display: flex;
   flex-direction: column;
+  height: calc(100% - 40px);
   width: 100%;
+  overflow: auto;
+  border-bottom: 1px solid #e2e2e2;
+  margin-bottom: 8px;
   .list-row {
     display: flex;
     padding-bottom: 10px;

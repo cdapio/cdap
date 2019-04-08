@@ -45,6 +45,11 @@
   box-shadow: 3px 3px 5px #888888;
   background-color: #e8e8e8;
   font-size: 14px;
+  .title {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .edit-operation {
     font-size: 16px !important;
     padding: 10px 5px;

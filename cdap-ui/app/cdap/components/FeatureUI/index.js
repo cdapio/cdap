@@ -28,7 +28,8 @@ const mapStateToFeatureUIProps = (state) => {
     propertyMap: state.featureState.propertyMap,
     configurationList: state.featureState.configurationList,
     featureName: state.featureState.featureName,
-    operationType:  state.featureState.operationType
+    operationType:  state.featureState.operationType,
+    sinkConfigurations:  state.featureState.sinkConfigurations
   };
 };
 
