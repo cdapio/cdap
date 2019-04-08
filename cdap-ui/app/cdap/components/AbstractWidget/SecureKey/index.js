@@ -98,6 +98,13 @@ export default class SecureKeyTextarea extends Component {
     });
   };
 
+  handleOnInputChange = (e) => {
+    const { value } = e.target;
+    if (this.props.onChange) {
+      this.props.onChange(value);
+    }
+  };
+
   renderCustomEntry = () => {
     const helperText = (
       <div className="helper-text text-center" onClick={this.toggleCustomEntry}>
@@ -170,7 +177,7 @@ export default class SecureKeyTextarea extends Component {
       return (
         <textarea
           className="form-control raw-text-input"
-          onChange={this.props.onChange}
+          onChange={this.handleOnInputChange}
           value={this.props.value}
           {...this.props.widgetProps}
         />
@@ -181,7 +188,7 @@ export default class SecureKeyTextarea extends Component {
       <input
         type={this.props.inputTextType}
         className="form-control raw-text-input"
-        onChange={this.props.onChange}
+        onChange={this.handleOnInputChange}
         value={this.props.value}
         {...this.props.widgetProps}
       />
