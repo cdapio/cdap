@@ -33,6 +33,8 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -53,6 +55,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenti
 import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -509,10 +512,15 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         // Execute the startup task if provided
         if (startupTask != null) {
           Future<?> startupTaskFuture = startupTaskExecutor.submit(() -> {
+            Map<String, String> systemArgs = programOptions.getArguments().asMap();
+            LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, systemArgs);
+            Cancellable restoreContext = LoggingContextAccessor.setLoggingContext(loggingContext);
             try {
               startupTaskCompletion.complete(startupTask.call());
             } catch (Throwable t) {
               startupTaskCompletion.completeExceptionally(t);
+            } finally {
+              restoreContext.cancel();
             }
           });
 
