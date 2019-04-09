@@ -28,7 +28,8 @@ const mapStateToFeatureUIProps = (state) => {
     propertyMap: state.featureState.propertyMap,
     configurationList: state.featureState.configurationList,
     featureName: state.featureState.featureName,
-    operationType:  state.featureState.operationType
+    operationType:  state.featureState.operationType,
+    sinkConfigurations:  state.featureState.sinkConfigurations
   };
 };
 
@@ -85,6 +86,12 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
     updateConfigurationList: (list) => {
       dispatch({
         type: AddFeatureActions.updateConfigurationList,
+        payload: list
+      });
+    },
+    setAvailableSinks: (list) => {
+      dispatch({
+        type: AddFeatureActions.setAvailableSinks,
         payload: list
       });
     }

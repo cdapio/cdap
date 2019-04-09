@@ -37,7 +37,7 @@ class AddSchema extends React.Component {
   render() {
     return (
       <div className= { this.state.type == 'NEW' ? "add-container" : "scheme-container"}>
-        <div className="tilte">{this.state.title}</div>
+        <div className="title">{this.state.title}</div>
         {
           (this.state.type == 'NEW') ? <i className="fa fa-plus-circle add-operation" onClick={this.onOperation.bind(this,'ADD')}></i>:
           <div>

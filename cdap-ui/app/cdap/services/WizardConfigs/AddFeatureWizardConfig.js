@@ -19,6 +19,7 @@ import FeatureSchemaStep from '../../components/FeatureUI/AddFeatureWizard/Featu
 import FeaturePropertiesStep from '../../components/FeatureUI/AddFeatureWizard/FeaturePropertiesStep';
 import FeatureConfigurationStep from '../../components/FeatureUI/AddFeatureWizard/FeatureConfigurationStep';
 import FeatureDetailStep from '../../components/FeatureUI/AddFeatureWizard/FeatureDetailStep';
+import FeatureSinkStep from '../../components/FeatureUI/AddFeatureWizard/FeatureSinkStep';
 
 
 const AddFeatureWizardConfig = {
@@ -36,6 +37,13 @@ const AddFeatureWizardConfig = {
       title: 'Select Properties',
       description: '',
       content: (<FeaturePropertiesStep />)
+    },
+    {
+      id: 'sink',
+      shorttitle: 'Sink Config',
+      title: 'Set Sink Configuration',
+      description: '',
+      content: (<FeatureSinkStep />)
     },
     {
       id: 'configuration',

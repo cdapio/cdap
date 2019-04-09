@@ -27,6 +27,7 @@ import {
   GET_SCHEMA,
   GET_PROPERTY,
   GET_CONFIGURATION,
+  GET_SINKS,
   IS_OFFLINE,
   DELETE_PIPELINE,
   READ_PIPELINE,
@@ -102,6 +103,7 @@ class LandingPage extends React.Component {
     this.fetchProperties();
     this.fetchConfiguration();
     this.fetchSchemas();
+    this.fetchSinks();
   }
 
   toggleFeatureWizard() {
@@ -618,6 +620,23 @@ class LandingPage extends React.Component {
     );
   }
 
+  fetchSinks() {
+    FEDataServiceApi.availableSinks({
+      namespace: NamespaceStore.getState().selectedNamespace
+    }).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["configParamList"])) {
+          this.handleError(result, GET_SINKS);
+        } else {
+          this.props.setAvailableSinks(result["configParamList"]);
+        }
+      },
+      error => {
+        this.handleError(error, GET_SINKS);
+      }
+    );
+  }
+
   render() {
     return (
       <div className='landing-page-container'>{
@@ -690,5 +709,6 @@ LandingPage.propTypes = {
   updatePropertyMap: PropTypes.func,
   availableConfigurations: PropTypes.array,
   updateConfigurationList: PropTypes.func,
-  operationType: PropTypes.string
+  operationType: PropTypes.string,
+  setAvailableSinks: PropTypes.func
 };

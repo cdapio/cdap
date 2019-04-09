@@ -32,11 +32,13 @@ const defaultState = {
   featureName: '',
   availableSchemas: [],
   availableProperties: [],
+  availableSinks: [],
   availableConfigurations: [],
   selectedSchemas: [],
   detectedProperties: [],
   propertyMap: new Map(),
   configurationList: [],
+  sinkConfigurations: {},
   __complete: false,
   __skipped: false,
   __error: false
@@ -97,6 +99,22 @@ const isFeatureComplete = (state) => {
       }
     }
   }
+  if(isEmpty(state.sinkConfigurations)) {
+    return false;
+  } else {
+    for(let property in state.sinkConfigurations) {
+      if(property) {
+        const initialSinkConfig = find(state.sinkConfigurations, { paramName: property });
+        if (!isEmpty(initialSinkConfig)) {
+          for(let subParams of initialSinkConfig.subParams) {
+            if(subParams.isMandatory && isEmpty(state.sinkConfigurations[property][subParams.paramName])) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+  }
   return true;
 };
 
@@ -127,6 +145,12 @@ const featureState = (state = defaultState, action = defaultAction) => {
       state = {
         ...state,
         availableProperties: action.payload
+      };
+      break;
+    case AddFeatureActions.setAvailableSinks:
+      state = {
+        ...state,
+        availableSinks: action.payload
       };
       break;
     case AddFeatureActions.setAvailableConfigurations:
@@ -195,7 +219,14 @@ const featureState = (state = defaultState, action = defaultAction) => {
         detectedProperties: action.payload
       };
       break;
+    case AddFeatureActions.setSinkConfigurations:
+      state = {
+        ...state,
+        sinkConfigurations: action.payload
+      };
+      break;
   }
+  console.log("feature state =>" , state );
   return {
     ...state,
     __complete: isFeatureComplete(state)

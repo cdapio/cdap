@@ -22,6 +22,7 @@ const AddFeatureActions = {
   setAvailableSchemas: 'SET-AVAILABLE-SCHEMAS',
   setAvailableProperties: 'SET-AVAILABLE-PROPERTIES',
   setAvailableConfigurations: 'SET-AVAILABLE-CONFIGURATIONS',
+  setAvailableSinks: 'SET-AVAILABLE-SINKS',
   setSelectedSchemas: 'SET-SELECTED-SCHEMAS',
   addSelectedSchema: 'ADD-SELECTED-SCHEMA',
   updateSelectedSchema: 'UPDATE-SELECTED-SCHEMA',
@@ -29,6 +30,8 @@ const AddFeatureActions = {
   updatePropertyMap: 'UPDATE-PROPERTY-MAP',
   updateConfigurationList: 'UPDATE-CONFIGURATION-LIST',
   setDetectedProperties: 'SET-DETECTED-PROPERTIES',
+  setSinkConfigurations: 'SET-SINK-CONFIGURATIONS',
+
 };
 
 export default AddFeatureActions;
