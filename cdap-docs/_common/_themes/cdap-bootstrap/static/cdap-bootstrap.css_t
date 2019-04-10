@@ -59,7 +59,7 @@ body,html {
 }
 
 a {
-    color: #FF6600;
+    color: #0092ff;
 }
 
 p {
@@ -85,10 +85,10 @@ div.row > div.content > div.section > ul.simple {
 /* -- Header -- */
 
 .navbar-inverse {
-    background-color: #666666;
+    background-color: #333333;
     background-image: none;
-    border-bottom: 0;
-    box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
+    border-bottom: 2px solid #FF6600;
+    /* box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28); */
 }
 
 /* -- Header First Row -- */
@@ -103,18 +103,71 @@ div.row > div.content > div.section > ul.simple {
     font: 14px/16px Roboto, sans-serif;
     letter-spacing: 0;
     margin-bottom: 0;
-    margin-top: 22px;
+    margin-top: 19px;
     margin-left: 10px;
+}
+
+.version-dropdown a {
+  color: white;
+  text-decoration: none;
+  line-height: 50px;
+  padding-left: 10px;
+}
+
+.version-dropdown .dropdown-menu {
+  left: auto;
+  right: 0;
 }
 
 .navbar-brand {
     padding-right: 0;
     padding-top: 8px;
     margin-top: 10px;
+    height: auto;
 }
 
 .navbar-brand img {
-    height: 26px;
+    height: 21px;
+}
+
+@media (min-width: 1200px) {
+    #navbar > .container-fluid {
+        max-width: 1480px;
+    }
+}
+
+@media (max-width: 950px) and (min-width: 767px) {
+    #navbar .navbar-navigation {
+        float: left !important;
+    }
+}
+
+#navbar .navbar-toggle {
+    margin-right: 0;
+    padding-right: 0;
+    float: right;
+    margin-top: 4px;
+}
+
+#navbar > .container-fluid {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+#navbar .navbar-header {
+    padding-top: 5px;
+}
+
+#navbar .navbar-form {
+    box-shadow: none;
+    border-width: 0;
+}
+
+@media (min-width: 1200px) {
+    .container {
+        width: 90%;
+        max-width: 1324px;
+    }
 }
 
 a.navbar-brand {
@@ -135,17 +188,28 @@ a.navbar-brand {
 
 .navbar-search-image {
     color: white;
-    left: 36px;
-    position: relative;
+    left: 14px;
+    position: absolute;
+    top: 5px;
     transition: color .2s;
     vertical-align: middle;
+}
+
+@media (max-width: 767px) {
+    .navbar-search-image {
+        top: 36px;
+    }
 }
 
 .navbar-search-image:before {
     content: 'search';
 }
 
-form.navbar-form.navbar-right input.form-control {
+.navbar-search .form-group {
+    position: relative;
+}
+
+form.navbar-form.navbar-search input.form-control {
     padding-left: 36px;
 }
 
@@ -193,19 +257,21 @@ form.navbar-form.navbar-right input.form-control {
     padding-top: 0px;
     text-transform: uppercase;
     transition: color .2s;
-    border-bottom-width: 4px;
+    border-bottom-width: 8px;
 }
+
 
 .docsite-nav-tab-link:hover,
 .docsite-nav-tab-link:focus {
     color: white;
     text-decoration: none;
+    border-bottom-color: #666;
 }
 
 .navbar-inverse .navbar-nav > li > a {
     color: rgba(255,255,255,.7);
-    padding-bottom: 11px;
-    padding-top: 11px;
+    padding-bottom: 8px;
+    padding-top: 12px;
 }
 
 .navbar-inverse .navbar-nav > li > a.current {
@@ -217,8 +283,23 @@ form.navbar-form.navbar-right input.form-control {
 }
 
 li.docsite-nav-tab-container {
-    margin: 0 0;
+    margin: 0 10px;
 }
+
+.nav.navbar-nav > li.docsite-nav-tab-container:first-child {
+    margin-left: 0;
+}
+
+.nav.navbar-nav > li.docsite-nav-tab-container:last-child {
+    margin-right: 0;
+}
+
+.docsite-nav-tab-container .docsite-nav-tab-link {
+    font-size: 13px;
+    font-weight: normal;
+    letter-spacing: .26px;
+}
+
 
 /* -- Manual Nav Scroll (Left Sidebar) -- */
 
@@ -341,14 +422,15 @@ a.headerlink:before {
 /* -- Page Section Heads -- */
 
 h1 {
-    color: #757575;
-    font: 300 34px/40px Roboto, sans-serif;
+    color: #444;
+    font-family: 'Google Sans', sans-serif;
+    font-weight: 400;
     letter-spacing: -.01em;
 }
 
 h2 {
     border-bottom: 1px solid #ebebeb;
-    font: 300 24px/32px Roboto, sans-serif;
+    font: 400 24px/32px 'Google Sans', sans-serif;
     letter-spacing: -.01em;
     margin: 40px 0 20px;
     padding-bottom: 3px;
@@ -356,22 +438,22 @@ h2 {
 
 h3 {
     border-bottom: 1px dashed #ebebeb;
-    font: 400 20px/32px Roboto, sans-serif;
+    font: 400 20px/32px 'Google Sans', sans-serif;
     margin: 32px 0 16px;
 }
 
 h4 {
-    font: 400 18px/32px Roboto, sans-serif;
+    font: 400 18px/32px 'Google Sans', sans-serif;
     margin: 32px 0 16px;
 }
 
 h5 {
-    font: 700 16px/24px Roboto, sans-serif;
+    font: 400 16px/24px 'Google Sans', sans-serif;
     margin: 32px 0 16px;
 }
 
 h6 {
-    font: 500 16px/24px Roboto, sans-serif;
+    font: 400 16px/24px 'Google Sans', sans-serif;
     margin: 32px 0 16px;
 }
 
