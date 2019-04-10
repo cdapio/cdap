@@ -74,6 +74,9 @@ export default class Market extends Component {
 
     MyMarketApi.getCategories().subscribe(
       (categories) => {
+        categories = categories.filter(
+          (category) => ['gcp', 'usecase', 'datapack'].indexOf(category.name) === -1
+        );
         this.processPackagesAndCategories(filteredPackages, categories);
       },
       () => {
