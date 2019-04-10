@@ -255,7 +255,7 @@ public class DataprocConf {
       throw new IllegalArgumentException(
         String.format("Invalid config 'masterNumNodes' = %d. Master nodes must be either 1 or 3.", masterNumNodes));
     }
-    int workerNumNodes = getInt(properties, "workerNumNodes", 2);
+    int workerNumNodes = getInt(properties, "workerNumNodes", 9);
     if (workerNumNodes == 1) {
       throw new IllegalArgumentException(
         "Invalid config 'workerNumNodes' = 1. Worker nodes must either be zero for a single node cluster, " +
