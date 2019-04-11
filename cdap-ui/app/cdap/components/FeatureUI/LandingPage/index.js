@@ -356,7 +356,7 @@ class LandingPage extends React.Component {
         this.updateConfigurationList(this.props.availableConfigurations, configurationList);
       }
       this.setState({
-        showFeatureWizard: open
+        showFeatureWizard: !this.state.showFeatureWizard
       });
     }
   }
