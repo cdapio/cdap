@@ -21,7 +21,6 @@ import AddFeatureStore from '../../../../services/WizardStores/AddFeature/AddFea
 
 const mapStateToConfigurationProps = (state) => {
   return {
-    availableConfigurations: state.featureState.availableConfigurations,
     configurationList: state.featureState.configurationList
   };
 };

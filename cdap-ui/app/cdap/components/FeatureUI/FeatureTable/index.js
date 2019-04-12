@@ -76,7 +76,7 @@ class FeatureTable extends React.Component {
       <div
         className="ag-theme-balham grid-container">
         <AgGridReact
-          suppressMenuHide = {true}
+          suppressMenuHide={true}
           columnDefs={this.state.columnDefs}
           context={this.state.context}
           frameworkComponents={this.state.frameworkComponents}
@@ -109,8 +109,8 @@ class FeatureTable extends React.Component {
     }
   }
 
-  onAction(item, type){
-    switch(type) {
+  onAction(item, type) {
+    switch (type) {
       case EDIT:
         this.onEdit(item);
         break;

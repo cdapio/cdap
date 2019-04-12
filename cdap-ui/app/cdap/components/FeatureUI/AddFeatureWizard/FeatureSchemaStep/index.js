@@ -31,18 +31,6 @@ const mapStateToSelectSchemaProps = (state) => {
 
 const mapDispatchToSelectSchemaProps = (dispatch) => {
   return {
-    setAvailableSchemas: (schemas) => {
-      dispatch({
-        type: AddFeatureActions.setAvailableSchemas,
-        payload: schemas
-      });
-    },
-    addSelectedSchema: (schema) => {
-      dispatch({
-        type: AddFeatureActions.addSelectedSchema,
-        payload: schema
-      });
-    },
     updateSelectedSchema: (schema) => {
       dispatch({
         type: AddFeatureActions.updateSelectedSchema,
