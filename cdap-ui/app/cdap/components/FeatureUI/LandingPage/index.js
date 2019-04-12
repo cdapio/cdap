@@ -256,6 +256,7 @@ class LandingPage extends React.Component {
       let propertyMap = new Map();
       let configurationList = [];
       this.props.updateOperationType(type);
+      const sinkConfiguration = {};
       for (let property in pipelineData) {
         switch (property) {
           case PIPELINE_RUN_NAME: {
@@ -340,10 +341,15 @@ class LandingPage extends React.Component {
                   }
                 }
               } else {
-                configurationList.push({
-                  name: property,
-                  value: pipelineData[property].toString(),
-                });
+                const sinkConfig = find(this.props.availableSinks, { paramName: property });
+                if(sinkConfig) {
+                  sinkConfiguration[property] = pipelineData[property];
+                } else {
+                  configurationList.push({
+                    name: property,
+                    value: pipelineData[property].toString(),
+                  });
+                }
               }
             }
             break;
@@ -352,12 +358,11 @@ class LandingPage extends React.Component {
       if (propertyMap.size > 0) {
         this.props.updatePropertyMap(propertyMap);
       }
+      this.props.setSinkConfigurations(sinkConfiguration);
       if (!isEmpty(configurationList)) {
         this.updateConfigurationList(this.props.availableConfigurations, configurationList);
       }
-      this.setState({
-        showFeatureWizard: !this.state.showFeatureWizard
-      });
+      this.setState(prevState => ({  showFeatureWizard: !prevState.showFeatureWizard }));
     }
   }
 
@@ -706,6 +711,7 @@ LandingPage.propTypes = {
   availableSchemas: PropTypes.array,
   setSelectedSchemas: PropTypes.func,
   availableProperties: PropTypes.array,
+  availableSinks: PropTypes.array,
   updatePropertyMap: PropTypes.func,
   availableConfigurations: PropTypes.array,
   updateConfigurationList: PropTypes.func,

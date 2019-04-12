@@ -24,6 +24,7 @@ const mapStateToFeatureUIProps = (state) => {
     availableSchemas: state.featureState.availableSchemas,
     availableProperties: state.featureState.availableProperties,
     availableConfigurations: state.featureState.availableConfigurations,
+    availableSinks: state.featureState.availableSinks,
     selectedSchemas: state.featureState.selectedSchemas,
     propertyMap: state.featureState.propertyMap,
     configurationList: state.featureState.configurationList,
@@ -93,6 +94,12 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
       dispatch({
         type: AddFeatureActions.setAvailableSinks,
         payload: list
+      });
+    },
+    setSinkConfigurations: (configurations) => {
+      dispatch({
+        type: AddFeatureActions.setSinkConfigurations,
+        payload: configurations
       });
     }
   };
