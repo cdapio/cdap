@@ -27,7 +27,7 @@ describe('Navbar tests', () => {
       url: '/updateTheme',
       method: 'POST',
       body: {
-        uiThemePath: 'cdap-ui/server/config/themes/default.json',
+        uiThemePath: 'config/themes/default.json',
       },
     });
   });
@@ -63,7 +63,7 @@ describe('Navbar tests', () => {
       url: '/updateTheme',
       method: 'POST',
       body: {
-        uiThemePath: 'cdap-ui/server/config/themes/light.json',
+        uiThemePath: 'config/themes/light.json',
       },
     }).then(() => {
       cy.visit('/cdap');
