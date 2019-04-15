@@ -170,6 +170,7 @@
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
                   <exclude>**/*.json</exclude>
+                  <exclude>**/*.csv</exclude>
                   <exclude>**/*.lock</exclude>
                   <exclude>**/*.yaml</exclude>
                   <exclude>**/dll/**</exclude>

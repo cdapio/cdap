@@ -35,7 +35,7 @@
           "type": "batchsource",
           "label": "Amazon S3",
           "artifact": {
-            "name": "amazon-s3-plugins",
+            "name": "amazon-s3-plugins1",
             "version": "1.9.2",
             "scope": "USER"
           },
@@ -64,7 +64,7 @@
           "type": "batchsink",
           "label": "Amazon S32",
           "artifact": {
-            "name": "amazon-s3-plugins",
+            "name": "amazon-s3-plugins1",
             "version": "1.9.2",
             "scope": "USER"
           },
