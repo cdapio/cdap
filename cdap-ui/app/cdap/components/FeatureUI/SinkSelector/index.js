@@ -105,8 +105,8 @@ class SinkSelector extends React.Component {
         {
           (this.props.availableSinks).map((item) => {
             return (
-              <div className="config-container">
-                <div className="config-header-label" key={item.paramName}>
+              <div className="config-container" key={item.paramName}>
+                <div className="config-header-label">
                   <Input
                     type="radio"
                     value={item.paramName}

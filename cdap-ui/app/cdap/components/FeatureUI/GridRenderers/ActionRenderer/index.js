@@ -79,5 +79,5 @@ export default ActionRenderer;
 ActionRenderer.propTypes = {
   context: PropTypes.object,
   data: PropTypes.any,
-  colDef:PropTypes.array
+  colDef:PropTypes.object
 };

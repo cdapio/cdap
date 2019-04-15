@@ -99,15 +99,15 @@ const isFeatureComplete = (state) => {
       }
     }
   }
-  if(isEmpty(state.sinkConfigurations)) {
+  if (isEmpty(state.sinkConfigurations)) {
     return false;
   } else {
-    for(let property in state.sinkConfigurations) {
-      if(property) {
+    for (let property in state.sinkConfigurations) {
+      if (property) {
         const initialSinkConfig = find(state.sinkConfigurations, { paramName: property });
         if (!isEmpty(initialSinkConfig)) {
-          for(let subParams of initialSinkConfig.subParams) {
-            if(subParams.isMandatory && isEmpty(state.sinkConfigurations[property][subParams.paramName])) {
+          for (let subParams of initialSinkConfig.subParams) {
+            if (subParams.isMandatory && isEmpty(state.sinkConfigurations[property][subParams.paramName])) {
               return false;
             }
           }
@@ -126,7 +126,8 @@ const featureState = (state = defaultState, action = defaultAction) => {
     case AddFeatureActions.onReset:
       state = {
         ...defaultState,
-        propertyMap: new Map()
+        propertyMap: new Map(),
+        sinkConfigurations: {}
       };
       break;
     case AddFeatureActions.updateOperationType:
@@ -169,12 +170,6 @@ const featureState = (state = defaultState, action = defaultAction) => {
       state = {
         ...state,
         selectedSchemas: action.payload
-      };
-      break;
-    case AddFeatureActions.addSelectedSchema:
-      state = {
-        ...state,
-        selectedSchemas: [...state.selectedSchemas, action.payload]
       };
       break;
     case AddFeatureActions.updateSelectedSchema:
@@ -226,11 +221,11 @@ const featureState = (state = defaultState, action = defaultAction) => {
       };
       break;
   }
-  console.log("feature state =>" , state );
-  return {
-    ...state,
-    __complete: isFeatureComplete(state)
-  };
+  // Check if all mandatory conditions required to save feature pipeline
+  state["__complete"] = isFeatureComplete(state);
+
+  console.log("feature state =>", state);
+  return state;
 };
 
 
