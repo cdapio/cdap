@@ -160,11 +160,11 @@ class LandingPage extends React.Component {
       }
     });
     return [
-    { id: 0, name: TOTAL, count: totalCount, selected: false },
-    { id: 1, name: RUNNING, count: runningCount, selected: false },
-    { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
-    { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
-    { id: 4, name: FAILED, count: failCount, selected: false }];
+      { id: 0, name: TOTAL, count: totalCount, selected: false },
+      { id: 1, name: RUNNING, count: runningCount, selected: false },
+      { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
+      { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
+      { id: 4, name: FAILED, count: failCount, selected: false }];
   }
 
   getPipelines(type) {
@@ -342,7 +342,7 @@ class LandingPage extends React.Component {
                 }
               } else {
                 const sinkConfig = find(this.props.availableSinks, { paramName: property });
-                if(sinkConfig) {
+                if (sinkConfig) {
                   sinkConfiguration[property] = pipelineData[property];
                 } else {
                   configurationList.push({
@@ -362,7 +362,7 @@ class LandingPage extends React.Component {
       if (!isEmpty(configurationList)) {
         this.updateConfigurationList(this.props.availableConfigurations, configurationList);
       }
-      this.setState(prevState => ({  showFeatureWizard: !prevState.showFeatureWizard }));
+      this.setState(prevState => ({ showFeatureWizard: !prevState.showFeatureWizard }));
     }
   }
 
@@ -418,7 +418,7 @@ class LandingPage extends React.Component {
   }
 
   handleError(error, type) {
-    console.log('error ==> '+ error + "| type => " + type);
+    console.log('error ==> ' + error + "| type => " + type);
   }
 
   onWizardClose() {
@@ -678,7 +678,7 @@ class LandingPage extends React.Component {
               <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
             </div>
             <FeatureTable data={this.state.data}
-              isDataLoading = {this.state.isDataLoading}
+              isDataLoading={this.state.isDataLoading}
               onView={this.viewPipeline.bind(this)}
               onEdit={this.editPipeline.bind(this, EDIT_PIPELINE)}
               onClone={this.editPipeline.bind(this, CLONE_PIPELINE)}
@@ -716,5 +716,6 @@ LandingPage.propTypes = {
   availableConfigurations: PropTypes.array,
   updateConfigurationList: PropTypes.func,
   operationType: PropTypes.string,
-  setAvailableSinks: PropTypes.func
+  setAvailableSinks: PropTypes.func,
+  setSinkConfigurations: PropTypes.func
 };
