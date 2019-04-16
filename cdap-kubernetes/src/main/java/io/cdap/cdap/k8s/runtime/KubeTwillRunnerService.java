@@ -49,9 +49,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -142,7 +142,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     // labels have more strict requirements around valid character sets,
     // so use annotations to store the app name.
     resourceMeta.setAnnotations(Collections.singletonMap(APP_ANNOTATION, spec.getName()));
-    return new KubeTwillPreparer(apiClient, kubeNamespace, podInfo, spec, resourceMeta, (timeout, timeoutUnit) -> {
+    return new KubeTwillPreparer(apiClient, kubeNamespace, podInfo,
+                                 spec, runId, resourceMeta, (timeout, timeoutUnit) -> {
       // Adds the controller to the LiveInfo.
       liveInfoLock.lock();
       try {
@@ -225,8 +226,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     // Schedule to terminate the controller in the timeout time.
     Future<?> terminationFuture = monitorScheduler.schedule(controller::terminate, timeout, timeoutUnit);
 
-    // This queue is for transferring the cancel watch to the change listener
-    BlockingQueue<Cancellable> cancellableQueue = new ArrayBlockingQueue<>(1);
+    // This future is for transferring the cancel watch to the change listener
+    CompletableFuture<Cancellable> cancellableFuture = new CompletableFuture<>();
 
     // Listen to deployment changes. If the deployment represented by the controller changed to available, cancel
     // the terminationFuture. If the deployment is deleted, also cancel the terminationFuture, and also terminate
@@ -261,7 +262,11 @@ public class KubeTwillRunnerService implements TwillRunnerService {
             // Cancel the scheduled termination
             terminationFuture.cancel(false);
             // Cancel the watch
-            Uninterruptibles.takeUninterruptibly(cancellableQueue).cancel();
+            try {
+              Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+            } catch (ExecutionException e) {
+              // This never happen
+            }
           }
         }
       }
@@ -274,19 +279,23 @@ public class KubeTwillRunnerService implements TwillRunnerService {
           terminationFuture.cancel(false);
           controller.terminate();
           // Cancel the watch
-          Uninterruptibles.takeUninterruptibly(cancellableQueue).cancel();
+          try {
+            Uninterruptibles.getUninterruptibly(cancellableFuture).cancel();
+          } catch (ExecutionException e) {
+            // This never happen
+          }
         }
       }
     });
 
-    cancellableQueue.add(cancellable);
+    cancellableFuture.complete(cancellable);
 
     // On controller termination, remove it from the liveInfo
     controller.onTerminated(() -> {
       // Cancel the scheduled termination
       terminationFuture.cancel(false);
       // Cancel the watch if there is one
-      Uninterruptibles.takeUninterruptibly(cancellableQueue).cancel();
+      cancellable.cancel();
       liveInfoLock.lock();
       try {
         liveInfo.removeController(controller);
