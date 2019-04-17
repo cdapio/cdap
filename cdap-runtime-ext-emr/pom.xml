@@ -33,6 +33,19 @@
     <aws.sdk.version>1.11.133</aws.sdk.version>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <!-- This is for importing the dependencies -->
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-bom</artifactId>
+        <version>${aws.sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -48,13 +61,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk-bom</artifactId>
-      <version>${aws.sdk.version}</version>
-      <type>pom</type>
-      <scope>import</scope>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>

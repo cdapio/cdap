@@ -2735,6 +2735,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
+              <version>3.1.0</version>
               <configuration>
                 <additionalparam>-Xdoclint:none</additionalparam>
                 <failOnError>false</failOnError>
@@ -2743,18 +2744,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-site-plugin</artifactId>
-              <configuration>
-                <reportPlugins>
-                  <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <configuration>
-                      <additionalparam>-Xdoclint:none</additionalparam>
-                      <failOnError>false</failOnError>
-                    </configuration>
-                  </plugin>
-                </reportPlugins>
-              </configuration>
+              <version>3.7.1</version>
             </plugin>
           </plugins>
         </pluginManagement>
@@ -2771,6 +2761,8 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
         <configuration>
+          <additionalparam>-Xdoclint:none</additionalparam>
+          <failOnError>false</failOnError>
           <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
           <bottom>
             <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
