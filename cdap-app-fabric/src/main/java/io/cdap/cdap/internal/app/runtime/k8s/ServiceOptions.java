@@ -26,6 +26,7 @@ public class ServiceOptions extends EnvironmentOptions {
   public static final String APP_SPEC_PATH = "appSpecPath";
   public static final String PROGRAM_OPTIONS_PATH = "programOptions";
   public static final String BIND_ADDRESS = "bindAddress";
+  public static final String TWILL_RUN_ID = "twillRunId";
 
   @Option(name = APP_SPEC_PATH, usage = "Path to application specification file")
   private String appSpecPath;
@@ -35,6 +36,9 @@ public class ServiceOptions extends EnvironmentOptions {
 
   @Option(name = BIND_ADDRESS, usage = "The address to bind to")
   private String bindAddress;
+
+  @Option(name = TWILL_RUN_ID, usage = "The twill run id")
+  private String twillRunId;
 
   public String getAppSpecPath() {
     return appSpecPath;
@@ -46,5 +50,9 @@ public class ServiceOptions extends EnvironmentOptions {
 
   public String getBindAddress() {
     return bindAddress == null ? "0.0.0.0" : bindAddress;
+  }
+
+  public String getTwillRunId() {
+    return twillRunId;
   }
 }

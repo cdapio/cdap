@@ -63,6 +63,7 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -375,15 +376,10 @@ public class ProgramLifecycleService {
    *                               a user requires {@link Action#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public synchronized RunId run(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+  public RunId run(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isStoppedInSameProgram(programId)) {
-      throw new ConflictException(String.format("Program %s is already running in an version of the same application",
-                                                programId));
-    }
-    if (!isStopped(programId) && !isConcurrentRunsAllowed(programId.getType())) {
-      throw new ConflictException(String.format("Program %s is already running", programId));
-    }
+    checkConcurrentExecution(programId);
+
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
     Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
     if (overrides != null) {
@@ -408,20 +404,23 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the namespace, application, or program is not found
    * @throws ProfileConflictException if the profile is disabled
    */
-  public synchronized RunId runInternal(ProgramId programId, Map<String, String> userArgs,
-                                        Map<String, String> sysArgs,
-                                        boolean debug) throws NotFoundException, IOException, ConflictException {
+  public RunId runInternal(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
+                           boolean debug) throws NotFoundException, IOException, ConflictException {
     RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     String userId = SecurityRequestContext.getUserId();
     userId = userId == null ? "" : userId;
 
-    if (maxConcurrentRuns > 0 && maxConcurrentRuns <= store.countActiveRuns(maxConcurrentRuns)) {
-      ConflictException e = new ConflictException(String.format(
-        "Program %s cannot start because the maximum of %d concurrent runs is exceeded", programId, maxConcurrentRuns));
-      programStateWriter.reject(programId.run(runId), programOptions, programDescriptor, userId, e);
-      throw e;
+    synchronized (this) {
+      if (maxConcurrentRuns > 0 && maxConcurrentRuns <= store.countActiveRuns(maxConcurrentRuns)) {
+        ConflictException e = new ConflictException(
+          String.format("Program %s cannot start because the maximum of %d concurrent runs is exceeded",
+                        programId, maxConcurrentRuns));
+
+        programStateWriter.reject(programId.run(runId), programOptions, programDescriptor, userId, e);
+        throw e;
+      }
     }
 
     LOG.info("Attempt to run {} program {} as user {}", programId.getType(), programId.getProgram(),
@@ -482,16 +481,9 @@ public class ProgramLifecycleService {
    *                               a user requires {@link Action#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
-    throws Exception {
+  public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    if (isConcurrentRunsInSameAppForbidden(programId.getType()) && !isStoppedInSameProgram(programId)) {
-      throw new ConflictException(String.format("Program %s is already running in an version of the same application",
-                                                programId));
-    }
-    if (!isStopped(programId) && !isConcurrentRunsAllowed(programId.getType())) {
-      throw new ConflictException(String.format("Program %s is already running", programId));
-    }
+    checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
@@ -512,29 +504,27 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Starts a Program with the specified argument overrides. Does not perform authorization checks, and is meant to
-   * only be used by internal services. If the program is already started, returns the controller for the program.
+   * Starts a Program run with the given arguments. This method skips cluster lifecycle steps and
+   * does not perform authorization checks. If the program is already started, returns the controller for the program.
+   * NOTE: This method should only be used from this service and the {@link ProgramNotificationSubscriberService}
+   * upon receiving a {@link ProgramRunClusterStatus#PROVISIONED} state.
    *
    * @param programDescriptor descriptor of the program to run
    * @param programOptions options for the program run
    * @param programRunId program run id
    * @return controller for the program
-   * @throws IOException if there was a failure starting the program
    */
-  synchronized ProgramController startInternal(ProgramDescriptor programDescriptor,
-                                               ProgramOptions programOptions,
-                                               ProgramRunId programRunId) throws IOException {
+  ProgramController startInternal(ProgramDescriptor programDescriptor,
+                                  ProgramOptions programOptions, ProgramRunId programRunId) {
     RunId runId = RunIds.fromString(programRunId.getRun());
-    RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
-    if (runtimeInfo != null) {
-      return runtimeInfo.getController();
-    }
 
-    runtimeInfo = runtimeService.run(programDescriptor, programOptions, runId);
-    if (runtimeInfo == null) {
-      throw new IOException(String.format("Failed to start program %s", programRunId));
+    synchronized (this) {
+      RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
+      if (runtimeInfo != null) {
+        return runtimeInfo.getController();
+      }
+      return runtimeService.run(programDescriptor, programOptions, runId).getController();
     }
-    return runtimeInfo.getController();
   }
 
   /**
@@ -547,7 +537,7 @@ public class ProgramLifecycleService {
    * @throws InterruptedException if there was a problem while waiting for the stop call to complete
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
-  public synchronized void stop(ProgramId programId) throws Exception {
+  public void stop(ProgramId programId) throws Exception {
     stop(programId, null);
   }
 
@@ -813,6 +803,36 @@ public class ProgramLifecycleService {
 
   private boolean isStopped(ProgramId programId) throws Exception {
     return ProgramStatus.STOPPED == getProgramStatus(programId);
+  }
+
+  /**
+   * Checks if the given program is running and is allowed for concurrent execution.
+   *
+   * @param programId the program Id to check
+   * @throws ConflictException if concurrent execution is not allowed and has an existing run
+   * @throws NotFoundException if the program is not found
+   * @throws Exception if failed to determine the state
+   */
+  private synchronized void checkConcurrentExecution(ProgramId programId) throws Exception {
+    if (isConcurrentRunsInSameAppForbidden(programId.getType())) {
+      Map<RunId, RuntimeInfo> runs = runtimeService.list(programId);
+      if (!runs.isEmpty() || !isStoppedInSameProgram(programId)) {
+        throw new ConflictException(
+          String.format("Program %s is already running in an version of the same application with run ids %s",
+                        programId, runs.keySet()));
+      }
+    }
+    if (!isConcurrentRunsAllowed(programId.getType())) {
+      List<RunId> runIds = new ArrayList<>();
+      for (Map.Entry<RunId, RuntimeInfo> entry : runtimeService.list(programId.getType()).entrySet()) {
+        if (programId.equals(entry.getValue().getProgramId())) {
+          runIds.add(entry.getKey());
+        }
+      }
+      if (!runIds.isEmpty() || !isStopped(programId)) {
+        throw new ConflictException(String.format("Program %s is already running with run ids %s", programId, runIds));
+      }
+    }
   }
 
   /**

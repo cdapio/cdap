@@ -42,6 +42,7 @@ import io.kubernetes.client.models.V1VolumeMount;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.TwillController;
@@ -92,6 +93,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final List<URI> resources;
   private final Set<String> runnables;
   private final Map<String, Map<String, String>> environments;
+  private final RunId twillRunId;
   private final V1ObjectMeta resourceMeta;
   private final KubeTwillControllerFactory controllerFactory;
   private final URI appSpec;
@@ -100,7 +102,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int vcores;
 
   KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
-                    V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
+                    RunId twillRunId, V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
@@ -111,10 +113,8 @@ class KubeTwillPreparer implements TwillPreparer {
     this.runnables = spec.getRunnables().keySet();
     this.resources = new ArrayList<>();
     this.controllerFactory = controllerFactory;
-    this.environments = new HashMap<>();
-    for (String runnable : runnables) {
-      environments.put(runnable, new HashMap<>());
-    }
+    this.environments = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
+    this.twillRunId = twillRunId;
     this.resourceMeta = resourceMeta;
     RuntimeSpecification runtimeSpecification = spec.getRunnables().values().iterator().next();
     ResourceSpecification resourceSpecification = runtimeSpecification.getResourceSpecification();
@@ -457,7 +457,8 @@ class KubeTwillPreparer implements TwillPreparer {
     // when other program types are supported, there will need to be a mapping from program type to main class
     container.setArgs(Arrays.asList("io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
                                     String.format("--appSpecPath=%s/%s", configDir, APP_SPEC),
-                                    String.format("--programOptions=%s/%s", configDir, PROGRAM_OPTIONS)));
+                                    String.format("--programOptions=%s/%s", configDir, PROGRAM_OPTIONS),
+                                    String.format("--twillRunId=%s", twillRunId.getId())));
     podSpec.setContainers(Collections.singletonList(container));
 
     templateSpec.setSpec(podSpec);
