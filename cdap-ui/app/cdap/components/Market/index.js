@@ -65,11 +65,18 @@ export default class Market extends Component {
 
   getCategories = (packages) => {
     const filteredPackages = packages.filter((packet) => {
-      return packet.categories.indexOf('datapack') === -1;
+      return (
+        packet.categories.indexOf('datapack') === -1 &&
+        packet.categories.indexOf('gcp') === -1 &&
+        packet.categories.indexOf('usecase') === -1
+      );
     });
 
     MyMarketApi.getCategories().subscribe(
       (categories) => {
+        categories = categories.filter(
+          (category) => ['gcp', 'usecase', 'datapack'].indexOf(category.name) === -1
+        );
         this.processPackagesAndCategories(filteredPackages, categories);
       },
       () => {

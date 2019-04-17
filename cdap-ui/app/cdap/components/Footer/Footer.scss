@@ -15,6 +15,7 @@
  */
 
 @import "~styles/variables.scss";
+@import "~styles/colors.scss";
 
 footer.app-footer {
   background-color: white;
@@ -34,5 +35,11 @@ footer.app-footer {
   }
   a {
     color: inherit;
+  }
+  .instance-metadata-id {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    color: $grey-05;
   }
 }

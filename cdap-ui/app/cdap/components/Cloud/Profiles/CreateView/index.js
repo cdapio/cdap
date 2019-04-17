@@ -98,6 +98,16 @@ class ProfileCreateView extends Component {
       creatingProfile: true,
     });
     let { label, name, description, properties } = CreateProfileStore.getState();
+    /**
+     * TODO: https://issues.cask.co/browse/CDAP-15211
+     * Today we special case it for projectid alone to minimize the impact of the change
+     * Ideally we should have this information from backend (nullable fields) so that UI
+     * can be proactive in not passing empty string for nullable fields while creating
+     * a profile.
+     */
+    if (properties['projectId'].value === '') {
+      delete properties['projectId'];
+    }
     let jsonBody = {
       description,
       label,

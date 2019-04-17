@@ -204,7 +204,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     ApplicationSpecification appSpec = readJsonFile(appSpecFile, ApplicationSpecification.class);
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     UserService userService = new UserService(cConf, artifactFinder, programRunner, programStateWriter, appSpec,
-                                              programOptions, programRunId, options.getBindAddress());
+                                              programOptions, programRunId, options);
     services.add(userService);
     closeableResources.add(userService);
   }
@@ -245,10 +245,10 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
 
     private UserService(CConfiguration cConf, ArtifactFinder artifactFinder, ProgramRunner programRunner,
                         ProgramStateWriter programStateWriter, ApplicationSpecification appSpec,
-                        ProgramOptions programOptions, ProgramRunId programRunId, String bindHost) {
+                        ProgramOptions programOptions, ProgramRunId programRunId, ServiceOptions serviceOptions) {
       this.controllerFuture = new CompletableFuture<>();
       this.controllerFuture.thenAcceptAsync(
-        c -> c.addListener(new StateChangeListener(programRunId, null, programStateWriter),
+        c -> c.addListener(new StateChangeListener(programRunId, serviceOptions.getTwillRunId(), programStateWriter),
                            Threads.SAME_THREAD_EXECUTOR));
       this.programCompletion = new CompletableFuture<>();
       this.cConf = cConf;
@@ -256,7 +256,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       this.artifactFinder = artifactFinder;
       this.appSpec = appSpec;
       this.programOptions = programOptions;
-      this.bindHost = bindHost;
+      this.bindHost = serviceOptions.getBindAddress();
       this.programRunId = programRunId;
       this.maxStopSeconds = cConf.getLong(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS, 60);
     }
