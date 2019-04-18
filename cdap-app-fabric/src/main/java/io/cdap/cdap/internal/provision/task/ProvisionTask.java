@@ -21,7 +21,6 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
-import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -63,8 +62,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class ProvisionTask extends ProvisioningTask {
   private static final Logger LOG = LoggerFactory.getLogger(ProvisionTask.class);
-  private final Provisioner provisioner;
-  private final ProvisionerContext provisionerContext;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramStateWriter programStateWriter;
 
@@ -72,15 +69,13 @@ public class ProvisionTask extends ProvisioningTask {
                        Provisioner provisioner, ProvisionerContext provisionerContext,
                        ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
                        int retryTimeLimitSecs) {
-    super(initialTaskInfo, transactionRunner, retryTimeLimitSecs);
-    this.provisioner = provisioner;
-    this.provisionerContext = provisionerContext;
+    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, retryTimeLimitSecs);
     this.provisionerNotifier = provisionerNotifier;
     this.programStateWriter = programStateWriter;
   }
 
   @Override
-  protected Map<ProvisioningOp.Status, ProvisioningSubtask> getSubtasks() {
+  protected Map<ProvisioningOp.Status, ProvisioningSubtask> createSubTasks(ProvisioningTaskInfo initialTaskInfo) {
     Map<ProvisioningOp.Status, ProvisioningSubtask> subtasks = new HashMap<>();
 
     subtasks.put(ProvisioningOp.Status.REQUESTING_CREATE, createClusterCreateSubtask());
@@ -89,7 +84,7 @@ public class ProvisionTask extends ProvisioningTask {
                  new ClusterDeleteSubtask(provisioner, provisionerContext,
                                           cluster -> Optional.of(ProvisioningOp.Status.POLLING_DELETE)));
     subtasks.put(ProvisioningOp.Status.POLLING_DELETE, createPollingDeleteSubtask());
-    subtasks.put(ProvisioningOp.Status.INITIALIZING, createInitializeSubtask());
+    subtasks.put(ProvisioningOp.Status.INITIALIZING, createInitializeSubtask(initialTaskInfo));
     subtasks.put(ProvisioningOp.Status.FAILED, EndSubtask.INSTANCE);
     subtasks.put(ProvisioningOp.Status.CREATED, EndSubtask.INSTANCE);
     subtasks.put(ProvisioningOp.Status.CANCELLED, EndSubtask.INSTANCE);
@@ -124,8 +119,10 @@ public class ProvisionTask extends ProvisioningTask {
   }
 
   private ProvisioningSubtask createPollingCreateSubtask() {
-    return new ClusterPollSubtask(provisioner, provisionerContext, ClusterStatus.CREATING, cluster -> {
+    return new ClusterPollSubtask(provisioner, provisionerContext, cluster -> {
       switch (cluster.getStatus()) {
+        case CREATING:
+          return Optional.of(ProvisioningOp.Status.POLLING_CREATE);
         case RUNNING:
           return Optional.of(ProvisioningOp.Status.INITIALIZING);
         case NOT_EXISTS:
@@ -152,7 +149,7 @@ public class ProvisionTask extends ProvisioningTask {
 
   private ProvisioningSubtask createPollingDeleteSubtask() {
     long taskStartTime = System.currentTimeMillis();
-    return new ClusterPollSubtask(provisioner, provisionerContext, ClusterStatus.DELETING, cluster -> {
+    return new ClusterPollSubtask(provisioner, provisionerContext, cluster -> {
       switch (cluster.getStatus()) {
         case CREATING:
           // this would be really weird, but provisioners can do whatever they want
@@ -185,7 +182,7 @@ public class ProvisionTask extends ProvisioningTask {
     });
   }
 
-  private ProvisioningSubtask createInitializeSubtask() {
+  private ProvisioningSubtask createInitializeSubtask(ProvisioningTaskInfo initialTaskInfo) {
     return new ClusterInitializeSubtask(provisioner, provisionerContext, cluster -> {
       provisionerNotifier.provisioned(programRunId, initialTaskInfo.getProgramOptions(),
                                       initialTaskInfo.getProgramDescriptor(), initialTaskInfo.getUser(),

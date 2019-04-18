@@ -21,7 +21,6 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
-import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -52,8 +51,7 @@ import java.util.Optional;
  */
 public class DeprovisionTask extends ProvisioningTask {
   private static final Logger LOG = LoggerFactory.getLogger(DeprovisionTask.class);
-  private final Provisioner provisioner;
-  private final ProvisionerContext provisionerContext;
+
   private final ProvisionerNotifier provisionerNotifier;
   private final Location keysDir;
 
@@ -61,15 +59,13 @@ public class DeprovisionTask extends ProvisioningTask {
                          int retryTimeLimitSecs, Provisioner provisioner,
                          ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
                          LocationFactory locationFactory) {
-    super(initialTaskInfo, transactionRunner, retryTimeLimitSecs);
-    this.provisioner = provisioner;
-    this.provisionerContext = provisionerContext;
+    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, retryTimeLimitSecs);
     this.provisionerNotifier = provisionerNotifier;
     this.keysDir = locationFactory.create(initialTaskInfo.getSecureKeysDir());
   }
 
   @Override
-  protected Map<ProvisioningOp.Status, ProvisioningSubtask> getSubtasks() {
+  protected Map<ProvisioningOp.Status, ProvisioningSubtask> createSubTasks(ProvisioningTaskInfo initialTaskInfo) {
     Map<ProvisioningOp.Status, ProvisioningSubtask> subtasks = new HashMap<>();
 
     // RequestingDelete
@@ -79,8 +75,10 @@ public class DeprovisionTask extends ProvisioningTask {
     subtasks.put(ProvisioningOp.Status.REQUESTING_DELETE, subtask);
 
     // PollingDelete
-    subtask = new ClusterPollSubtask(provisioner, provisionerContext, ClusterStatus.DELETING, cluster -> {
+    subtask = new ClusterPollSubtask(provisioner, provisionerContext, cluster -> {
       switch (cluster.getStatus()) {
+        case DELETING:
+          return Optional.of(ProvisioningOp.Status.POLLING_DELETE);
         case NOT_EXISTS:
           try {
             provisionerNotifier.deprovisioned(programRunId);

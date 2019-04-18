@@ -40,9 +40,8 @@ public class ClusterDeleteSubtask extends ProvisioningSubtask {
   @Override
   public Cluster execute(Cluster cluster) throws Exception {
     provisioner.deleteCluster(provisionerContext, cluster);
-    Cluster updatedCluster = new Cluster(cluster == null ? null : cluster.getName(), ClusterStatus.DELETING,
-                                         cluster == null ? Collections.emptyList() : cluster.getNodes(),
-                                         cluster == null ? Collections.emptyMap() : cluster.getProperties());
-    return updatedCluster;
+    return new Cluster(cluster == null ? null : cluster.getName(), ClusterStatus.DELETING,
+                       cluster == null ? Collections.emptyList() : cluster.getNodes(),
+                       cluster == null ? Collections.emptyMap() : cluster.getProperties());
   }
 }

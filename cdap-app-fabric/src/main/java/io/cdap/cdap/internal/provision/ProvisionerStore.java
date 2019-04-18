@@ -35,7 +35,7 @@ import javax.inject.Inject;
  *
  * Provisioner Store uses transactionRunners to perform underlying CRUD operations.
  */
-public class ProvisionerStore {
+final class ProvisionerStore {
 
   private final TransactionRunner txRunner;
 
@@ -44,37 +44,37 @@ public class ProvisionerStore {
   }
 
   @Inject
-  public ProvisionerStore(TransactionRunner txRunner) {
+  ProvisionerStore(TransactionRunner txRunner) {
     this.txRunner = txRunner;
   }
 
-  public List<ProvisioningTaskInfo> listTaskInfo() throws IOException {
+  List<ProvisioningTaskInfo> listTaskInfo() throws IOException {
     return TransactionRunners.run(txRunner, context -> {
       return getProvisionerTable(context).listTaskInfo();
     }, IOException.class);
   }
 
   @Nullable
-  public ProvisioningTaskInfo getTaskInfo(final ProvisioningTaskKey key) throws IOException {
+  ProvisioningTaskInfo getTaskInfo(final ProvisioningTaskKey key) throws IOException {
     return TransactionRunners.run(txRunner, context -> {
       return getProvisionerTable(context).getTaskInfo(key);
     }, IOException.class);
   }
 
-  public void putTaskInfo(final ProvisioningTaskInfo taskInfo) throws IOException {
+  void putTaskInfo(final ProvisioningTaskInfo taskInfo) throws IOException {
     TransactionRunners.run(txRunner, context -> {
       getProvisionerTable(context).putTaskInfo(taskInfo);
     }, IOException.class);
   }
 
-  public void deleteTaskInfo(ProgramRunId programRunId) throws IOException {
+  void deleteTaskInfo(ProgramRunId programRunId) throws IOException {
     TransactionRunners.run(txRunner, context -> {
       getProvisionerTable(context).deleteTaskInfo(programRunId);
     }, IOException.class);
   }
 
   @Nullable
-  public ProvisioningTaskInfo getExistingAndCancel(final ProvisioningTaskKey taskKey) throws IOException {
+  ProvisioningTaskInfo getExistingAndCancel(final ProvisioningTaskKey taskKey) throws IOException {
     return TransactionRunners.run(txRunner, context -> {
       ProvisionerTable table = getProvisionerTable(context);
       ProvisioningTaskInfo currentTaskInfo = table.getTaskInfo(taskKey);
