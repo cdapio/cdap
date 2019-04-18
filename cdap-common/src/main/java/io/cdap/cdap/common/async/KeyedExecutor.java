@@ -18,27 +18,29 @@ package io.cdap.cdap.common.async;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Wrapper around an ExecutorService that keeps track of submitted runnables by a key. Enforces that
+ * Wrapper around an ExecutorService that keeps track of submitted tasks by a key. Enforces that
  * only one runnable per key is ever running, and exposes methods to get the corresponding future for a key, and check
  * if there is a runnable for a given key.
  *
  * @param <K> type of key
  */
 public class KeyedExecutor<K> {
-  private final ExecutorService executorService;
+  private final ScheduledExecutorService scheduler;
   private final ConcurrentMap<K, CompletableFuture<Void>> futures;
 
-  public KeyedExecutor(ExecutorService executorService) {
-    this.executorService = executorService;
+  public KeyedExecutor(ScheduledExecutorService scheduler) {
+    this.scheduler = scheduler;
     this.futures = new ConcurrentHashMap<>();
   }
 
@@ -50,30 +52,69 @@ public class KeyedExecutor<K> {
    * @param task the task to submit
    * @return a Future representing pending completion of the task
    */
-  public Future<Void> submit(K key, Runnable task) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
+  public Future<Void> execute(K key, Runnable task) {
+    // Execute the runnable once
+    return submit(key, () -> {
+      task.run();
+      return -1;
+    });
+  }
+
+  /**
+   * Submits a {@link RepeatedTask} for execution and returns a Future representing that task.
+   * If there is already a task running for the key, the given task will not be executed,
+   * and the existing Future for the key will be returned.
+   *
+   * @param key the task key
+   * @param task the task to submit
+   * @return a Future representing pending completion of the task
+   */
+  public Future<Void> submit(K key, RepeatedTask task) {
+    AtomicReference<Future<?>> futureReference = new AtomicReference<>();
+    AtomicBoolean cancelled = new AtomicBoolean();
+
+    CompletableFuture<Void> future = new CompletableFuture<Void>() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        // Cancel the task execution
+        if (cancelled.compareAndSet(false, true)) {
+          Optional.ofNullable(futureReference.get()).ifPresent(f -> f.cancel(mayInterruptIfRunning));
+        }
+        return super.cancel(mayInterruptIfRunning);
+      }
+    };
     CompletableFuture<Void> oldFuture = futures.putIfAbsent(key, future);
     if (oldFuture != null) {
       return oldFuture;
     }
 
-    Future<?> taskFuture = executorService.submit(() -> {
-      try {
-        task.run();
-        future.complete(null);
-      } catch (Exception e) {
-        future.completeExceptionally(e);
+    futureReference.set(scheduler.submit(new Runnable() {
+      @Override
+      public void run() {
+        if (cancelled.get()) {
+          return;
+        }
+        try {
+          long delayMillis = task.executeOnce();
+          if (delayMillis < 0) {
+            future.complete(null);
+            return;
+          }
+          // If the task is not cancelled, schedule the task to run again
+          if (!cancelled.get()) {
+            futureReference.set(scheduler.schedule(this, delayMillis, TimeUnit.MILLISECONDS));
+          }
+        } catch (Exception e) {
+          future.completeExceptionally(e);
+        }
       }
-    });
+    }));
 
-    future.exceptionally(throwable -> {
-      if (throwable instanceof CancellationException) {
-        taskFuture.cancel(true);
-      }
-      return null;
-    });
+    // When the future is done, remove it from the map
+    future.handle((r, e) -> futures.remove(key, future));
 
     return future;
+
   }
 
   /**
@@ -90,7 +131,7 @@ public class KeyedExecutor<K> {
    * Calls {@link ExecutorService#shutdown()} on the underlying executor
    */
   public void shutdown() {
-    executorService.shutdown();
+    scheduler.shutdown();
   }
 
   /**
@@ -99,7 +140,7 @@ public class KeyedExecutor<K> {
    * @return tasks that were awaiting execution
    */
   public List<Runnable> shutdownNow() {
-    return executorService.shutdownNow();
+    return scheduler.shutdownNow();
   }
 
   /**
@@ -111,6 +152,6 @@ public class KeyedExecutor<K> {
    * @throws InterruptedException if interrupted while waiting
    */
   public boolean awaitTermination(long duration, TimeUnit timeUnit) throws InterruptedException {
-    return executorService.awaitTermination(duration, timeUnit);
+    return scheduler.awaitTermination(duration, timeUnit);
   }
 }

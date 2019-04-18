@@ -20,38 +20,25 @@ package io.cdap.cdap.internal.provision.task;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
-import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
  * Provisioning subtask that polls for cluster status until it is different than a specified status.
  */
 public class ClusterPollSubtask extends ProvisioningSubtask {
-  private final ClusterStatus status;
 
-  public ClusterPollSubtask(Provisioner provisioner, ProvisionerContext provisionerContext, ClusterStatus status,
+  public ClusterPollSubtask(Provisioner provisioner, ProvisionerContext provisionerContext,
                             Function<Cluster, Optional<ProvisioningOp.Status>> transition) {
-    super(provisioner, provisionerContext, transition);
-    this.status = status;
-  }
+    super(provisioner, provisionerContext, transition); }
 
   @Override
   protected Cluster execute(Cluster cluster) throws Exception {
-    PollingStrategy pollingStrategy = provisioner.getPollingStrategy(provisionerContext, cluster);
-    long startTime = System.currentTimeMillis();
-    int numPolls = 0;
-    ClusterStatus currentStatus;
-    do {
-      currentStatus = provisioner.getClusterStatus(provisionerContext, cluster);
-      if (currentStatus == status) {
-        TimeUnit.MILLISECONDS.sleep(pollingStrategy.nextPoll(numPolls++, startTime));
-      }
-    } while (currentStatus == status);
-    return new Cluster(cluster, currentStatus);
+    ClusterStatus currentStatus = provisioner.getClusterStatus(provisionerContext, cluster);
+    // If the status doesn't change, return the same Cluster object. Otherwise return a Cluster with the new status
+    return currentStatus == cluster.getStatus() ? cluster : new Cluster(cluster, currentStatus);
   }
 }
