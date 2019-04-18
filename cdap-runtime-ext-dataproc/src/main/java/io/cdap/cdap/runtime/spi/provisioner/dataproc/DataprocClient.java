@@ -310,7 +310,9 @@ public class DataprocClient implements AutoCloseable {
     FirewallList firewalls = compute.firewalls().list(projectId).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
-    for (Firewall firewall : firewalls.getItems()) {
+
+    // Iterate all firewall rules and see if it has ingress rules for all required firewall port.
+    for (Firewall firewall : Optional.ofNullable(firewalls.getItems()).orElse(Collections.emptyList())) {
       // network is a url like https://www.googleapis.com/compute/v1/projects/<project>/<region>/networks/<name>
       // we want to get the last section of the path and compare to the configured network name
       int idx = firewall.getNetwork().lastIndexOf('/');

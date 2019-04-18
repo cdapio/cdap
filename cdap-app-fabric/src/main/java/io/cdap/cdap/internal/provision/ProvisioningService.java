@@ -84,7 +84,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -138,7 +138,7 @@ public class ProvisioningService extends AbstractIdleService {
       try {
         provisionerStore.deleteTaskInfo(programRunId);
       } catch (IOException e) {
-        LOG.error(String.format("Error cleaning up provisioning task {} {}", programRunId.toString(), e.getMessage()));
+        LOG.error("Error cleaning up provisioning task {}", programRunId.toString(), e);
       }
     };
   }
@@ -147,9 +147,8 @@ public class ProvisioningService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
     initializeProvisioners();
-    ExecutorService executorService = Executors.newCachedThreadPool(
-      Threads.createDaemonThreadFactory("provisioning-service-%d"));
-    this.taskExecutor = new KeyedExecutor<>(executorService);
+    this.taskExecutor = new KeyedExecutor<>(Executors.newScheduledThreadPool(
+      0, Threads.createDaemonThreadFactory("provisioning-service-%d")));
     resumeTasks(taskStateCleanup);
   }
 
@@ -530,6 +529,7 @@ public class ProvisioningService extends AbstractIdleService {
 
   private Runnable createProvisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner) {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
+    Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
 
     ProvisionerContext context;
     try {
@@ -537,12 +537,12 @@ public class ProvisioningService extends AbstractIdleService {
                               new DefaultSSHContext(locationFactory.create(taskInfo.getSecureKeysDir()),
                                                     createSSHKeyPair(taskInfo)));
     } catch (IOException e) {
-      runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+      runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
       provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
       return () -> { };
     } catch (InvalidMacroException e) {
-      runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+      runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Could not evaluate macros while provisoning. "
                                               + "The run will be marked as failed.", e));
       provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
@@ -553,20 +553,18 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisioningTask task = new ProvisionTask(taskInfo, transactionRunner, provisioner, context,
                                               provisionerNotifier, programStateWriter, 300);
 
-    Runnable runnable = () -> runWithProgramLogging(
-      programRunId, taskInfo.getProgramOptions().getArguments().asMap(),
-      () -> {
-        try {
-          task.execute();
-        } catch (InterruptedException e) {
-          LOG.debug("Provision task for program run {} interrupted.", taskInfo.getProgramRunId());
-        } catch (Exception e) {
-          LOG.info("Provision task for program run {} failed.", taskInfo.getProgramRunId(), e);
-        }
-      });
-
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION);
-    return () -> taskExecutor.submit(taskKey, runnable);
+    return () -> taskExecutor.submit(taskKey, () -> callWithProgramLogging(programRunId, systemArgs, () -> {
+      try {
+        return task.executeOnce();
+      } catch (InterruptedException e) {
+        LOG.debug("Provision task for program run {} interrupted.", taskInfo.getProgramRunId());
+        throw e;
+      } catch (Exception e) {
+        LOG.info("Provision task for program run {} failed.", taskInfo.getProgramRunId(), e);
+        throw e;
+      }
+    }));
   }
 
   private Runnable createDeprovisionTask(ProvisioningTaskInfo taskInfo, Provisioner provisioner,
@@ -581,68 +579,65 @@ public class ProvisioningService extends AbstractIdleService {
       LOG.warn("Failed to load ssh key. No SSH key will be available for the deprovision task", e);
     }
 
+    ProgramRunId programRunId = taskInfo.getProgramRunId();
+    Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
-      context = createContext(taskInfo.getProgramRunId(), taskInfo.getUser(), properties,
-                              new DefaultSSHContext(null, sshKeyPair));
+      context = createContext(programRunId, taskInfo.getUser(), properties, new DefaultSSHContext(null, sshKeyPair));
     } catch (InvalidMacroException e) {
-      runWithProgramLogging(taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
+      runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
                                               + "The cluster will be marked as orphaned.", e));
-      provisionerNotifier.orphaned(taskInfo.getProgramRunId());
+      provisionerNotifier.orphaned(programRunId);
       return () -> { };
     }
     DeprovisionTask task = new DeprovisionTask(taskInfo, transactionRunner, 300,
                                                provisioner, context, provisionerNotifier, locationFactory);
+    ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION);
 
-    Runnable runnable = () -> runWithProgramLogging(
-      taskInfo.getProgramRunId(), taskInfo.getProgramOptions().getArguments().asMap(),
-      () -> {
-        try {
-          // any logs within the task, and any errors caused by the task will be logged in the program run context
-          task.execute();
-          taskCleanup.accept(taskInfo.getProgramRunId());
-        } catch (InterruptedException e) {
-          // We can get interrupted if the task is cancelled or CDAP is stopped. In either case, just return.
-          // If it was cancelled, state cleanup is left to the caller. If it was CDAP master stopping, the task
-          // will be resumed on master startup
-          LOG.debug("Deprovision task for program run {} interrupted.", taskInfo.getProgramRunId());
-        } catch (Exception e) {
-          // Otherwise, if there was an error deprovisioning, run the cleanup
-          LOG.info("Deprovision task for program run {} failed.", taskInfo.getProgramRunId(), e);
-          taskCleanup.accept(taskInfo.getProgramRunId());
+    return () -> taskExecutor.submit(taskKey, () -> callWithProgramLogging(programRunId, systemArgs, () -> {
+      try {
+        long delay = task.executeOnce();
+        if (delay < 0) {
+          taskCleanup.accept(programRunId);
         }
-      });
-
-    ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskInfo.getProgramRunId(), ProvisioningOp.Type.DEPROVISION);
-    return () -> taskExecutor.submit(taskKey, runnable);
+        return delay;
+      } catch (InterruptedException e) {
+        // We can get interrupted if the task is cancelled or CDAP is stopped. In either case, just return.
+        // If it was cancelled, state cleanup is left to the caller. If it was CDAP master stopping, the task
+        // will be resumed on master startup
+        LOG.debug("Deprovision task for program run {} interrupted.", programRunId);
+        throw e;
+      } catch (Exception e) {
+        // Otherwise, if there was an error deprovisioning, run the cleanup
+        LOG.info("Deprovision task for program run {} failed.", programRunId, e);
+        taskCleanup.accept(programRunId);
+        throw e;
+      }
+    }));
   }
 
   private List<ProvisioningTaskInfo> getInProgressTasks() throws IOException {
-    return Retries.callWithRetries(
-      () -> provisionerStore.listTaskInfo(),
-      RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
-      t -> {
-        // don't retry if we were interrupted, or if the service is not running
-        // normally this is only called when the service is starting, but it can be running in unit test
-        State serviceState = state();
-        if (serviceState != State.STARTING && serviceState != State.RUNNING) {
-          return false;
-        }
-        if (t instanceof InterruptedException) {
-          return false;
-        }
-        // Otherwise always retry, but log unexpected types of failures
-        // We expect things like SocketTimeoutException or ConnectException
-        // when talking to Dataset Service during startup
-        Throwable rootCause = Throwables.getRootCause(t);
-        if (!(rootCause instanceof SocketTimeoutException || rootCause instanceof ConnectException)) {
-          SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. " +
-            "Tasks that were in progress during the last CDAP shutdown will not be resumed until this succeeds. ", t);
-        }
-        return true;
-      });
+    return Retries.callWithRetries(provisionerStore::listTaskInfo, RetryStrategies.fixDelay(6, TimeUnit.SECONDS), t -> {
+      // don't retry if we were interrupted, or if the service is not running
+      // normally this is only called when the service is starting, but it can be running in unit test
+      State serviceState = state();
+      if (serviceState != State.STARTING && serviceState != State.RUNNING) {
+        return false;
+      }
+      if (t instanceof InterruptedException) {
+        return false;
+      }
+      // Otherwise always retry, but log unexpected types of failures
+      // We expect things like SocketTimeoutException or ConnectException
+      // when talking to Dataset Service during startup
+      Throwable rootCause = Throwables.getRootCause(t);
+      if (!(rootCause instanceof SocketTimeoutException || rootCause instanceof ConnectException)) {
+        SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. " +
+          "Tasks that were in progress during the last CDAP shutdown will not be resumed until this succeeds. ", t);
+      }
+      return true;
+    });
   }
-
 
   /**
    * Creates a {@link SSHKeyPair} based on the given {@link ProvisioningTaskInfo}.
@@ -754,6 +749,27 @@ public class ProvisioningService extends AbstractIdleService {
     Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
       runnable.run();
+    } finally {
+      cancellable.cancel();
+    }
+  }
+
+  /**
+   * Calls the {@link Callable} with the logging context set to the program run's context.
+   * Anything logged within the runnable will be treated as if they were logs in the program run.
+   *
+   * @param programRunId the program run to log as
+   * @param systemArgs system arguments for the run
+   * @param callable the {@link Callable} to call
+   * @return the value returned by the {@link Callable#call()} method
+   * @throws Exception if the {@link Callable#call()} method thrown an exception
+   */
+  private <V> V callWithProgramLogging(ProgramRunId programRunId,
+                                       Map<String, String> systemArgs, Callable<V> callable) throws Exception {
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, systemArgs);
+    Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
+    try {
+      return callable.call();
     } finally {
       cancellable.cancel();
     }

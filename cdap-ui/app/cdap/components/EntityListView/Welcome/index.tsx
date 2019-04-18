@@ -59,7 +59,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
     MyUserStoreApi.get().subscribe((res) => {
       const storeValue = objectQuery(res, 'property', USER_STORE_KEY);
 
-      if (!storeValue || storeValue !== USER_STORE_VALUE) {
+      if ((!storeValue || storeValue !== USER_STORE_VALUE) && !window.Cypress) {
         this.setState({
           showModal: true,
         });

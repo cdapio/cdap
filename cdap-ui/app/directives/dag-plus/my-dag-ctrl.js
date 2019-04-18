@@ -404,12 +404,6 @@ angular.module(PKG.name + '.commons')
       addListenersForEndpoint(splitterEndpoint, endpointDOMEl);
     }
 
-    function getPortEndpointClass(splitterNodeClassList) {
-      let portElemClassList = [].slice.call(splitterNodeClassList);
-      let portClass = _.find(portElemClassList, (className) => className.indexOf('_port_') !== -1);
-      return portClass;
-    }
-
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
         var sourceNode = $scope.nodes.find(node => node.name === conn.from);
@@ -538,37 +532,14 @@ angular.module(PKG.name + '.commons')
         to: newConnObj.targetId
       };
 
-      let sourceIsCondition = newConnObj.sourceId.indexOf('_condition_') !== -1;
-      let sourceIsPort = newConnObj.source.className.indexOf('_port_') !== -1;
+      const source = newConnObj.source.getAttribute('data-nodetype');
+      const fromNodeId = newConnObj.source.getAttribute('data-nodeid');
+      connection.from = fromNodeId;
 
-      let sourceIdSplit;
-
-      if (sourceIsPort) {
-        let portClass = getPortEndpointClass(newConnObj.source.classList);
-        // port endpoint marker is of the form "endpoint_UnionSplitter-9c1564a4-fc99-4927-bfc0-ef7a0bd607e1_port_string"
-        // We need everything between endpoint and _port_ as node id
-        // and type after _port_ as port name
-        sourceIdSplit = portClass.split('_');
-        connection.from = sourceIdSplit.slice(1, sourceIdSplit.length - 2).join('_');
-        connection.port = sourceIdSplit[sourceIdSplit.length - 1];
-      } else if (sourceIsCondition) {
-        sourceIdSplit = newConnObj.sourceId.split('_');
-        connection.from = sourceIdSplit.slice(1, sourceIdSplit.length - 2).join('_');
-        connection.condition = sourceIdSplit[sourceIdSplit.length - 1];
-      } else {
-        // The regular endpoints are marked as "endpoint_nodename"
-        // So this split just skips the "endpoint" and assigns the rest as nodeid.
-
-        sourceIdSplit = newConnObj.sourceId.split('_');
-        let endIndex = sourceIdSplit.length;
-
-        // solving case where the source is coming from alert or error port. "nodename_alert"
-        if (newConnObj.sourceId.endsWith('_alert') || newConnObj.sourceId.endsWith('_error')) {
-          endIndex = sourceIdSplit.length - 1;
-        }
-        sourceIdSplit = sourceIdSplit.slice(1, endIndex).join('_');
-
-        connection.from = sourceIdSplit;
+      if (source === 'splitter') {
+        connection.port = newConnObj.source.getAttribute('data-portname');
+      } else if (source.indexOf('condition') !== -1) {
+        connection.condition = source === 'condition-true' ? 'true' : 'false';
       }
       $scope.connections.push(connection);
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
@@ -576,37 +547,11 @@ angular.module(PKG.name + '.commons')
 
     function removeConnection(detachedConnObj, updateStore = true) {
       let connObj = Object.assign({}, detachedConnObj);
-      /**
-       * This is still not perfect. We shouldn't be splitting names by '_' and randomly take at index 1
-       * Underscore is something that very common in names used by developers.
-       *
-       * FIXME: This needs a much bigger refactor
-       */
-      if (myHelpers.objectQuery(detachedConnObj, 'sourceId') && detachedConnObj.sourceId.indexOf('_condition_') !== -1) {
-        // The regular endpoints are marked as "endpoint_nodename"
-        // So this split just skips the "endpoint" and assigns the rest as nodeid.
-        let conditionSplit = detachedConnObj.sourceId.split('_');
-        connObj.sourceId = conditionSplit.slice(1, conditionSplit.length - 2).join('_');
-      } else if (myHelpers.objectQuery(detachedConnObj, 'source', 'className') && detachedConnObj.source.className.indexOf('_port_') !== -1) {
-        /**
-         * The nodes are marked as endpoint_somename_port_nonnull
-         * and endpoint_somename_port_null. So we need to remove the endpoint_ and _port_nonull
-         * part from the label correctly.
-         */
-        let portClass = getPortEndpointClass(detachedConnObj.source.classList);
-        let portSplit = portClass.split('_');
-        connObj.sourceId = portSplit.slice(1, portSplit.length - 2).join('_');
-      } else {
-        // The regular endpoints are marked as "endpoint_nodename"
-        // So this split just skips the "endpoint" and assigns the rest as nodeid.
-        let sourceIdSplit = detachedConnObj.sourceId.split('_');
-        let endIndex = sourceIdSplit.length;
-        if (detachedConnObj.sourceId.endsWith('_alert') || detachedConnObj.sourceId.endsWith('_error')) {
-          endIndex = sourceIdSplit.length - 1;
-        }
-
-        connObj.sourceId = sourceIdSplit.slice(1, endIndex).join('_');
+      if (!detachedConnObj.source || typeof detachedConnObj.source !== 'object') {
+        return;
       }
+      const nodeId = detachedConnObj.source.getAttribute('data-nodeid');
+      connObj.sourceId = nodeId;
       var connectionIndex = _.findIndex($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
@@ -796,31 +741,7 @@ angular.module(PKG.name + '.commons')
     function checkIfConnectionExistsOrValid(connObj) {
       // return false if connection already exists, which will prevent the connecton from being formed
 
-      if (connObj.connection.source.className.indexOf('_port_') !== -1) {
-        let portClass = getPortEndpointClass(connObj.connection.source.classList);
-        /**
-         * The nodes are marked as endpoint_somename_port_nonnull
-         * and endpoint_somename_port_null. So we need to remove the endpoint_ and _port_nonull
-         * part from the label correctly.
-         */
-        let portSplit = portClass.split('_');
-        connObj.sourceId = portSplit.slice(1, portSplit.length - 2).join('_');
-      } else if (connObj.sourceId.indexOf('_condition_') !== -1) {
-        let conditionalSplit = connObj.sourceId.split('_');
-        connObj.sourceId = conditionalSplit.slice(1, conditionalSplit.length - 2).join('_');
-      } else {
-        // The regular endpoints are marked as "endpoint_nodename"
-        // So this split just skips the "endpoint" and assigns the rest as nodeid.
-        let sourceIdSplit = connObj.sourceId.split('_');
-        let endIndex = sourceIdSplit.length;
-
-        if (connObj.sourceId.endsWith('_alert') || connObj.sourceId.endsWith('_error')) {
-          endIndex = sourceIdSplit.length - 1;
-        }
-
-        connObj.sourceId = sourceIdSplit.slice(1, endIndex).join('_');
-      }
-
+      connObj.sourceId = connObj.connection.source.getAttribute('data-nodeid');
       var exists = _.find($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
@@ -831,14 +752,8 @@ angular.module(PKG.name + '.commons')
         return false;
       }
 
-      let sourceName = connObj.sourceId;
-      if (sourceName.endsWith('_alert') || sourceName.endsWith('_error')) {
-        const sourceNameSplit = sourceName.split('_');
-        sourceName = sourceNameSplit.slice(0, sourceNameSplit.length - 1).join('_');
-      }
-
       // else check if the connection is valid
-      var sourceNode = $scope.nodes.find( node => node.name === sourceName);
+      var sourceNode = $scope.nodes.find(node => node.name === connObj.sourceId);
       var targetNode = $scope.nodes.find( node => node.name === connObj.targetId);
 
       var valid = true;
@@ -865,10 +780,10 @@ angular.module(PKG.name + '.commons')
         if (sourceNode.type === 'condition') {
           if (connObj.connection.endpoints && connObj.connection.endpoints.length > 0) {
             let sourceEndpoint = connObj.dropEndpoint;
-            // TODO: simplify this?
-            if (sourceEndpoint.canvas.classList.contains('condition-endpoint-true')) {
+            const nodeType = sourceEndpoint.canvas.getAttribute('data-nodetype');
+            if (nodeType === 'condition-true') {
               connObj.connection.setType('conditionTrue');
-            } else if (sourceEndpoint.canvas.classList.contains('condition-endpoint-false')) {
+            } if (nodeType === 'condition-false') {
               connObj.connection.setType('conditionFalse');
             }
           }
