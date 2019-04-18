@@ -164,7 +164,7 @@ public class DataprocProvisioner implements Provisioner {
           break;
         case SPARK2_2_11:
         default:
-          imageVersion = "1.2.65-deb9";
+          imageVersion = "1.2";
           break;
       }
 
