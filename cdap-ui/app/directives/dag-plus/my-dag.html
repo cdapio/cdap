@@ -119,6 +119,8 @@
                   ng-if="node.type !== 'splittertransform'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'endpoint-circle-right': node.type === 'condition'}"
                   ng-attr-id="{{node.type === 'condition' ? 'endpoint_' + node.name + '_condition_true' : 'endpoint_' + node.name}}"
+                  data-nodeid="{{node.name}}"
+                  data-nodetype="{{node.type === 'condition' ? 'condition-true' : 'regular'}}"
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
@@ -144,7 +146,9 @@
                   ng-if="node.type === 'condition'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
-                  ng-attr-id="{{'endpoint_' + node.name + '_condition_false'}}">
+                  ng-attr-id="{{'endpoint_' + node.name + '_condition_false'}}"
+                  data-nodeid="{{node.name}}"
+                  data-nodetype="condition-false">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div ng-if="node.error">
@@ -220,7 +224,9 @@
                 <div class="endpoint-circle endpoint-circle-bottom"
                       ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                       ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
-                      ng-attr-id="{{'endpoint_' + node.name + '_alert'}}">
+                      ng-attr-id="{{'endpoint_' + node.name + '_alert'}}"
+                      data-nodeid="{{node.name}}"
+                      data-nodetype="alert">
                   <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
                 </div>
               </div>
@@ -229,7 +235,9 @@
                 <div class="endpoint-circle endpoint-circle-bottom"
                       ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                       ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
-                      ng-attr-id="{{'endpoint_' + node.name + '_error'}}">
+                      ng-attr-id="{{'endpoint_' + node.name + '_error'}}"
+                      data-nodeid="{{node.name}}"
+                      data-nodetype="error">
                   <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
                 </div>
                 <span>Error</span>
