@@ -210,8 +210,8 @@
           "name": "workerNumNodes",
           "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
           "widget-attributes": {
-            "default": 9,
-            "min": 2,
+            "default": 2,
+            "min": 1,
             "size": "small"
           }
         },
