@@ -77,3 +77,12 @@ environments and build options, please see the
 The UI runs on http://localhost:11011. To stop the sandbox, use::
 
     ./cdap sandbox stop
+
+Note, to include additional artifacts in the CDAP sandbox, such as
+`Hydrator plugins <https://github.com/cdapio/hydrator-plugins>`__, include the additional
+``-Dadditional.artifacts.dir`` flag in the build step. That is::
+
+    MAVEN_OPTS="-Xmx2048m" mvn clean package \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -am -amd -DskipTests -P templates,dist,release,unit-tests
+    -Dadditional.artifacts.dir=</path/to/additional/artifacts>
