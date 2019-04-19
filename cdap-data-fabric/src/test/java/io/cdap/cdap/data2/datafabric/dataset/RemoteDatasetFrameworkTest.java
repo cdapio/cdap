@@ -169,8 +169,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
 
     DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(discoveryServiceClient, authenticationContext);
-    DatasetInstanceService instanceService = new DatasetInstanceService(cConf,
-                                                                        typeService, noAuthTypeService,
+    DatasetInstanceService instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
                                                                         instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,
                                                                         authorizationEnforcer, authenticationContext,

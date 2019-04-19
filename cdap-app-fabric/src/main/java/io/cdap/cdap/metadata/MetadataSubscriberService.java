@@ -32,7 +32,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageTable;
@@ -104,7 +103,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     MetadataDirective.PRESERVE);
 
   private final CConfiguration cConf;
-  private final DatasetFramework datasetFramework;
   private final MetadataStorage metadataStorage;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
@@ -115,7 +113,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                            DatasetFramework datasetFramework,
                             MetricsCollectionService metricsCollectionService,
                             MetadataStorage metadataStorage,
                             TransactionRunner transactionRunner) {
@@ -135,7 +132,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
-    this.datasetFramework = datasetFramework;
     this.metadataStorage = metadataStorage;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
@@ -206,8 +202,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new WorkflowProcessor();
           case METADATA_OPERATION:
             return new MetadataOperationProcessor(cConf);
-          case DATASET_OPERATION:
-            return new DatasetOperationMessageProcessor(datasetFramework);
           case PROFILE_ASSIGNMENT:
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:

@@ -415,9 +415,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Disable explore
       result.set(Constants.Explore.EXPLORE_ENABLED, Boolean.FALSE.toString());
 
-      // Publish CUD (Create, Update, Delete) operations on dataset instance
-      result.set(Constants.Dataset.Manager.PUBLISH_CUD, Boolean.TRUE.toString());
-
       // Always use NoSQL as storage
       result.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
