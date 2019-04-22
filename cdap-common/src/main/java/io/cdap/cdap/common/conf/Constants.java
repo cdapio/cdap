@@ -483,11 +483,6 @@ public final class Constants {
       public static final String WORKER_THREADS = "dataset.service.worker.threads";
       public static final String OUTPUT_DIR = "dataset.service.output.dir";
 
-      // Configuration key for publishing CUD (create, update, delete) operations on dataset instance
-      // It is used in remote runtime, hence not present in the cdap-default.xml, but
-      // rather set dynamically via the DistributedProgramRunner
-      public static final String PUBLISH_CUD = "dataset.service.publish.crud";
-
       /**
        * Annotation for binding default dataset modules for the dataset service
        */

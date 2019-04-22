@@ -16,9 +16,7 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
-import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 /**
@@ -33,15 +31,4 @@ public interface MetadataPublisher {
    * @param metadataOperation the {@link MetadataOperation}
    */
   void publish(EntityId publisher, MetadataOperation metadataOperation);
-
-  /**
-   * Publishes the {@link DatasetInstanceOperation}.
-   *
-   * @param entityId the {@link EntityId} that the operation happened. It must be of either an instance of
-   *                 {@link DatasetId} or {@link NamespaceId}. If it is {@link NamespaceId}, only
-   *                 {@link DatasetInstanceOperation.Type#DELETE} is supported, which is for deleting all
-   *                 datasets in the given namespace.
-   * @param datasetInstanceOperation the {@link DatasetInstanceOperation} to publish
-   */
-  void publish(EntityId entityId, DatasetInstanceOperation datasetInstanceOperation);
 }
