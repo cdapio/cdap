@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -170,8 +170,25 @@ public final class SchemaHash implements Serializable {
         break;
     }
 
-    if (schema.getLogicalType() != null) {
-      md5.update((byte) 13);
+    Schema.LogicalType logicalType = schema.getLogicalType();
+    if (logicalType != null) {
+      switch (logicalType) {
+        case DATE:
+          md5.update((byte) 13);
+          break;
+        case TIME_MILLIS:
+          md5.update((byte) 14);
+          break;
+        case TIME_MICROS:
+          md5.update((byte) 15);
+          break;
+        case TIMESTAMP_MILLIS:
+          md5.update((byte) 16);
+          break;
+        case TIMESTAMP_MICROS:
+          md5.update((byte) 17);
+          break;
+      }
     }
 
     return md5;

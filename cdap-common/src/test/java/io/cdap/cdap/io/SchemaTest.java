@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -575,6 +575,16 @@ public class SchemaTest {
 
     Assert.assertEquals(expectedAvroSchema, avroSchema);
     Assert.assertEquals(schema, Schema.parseJson(avroSchema.toString()));
+  }
+
+  @Test
+  public void testLogicalTypeEquals() {
+    Schema timestampMillis = Schema.Field.of("timestamp_millis", Schema.unionOf(
+      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))).getSchema();
+    Schema timestampMicros = Schema.Field.of("timestamp_micros", Schema.unionOf(
+      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))).getSchema();
+    Assert.assertNotEquals(timestampMillis, timestampMicros);
+    Assert.assertEquals(timestampMicros, timestampMicros);
   }
 
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
