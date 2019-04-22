@@ -219,6 +219,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     System.setSecurityManager(new ProgramContainerSecurityManager(System.getSecurityManager()));
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
     SLF4JBridgeHandler.install();
 
     // Create the ProgramOptions
