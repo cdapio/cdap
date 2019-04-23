@@ -19,7 +19,7 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * DatasetService implemented using the common http netty framework.
  */
-public class DatasetService extends AbstractExecutionThreadService {
+public class DatasetService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetService.class);
 
   private final NettyHttpService httpService;
@@ -66,7 +66,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
   private SettableFuture<ServiceDiscovered> opExecutorDiscovered;
-  private volatile boolean stopping = false;
+  private volatile boolean stopping;
 
   @Inject
   public DatasetService(CConfiguration cConf,
@@ -115,56 +115,73 @@ public class DatasetService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected void startUp() throws Exception {
-    LOG.info("Starting DatasetService...");
-    typeService.startAndWait();
-    httpService.start();
-
-    // setting watch for ops executor service that we need to be running to operate correctly
-    ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
-    opExecutorDiscovered = SettableFuture.create();
-    opExecutorServiceWatch = discover.watchChanges(
-      serviceDiscovered -> {
-        if (!Iterables.isEmpty(serviceDiscovered)) {
-          LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
-          opExecutorDiscovered.set(serviceDiscovered);
-        }
-      }, MoreExecutors.sameThreadExecutor());
-
-    for (DatasetMetricsReporter metricsReporter : metricReporters) {
-      metricsReporter.start();
-    }
+  protected void doStart() {
+    Thread thread = new Thread(this::startUp);
+    thread.setName(Constants.Service.DATASET_MANAGER + "-startup");
+    thread.start();
   }
 
   @Override
-  protected String getServiceName() {
-    return "DatasetService";
+  protected void doStop() {
+    stopping = true;
+
+    Thread thread = new Thread(this::shutDown);
+    thread.setName(Constants.Service.DATASET_MANAGER + "-shutdown");
+    thread.start();
   }
 
-  @Override
-  protected void run() throws Exception {
-    waitForOpExecutorToStart();
+  /**
+   * Starts this service by starting all dependencies and wait for operation executor to be ready.
+   */
+  private void startUp() {
+    try {
+      LOG.info("Starting DatasetService...");
+      typeService.startAndWait();
+      httpService.start();
 
-    String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
-                                       httpService.getBindAddress().getHostName());
-    int announcePort = cConf.getInt(Constants.Dataset.Manager.ANNOUNCE_PORT,
-                                    httpService.getBindAddress().getPort());
+      // setting watch for ops executor service that we need to be running to operate correctly
+      ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
+      opExecutorDiscovered = SettableFuture.create();
+      opExecutorServiceWatch = discover.watchChanges(
+        serviceDiscovered -> {
+          if (!Iterables.isEmpty(serviceDiscovered)) {
+            LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
+            opExecutorDiscovered.set(serviceDiscovered);
+          }
+        }, MoreExecutors.sameThreadExecutor());
 
-    final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
-    LOG.info("Announcing DatasetService for discovery...");
-    // Register the service
-    cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.DATASET_MANAGER, socketAddress)));
-
-    LOG.info("DatasetService started successfully on {}", socketAddress);
-    while (isRunning()) {
-      try {
-        TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        // It's triggered by stop
-        Thread.currentThread().interrupt();
-        break;
+      for (DatasetMetricsReporter metricsReporter : metricReporters) {
+        metricsReporter.start();
       }
+    } catch (Throwable t) {
+      notifyFailed(t);
+      return;
+    }
+
+    // Notify that the Service has been started to unblock all startAndWait call on this service
+    notifyStarted();
+
+    try {
+      waitForOpExecutorToStart();
+      String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
+                                         httpService.getBindAddress().getHostName());
+      int announcePort = cConf.getInt(Constants.Dataset.Manager.ANNOUNCE_PORT,
+                                      httpService.getBindAddress().getPort());
+
+      final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
+      LOG.info("Announcing DatasetService for discovery...");
+      // Register the service
+      cancelDiscovery = discoveryService.register(
+        ResolvingDiscoverable.of(new Discoverable(Constants.Service.DATASET_MANAGER, socketAddress)));
+
+      LOG.info("DatasetService started successfully on {}", socketAddress);
+    } catch (Throwable t) {
+      try {
+        doShutdown();
+      } catch (Throwable shutdownError) {
+        t.addSuppressed(shutdownError);
+      }
+      notifyFailed(t);
     }
   }
 
@@ -191,15 +208,20 @@ public class DatasetService extends AbstractExecutionThreadService {
     }
   }
 
-  @Override
-  protected void triggerShutdown() {
-    stopping = true;
-    super.triggerShutdown();
+  protected void shutDown() {
+    try {
+      doShutdown();
+      notifyStopped();
+    } catch (Throwable t) {
+      notifyFailed(t);
+    }
   }
 
-  @Override
-  protected void shutDown() throws Exception {
+  private void doShutdown() throws Exception {
     LOG.info("Stopping DatasetService...");
+    if (cancelDiscovery != null) {
+      cancelDiscovery.cancel();
+    }
 
     for (DatasetMetricsReporter metricsReporter : metricReporters) {
       metricsReporter.stop();
@@ -211,18 +233,9 @@ public class DatasetService extends AbstractExecutionThreadService {
 
     typeService.stopAndWait();
 
-    if (cancelDiscovery != null) {
-      cancelDiscovery.cancel();
-    }
-
     // Wait for a few seconds for requests to stop
-    try {
-      TimeUnit.SECONDS.sleep(3);
-    } catch (InterruptedException e) {
-      LOG.error("Interrupted while waiting...", e);
-    }
-
-    httpService.stop();
+    httpService.stop(3, 5, TimeUnit.SECONDS);
+    LOG.info("DatasetService stopped");
   }
 
   @Override
