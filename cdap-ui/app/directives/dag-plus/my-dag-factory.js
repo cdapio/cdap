@@ -286,7 +286,7 @@ angular.module(PKG.name + '.commons')
         'conditional': 'fa-question-circle-o'
       };
 
-      var pluginName = plugin.toLowerCase();
+      var pluginName = plugin ? plugin.toLowerCase() : '';
       var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
       return icon;
     }
