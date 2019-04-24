@@ -113,8 +113,9 @@ export default class IngestDataFromDataPrep extends Component {
     let corePlugins;
     MyArtifactApi.list({ namespace }).subscribe((res) => {
       corePlugins = find(res, { name: 'core-plugins' });
-
-      corePlugins.version = '[1.7.0, 3.0.0)';
+      if (corePlugins) {
+        corePlugins.version = '[1.7.0, 3.0.0)';
+      }
 
       const getPluginConfig = (pluginName) => {
         return {
@@ -199,6 +200,7 @@ export default class IngestDataFromDataPrep extends Component {
       (stage) => stage.name === 'BigQueryTable'
     );
     let spannerStage = pipelineConfig.config.stages.find((stage) => stage.name === 'Spanner');
+    let adlsStage = pipelineConfig.config.stages.find((stage) => stage.name === 'ADLS');
 
     let macroMap = {};
     if (databaseConfig) {
@@ -244,6 +246,7 @@ export default class IngestDataFromDataPrep extends Component {
       spannerDatabase: objectQuery(spannerStage, 'plugin', 'properties', 'database') || '',
       spannerTable: objectQuery(spannerStage, 'plugin', 'properties', 'table') || '',
       spannerSchema: objectQuery(spannerStage, 'plugin', 'properties', 'schema') || '',
+      adlsProject: objectQuery(adlsStage, 'plugin', 'properties', 'project') || '',
     });
     var newMacorMap = {};
     // This is to prevent from passing all the empty properties as payload while starting the pipeline.
@@ -325,6 +328,9 @@ export default class IngestDataFromDataPrep extends Component {
         table: '${spannerTable}',
         schema: '${spannerSchema}',
       },
+      ADLS: {
+        project: '${adlsProject}',
+      },
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map((stage) => {
       if (!isNil(pluginsMap[stage.name])) {
@@ -401,6 +407,8 @@ export default class IngestDataFromDataPrep extends Component {
         pipelineName = 'one_time_copy_to_fs_from_bigquery';
       } else if (workspaceProps.connection === 'spanner') {
         pipelineName = 'one_time_copy_to_fs_from_spanner';
+      } else if (workspaceProps.connection === 'adls') {
+        pipelineName = 'one_time_copy_to_fs_from_adls';
       }
     } else {
       pipelineName = `one_time_copy_to_table`;
@@ -414,8 +422,10 @@ export default class IngestDataFromDataPrep extends Component {
         pipelineName = 'one_time_copy_to_table_from_gcs';
       } else if (workspaceProps.connection === 'bigquery') {
         pipelineName = 'one_time_copy_to_table_from_bigquery';
-      } else if (workspaceProps.connection === 'bigquery') {
+      } else if (workspaceProps.connection === 'spanner') {
         pipelineName = 'one_time_copy_to_table_from_spanner';
+      } else if (workspaceProps.connection === 'adls') {
+        pipelineName = 'one_time_copy_to_table_from_adls';
       }
     }
 

@@ -68,6 +68,17 @@ const Actions = {
   SET_SPANNER_DATABASE_LIST: 'SET_SPANNER_DATABASE_LIST',
   SET_SPANNER_TABLE_LIST: 'SET_SPANNER_TABLE_LIST',
 
+  // adls
+  SET_ADLS_PROPERTIES: 'SET_ADLS_PROPERTIES',
+  SET_ADLS_CONNECTION_ID: 'SET_ADLS_CONNECTION_ID',
+  SET_ADLS_LOADING: 'SET_ADLS_LOADING',
+  SET_ADLS_PREFIX: 'SET_ADLS_PREFIX',
+  SET_ADLS_CONNECTION_DETAILS: 'SET_ADLS_CONNECTION_DETAILS',
+  SET_ADLS_FILE_SYSTEM_CONTENTS: 'SET_ADLS_FILE_SYSTEM_CONTENTS',
+  SET_ADLS_FILE_SYSTEM_PATH: 'SET_ADLS_FILE_SYSTEM_PATH',
+  SET_ADLS_FILE_SYSTEM_LOADING: 'SET_ADLS_FILE_SYSTEM_LOADING',
+  SET_ADLS_FILE_SYSTEM_SEARCH: 'SET_ADLS_FILE_SYSTEM_SEARCH',
+
   SET_ERROR: 'SET_ERROR',
   RESET: 'RESET',
 };
@@ -133,6 +144,15 @@ const defaultSpannerValue = {
   instanceList: [],
   databaseList: [],
   tableList: [],
+};
+
+const defaultADLSValue = {
+  info: {},
+  connectionId: '',
+  contents: [],
+  path: '',
+  search: '',
+  loading: false,
 };
 
 const defaultActiveBrowser = {
@@ -478,6 +498,67 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
   }
 };
 
+const adls = (state = defaultADLSValue, action = defaultAction) => {
+  switch (action.type) {
+    // This means the user is starting afresh. Reset everything to default and set the connectionID
+    case Actions.SET_ADLS_CONNECTION_ID:
+      if (action.payload.connectionId === state.connectionId) {
+        return state;
+      }
+      return {
+        ...state,
+        connectionId: action.payload.connectionId,
+      };
+    case Actions.SET_ADLS_CONNECTION_DETAILS:
+      return {
+        ...state,
+        info: action.payload.info,
+        error: null,
+      };
+    case Actions.SET_ADLS_LOADING:
+      return {
+        ...state,
+        loading: true,
+      };
+    case Actions.SET_ADLS_PROPERTIES:
+      return Object.assign({}, state, {
+        info: objectQuery(action, 'payload', 'info') || state.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId'),
+        error: null,
+        loading: false,
+      });
+    case Actions.SET_ADLS_FILE_SYSTEM_CONTENTS:
+      return {
+        ...state,
+        loading: false,
+        contents: action.payload.contents,
+        search: '',
+      };
+    case Actions.SET_ADLS_FILE_SYSTEM_PATH:
+      return {
+        ...state,
+        path: action.payload.path,
+        search: '',
+      };
+    case Actions.SET_ERROR:
+      return {
+        ...state,
+        loading: false,
+      };
+    case Actions.SET_ADLS_PREFIX:
+      return {
+        ...state,
+        prefix: action.payload.prefix,
+      };
+    case Actions.SET_ACTIVEBROWSER:
+      return defaultADLSValue;
+    case Actions.RESET:
+      return defaultADLSValue;
+    default:
+      return state;
+  }
+};
+
 const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_ACTIVEBROWSER:
@@ -508,6 +589,7 @@ const DataPrepBrowserStore = createStore(
     gcs,
     bigquery,
     spanner,
+    adls,
     error,
   }),
   {
@@ -519,6 +601,7 @@ const DataPrepBrowserStore = createStore(
     gcs: defaultGCSValue,
     bigquery: defaultBigQueryValue,
     spanner: defaultSpannerValue,
+    adls: defaultADLSValue,
     error: defaultError,
   },
   composeEnhancers('DataPrepBrowserStore')()

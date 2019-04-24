@@ -510,6 +510,19 @@ features:
           1: "{context} table"
           _: "{context} tables"
         title: Select data
+      ADLSBrowser:
+        EmptyMessage:
+          emptyDatasetList: 'No Data'
+          emptyTableList: 'No Data'
+        name: Name
+        pageTitle: '{productName} | Connections | ADLS | {connectionId}'
+        title: 'ADLS'
+        Search:
+          placeholder: Search this directory
+        TopPanel:
+          ListingInfo:
+            label: "{dirsCount} directories and {filesCount} files"
+          selectData: Select data
     Directives:
       apply: Apply
       cancel: Cancel
@@ -1017,6 +1030,7 @@ features:
       databaseTitle: "Table: {name}"
       file: File System
       gcs: Google Cloud Storage
+      adls: ADLS File System
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
@@ -1218,6 +1232,32 @@ features:
         projectId: Project ID
         serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection
+      ADLS:
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        defaultTestErrorMessage: Cannot connect to ADLS Handler
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        ModalHeader:
+          ADD: "Add connection: ADLS Handler"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
+        Placeholders:
+          name: Specify a name to identify this connection
+          accountFQDN: Specify Account FQDN
+          clientID: Specify Client ID
+          clientSecret: Specify Client Key
+          refreshURL: Specify End Point Refresh URL
+        accountFQDN: Account FQDN
+        name: Connection name
+        clientID: Client ID
+        clientSecret: Client Key
+        refreshURL: End Point Refresh URL
+        testConnection: Test Connection
       TestConnectionLabels:
         danger: Test connection failed
         success: Test connection succcessful
@@ -1245,6 +1285,7 @@ features:
     pageTitle: '{productName} | Connections'
     s3: S3 ({count})
     spanner: Google Cloud Spanner ({count})
+    adls: "ADLS Handler ({count})"
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:
@@ -1426,7 +1467,26 @@ features:
       subtitle: Explore root cause and impact for each of the fields of the dataset
       timePickerCaption: View field level info in the
       title: Field level lineage
-
+  ADLSBrowser:
+    directory: Directory
+    EmptyMessage:
+      clearLabel: Clear
+      noFilesOrDirectories: No files or directories found in this directory
+      suggestion1: your search
+      suggestionTitle: "You can try to:"
+      title: 'No match found for "{searchText}"'
+    Table:
+      group: Group
+      last-modified: Last modified
+      name: Name
+      owner: Owner
+      permission: Permission
+      size: Size
+      type: Type
+    TopPanel:
+      directoryMetrics: "{count} files and directories"
+      searchPlaceholder: Search this directory
+      selectData: "Select file/directory to preview"
   FileBrowser:
     directory: Directory
     EmptyMessage:

@@ -210,6 +210,27 @@ const MyDataPrepApi = {
     `${contextPath}/spanner/workspaces/:workspaceId/specification`
   ),
 
+  // ADLS
+  adlsTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/adls/test`),
+  adlsFileExplorer: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/adls/explore`
+  ),
+  adlsReadFile: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/adls/read`
+  ),
+  getAdlsSpecification: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${connectionsPath}/:connectionId/adls/specification`
+  ),
+
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),
