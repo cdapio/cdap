@@ -68,7 +68,7 @@ GIT_BRANCH_CDAP_GUIDES="develop"
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 
-GIT_CASK_MARKET_VERSION="v2"
+GIT_HUB_VERSION="v2"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"
