@@ -20,6 +20,8 @@
 @import "./color-constants.less";
 
 @node-box-width: 200px;
+@node-box-width-with-errors: 140px;
+@node-box-width-without-errors: 148px;
 @node-box-height-big: 100px;
 @condition-box-width: 105px;
 @condition-box-height: 105px;
@@ -292,7 +294,13 @@ my-dag-plus {
         }
 
         .node-info {
-          display: flex;
+          display: grid;
+          overflow: hidden;
+          grid-template-columns: 25px minmax(auto, @node-box-width-with-errors);
+
+          &.node-no-errors {
+            grid-template-columns: 25px minmax(auto, @node-box-width-without-errors);
+          }
 
           .node-icon {
             font-size: 25px;
@@ -316,6 +324,7 @@ my-dag-plus {
             .node-version {
               text-overflow: ellipsis;
               overflow: hidden;
+              white-space: nowrap;
             }
 
             .node-name {
