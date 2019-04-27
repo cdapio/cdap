@@ -44,7 +44,7 @@ public interface MetadataStorage extends Closeable {
    * @param mutation the mutation to perform
    * @return the change effected by this mutation
    */
-  MetadataChange apply(MetadataMutation mutation) throws IOException;
+  MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException;
 
   /**
    * Apply a batch of mutations to the metadata state.
@@ -52,7 +52,7 @@ public interface MetadataStorage extends Closeable {
    * @param mutations the mutations to perform. They are applied in the order given by the list.
    * @return the changes effected by each of the mutations, in the same order as the batch of mutations.
    */
-  List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException;
+  List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException;
 
   /**
    * Retrieve the metadata for an entity.
