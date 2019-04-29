@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'plugin-functions/functions/output-schema/output-schema.html',
       scope: {
         node: '=',
-        fnConfig: '='
+        fnConfig: '=',
+        nodeConfig: '=',
       },
       controller: function ($scope, $uibModal, EventPipe, myPipelineApi, myHelpers) {
         var vm = this;
@@ -57,6 +58,14 @@ angular.module(PKG.name + '.commons')
               var mvm = this;
               mvm.additionalPropertiesFields = addProperties;
               mvm.additionalProperties = {};
+              if(Array.isArray(mvm.additionalPropertiesFields)) {
+                mvm.additionalPropertiesFields.forEach(additionalProperty => {
+                  let pluginProperty = additionalProperty['plugin-property-for-value'];
+                  if (pluginProperty) {
+                    mvm.additionalProperties[additionalProperty.name] = nodeInfo.plugin.properties[pluginProperty];
+                  }
+                });
+              }
 
               const parseResSchema = (res) => {
                 if (res.name && res.type && res.fields) {

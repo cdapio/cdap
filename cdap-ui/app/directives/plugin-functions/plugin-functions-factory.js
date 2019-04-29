@@ -30,6 +30,7 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'node': 'node',
           'fn-config': 'fnConfig',
+          'node-config': 'nodeConfig',
           'class': 'pull-right'
         }
       },
