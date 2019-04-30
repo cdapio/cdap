@@ -249,7 +249,7 @@ export default class ColumnActionsDropdown extends Component {
 
     if (newState) {
       let element = document.getElementById('app-container');
-      if (!element && this.singleWorkspaceMode) {
+      if (this.singleWorkspaceMode) {
         element = document.getElementsByClassName('wrangler-modal')[0];
       }
       this.documentClick$ = Observable.fromEvent(element, 'click').subscribe((e) => {
