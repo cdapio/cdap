@@ -14,6 +14,10 @@
  * the License.
  */
 
+ /**
+  * OPENMARKET - Event emitted to hub to open the market
+  * CLOSEMARKET - Event emitted to hub to close the market
+  */
 export default {
   APPUPLOAD: 'APPICATION_UPLOAD',
   ARTIFACTUPLOAD: 'ARTIFACT_UPLOAD',
@@ -21,7 +25,6 @@ export default {
   CREATENAMESPACE: 'CREATE_NAMESPACE',
   DELETEENTITY: 'DELETE_ENTITY',
   DIRECTIVEUPLOAD: 'DIRECTIVE_UPLOAD',
-  MARKETCLOSING: 'MARKET_CLOSING',
   NONAMESPACE: 'NO_NAMESPACE',
   OPENMARKET: 'OPEN_MARKET',
   PUBLISHPIPELINE: 'PUBLISH_PIPELINE',

@@ -25,6 +25,7 @@ import { withContext, INamespaceLinkContext } from 'components/AppHeader/Namespa
 import DrawerFeatureLink from 'components/AppHeader/AppDrawer/DrawerFeatureLink';
 import { Theme } from 'services/ThemeHelper';
 import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 const DRAWER_WIDTH = '240px';
 export const appDrawerListItemTextStyles = {
@@ -77,10 +78,17 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
     super(props);
     this.eventEmitter.on('NUX-TOUR-START', this.toggleNuxTourProgressFlag);
     this.eventEmitter.on('NUX-TOUR-END', this.toggleNuxTourProgressFlag);
+    this.eventEmitter.on(globalEvents.OPENMARKET, this.closeDrawerIfOpened);
   }
   public state = {
     onNamespacePreferenceEdit: false,
     nuxTourInProgress: false,
+    forcefullyCloseDrawer: false,
+  };
+  public closeDrawerIfOpened = () => {
+    if (this.state.nuxTourInProgress || this.props.open) {
+      this.props.onClose();
+    }
   };
   public toggleNuxTourProgressFlag = () => {
     this.setState({
