@@ -169,7 +169,8 @@ public abstract class HBaseTestBase extends ExternalResource {
       @Override
       public void run() {
         try {
-          region.flushcache();
+        	//Added tracker null for compilation to HBase 2
+          region.flushcache(false, false, null);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
