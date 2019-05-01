@@ -152,6 +152,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
     txStateCacheSupplier.release();
   }
 
+  @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
                                   Store store, InternalScanner scanner) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
@@ -162,6 +163,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
     return new EvictionInternalScanner("flush", e.getEnvironment(), scanner, null);
   }
 
+  @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, ScanType type,
                                     CompactionRequest request) throws IOException {
@@ -181,6 +183,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
     return new EvictionInternalScanner("compaction", e.getEnvironment(), scanner, txVisibilityState);
   }
 
+  @Override
   public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,
                           CompactionRequest request) throws IOException {
     // Persist the compaction state after a successful compaction
@@ -189,6 +192,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
     }
   }
 
+  @Override
   public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e) throws IOException {
     // Record whether the region is empty after a flush
     Region region = e.getEnvironment().getRegion();

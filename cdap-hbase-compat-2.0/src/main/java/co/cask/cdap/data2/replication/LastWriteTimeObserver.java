@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.coprocessor.WALCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.WALCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.WALObserver;
 import org.apache.hadoop.hbase.wal.WALEdit;
+import org.apache.hadoop.hbase.wal.WALKey;
 import org.apache.hadoop.hbase.wal.WALKeyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +63,13 @@ public class LastWriteTimeObserver implements WALCoprocessor,WALObserver {
     hBase11TableUpdater.cancelTimer();
   }
 
+ @Override
   public void postWALWrite(ObserverContext<? extends WALCoprocessorEnvironment> ctx, RegionInfo info,
-		  WALKeyImpl logKey, WALEdit logEdit) throws IOException {
-    if (logKey.getReplicationScopes() == null || logKey.getReplicationScopes().size() == 0 || !logKey.getClusterIds().isEmpty()) {
+		  WALKey logKey, WALEdit logEdit) throws IOException {
+	 if(!(logKey instanceof WALKeyImpl)) {
+		 throw new RuntimeException("WAL key is not an instance of WALKeyImpl");
+	 }
+    if (((WALKeyImpl)logKey).getReplicationScopes() == null || ((WALKeyImpl)logKey).getReplicationScopes().size() == 0 || !((WALKeyImpl)logKey).getClusterIds().isEmpty()) {
       //if replication scope is not set for this entry, do not update write time.
       // This is to save us from cases where some HBase tables do not have replication enabled.
       // Ideally, you would check scopes against REPLICATION_SCOPE_LOCAL, but cell.getFamily() is expensive.
@@ -79,10 +84,8 @@ public class LastWriteTimeObserver implements WALCoprocessor,WALObserver {
     hBase11TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
   }
 
+
 @Override
-public Optional<WALObserver> getWALObserver() {
-	// TODO Auto-generated method stub
-	return null;
-}
+public Optional<WALObserver> getWALObserver() { return Optional.of(this); }
 
 }

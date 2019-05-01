@@ -60,8 +60,7 @@ public class HBase11TableUtil extends HBaseTableUtil {
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-//    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
-    return null;
+    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override

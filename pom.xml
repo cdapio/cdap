@@ -276,7 +276,7 @@
       <dependency>
 	    <groupId>org.apache.tephra</groupId>
 	    <artifactId>tephra-hbase-compat-2.0</artifactId>
-	    <version>0.15.0-incubating</version>
+	    <version>${tephra.version}</version>
 	    <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>

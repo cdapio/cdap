@@ -244,12 +244,12 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
     }
   }
 
-  public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
+  @Override
+  public void preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan)
     throws IOException {
     // must see all versions to aggregate increments
     scan.setMaxVersions();
     scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
-    return s;
   }
 
   @Override
@@ -259,6 +259,7 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
     return new IncrementSummingScanner(region, scan.getBatch(), scanner, ScanType.USER_SCAN);
   }
 
+  @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                   InternalScanner scanner) throws IOException {
     byte[] family = store.getColumnFamilyName().getBytes();
@@ -272,6 +273,7 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
                    IncrementHandlerState.DELTA_MAGIC_PREFIX, 0, IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
   }
 
+  @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, ScanType scanType) throws IOException {
     byte[] family = store.getColumnFamilyName().getBytes();
@@ -279,6 +281,7 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
         state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 
+  @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, ScanType scanType, CompactionRequest request)
     throws IOException {

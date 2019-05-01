@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>5.1.2</version>
+    <version>5.1.202</version>
   </parent>
 
   <artifactId>cdap-hbase-compat-2.0</artifactId>
@@ -64,7 +64,7 @@
     <dependency>
     <groupId>org.apache.tephra</groupId>
     <artifactId>tephra-hbase-compat-2.0</artifactId>
-    <version>0.15.0-incubating</version>
+    <version>${tephra.version}</version>
 	</dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -73,22 +73,22 @@
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>2.0.2</version>
+      <version>${hbase20.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>2.0.2}</version>
+      <version>${hbase20.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-protocol</artifactId>
-      <version>2.0.2</version>
+      <version>${hbase20.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
-      <version>2.0.2</version>
+      <version>${hbase20.version}</version>
     </dependency>
 
     <dependency>
@@ -128,7 +128,7 @@
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
-      <version>2.0.2</version>
+      <version>${hbase20.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
@@ -141,7 +141,7 @@
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-testing-util</artifactId>
-      <version>2.0.2</version>
+      <version>${hbase20.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>

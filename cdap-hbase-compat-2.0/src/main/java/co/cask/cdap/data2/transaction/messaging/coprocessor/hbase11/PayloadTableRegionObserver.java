@@ -92,6 +92,7 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
     topicMetadataCacheSupplier.release();
   }
 
+  @Override
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
     LOG.info("preFlush, filter using PayloadDataFilter");
@@ -102,6 +103,7 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
   }
 
+  @Override
   public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                                List<? extends KeyValueScanner> scanners, ScanType scanType,
                                                long earliestPutTs, InternalScanner s,

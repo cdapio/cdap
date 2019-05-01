@@ -125,7 +125,7 @@ public abstract class HBaseTestBase extends ExternalResource {
     if (hbaseCluster != null) {
       TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
+        List<HRegion> serverRegions = t.getRegionServer().getRegions(qualifiedTableName);
         List<Runnable> flushers = new ArrayList<>();
         for (HRegion region : serverRegions) {
           flushers.add(createFlushRegion(region));
@@ -148,7 +148,7 @@ public abstract class HBaseTestBase extends ExternalResource {
     if (hbaseCluster != null) {
       TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
+        List<HRegion> serverRegions = t.getRegionServer().getRegions(qualifiedTableName);
         List<Runnable> compacters = new ArrayList<>();
         for (HRegion region : serverRegions) {
           compacters.add(createCompactRegion(region, majorCompact));
@@ -185,7 +185,7 @@ public abstract class HBaseTestBase extends ExternalResource {
       @Override
       public void run() {
         try {
-          region.compactStores(majorCompact);
+          region.compactStores();
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }

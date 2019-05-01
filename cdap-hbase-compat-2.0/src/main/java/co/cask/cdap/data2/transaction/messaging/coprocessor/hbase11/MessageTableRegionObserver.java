@@ -119,7 +119,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     txStateCacheSupplier.release();
   }
 
-  
+  @Override
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
     LOG.info("preFlush, filter using MessageDataFilter");
@@ -128,6 +128,9 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
                                          prefixLength, topicMetadataCache, txVisibilityState));
     
+    if(!(store instanceof HStore)){
+    	throw new RuntimeException("store is not an instance of HStore");
+    }
     return new LoggingInternalScanner("MessageDataFilter", "preFlush",
                                       new StoreScanner((HStore) store, ((HStore)store).getScanInfo(), 
                                                        Collections.singletonList(memstoreScanner),
@@ -135,6 +138,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
                                                        HConstants.OLDEST_TIMESTAMP), txVisibilityState);
   }
 
+  @Override
   public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e) throws IOException {
     // Record whether the region is empty after a flush
     Region region = e.getEnvironment().getRegion();
@@ -151,6 +155,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     }
   }
 
+  @Override
   public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                                List<? extends KeyValueScanner> scanners, ScanType scanType,
                                                long earliestPutTs, InternalScanner s,
@@ -167,11 +172,15 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     Scan scan = new Scan();
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
                                          prefixLength, topicMetadataCache, txVisibilityState));
+    if(!(store instanceof HStore)){
+    	throw new RuntimeException("store is not an instance of HStore");
+    }
     return new LoggingInternalScanner("MessageDataFilter", "preCompact",
                                       new StoreScanner((HStore)store, ((HStore)store).getScanInfo(), scanners, scanType,
                                                        store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);
   }
 
+  @Override
   public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,
                           CompactionRequest request) throws IOException {
     // Persist the compaction state after a successful compaction

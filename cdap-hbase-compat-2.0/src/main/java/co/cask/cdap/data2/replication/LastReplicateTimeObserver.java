@@ -61,6 +61,7 @@ public class LastReplicateTimeObserver implements RegionServerCoprocessor, Regio
     hBase11TableUpdater.cancelTimer();
   }
 
+  @Override
   public void postReplicateLogEntries(ObserverContext<RegionServerCoprocessorEnvironment> ctx,
                                       List<AdminProtos.WALEntry> entries, CellScanner cells) throws IOException {
     for (AdminProtos.WALEntry entry : entries) {

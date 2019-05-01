@@ -33,7 +33,7 @@ import java.io.IOException;
  *
  */
 public class DequeueScanObserver implements RegionCoprocessor,RegionObserver {
-	  
+	@Override
 	public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
 	    throws IOException {
 	    ConsumerConfig consumerConfig = DequeueScanAttributes.getConsumerConfig(scan);

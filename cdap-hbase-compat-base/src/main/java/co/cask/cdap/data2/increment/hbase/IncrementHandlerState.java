@@ -16,24 +16,26 @@
 
 package co.cask.cdap.data2.increment.hbase;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.persist.TransactionVisibilityState;
 
-import java.util.Map;
-import java.util.Set;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 
 /**
  * Common state and utilities shared by the HBase version-specific {@code IncrementHandler} coprocessor
@@ -55,7 +57,7 @@ public class IncrementHandlerState {
   public static final int BATCH_UNLIMITED = -1;
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
-  private final HTableDescriptor hTableDescriptor;
+  private final TableDescriptor hTableDescriptor;
   private final CoprocessorEnvironment env;
 
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
@@ -66,7 +68,7 @@ public class IncrementHandlerState {
 
   private TimestampOracle timeOracle = new TimestampOracle();
 
-  public IncrementHandlerState(CoprocessorEnvironment env, HTableDescriptor hTableDescriptor) {
+  public IncrementHandlerState(CoprocessorEnvironment env, TableDescriptor hTableDescriptor) {
     this.env = env;
     this.hTableDescriptor = hTableDescriptor;
   }
