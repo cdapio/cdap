@@ -46,12 +46,7 @@ import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -320,7 +315,7 @@ public abstract class HBaseTableUtil {
 
     // Extract information about existing data janitor coprocessor
     // The following logic is copied from RegionCoprocessorHost in HBase
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<org.apache.hadoop.hbase.util.Bytes, org.apache.hadoop.hbase.util.Bytes> entry: tableDescriptor.getValues().entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String spec = Bytes.toString(entry.getValue().get()).trim();
 
@@ -454,7 +449,8 @@ public abstract class HBaseTableUtil {
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
                                    Configuration hConf, Predicate<TableId> predicate) throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
         if (predicate.apply(tableId)) {
           dropTable(ddlExecutor, tableId);
@@ -482,7 +478,7 @@ public abstract class HBaseTableUtil {
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId HBase namespace for which the tables are being requested
    */
-  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException;
+  public abstract List<TableId> listTablesInNamespace(Admin admin, String namespaceId) throws IOException;
 
   /**
    * Lists all tables

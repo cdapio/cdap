@@ -35,43 +35,50 @@ class DefaultDeleteBuilder implements DeleteBuilder {
 
   @Override
   public DeleteBuilder deleteFamily(byte[] family) {
-    delete.deleteFamily(family);
+    delete.addFamily(family);
+    //delete.deleteFamily(family);
     return this;
   }
 
   @Override
   public DeleteBuilder deleteFamily(byte[] family, long timestamp) {
-    delete.deleteFamily(family, timestamp);
+    delete.addFamily(family,timestamp);
+    //delete.deleteFamily(family, timestamp);
     return this;
   }
 
   @Override
   public DeleteBuilder deleteFamilyVersion(byte[] family, long timestamp) {
-    delete.deleteFamilyVersion(family, timestamp);
+    delete.addFamilyVersion(family,timestamp);
+    //delete.deleteFamilyVersion(family, timestamp);
     return this;
   }
 
   @Override
   public DeleteBuilder deleteColumns(byte[] family, byte[] qualifier) {
-    delete.deleteColumns(family, qualifier);
+    delete.addColumns(family,qualifier);
+    //delete.deleteColumns(family, qualifier);
     return this;
   }
 
   @Override
   public DeleteBuilder deleteColumns(byte[] family, byte[] qualifier, long timestamp) {
-    delete.deleteColumns(family, qualifier, timestamp);
+    delete.addColumns(family, qualifier, timestamp);
+    //delete.deleteColumns(family, qualifier, timestamp);
     return this;
   }
 
   @Override
   public DeleteBuilder deleteColumn(byte[] family, byte[] qualifier) {
-    delete.deleteColumn(family, qualifier);
+    delete.addColumn(family, qualifier);
+    //delete.deleteColumn(family, qualifier);
     return this;
   }
 
   @Override
   public DeleteBuilder deleteColumn(byte[] family, byte[] qualifier, long timestamp) {
-    delete.deleteColumn(family, qualifier, timestamp);
+    delete.addColumn(family, qualifier, timestamp);
+    //delete.deleteColumn(family, qualifier, timestamp);
     return this;
   }
 

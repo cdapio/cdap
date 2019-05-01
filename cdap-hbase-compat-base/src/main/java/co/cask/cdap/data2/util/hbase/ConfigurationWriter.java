@@ -23,8 +23,9 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,15 +76,16 @@ public class ConfigurationWriter extends ConfigurationReader {
     // we will write the current config with the current timestamp
     Put p = new Put(rowKey);
     for (Map.Entry<String, String> e : configurationToWrite) {
-      p.add(FAMILY, Bytes.toBytes(e.getKey()), now, Bytes.toBytes(e.getValue()));
+      p.addColumn(FAMILY, Bytes.toBytes(e.getKey()), now, Bytes.toBytes(e.getValue()));
     }
     // and we will delete any cells older than current time
     Delete d = new Delete(rowKey);
-    d.deleteFamily(FAMILY, now - 1);
+    d.addFamily(FAMILY, now -1);
+    //d.deleteFamily(FAMILY, now - 1);
 
-    HTableInterface table = tableProvider.get();
+    Table table = tableProvider.get();
     try {
-      table.setAutoFlushTo(false);
+      //table.setAutoFlushTo(false);
       LOG.info("Writing new configuration to row '{}' in configuration table {} and time stamp {}.",
                type, table.getName(), now);
       // populate the configuration data

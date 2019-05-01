@@ -25,6 +25,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -60,8 +63,11 @@ public abstract class HBaseTestBase extends ExternalResource {
 
   public abstract Configuration getConfiguration();
 
-  public HBaseAdmin getHBaseAdmin() throws IOException {
-    return new HBaseAdmin(getConfiguration());
+  public Admin getHBaseAdmin() throws IOException {
+    Connection connection = ConnectionFactory.createConnection(getConfiguration());
+    return connection.getAdmin();
+//    this.admin = connection.getAdmin();
+//    return new HBaseAdmin(getConfiguration());
   }
 
   public String getZkConnectionString() {
