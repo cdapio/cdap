@@ -23,8 +23,32 @@ function SqlConditionsController() {
 
   vm.mapInputSchema = {};
   vm.stageList = [];
+  vm.error = null;
 
+  /**
+   * FIXME: CDAP-14999
+   * This exists as a stopgap solution when user clicks on generate schema on joiner plugin
+   * where the input stages have either & or . or = in their name.
+   * The right fix is to fix it in backend.
+   */
+  vm.checkRulesForValidStageNames = () => {
+    const invalidRule = /[&\.=]/g;
+    let invalidStageNames = [];
+    angular.forEach(vm.rules, (rule) => {
+      var invalidStageName = rule.filter(field => invalidRule.test(field.stageName));
+      if (invalidStageName.length) {
+        invalidStageNames = invalidStageNames.concat(invalidStageName.map(stage => stage.stageName));
+      }
+    });
+    if (invalidStageNames.length) {
+      vm.error = 'Invalid name for input ' + (invalidStageNames.length > 1 ? 'nodes' : 'node') + ': ' +
+        invalidStageNames.map(sn => JSON.stringify(sn)).join(', ') +
+        '. \n Node names cannot contain "&" "=" "."';
+    }
+    return vm.error && vm.error.length;
+  };
   vm.formatOutput = () => {
+    vm.checkRulesForValidStageNames();
     if (vm.stageList.length < 2) {
       vm.model = '';
       return;
