@@ -16,9 +16,10 @@
 
 package co.cask.data2.txprune;
 
-import co.cask.cdap.data2.transaction.coprocessor.hbase11.DefaultTransactionProcessor;
-import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase11.MessageTableRegionObserver;
-import co.cask.cdap.data2.transaction.queue.coprocessor.hbase11.HBaseQueueRegionObserver;
+import co.cask.cdap.data2.transaction.coprocessor.hbase20.DefaultTransactionProcessor;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20.MessageTableRegionObserver;
+import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.HBaseQueueRegionObserver;
+
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.tephra.hbase.txprune.HBaseTransactionPruningPlugin;
 import org.apache.tephra.txprune.TransactionPruningPlugin;
