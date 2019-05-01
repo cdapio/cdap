@@ -135,9 +135,9 @@ final class HBaseMessageTable extends AbstractMessageTable {
     try {
       if (!batchPuts.isEmpty()) {
         hTable.put(batchPuts);
-        if (!hTable.isAutoFlush()) {
-          hTable.flushCommits();
-        }
+//        if (!hTable.isAutoFlush()) {
+//          hTable.flushCommits();
+//        }
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);
@@ -165,9 +165,9 @@ final class HBaseMessageTable extends AbstractMessageTable {
     try {
       if (!batchPuts.isEmpty()) {
         hTable.put(batchPuts);
-        if (!hTable.isAutoFlush()) {
-          hTable.flushCommits();
-        }
+//        if (!hTable.isAutoFlush()) {
+//          hTable.flushCommits();
+//        }
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);

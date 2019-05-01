@@ -25,11 +25,7 @@ import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -124,9 +120,9 @@ final class HBasePayloadTable extends AbstractPayloadTable {
     try {
       if (!batchPuts.isEmpty()) {
         hTable.put(batchPuts);
-        if (!hTable.isAutoFlush()) {
-          hTable.flushCommits();
-        }
+//        if (!hTable.isAutoFlush()) {
+//          hTable.flushCommits();
+//        }
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);

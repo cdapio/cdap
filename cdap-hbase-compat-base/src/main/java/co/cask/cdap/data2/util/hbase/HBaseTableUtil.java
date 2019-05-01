@@ -389,7 +389,7 @@ public abstract class HBaseTableUtil {
    * @return an {@link HTableDescriptor} for the table
    * @throws IOException
    */
-  public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract HTableDescriptor getHTableDescriptor(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Checks if an HBase namespace already exists
@@ -407,7 +407,7 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract boolean tableExists(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Delete an HBase table
