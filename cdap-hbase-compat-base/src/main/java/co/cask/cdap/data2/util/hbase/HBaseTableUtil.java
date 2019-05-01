@@ -398,7 +398,7 @@ public abstract class HBaseTableUtil {
    * @param namespace the namespace to check for existence
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException;
+  public abstract boolean hasNamespace(Admin admin, String namespace) throws IOException;
 
   /**
    * Check if an HBase table exists

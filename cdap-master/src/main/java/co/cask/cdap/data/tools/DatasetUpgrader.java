@@ -41,6 +41,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -193,7 +196,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
                                                    final HBaseDDLExecutor ddlExecutor) throws Exception {
     Map<String, Future<?>> futures = new HashMap<>();
     String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
-    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin hAdmin = connection.getAdmin()) {
       for (final HTableDescriptor desc :
         hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
         Callable<Void> callable = new Callable<Void>() {

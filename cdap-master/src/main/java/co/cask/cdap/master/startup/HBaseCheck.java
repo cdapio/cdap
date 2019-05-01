@@ -25,8 +25,8 @@ import co.cask.cdap.data2.util.hbase.HBaseVersion;
 import com.google.inject.Inject;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HConnection;
-import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,9 +61,12 @@ class HBaseCheck extends Check {
     LOG.info("  HBase version successfully verified.");
 
     LOG.info("Checking HBase availability.");
-    try (HConnection hbaseConnection = HConnectionManager.createConnection(hConf)) {
-      hbaseConnection.listTables();
-      LOG.info("  HBase availability successfully verified.");
+    try (Connection connection = ConnectionFactory.createConnection(hConf); ) {
+      if(!connection.isClosed()){
+        LOG.info("  HBase availability successfully verified.");
+      }else {
+        LOG.info("  HBase unavailable");
+      }
     } catch (IOException e) {
       throw new RuntimeException(
         "Unable to connect to HBase. " +
