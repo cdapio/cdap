@@ -610,7 +610,7 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+  public Map<TableId, TableStats> getTableStats(Admin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
     Map<TableId, TableStats> datasetStat = Maps.newHashMap();

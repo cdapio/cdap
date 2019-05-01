@@ -85,9 +85,9 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
   @Override
   protected void store(byte[] row, byte[] column, byte[] value) throws IOException {
     Put put = new Put(row);
-    put.add(QueueEntryRow.COLUMN_FAMILY, column, value);
+    put.addColumn(QueueEntryRow.COLUMN_FAMILY, column, value);
     hTable.put(put);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -97,10 +97,10 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
     }
     Put put = new Put(row);
     for (Map.Entry<byte[], byte[]> entry : values.entrySet()) {
-      put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
+      put.addColumn(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
     }
     hTable.put(put);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -110,9 +110,9 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
     }
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
-      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, column);
+      delete.addColumns(QueueEntryRow.COLUMN_FAMILY, column);
     }
     hTable.delete(delete);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 }

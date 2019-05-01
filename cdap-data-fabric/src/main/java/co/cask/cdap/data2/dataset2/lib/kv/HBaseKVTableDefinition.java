@@ -39,10 +39,7 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -112,7 +109,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public boolean exists() throws IOException {
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      Connection connection = ConnectionFactory.createConnection(hConf);
+      try (Admin admin = connection.getAdmin()) {
         return tableUtil.tableExists(admin, tableId);
       }
     }

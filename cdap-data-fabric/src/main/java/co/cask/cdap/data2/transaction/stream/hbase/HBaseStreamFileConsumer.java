@@ -86,7 +86,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
   @Override
   protected boolean claimFifoEntry(byte[] row, byte[] value, byte[] oldValue) throws IOException {
     Put put = new Put(keyDistributor.getDistributedKey(row));
-    put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
+    put.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
     return hTable.checkAndPut(put.getRow(), QueueEntryRow.COLUMN_FAMILY, stateColumnName, oldValue, put);
   }
 
@@ -96,11 +96,11 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
 
     for (byte[] row : rows) {
       Put put = new Put(keyDistributor.getDistributedKey(row));
-      put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
+      put.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
       puts.add(put);
     }
     hTable.put(puts);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -108,11 +108,11 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
     List<Delete> deletes = Lists.newArrayListWithCapacity(size);
     for (byte[] row : rows) {
       Delete delete = new Delete(keyDistributor.getDistributedKey(row));
-      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      delete.addColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       deletes.add(delete);
     }
     hTable.delete(deletes);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override

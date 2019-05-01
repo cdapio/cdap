@@ -41,6 +41,9 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -98,7 +101,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public boolean exists() throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       return tableUtil.tableExists(admin, tableId);
     }
   }
@@ -135,8 +139,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       HTableDescriptor tableDescriptor;
       HTableDescriptorBuilder newDescriptor;
-
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      Connection connection = ConnectionFactory.createConnection(hConf);
+      try (Admin admin = connection.getAdmin()) {
         tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
         // create a new descriptor for the table update
         newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);

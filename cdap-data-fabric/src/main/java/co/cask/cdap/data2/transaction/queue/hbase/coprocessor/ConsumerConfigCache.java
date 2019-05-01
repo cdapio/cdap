@@ -28,7 +28,7 @@ import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -66,7 +66,7 @@ public class ConsumerConfigCache extends AbstractIdleService {
   private final TableName queueConfigTableName;
   private final CConfigurationReader cConfReader;
   private final Supplier<TransactionVisibilityState> transactionSnapshotSupplier;
-  private final InputSupplier<HTableInterface> hTableSupplier;
+  private final InputSupplier<Table> hTableSupplier;
   private final TransactionCodec txCodec;
 
   private volatile Thread refreshThread;
@@ -85,11 +85,11 @@ public class ConsumerConfigCache extends AbstractIdleService {
    * @param queueConfigTableName table name that stores queue configuration
    * @param cConfReader reader to read the latest {@link CConfiguration}
    * @param transactionSnapshotSupplier A supplier for the latest {@link TransactionSnapshot}
-   * @param hTableSupplier A supplier for creating {@link HTableInterface}.
+   * @param hTableSupplier A supplier for creating {@link Table}.
    */
   ConsumerConfigCache(TableName queueConfigTableName, CConfigurationReader cConfReader,
                       Supplier<TransactionVisibilityState> transactionSnapshotSupplier,
-                      InputSupplier<HTableInterface> hTableSupplier) {
+                      InputSupplier<Table> hTableSupplier) {
     this.queueConfigTableName = queueConfigTableName;
     this.cConfReader = cConfReader;
     this.transactionSnapshotSupplier = transactionSnapshotSupplier;
@@ -166,7 +166,7 @@ public class ConsumerConfigCache extends AbstractIdleService {
       return;
     }
 
-    HTableInterface table = hTableSupplier.getInput();
+    Table table = hTableSupplier.getInput();
     try {
       // Scan the table with the transaction snapshot
       Scan scan = new Scan();

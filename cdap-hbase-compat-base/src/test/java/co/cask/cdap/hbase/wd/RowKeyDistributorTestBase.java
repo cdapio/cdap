@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableName;
+<<<<<<< HEAD
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -28,6 +29,9 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+=======
+import org.apache.hadoop.hbase.client.*;
+>>>>>>> 632561b200dfe69d16d1096631e000693eabd211
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
@@ -88,7 +92,12 @@ public abstract class RowKeyDistributorTestBase {
     hConf.setInt("hbase.regionserver.info.port", Networks.getRandomPort());
 
     testingUtility.startMiniCluster();
+<<<<<<< HEAD
     hTable = testingUtility.createTable(TableName.valueOf(TABLE_NAME), CF);
+=======
+    TableName tableName = TableName.valueOf(TABLE_NAME);
+    hTable = testingUtility.createTable(tableName, CF);
+>>>>>>> 632561b200dfe69d16d1096631e000693eabd211
   }
 
   @AfterClass

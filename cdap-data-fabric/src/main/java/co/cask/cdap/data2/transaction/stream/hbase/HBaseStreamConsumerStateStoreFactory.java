@@ -32,8 +32,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 
@@ -62,7 +61,8 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
                                                     streamStateStoreTableId.getTableName());
 
     boolean tableExist;
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       tableExist = tableUtil.tableExists(admin, hbaseTableId);
     }
 
@@ -79,14 +79,15 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     }
 
     HTable hTable = tableUtil.createHTable(hConf, hbaseTableId);
-    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlushTo(false);
+//    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
+//    hTable.setAutoFlushTo(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
   }
 
   @Override
   public synchronized void dropAllInNamespace(NamespaceId namespace) throws IOException {
-    try (HBaseDDLExecutor executor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (HBaseDDLExecutor executor = ddlExecutorFactory.get(); Admin admin = connection.getAdmin()) {
       TableId tableId = StreamUtils.getStateStoreTableId(namespace);
       TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
       if (tableUtil.tableExists(admin, hbaseTableId)) {
