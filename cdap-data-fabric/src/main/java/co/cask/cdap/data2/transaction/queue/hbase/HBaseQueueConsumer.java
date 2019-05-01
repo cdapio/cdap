@@ -88,7 +88,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   @Override
   protected boolean claimEntry(byte[] rowKey, byte[] claimedStateValue) throws IOException {
     Put put = new Put(queueStrategy.getActualRowKey(getConfig(), rowKey));
-    put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, claimedStateValue);
+    put.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName, claimedStateValue);
     return hTable.checkAndPut(put.getRow(), QueueEntryRow.COLUMN_FAMILY,
                               stateColumnName, null, put);
   }
@@ -101,11 +101,11 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     List<Put> puts = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
       Put put = new Put(queueStrategy.getActualRowKey(getConfig(), rowKey));
-      put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, stateContent);
+      put.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName, stateContent);
       puts.add(put);
     }
     hTable.put(puts);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -116,11 +116,12 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     List<Row> ops = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
       Delete delete = new Delete(queueStrategy.getActualRowKey(getConfig(), rowKey));
-      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      delete.addColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       ops.add(delete);
     }
-    hTable.batch(ops);
-    hTable.flushCommits();
+    Object[] results = new Object[rowKeys.size()];
+    hTable.batch(ops,results);
+//    hTable.flushCommits();
   }
 
   @Override

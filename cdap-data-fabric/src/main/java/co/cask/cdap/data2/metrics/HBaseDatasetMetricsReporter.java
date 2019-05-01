@@ -33,6 +33,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.common.Threads;
 
@@ -55,7 +58,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
-  private HBaseAdmin hAdmin;
+  private Admin hAdmin;
 
 
   @Inject
@@ -70,7 +73,8 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
 
   @Override
   protected void startUp() throws Exception {
-    hAdmin = new HBaseAdmin(hConf);
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    hAdmin = connection.getAdmin();
   }
 
   @Override

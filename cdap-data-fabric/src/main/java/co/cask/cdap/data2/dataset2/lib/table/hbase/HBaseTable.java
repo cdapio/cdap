@@ -58,6 +58,7 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
@@ -127,11 +128,11 @@ public class HBaseTable extends BufferingTable {
     TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     // todo: make configurable
-    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlushTo(false);
+//    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
+//    hTable.setAutoFlushTo(false);
     this.tableUtil = tableUtil;
     this.hTable = hTable;
-    this.hTableName = Bytes.toStringBinary(hTable.getTableName());
+    this.hTableName = Bytes.toStringBinary(hTable.getName().getName());
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
     this.txCodec = txCodec;
     // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
@@ -317,7 +318,7 @@ public class HBaseTable extends BufferingTable {
 
     if (!mutations.isEmpty()) {
       hTable.batch(mutations, new Object[mutations.size()]);
-      hTable.flushCommits();
+//      hTable.flushCommits();
       return true;
     }
     return false;
@@ -418,7 +419,7 @@ public class HBaseTable extends BufferingTable {
   @WriteOnly
   private void hbaseDelete(List<Delete> deletes) throws IOException {
     hTable.delete(deletes);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -602,6 +603,14 @@ public class HBaseTable extends BufferingTable {
       @Override
       public void close() {
         scanner.close();
+      }
+
+      public boolean renewLease(){
+        throw new UnsupportedOperationException();
+      }
+
+      public ScanMetrics getScanMetrics(){
+        throw new UnsupportedOperationException();
       }
 
       @SuppressWarnings("NullableProblems")
