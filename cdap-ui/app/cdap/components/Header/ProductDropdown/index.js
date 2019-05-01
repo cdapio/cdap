@@ -176,15 +176,18 @@ export default class ProductDropdown extends Component {
                   </a>
               }
             </DropdownItem>
-            <DropdownItem tag="li">
-              <a
-                href={docsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-              </a>
-            </DropdownItem>
+            {/* to enable documentation, uncomment below code  */}
+            {/*
+              <DropdownItem tag="li">
+                <a
+                  href={docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
+                </a>
+              </DropdownItem>
+            */}
             {
               window.CDAP_CONFIG.securityEnabled ?
                 (
