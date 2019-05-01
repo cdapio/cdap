@@ -37,7 +37,8 @@ class DefaultPutBuilder implements PutBuilder {
 
   @Override
   public PutBuilder add(byte[] family, byte[] qualifier, byte[] value) {
-    put.add(family, qualifier, value);
+    put.addColumn(family, qualifier, value);
+    //put.add(family, qualifier, value);
     return this;
   }
 
@@ -49,7 +50,8 @@ class DefaultPutBuilder implements PutBuilder {
 
   @Override
   public PutBuilder add(byte[] family, byte[] qualifier, long ts, byte[] value) {
-    put.add(family, qualifier, ts, value);
+    put.addColumn(family, qualifier, ts, value);
+    //put.add(family, qualifier, ts, value);
     return this;
   }
 
@@ -61,7 +63,8 @@ class DefaultPutBuilder implements PutBuilder {
 
   @Override
   public PutBuilder add(byte[] family, ByteBuffer qualifier, long ts, ByteBuffer value) {
-    put.add(family, qualifier, ts, value);
+    put.addColumn(family, qualifier, ts, value);
+    //put.add(family, qualifier, ts, value);
     return this;
   }
 

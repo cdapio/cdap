@@ -20,7 +20,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 
@@ -45,8 +47,9 @@ public final class CoprocessorCConfigurationReader extends ConfigurationReader i
         TableName.valueOf(HTableNameConverter.getSystemNamespace(tablePrefix), ConfigurationReader.TABLE_NAME);
 
       @Override
-      public HTableInterface get() throws IOException {
-        return env.getTable(tableName);
+      public Table get() throws IOException {
+        Connection connection = ConnectionFactory.createConnection(env.getConfiguration());
+        return connection.getTable(tableName);
       }
 
       @Override

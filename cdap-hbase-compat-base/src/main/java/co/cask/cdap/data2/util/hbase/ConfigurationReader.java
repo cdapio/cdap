@@ -22,11 +22,9 @@ import co.cask.cdap.common.conf.Constants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -77,8 +75,9 @@ public class ConfigurationReader {
         HTableNameConverter.getSysConfigTablePrefix(cConf.get(Constants.Dataset.TABLE_PREFIX)) + TABLE_NAME;
 
       @Override
-      public HTableInterface get() throws IOException {
-        return new HTable(hbaseConf, tableName);
+      public Table get() throws IOException {
+        Connection connection = ConnectionFactory.createConnection(hbaseConf);
+        return connection.getTable(TableName.valueOf(tableName));
       }
 
       @Override
@@ -97,7 +96,7 @@ public class ConfigurationReader {
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
   public CConfiguration read(Type type) throws IOException {
-    HTableInterface table = null;
+    Table table = null;
     try {
       Get get = new Get(Bytes.toBytes(type.name()));
       get.addFamily(FAMILY);
