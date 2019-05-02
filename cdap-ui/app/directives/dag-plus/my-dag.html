@@ -173,7 +173,7 @@
                 </span>
               </div>
             </div>
-            <div class="node-info">
+            <div class="node-info" ng-class="{ 'node-no-errors': node.errorCount === 0 || DAGPlusPlusCtrl.isDisabled}">
               <div
                 ng-if="!DAGPlusPlusCtrl.shouldShowCustomIcon(node)"
                 class="node-icon fa {{node.icon}}"></div>
@@ -188,7 +188,7 @@
 
               <div class="node-metadata">
                 <div class="node-name"
-                      ng-bind="node.plugin.label || node.name | myEllipsis: 15"
+                      ng-bind="node.plugin.label || node.name"
                       ng-attr-title="{{node.plugin.label || node.name}}">
                 </div>
                 <div class="node-version"
