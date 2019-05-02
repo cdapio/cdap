@@ -27,7 +27,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -38,12 +37,14 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
+import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
@@ -154,7 +155,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
 
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
-                                  Store store, InternalScanner scanner) throws IOException {
+                                  Store store, InternalScanner scanner,FlushLifeCycleTracker tracker) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
       return scanner;
     }
@@ -165,7 +166,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                    InternalScanner scanner, ScanType type,
+                                    InternalScanner scanner, ScanType type,CompactionLifeCycleTracker tracker,
                                     CompactionRequest request) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
       return scanner;
@@ -184,7 +185,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
   }
 
   @Override
-  public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,
+  public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile, CompactionLifeCycleTracker tracker,
                           CompactionRequest request) throws IOException {
     // Persist the compaction state after a successful compaction
     if (this.compactionState != null) {
@@ -193,7 +194,7 @@ public final class HBaseQueueRegionObserver implements RegionCoprocessor, Region
   }
 
   @Override
-  public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e) throws IOException {
+  public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e,FlushLifeCycleTracker tracker) throws IOException {
     // Record whether the region is empty after a flush
     Region region = e.getEnvironment().getRegion();
     // After a flush, if the memstore size is zero and there are no store files for any stores in the region
