@@ -147,7 +147,7 @@ window.getDataPrepUrl = function(navigationObj = {}) {
 
   let stateToUrlMap = {
     connections: '/connections',
-    workspaces: '/dataprep',
+    workspaces: '/wrangler',
   };
 
   let url = baseUrl + stateToUrlMap[stateName || 'workspaces'];

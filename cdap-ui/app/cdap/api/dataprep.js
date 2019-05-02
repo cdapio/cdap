@@ -19,7 +19,7 @@ import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 
-const appPath = '/namespaces/system/apps/dataprep';
+const appPath = '/namespaces/system/apps/wrangler';
 const baseServicePath = `${appPath}/services/service`;
 const contextPath = `${baseServicePath}/methods/contexts/:context`;
 const basepath = `${contextPath}/workspaces/:workspaceId`;

@@ -18,7 +18,7 @@ angular.module(PKG.name + '.services')
   .factory('myDataprepApi', function myDataprepApi(myCdapUrl, $resource, myAuth, myHelpers) {
     var url = myCdapUrl.constructUrl;
 
-    const appPath = '/namespaces/:namespace/apps/dataprep';
+    const appPath = '/namespaces/:namespace/apps/wrangler';
     const baseServicePath = `${appPath}/services/service`;
     const basepath = `${baseServicePath}/methods/workspaces/:workspaceId`;
     return $resource(
