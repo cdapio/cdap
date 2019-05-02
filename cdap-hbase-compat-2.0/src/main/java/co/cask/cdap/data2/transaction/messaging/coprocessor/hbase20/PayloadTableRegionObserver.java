@@ -93,13 +93,13 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
     LOG.info("preFlush, filter using PayloadDataFilter");
     Scan scan = new Scan();
     scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
-                                         topicMetadataCache));
-    
-    if(!(store instanceof HStore)){
-    	throw new RuntimeException("store is not an instance of HStore");
+            topicMetadataCache));
+
+    if (!(store instanceof HStore)) {
+      throw new RuntimeException("store is not an instance of HStore");
     }
-    return new StoreScanner((HStore)store, ((HStore)store).getScanInfo(),  Collections.singletonList(memstoreScanner),
-                            ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
+    return new StoreScanner((HStore) store, ((HStore) store).getScanInfo(), Collections.singletonList(memstoreScanner),
+            ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
   }
 
   @Override
