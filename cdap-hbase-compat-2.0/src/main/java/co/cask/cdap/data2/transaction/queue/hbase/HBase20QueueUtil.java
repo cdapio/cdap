@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Table;
 
 /**
  * HBase 1.1 implementation of {@link HBaseQueueUtil}.
@@ -26,7 +27,7 @@ import org.apache.hadoop.hbase.client.HTable;
 public class HBase20QueueUtil extends HBaseQueueUtil {
   @Override
   public HBaseQueueConsumer getQueueConsumer(CConfiguration cConf,
-                                             HTable hTable, QueueName queueName,
+                                             Table hTable, QueueName queueName,
                                              HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                                              HBaseQueueStrategy queueStrategy) {
     return new HBase20QueueConsumer(cConf, hTable, queueName, consumerState, stateStore, queueStrategy);

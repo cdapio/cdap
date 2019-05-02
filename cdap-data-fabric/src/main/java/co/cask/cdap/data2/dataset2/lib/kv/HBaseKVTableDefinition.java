@@ -157,7 +157,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
     private final HBaseTableUtil tableUtil;
-    private final HTable table;
+    private final Table table;
 
     KVTableImpl(DatasetContext datasetContext, String tableName,
                 Configuration hConf, HBaseTableUtil tableUtil) throws IOException {

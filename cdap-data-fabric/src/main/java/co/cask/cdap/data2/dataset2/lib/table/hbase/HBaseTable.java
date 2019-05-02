@@ -51,13 +51,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.OperationWithAttributes;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.tephra.Transaction;
@@ -97,7 +91,7 @@ public class HBaseTable extends BufferingTable {
   public static final String SAFE_INCREMENTS = "dataset.table.safe.readless.increments";
 
   private final HBaseTableUtil tableUtil;
-  private final HTable hTable;
+  private final Table hTable;
   private final String hTableName;
   private final byte[] columnFamily;
   private final TransactionCodec txCodec;
@@ -126,7 +120,7 @@ public class HBaseTable extends BufferingTable {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           TableProperties.getReadlessIncrementSupport(spec.getProperties()), spec.getProperties());
     TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
-    HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
+    Table hTable = tableUtil.createHTable(hConf, hBaseTableId);
     // todo: make configurable
 //    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
 //    hTable.setAutoFlushTo(false);

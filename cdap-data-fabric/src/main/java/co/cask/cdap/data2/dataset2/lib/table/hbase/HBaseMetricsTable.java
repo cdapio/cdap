@@ -40,13 +40,7 @@ import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -76,7 +70,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private final HBaseTableUtil tableUtil;
   private final TableId tableId;
-  private final HTable hTable;
+  private final Table hTable;
   private final byte[] columnFamily;
   private AbstractRowKeyDistributor rowKeyDistributor;
   private ExecutorService scanExecutor;
@@ -88,7 +82,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
     initializeV3Vars(cConf, spec);
 
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
+    Table hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
 //    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
 //    hTable.setAutoFlushTo(false);

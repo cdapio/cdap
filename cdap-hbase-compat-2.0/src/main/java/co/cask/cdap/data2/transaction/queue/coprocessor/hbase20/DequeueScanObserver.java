@@ -33,26 +33,26 @@ import java.io.IOException;
  *
  */
 public class DequeueScanObserver implements RegionCoprocessor,RegionObserver {
-	@Override
-	public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
-	    throws IOException {
-	    ConsumerConfig consumerConfig = DequeueScanAttributes.getConsumerConfig(scan);
-	    Transaction tx = DequeueScanAttributes.getTx(scan);
-
-	    if (consumerConfig == null || tx == null) {
-	      return s;
-	    }
-
-	    Filter dequeueFilter = new DequeueFilter(consumerConfig, tx);
-
-	    Filter existing = scan.getFilter();
-	    if (existing != null) {
-	      Filter combined = new FilterList(FilterList.Operator.MUST_PASS_ALL, existing, dequeueFilter);
-	      scan.setFilter(combined);
-	    } else {
-	      scan.setFilter(dequeueFilter);
-	    }
-
-	    return s;
-	  }
+//	@Override
+//	public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
+//	    throws IOException {
+//	    ConsumerConfig consumerConfig = DequeueScanAttributes.getConsumerConfig(scan);
+//	    Transaction tx = DequeueScanAttributes.getTx(scan);
+//
+//	    if (consumerConfig == null || tx == null) {
+//	      return s;
+//	    }
+//
+//	    Filter dequeueFilter = new DequeueFilter(consumerConfig, tx);
+//
+//	    Filter existing = scan.getFilter();
+//	    if (existing != null) {
+//	      Filter combined = new FilterList(FilterList.Operator.MUST_PASS_ALL, existing, dequeueFilter);
+//	      scan.setFilter(combined);
+//	    } else {
+//	      scan.setFilter(dequeueFilter);
+//	    }
+//
+//	    return s;
+//	  }
 	}

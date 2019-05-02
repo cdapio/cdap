@@ -25,11 +25,7 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Row;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;
@@ -43,7 +39,7 @@ import java.util.Set;
  */
 abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
 
-  private final HTable hTable;
+  private final Table hTable;
   private final HBaseConsumerState state;
   private final HBaseConsumerStateStore stateStore;
   private final HBaseQueueStrategy queueStrategy;
@@ -59,7 +55,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
    * @param consumerState The persisted state of this consumer.
    * @param stateStore The store for persisting state for this consumer.
    */
-  HBaseQueueConsumer(CConfiguration cConf, HTable hTable, QueueName queueName,
+  HBaseQueueConsumer(CConfiguration cConf, Table hTable, QueueName queueName,
                      HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                      HBaseQueueStrategy queueStrategy) {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.

@@ -42,13 +42,13 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
-  private final HTable hTable;
+  private final Table hTable;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
   private final int scanCacheRows;
   private final HBaseExceptionHandler exceptionHandler;
 
-  HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+  HBasePayloadTable(HBaseTableUtil tableUtil, Table hTable, byte[] columnFamily,
                     AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
                     int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;

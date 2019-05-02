@@ -22,6 +22,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public interface HBaseQueueStrategy extends Closeable {
    * @param numRows Maximum number of rows to scan for
    * @return A {@link QueueScanner} that scans over the give table
    */
-  QueueScanner createScanner(ConsumerConfig consumerConfig, HTable hTable, Scan scan, int numRows) throws IOException;
+  QueueScanner createScanner(ConsumerConfig consumerConfig, Table hTable, Scan scan, int numRows) throws IOException;
 
   /**
    * Creates the actual row key used for accessing the HBase table from the given queue entry row key.

@@ -40,17 +40,7 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.FilterBase;
-import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
-import org.apache.hadoop.hbase.regionserver.HStore;
-import org.apache.hadoop.hbase.regionserver.InternalScanner;
-import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
-import org.apache.hadoop.hbase.regionserver.Region;
-import org.apache.hadoop.hbase.regionserver.ScanInfo;
-import org.apache.hadoop.hbase.regionserver.ScanType;
-import org.apache.hadoop.hbase.regionserver.ScannerContext;
-import org.apache.hadoop.hbase.regionserver.Store;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
-import org.apache.hadoop.hbase.regionserver.StoreScanner;
+import org.apache.hadoop.hbase.regionserver.*;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -122,8 +112,8 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
   }
 
   @Override
-  public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                             KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
+  public void preFlushScannerOpen(final ObserverContext<RegionCoprocessorEnvironment> c, final Store store,
+                                             ScanOptions options, FlushLifeCycleTracker tracker) throws IOException {
     LOG.info("preFlush, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
     Scan scan = new Scan();
@@ -133,11 +123,11 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     if(!(store instanceof HStore)){
     	throw new RuntimeException("store is not an instance of HStore");
     }
-    return new LoggingInternalScanner("MessageDataFilter", "preFlush",
-                                      new StoreScanner((HStore) store, ((HStore)store).getScanInfo(), 
-                                                       Collections.singletonList(memstoreScanner),
-                                                       ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
-                                                       HConstants.OLDEST_TIMESTAMP), txVisibilityState);
+//    return new LoggingInternalScanner("MessageDataFilter", "preFlush",
+//                                      new StoreScanner((HStore) store, ((HStore)store).getScanInfo(),
+//                                                       Collections.singletonList(memstoreScanner),
+//                                                       ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
+//                                                       HConstants.OLDEST_TIMESTAMP), txVisibilityState);
   }
 
   @Override
@@ -158,10 +148,9 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
   }
 
   @Override
-  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                               List<? extends KeyValueScanner> scanners, ScanType scanType,
-                                               long earliestPutTs, InternalScanner s,
-                                               CompactionRequest request) throws IOException {
+  public void preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
+                                    ScanType scanType, ScanOptions options, CompactionLifeCycleTracker tracker,
+                                    CompactionRequest request) throws IOException {
     LOG.info("preCompact, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
 
@@ -177,9 +166,9 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     if(!(store instanceof HStore)){
     	throw new RuntimeException("store is not an instance of HStore");
     }
-    return new LoggingInternalScanner("MessageDataFilter", "preCompact",
-                                      new StoreScanner((HStore)store, ((HStore)store).getScanInfo(), scanners, scanType,
-                                                       store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);
+//    return new LoggingInternalScanner("MessageDataFilter", "preCompact",
+//                                      new StoreScanner((HStore)store, ((HStore)store).getScanInfo(), scanners, scanType,
+//                                                       store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);
   }
 
   @Override

@@ -47,11 +47,11 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
   private final HBaseQueueStrategy queueStrategy;
   private final List<ConsumerGroupConfig> consumerGroupConfigs;
   private final byte[] queueRowPrefix;
-  private final HTable hTable;
+  private final Table hTable;
   private final List<byte[]> rollbackKeys;
   private final long txMaxLifeTimeInMillis;
 
-  public HBaseQueueProducer(HTable hTable, QueueName queueName,
+  public HBaseQueueProducer(Table hTable, QueueName queueName,
                             QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy,
                             Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
                             long txMaxLifeTimeInMillis) {

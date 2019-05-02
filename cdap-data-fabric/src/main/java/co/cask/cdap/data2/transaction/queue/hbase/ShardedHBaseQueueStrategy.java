@@ -32,6 +32,7 @@ import com.google.common.base.Function;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.Closeable;
@@ -107,12 +108,12 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
 
   @Override
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
-                                    HTable hTable, Scan scan, int numRows) throws IOException {
+                                    Table hTable, Scan scan, int numRows) throws IOException {
     ResultScanner scanner = createHBaseScanner(consumerConfig, hTable, scan, numRows);
     return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
   }
 
-  private ResultScanner createHBaseScanner(ConsumerConfig consumerConfig, HTable hTable, Scan scan,
+  private ResultScanner createHBaseScanner(ConsumerConfig consumerConfig, Table hTable, Scan scan,
                                            int numRows) throws IOException {
     // Modify the scan with sharded key prefix
     ScanBuilder shardedScan = tableUtil.buildScan(scan);

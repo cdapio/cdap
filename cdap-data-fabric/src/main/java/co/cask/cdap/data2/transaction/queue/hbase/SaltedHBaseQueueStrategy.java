@@ -30,6 +30,7 @@ import com.google.common.base.Function;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.IOException;
@@ -96,7 +97,7 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
 
   @Override
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
-                                    HTable hTable, Scan scan, int numRows) throws IOException {
+                                    Table hTable, Scan scan, int numRows) throws IOException {
     // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
     ScanBuilder distributedScan = tableUtil.buildScan(scan);
     int caching = (int) (1.1 * numRows / distributorBuckets);

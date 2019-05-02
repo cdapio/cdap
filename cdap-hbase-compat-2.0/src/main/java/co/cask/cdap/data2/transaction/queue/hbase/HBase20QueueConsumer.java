@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import com.google.common.primitives.Ints;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
 import org.apache.hadoop.hbase.filter.BitComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
@@ -39,7 +40,7 @@ import java.util.Map;
 final class HBase20QueueConsumer extends HBaseQueueConsumer {
   private final Filter processedStateFilter;
 
-  HBase20QueueConsumer(CConfiguration cConf, HTable hTable, QueueName queueName,
+  HBase20QueueConsumer(CConfiguration cConf, Table hTable, QueueName queueName,
                        HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
                        HBaseQueueStrategy queueStrategy) {
     super(cConf, hTable, queueName, consumerState, stateStore, queueStrategy);

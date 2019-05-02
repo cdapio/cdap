@@ -129,7 +129,7 @@ public final class HBaseTableFactory implements TableFactory {
   @Override
   public MetadataTable createMetadataTable(String tableName) throws IOException {
     TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
-    HTable hTable = null;
+    Table hTable = null;
 
     // If the table descriptor is in the cache, we assume the table exists.
     if (!tableDescriptors.containsKey(tableId)) {
@@ -345,7 +345,7 @@ public final class HBaseTableFactory implements TableFactory {
 
     // Lookup the table descriptor from the cache first. If it is there, we assume the HBase table exists
     // Otherwise, attempt to create it.
-    HTable hTable = null;
+    Table hTable = null;
     HTableDescriptor htd = tableDescriptors.get(tableId);
 
     if (htd == null) {
@@ -429,15 +429,15 @@ public final class HBaseTableFactory implements TableFactory {
    * A holder class for {@link HTable} and a {@link AbstractRowKeyDistributor} for operating on the given table.
    */
   private static final class HTableWithRowKeyDistributor {
-    private final HTable hTable;
+    private final Table hTable;
     private final AbstractRowKeyDistributor rowKeyDistributor;
 
-    private HTableWithRowKeyDistributor(HTable hTable, AbstractRowKeyDistributor rowKeyDistributor) {
+    private HTableWithRowKeyDistributor(Table hTable, AbstractRowKeyDistributor rowKeyDistributor) {
       this.hTable = hTable;
       this.rowKeyDistributor = rowKeyDistributor;
     }
 
-    HTable getHTable() {
+    Table getHTable() {
       return hTable;
     }
 

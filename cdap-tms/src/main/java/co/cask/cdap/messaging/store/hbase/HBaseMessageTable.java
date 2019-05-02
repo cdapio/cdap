@@ -26,11 +26,7 @@ import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.store.AbstractMessageTable;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.RawMessageTableEntry;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,13 +44,13 @@ final class HBaseMessageTable extends AbstractMessageTable {
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
-  private final HTable hTable;
+  private final Table hTable;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
   private final int scanCacheRows;
   private final HBaseExceptionHandler exceptionHandler;
 
-  HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+  HBaseMessageTable(HBaseTableUtil tableUtil, Table hTable, byte[] columnFamily,
                     AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor, int scanCacheRows,
                     HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;

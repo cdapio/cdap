@@ -97,7 +97,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), splitKeys);
     }
 
-    HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
+    Table hTable = tableUtil.createHTable(hConf, hBaseTableId);
 //    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
 //    hTable.setAutoFlushTo(false);
 

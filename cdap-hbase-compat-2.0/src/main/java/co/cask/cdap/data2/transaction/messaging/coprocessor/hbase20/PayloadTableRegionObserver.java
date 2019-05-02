@@ -19,15 +19,12 @@ package co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -36,6 +33,7 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.*;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -88,35 +86,34 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
   }
 
   @Override
-  public InternalScanner preFlushScannerOpen(final ObserverContext<RegionCoprocessorEnvironment> c, final Store store,
-                                             final KeyValueScanner memstoreScanner, final InternalScanner s) throws IOException {
+  public void preFlushScannerOpen(final ObserverContext<RegionCoprocessorEnvironment> c, final Store store,
+                                  ScanOptions options, FlushLifeCycleTracker tracker) throws IOException {
     LOG.info("preFlush, filter using PayloadDataFilter");
     Scan scan = new Scan();
     scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
             topicMetadataCache));
 
-    if (!(store instanceof HStore)) {
-      throw new RuntimeException("store is not an instance of HStore");
-    }
-    return new StoreScanner((HStore) store, ((HStore) store).getScanInfo(), Collections.singletonList(memstoreScanner),
-            ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
+//    if (!(store instanceof HStore)) {
+//      throw new RuntimeException("store is not an instance of HStore");
+//    }
+//    return new StoreScanner((HStore) store, ((HStore) store).getScanInfo(), Collections.singletonList(memstoreScanner),
+//            ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
   }
 
   @Override
-  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                               List<? extends KeyValueScanner> scanners, ScanType scanType,
-                                               long earliestPutTs, InternalScanner s,
+  public void preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
+                                               ScanType scanType, ScanOptions options, CompactionLifeCycleTracker tracker,
                                                CompactionRequest request) throws IOException {
     LOG.info("preCompact, filter using PayloadDataFilter");
     Scan scan = new Scan();
     scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
                                          topicMetadataCache));
     
-    if(!(store instanceof HStore)){
-    	throw new RuntimeException("store is not an instance of HStore");
-    }
-    return new StoreScanner((HStore)store, ((HStore)store).getScanInfo(),  scanners, scanType, store.getSmallestReadPoint(),
-                            earliestPutTs);
+//    if(!(store instanceof HStore)){
+//    	throw new RuntimeException("store is not an instance of HStore");
+//    }
+//    return new StoreScanner((HStore)store, ((HStore)store).getScanInfo(),  scanners, scanType, store.getSmallestReadPoint(),
+//                            earliestPutTs);
   }
 
 
