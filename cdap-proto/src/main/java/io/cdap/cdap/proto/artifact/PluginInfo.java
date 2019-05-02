@@ -23,7 +23,6 @@ import io.cdap.cdap.api.plugin.PluginPropertyField;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -35,19 +34,17 @@ public class PluginInfo extends PluginSummary {
 
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
-  private final Set<String> endpoints;
 
   public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
     this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(), pluginClass.getClassName(),
-         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints());
+         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties());
   }
 
   public PluginInfo(String name, String type, String description, String className, @Nullable String configFieldName,
-                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties, Set<String> endpoints) {
+                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties) {
     super(name, type, description, className, artifact);
     this.configFieldName = configFieldName;
     this.properties = properties;
-    this.endpoints = endpoints;
   }
 
   @Nullable
@@ -57,10 +54,6 @@ public class PluginInfo extends PluginSummary {
 
   public Map<String, PluginPropertyField> getProperties() {
     return properties;
-  }
-
-  public Set<String> getEndpoints() {
-    return endpoints;
   }
 
   @Override
@@ -76,13 +69,12 @@ public class PluginInfo extends PluginSummary {
 
     return super.equals(that) &&
       Objects.equals(configFieldName, that.configFieldName) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(endpoints, that.endpoints);
+      Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), configFieldName, properties, endpoints);
+    return Objects.hash(super.hashCode(), configFieldName, properties);
   }
 
   @Override
@@ -90,7 +82,6 @@ public class PluginInfo extends PluginSummary {
     return "PluginInfo{" +
       "configFieldName='" + configFieldName + '\'' +
       ", properties=" + properties +
-      ", endpoints=" + endpoints +
       ", name='" + name + '\'' +
       ", type='" + type + '\'' +
       ", description='" + description + '\'' +
