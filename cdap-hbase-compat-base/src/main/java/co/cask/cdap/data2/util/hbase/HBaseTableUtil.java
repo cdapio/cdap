@@ -389,7 +389,7 @@ public abstract class HBaseTableUtil {
    * @return an {@link HTableDescriptor} for the table
    * @throws IOException
    */
-  public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract HTableDescriptor getHTableDescriptor(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Checks if an HBase namespace already exists
@@ -398,7 +398,7 @@ public abstract class HBaseTableUtil {
    * @param namespace the namespace to check for existence
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException;
+  public abstract boolean hasNamespace(Admin admin, String namespace) throws IOException;
 
   /**
    * Check if an HBase table exists
@@ -407,7 +407,7 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract boolean tableExists(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Delete an HBase table
@@ -610,7 +610,7 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+  public Map<TableId, TableStats> getTableStats(Admin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
     Map<TableId, TableStats> datasetStat = Maps.newHashMap();

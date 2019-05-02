@@ -66,8 +66,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
@@ -174,7 +173,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   @Override
   public boolean exists(QueueName queueName) throws Exception {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       return tableUtil.tableExists(admin, getDataTableId(queueName)) &&
         datasetFramework.hasInstance(getStateStoreId(queueName.getFirstComponent()));
     }
@@ -256,7 +256,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            HBaseAdmin hBaseAdmin = new HBaseAdmin(hConf);
+            Connection connection = ConnectionFactory.createConnection(hConf);
+            Admin hBaseAdmin = connection.getAdmin();
             // register it for close, after all Futures are complete
             toClose.add(hBaseAdmin);
             Map<TableId, Future<?>> futures = upgradeQueues(namespaceMeta, executor, hBaseAdmin);
@@ -286,7 +287,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   private Map<TableId, Future<?>> upgradeQueues(final NamespaceMeta namespaceMeta, ExecutorService executor,
-                                                final HBaseAdmin admin) throws Exception {
+                                                final Admin admin) throws Exception {
     String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
     List<TableId> tableIds = tableUtil.listTablesInNamespace(admin, hbaseNamespace);
     List<TableId> stateStoreTableIds = Lists.newArrayList();
@@ -376,7 +377,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   private void truncate(TableId tableId) throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       if (!tableUtil.tableExists(admin, tableId)) {
         return;
       }
@@ -389,7 +391,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   private void drop(TableId tableId) throws IOException {
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get();
-         HBaseAdmin admin = new HBaseAdmin(hConf)) {
+         Connection connection = ConnectionFactory.createConnection(hConf);
+         Admin admin = connection.getAdmin()) {
       if (tableUtil.tableExists(admin, tableId)) {
         tableUtil.dropTable(ddlExecutor, tableId);
       }
