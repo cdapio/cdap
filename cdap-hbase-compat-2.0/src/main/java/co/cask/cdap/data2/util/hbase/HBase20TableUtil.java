@@ -16,17 +16,9 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.data2.increment.hbase20.IncrementHandler;
-import co.cask.cdap.data2.transaction.coprocessor.hbase20.DefaultTransactionProcessor;
-import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20.MessageTableRegionObserver;
-import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20.PayloadTableRegionObserver;
-import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.DequeueScanObserver;
-import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.HBaseQueueRegionObserver;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.spi.hbase.TableDescriptor;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -48,8 +40,18 @@ import org.apache.hadoop.hbase.security.access.AccessControlClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.List;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+
+import co.cask.cdap.data2.increment.hbase20.IncrementHandler;
+import co.cask.cdap.data2.transaction.coprocessor.hbase20.DefaultTransactionProcessor;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20.MessageTableRegionObserver;
+import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20.PayloadTableRegionObserver;
+import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.DequeueScanObserver;
+import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.HBaseQueueRegionObserver;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.hbase.TableDescriptor;
 
 /**
  *
@@ -77,14 +79,14 @@ public class HBase20TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
+  public HTableDescriptor getHTableDescriptor(Admin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     return admin.getTableDescriptor(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
-  public boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException {
+  public boolean hasNamespace(Admin admin, String namespace) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     try {
@@ -96,7 +98,7 @@ public class HBase20TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
+  public boolean tableExists(Admin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     return admin.tableExists(HTableNameConverter.toTableName(tablePrefix, tableId));
