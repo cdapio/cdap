@@ -364,7 +364,7 @@ public abstract class HBaseTableUtil {
    * @param tableId the {@link TableId} to create an {@link HTable} for
    * @return an {@link HTable} for the tableName in the namespace
    */
-  public abstract HTable createHTable(Configuration conf, TableId tableId) throws IOException;
+  public abstract Table createHTable(Configuration conf, TableId tableId) throws IOException;
 
   /**
    * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version

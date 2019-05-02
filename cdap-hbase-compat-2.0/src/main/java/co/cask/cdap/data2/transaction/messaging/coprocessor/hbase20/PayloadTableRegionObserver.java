@@ -35,12 +35,7 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.FilterBase;
-import org.apache.hadoop.hbase.regionserver.HStore;
-import org.apache.hadoop.hbase.regionserver.InternalScanner;
-import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
-import org.apache.hadoop.hbase.regionserver.ScanType;
-import org.apache.hadoop.hbase.regionserver.Store;
-import org.apache.hadoop.hbase.regionserver.StoreScanner;
+import org.apache.hadoop.hbase.regionserver.*;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -93,13 +88,13 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
   }
 
   @Override
-  public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                             KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
+  public InternalScanner preFlushScannerOpen(final ObserverContext<RegionCoprocessorEnvironment> c, final Store store,
+                                             final KeyValueScanner memstoreScanner, final InternalScanner s) throws IOException {
     LOG.info("preFlush, filter using PayloadDataFilter");
     Scan scan = new Scan();
     scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
                                          topicMetadataCache));
-    return new StoreScanner((HStore)store, ((HStore)store).getScanInfo(),  Collections.singletonList(memstoreScanner),
+    return new StoreScanner((HStore)store, ((HStore)store).getScanInfo(), Collections.singletonList(memstoreScanner),
                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
   }
 
@@ -115,6 +110,7 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
     return new StoreScanner((HStore)store, ((HStore)store).getScanInfo(),  scanners, scanType, store.getSmallestReadPoint(),
                             earliestPutTs);
   }
+
 
   private static final class PayloadDataFilter extends FilterBase {
     private final RegionCoprocessorEnvironment env;

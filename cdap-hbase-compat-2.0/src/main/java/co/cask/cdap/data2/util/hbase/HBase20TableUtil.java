@@ -32,7 +32,6 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -50,6 +49,7 @@ import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase20.PayloadTable
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.DequeueScanObserver;
 import co.cask.cdap.data2.transaction.queue.coprocessor.hbase20.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
+import org.apache.hadoop.hbase.client.Table;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.spi.hbase.TableDescriptor;
 
@@ -61,9 +61,11 @@ public class HBase20TableUtil extends HBaseTableUtil {
   private static final Logger LOG = LoggerFactory.getLogger(HBase20TableUtil.class);
 
   @Override
-  public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
+  public Table createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
+    Connection connection = ConnectionFactory.createConnection(conf);
+    return connection.getTable(HTableNameConverter.toTableName(tablePrefix, tableId));
+//    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override

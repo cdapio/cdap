@@ -41,11 +41,8 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
-import org.apache.hadoop.hbase.regionserver.InternalScanner;
-import org.apache.hadoop.hbase.regionserver.Region;
-import org.apache.hadoop.hbase.regionserver.RegionScanner;
-import org.apache.hadoop.hbase.regionserver.ScanType;
-import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.*;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.wal.WALEdit;
@@ -261,7 +258,7 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
 
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                  InternalScanner scanner) throws IOException {
+                                  InternalScanner scanner, FlushLifeCycleTracker tracker) throws IOException {
     byte[] family = store.getColumnFamilyName().getBytes();
     return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner,
         ScanType.COMPACT_RETAIN_DELETES, state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
@@ -275,7 +272,8 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                    InternalScanner scanner, ScanType scanType) throws IOException {
+                                    InternalScanner scanner, ScanType scanType, CompactionLifeCycleTracker tracker,
+                                    CompactionRequest request) throws IOException {
     byte[] family = store.getColumnFamilyName().getBytes();
     return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner, scanType,
         state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
@@ -283,7 +281,7 @@ public class IncrementHandler implements  RegionCoprocessor,RegionObserver  {
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                    InternalScanner scanner, ScanType scanType, CompactionRequest request)
+                                    InternalScanner scanner, ScanType scanType)
     throws IOException {
     byte[] family = store.getColumnFamilyName().getBytes();
     return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner, scanType,
