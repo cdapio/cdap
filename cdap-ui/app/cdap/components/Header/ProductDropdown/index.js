@@ -96,7 +96,7 @@ export default class ProductDropdown extends Component {
     let baseCDAPURL = window.getAbsUIUrl();
     let cdapVersion = VersionStore.getState().version;
     /* to enable documentation, uncomment below code */
-    //let docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
+    // let docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
     let administrationURL = '/administration/configuration';
     let userSection;
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
