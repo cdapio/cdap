@@ -32,6 +32,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
@@ -77,7 +78,7 @@ public class MetricHBaseTableUtilTest {
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
-    HBaseAdmin hAdmin = TEST_HBASE.getHBaseAdmin();
+    Admin hAdmin = TEST_HBASE.getHBaseAdmin();
     TableId hTableId = hBaseTableUtil.createHTableId(NamespaceId.SYSTEM, spec.getName());
     HTableDescriptor desc = hBaseTableUtil.getHTableDescriptor(hAdmin, hTableId);
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));

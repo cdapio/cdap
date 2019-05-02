@@ -1850,23 +1850,23 @@
           </executions>
         </plugin>
 
-        <!-- GPG signature -->
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.5</version>
-          <configuration>
-            <passphrase>${gpg.passphrase}</passphrase>
-            <useAgent>${gpg.useagent}</useAgent>
-          </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>sign</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+        <!--&lt;!&ndash; GPG signature &ndash;&gt;-->
+        <!--<plugin>-->
+          <!--<groupId>org.apache.maven.plugins</groupId>-->
+          <!--<artifactId>maven-gpg-plugin</artifactId>-->
+          <!--<version>1.5</version>-->
+          <!--<configuration>-->
+            <!--<passphrase>${gpg.passphrase}</passphrase>-->
+            <!--<useAgent>${gpg.useagent}</useAgent>-->
+          <!--</configuration>-->
+          <!--<executions>-->
+            <!--<execution>-->
+              <!--<goals>-->
+                <!--<goal>sign</goal>-->
+              <!--</goals>-->
+            <!--</execution>-->
+          <!--</executions>-->
+        <!--</plugin>-->
 
         <!-- Nexus deploy plugin -->
         <plugin>
