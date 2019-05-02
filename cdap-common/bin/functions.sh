@@ -443,62 +443,128 @@ cdap_set_hbase() {
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
 #
+#cdap_set_hive_classpath() {
+#  local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
+#  if [[ ${__explore} == true ]]; then
+#    if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]] || [[ -z ${HIVE_EXEC_ENGINE} ]] || [[ -z ${HIVE_CLASSPATH} ]]; then
+#      __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
+#      if [[ ${__secure} == true ]]; then
+#        cdap_kinit || return 1
+#      fi
+#
+#      if [[ -n ${HIVE_HOME} ]] && [[ -d ${HIVE_HOME} ]] && [[ -x ${HIVE_HOME}/bin/hive ]]; then
+#        HIVE_CMD="${HIVE_HOME}"/bin/hive
+#      else
+#        HIVE_CMD=hive
+#      fi
+#
+#      if [[ $(which ${HIVE_CMD} 2>/dev/null) ]]; then
+#        ERR_FILE=$(mktemp)
+#        HIVE_VAR_OUT=$(${HIVE_CMD} -e 'set -v' 2>${ERR_FILE})
+#        __ret=$?
+#        HIVE_ERR_MSG=$(< ${ERR_FILE})
+#        rm ${ERR_FILE}
+#        if [ ${__ret} -ne 0 ]; then
+#          echo "[ERROR] While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
+#          echo "  If you do not want CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
+#          echo "  Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
+#          echo "  stderr:"
+#          echo "${HIVE_ERR_MSG}"
+#          return 1
+#        fi
+#        HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
+#        # Quotes preserve whitespace
+#        HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
+#        HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
+#        HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
+#        HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
+#        HIVE_EXEC_ENGINE=${HIVE_EXEC_ENGINE:-$(echo -e "${HIVE_VARS}" | grep '^hive.execution.engine=' | cut -d= -f2)}
+#      fi
+#    fi
+#
+#    # If Hive classpath is successfully determined, derive explore
+#    # classpath from it and export it to use it in the launch command
+#    if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]] && [[ -n ${HIVE_CLASSPATH} ]]; then
+#      EXPLORE_CONF_DIRS="${HIVE_CONF_DIR}:${HADOOP_CONF_DIR}"
+#      EXPLORE_CLASSPATH=${HIVE_CLASSPATH}
+#      if [[ -n ${TEZ_HOME} ]] && [[ -n ${TEZ_CONF_DIR} ]]; then
+#        # tez-site.xml also need to be passed to explore service
+#        EXPLORE_CONF_DIRS="${EXPLORE_CONF_DIRS}:${TEZ_CONF_DIR}"
+#      fi
+#      if [[ ${HIVE_EXEC_ENGINE} == spark ]]; then
+#        # We require SPARK_HOME to be set for CDAP to include the Spark assembly JAR for Explore
+#        cdap_set_spark || die "Unable to get SPARK_HOME, but default Hive engine is Spark"
+#      fi
+#      export EXPLORE_CONF_DIRS EXPLORE_CLASSPATH
+#    fi
+#  fi
+#}
+
+#
+# cdap_set_hive_classpath
+# Determine Hive's CLASSPATH, and set EXPLORE_CLASSPATH.
+# Hive classpath is not added as part of system classpath as hive jars bundle unrelated jars like guava,
+# and hence need to be isolated.
+# NOTE: this function is also sourced and invoked by the CSD control script, found here:
+#   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
+#   Any changes to this function must be compatible with the CSD's invocation
+#
 cdap_set_hive_classpath() {
-  local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
-  if [[ ${__explore} == true ]]; then
-    if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]] || [[ -z ${HIVE_EXEC_ENGINE} ]] || [[ -z ${HIVE_CLASSPATH} ]]; then
-      __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
-      if [[ ${__secure} == true ]]; then
-        cdap_kinit || return 1
-      fi
+  #local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
+  #if [[ ${__explore} == true ]]; then
+   if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]] || [[ -z ${HIVE_EXEC_ENGINE} ]] || [[ -z ${HIVE_CLASSPATH} ]]; then
+     __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
+     if [[ ${__secure} == true ]]; then
+       cdap_kinit || return 1
+     fi
 
-      if [[ -n ${HIVE_HOME} ]] && [[ -d ${HIVE_HOME} ]] && [[ -x ${HIVE_HOME}/bin/hive ]]; then
-        HIVE_CMD="${HIVE_HOME}"/bin/hive
-      else
-        HIVE_CMD=hive
-      fi
+     if [[ -n ${HIVE_HOME} ]] && [[ -d ${HIVE_HOME} ]] && [[ -x ${HIVE_HOME}/bin/hive ]]; then
+       HIVE_CMD="${HIVE_HOME}"/bin/hive
+     else
+       HIVE_CMD=hive
+     fi
 
-      if [[ $(which ${HIVE_CMD} 2>/dev/null) ]]; then
-        ERR_FILE=$(mktemp)
-        HIVE_VAR_OUT=$(${HIVE_CMD} -e 'set -v' 2>${ERR_FILE})
-        __ret=$?
-        HIVE_ERR_MSG=$(< ${ERR_FILE})
-        rm ${ERR_FILE}
-        if [ ${__ret} -ne 0 ]; then
-          echo "[ERROR] While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
-          echo "  If you do not want CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
-          echo "  Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
-          echo "  stderr:"
-          echo "${HIVE_ERR_MSG}"
-          return 1
-        fi
-        HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
-        # Quotes preserve whitespace
-        HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
-        HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
-        HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
-        HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
-        HIVE_EXEC_ENGINE=${HIVE_EXEC_ENGINE:-$(echo -e "${HIVE_VARS}" | grep '^hive.execution.engine=' | cut -d= -f2)}
-      fi
-    fi
+     if [[ $(which ${HIVE_CMD} 2>/dev/null) ]]; then
+       ERR_FILE=$(mktemp)
+       HIVE_VAR_OUT=$(${HIVE_CMD} -e 'set -v' 2>${ERR_FILE})
+       __ret=$?
+       HIVE_ERR_MSG=$(< ${ERR_FILE})
+       rm ${ERR_FILE}
+       if [ ${__ret} -ne 0 ]; then
+         echo "[ERROR] While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
+         echo "  If you do not want CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
+         echo "  Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
+         echo "  stderr:"
+         echo "${HIVE_ERR_MSG}"
+         return 1
+       fi
+       HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
+       # Quotes preserve whitespace
+       HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
+       HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
+       HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
+       HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
+       HIVE_EXEC_ENGINE=${HIVE_EXEC_ENGINE:-$(echo -e "${HIVE_VARS}" | grep '^hive.execution.engine=' | cut -d= -f2)}
+     fi
+   fi
 
-    # If Hive classpath is successfully determined, derive explore
-    # classpath from it and export it to use it in the launch command
-    if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]] && [[ -n ${HIVE_CLASSPATH} ]]; then
-      EXPLORE_CONF_DIRS="${HIVE_CONF_DIR}:${HADOOP_CONF_DIR}"
-      EXPLORE_CLASSPATH=${HIVE_CLASSPATH}
-      if [[ -n ${TEZ_HOME} ]] && [[ -n ${TEZ_CONF_DIR} ]]; then
-        # tez-site.xml also need to be passed to explore service
-        EXPLORE_CONF_DIRS="${EXPLORE_CONF_DIRS}:${TEZ_CONF_DIR}"
-      fi
-      if [[ ${HIVE_EXEC_ENGINE} == spark ]]; then
-        # We require SPARK_HOME to be set for CDAP to include the Spark assembly JAR for Explore
-        cdap_set_spark || die "Unable to get SPARK_HOME, but default Hive engine is Spark"
-      fi
-      export EXPLORE_CONF_DIRS EXPLORE_CLASSPATH
-    fi
-  fi
-}
+   # If Hive classpath is successfully determined, derive explore
+   # classpath from it and export it to use it in the launch command
+   if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]] && [[ -n ${HIVE_CLASSPATH} ]]; then
+     EXPLORE_CONF_DIRS="${HIVE_CONF_DIR}:${HADOOP_CONF_DIR}"
+     EXPLORE_CLASSPATH=${HIVE_CLASSPATH}
+     if [[ -n ${TEZ_HOME} ]] && [[ -n ${TEZ_CONF_DIR} ]]; then
+       # tez-site.xml also need to be passed to explore service
+       EXPLORE_CONF_DIRS="${EXPLORE_CONF_DIRS}:${TEZ_CONF_DIR}"
+     fi
+     if [[ ${HIVE_EXEC_ENGINE} == spark ]]; then
+       # We require SPARK_HOME to be set for CDAP to include the Spark assembly JAR for Explore
+       cdap_set_spark || die "Unable to get SPARK_HOME, but default Hive engine is Spark"
+     fi
+     export EXPLORE_CONF_DIRS EXPLORE_CLASSPATH
+   fi
+ #fi
+} 
 
 #
 # cdap_set_spark
