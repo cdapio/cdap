@@ -228,7 +228,7 @@ export default class FileBrowser extends Component {
         }
         const navigatePath = `${
           window.location.origin
-        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        }/cdap/ns/${namespace}/wrangler/${workspaceId}`;
         window.location.href = navigatePath;
       },
       (err) => {

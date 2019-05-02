@@ -97,7 +97,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
         }
         window.location.href = `${
           window.location.origin
-        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        }/cdap/ns/${namespace}/wrangler/${workspaceId}`;
       },
       (err) => {
         setError(err);
