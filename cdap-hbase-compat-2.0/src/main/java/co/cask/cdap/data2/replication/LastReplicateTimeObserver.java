@@ -61,16 +61,16 @@ public class LastReplicateTimeObserver implements RegionServerCoprocessor, Regio
     hBase20TableUpdater.cancelTimer();
   }
 
-  @Override
-  public void postReplicateLogEntries(ObserverContext<RegionServerCoprocessorEnvironment> ctx,
-                                      List<AdminProtos.WALEntry> entries, CellScanner cells) throws IOException {
-    for (AdminProtos.WALEntry entry : entries) {
-      LOG.debug("Update LastReplicateTimeObserver for Table {}:{} for region {}",
-                entry.getKey().getTableName().toStringUtf8(),
-                entry.getKey().getWriteTime(),
-                entry.getKey().getEncodedRegionName().toStringUtf8());
-      hBase20TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
-                                     entry.getKey().getWriteTime());
-    }
-  }
+//  @Override
+//  public void postReplicateLogEntries(ObserverContext<RegionServerCoprocessorEnvironment> ctx,
+//                                      List<AdminProtos.WALEntry> entries, CellScanner cells) throws IOException {
+//    for (AdminProtos.WALEntry entry : entries) {
+//      LOG.debug("Update LastReplicateTimeObserver for Table {}:{} for region {}",
+//                entry.getKey().getTableName().toStringUtf8(),
+//                entry.getKey().getWriteTime(),
+//                entry.getKey().getEncodedRegionName().toStringUtf8());
+//      hBase20TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
+//                                     entry.getKey().getWriteTime());
+//    }
+//  }
 }
