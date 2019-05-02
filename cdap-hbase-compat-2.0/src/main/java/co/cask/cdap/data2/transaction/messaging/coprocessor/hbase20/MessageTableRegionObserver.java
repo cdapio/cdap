@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
@@ -50,6 +51,7 @@ import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
@@ -139,7 +141,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
   }
 
   @Override
-  public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e) throws IOException {
+  public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e,FlushLifeCycleTracker tracker) throws IOException {
     // Record whether the region is empty after a flush
     Region region = e.getEnvironment().getRegion();
     // After a flush, if the memstore size is zero and there are no store files for any stores in the region
@@ -181,7 +183,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
   }
 
   @Override
-  public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,
+  public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,CompactionLifeCycleTracker tracker,
                           CompactionRequest request) throws IOException {
     // Persist the compaction state after a successful compaction
     if (compactionState != null) {
