@@ -275,6 +275,9 @@ public class HBaseVersion {
     if (versionString.startsWith(HBASE_12_VERSION)) {
       return getHBase12VersionFromVersion(ver);
     }
+    if (versionString.startsWith(HBASE_20_VERSION)) {
+      return Version.HBASE_20;
+    }
     boolean isCDH = ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER);
     // hbase 1.3 packaged with any future CDH version will likely not be compatible, since the hbase 1.2 version with
     // CDH is not compatible, whereas the HDP and OSS versions are
