@@ -87,6 +87,8 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.stream.StreamSupport;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -203,6 +205,14 @@ public class DefaultPreviewManager implements PreviewManager {
   @VisibleForTesting
   Injector createPreviewInjector(ApplicationId applicationId) throws IOException {
     CConfiguration previewCConf = CConfiguration.copy(cConf);
+
+    // Change all services bind address to local host
+    String localhost = InetAddress.getLoopbackAddress().getHostName();
+    StreamSupport.stream(previewCConf.spliterator(), false)
+      .map(Map.Entry::getKey)
+      .filter(s -> s.endsWith(".bind.address"))
+      .forEach(key -> previewCConf.set(key, localhost));
+
     Path previewDir = Files.createDirectories(previewDataDir.resolve(applicationId.getApplication()));
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
