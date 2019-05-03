@@ -38,6 +38,8 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
@@ -66,6 +68,7 @@ import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -103,6 +106,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.http.HttpRequest;
@@ -197,6 +201,7 @@ public abstract class AppFabricTestBase {
   private static ServiceStore serviceStore;
   private static MetadataStorage metadataStorage;
   private static MetadataService metadataService;
+  private static DefaultMetadataServiceClient metadataServiceClient;
   private static MetadataSubscriberService metadataSubscriberService;
   private static LocationFactory locationFactory;
   private static DatasetClient datasetClient;
@@ -275,6 +280,7 @@ public abstract class AppFabricTestBase {
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
+    metadataServiceClient = new DefaultMetadataServiceClient(discoveryClient);
     metricStore = injector.getInstance(MetricStore.class);
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
@@ -1120,6 +1126,30 @@ public abstract class AppFabricTestBase {
 
   protected Map<String, String> getMetadataProperties(EntityId entityId) throws Exception {
     return metadataClient.getProperties(entityId.toMetadataEntity());
+  }
+
+  protected Map<String, String> getMetadataProperties(MetadataEntity entity, MetadataScope scope) throws Exception {
+    return metadataClient.getProperties(entity, scope);
+  }
+
+  protected Set<String> getMetadataTags(MetadataEntity entity, MetadataScope scope) throws Exception {
+    return metadataClient.getTags(entity, scope);
+  }
+
+  protected void createMetadataMutation(MetadataMutation.Create createMutation) {
+    metadataServiceClient.create(createMutation);
+  }
+
+  protected void updateMetadataMutation(MetadataMutation.Update updateMutation) {
+    metadataServiceClient.update(updateMutation);
+  }
+
+  protected void dropMetadataMutation(MetadataMutation.Drop dropMutation) {
+    metadataServiceClient.drop(dropMutation);
+  }
+
+  protected void removeMetadataMutation(MetadataMutation.Remove removeMutation) {
+    metadataServiceClient.remove(removeMutation);
   }
 
   protected void verifyNoRunWithStatus(final Id.Program program, final ProgramRunStatus status) throws Exception {

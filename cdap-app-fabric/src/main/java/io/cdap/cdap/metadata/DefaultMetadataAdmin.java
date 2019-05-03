@@ -152,6 +152,12 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
       .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag)).collect(Collectors.toSet())));
   }
 
+
+  @Override
+  public void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException {
+    storage.apply(mutation, options);
+  }
+
   @Override
   public SearchResponse search(SearchRequest request) throws Exception {
     return filterAuthorizedSearchResult(storage.search(request));

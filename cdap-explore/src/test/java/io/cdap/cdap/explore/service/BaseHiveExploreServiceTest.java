@@ -43,8 +43,8 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.explore.client.DiscoveryExploreClient;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
@@ -341,7 +341,7 @@ public class BaseHiveExploreServiceTest {
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
 
           // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
           install(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {

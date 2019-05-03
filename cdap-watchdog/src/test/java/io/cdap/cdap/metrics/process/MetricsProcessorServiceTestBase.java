@@ -33,8 +33,8 @@ import io.cdap.cdap.common.io.Encoder;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.metrics.MetricsTestBase;
@@ -146,7 +146,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       protected void configure() {
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
-        bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+        bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
       }
     }));
     return list;
