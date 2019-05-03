@@ -65,4 +65,13 @@ public class SchemaHashTest {
     Assert.assertEquals(schema.getSchemaHash(), schema.getSchemaHash());
     Assert.assertEquals(schemaWithLogicalType.getSchemaHash(), schemaWithLogicalType.getSchemaHash());
   }
+
+  @Test
+  public void testDecimalSchemaHash() {
+    Schema schema1 = Schema.decimalOf(3, 5);
+    Schema schema2 = Schema.decimalOf(3);
+
+    Assert.assertNotEquals(schema1.getSchemaHash(), schema2.getSchemaHash());
+    Assert.assertEquals(schema1.getSchemaHash(), schema1.getSchemaHash());
+  }
 }
