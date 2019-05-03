@@ -46,7 +46,9 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
@@ -146,6 +148,7 @@ public class LogHandlerTest {
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
         // TODO (CDAP-14677): find a better way to inject metadata publisher
         bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+        bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
       }
     }));
 

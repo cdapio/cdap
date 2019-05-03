@@ -23,7 +23,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -43,9 +43,9 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final ApplicationId appId;
   private final String creationTime;
 
-  public AppSystemMetadataWriter(MetadataPublisher publisher, ApplicationId entityId,
+  public AppSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ApplicationId entityId,
                                  ApplicationSpecification appSpec, String creationTime) {
-    super(publisher, entityId);
+    super(metadataServiceClient, entityId);
     this.appSpec = appSpec;
     this.appId = entityId;
     this.creationTime = creationTime;

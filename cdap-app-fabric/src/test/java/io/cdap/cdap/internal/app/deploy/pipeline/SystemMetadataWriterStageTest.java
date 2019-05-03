@@ -30,7 +30,7 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.pipeline.StageContext;
@@ -63,14 +63,14 @@ public class SystemMetadataWriterStageTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static MetadataStorage metadataStorage;
-  private static MetadataPublisher metadataPublisher;
+  private static MetadataServiceClient metadataServiceClient;
   private static MetadataSubscriberService metadataSubscriber;
 
   @BeforeClass
   public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector();
     metadataStorage = injector.getInstance(MetadataStorage.class);
-    metadataPublisher = injector.getInstance(MetadataPublisher.class);
+    metadataServiceClient = injector.getInstance(MetadataServiceClient.class);
     metadataSubscriber = injector.getInstance(MetadataSubscriberService.class);
     metadataSubscriber.startAndWait();
   }
@@ -89,7 +89,7 @@ public class SystemMetadataWriterStageTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
     ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
-    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataPublisher);
+    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataServiceClient);
     StageContext stageContext = new StageContext(Object.class);
     systemMetadataWriterStage.process(stageContext);
     systemMetadataWriterStage.process(appWithPrograms);

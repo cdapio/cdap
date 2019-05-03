@@ -17,13 +17,17 @@
 package io.cdap.cdap.data2.metadata.system;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.spi.metadata.MetadataDirective;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,11 +38,20 @@ import java.util.Set;
  */
 public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter, SystemMetadataProvider {
 
-  private final MetadataPublisher metadataPublisher;
+  private final MetadataServiceClient metadataServiceClient;
   private final MetadataEntity metadataEntity;
 
-  AbstractSystemMetadataWriter(MetadataPublisher metadataPublisher, NamespacedEntityId entityId) {
-    this.metadataPublisher = metadataPublisher;
+  // directives for creation of system metadata:
+  // - keep description if new metadata does not contain it
+  // - preserve creation-time if it exists in current metadata
+  private static final Map<ScopedNameOfKind, MetadataDirective> CREATE_DIRECTIVES = ImmutableMap.of(
+    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.DESCRIPTION_KEY),
+    MetadataDirective.KEEP,
+    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
+    MetadataDirective.PRESERVE);
+
+  AbstractSystemMetadataWriter(MetadataServiceClient metadataServiceClient, NamespacedEntityId entityId) {
+    this.metadataServiceClient = metadataServiceClient;
     this.metadataEntity = entityId.toMetadataEntity();
   }
 
@@ -54,6 +67,8 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
       properties = new HashMap<>(properties);
       properties.put(MetadataConstants.SCHEMA_KEY, schema);
     }
-    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(metadataEntity, properties, tags));
+    metadataServiceClient.create(new MetadataMutation.Create(metadataEntity,
+                                                             new Metadata(MetadataScope.SYSTEM, tags, properties),
+                                                             CREATE_DIRECTIVES));
   }
 }
