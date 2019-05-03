@@ -85,7 +85,8 @@ import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
 import io.cdap.cdap.data2.dataset2.SingleThreadDatasetCache;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.preview.DataTracerFactoryProvider;
@@ -166,7 +167,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final MetadataReader metadataReader;
-  private final MetadataServiceClient metadataServiceClient;
+  private final MetadataPublisher metadataPublisher;
   private final Set<Operation> fieldLineageOperations;
   private final LoggingContext loggingContext;
   private volatile ClassLoader programInvocationClassLoader;
@@ -183,7 +184,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator,
-                            MetadataReader metadataReader, MetadataServiceClient metadataServiceClient,
+                            MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                             NamespaceQueryAdmin namespaceQueryAdmin) {
     super(program.getId());
 
@@ -239,7 +240,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
     this.metadataReader = metadataReader;
-    this.metadataServiceClient = metadataServiceClient;
+    this.metadataPublisher = metadataPublisher;
     this.fieldLineageOperations = new HashSet<>();
     this.loggingContext = LoggingContextHelper.getLoggingContextWithRunId(program.getId().run(getRunId()),
                                                                           programOptions.getArguments().asMap());
@@ -762,7 +763,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
-    metadataServiceClient.addProperties(metadataEntity, properties);
+    metadataPublisher.publish(programRunId,
+                              new MetadataOperation.Put(metadataEntity, properties, Collections.emptySet()));
   }
 
   @Override
@@ -772,32 +774,35 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
-    metadataServiceClient.addTags(metadataEntity, ImmutableSet.copyOf(tags));
+    metadataPublisher.publish(programRunId, new MetadataOperation.Put(
+      metadataEntity, Collections.emptyMap(), ImmutableSet.copyOf(tags)));
   }
 
   @Override
   public void removeMetadata(MetadataEntity metadataEntity) {
-    metadataServiceClient.remove(metadataEntity);
+    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAll(metadataEntity));
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity) {
-    metadataServiceClient.removeProperties(metadataEntity);
+    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllProperties(metadataEntity));
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity, String... keys) {
-    metadataServiceClient.removeProperties(metadataEntity, keys);
+    metadataPublisher.publish(programRunId, new MetadataOperation.Delete(
+      metadataEntity, ImmutableSet.copyOf(keys), Collections.emptySet()));
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity) {
-    metadataServiceClient.removeTags(metadataEntity);
+    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllTags(metadataEntity));
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
-    metadataServiceClient.removeTags(metadataEntity, tags);
+    metadataPublisher.publish(programRunId, new MetadataOperation.Delete(
+      metadataEntity, Collections.emptySet(), ImmutableSet.copyOf(tags)));
   }
 
   /**

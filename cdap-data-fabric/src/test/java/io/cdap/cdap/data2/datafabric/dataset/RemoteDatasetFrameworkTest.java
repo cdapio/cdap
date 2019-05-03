@@ -139,6 +139,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
+    discoveryService.
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
