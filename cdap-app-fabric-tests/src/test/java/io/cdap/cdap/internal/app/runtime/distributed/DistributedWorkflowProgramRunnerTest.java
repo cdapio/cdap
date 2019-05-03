@@ -48,8 +48,8 @@ import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -291,7 +291,7 @@ public class DistributedWorkflowProgramRunnerTest {
         @Override
         protected void configure() {
           // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+          bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
         }
       });
 

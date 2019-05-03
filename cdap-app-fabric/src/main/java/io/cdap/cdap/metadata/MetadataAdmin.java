@@ -21,6 +21,7 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
@@ -144,6 +145,13 @@ public interface MetadataAdmin {
    * @param tags the tags to remove
    */
   void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException;
+
+  /**
+   * Applies a metadata mutation directly.
+   *
+   * @param mutation the MetadataMutation to apply
+   */
+  void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException;
 
   /**
    * Executes a search for CDAP entities.

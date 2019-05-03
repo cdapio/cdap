@@ -371,6 +371,12 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testMetadataInternalsPaths() {
+    assertRouting("/v3/metadata-internals/create", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v3/metadata-internals/drop", RouterPathLookup.DONT_ROUTE);
+  }
+
+  @Test
   public void testServiceProviderStatsPaths() {
     assertRouting("/v3/system/////serviceproviders", RouterPathLookup.APP_FABRIC_HTTP);
   }

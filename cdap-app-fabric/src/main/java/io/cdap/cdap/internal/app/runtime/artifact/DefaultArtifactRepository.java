@@ -50,8 +50,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
@@ -61,6 +60,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -93,13 +93,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
-  private final MetadataPublisher metadataPublisher;
+  private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
 
   @VisibleForTesting
   @Inject
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
-                                   MetadataPublisher metadataPublisher,
+                                   MetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;
@@ -125,7 +125,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
     }
     this.configReader = new ArtifactConfigReader();
-    this.metadataPublisher = metadataPublisher;
+    this.metadataServiceClient = metadataServiceClient;
     this.impersonator = impersonator;
   }
 
@@ -447,8 +447,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataPublisher.publish(NamespaceId.SYSTEM,
-                              new MetadataOperation.Drop(artifactId.toEntityId().toMetadataEntity()));
+    metadataServiceClient.drop(new MetadataMutation.Drop(artifactId.toEntityId().toMetadataEntity()));
   }
 
   @Override
@@ -706,7 +705,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   private void writeSystemMetadata(io.cdap.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
     // add system metadata for artifacts
-    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataPublisher, artifactId, artifactInfo);
+    ArtifactSystemMetadataWriter writer =
+      new ArtifactSystemMetadataWriter(metadataServiceClient, artifactId, artifactInfo);
     writer.write();
   }
 }

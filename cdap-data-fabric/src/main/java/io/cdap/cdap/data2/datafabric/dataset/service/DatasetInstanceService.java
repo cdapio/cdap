@@ -43,8 +43,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
 import io.cdap.cdap.data2.metadata.system.SystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
@@ -63,6 +62,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +95,7 @@ public class DatasetInstanceService {
   private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
-  private MetadataPublisher metadataPublisher;
+  private MetadataServiceClient metadataServiceClient;
 
   @VisibleForTesting
   @Inject
@@ -107,7 +107,7 @@ public class DatasetInstanceService {
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MetadataPublisher metadataPublisher) {
+                                MetadataServiceClient metadataServiceClient) {
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
@@ -115,7 +115,7 @@ public class DatasetInstanceService {
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
-    this.metadataPublisher = metadataPublisher;
+    this.metadataServiceClient = metadataServiceClient;
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<DatasetId, DatasetMeta>() {
         @Override
@@ -570,7 +570,7 @@ public class DatasetInstanceService {
 
     // Remove metadata for the dataset
     LOG.trace("Removing metadata for dataset {}", instance);
-    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(instance.toMetadataEntity()));
+    metadataServiceClient.drop(new MetadataMutation.Drop(instance.toMetadataEntity()));
     LOG.trace("Removed metadata for dataset {}", instance);
 
     publishAudit(instance, AuditType.DELETE);
@@ -635,7 +635,7 @@ public class DatasetInstanceService {
 
   private void publishMetadata(DatasetId dataset, SystemMetadata metadata) {
     if (metadata != null && !metadata.isEmpty()) {
-      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataPublisher, dataset, metadata);
+      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataServiceClient, dataset, metadata);
       metadataWriter.write();
     }
   }

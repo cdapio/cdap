@@ -30,6 +30,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -53,6 +54,8 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.preview.PreviewDataModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
@@ -246,7 +249,13 @@ public class DefaultPreviewManager implements PreviewManager {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LocalLogAppenderModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new MetadataReaderWriterModules().getInMemoryModules(),
+      Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // we don't start a metadata service in preview, so don't attempt to create any metadata
+          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
+        }
+      }),
       new ProvisionerModule(),
       new AbstractModule() {
         @Override
