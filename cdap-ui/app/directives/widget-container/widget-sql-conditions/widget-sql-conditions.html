@@ -16,9 +16,7 @@
 
 <div class="sql-conditions-container">
   <div class="text-danger"
-       ng-if="SqlConditions.error && SqlConditions.stageList.length > 0">
-    {{ SqlConditions.error }}
-  </div>
+       ng-if="SqlConditions.error && SqlConditions.stageList.length > 0">{{ SqlConditions.error }}</div>
 
   <div class="text-warning"
        ng-if="SqlConditions.warning && !SqlConditions.error">
