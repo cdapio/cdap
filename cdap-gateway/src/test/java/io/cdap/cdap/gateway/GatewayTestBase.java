@@ -43,6 +43,7 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -114,6 +115,7 @@ public abstract class GatewayTestBase {
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
+  private static MetadataService metadataService;
   private static MetadataStorage metadataStorage;
   protected static NamespaceAdmin namespaceAdmin;
 
@@ -184,6 +186,8 @@ public abstract class GatewayTestBase {
                                     injector.getInstance(StructuredTableRegistry.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
@@ -220,11 +224,12 @@ public abstract class GatewayTestBase {
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
+    metadataService.stopAndWait();
+    Closeables.closeQuietly(metadataStorage);
     txService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
-    Closeables.closeQuietly(metadataStorage);
     conf.clear();
   }
 

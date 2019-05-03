@@ -14,16 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata;
+package io.cdap.cdap.spi.metadata;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.metadata.MetadataEntity;
-import io.cdap.cdap.spi.metadata.Metadata;
-import io.cdap.cdap.spi.metadata.MetadataRecord;
-import io.cdap.cdap.spi.metadata.ScopedName;
 import org.junit.Assert;
 import org.junit.Test;
 

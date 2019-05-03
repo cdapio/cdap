@@ -49,8 +49,8 @@ import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
@@ -351,7 +351,7 @@ public class JobQueueDebugger extends AbstractIdleService {
             .annotatedWith(Names.named("datasetMDS"))
             .to(DatasetFramework.class).in(Singleton.class);
           // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
         }
       });
   }

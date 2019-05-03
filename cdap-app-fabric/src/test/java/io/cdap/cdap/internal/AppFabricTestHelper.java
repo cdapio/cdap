@@ -70,6 +70,7 @@ import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -149,6 +150,13 @@ public class AppFabricTestHelper {
       }
 
       injector.getInstance(TransactionManager.class).startAndWait();
+      metadataStorage = injector.getInstance(MetadataStorage.class);
+      try {
+        metadataStorage.createIndex();
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to create the metadata tables.", e);
+      }
+      injector.getInstance(MetadataService.class).startAndWait();
       // Register the tables before services will need to use them
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
       StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
@@ -162,12 +170,7 @@ public class AppFabricTestHelper {
       } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
       }
-      metadataStorage = injector.getInstance(MetadataStorage.class);
-      try {
-        metadataStorage.createIndex();
-      } catch (IOException e) {
-        throw new RuntimeException("Unable to create the metadata tables.", e);
-      }
+
       injector.getInstance(DatasetOpExecutorService.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();

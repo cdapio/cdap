@@ -22,8 +22,10 @@ import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.common.runtime.RuntimeModule;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 
 /**
  * Guice binding for {@link MetadataReader} and {@link MetadataWriter} for service binding see
@@ -38,6 +40,7 @@ public class MetadataReaderWriterModules extends RuntimeModule {
       protected void configure() {
         bind(MetadataReader.class).to(DefaultMetadataReader.class);
         bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+        bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
       }
     };
   }
@@ -49,6 +52,7 @@ public class MetadataReaderWriterModules extends RuntimeModule {
       protected void configure() {
         bind(MetadataReader.class).to(DefaultMetadataReader.class);
         bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+        bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
       }
     };
   }
@@ -65,6 +69,7 @@ public class MetadataReaderWriterModules extends RuntimeModule {
         // TODO: Bind to cloud implementation in cloud mode. How to check cdap is in cloud mode?
         bind(MetadataReader.class).to(RemoteMetadataReader.class);
         bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+        bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
       }
     };
   }
