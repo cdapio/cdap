@@ -75,8 +75,7 @@ class PropertySelector extends React.Component {
     }
     this.setState({
       columnTypes: this.getColumnTypes()
-    })
-
+    });
   }
 
   getColumnTypes() {
@@ -85,8 +84,8 @@ class PropertySelector extends React.Component {
       this.state.schemas.map(schema => {
         schema.schemaColumns.map(column => {
           columnTypes.add(column.columnType);
-        })
-      })
+        });
+      });
     }
     return columnTypes;
   }
