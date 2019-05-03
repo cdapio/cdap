@@ -188,7 +188,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/**/properties/{property}")
+  @Path("/**/metadata/properties/{property}")
   public void removeProperty(HttpRequest request, HttpResponder responder,
                              @PathParam("property") String property,
                              @QueryParam("type") String type,
