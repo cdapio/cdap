@@ -318,7 +318,7 @@ $success_alert_bg_color: $brand-success;
     text-align: left;
 
     .success-message {
-      margin: 3px 0;
+      margin: 3px 0 10px;
       color: rgb(74, 182, 60);
       line-height: 1.3em;
       max-height: 3.9em;
@@ -327,7 +327,7 @@ $success_alert_bg_color: $brand-success;
     }
 
     .remedy-message {
-      margin: 3px 0 10px;
+      margin: 3px 0 ;
     }
 
     .buttons-container {
