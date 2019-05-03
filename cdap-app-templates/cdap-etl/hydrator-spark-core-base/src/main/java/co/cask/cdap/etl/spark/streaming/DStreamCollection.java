@@ -47,6 +47,7 @@ import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
@@ -77,6 +78,11 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public SparkCollection<T> cache() {
     return wrap(stream.cache());
+  }
+  
+  @Override
+  public SparkCollection<T> persist(StorageLevel storageLevel) {
+    return wrap(stream.persist(storageLevel));
   }
 
   @SuppressWarnings("unchecked")
