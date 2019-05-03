@@ -19,9 +19,7 @@ package io.cdap.cdap.data2.metadata.system;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 
@@ -34,11 +32,11 @@ import java.util.Set;
  */
 public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter, SystemMetadataProvider {
 
-  private final MetadataPublisher metadataPublisher;
+  private final MetadataServiceClient metadataServiceClient;
   private final MetadataEntity metadataEntity;
 
-  AbstractSystemMetadataWriter(MetadataPublisher metadataPublisher, NamespacedEntityId entityId) {
-    this.metadataPublisher = metadataPublisher;
+  AbstractSystemMetadataWriter(MetadataServiceClient metadataServiceClient, NamespacedEntityId entityId) {
+    this.metadataServiceClient = metadataServiceClient;
     this.metadataEntity = entityId.toMetadataEntity();
   }
 
@@ -54,6 +52,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
       properties = new HashMap<>(properties);
       properties.put(MetadataConstants.SCHEMA_KEY, schema);
     }
-    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(metadataEntity, properties, tags));
+    metadataServiceClient.addProperties(metadataEntity, properties);
+    metadataServiceClient.addTags(metadataEntity, tags);
   }
 }

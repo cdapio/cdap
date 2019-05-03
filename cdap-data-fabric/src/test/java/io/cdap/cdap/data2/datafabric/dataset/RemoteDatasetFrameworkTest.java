@@ -52,7 +52,7 @@ import io.cdap.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.client.DiscoveryExploreClient;
@@ -173,7 +173,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                         instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,
                                                                         authorizationEnforcer, authenticationContext,
-                                                                        new NoOpMetadataPublisher());
+                                                                        new MetadataServiceClient(
+                                                                          discoveryServiceClient,
+                                                                          authenticationContext));
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,

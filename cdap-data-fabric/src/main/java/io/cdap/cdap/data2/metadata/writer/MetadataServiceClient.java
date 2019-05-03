@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2019 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package io.cdap.cdap.data2.metadata.writer;
 
 import com.google.common.collect.BiMap;
@@ -19,6 +35,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -47,7 +65,7 @@ public class MetadataServiceClient {
     ENTITY_TYPE_TO_API_PART = map;
   }
 
-  MetadataServiceClient(final DiscoveryServiceClient discoveryClient,
+  public MetadataServiceClient(final DiscoveryServiceClient discoveryClient,
                                 AuthenticationContext authenticationContext) {
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.METADATA_SERVICE,
                                          new DefaultHttpRequestConfig(false),
@@ -55,192 +73,81 @@ public class MetadataServiceClient {
     this.authenticationContext = authenticationContext;
   }
 
-  public void create(MetadataOperation.Create createOperation) {
-    // Call Tags endpoint to add tags.
-    String path = addQueryParams(String.format("%s/metadata/tags", constructPath(createOperation.getEntity())),
-                                 createOperation.getEntity(), null);
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path)
-      .withBody(GSON.toJson(createOperation.getTags()));
+  public void addTags(MetadataEntity metadataEntity, Set<String> tags) {
+    String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
+    path = addQueryParams(path, metadataEntity, null);
+    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(tags));
     HttpResponse response = execute(builder);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       LOG.trace("Failed to add tags, i.e. see response for details: %s", response);
     }
+  }
 
-    // Call Properties endpoint to add properties.
-    path = addQueryParams(String.format("%s/metadata/tags", constructPath(createOperation.getEntity())),
-                          createOperation.getEntity(), null);
-    builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(createOperation.getProperties()));
-    response = execute(builder);
+  public void removeTags(MetadataEntity metadataEntity, String... tagsToRemove) {
+    for (String tagToRemove: tagsToRemove) {
+      String path = String.format("%s/metadata/tag/%s", constructPath(metadataEntity), tagToRemove);
+      HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
+      HttpResponse response = execute(builder);
+
+      if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
+        LOG.trace("Failed to remove tag, i.e. see response for details: %s", response);
+      }
+    }
+  }
+
+  public void removeTags(MetadataEntity metadataEntity) {
+    String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
+    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
+    HttpResponse response = execute(builder);
+
+    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
+      LOG.trace("Failed to remove all tags, i.e. see response for details: %s", response);
+    }
+  }
+
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+    String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
+    path = addQueryParams(path, metadataEntity, null);
+    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(properties));
+    HttpResponse response = execute(builder);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       LOG.trace("Failed to add properties, i.e. see response for details: %s", response);
     }
   }
 
-  public void drop(MetadataOperation.Drop dropOperation) {
-    String path = addQueryParams(String.format("%s/metadata", constructPath(dropOperation.getEntity())),
-                                 dropOperation.getEntity(), null);
+  public void removeProperties(MetadataEntity metadataEntity, String... propertiesToRemove) {
+    for (String propertyToRemove: propertiesToRemove) {
+      String path = String.format("%s/metadata/property/%s", constructPath(metadataEntity), propertyToRemove);
+      HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
+      HttpResponse response = execute(builder);
+
+      if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
+        LOG.trace("Failed to remove property, i.e. see response for details: %s", response);
+      }
+    }
+  }
+
+  public void removeProperties(MetadataEntity metadataEntity) {
+    String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
     HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
     HttpResponse response = execute(builder);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to drop all metadata, i.e. see response for details: %s", response);
+      LOG.trace("Failed to remove all properties, i.e. see response for details: %s", response);
     }
   }
 
-  public void deleteAll(MetadataOperation.DeleteAll deleteAllOperation) {
-    String path = addQueryParams(String.format("%s/metadata", constructPath(deleteAllOperation.getEntity())),
-                                 deleteAllOperation.getEntity(), deleteAllOperation.getScope());
+  public void remove(MetadataEntity metadataEntity) {
+    String path = String.format("%s/metadata", constructPath(metadataEntity));
     HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
     HttpResponse response = execute(builder);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to delete metadata, i.e. see response for details: %s", response);
+      LOG.trace("Failed to remove all metadata, i.e. see response for details: %s", response);
     }
   }
-
-  public void deleteAllTags(MetadataOperation.DeleteAllTags deleteAllTagsOperation) {
-    String path = addQueryParams(
-      String.format("%s/metadata/tags", constructPath(deleteAllTagsOperation.getEntity())),
-      deleteAllTagsOperation.getEntity(), deleteAllTagsOperation.getScope());
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-    HttpResponse response = execute(builder);
-
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to delete tags, i.e. see response for details: %s", response);
-    }
-  }
-
-  public void deleteAllProperties(MetadataOperation.DeleteAllProperties deleteAllPropertiesOperation) {
-    String path = addQueryParams(
-      String.format("%s/metadata/properties", constructPath(deleteAllPropertiesOperation.getEntity())),
-      deleteAllPropertiesOperation.getEntity(), deleteAllPropertiesOperation.getScope());
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-    HttpResponse response = execute(builder);
-
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to delete properties, i.e. see response for details: %s", response);
-    }
-  }
-
-  public void put(MetadataOperation.Put putOperation) {
-    // Call Tags endpoint to add tags.
-    String path = addQueryParams(String.format("%s/metadata/tags", constructPath(putOperation.getEntity())),
-                                 putOperation.getEntity(), putOperation.getScope());
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path)
-      .withBody(GSON.toJson(putOperation.getTags()));
-    HttpResponse response = execute(builder);
-
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to add tags, i.e. see response for details: %s", response);
-    }
-
-    // Call Properties endpoint to add properties.
-    path = addQueryParams(String.format("%s/metadata/tags", constructPath(putOperation.getEntity())),
-                          putOperation.getEntity(), putOperation.getScope());
-    builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(putOperation.getProperties()));
-    response = execute(builder);
-
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to add properties, i.e. see response for details: %s", response);
-    }
-  }
-
-  public void delete(MetadataOperation.Delete deleteOperation) {
-    // Call Tags endpoint to add tags.
-    String path = addQueryParams(String.format("%s/metadata/tags", constructPath(deleteOperation.getEntity())),
-                                 deleteOperation.getEntity(), deleteOperation.getScope());
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path)
-      .withBody(GSON.toJson(deleteOperation.getTags()));
-    HttpResponse response = execute(builder);
-
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to add tags, i.e. see response for details: %s", response);
-    }
-
-    // Call Properties endpoint to add properties.
-    path = addQueryParams(String.format("%s/metadata/tags", constructPath(deleteOperation.getEntity())),
-                          deleteOperation.getEntity(), deleteOperation.getScope());
-    builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(deleteOperation.getProperties()));
-    response = execute(builder);
-
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to add properties, i.e. see response for details: %s", response);
-    }
-  }
-
-//  public void addTags(MetadataEntity metadataEntity, Set<String> tags) {
-//    String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-//    path = addQueryParams(path, metadataEntity, null);
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(tags));
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to add tags, i.e. see response for details: %s", response);
-//    }
-//  }
-//
-//  public void removeTag(MetadataEntity metadataEntity, String tagToRemove) {
-//    String path = String.format("%s/metadata/tag/%s", constructPath(metadataEntity), tagToRemove);
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to remove a tag, i.e. see response for details: %s", response);
-//    }
-//  }
-//
-//  public void removeTags(MetadataEntity metadataEntity) {
-//    String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to remove all tags, i.e. see response for details: %s", response);
-//    }
-//  }
-//
-//  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
-//    String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-//    path = addQueryParams(path, metadataEntity, null);
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path).withBody(GSON.toJson(properties));
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to add properties, i.e. see response for details: %s", response);
-//    }
-//  }
-//
-//  public void removeProperty(MetadataEntity metadataEntity, String propertyToRemove) {
-//    String path = String.format("%s/metadata/property/%s", constructPath(metadataEntity), propertyToRemove);
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to remove a property, i.e. see response for details: %s", response);
-//    }
-//  }
-//
-//  public void removeProperties(MetadataEntity metadataEntity) {
-//    String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to remove all properties, i.e. see response for details: %s", response);
-//    }
-//  }
-//
-//  public void removeMetadata(MetadataEntity metadataEntity) {
-//    String path = String.format("%s/metadata", constructPath(metadataEntity));
-//    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.DELETE, path);
-//    HttpResponse response = execute(builder);
-//
-//    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-//      LOG.trace("Failed to remove all metadata, i.e. see response for details: %s", response);
-//    }
-//  }
 
   protected HttpResponse execute(HttpRequest.Builder requestBuilder) {
     HttpRequest request = addUserIdHeader(requestBuilder).build();

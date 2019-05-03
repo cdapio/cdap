@@ -50,8 +50,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.config.PreferencesService;
-import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -120,7 +119,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final OwnerAdmin ownerAdmin;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
-  private final MetadataPublisher metadataPublisher;
+  private final MetadataServiceClient metadataServiceClient;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
@@ -132,7 +131,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
                               OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                              MetadataPublisher metadataPublisher,
+                              MetadataServiceClient metadataServiceClient,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                               MessagingService messagingService) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
@@ -144,7 +143,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.metricsSystemClient = metricsSystemClient;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
-    this.metadataPublisher = metadataPublisher;
+    this.metadataServiceClient = metadataServiceClient;
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -739,13 +738,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteAppMetadata(ApplicationId appId, ApplicationSpecification appSpec) {
     // Remove metadata for the Application itself.
-    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(appId.toMetadataEntity()));
+    metadataServiceClient.remove(appId.toMetadataEntity());
 
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
     for (ProgramId programId : getAllPrograms(appId, appSpec)) {
-      metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(programId.toMetadataEntity()));
+      metadataServiceClient.remove(programId.toMetadataEntity());
     }
   }
 
