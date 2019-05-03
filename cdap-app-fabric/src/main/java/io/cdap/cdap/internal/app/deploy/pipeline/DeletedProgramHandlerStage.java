@@ -22,11 +22,14 @@ import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
+// TODO: import MetadataServiceClient
+import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProgramTypes;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.Scheduler;
 import org.slf4j.Logger;
@@ -52,18 +55,18 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final Store store;
   private final ProgramTerminator programTerminator;
   private final MetricsSystemClient metricsSystemClient;
-  private final MetadataServiceClient metadataServiceClient;
+  private final MetadataPublisher metadataPublisher;
   private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     MetricsSystemClient metricsSystemClient,
-                                    MetadataServiceClient metadataServiceClient,
+                                    MetadataPublisher metadataPublisher,
                                     Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
     this.metricsSystemClient = metricsSystemClient;
-    this.metadataServiceClient = metadataServiceClient;
+    this.metadataPublisher = metadataPublisher;
     this.programScheduler = programScheduler;
   }
 
@@ -84,7 +87,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
 
       // Remove metadata for the deleted program
-      metadataServiceClient.remove(programId.toMetadataEntity());
+      metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(programId.toMetadataEntity()));
 
       deletedPrograms.add(programId);
     }
