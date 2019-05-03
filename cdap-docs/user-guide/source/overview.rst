@@ -20,7 +20,7 @@ Cask Data Application Platform (CDAP) is an open source framework to build and d
 
 CDAP provides visual tools that help ease Data Scientists work with large datasets:
 
-- **Data Collection**: Both Data Preparation and Data Pipelines provide simple UIs for gathering data that is stored in files, databases, or real-time streams.
+- **Data Collection**: Both Data Preparation and Data Pipelines provide simple UIs for gathering data that is stored in files or databases.
 
 - **Data Exploration**: Data Preparation allows you to view and explore your data in spreadsheet format. You can also apply simple transformations to your data before deploying in a pipeline.
 

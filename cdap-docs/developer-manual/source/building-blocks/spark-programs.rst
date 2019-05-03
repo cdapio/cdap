@@ -40,7 +40,7 @@ You can extend from the abstract class ``AbstractSpark`` to simplify the impleme
     ...
   }
 
-The configure method is similar to the one found in flows and MapReduce programs. It
+The configure method is similar to the one found in service and MapReduce programs. It
 defines the name, description, and the class containing the Spark program to be executed
 by the Spark framework.
 

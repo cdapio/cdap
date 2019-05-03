@@ -44,10 +44,10 @@ class, which allows the overriding of these three methods:
       setDescription("Builds a purchase history for each customer");
     }
 
-The configure method is similar to the one found in flows and
-applications. It defines the name and description of the MapReduce.
-You can also :ref:`specify resources <mapreduce-resources>` (memory and virtual cores) used by the
-mappers and reducers.
+The configure method is similar to the one found in applications.
+It defines the name and description of the MapReduce program.
+You can also :ref:`specify resources <mapreduce-resources>` (memory and virtual cores)
+used by the mappers and reducers.
 
 The ``initialize()`` method is invoked at runtime, before the MapReduce is executed.
 Through the ``getContext()`` method you can obtain an instance of the ``MapReduceContext``.
@@ -338,7 +338,7 @@ is a single output to the MapReduce program.
 MapReduce and Transactions
 ==========================
 When you run a MapReduce that interacts with datasets, the system creates a
-long-running transaction. Similar to the transaction of a flowlet, here are
+long-running transaction. Similar to the transaction of a service handler, here are
 some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed

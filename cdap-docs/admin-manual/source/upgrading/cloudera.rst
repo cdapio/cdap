@@ -46,7 +46,7 @@ CDAP:
 
 .. highlight:: console
 
-#. Stop all flows, services, and other programs in all your applications.
+#. Stop all services, and other programs in all your applications.
 
 #. Stop all CDAP services.
 

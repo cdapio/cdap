@@ -84,7 +84,7 @@ Transactional Messaging
 With transactional messages, messages are not available (published) until the transaction
 has been successfully committed.
 
-For example, a pipeline or flow might follow these steps:
+For example, a pipeline might follow these steps:
 
 - Open a transaction
 - Do some work

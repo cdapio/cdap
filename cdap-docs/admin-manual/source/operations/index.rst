@@ -48,13 +48,13 @@ Operations
 .. _preferences: preferences.html
 
 - |preferences|_ **Preferences** provide the ability to save configuration information. 
-  Flows, MapReduce and Spark programs, services, workers, and workflows can receive **runtime arguments.**
+  MapReduce and Spark programs, services, workers, and workflows can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
+- |scaling-instances|_ Covers **querying and setting the number of instances of services.**
 
 
 .. |resource-guarantees| replace:: **Resource Guarantees:**
