@@ -147,7 +147,7 @@ The application's content is the body of the request::
   <JAR binary content>
 
 Invoke the same command to update an application to a newer version.
-However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
+However, be sure to stop all of its Spark and MapReduce programs before updating the application.
 
 .. highlight:: java
 
@@ -258,7 +258,7 @@ could return in a JSON array a list of the versions of the application::
 
 Delete an Application
 ---------------------
-To delete an application |---| together with all of its flows, MapReduce or Spark
+To delete an application |---| together with all of its MapReduce or Spark
 programs, schedules, custom services, and workflows |---| submit an HTTP DELETE::
 
   DELETE /v3/namespaces/<namespace-id>/apps/<app-id>
@@ -295,7 +295,7 @@ Program Lifecycle
 
 Details of a Program
 --------------------
-After an application is deployed, you can retrieve the details of its flows, MapReduce and Spark programs,
+After an application is deployed, you can retrieve the details of its MapReduce and Spark programs,
 custom services, schedules, workers, and workflows by submitting an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
@@ -372,7 +372,7 @@ be similar to this (pretty-printed and portions deleted to fit)::
 
 Start a Program
 ---------------
-After an application is deployed, you can start its flows, MapReduce and Spark programs,
+After an application is deployed, you can start its MapReduce and Spark programs,
 custom services, workers, or workflows by submitting an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/start
@@ -382,7 +382,7 @@ POST request that includes the version::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/start
 
-Note: Concurrent runs of flows and workers across multiple versions of the same
+Note: Concurrent runs of workers across multiple versions of the same
 application are not allowed.
 
 When starting an program, you can optionally specify runtime arguments as a JSON map in
@@ -495,7 +495,7 @@ started, and there was an error starting the last program because the *App2* app
 
 Stop a Program
 --------------
-You can stop the flows, MapReduce and Spark programs, custom services, workers, and
+You can stop the MapReduce and Spark programs, custom services, workers, and
 workflows of an application by submitting an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/stop
@@ -1164,7 +1164,7 @@ To disable or enable a schedule use::
 Container Information
 =====================
 To find out the address of an program's container host and the container’s debug port, you can query
-CDAP for a flow or service’s live info via an HTTP GET method::
+CDAP for a service’s live info via an HTTP GET method::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/live-info
 

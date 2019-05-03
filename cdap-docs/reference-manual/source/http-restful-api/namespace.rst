@@ -197,7 +197,7 @@ for when you `Create a Namespace`_.
 Deleting a Namespace
 ====================
 
-To delete an existing namespace (including all applications, streams, flows, datasets, metrics,
+To delete an existing namespace (including all pipelines, applications, datasets, metrics,
 and other components), submit an HTTP DELETE request to::
 
   DELETE /v3/unrecoverable/namespaces/<namespace-id>
