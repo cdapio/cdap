@@ -49,7 +49,7 @@ export default class PersistViewSchemaModel extends Component {
     this.state = {
       configloading: true,
       schemaloading: true,
-      loading: true,
+      loading: false,
       error: null,
       workspaceId: null,
       realtimeConfig: null,
@@ -68,9 +68,6 @@ export default class PersistViewSchemaModel extends Component {
   }
 
   persistViewSchema() {
-    // if (!this.state.loading) {
-    //   return;
-    // }
     this.setState({
       error: false,
       loading: true,
@@ -262,9 +259,9 @@ export default class PersistViewSchemaModel extends Component {
             :null
           }
 
-          <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Cancel</Button>
+          <Button className="btn-margin" color="secondary" onClick={this.props.toggle} disabled={this.state.loading}>Cancel</Button>
           <Button className="btn-margin" color="primary" onClick={this.handleSubmit}
-            disabled={this.state.datasetName.trim().length < 1} >OK</Button>
+            disabled={this.state.datasetName.trim().length < 1 || this.state.loading} >OK</Button>
         </ModalFooter>
       </Modal>
     );
