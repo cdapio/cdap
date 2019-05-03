@@ -21,7 +21,7 @@ import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 
@@ -34,9 +34,9 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ArtifactInfo artifactInfo;
 
-  public ArtifactSystemMetadataWriter(MetadataPublisher metadataPublisher, ArtifactId artifactId,
+  public ArtifactSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ArtifactId artifactId,
                                       ArtifactInfo artifactInfo) {
-    super(metadataPublisher, artifactId);
+    super(metadataServiceClient, artifactId);
     this.artifactInfo = artifactInfo;
   }
 
