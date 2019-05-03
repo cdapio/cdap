@@ -308,26 +308,30 @@ $success_alert_bg_color: $brand-success;
 }
 .persist-view-schema-modal.modal-dialog {
   width: 500px;
-  .input-style{
+
+  .input-style {
     width: 300px;
     margin-left: 10px;
   }
-  .modal-footer{
+
+  .modal-footer {
     text-align: left;
+
     .success-message {
       margin: 3px 0;
-      color:  rgb(74, 182, 60);
+      color: rgb(74, 182, 60);
       line-height: 1.3em;
       max-height: 3.9em;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
     .remedy-message {
       margin: 3px 0 10px;
     }
+
     .buttons-container {
       float: right;
     }
   }
-
 }
