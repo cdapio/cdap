@@ -22,6 +22,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.Schema.LogicalType;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -91,9 +93,10 @@ public class StructuredRecord implements Serializable {
    */
   @Nullable
   public LocalDate getDate(String fieldName) {
-    LogicalType logicalType = validateAndGetLogicalType(schema.getField(fieldName), EnumSet.of(LogicalType.DATE));
+    Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
+                                                               EnumSet.of(LogicalType.DATE));
     Integer value = (Integer) fields.get(fieldName);
-    return (value == null || logicalType == null) ? null : LocalDate.ofEpochDay(value.longValue());
+    return (value == null || logicalTypeSchema == null) ? null : LocalDate.ofEpochDay(value.longValue());
   }
 
   /**
@@ -107,14 +110,15 @@ public class StructuredRecord implements Serializable {
    */
   @Nullable
   public LocalTime getTime(String fieldName) {
-    LogicalType logicalType = validateAndGetLogicalType(schema.getField(fieldName),
-                                                        EnumSet.of(LogicalType.TIME_MILLIS, LogicalType.TIME_MICROS));
+    Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
+                                                               EnumSet.of(LogicalType.TIME_MILLIS,
+                                                                          LogicalType.TIME_MICROS));
     Object value = fields.get(fieldName);
-    if (value == null || logicalType == null) {
+    if (value == null || logicalTypeSchema == null) {
       return null;
     }
 
-    if (logicalType == LogicalType.TIME_MILLIS) {
+    if (logicalTypeSchema.getLogicalType() == LogicalType.TIME_MILLIS) {
       return LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(((Integer) value)));
     }
 
@@ -149,19 +153,39 @@ public class StructuredRecord implements Serializable {
    */
   @Nullable
   public ZonedDateTime getTimestamp(String fieldName, ZoneId zoneId) {
-    LogicalType logicalType = validateAndGetLogicalType(schema.getField(fieldName),
-                                                        EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
-                                                                   LogicalType.TIMESTAMP_MICROS));
+    Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
+                                                               EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
+                                                                          LogicalType.TIMESTAMP_MICROS));
     Object value = fields.get(fieldName);
-    if (value == null || logicalType == null) {
+    if (value == null || logicalTypeSchema == null) {
       return null;
     }
 
-    if (logicalType == LogicalType.TIMESTAMP_MILLIS) {
+    if (logicalTypeSchema.getLogicalType() == LogicalType.TIMESTAMP_MILLIS) {
       return getZonedDateTime((long) value, TimeUnit.MILLISECONDS, zoneId);
     }
 
     return getZonedDateTime((long) value, TimeUnit.MICROSECONDS, zoneId);
+  }
+
+  /**
+   * Get the {@link BigDecimal} from field. The field must have {@link LogicalType#DECIMAL} as its logical type.
+   *
+   * @param fieldName decimal field to get.
+   * @return value of the field as a {@link BigDecimal}
+   * @throws UnexpectedFormatException if the provided field is not of {@link LogicalType#DECIMAL} type.
+   */
+  @Nullable
+  public BigDecimal getDecimal(String fieldName) {
+    Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
+                                                               EnumSet.of(LogicalType.DECIMAL));
+    Object value = fields.get(fieldName);
+    if (value == null || logicalTypeSchema == null) {
+      return null;
+    }
+
+    int scale = logicalTypeSchema.getScale();
+    return new BigDecimal(new BigInteger((byte[]) value), scale);
   }
 
   /**
@@ -182,57 +206,58 @@ public class StructuredRecord implements Serializable {
   }
 
   /**
-   * Validates and returns the underlying {@link LogicalType} of the given {@link Schema.Field}.
+   * Validates and returns the underlying {@link LogicalType} Schema of the given {@link Schema.Field}.
    *
    * @param field field with logical type
    * @param allowedTypes acceptable logical types
-   * @return the underlying {@link LogicalType} for the field
+   * @return the Schema of underlying {@link LogicalType} for the field
    * @throws UnexpectedFormatException if the field provided does not have a {@link LogicalType} that is
    *                                   one of the acceptable types
    */
   @Nullable
-  private static LogicalType validateAndGetLogicalType(Schema.Field field, Set<LogicalType> allowedTypes) {
+  private static Schema validateAndGetLogicalTypeSchema(Schema.Field field, Set<LogicalType> allowedTypes) {
     if (field == null) {
       return null;
     }
 
     String fieldName = field.getName();
-    LogicalType logicalType = getLogicalType(field.getSchema(), allowedTypes);
+    Schema logicalTypeSchema = getLogicalTypeSchema(field.getSchema(), allowedTypes);
 
-    if (logicalType == null) {
+    if (logicalTypeSchema == null) {
       throw new UnexpectedFormatException(String.format("Field %s does not have a logical type.", fieldName));
     }
 
+    LogicalType logicalType = logicalTypeSchema.getLogicalType();
     if (!allowedTypes.contains(logicalType)) {
       throw new UnexpectedFormatException(String.format("Field %s must be of logical type %s, instead it is of type %s",
-                                                       fieldName, allowedTypes, logicalType));
+                                                        fieldName, allowedTypes, logicalType));
     }
-    return logicalType;
+    return logicalTypeSchema;
   }
 
   /**
-   * Gets the {@link LogicalType} defined in the given {@link Schema}.
+   * Gets the {@link Schema} with logical type.
    * If the given {@link Schema} is a {@link Schema.Type#UNION}, this method will find
-   * the {@link LogicalType} recursively and return the first {@link LogicalType} it encountered.
+   * the schema recursively and return the schema for the first {@link LogicalType} it encountered.
    *
    * @param schema the {@link Schema} for finding the {@link LogicalType}
    * @param allowedTypes acceptable logical types
-   * @return the {@link LogicalType} defined in the given schema or {@code null} if no {@link LogicalType} was found
+   * @return the {@link Schema} for logical type or {@code null} if no {@link LogicalType} was found
    */
   @Nullable
-  private static LogicalType getLogicalType(Schema schema, Set<LogicalType> allowedTypes) {
+  private static Schema getLogicalTypeSchema(Schema schema, Set<LogicalType> allowedTypes) {
     LogicalType logicalType = schema.getLogicalType();
 
     if (logicalType != null && allowedTypes.contains(logicalType)) {
-      return logicalType;
+      return schema;
     }
 
     if (schema.getType() == Schema.Type.UNION) {
       for (Schema unionSchema : schema.getUnionSchemas()) {
-        logicalType = getLogicalType(unionSchema, allowedTypes);
+        Schema logicalTypeSchema = getLogicalTypeSchema(unionSchema, allowedTypes);
 
-        if (logicalType != null) {
-          return logicalType;
+        if (logicalTypeSchema != null) {
+          return logicalTypeSchema;
         }
       }
     }
@@ -291,7 +316,7 @@ public class StructuredRecord implements Serializable {
      *                                   value is given or if the provided date is an invalid date
      */
     public Builder setDate(String fieldName, @Nullable LocalDate localDate) {
-      validateAndGetLogicalType(validateAndGetField(fieldName, localDate), EnumSet.of(LogicalType.DATE));
+      validateAndGetLogicalTypeSchema(validateAndGetField(fieldName, localDate), EnumSet.of(LogicalType.DATE));
       if (localDate == null) {
         fields.put(fieldName, null);
         return this;
@@ -301,7 +326,7 @@ public class StructuredRecord implements Serializable {
       } catch (ArithmeticException e) {
         // Highest integer is 2,147,483,647 which is Jan 1 2038.
         throw new UnexpectedFormatException(String.format("Field %s was set to a date that is too large." +
-                                                           "Valid date should be below Jan 1 2038", fieldName));
+                                                            "Valid date should be below Jan 1 2038", fieldName));
       }
       return this;
     }
@@ -316,8 +341,9 @@ public class StructuredRecord implements Serializable {
      *                                   value is given
      */
     public Builder setTime(String fieldName, @Nullable LocalTime localTime) {
-      LogicalType logicalType = validateAndGetLogicalType(validateAndGetField(fieldName, localTime),
-                                                          EnumSet.of(LogicalType.TIME_MILLIS, LogicalType.TIME_MICROS));
+      Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(validateAndGetField(fieldName, localTime),
+                                                                 EnumSet.of(LogicalType.TIME_MILLIS,
+                                                                            LogicalType.TIME_MICROS));
 
       if (localTime == null) {
         fields.put(fieldName, null);
@@ -326,7 +352,7 @@ public class StructuredRecord implements Serializable {
 
       long nanos = localTime.toNanoOfDay();
 
-      if (logicalType == LogicalType.TIME_MILLIS) {
+      if (logicalTypeSchema.getLogicalType() == LogicalType.TIME_MILLIS) {
         try {
           int millis = Math.toIntExact(TimeUnit.NANOSECONDS.toMillis(nanos));
           fields.put(fieldName, millis);
@@ -353,9 +379,9 @@ public class StructuredRecord implements Serializable {
      *                                   value is given or if the provided date is an invalid timestamp
      */
     public Builder setTimestamp(String fieldName, @Nullable ZonedDateTime zonedDateTime) {
-      LogicalType logicalType = validateAndGetLogicalType(validateAndGetField(fieldName, zonedDateTime),
-                                                          EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
-                                                                     LogicalType.TIMESTAMP_MICROS));
+      Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(validateAndGetField(fieldName, zonedDateTime),
+                                                                 EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
+                                                                            LogicalType.TIMESTAMP_MICROS));
 
       if (zonedDateTime == null) {
         fields.put(fieldName, null);
@@ -364,7 +390,7 @@ public class StructuredRecord implements Serializable {
 
       Instant instant = zonedDateTime.toInstant();
       try {
-        if (logicalType == LogicalType.TIMESTAMP_MILLIS) {
+        if (logicalTypeSchema.getLogicalType() == LogicalType.TIMESTAMP_MILLIS) {
           long millis = TimeUnit.SECONDS.toMillis(instant.getEpochSecond());
           long tsMillis = Math.addExact(millis, TimeUnit.NANOSECONDS.toMillis(instant.getNano()));
           fields.put(fieldName, tsMillis);
@@ -380,6 +406,41 @@ public class StructuredRecord implements Serializable {
                                                           fieldName));
       }
     }
+
+    /**
+     * Sets the decimal value for provided {@link LogicalType#DECIMAL} field. The decimal value precision should be
+     * less than or equal to precision provided in {@link Schema.LogicalType} and the scale should be exactly same.
+     *
+     * @param fieldName name of the field to set
+     * @param decimal value for the field
+     * @return this builder
+     * @throws UnexpectedFormatException if the field is not in the schema, or the field is not nullable but a null
+     *                                   value is given or if the provided decimal is invalid
+     */
+    public Builder setDecimal(String fieldName, @Nullable BigDecimal decimal) {
+      Schema logicalSchema = validateAndGetLogicalTypeSchema(validateAndGetField(fieldName, decimal),
+                                                             EnumSet.of(LogicalType.DECIMAL));
+      if (decimal == null) {
+        fields.put(fieldName, null);
+        return this;
+      }
+
+      if (decimal.precision() > logicalSchema.getPrecision()) {
+        throw new UnexpectedFormatException(
+          String.format("Field '%s' has precision '%s' which is higher than schema precision '%s'.",
+                        fieldName, decimal.precision(), logicalSchema.getPrecision()));
+      }
+
+      if (decimal.scale() != logicalSchema.getScale()) {
+        throw new UnexpectedFormatException(
+          String.format("Field '%s' has scale '%s' which is not equal to schema scale '%s'.",
+                        fieldName, decimal.scale(), logicalSchema.getScale()));
+      }
+
+      fields.put(fieldName, decimal.unscaledValue().toByteArray());
+      return this;
+    }
+
 
     /**
      * Convert the given date into the type of the given field, and set the value for that field.
