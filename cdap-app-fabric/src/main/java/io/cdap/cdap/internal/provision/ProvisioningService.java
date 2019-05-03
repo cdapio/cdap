@@ -539,12 +539,16 @@ public class ProvisioningService extends AbstractIdleService {
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
+      programStateWriter.error(programRunId,
+                               new IllegalStateException("Failed to load ssh key.", e));
       provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
       return () -> { };
     } catch (InvalidMacroException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Could not evaluate macros while provisoning. "
                                               + "The run will be marked as failed.", e));
+      programStateWriter.error(programRunId,
+                               new IllegalStateException("Could not evaluate macros while provisioning", e));
       provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
       return () -> { };
     }
