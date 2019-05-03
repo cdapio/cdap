@@ -36,7 +36,8 @@ public class SchemaHashTest {
                                                      Schema.of(Schema.Type.LONG)))),
     Schema.Field.of("f", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
     Schema.Field.of("g", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-    Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.Type.LONG))));
+    Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+    Schema.Field.of("i", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
 
   private Schema schemaWithLogicalType = Schema.recordOf(
     "union",
@@ -53,7 +54,8 @@ public class SchemaHashTest {
                                                      Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)))),
     Schema.Field.of("f", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
     Schema.Field.of("g", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))),
-    Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))));
+    Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))),
+    Schema.Field.of("i", Schema.nullableOf(Schema.of(Schema.LogicalType.DECIMAL))));
 
   @Test
   public void testDifferentSchemaHash() {

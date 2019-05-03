@@ -188,6 +188,9 @@ public final class SchemaHash implements Serializable {
         case TIMESTAMP_MICROS:
           md5.update((byte) 17);
           break;
+        case DECIMAL:
+          md5.update((byte) 18);
+          break;
       }
     }
 

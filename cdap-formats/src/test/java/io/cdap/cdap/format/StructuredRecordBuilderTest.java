@@ -22,6 +22,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -189,6 +191,26 @@ public class StructuredRecordBuilderTest {
     Assert.assertEquals(zonedDateTime, x.getTimestamp("x"));
     Assert.assertEquals(time, StructuredRecord.builder(schema).setTime("x", time).build().getTime("x"));
     Assert.assertNull(StructuredRecord.builder(schema).setTime("x", null).build().getTime("x"));
+  }
+
+  @Test
+  public void testDecimalLogicalType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                    Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of("d", Schema.nullableOf(Schema.decimalOf(3, 2))));
+    BigDecimal d = new BigDecimal(new BigInteger("111"), 2);
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .set("id", 1)
+      .set("name", "test")
+      .setDecimal("d", d).build();
+
+    Assert.assertEquals(d, record.getDecimal("d"));
+
+    record = StructuredRecord.builder(schema)
+      .set("id", 1)
+      .set("name", "test")
+      .setDecimal("d", null).build();
+    Assert.assertNull(record.getDecimal("d"));
   }
 
   @Test
