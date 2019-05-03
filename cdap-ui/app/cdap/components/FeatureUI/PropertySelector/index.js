@@ -73,8 +73,24 @@ class PropertySelector extends React.Component {
     } else {
       this.setDefaultPropertyTobeConigured();
     }
+    this.setState({
+      columnTypes: this.getColumnTypes()
+    })
 
   }
+
+  getColumnTypes() {
+    const columnTypes = new Set();
+    if (!isEmpty(this.props.selectedSchemas)) {
+      this.state.schemas.map(schema => {
+        schema.schemaColumns.map(column => {
+          columnTypes.add(column.columnType);
+        })
+      })
+    }
+    return columnTypes;
+  }
+
 
   setDefaultPropertyTobeConigured() {
     if (!isEmpty(this.props.availableProperties)) {
