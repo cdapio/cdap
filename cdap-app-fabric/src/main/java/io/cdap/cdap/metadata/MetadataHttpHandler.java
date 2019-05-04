@@ -37,6 +37,7 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import io.cdap.cdap.spi.metadata.Sorting;
@@ -208,6 +209,30 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     metadataAdmin.removeTags(metadataEntity, Collections.singleton(tag));
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata tag %s for %s deleted successfully.", tag, metadataEntity));
+  }
+
+  @POST
+  @Path("/**/metadata-internals/create")
+  public void create(HttpRequest request, HttpResponder responder) throws IOException {
+    MetadataMutation.Create createMutation =
+  }
+
+  @POST
+  @Path("/**/metadata-internals/put")
+  public void put(HttpRequest request, HttpResponder responder) throws IOException {
+
+  }
+
+  @DELETE
+  @Path("/**/metadata-internals/drop")
+  public void drop(HttpRequest request, HttpResponder responder) throws IOException {
+
+  }
+
+  @DELETE
+  @Path("/**/metadata-internals/remove")
+  public void remove(HttpRequest request, HttpResponder responder) throws IOException {
+
   }
 
   @GET
@@ -437,6 +462,24 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
     if (toReturn == null) {
       throw new BadRequestException("Null tags were read from the request.");
+    }
+    return toReturn;
+  }
+
+  private MetadataMutation readMutation(FullHttpRequest request) throws BadRequestException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
+      throw new BadRequestException("Unable to read metadata mutation from the request.");
+    }
+    MetadataMutation toReturn;
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
+      toReturn = GSON.fromJson(reader, MetadataMutation.class);
+    } catch (IOException e) {
+      throw new BadRequestException("Unable to read metadata mutation from the request.");
+    }
+
+    if (toReturn == null) {
+      throw new BadRequestException("Null metadata mutation was read from the request.");
     }
     return toReturn;
   }
