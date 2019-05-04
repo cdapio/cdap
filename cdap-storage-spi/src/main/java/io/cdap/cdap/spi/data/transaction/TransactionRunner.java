@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.transaction;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 
@@ -23,6 +24,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
  * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed inside
  * a transaction.
  */
+@Beta
 public interface TransactionRunner {
 
   /**

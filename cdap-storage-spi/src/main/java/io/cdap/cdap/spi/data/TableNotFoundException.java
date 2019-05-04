@@ -17,11 +17,13 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 
 /**
  * Thrown when a table does not exist when it is expected to.
  */
+@Beta
 public class TableNotFoundException extends RuntimeException {
   private final StructuredTableId id;
 

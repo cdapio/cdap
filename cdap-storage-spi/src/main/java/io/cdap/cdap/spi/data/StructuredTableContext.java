@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 
 /**
  * This interface provides methods that instantiate a {@link StructuredTable} during the runtime.
  * of a program.
  */
+@Beta
 public interface StructuredTableContext {
 
   /**

@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 
 /**
  * Exception thrown when table instantiation fails.
  */
+@Beta
 public class StructuredTableInstantiationException extends RuntimeException {
   private final StructuredTableId tableId;
 

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import javax.annotation.Nullable;
 /**
  * Class for the table schema, which provides convenient way to fetch for fields, primary key and index.
  */
+@Beta
 public class StructuredTableSchema {
   private final StructuredTableId tableId;
   private final Map<String, FieldType.Type> fields;
