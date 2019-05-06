@@ -157,6 +157,12 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
       .collect(Collectors.toSet())), options);
   }
 
+
+  @Override
+  public void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException {
+    storage.apply(mutation, options);
+  }
+
   @Override
   public SearchResponse search(SearchRequest request) throws Exception {
     return filterAuthorizedSearchResult(storage.search(request));
