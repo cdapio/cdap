@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.transaction;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 
@@ -23,6 +24,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
  * A runnable that provides a {@link StructuredTableContext} to programs which may be used to get
  * access to and use tables.
  */
+@Beta
 public interface TxRunnable {
   /**
    * Provides a {@link StructuredTableContext} to get instances of {@link StructuredTable}s.

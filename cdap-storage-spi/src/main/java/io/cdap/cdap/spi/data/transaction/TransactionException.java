@@ -16,9 +16,12 @@
 
 package io.cdap.cdap.spi.data.transaction;
 
+import io.cdap.cdap.api.annotation.Beta;
+
 /**
  * Exception thrown when a transaction fails to execute.
  */
+@Beta
 public class TransactionException extends Exception {
   public TransactionException(String message, Throwable cause) {
     super(message, cause);

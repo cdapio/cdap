@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spi.data.table.field;
 
+import io.cdap.cdap.api.annotation.Beta;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -24,6 +26,7 @@ import java.util.Set;
 /**
  * Contains the name and type information of a {@link Field}.
  */
+@Beta
 public final class FieldType {
   /**
    * Supported data types.
