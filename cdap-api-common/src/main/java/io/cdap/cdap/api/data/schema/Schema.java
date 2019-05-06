@@ -421,6 +421,9 @@ public final class Schema implements Serializable {
    * Creates a {@link Type#UNION UNION} {@link Schema} which represents a union of all the given schemas.
    * The ordering of the schemas inside the union would be the same as the one being passed in.
    *
+   * Unions may not contain more than one schema with the same type, except for records and enums.
+   * For example, unions containing two array types or two map types are not permitted.
+   *
    * @param schemas All the {@link Schema Schemas} constitutes the union.
    * @return A {@link Schema} of {@link Type#UNION UNION} type.
    */
@@ -432,16 +435,38 @@ public final class Schema implements Serializable {
    * Creates a {@link Type#UNION UNION} {@link Schema} which represents a union of all the given schemas.
    * The ordering of the schemas inside the union would be the same as the {@link Iterable#iterator()} order.
    *
+   * Unions may not contain more than one schema with the same type, except for records and enums.
+   * For example, unions containing two array types or two map types are not permitted.
+   *
    * @param schemas All the {@link Schema Schemas} constitutes the union.
    * @return A {@link Schema} of {@link Type#UNION UNION} type.
    */
   public static Schema unionOf(Iterable<Schema> schemas) {
+    List<Schema> mapSchemas = new ArrayList<>();
+    List<Schema> arraySchemas = new ArrayList<>();
     List<Schema> schemaList = new ArrayList<>();
     for (Schema schema : schemas) {
       schemaList.add(schema);
+      Schema.Type type = schema.getType();
+      if (type == Type.MAP) {
+        mapSchemas.add(schema);
+      }
+      if (type == Type.ARRAY) {
+        arraySchemas.add(schema);
+      }
     }
     if (schemaList.isEmpty()) {
       throw new IllegalArgumentException("No union schema provided.");
+    }
+    if (mapSchemas.size() > 1) {
+      throw new IllegalArgumentException(String.format(
+        "A union is not allowed to contain more than one map, but it contains %d schemas: %s",
+        mapSchemas.size(), mapSchemas));
+    }
+    if (arraySchemas.size() > 1) {
+      throw new IllegalArgumentException(String.format(
+        "A union is not allowed to contain more than one array, but it contains %d schemas: %s",
+        arraySchemas.size(), arraySchemas));
     }
     return new Schema(Type.UNION, null, null, null, null, null, null, null, schemaList);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.datapipeline;
+package io.cdap.cdap.etl.batch;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.batch.StructuredRecordWritable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,5 +50,16 @@ public class StructuredRecordWritableTest {
     writableIn.readFields(input);
 
     Assert.assertEquals(writableIn.get(), record);
+  }
+
+  @Test
+  public void testComparison() {
+    Schema schema = Schema.recordOf("l", Schema.Field.of("l", Schema.of(Schema.Type.LONG)));
+    StructuredRecord record1 = StructuredRecord.builder(schema).set("l", 0L).build();
+    StructuredRecord record2 = StructuredRecord.builder(schema).set("l", -1L).build();
+    StructuredRecordWritable writable1 = new StructuredRecordWritable(record1);
+    StructuredRecordWritable writable2 = new StructuredRecordWritable(record2);
+    Assert.assertNotEquals(0, writable1.compareTo(writable2));
+    Assert.assertNotEquals(writable1, writable2);
   }
 }
