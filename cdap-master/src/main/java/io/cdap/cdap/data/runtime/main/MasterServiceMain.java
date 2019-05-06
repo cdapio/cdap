@@ -62,8 +62,10 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.util.hbase.ConfigurationReader;
 import io.cdap.cdap.data2.util.hbase.ConfigurationWriter;
 import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -578,6 +580,7 @@ public class MasterServiceMain extends DaemonMain {
         protected void configure() {
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+          bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
         }
       }
     );

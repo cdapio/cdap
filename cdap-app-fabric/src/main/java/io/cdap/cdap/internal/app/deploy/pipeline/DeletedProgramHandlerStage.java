@@ -22,7 +22,7 @@ import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
@@ -53,12 +53,12 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final Store store;
   private final ProgramTerminator programTerminator;
   private final MetricsSystemClient metricsSystemClient;
-  private final DefaultMetadataServiceClient metadataServiceClient;
+  private final MetadataServiceClient metadataServiceClient;
   private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     MetricsSystemClient metricsSystemClient,
-                                    DefaultMetadataServiceClient metadataServiceClient,
+                                    MetadataServiceClient metadataServiceClient,
                                     Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
