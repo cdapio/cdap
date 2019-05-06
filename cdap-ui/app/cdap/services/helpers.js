@@ -163,6 +163,9 @@ function humanReadableDuration(timeInSeconds, shortForm = false) {
 }
 
 function timeSinceCreated(timeInSeconds, shortForm) {
+  if (isNaN(timeInSeconds)) {
+    return '--';
+  }
   return `${humanReadableDuration(timeInSeconds, shortForm)} ago`;
 }
 
