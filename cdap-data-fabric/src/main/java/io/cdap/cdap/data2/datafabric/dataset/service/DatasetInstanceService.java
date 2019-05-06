@@ -43,7 +43,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
 import io.cdap.cdap.data2.metadata.system.SystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
@@ -62,6 +62,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,7 @@ public class DatasetInstanceService {
   private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
-  private MetadataServiceClient metadataServiceClient;
+  private DefaultMetadataServiceClient metadataServiceClient;
 
   @VisibleForTesting
   @Inject
@@ -106,7 +107,7 @@ public class DatasetInstanceService {
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MetadataServiceClient metadataServiceClient) {
+                                DefaultMetadataServiceClient metadataServiceClient) {
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
@@ -569,7 +570,7 @@ public class DatasetInstanceService {
 
     // Remove metadata for the dataset
     LOG.trace("Removing metadata for dataset {}", instance);
-    metadataServiceClient.remove(instance.toMetadataEntity());
+    metadataServiceClient.remove(new MetadataMutation.Remove(instance.toMetadataEntity()));
     LOG.trace("Removed metadata for dataset {}", instance);
 
     publishAudit(instance, AuditType.DELETE);

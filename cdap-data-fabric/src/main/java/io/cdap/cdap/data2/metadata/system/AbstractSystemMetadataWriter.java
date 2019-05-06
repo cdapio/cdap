@@ -19,7 +19,7 @@ package io.cdap.cdap.data2.metadata.system;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 
@@ -32,10 +32,10 @@ import java.util.Set;
  */
 public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter, SystemMetadataProvider {
 
-  private final MetadataServiceClient metadataServiceClient;
+  private final DefaultMetadataServiceClient metadataServiceClient;
   private final MetadataEntity metadataEntity;
 
-  AbstractSystemMetadataWriter(MetadataServiceClient metadataServiceClient, NamespacedEntityId entityId) {
+  AbstractSystemMetadataWriter(DefaultMetadataServiceClient metadataServiceClient, NamespacedEntityId entityId) {
     this.metadataServiceClient = metadataServiceClient;
     this.metadataEntity = entityId.toMetadataEntity();
   }

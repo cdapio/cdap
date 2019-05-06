@@ -50,7 +50,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
@@ -60,6 +60,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -92,13 +93,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
-  private final MetadataServiceClient metadataServiceClient;
+  private final DefaultMetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
 
   @VisibleForTesting
   @Inject
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
-                                   MetadataServiceClient metadataServiceClient,
+                                   DefaultMetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;
@@ -446,7 +447,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataServiceClient.remove(artifactId.toEntityId().toMetadataEntity());
+    metadataServiceClient.remove(new MetadataMutation.Remove(artifactId.toEntityId().toMetadataEntity()));
   }
 
   @Override
