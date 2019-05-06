@@ -60,7 +60,7 @@ import io.cdap.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
-import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.client.DiscoveryExploreClient;
@@ -245,8 +245,8 @@ public abstract class DatasetServiceTestBase {
                                                  instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer,
                                                  authenticationContext,
-                                                 new MetadataServiceClient(discoveryServiceClient,
-                                                                           authenticationContext));
+                                                 new DefaultMetadataServiceClient(discoveryServiceClient,
+                                                                                  authenticationContext));
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  new HashSet<>(), typeService, instanceService);

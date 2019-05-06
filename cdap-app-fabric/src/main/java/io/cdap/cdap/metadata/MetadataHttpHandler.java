@@ -225,37 +225,34 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/**/metadata-internals/create")
-  public void create(FullHttpRequest request, HttpResponder responder) throws IOException {
-    ByteBuf content = request.content();
-    if (!content.isReadable()) {
-      throw new IOException("Unable to read metadata mutation from the request.");
-    }
-    MetadataMutation.Create createOperation;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
-      createOperation = GSON.fromJson(reader, MetadataMutation.Create.class);
-    } catch (IOException e) {
-      throw new IOException("Unable to read metadata mutation from the request.");
-    }
-
-    metadataAdmin
+  public void create(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
+    MetadataMutation.Create createMutation = (MetadataMutation.Create) readMutation(request);
+    metadataAdmin.applyMutation(createMutation, SYNC);
+    responder.sendString(HttpResponseStatus.OK, String.format("Create Metadata mutation applied successfully."));
   }
 
   @POST
-  @Path("/**/metadata-internals/put")
-  public void put(FullHttpRequest request, HttpResponder responder) throws IOException {
-
+  @Path("/**/metadata-internals/update")
+  public void update(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
+    MetadataMutation.Update updateMutation = (MetadataMutation.Update) readMutation(request);
+    metadataAdmin.applyMutation(updateMutation, SYNC);
+    responder.sendString(HttpResponseStatus.OK, String.format("Update Metadata mutation applied successfully."));
   }
 
   @DELETE
   @Path("/**/metadata-internals/drop")
-  public void drop(FullHttpRequest request, HttpResponder responder) throws IOException {
-
+  public void drop(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
+    MetadataMutation.Drop dropMutation = (MetadataMutation.Drop) readMutation(request);
+    metadataAdmin.applyMutation(dropMutation, SYNC);
+    responder.sendString(HttpResponseStatus.OK, String.format(" Drop Metadata mutation applied successfully."));
   }
 
   @DELETE
   @Path("/**/metadata-internals/remove")
-  public void remove(FullHttpRequest request, HttpResponder responder) throws IOException {
-
+  public void remove(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
+    MetadataMutation.Remove removeMutation = (MetadataMutation.Remove) readMutation(request);
+    metadataAdmin.applyMutation(removeMutation, SYNC);
+    responder.sendString(HttpResponseStatus.OK, String.format("Remove Metadata mutation applied successfully."));
   }
 
   @GET
@@ -489,23 +486,23 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     return toReturn;
   }
 
-//  private MetadataMutation readMutation(FullHttpRequest request) throws BadRequestException {
-//    ByteBuf content = request.content();
-//    if (!content.isReadable()) {
-//      throw new BadRequestException("Unable to read metadata mutation from the request.");
-//    }
-//    MetadataMutation toReturn;
-//    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
-//      toReturn = GSON.fromJson(reader, MetadataMutation.class);
-//    } catch (IOException e) {
-//      throw new BadRequestException("Unable to read metadata mutation from the request.");
-//    }
-//
-//    if (toReturn == null) {
-//      throw new BadRequestException("Null metadata mutation was read from the request.");
-//    }
-//    return toReturn;
-//  }
+  private MetadataMutation readMutation(FullHttpRequest request) throws BadRequestException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
+      throw new BadRequestException("Unable to read metadata mutation from the request.");
+    }
+    MetadataMutation toReturn;
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
+      toReturn = GSON.fromJson(reader, MetadataMutation.class);
+    } catch (IOException e) {
+      throw new BadRequestException("Unable to read metadata mutation from the request.");
+    }
+
+    if (toReturn == null) {
+      throw new BadRequestException("Null metadata mutation was read from the request.");
+    }
+    return toReturn;
+  }
 
   private MetadataScope validateScope(@Nullable String scope) throws BadRequestException {
     try {
