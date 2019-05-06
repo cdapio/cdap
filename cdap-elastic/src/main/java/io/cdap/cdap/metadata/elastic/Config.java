@@ -25,7 +25,6 @@ public final class Config {
   static final String CONF_ELASTIC_HOSTS = "metadata.elasticsearch.cluster.hosts";
   static final String CONF_ELASTIC_INDEX_NAME = "metadata.elasticsearch.index.name";
   static final String CONF_ELASTIC_SCROLL_TIMEOUT = "metadata.elasticsearch.scroll.timeout";
-  static final String CONF_ELASTIC_WAIT_FOR_MUTATIONS = "metadata.elasticsearch.wait.for.mutations";
   static final String CONF_ELASTIC_NUM_SHARDS = "metadata.elasticsearch.num.shards";
   static final String CONF_ELASTIC_NUM_REPLICAS = "metadata.elasticsearch.num.replicas";
   static final String CONF_ELASTIC_WINDOW_SIZE = "metadata.elasticsearch.max.window.size";
@@ -35,7 +34,6 @@ public final class Config {
   static final String DEFAULT_ELASTIC_HOSTS = "localhost:9200";
   static final String DEFAULT_INDEX_NAME = "cdap.metadata";
   static final String DEFAULT_SCROLL_TIMEOUT = "60s";
-  static final boolean DEFAULT_WAIT_FOR_MUTATIONS = false;
   static final int DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES = 50;
   static final int DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS = 100;
   static final int DEFAULT_MAX_RESULT_WINDOW = 10000; // this is hardcoded in Elasticsearch

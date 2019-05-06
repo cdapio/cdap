@@ -64,6 +64,7 @@ import io.cdap.cdap.spi.metadata.MetadataDirective;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
@@ -363,11 +364,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           MetadataOperation.Create create = (MetadataOperation.Create) operation;
           MetadataMutation mutation = new MetadataMutation.Create(
             entity, new Metadata(MetadataScope.SYSTEM, create.getTags(), create.getProperties()), CREATE_DIRECTIVES);
-          metadataStorage.apply(mutation);
+          metadataStorage.apply(mutation, MutationOptions.DEFAULT);
           break;
         }
         case DROP: {
-          metadataStorage.apply(new MetadataMutation.Drop(operation.getEntity()));
+          metadataStorage.apply(new MetadataMutation.Drop(operation.getEntity()), MutationOptions.DEFAULT);
           break;
         }
         case PUT: {
@@ -379,7 +380,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
               validateProperties(entity, props);
               validateTags(entity, tags);
             }
-            metadataStorage.apply(new MetadataMutation.Update(entity, new Metadata(put.getScope(), tags, props)));
+            metadataStorage.apply(
+              new MetadataMutation.Update(entity, new Metadata(put.getScope(), tags, props)), MutationOptions.DEFAULT);
           } catch (InvalidMetadataException e) {
             LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
                      GSON.toJson(message.getRawPayload()), e);
@@ -397,22 +399,23 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             delete.getTags().forEach(
               name -> toDelete.add(new ScopedNameOfKind(MetadataKind.TAG, delete.getScope(), name)));
           }
-          metadataStorage.apply(new MetadataMutation.Remove(entity, toDelete));
+          metadataStorage.apply(new MetadataMutation.Remove(entity, toDelete), MutationOptions.DEFAULT);
           break;
         }
         case DELETE_ALL: {
           MetadataScope scope = ((MetadataOperation.DeleteAll) operation).getScope();
-          metadataStorage.apply(new MetadataMutation.Remove(entity, scope));
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope), MutationOptions.DEFAULT);
           break;
         }
         case DELETE_ALL_PROPERTIES: {
           MetadataScope scope = ((MetadataOperation.DeleteAllProperties) operation).getScope();
-          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.PROPERTY));
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.PROPERTY),
+                                MutationOptions.DEFAULT);
           break;
         }
         case DELETE_ALL_TAGS: {
           MetadataScope scope = ((MetadataOperation.DeleteAllTags) operation).getScope();
-          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.TAG));
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.TAG), MutationOptions.DEFAULT);
           break;
         }
         default:

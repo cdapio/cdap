@@ -39,6 +39,7 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageTest;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.dataset.DatasetMetadataStorageTest;
 import org.junit.AfterClass;
@@ -193,17 +194,36 @@ public class AuditMetadataStorageTest extends MetadataStorageTest {
   }
 
   private void generateMetadataUpdates() throws IOException {
-    storage.apply(new MetadataMutation.Update(
-      dataset.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, datasetTags)));
-    storage.apply(new MetadataMutation.Update(
-      app.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, appProperties)));
-    storage.apply(new MetadataMutation.Update(
-      app.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, appTags)));
-    storage.apply(new MetadataMutation.Update(
-      service.toMetadataEntity(), new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, tags)));
-    storage.apply(new MetadataMutation.Remove(service.toMetadataEntity(), MetadataScope.USER, MetadataKind.TAG));
-    storage.apply(new MetadataMutation.Remove(dataset.toMetadataEntity(), datasetTags.stream().map(
-      tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag)).collect(Collectors.toSet())));
-    storage.apply(new MetadataMutation.Remove(app.toMetadataEntity(), MetadataScope.USER));
+    storage.apply(
+      new MetadataMutation.Update(
+        dataset.toMetadataEntity(),
+        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, datasetTags)), MutationOptions.DEFAULT);
+    storage.apply(
+      new MetadataMutation.Update(
+        app.toMetadataEntity(),
+        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, appProperties)), MutationOptions.DEFAULT);
+    storage.apply(
+      new MetadataMutation.Update(
+        app.toMetadataEntity(),
+        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, appTags)), MutationOptions.DEFAULT);
+    storage.apply(
+      new MetadataMutation.Update(
+        service.toMetadataEntity(),
+        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, tags)), MutationOptions.DEFAULT);
+    storage.apply(
+      new MetadataMutation.Remove(
+        service.toMetadataEntity(),
+        MetadataScope.USER,
+        MetadataKind.TAG), MutationOptions.DEFAULT);
+    storage.apply(
+      new MetadataMutation.Remove(
+        dataset.toMetadataEntity(),
+        datasetTags.stream()
+          .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag))
+          .collect(Collectors.toSet())), MutationOptions.DEFAULT);
+    storage.apply(
+      new MetadataMutation.Remove(
+        app.toMetadataEntity(),
+        MetadataScope.USER), MutationOptions.DEFAULT);
   }
 }

@@ -97,6 +97,7 @@ import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -548,8 +549,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       profileService.disableProfile(myProfile);
       profileService.disableProfile(myProfile2);
       profileService.deleteAllProfiles(myProfile.getNamespaceId());
-      mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()));
-      mds.apply(new MetadataMutation.Drop(scheduleId.toMetadataEntity()));
+      mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()), MutationOptions.DEFAULT);
+      mds.apply(new MetadataMutation.Drop(scheduleId.toMetadataEntity()), MutationOptions.DEFAULT);
     }
   }
 
@@ -608,7 +609,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       store.removeAllApplications(NamespaceId.DEFAULT);
       profileService.disableProfile(myProfile);
       profileService.deleteProfile(myProfile);
-      mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()));
+      mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()), MutationOptions.DEFAULT);
     }
   }
 
@@ -658,7 +659,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     mds.apply(new MetadataMutation.Update(workflowId.toMetadataEntity(),
                                           new Metadata(MetadataScope.SYSTEM,
                                                        Collections.singletonMap("profile",
-                                                                                ProfileId.NATIVE.getScopedName()))));
+                                                                                ProfileId.NATIVE.getScopedName()))),
+              MutationOptions.DEFAULT);
     Assert.assertEquals(ProfileId.NATIVE.getScopedName(), getProfileProperty(mds, workflowId));
 
     // publish app deletion message
