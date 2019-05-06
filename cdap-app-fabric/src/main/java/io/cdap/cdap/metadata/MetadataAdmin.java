@@ -21,6 +21,7 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 
@@ -45,7 +46,7 @@ public interface MetadataAdmin {
    *
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
+  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties, MutationOptions options)
     throws InvalidMetadataException, IOException;
 
   /**
@@ -54,7 +55,8 @@ public interface MetadataAdmin {
    *
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException, IOException;
+  void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
+    throws InvalidMetadataException, IOException;
 
   /**
    * Returns all metadata (including properties and tags) for the specified {@link MetadataEntity}
@@ -107,7 +109,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove metadata for
    */
-  void removeMetadata(MetadataEntity metadataEntity) throws IOException;
+  void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
    * Removes all properties from the metadata of the specified {@link MetadataEntity}. This API only supports
@@ -115,7 +117,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove properties for
    */
-  void removeProperties(MetadataEntity metadataEntity) throws IOException;
+  void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
    * Removes the specified keys from the metadata properties of the specified {@link MetadataEntity}. This API only
@@ -124,7 +126,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove
    */
-  void removeProperties(MetadataEntity metadataEntity, Set<String> keys) throws IOException;
+  void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options) throws IOException;
 
   /**
    * Removes all tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -132,7 +134,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove tags for
    */
-  void removeTags(MetadataEntity metadataEntity) throws IOException;
+  void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
    * Removes the specified tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -141,7 +143,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tags the tags to remove
    */
-  void removeTags(MetadataEntity metadataEntity, Set<String> tags) throws IOException;
+  void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException;
 
   /**
    * Executes a search for CDAP entities.

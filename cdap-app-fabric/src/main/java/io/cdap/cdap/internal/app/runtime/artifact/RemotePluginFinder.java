@@ -105,7 +105,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
             artifactSummary.getName(), new ArtifactVersion(artifactSummary.getVersion()), artifactSummary.getScope());
           PluginClass pluginClass = new PluginClass(info.getType(), info.getName(), info.getDescription(),
                                                     info.getClassName(), info.getConfigFieldName(),
-                                                    info.getProperties(), info.getEndpoints());
+                                                    info.getProperties());
           plugins.put(pluginArtifactId, pluginClass);
         }
 

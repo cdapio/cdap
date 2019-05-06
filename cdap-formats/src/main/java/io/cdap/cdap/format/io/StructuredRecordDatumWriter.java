@@ -233,7 +233,14 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @throws IOException If failed to encode
    */
   protected void encodeRecordField(Encoder encoder, Schema.Field field, Object value) throws IOException {
-    encode(encoder, field.getSchema(), value);
+    try {
+      encode(encoder, field.getSchema(), value);
+    } catch (ClassCastException e) {
+      // happens if the record is constructed incorrectly.
+      throw new IllegalArgumentException(
+        String.format("A value for field '%s' is of type '%s', which does not match schema '%s'. ",
+                      field.getName(), value.getClass().getName(), field.getSchema()));
+    }
   }
 
   /**

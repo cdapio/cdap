@@ -36,6 +36,7 @@ import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataChange;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
@@ -104,10 +105,10 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public MetadataChange apply(MetadataMutation mutation) throws IOException {
+  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
     MetadataChange change;
     try {
-      change = storage.apply(mutation);
+      change = storage.apply(mutation, options);
       emitMetrics(MUTATION_COUNT_MAP.get(mutation.getType()));
     } catch (Exception e) {
       emitMetrics(MUTATION_ERROR_MAP.get(mutation.getType()));
@@ -118,10 +119,11 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException {
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
+                                    MutationOptions options) throws IOException {
     List<MetadataChange> changes;
     try {
-      changes = storage.batch(mutations);
+      changes = storage.batch(mutations, options);
       for (MetadataMutation metadataMutation : mutations) {
         emitMetrics(MUTATION_COUNT_MAP.get(metadataMutation.getType()));
       }

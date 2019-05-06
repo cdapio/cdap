@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
@@ -35,6 +36,7 @@ import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -68,8 +70,8 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   }
 
   @Override
-  public void registerLineage(final String referenceName) throws DatasetManagementException,
-    TransactionFailureException {
+  public void registerLineage(final String referenceName)
+    throws DatasetManagementException, TransactionFailureException {
     try {
       if (!admin.datasetExists(referenceName)) {
         admin.createDataset(referenceName, EXTERNAL_DATASET_TYPE, DatasetProperties.EMPTY);
@@ -83,7 +85,18 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
     Transactionals.execute(sec, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        context.getDataset(referenceName);
+        // we cannot instantiate ExternalDataset here - it is in CDAP data-fabric,
+        // and this code (the pipeline app) cannot depend on that. Thus, use reflection
+        // to invoke a method on the dataset.
+        Dataset ds = context.getDataset(referenceName);
+        try {
+          Class<? extends Dataset> dsClass = ds.getClass();
+          Method method = dsClass.getMethod("recordRead");
+          method.invoke(ds);
+        } catch (NoSuchMethodException e) {
+          LOG.warn("ExternalDataset '{}' does not have method 'recordRead()'. " +
+                     "Can't register read-only lineage for this dataset", referenceName);
+        }
       }
     }, DatasetManagementException.class);
   }
