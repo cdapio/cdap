@@ -307,6 +307,9 @@
                         <exclude name="node_modules/**" />
                       </fileset>
                     </copy>
+                    <copy todir = "${stage.opt.dir}/cdap-ui-upgrade">
+                      <fileset dir = "cdap-ui-upgrade" />
+                    </copy>
                     <copy todir = "${stage.opt.dir}/server/config/themes">
                       <fileset dir = "server/config/themes" />
                     </copy>
