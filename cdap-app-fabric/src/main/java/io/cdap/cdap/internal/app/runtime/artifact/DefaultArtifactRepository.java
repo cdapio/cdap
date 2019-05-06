@@ -50,7 +50,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
@@ -93,13 +93,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
-  private final DefaultMetadataServiceClient metadataServiceClient;
+  private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
 
   @VisibleForTesting
   @Inject
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
-                                   DefaultMetadataServiceClient metadataServiceClient,
+                                   MetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;

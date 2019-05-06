@@ -43,7 +43,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
 import io.cdap.cdap.data2.metadata.system.SystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
@@ -95,7 +95,7 @@ public class DatasetInstanceService {
   private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
-  private DefaultMetadataServiceClient metadataServiceClient;
+  private MetadataServiceClient metadataServiceClient;
 
   @VisibleForTesting
   @Inject
@@ -107,7 +107,7 @@ public class DatasetInstanceService {
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                DefaultMetadataServiceClient metadataServiceClient) {
+                                MetadataServiceClient metadataServiceClient) {
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
