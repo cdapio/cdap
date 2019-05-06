@@ -150,4 +150,11 @@ public interface MetadataAdmin {
    * @return the {@link SearchResponse} containing the results for the request
    */
   SearchResponse search(SearchRequest request) throws Exception;
+
+  /**
+   * Applies a raw metadata mutation.
+   *
+   * @param mutation the MetadataMutation to apply
+   *
+   */
 }
