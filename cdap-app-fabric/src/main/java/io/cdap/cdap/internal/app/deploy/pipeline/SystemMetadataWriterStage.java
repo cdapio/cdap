@@ -21,7 +21,7 @@ import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -32,12 +32,12 @@ import io.cdap.cdap.proto.id.ProgramId;
  */
 public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
 
-  private final MetadataPublisher metadataPublisher;
+  private final MetadataServiceClient metadataServiceClient;
   private String creationTime;
 
-  public SystemMetadataWriterStage(MetadataPublisher metadataPublisher) {
+  public SystemMetadataWriterStage(MetadataServiceClient metadataServiceClient) {
     super(TypeToken.of(ApplicationWithPrograms.class));
-    this.metadataPublisher = metadataPublisher;
+    this.metadataServiceClient = metadataServiceClient;
   }
 
   @Override
@@ -49,7 +49,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
 
-    new AppSystemMetadataWriter(metadataPublisher, appId, appSpec, creationTime).write();
+    new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, creationTime).write();
 
     // add system metadata for programs
     writeProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values());
@@ -66,7 +66,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
                                           Iterable<? extends ProgramSpecification> specs) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
-      new ProgramSystemMetadataWriter(metadataPublisher, programId, spec, creationTime).write();
+      new ProgramSystemMetadataWriter(metadataServiceClient, programId, spec, creationTime).write();
     }
   }
 }

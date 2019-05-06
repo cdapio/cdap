@@ -50,7 +50,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.config.PreferencesService;
-import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -120,7 +120,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final OwnerAdmin ownerAdmin;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
-  private final DefaultMetadataServiceClient metadataServiceClient;
+  private final MetadataServiceClient metadataServiceClient;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
@@ -132,7 +132,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
                               OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                              DefaultMetadataServiceClient metadataServiceClient,
+                              MetadataServiceClient metadataServiceClient,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                               MessagingService messagingService) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,

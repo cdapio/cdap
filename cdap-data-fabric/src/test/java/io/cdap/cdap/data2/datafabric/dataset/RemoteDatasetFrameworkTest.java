@@ -52,7 +52,7 @@ import io.cdap.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.explore.client.DiscoveryExploreClient;
@@ -139,7 +139,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
-    discoveryService.
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
@@ -174,9 +173,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                         instanceManager, opExecutor,
                                                                         exploreFacade, namespaceQueryAdmin, ownerAdmin,
                                                                         authorizationEnforcer, authenticationContext,
-                                                                        new DefaultMetadataServiceClient(
-                                                                          discoveryServiceClient,
-                                                                          authenticationContext));
+                                                                        new NoOpMetadataServiceClient());
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
