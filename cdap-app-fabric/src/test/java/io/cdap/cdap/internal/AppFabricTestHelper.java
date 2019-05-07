@@ -70,6 +70,7 @@ import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -148,6 +149,7 @@ public class AppFabricTestHelper {
         ((Service) messagingService).startAndWait();
       }
 
+      injector.getInstance(MetadataService.class).startAndWait();
       injector.getInstance(TransactionManager.class).startAndWait();
       // Register the tables before services will need to use them
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
