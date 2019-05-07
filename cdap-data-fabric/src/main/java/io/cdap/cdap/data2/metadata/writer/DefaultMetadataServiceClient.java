@@ -30,6 +30,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+
 /**
  * Metadata service client that allows CDAP Master to make Metadata updates via HTTP.
  */
@@ -39,6 +41,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
 
   private final RemoteClient remoteClient;
 
+  @Inject
   public DefaultMetadataServiceClient(final DiscoveryServiceClient discoveryClient) {
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.METADATA_SERVICE,
                                          new DefaultHttpRequestConfig(false),
@@ -52,7 +55,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to create mutation, i.e. see response for details: %s", response);
+      LOG.trace("Failed to create metadata, i.e. see response for details: %s", response);
     }
   }
 
@@ -63,7 +66,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to create mutation, i.e. see response for details: %s", response);
+      LOG.trace("Failed to drop metadata, i.e. see response for details: %s", response);
     }
   }
 
@@ -74,7 +77,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to create mutation, i.e. see response for details: %s", response);
+      LOG.trace("Failed to update metadata, i.e. see response for details: %s", response);
     }
   }
 
@@ -85,7 +88,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to create mutation, i.e. see response for details: %s", response);
+      LOG.trace("Failed to remove metadata, i.e. see response for details: %s", response);
     }
   }
 

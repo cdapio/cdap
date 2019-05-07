@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.system;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
