@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.metadata.writer;
 
-  import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 
 /**
  * NoOp Metadata service client that allows testing.
