@@ -23,6 +23,7 @@ const SCHEMA_TYPES = {
     'boolean',
     'bytes',
     'date',
+    'decimal',
     'double',
     'float',
     'int',
