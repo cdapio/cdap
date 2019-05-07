@@ -705,7 +705,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   private void writeSystemMetadata(io.cdap.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
     // add system metadata for artifacts
-    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataServiceClient, artifactId, artifactInfo);
+    ArtifactSystemMetadataWriter writer =
+      new ArtifactSystemMetadataWriter(metadataServiceClient, artifactId, artifactInfo);
     writer.write();
   }
 }

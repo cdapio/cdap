@@ -48,7 +48,9 @@ import io.cdap.cdap.data.runtime.TransactionMetricsModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -143,6 +145,7 @@ public class DatasetOpExecutorServiceTest {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
         }
       });
 
