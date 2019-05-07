@@ -92,7 +92,7 @@ export default class WorkspaceTab extends Component {
     return (
       <div id={workspace.id} className="workspace-tab clearfix" title={workspace.name}>
         <span className="display-name-container float-left">
-          <Link to={`/ns/${this.namespace}/dataprep/${workspace.id}`}>
+          <Link to={`/ns/${this.namespace}/wrangler/${workspace.id}`}>
             {this.state.overflow ? this.renderOverflow() : this.renderName()}
           </Link>
         </span>

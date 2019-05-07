@@ -168,12 +168,12 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureName={Theme.featureNames.dataPrep}
             featureFlag={Theme.showDataPrep}
             featureSVGIconName="icon-transform"
-            featureUrl={`/${nsurl}/dataprep`}
+            featureUrl={`/${nsurl}/wrangler`}
             componentDidNavigate={componentDidNavigate}
             data-cy="navbar-dataprep-link"
             id="navbar-preparation"
             isActive={
-              location.pathname.startsWith(`/cdap/${nsurl}/dataprep`) ||
+              location.pathname.startsWith(`/cdap/${nsurl}/wrangler`) ||
               location.pathname.startsWith(`/cdap/${nsurl}/connections`)
             }
           />
