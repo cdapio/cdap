@@ -41,7 +41,7 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
     new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
     MetadataDirective.PRESERVE);
 
-  private static final MetadataEntity testEntity = MetadataEntity.builder().build();
+  private final MetadataEntity testEntity = MetadataEntity.builder().append("test", "value").build();
 
   @Test
   public void testCreate() {
