@@ -42,7 +42,6 @@ import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
