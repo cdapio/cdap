@@ -181,7 +181,20 @@ function convertBytesToHumanReadable(bytes, type, includeSpace) {
 
   return numeral(bytes).format(format);
 }
-
+/**
+ * Check if child is a descendant of the parent. This is
+ * usually used when checking if the (click) event target is
+ * within a specific element or is outside.
+ *
+ * We usually use this utility for a popover'ish behavior where
+ * clicking on anywhere outside of the popover should trigger a close.
+ *
+ * @param parent parent container to check
+ * @param child child where the (click) event originated.
+ *
+ * @deprecated Try to use containerRef.contains(DOM_NODE_FROM_EVENT) as this is native.
+ * containerRef being the ref (html) element handed to us by react.
+ */
 function isDescendant(parent, child) {
   var node = child;
   while (node != null) {
