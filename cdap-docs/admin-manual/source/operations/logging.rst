@@ -668,7 +668,7 @@ Monitoring Utilities
 ====================
 CDAP can be monitored using external systems such as `Nagios <https://www.nagios.org/>`__;
 a Nagios-style plugin `is available
-<https://github.com/caskdata/cdap-monitoring-tools/blob/develop/nagios/README.rst>`__ for
+<https://github.com/cdapio/cdap-ops-tools/blob/develop/nagios/README.rst>`__ for
 checking the status of CDAP applications, programs, and the CDAP instance itself.
 
 

@@ -45,7 +45,7 @@ Cask Data Application Platform UI Dependencies
    "body-parser","1.14.2","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/body-parser"
    "bootstrap","4.0.0-alpha.5","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://getbootstrap.com"
    "c3","0.4.10","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/masayuki0812/c3"
-   "cdap-avsc","4.1.12","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/caskdata/ui-schema-parser/develop/LICENSE"
+   "cdap-avsc","4.1.12","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/cdapio/ui-schema-parser/develop/LICENSE"
    "classnames","2.2.5","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/JedWatson/classnames/master/LICENSE"
    "compression","1.6.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/compression"
    "cookie-parser","1.4.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/cookie-parser"
