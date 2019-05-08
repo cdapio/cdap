@@ -193,6 +193,10 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   @include db-image(1);
 }
 
+.db-oracle-thin {
+  @include db-image(1);
+}
+
 .db-mssql {
   @include db-image(2);
 }
