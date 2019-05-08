@@ -87,6 +87,7 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -189,6 +190,7 @@ public class TestBase {
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
+  private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static MetadataStorage metadataStorage;
   private static MetadataAdmin metadataAdmin;
@@ -269,6 +271,8 @@ public class TestBase {
       }
     );
 
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataAdmin = injector.getInstance(MetadataAdmin.class);
