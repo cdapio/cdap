@@ -2130,7 +2130,7 @@ features:
     title: 'Summary (Max: 100 runs)'
 
   PipelineTriggers:
-    collapsedTabLabel: "Show inbound triggers ({count})"
+    collapsedTabLabel: "Inbound triggers ({count})"
     description: Description
     EnabledTriggers:
       buttonLabel: Disable Trigger
@@ -2143,7 +2143,7 @@ features:
       COMPLETED: Succeeds
       FAILED: Fails
       KILLED: Stops
-    expandedTabLabel: "Hide inbound triggers ({count})"
+    expandedTabLabel: "Inbound triggers ({count})"
     helperText: "\"{pipelineName}\" is triggered when this pipeline"
     namespace: Namespace
     pipelineName: Pipeline Name
@@ -2459,13 +2459,13 @@ features:
     notags: No tags found. Click to add a new business tag.
 
   TriggeredPipelines:
-    collapsedTabLabel: "Show outbound triggers ({count})"
+    collapsedTabLabel: "Outbound triggers ({count})"
     description: Description
     Events:
       COMPLETED: Succeeds
       KILLED: Stopped
       FAILED: Fails
-    expandedTabLabel: "Hide outbound triggers ({count})"
+    expandedTabLabel: "Outbound triggers ({count})"
     helperText: "This pipeline is triggered when \"{pipelineName}\""
     namespace: Namespace
     pipelineCount:
