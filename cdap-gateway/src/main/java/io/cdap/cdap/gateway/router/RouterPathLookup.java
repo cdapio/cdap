@@ -190,6 +190,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/artifact-internals/list/artifacts
       // /v3/namespaces/{namespace-id}/artifact-internals/artifact/{artifact-name}
       return DONT_ROUTE;
+    } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
+      // we don't want to expose endpoints for direct metadata mutation from CDAP master
+      // /v3/metadata-internals/{mutation-type}
+      return DONT_ROUTE;
     }
     return APP_FABRIC_HTTP;
   }
