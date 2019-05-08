@@ -66,4 +66,10 @@ public class ScopedNameOfKind extends ScopedName {
   public String toString() {
     return '(' + kind.name().toLowerCase() + ')' + super.toString();
   }
+
+  public static ScopedNameOfKind fromString(String s) {
+    MetadataKind kind = MetadataKind.valueOf(s.substring(s.indexOf("(") + 1, s.indexOf(")")).toUpperCase());
+    ScopedName scopedName = ScopedName.fromString(s.substring(s.indexOf(")") + 1));
+    return new ScopedNameOfKind(kind, scopedName);
+  }
 }

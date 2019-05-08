@@ -38,6 +38,8 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
@@ -1124,6 +1126,14 @@ public abstract class AppFabricTestBase {
 
   protected Map<String, String> getMetadataProperties(EntityId entityId) throws Exception {
     return metadataClient.getProperties(entityId.toMetadataEntity());
+  }
+
+  protected Map<String, String> getMetadataProperties(MetadataEntity entity, MetadataScope scope) throws Exception {
+    return metadataClient.getProperties(entity, scope);
+  }
+
+  protected Set<String> getMetadataTags(MetadataEntity entity, MetadataScope scope) throws Exception {
+    return metadataClient.getTags(entity, scope);
   }
 
   protected void createMetadataMutation(MetadataMutation.Create createMutation) {

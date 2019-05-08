@@ -21,7 +21,15 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.metadata.elastic.ScopedNameOfKindTypeAdapter;
+import io.cdap.cdap.metadata.elastic.ScopedNameTypeAdapter;
+import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataCodec;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -37,8 +45,12 @@ import javax.inject.Inject;
  */
 public class DefaultMetadataServiceClient implements MetadataServiceClient {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataServiceClient.class);
-  private static final Gson GSON = new GsonBuilder().create();
-
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .registerTypeAdapter(Metadata.class, new MetadataCodec())
+    .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
+    .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+    .create();
   private final RemoteClient remoteClient;
 
   @Inject
