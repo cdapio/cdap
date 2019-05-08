@@ -19,6 +19,7 @@ package io.cdap.cdap.app.services;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -51,7 +52,8 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   @Override
   public URL getServiceURL(String applicationId, String serviceId) {
-    String discoveryName = String.format("service.%s.%s.%s", namespaceId, applicationId, serviceId);
+    String discoveryName = String.format("%s.%s.%s.%s", ProgramType.SERVICE.getDiscoverableTypeName(), namespaceId,
+                                         applicationId, serviceId);
     return createURL(new RandomEndpointStrategy(() -> getDiscoveryServiceClient().discover(discoveryName))
                        .pick(1, TimeUnit.SECONDS), applicationId, serviceId);
   }

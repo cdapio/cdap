@@ -179,7 +179,9 @@ public class RouterPathLookupTest {
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals("service.testnamespace.PurchaseHistory.CatalogLookup", result.getServiceName());
+    Assert.assertEquals(String.format("%s.testnamespace.PurchaseHistory.CatalogLookup",
+                                      ProgramType.SERVICE.getDiscoverableTypeName()),
+                        result.getServiceName());
     Assert.assertNull(result.getVersion());
 
     servicePath = "///v3/namespaces/testnamespace//apps/PurchaseHistory-123//services/weird!service@@NAme///methods/" +
@@ -187,14 +189,18 @@ public class RouterPathLookupTest {
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals("service.testnamespace.PurchaseHistory-123.weird!service@@NAme", result.getServiceName());
+    Assert.assertEquals(String.format("%s.testnamespace.PurchaseHistory-123.weird!service@@NAme",
+                                      ProgramType.SERVICE.getDiscoverableTypeName()),
+                        result.getServiceName());
     Assert.assertNull(result.getVersion());
 
     servicePath = "v3/namespaces/testnamespace/apps/SomeApp_Name/services/CatalogLookup/methods/getHistory/itemID";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals("service.testnamespace.SomeApp_Name.CatalogLookup", result.getServiceName());
+    Assert.assertEquals(String.format("%s.testnamespace.SomeApp_Name.CatalogLookup",
+                                      ProgramType.SERVICE.getDiscoverableTypeName()),
+                        result.getServiceName());
     Assert.assertNull(result.getVersion());
 
     servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup//methods////";
