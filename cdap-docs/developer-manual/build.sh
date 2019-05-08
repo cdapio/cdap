@@ -46,7 +46,7 @@ function download_includes() {
   pipelines_download_includes ${1}
 
   echo "Downloading source files to be included from GitHub..."
-  local github_url="https://raw.githubusercontent.com/caskdata"
+  local github_url="https://raw.githubusercontent.com/cdapio"
   local includes_dir=${1}
   set_version
 
@@ -60,14 +60,14 @@ function download_includes() {
   fi
 
 # cdap-clients
-# https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.rst
+# https://raw.githubusercontent.com/cdapio/cdap-clients/develop/cdap-authentication-clients/java/README.rst
   local clients_url="${github_url}/cdap-clients/${clients_branch}"
 
   download_readme_file_and_test ${includes_dir} ${clients_url} 9bdc7d9ab874bfb6ec044964d3df804e cdap-authentication-clients/java
   download_readme_file_and_test ${includes_dir} ${clients_url} 6f937cbf71ed2312a4893cba27e6145f cdap-authentication-clients/python
 
 # cdap-ingest
-# https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
+# https://raw.githubusercontent.com/cdapio/cdap-ingest/develop/cdap-file-drop-zone/README.rst
   local ingest_url="${github_url}/cdap-ingest/${ingest_branch}"
 
   download_readme_file_and_test ${includes_dir} ${ingest_url} cf2d8cac45b4be267adbb0e8ecdc88a4 cdap-flume
