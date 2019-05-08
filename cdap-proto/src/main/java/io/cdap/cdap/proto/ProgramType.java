@@ -44,7 +44,6 @@ public enum ProgramType {
     .setCategoryName("workflows")
     .setPrettyName("Workflow")
     .setListable(true)
-    .setDiscoverable(true)
     .setSchedulableType(SchedulableProgramType.WORKFLOW)
     .setApiProgramType(io.cdap.cdap.api.app.ProgramType.WORKFLOW)
     .build()),
@@ -54,7 +53,7 @@ public enum ProgramType {
     .setCategoryName("services")
     .setPrettyName("Service")
     .setListable(true)
-    .setDiscoverable(true)
+    .setDiscoverable("svc")
     .setApiProgramType(io.cdap.cdap.api.app.ProgramType.SERVICE)
     .build()),
 
@@ -63,7 +62,7 @@ public enum ProgramType {
     .setCategoryName("spark")
     .setPrettyName("Spark")
     .setListable(true)
-    .setDiscoverable(true)
+    .setDiscoverable("spk")
     .setSchedulableType(SchedulableProgramType.SPARK)
     .setApiProgramType(io.cdap.cdap.api.app.ProgramType.SPARK)
     .build()),
@@ -108,11 +107,11 @@ public enum ProgramType {
     return parameters.isDiscoverable();
   }
 
-  public String getDiscoverablePrefix() {
+  public String getDiscoverableTypeName() {
     if (!isDiscoverable()) {
       throw new IllegalArgumentException("Program type " + name() + " is not discoverable");
     }
-    return name().toLowerCase() + ".";
+    return parameters.getDiscoverableTypeName();
   }
 
   public String getCategoryName() {
@@ -177,10 +176,10 @@ public enum ProgramType {
     private final boolean listable;
     private final String categoryName;
     private final SchedulableProgramType schedulableType;
-    private final boolean discoverable;
+    private final String discoverableTypeName;
     private io.cdap.cdap.api.app.ProgramType apiProgramType;
 
-    Parameters(String prettyName, Boolean listable, String categoryName, boolean discoverable,
+    Parameters(String prettyName, Boolean listable, String categoryName, String discoverableTypeName,
                @Nullable SchedulableProgramType schedulableType,
                @Nullable io.cdap.cdap.api.app.ProgramType apiProgramType) {
       if (prettyName == null) {
@@ -195,7 +194,7 @@ public enum ProgramType {
       this.prettyName = prettyName;
       this.listable = listable;
       this.categoryName = categoryName;
-      this.discoverable = discoverable;
+      this.discoverableTypeName = discoverableTypeName;
       this.schedulableType = schedulableType;
       this.apiProgramType = apiProgramType;
     }
@@ -218,7 +217,11 @@ public enum ProgramType {
     }
 
     boolean isDiscoverable() {
-      return discoverable;
+      return discoverableTypeName != null;
+    }
+
+    String getDiscoverableTypeName() {
+      return discoverableTypeName;
     }
 
     @Nullable
@@ -237,7 +240,7 @@ public enum ProgramType {
       private String prettyName;
       private Boolean listable;
       private String categoryName;
-      private boolean discoverable;
+      private String discoverableTypeName;
       private SchedulableProgramType schedulableType;
       private io.cdap.cdap.api.app.ProgramType apiProgramType;
 
@@ -261,8 +264,8 @@ public enum ProgramType {
         return this;
       }
 
-      Builder setDiscoverable(boolean discoverable) {
-        this.discoverable = discoverable;
+      Builder setDiscoverable(String discoverableTypeName) {
+        this.discoverableTypeName = discoverableTypeName;
         return this;
       }
 
@@ -272,7 +275,8 @@ public enum ProgramType {
       }
 
       Parameters build() {
-        return new Parameters(prettyName, listable, categoryName, discoverable, schedulableType, apiProgramType);
+        return new Parameters(prettyName, listable, categoryName, discoverableTypeName, schedulableType,
+                              apiProgramType);
       }
     }
   }
