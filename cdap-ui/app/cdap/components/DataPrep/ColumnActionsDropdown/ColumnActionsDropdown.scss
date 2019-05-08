@@ -46,6 +46,7 @@ $column-type-label-color: #b6babc;
     border-color: $normal-caret-outline-color;
     justify-content: center;
     display: flex;
+    border-width: 1px;
 
     &:hover {
       box-shadow: none;
@@ -55,9 +56,9 @@ $column-type-label-color: #b6babc;
     }
 
     &.expanded {
-      color: $dropdown-expanded-caret-color;
-      background-color: $dropdown-expanded-caret-bg-color;
       box-shadow: none;
+      background-color: $dropdown-expanded-caret-bg-color;
+      color: $dropdown-expanded-caret-color;
       border-color: $dropdown-expanded-caret-bg-color;
     }
   }

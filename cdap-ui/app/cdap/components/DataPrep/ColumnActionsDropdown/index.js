@@ -396,8 +396,14 @@ export default class ColumnActionsDropdown extends Component {
           target={`dataprep-action-${this.dropdownId}`}
           placement="top"
           modifiers={{
-            shift: { enabled: false },
-            flip: { enabled: false },
+            flip: {
+              enabled: false,
+              boundariesElement: document.querySelector('.dataprephome-wrapper'),
+            },
+            // FIXME: This offset is not being applied because the popover overlaps with its boundary.
+            offset: {
+              offset: '0 3',
+            },
           }}
         >
           Column transformations
