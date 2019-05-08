@@ -84,7 +84,7 @@ function download_includes() {
   local includes_wise="${includes}/tutorial-wise"
   local project_version=${PROJECT_SHORT_VERSION}
 
-  local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
+  local source1="https://raw.githubusercontent.com/cdapio/cdap-apps"
   if [ "x${GIT_BRANCH_CDAP_APPS}" != "x" ]; then
     local source2="${GIT_BRANCH_CDAP_APPS}"
   elif [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then

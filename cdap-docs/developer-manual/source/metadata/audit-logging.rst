@@ -80,7 +80,7 @@ When audit publishing is :ref:`enabled <audit-logging-configuring-audit-publishi
 
 The contents of the message are a JSON representation of
 the `AuditMessage
-<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/audit/AuditMessage.java>`__
+<https://github.com/cdapio/cdap/blob/develop/cdap-proto/src/main/java/io/cdap/cdap/proto/audit/AuditMessage.java>`__
 class.
 
 Here are some example JSON messages, pretty-printed:
@@ -179,5 +179,5 @@ Here are some example JSON messages, pretty-printed:
   }
 
 CDAP also provides an `adapter class 
-<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/codec/AuditMessageTypeAdapter.java>`__
+<https://github.com/cdapio/cdap/blob/develop/cdap-proto/src/main/java/io/cdap/cdap/proto/codec/AuditMessageTypeAdapter.java>`__
 to enable deserializing of the audit messages using the `GSON <https://github.com/google/gson>`__ library.

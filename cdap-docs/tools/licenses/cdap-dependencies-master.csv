@@ -43,7 +43,7 @@
 "@babel/polyfill","7.0.0-beta.53","npm","MIT License","http://opensource.org/licenses/MIT","https://babeljs.io/",""
 "babel-polyfill","6.26.0","npm","MIT License","http://opensource.org/licenses/MIT","https://babeljs.io/","https://raw.githubusercontent.com/babel/babel/master/LICENSE"
 "body-parser","1.14.2","npm","MIT License","http://opensource.org/licenses/MIT","https://github.com/expressjs/body-parser",""
-"cdap-avsc","4.1.12","npm","MIT License","http://opensource.org/licenses/MIT","https://github.com/caskdata/ui-schema-parser","https://raw.githubusercontent.com/caskdata/ui-schema-parser/develop/LICENSE"
+"cdap-avsc","4.1.12","npm","MIT License","http://opensource.org/licenses/MIT","https://github.com/cdapio/ui-schema-parser","https://raw.githubusercontent.com/cdapio/ui-schema-parser/develop/LICENSE"
 "chart.js","2.3.0","npm","MIT License","http://opensource.org/licenses/MIT","http://www.chartjs.org","https://raw.githubusercontent.com/chartjs/Chart.js/master/LICENSE.md"
 "classnames","2.2.5","npm","MIT License","http://opensource.org/licenses/MIT","https://github.com/JedWatson/classnames#readme","https://raw.githubusercontent.com/JedWatson/classnames/master/LICENSE"
 "clipboard","1.7.1","npm","MIT License","https://zenorocha.mit-license.org/","https://github.com/zenorocha/clipboard.js#readme",""

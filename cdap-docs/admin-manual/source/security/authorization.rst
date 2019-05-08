@@ -54,7 +54,7 @@ require additional properties to be configured. Please see the documentation on
 individual extensions for configuring properties specific to that extension:
 
 - :ref:`Integrations: Apache Sentry <apache-sentry>`
-- `Integrations: Apache Ranger <https://github.com/caskdata/cdap-security-extn/wiki/CDAP-Ranger-Extension>`_
+- `Integrations: Apache Ranger <https://github.com/cdapio/cdap-security-extn/wiki/CDAP-Ranger-Extension>`_
 
 :ref:`Security extension properties <appendix-cdap-default-security>`, which are specified
 in ``cdap-site.xml``, begin with the prefix ``security.authorization.extension.config``.
