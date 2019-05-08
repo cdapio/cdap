@@ -30,15 +30,20 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.data2.metadata.MetadataCompatibility;
+import io.cdap.cdap.metadata.elastic.ScopedNameOfKindTypeAdapter;
+import io.cdap.cdap.metadata.elastic.ScopedNameTypeAdapter;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataCodec;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MutationOptions;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import io.cdap.cdap.spi.metadata.Sorting;
@@ -83,6 +88,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .registerTypeAdapter(Metadata.class, new MetadataCodec())
+    .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
+    .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
@@ -224,33 +231,37 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/**/metadata-internals/create")
-  public void create(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
-    MetadataMutation.Create createMutation = (MetadataMutation.Create) readMutation(request);
+  @Path("/metadata-internals/create")
+  public void create(FullHttpRequest request, HttpResponder responder) throws IOException {
+    MetadataMutation.Create createMutation =
+      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Create.class);
     metadataAdmin.applyMutation(createMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, String.format("Create Metadata mutation applied successfully."));
   }
 
   @POST
-  @Path("/**/metadata-internals/update")
-  public void update(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
-    MetadataMutation.Update updateMutation = (MetadataMutation.Update) readMutation(request);
+  @Path("/metadata-internals/update")
+  public void update(FullHttpRequest request, HttpResponder responder) throws IOException {
+    MetadataMutation.Update updateMutation =
+      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Update.class);
     metadataAdmin.applyMutation(updateMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, String.format("Update Metadata mutation applied successfully."));
   }
 
   @DELETE
-  @Path("/**/metadata-internals/drop")
-  public void drop(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
-    MetadataMutation.Drop dropMutation = (MetadataMutation.Drop) readMutation(request);
+  @Path("/metadata-internals/drop")
+  public void drop(FullHttpRequest request, HttpResponder responder) throws IOException {
+    MetadataMutation.Drop dropMutation =
+      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Drop.class);
     metadataAdmin.applyMutation(dropMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, String.format(" Drop Metadata mutation applied successfully."));
   }
 
   @DELETE
-  @Path("/**/metadata-internals/remove")
-  public void remove(FullHttpRequest request, HttpResponder responder) throws IOException, BadRequestException {
-    MetadataMutation.Remove removeMutation = (MetadataMutation.Remove) readMutation(request);
+  @Path("/metadata-internals/remove")
+  public void remove(FullHttpRequest request, HttpResponder responder) throws IOException {
+    MetadataMutation.Remove removeMutation =
+      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Remove.class);
     metadataAdmin.applyMutation(removeMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, String.format("Remove Metadata mutation applied successfully."));
   }
@@ -482,24 +493,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
     if (toReturn == null) {
       throw new BadRequestException("Null tags were read from the request.");
-    }
-    return toReturn;
-  }
-
-  private MetadataMutation readMutation(FullHttpRequest request) throws BadRequestException {
-    ByteBuf content = request.content();
-    if (!content.isReadable()) {
-      throw new BadRequestException("Unable to read metadata mutation from the request.");
-    }
-    MetadataMutation toReturn;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
-      toReturn = GSON.fromJson(reader, MetadataMutation.class);
-    } catch (IOException e) {
-      throw new BadRequestException("Unable to read metadata mutation from the request.");
-    }
-
-    if (toReturn == null) {
-      throw new BadRequestException("Null metadata mutation was read from the request.");
     }
     return toReturn;
   }
