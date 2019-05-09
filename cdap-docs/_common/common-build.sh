@@ -438,7 +438,7 @@ function set_and_display_version() {
 
 function get_cdap_pipelines_version() {
   # $1 Branch of Hydrator to use
-  CDAP_PIPELINES_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
+  CDAP_PIPELINES_VERSION=$(curl --silent "https://raw.githubusercontent.com/cdapio/hydrator-plugins/${1}/pom.xml" | grep "<version>")
   CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION#*<version>}
   CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION%%</version>*}
   export CDAP_PIPELINES_VERSION
@@ -446,7 +446,7 @@ function get_cdap_pipelines_version() {
 
 function get_cdap_metadata_management_version() {
   # $1 Branch of Tracker to use
-  CDAP_METADATA_MANAGEMENT_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
+  CDAP_METADATA_MANAGEMENT_VERSION=$(curl --silent "https://raw.githubusercontent.com/cdapio/cask-tracker/${1}/pom.xml" | grep "<version>")
   CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION#*<version>}
   CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION%%</version>*}
   if [[ -z ${CDAP_METADATA_MANAGEMENT_VERSION} ]]; then
