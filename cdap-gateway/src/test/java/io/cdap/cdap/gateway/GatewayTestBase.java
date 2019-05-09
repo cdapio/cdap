@@ -43,6 +43,7 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -114,6 +115,7 @@ public abstract class GatewayTestBase {
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
+  private static MetadataService metadataService;
   private static MetadataStorage metadataStorage;
   protected static NamespaceAdmin namespaceAdmin;
 
@@ -182,6 +184,8 @@ public abstract class GatewayTestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 
@@ -221,6 +225,7 @@ public abstract class GatewayTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+    metadataService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }

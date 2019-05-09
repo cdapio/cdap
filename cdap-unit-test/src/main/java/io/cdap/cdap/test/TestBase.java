@@ -504,6 +504,7 @@ public class TestBase {
       ((Service) messagingService).stopAndWait();
     }
     provisioningService.stopAndWait();
+    metadataService.stopAndWait();
     metadataSubscriberService.stopAndWait();
     Closeables.closeQuietly(metadataStorage);
   }
