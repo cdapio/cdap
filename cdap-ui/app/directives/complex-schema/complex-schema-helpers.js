@@ -21,6 +21,7 @@ angular.module(PKG.name+'.commons')
     'bytes',
     'date',
     'double',
+    'decimal',
     'float',
     'int',
     'long',
@@ -34,6 +35,7 @@ angular.module(PKG.name+'.commons')
     'record'
   ],
   'simpleTypes': [
+    'decimal',
     'boolean',
     'bytes',
     'date',
