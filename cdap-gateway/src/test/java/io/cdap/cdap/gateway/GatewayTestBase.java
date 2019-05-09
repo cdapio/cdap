@@ -184,10 +184,10 @@ public abstract class GatewayTestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
-    metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
@@ -224,12 +224,12 @@ public abstract class GatewayTestBase {
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
-    txService.stopAndWait();
     metadataService.stopAndWait();
+    Closeables.closeQuietly(metadataStorage);
+    txService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
-    Closeables.closeQuietly(metadataStorage);
     conf.clear();
   }
 

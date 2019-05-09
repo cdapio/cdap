@@ -67,7 +67,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to create metadata, i.e. see response for details: %s", response);
+      LOG.trace("Failed to create metadata for entity %s: %s", createMutation.getEntity(), response);
     }
   }
 
@@ -78,7 +78,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to drop metadata, i.e. see response for details: %s", response);
+      LOG.trace("Failed to drop metadata for entity %s: %s", dropMutation.getEntity(), response);
     }
   }
 
@@ -89,7 +89,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to update metadata, i.e. see response for details: %s", response);
+      LOG.trace("Failed to update metadata for entity %s: %s", updateMutation.getEntity(), response);
     }
   }
 
@@ -100,7 +100,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to remove metadata, i.e. see response for details: %s", response);
+      LOG.trace("Failed to remove metadata for entity %s: %s", removeMutation.getEntity(), response);
     }
   }
 

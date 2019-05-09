@@ -147,7 +147,7 @@ public interface MetadataAdmin {
   void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException;
 
   /**
-   * Applies a raw metadata mutation.
+   * Applies a metadata mutation directly.
    *
    * @param mutation the MetadataMutation to apply
    */

@@ -271,13 +271,6 @@ public class TestBase {
       }
     );
 
-    metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
-    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataStorage = injector.getInstance(MetadataStorage.class);
-    metadataAdmin = injector.getInstance(MetadataAdmin.class);
-    metadataStorage.createIndex();
-
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -285,6 +278,14 @@ public class TestBase {
 
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
+
+    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    metadataStorage = injector.getInstance(MetadataStorage.class);
+    metadataAdmin = injector.getInstance(MetadataAdmin.class);
+    metadataStorage.createIndex();
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
+
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
@@ -498,15 +499,15 @@ public class TestBase {
     }
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
+    metadataService.stopAndWait();
+    metadataSubscriberService.stopAndWait();
+    Closeables.closeQuietly(metadataStorage);
     txService.stopAndWait();
 
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
     provisioningService.stopAndWait();
-    metadataService.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    Closeables.closeQuietly(metadataStorage);
   }
 
   protected MetricsManager getMetricsManager() {

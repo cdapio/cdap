@@ -570,7 +570,7 @@ public class DatasetInstanceService {
 
     // Remove metadata for the dataset
     LOG.trace("Removing metadata for dataset {}", instance);
-    metadataServiceClient.remove(new MetadataMutation.Remove(instance.toMetadataEntity()));
+    metadataServiceClient.drop(new MetadataMutation.Drop(instance.toMetadataEntity()));
     LOG.trace("Removed metadata for dataset {}", instance);
 
     publishAudit(instance, AuditType.DELETE);

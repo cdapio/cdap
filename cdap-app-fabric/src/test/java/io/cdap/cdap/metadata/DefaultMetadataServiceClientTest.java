@@ -22,7 +22,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.spi.metadata.Metadata;
-import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataDirective;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
@@ -38,14 +37,12 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
   // - keep description if new metadata does not contain it
   // - preserve creation-time if it exists in current metadata
   private static final Map<ScopedNameOfKind, MetadataDirective> CREATE_DIRECTIVES = ImmutableMap.of(
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.DESCRIPTION_KEY),
+    new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, "c"),
     MetadataDirective.KEEP,
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
+    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.USER, "z"),
     MetadataDirective.PRESERVE);
 
-  private final MetadataEntity testEntity = MetadataEntity.builder().append("test", "value").build();
-
-  private final Metadata toCreate = new Metadata(
+  private final Metadata testMetadata = new Metadata(
     ImmutableSet.of(new ScopedName(MetadataScope.SYSTEM, "a"),
                     new ScopedName(MetadataScope.SYSTEM, "b"),
                     new ScopedName(MetadataScope.USER, "c")),
@@ -54,61 +51,89 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
                     new ScopedName(MetadataScope.USER, "z"), "4"));
   @Test
   public void testCreate() throws Exception {
-    createMetadataMutation(new MetadataMutation.Create(testEntity, toCreate, CREATE_DIRECTIVES));
+    final MetadataEntity createEntity = MetadataEntity.builder().append("create", "test").build();
+    createMetadataMutation(new MetadataMutation.Create(createEntity, testMetadata, CREATE_DIRECTIVES));
 
-    Assert.assertEquals(toCreate.getProperties(MetadataScope.SYSTEM),
-                        getMetadataProperties(testEntity, MetadataScope.SYSTEM));
-    Assert.assertEquals(toCreate.getTags(MetadataScope.SYSTEM),
-                        getMetadataTags(testEntity, MetadataScope.SYSTEM));
-    Assert.assertEquals(toCreate.getProperties(MetadataScope.USER),
-                        getMetadataProperties(testEntity, MetadataScope.USER));
-    Assert.assertEquals(toCreate.getTags(MetadataScope.USER),
-                        getMetadataTags(testEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(createEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(createEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.USER),
+                        getMetadataProperties(createEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
+                        getMetadataTags(createEntity, MetadataScope.USER));
+
+    // confirm that KEEP/PRESERVE work by trying to re-create the entity
+    final Metadata recreate =
+      new Metadata(Collections.EMPTY_SET,
+                   ImmutableMap.of(new ScopedName(MetadataScope.SYSTEM, "x"), "10",
+                                   new ScopedName(MetadataScope.SYSTEM, "y"), "20",
+                                   new ScopedName(MetadataScope.USER, "z"), "40"));
+
+    createMetadataMutation(new MetadataMutation.Create(createEntity, recreate, CREATE_DIRECTIVES));
+    Assert.assertEquals(recreate.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(createEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(recreate.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(createEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.USER),
+                        getMetadataProperties(createEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
+                        getMetadataTags(createEntity, MetadataScope.USER));
   }
 
   @Test
   public void testRemove() throws Exception {
-    removeMetadataMutation(new MetadataMutation.Remove(testEntity, MetadataScope.USER));
+    final MetadataEntity removeEntity = MetadataEntity.builder().append("remove", "test").build();
+    createMetadataMutation(new MetadataMutation.Create(removeEntity, testMetadata, CREATE_DIRECTIVES));
 
-    Assert.assertEquals(toCreate.getProperties(MetadataScope.SYSTEM),
-                        getMetadataProperties(testEntity, MetadataScope.SYSTEM));
-    Assert.assertEquals(toCreate.getTags(MetadataScope.SYSTEM),
-                        getMetadataTags(testEntity, MetadataScope.SYSTEM));
+    removeMetadataMutation(new MetadataMutation.Remove(removeEntity));
+
     Assert.assertEquals(Collections.EMPTY_MAP,
-                        getMetadataProperties(testEntity, MetadataScope.USER));
+                        getMetadataProperties(removeEntity, MetadataScope.SYSTEM));
     Assert.assertEquals(Collections.EMPTY_SET,
-                        getMetadataTags(testEntity, MetadataScope.USER));
+                        getMetadataTags(removeEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(Collections.EMPTY_MAP,
+                        getMetadataProperties(removeEntity, MetadataScope.USER));
+    Assert.assertEquals(Collections.EMPTY_SET,
+                        getMetadataTags(removeEntity, MetadataScope.USER));
   }
 
   @Test
   public void testUpdate() throws Exception {
-    Metadata toUpdate = new Metadata(ImmutableSet.of(new ScopedName(MetadataScope.USER, "d")),
-                                     ImmutableMap.of(new ScopedName(MetadataScope.USER, "x"), "3",
-                                                     new ScopedName(MetadataScope.USER, "z"), "4"));
+    final MetadataEntity updateEntity = MetadataEntity.builder().append("update", "test").build();
+    createMetadataMutation(new MetadataMutation.Create(updateEntity, testMetadata, CREATE_DIRECTIVES));
 
-    updateMetadataMutation(new MetadataMutation.Update(testEntity, toUpdate));
+    Metadata update = new Metadata(Collections.EMPTY_SET,
+                                   ImmutableMap.of(new ScopedName(MetadataScope.SYSTEM, "x"), "10",
+                                                   new ScopedName(MetadataScope.SYSTEM, "y"), "11",
+                                                   new ScopedName(MetadataScope.USER, "z"), "4"));
 
-    Assert.assertEquals(toCreate.getProperties(MetadataScope.SYSTEM),
-                        getMetadataProperties(testEntity, MetadataScope.SYSTEM));
-    Assert.assertEquals(toCreate.getTags(MetadataScope.SYSTEM),
-                        getMetadataTags(testEntity, MetadataScope.SYSTEM));
-    Assert.assertEquals(toUpdate.getProperties(MetadataScope.USER),
-                        getMetadataProperties(testEntity, MetadataScope.USER));
-    Assert.assertEquals(toUpdate.getTags(MetadataScope.USER),
-                        getMetadataTags(testEntity, MetadataScope.USER));
+    updateMetadataMutation(new MetadataMutation.Update(updateEntity, update));
+
+    Assert.assertEquals(update.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(updateEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(updateEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(update.getProperties(MetadataScope.USER),
+                        getMetadataProperties(updateEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
+                        getMetadataTags(updateEntity, MetadataScope.USER));
   }
 
   @Test
   public void testDrop() throws Exception {
-    dropMetadataMutation(new MetadataMutation.Drop(testEntity));
+    final MetadataEntity dropEntity = MetadataEntity.builder().append("drop", "test").build();
+    createMetadataMutation(new MetadataMutation.Create(dropEntity, testMetadata, CREATE_DIRECTIVES));
+
+    dropMetadataMutation(new MetadataMutation.Drop(dropEntity));
 
     Assert.assertEquals(Collections.EMPTY_MAP,
-                        getMetadataProperties(testEntity, MetadataScope.SYSTEM));
+                        getMetadataProperties(dropEntity, MetadataScope.SYSTEM));
     Assert.assertEquals(Collections.EMPTY_SET,
-                        getMetadataTags(testEntity, MetadataScope.SYSTEM));
+                        getMetadataTags(dropEntity, MetadataScope.SYSTEM));
     Assert.assertEquals(Collections.EMPTY_MAP,
-                        getMetadataProperties(testEntity, MetadataScope.USER));
+                        getMetadataProperties(dropEntity, MetadataScope.USER));
     Assert.assertEquals(Collections.EMPTY_SET,
-                        getMetadataTags(testEntity, MetadataScope.USER));
+                        getMetadataTags(dropEntity, MetadataScope.USER));
   }
 }

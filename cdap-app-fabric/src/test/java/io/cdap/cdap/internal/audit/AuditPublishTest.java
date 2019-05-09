@@ -162,7 +162,7 @@ public class AuditPublishTest {
         actualAuditEntities.put(message.getType(), entityId);
       }
       return actualAuditEntities;
-    }, 15, TimeUnit.SECONDS);
+    }, 5, TimeUnit.SECONDS);
   }
 
   private List<AuditMessage> fetchAuditMessages() throws TopicNotFoundException, IOException {

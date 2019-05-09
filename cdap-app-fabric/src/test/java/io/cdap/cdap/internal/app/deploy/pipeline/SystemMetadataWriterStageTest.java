@@ -29,7 +29,6 @@ import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.test.AppJarHelper;
-import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
@@ -54,7 +53,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link SystemMetadataWriterStage}.
@@ -94,20 +92,16 @@ public class SystemMetadataWriterStageTest {
     systemMetadataWriterStage.process(stageContext);
     systemMetadataWriterStage.process(appWithPrograms);
 
-    // verify that the workflow is not tagged with the fork node name. First wait for tags to show up
-    Tasks.waitFor(false, () -> metadataStorage.read(new Read(appId.workflow(workflowName).toMetadataEntity(),
-                                                             MetadataScope.SYSTEM, MetadataKind.TAG)).isEmpty(),
-                  5, TimeUnit.SECONDS);
+    Assert.assertEquals(false, metadataStorage.read(new Read(appId.workflow(workflowName).toMetadataEntity(),
+                                                             MetadataScope.SYSTEM, MetadataKind.TAG)).isEmpty());
     Set<String> workflowSystemTags = metadataStorage
       .read(new Read(appId.workflow(workflowName).toMetadataEntity())).getTags(MetadataScope.SYSTEM);
     Sets.SetView<String> intersection = Sets.intersection(workflowSystemTags, getWorkflowForkNodes(workflowSpec));
     Assert.assertTrue("Workflows should not be tagged with fork node names, but found the following fork nodes " +
                         "in the workflow's system tags: " + intersection, intersection.isEmpty());
 
-    // verify that metadata was added for the workflow's schedule. First wait for the metadata to show up
-    Tasks.waitFor(false, () -> metadataStorage.read(new Read(appId.toMetadataEntity(),
-                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty(),
-                  5, TimeUnit.SECONDS);
+    Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
+                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
     Map<String, String> metadataProperties = metadataStorage
       .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
     Assert.assertEquals(WorkflowAppWithFork.SCHED_NAME + ":testDescription",
