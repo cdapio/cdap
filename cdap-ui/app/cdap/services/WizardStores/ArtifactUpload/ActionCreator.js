@@ -19,6 +19,7 @@ import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import isNil from 'lodash/isNil';
+import { Observable } from 'rxjs/Observable';
 
 // FIXME: Extract it out???
 const uploadArtifact = (includeParents = true) => {
@@ -35,8 +36,11 @@ const uploadArtifact = (includeParents = true) => {
     // core-plugins-3.4.0-SNAPSHOT.jar
     // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning up to version beginning)
     let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
-    let version = regExpRule.exec(nameWithVersion)[0];
-    let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1);
+    let version = regExpRule.exec(nameWithVersion);
+    if (version && Array.isArray(version)) {
+      version = version[0];
+    }
+    let name = version ? nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1) : null;
     return { version, name };
   };
 
@@ -45,6 +49,9 @@ const uploadArtifact = (includeParents = true) => {
     filename = state.upload.file.name.split('.jar')[0];
   }
   let { name, version } = getArtifactNameAndVersion(filename);
+  if (!name || !version) {
+    return Observable.throw('Invalid driver JAR file name. The driver JAR file name must conform to the format <name>-<version>.jar (eg: mysql-connector-java-5.1.39-bin.jar)');
+  }
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = `/namespaces/${namespace}/artifacts/${name}`;
