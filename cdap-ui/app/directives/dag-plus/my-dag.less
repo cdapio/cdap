@@ -297,6 +297,7 @@ my-dag-plus {
           display: grid;
           overflow: hidden;
           grid-template-columns: 25px minmax(auto, @node-box-width-with-errors);
+          align-items: flex-start;
 
           &.node-no-errors {
             grid-template-columns: 25px minmax(auto, @node-box-width-without-errors);
@@ -317,8 +318,8 @@ my-dag-plus {
 
           .node-metadata {
             display: inline-block;
-            transform: translateY(-5px);
             margin-left: 8px;
+            line-height: 1.2;
 
             .node-name,
             .node-version {
@@ -330,6 +331,7 @@ my-dag-plus {
             .node-name {
               font-size: 14px;
               font-weight: bold;
+              margin-bottom: 5px;
             }
 
             .node-version {
