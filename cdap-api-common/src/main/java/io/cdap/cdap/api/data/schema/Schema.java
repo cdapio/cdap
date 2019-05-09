@@ -46,6 +46,8 @@ import javax.annotation.Nullable;
 public final class Schema implements Serializable {
   private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
   private static final long serialVersionUID = -1891891892562027345L;
+  private int precision;
+  private int scale;
 
   /**
    * Types known to Schema.
@@ -90,6 +92,7 @@ public final class Schema implements Serializable {
    * Logical type TIMESTAMP_MICROS relies on LONG as underlying primitive type
    * Logical type TIME_MILLIS relies on INT as underlying primitive type
    * Logical type TIME_MICROS relies on LONG as underlying primitive type
+   * Logical type DECIMAL relies on BYTES as underlying primitive type
    *
    * For example, the json schema for logicaltype date will be as below:
    * {
@@ -97,13 +100,28 @@ public final class Schema implements Serializable {
    *   "logicalType" : "date"
    * }
    *
+   * Example schema for logicaltype decimal will be as below:
+   * {
+   *   "type" : "bytes",
+   *   "logicalType" : "decimal",
+   *   "precision" : precision,
+   *   "scale" : scale
+   * }
+   * where precision is an int representing maximum number of unscaled digits in a decimal and
+   * positive scale is an int representing number of digits to the right of decimal number whereas
+   * negative scale is an int representing number of zeros appended to decimal number.
+   *
+   * For example,
+   * An unscaled value of 102 and scale 1 represents the number 10.2 with precision 3.
+   * An unscaled value of 111 and scale -1 represents the number 1110 with precision 3.
    */
   public enum LogicalType {
     DATE(Type.INT, "date"),
     TIMESTAMP_MILLIS(Type.LONG, "timestamp-millis"),
     TIMESTAMP_MICROS(Type.LONG, "timestamp-micros"),
     TIME_MILLIS(Type.INT, "time-millis"),
-    TIME_MICROS(Type.LONG, "time-micros");
+    TIME_MICROS(Type.LONG, "time-micros"),
+    DECIMAL(Type.BYTES, "decimal");
 
     private final Type type;
     private final String token;
@@ -273,7 +291,7 @@ public final class Schema implements Serializable {
     if (!type.isSimpleType()) {
       throw new IllegalArgumentException("Type " + type + " is not a simple type.");
     }
-    return new Schema(type, null, null, null, null, null, null, null, null);
+    return new Schema(type, null, null, null, null, null, null, null, null, 0, 0);
   }
 
   /**
@@ -283,7 +301,26 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} with the given logical type.
    */
   public static Schema of(LogicalType logicalType) {
-    return new Schema(logicalType.type, logicalType, null, null, null, null, null, null, null);
+    return new Schema(logicalType.type, logicalType, null, null, null, null, null, null, null, 0, 0);
+  }
+
+  /**
+   * Creates a {@link Schema} for Decimal logical type with provided precision.
+   * @param precision positive precision for decimal number
+   * @return A {@link Schema} with the decimal logical type
+   */
+  public static Schema decimalOf(int precision) {
+    return decimalOf(precision, 0);
+  }
+
+  /**
+   * Creates a {@link Schema} for Decimal logical type with provided precision and scale.
+   * @param precision positive precision for decimal number
+   * @param scale scale for the decimal number
+   * @return A {@link Schema} with the decimal logical type
+   */
+  public static Schema decimalOf(int precision, int scale) {
+    return new Schema(Type.BYTES, LogicalType.DECIMAL, null, null, null, null, null, null, null, precision, scale);
   }
 
   /**
@@ -330,7 +367,7 @@ public final class Schema implements Serializable {
     if (uniqueValues.isEmpty()) {
       throw new IllegalArgumentException("No enum value provided.");
     }
-    return new Schema(Type.ENUM, null, uniqueValues, null, null, null, null, null, null);
+    return new Schema(Type.ENUM, null, uniqueValues, null, null, null, null, null, null, 0, 0);
   }
 
   /**
@@ -355,7 +392,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of {@link Type#ARRAY ARRAY} type.
    */
   public static Schema arrayOf(Schema componentSchema) {
-    return new Schema(Type.ARRAY, null, null, componentSchema, null, null, null, null, null);
+    return new Schema(Type.ARRAY, null, null, componentSchema, null, null, null, null, null, 0, 0);
   }
 
   /**
@@ -365,7 +402,7 @@ public final class Schema implements Serializable {
    * @return A {@link Schema} of {@link Type#MAP MAP} type.
    */
   public static Schema mapOf(Schema keySchema, Schema valueSchema) {
-    return new Schema(Type.MAP, null, null, null, keySchema, valueSchema, null, null, null);
+    return new Schema(Type.MAP, null, null, null, keySchema, valueSchema, null, null, null, 0, 0);
   }
 
   /**
@@ -380,7 +417,7 @@ public final class Schema implements Serializable {
     if (name == null) {
       throw new IllegalArgumentException("Record name cannot be null.");
     }
-    return new Schema(Type.RECORD, null, null, null, null, null, name, null, null);
+    return new Schema(Type.RECORD, null, null, null, null, null, name, null, null, 0, 0);
   }
 
   /**
@@ -414,7 +451,7 @@ public final class Schema implements Serializable {
     if (fieldMap.isEmpty()) {
       throw new IllegalArgumentException("No record field provided for " + name);
     }
-    return new Schema(Type.RECORD, null, null, null, null, null, name, fieldMap, null);
+    return new Schema(Type.RECORD, null, null, null, null, null, name, fieldMap, null, 0, 0);
   }
 
   /**
@@ -458,6 +495,7 @@ public final class Schema implements Serializable {
     if (schemaList.isEmpty()) {
       throw new IllegalArgumentException("No union schema provided.");
     }
+
     if (mapSchemas.size() > 1) {
       throw new IllegalArgumentException(String.format(
         "A union is not allowed to contain more than one map, but it contains %d schemas: %s",
@@ -468,7 +506,7 @@ public final class Schema implements Serializable {
         "A union is not allowed to contain more than one array, but it contains %d schemas: %s",
         arraySchemas.size(), arraySchemas));
     }
-    return new Schema(Type.UNION, null, null, null, null, null, null, null, schemaList);
+    return new Schema(Type.UNION, null, null, null, null, null, null, null, schemaList, 0, 0);
   }
 
   private final Type type;
@@ -503,7 +541,12 @@ public final class Schema implements Serializable {
                  @Nullable Schema componentSchema,                                    // Not null for array type
                  @Nullable Schema keySchema, @Nullable Schema valueSchema,            // Not null for map type
                  @Nullable String recordName, @Nullable Map<String, Field> fieldMap,  // Not null for record type
-                 @Nullable List<Schema> unionSchemas) {                               // Not null for union type
+                 @Nullable List<Schema> unionSchemas,                                 // Not null for union type
+                 int precision, int scale) {
+    if (logicalType == LogicalType.DECIMAL && precision <= 0) {
+      throw new IllegalArgumentException("Schema for logical type decimal must be created using decimalOf() method.");
+    }
+
     this.type = type;
     this.logicalType = logicalType;
     Map.Entry<Map<String, Integer>, Map<Integer, String>> enumValuesIndexes = createIndex(enumValues);
@@ -517,6 +560,8 @@ public final class Schema implements Serializable {
     this.fieldMap = fieldMap == null ? null : copyFields(fieldMap);
     this.fields = this.fieldMap == null ? null : Collections.unmodifiableList(new ArrayList<>(this.fieldMap.values()));
     this.unionSchemas = unionSchemas == null ? null : new ArrayList<>(unionSchemas);
+    this.precision = precision;
+    this.scale = scale;
 
     // Resolve name only records. Only need this step for RECORD or UNION type schemas
     // For array and map schema types, they should already get resolved when the component type is being constructed.
@@ -672,6 +717,20 @@ public final class Schema implements Serializable {
   @Nullable
   public Schema getUnionSchema(int idx) {
     return (unionSchemas == null || idx < 0 || unionSchemas.size() <= idx) ? null : unionSchemas.get(idx);
+  }
+
+  /**
+   * Returns precision of decimal schema.
+   */
+  public int getPrecision() {
+    return precision;
+  }
+
+  /**
+   * Returns scale of decimal schema.
+   */
+  public int getScale() {
+    return scale;
   }
 
   /**

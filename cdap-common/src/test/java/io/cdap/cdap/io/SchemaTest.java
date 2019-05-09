@@ -587,6 +587,11 @@ public class SchemaTest {
     Assert.assertEquals(timestampMicros, timestampMicros);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidDecimalSchema() {
+    Schema.of(Schema.LogicalType.DECIMAL);
+  }
+
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
     return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
   }
