@@ -86,8 +86,29 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
     final MetadataEntity removeEntity = MetadataEntity.builder().append("remove", "test").build();
     createMetadataMutation(new MetadataMutation.Create(removeEntity, testMetadata, CREATE_DIRECTIVES));
 
-    removeMetadataMutation(new MetadataMutation.Remove(removeEntity));
+    // confirm that the create was successful
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(removeEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(removeEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.USER),
+                        getMetadataProperties(removeEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
+                        getMetadataTags(removeEntity, MetadataScope.USER));
 
+    // Remove only USER metadata
+    removeMetadataMutation(new MetadataMutation.Remove(removeEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(removeEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(removeEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(Collections.EMPTY_MAP,
+                        getMetadataProperties(removeEntity, MetadataScope.USER));
+    Assert.assertEquals(Collections.EMPTY_SET,
+                        getMetadataTags(removeEntity, MetadataScope.USER));
+
+    // Remove all metadata
+    removeMetadataMutation(new MetadataMutation.Remove(removeEntity));
     Assert.assertEquals(Collections.EMPTY_MAP,
                         getMetadataProperties(removeEntity, MetadataScope.SYSTEM));
     Assert.assertEquals(Collections.EMPTY_SET,
@@ -102,6 +123,16 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
   public void testUpdate() throws Exception {
     final MetadataEntity updateEntity = MetadataEntity.builder().append("update", "test").build();
     createMetadataMutation(new MetadataMutation.Create(updateEntity, testMetadata, CREATE_DIRECTIVES));
+
+    // confirm that the create was successful
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(updateEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(updateEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.USER),
+                        getMetadataProperties(updateEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
+                        getMetadataTags(updateEntity, MetadataScope.USER));
 
     Metadata update = new Metadata(Collections.EMPTY_SET,
                                    ImmutableMap.of(new ScopedName(MetadataScope.SYSTEM, "x"), "10",
@@ -124,6 +155,16 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
   public void testDrop() throws Exception {
     final MetadataEntity dropEntity = MetadataEntity.builder().append("drop", "test").build();
     createMetadataMutation(new MetadataMutation.Create(dropEntity, testMetadata, CREATE_DIRECTIVES));
+
+    // confirm that the create was successful
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.SYSTEM),
+                        getMetadataProperties(dropEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.SYSTEM),
+                        getMetadataTags(dropEntity, MetadataScope.SYSTEM));
+    Assert.assertEquals(testMetadata.getProperties(MetadataScope.USER),
+                        getMetadataProperties(dropEntity, MetadataScope.USER));
+    Assert.assertEquals(testMetadata.getTags(MetadataScope.USER),
+                        getMetadataTags(dropEntity, MetadataScope.USER));
 
     dropMetadataMutation(new MetadataMutation.Drop(dropEntity));
 
