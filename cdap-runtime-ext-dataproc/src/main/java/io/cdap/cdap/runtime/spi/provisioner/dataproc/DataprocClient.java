@@ -146,6 +146,8 @@ public class DataprocClient implements AutoCloseable {
         // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
         metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
       }
+      // override any os-login that may be set on the project-level metadata
+      metadata.put("enable-oslogin", "false");
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .setNetworkUri(conf.getNetwork())
