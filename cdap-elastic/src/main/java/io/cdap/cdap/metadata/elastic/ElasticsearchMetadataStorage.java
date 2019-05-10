@@ -47,6 +47,7 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
@@ -173,7 +174,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private final RestHighLevelClient client;
   private final String indexName;
   private final String scrollTimeout;
-  private final WriteRequest.RefreshPolicy refreshPolicy;
 
   private volatile boolean created = false;
   private int maxWindowSize = Config.DEFAULT_MAX_RESULT_WINDOW;
@@ -186,8 +186,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     this.cConf = cConf;
     indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
     scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
-    refreshPolicy = cConf.getBoolean(Config.CONF_ELASTIC_WAIT_FOR_MUTATIONS, Config.DEFAULT_WAIT_FOR_MUTATIONS)
-      ? WriteRequest.RefreshPolicy.WAIT_UNTIL : WriteRequest.RefreshPolicy.IMMEDIATE;
     String elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
     int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
                                   Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
@@ -343,7 +341,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public MetadataChange apply(MetadataMutation mutation) throws IOException {
+  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
     MetadataEntity entity = mutation.getEntity();
     try {
       // repeatedly try to read current metadata, apply the mutation and reindex, until there is no conflict
@@ -351,7 +349,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         () -> {
           VersionedMetadata before = readFromIndex(entity);
           RequestAndChange intermediary = applyMutation(before, mutation);
-          executeMutation(mutation.getEntity(), intermediary.getRequest());
+          executeMutation(mutation.getEntity(), intermediary.getRequest(), options);
           return intermediary.getChange();
         },
         retryStrategyOnConflict,
@@ -362,12 +360,13 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException {
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
+                                    MutationOptions options) throws IOException {
     if (mutations.isEmpty()) {
       return Collections.emptyList();
     }
     if (mutations.size() == 1) {
-      return Collections.singletonList(apply(mutations.get(0)));
+      return Collections.singletonList(apply(mutations.get(0), options));
     }
     // first detect whether there are duplicate entity ids. If so, execute in sequence
     Set<MetadataEntity> entities = new HashSet<>();
@@ -384,7 +383,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       // if there are multiple mutations for the same entity, execute all in sequence
       List<MetadataChange> changes = new ArrayList<>(mutations.size());
       for (MetadataMutation mutation : mutations) {
-        changes.add(apply(mutation));
+        changes.add(apply(mutation, options));
       }
       return changes;
     }
@@ -394,7 +393,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     LinkedHashMap<MetadataEntity, MetadataChange> changes = new LinkedHashMap<>(mutations.size());
     try {
       // repeatedly try to read current metadata, apply the mutations and reindex, until there is no conflict
-      return Retries.callWithRetries(() -> doBatch(mutationMap, changes),
+      return Retries.callWithRetries(() -> doBatch(mutationMap, changes, options),
                                      RetryStrategies.limit(50, RetryStrategies.fixDelay(100, TimeUnit.MILLISECONDS)),
                                      e -> e instanceof MetadataConflictException);
     } catch (MetadataConflictException e) {
@@ -423,7 +422,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * @throws IOException for any other problem encountered
    */
   private List<MetadataChange> doBatch(LinkedHashMap<MetadataEntity, MetadataMutation> mutations,
-                                       LinkedHashMap<MetadataEntity, MetadataChange> changes)
+                                       LinkedHashMap<MetadataEntity, MetadataChange> changes,
+                                       MutationOptions options)
     throws IOException {
     MultiGetRequest multiGet = new MultiGetRequest();
     for (Map.Entry<MetadataEntity, MetadataMutation> entry : mutations.entrySet()) {
@@ -447,7 +447,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       bulkRequest.add((DocWriteRequest) intermediary.getRequest());
       changes.put(entry.getKey(), intermediary.getChange());
     }
-    setRefreshPolicy(bulkRequest);
+    setRefreshPolicy(bulkRequest, options);
     executeBulk(bulkRequest, mutations);
     return changes.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
   }
@@ -672,10 +672,11 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * @throws MetadataConflictException if a conflict occurs
    * @throws IOException for any other problem encountered
    */
-  private void executeMutation(MetadataEntity entity, WriteRequest<?> writeRequest) throws IOException {
+  private void executeMutation(MetadataEntity entity, WriteRequest<?> writeRequest,
+                               MutationOptions options) throws IOException {
     String requestType = null;
     DocWriteResponse response;
-    setRefreshPolicy(writeRequest);
+    setRefreshPolicy(writeRequest, options);
     try {
       if (writeRequest instanceof DeleteRequest) {
         requestType = "Delete";
@@ -769,8 +770,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * {@link Config#CONF_ELASTIC_WAIT_FOR_MUTATIONS}, write requests will only return after they are
    * confirmed to be applied to the index, or return immediately after the request is acknowledged.
    */
-  private void setRefreshPolicy(WriteRequest<?> request) {
-    request.setRefreshPolicy(refreshPolicy);
+  private void setRefreshPolicy(WriteRequest<?> request, MutationOptions options) {
+    request.setRefreshPolicy(
+      options.isAsynchronous() ? WriteRequest.RefreshPolicy.IMMEDIATE : WriteRequest.RefreshPolicy.WAIT_UNTIL);
   }
 
   /**

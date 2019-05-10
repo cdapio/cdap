@@ -16,11 +16,14 @@
 
 package io.cdap.cdap.spi.data.table.field;
 
+import io.cdap.cdap.api.annotation.Beta;
+
 import javax.annotation.Nullable;
 
 /**
  * Convenience methods to work on {@link Field} and {@link FieldType}.
  */
+@Beta
 public final class Fields {
 
   private Fields() {

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.field.Field;
 
 import java.util.Collection;
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Represents a row of data from a {@link StructuredTable}.
  */
+@Beta
 public interface StructuredRow {
   /**
    * @return the value of the field named fieldName as integer, or null if the field value is not defined

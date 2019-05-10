@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  * the table schema, 2. the field is not a primary key or an index, but it is used as one, 3. the field is part of
  * schema but its value is incompatible with what is in the schema.
  */
+@Beta
 public class InvalidFieldException extends RuntimeException {
   private final Collection<String> fieldNames;
   private final StructuredTableId tableId;

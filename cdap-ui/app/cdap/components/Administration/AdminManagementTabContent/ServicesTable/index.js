@@ -269,10 +269,13 @@ export default class ServicesTable extends Component {
 
     MyAppApi.batchStatus({ namespace: 'system' }, requestBody).subscribe((res) => {
       const statuses = [];
+      // CDAP-15254: We need to make this rename until backend changes
+      // the name of the app from dataprep to wrangler
+      const getAppId = (appId) => (appId === 'dataprep' ? 'wrangler' : appId);
 
       res.forEach((program) => {
         const systemProgram = {
-          name: `${program.appId}.${program.programId}`,
+          name: `${getAppId(program.appId)}.${program.programId}`,
           provisioned: '--',
           requested: '--',
           status: program.status,

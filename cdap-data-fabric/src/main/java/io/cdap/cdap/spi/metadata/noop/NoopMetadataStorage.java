@@ -20,6 +20,7 @@ import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataChange;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
@@ -45,13 +46,13 @@ public class NoopMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public MetadataChange apply(MetadataMutation mutation) {
+  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) {
     return new MetadataChange(mutation.getEntity(), Metadata.EMPTY, Metadata.EMPTY);
   }
 
   @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) {
-    return mutations.stream().map(this::apply).collect(Collectors.toList());
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options) {
+    return mutations.stream().map(mutation -> apply(mutation, options)).collect(Collectors.toList());
   }
 
   @Override

@@ -1,5 +1,5 @@
 %PDF-1.4
-%“Œ‹ž ReportLab Generated PDF document http://www.reportlab.com
+%ï¿½ï¿½ï¿½ï¿½ ReportLab Generated PDF document http://www.reportlab.com
 1 0 obj
 <<
 /F1 2 0 R /F2 3 0 R /F3 5 0 R
@@ -510,14 +510,14 @@ endobj
 73 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (https://raw.githubusercontent.com/caskdata/ui-schema-parser/develop/LICENSE)
+/S /URI /Type /Action /URI (https://raw.githubusercontent.com/cdapio/ui-schema-parser/develop/LICENSE)
 >> /Border [ 0 0 0 ] /Rect [ 362.4 645.75 549.71 657.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
 74 0 obj
 <<
 /A <<
-/S /URI /Type /Action /URI (https://raw.githubusercontent.com/caskdata/ui-schema-parser/develop/LICENSE)
+/S /URI /Type /Action /URI (https://raw.githubusercontent.com/cdapio/ui-schema-parser/develop/LICENSE)
 >> /Border [ 0 0 0 ] /Rect [ 362.4 633.75 531.9 645.75 ] /Subtype /Link /Type /Annot
 >>
 endobj
@@ -3284,7 +3284,7 @@ q
 1 0 0 1 308.4 537 cm
 q
 0 0 .501961 rg
-BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (https://raw.githubusercontent.com/caskdat) Tj T* (a/ui-schema-parser/develop/LICENSE) Tj T* ET
+BT 1 0 0 1 0 14 Tm /F1 10 Tf 12 TL (https://raw.githubusercontent.com/cdapio) Tj T* (/ui-schema-parser/develop/LICENSE) Tj T* ET
 Q
 Q
 q

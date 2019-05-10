@@ -241,7 +241,7 @@ public abstract class DatasetServiceTestBase {
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
                                                                          authenticationContext);
 
-    instanceService = new DatasetInstanceService(cConf, typeService, noAuthTypeService,
+    instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
                                                  instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer,
                                                  authenticationContext, new NoOpMetadataPublisher());

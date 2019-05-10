@@ -33,6 +33,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
 import io.cdap.cdap.common.runtime.DaemonMain;
 import io.cdap.cdap.common.utils.ProjectInfo;
@@ -76,8 +77,6 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   private final List<AutoCloseable> closeableResources = new ArrayList<>();
   private MasterEnvironment masterEnv;
   private Injector injector;
-  private CConfiguration cConf;
-  private T options;
 
   /**
    * Helper method for sub-class to call from static void main.
@@ -119,14 +118,18 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   public final void init(String[] args) throws Exception {
     LOG.info("Initializing master service class {}", getClass().getName());
 
+    // System wide setup
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
+
     // Intercept JUL loggers
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
     SLF4JBridgeHandler.install();
 
     TypeToken<?> type = TypeToken.of(getClass()).resolveType(AbstractServiceMain.class.getTypeParameters()[0]);
-    options = (T) type.getRawType().newInstance();
+    T options = (T) type.getRawType().newInstance();
     OptionsParser.init(options, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
 
-    cConf = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
     if (options.getExtraConfPath() != null) {
       cConf.addResource(new File(options.getExtraConfPath(), "cdap-site.xml").toURI().toURL());
     }

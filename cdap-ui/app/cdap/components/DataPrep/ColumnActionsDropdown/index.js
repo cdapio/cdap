@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import { isDescendant } from 'services/helpers';
-import { Popover, PopoverBody } from 'reactstrap';
+import { Popover, PopoverBody, UncontrolledTooltip } from 'reactstrap';
 import { Observable } from 'rxjs/Observable';
 import uuidV4 from 'uuid/v4';
 import classnames from 'classnames';
@@ -249,7 +249,7 @@ export default class ColumnActionsDropdown extends Component {
 
     if (newState) {
       let element = document.getElementById('app-container');
-      if (!element && this.singleWorkspaceMode) {
+      if (this.singleWorkspaceMode) {
         element = document.getElementsByClassName('wrangler-modal')[0];
       }
       this.documentClick$ = Observable.fromEvent(element, 'click').subscribe((e) => {
@@ -385,14 +385,29 @@ export default class ColumnActionsDropdown extends Component {
   render() {
     return (
       <span className="column-actions-dropdown-container" ref={(ref) => (this.popover = ref)}>
-        <span
+        <button
           className={classnames('fa fa-caret-down', {
             expanded: this.state.dropdownOpen,
           })}
           onClick={this.toggleDropdown}
           id={`dataprep-action-${this.dropdownId}`}
         />
-
+        <UncontrolledTooltip
+          target={`dataprep-action-${this.dropdownId}`}
+          placement="top"
+          modifiers={{
+            flip: {
+              enabled: false,
+              boundariesElement: document.querySelector('.dataprephome-wrapper'),
+            },
+            // FIXME (CDAP-15360): This offset is not being applied because the popover overlaps with its boundary.
+            offset: {
+              offset: '0 3',
+            },
+          }}
+        >
+          Column transformations
+        </UncontrolledTooltip>
         {this.renderMenu()}
       </span>
     );

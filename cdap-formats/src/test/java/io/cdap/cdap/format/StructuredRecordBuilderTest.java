@@ -22,6 +22,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -179,16 +181,39 @@ public class StructuredRecordBuilderTest {
       Schema.of(Schema.Type.INT),
       Schema.of(Schema.Type.LONG),
       Schema.of(Schema.LogicalType.DATE),
-      Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS)))));
+      Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS)),
+      Schema.nullableOf(Schema.decimalOf(3)))));
 
     LocalDate date = LocalDate.of(2018, 11, 11);
     ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 11, 11, 11, 11, 11, 0, ZoneId.ofOffset("UTC", ZoneOffset.UTC));
     LocalTime time = LocalTime.of(21, 1, 1);
+    BigDecimal d = new BigDecimal(new BigInteger("111"), 0);
     Assert.assertEquals(date, StructuredRecord.builder(schema).setDate("x", date).build().getDate("x"));
     StructuredRecord x = StructuredRecord.builder(schema).setTimestamp("x", zonedDateTime).build();
     Assert.assertEquals(zonedDateTime, x.getTimestamp("x"));
     Assert.assertEquals(time, StructuredRecord.builder(schema).setTime("x", time).build().getTime("x"));
     Assert.assertNull(StructuredRecord.builder(schema).setTime("x", null).build().getTime("x"));
+    Assert.assertEquals(d, StructuredRecord.builder(schema).setDecimal("x", d).build().getDecimal("x"));
+  }
+
+  @Test
+  public void testDecimalLogicalType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                    Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of("d", Schema.nullableOf(Schema.decimalOf(3, 2))));
+    BigDecimal d = new BigDecimal(new BigInteger("111"), 2);
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .set("id", 1)
+      .set("name", "test")
+      .setDecimal("d", d).build();
+
+    Assert.assertEquals(d, record.getDecimal("d"));
+
+    record = StructuredRecord.builder(schema)
+      .set("id", 1)
+      .set("name", "test")
+      .setDecimal("d", null).build();
+    Assert.assertNull(record.getDecimal("d"));
   }
 
   @Test
@@ -247,5 +272,17 @@ public class StructuredRecordBuilderTest {
 
     LocalDate expected = LocalDate.now();
     StructuredRecord.builder(schema).set("id", 1).set("name", "test").setDate("timestamp", expected).build();
+  }
+
+  @Test(expected = UnexpectedFormatException.class)
+  public void testInvalidDecimalScale() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("d", Schema.decimalOf(5, 2)));
+    StructuredRecord.builder(schema).setDecimal("d", new BigDecimal(new BigInteger("1234"), 1)).build();
+  }
+
+  @Test(expected = UnexpectedFormatException.class)
+  public void testInvalidPrecision() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("d", Schema.decimalOf(5, 2)));
+    StructuredRecord.builder(schema).setDecimal("d", new BigDecimal(new BigInteger("12341324"), 2)).build();
   }
 }

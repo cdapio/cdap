@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
@@ -25,6 +26,7 @@ import javax.annotation.Nullable;
 /**
  * Defines admin operations on a {@link StructuredTable}.
  */
+@Beta
 public interface StructuredTableAdmin {
   /**
    * Create a StructuredTable using the {@link StructuredTableSpecification}.

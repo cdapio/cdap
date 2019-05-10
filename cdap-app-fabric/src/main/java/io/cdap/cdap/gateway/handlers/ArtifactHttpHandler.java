@@ -29,7 +29,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -45,7 +44,6 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ArtifactRangeNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
@@ -57,9 +55,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
-import io.cdap.cdap.internal.app.runtime.plugin.PluginEndpoint;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import io.cdap.cdap.internal.app.runtime.plugin.PluginService;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
@@ -87,7 +83,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -137,16 +132,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final File tmpDir;
-  private final PluginService pluginService;
 
   @Inject
   ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository,
-                      NamespaceQueryAdmin namespaceQueryAdmin, PluginService pluginService) {
+                      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.pluginService = pluginService;
   }
 
   @POST
@@ -507,59 +500,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error reading plugins for the artifact from the store.");
-    }
-  }
-
-  @Beta
-  @POST
-  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
-    "versions/{artifact-version}/plugintypes/{plugin-type}/plugins/{plugin-name}/methods/{plugin-method}")
-  @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
-  public void callArtifactPluginMethod(FullHttpRequest request, HttpResponder responder,
-                                       @PathParam("namespace-id") String namespaceId,
-                                       @PathParam("artifact-name") String artifactName,
-                                       @PathParam("artifact-version") String artifactVersion,
-                                       @PathParam("plugin-name") String pluginName,
-                                       @PathParam("plugin-type") String pluginType,
-                                       @PathParam("plugin-method") String methodName,
-                                       @QueryParam("scope") @DefaultValue("user") String scope)
-    throws Exception {
-
-    String requestBody = request.content().toString(StandardCharsets.UTF_8);
-    NamespaceId namespace = Ids.namespace(namespaceId);
-    NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
-    ArtifactId artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
-
-    if (requestBody.isEmpty()) {
-      throw new BadRequestException("Request body is used as plugin method parameter, " +
-                                      "Received empty request body.");
-    }
-    try {
-      PluginEndpoint pluginEndpoint =
-        pluginService.getPluginEndpoint(namespace, Id.Artifact.fromEntityId(artifactId),
-                                        pluginType, pluginName, methodName);
-      Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
-    } catch (JsonSyntaxException e) {
-      LOG.error("Exception while invoking plugin method.", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Unable to deserialize request body to method parameter type");
-    } catch (InvocationTargetException e) {
-      LOG.error("Exception while invoking plugin method.", e);
-      if (e.getCause() instanceof javax.ws.rs.NotFoundException) {
-        throw new NotFoundException(e.getCause());
-      } else if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
-        throw new BadRequestException(e.getCause());
-      } else if (e.getCause() instanceof IllegalArgumentException && e.getCause() != null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getCause().getMessage());
-      } else {
-        Throwable rootCause = Throwables.getRootCause(e);
-        String message = String.format("Error while invoking plugin method %s.", methodName);
-        if (rootCause != null && rootCause.getMessage() != null) {
-          message = String.format("%s %s", message, rootCause.getMessage());
-        }
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, message);
-      }
     }
   }
 

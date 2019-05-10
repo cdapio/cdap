@@ -29,8 +29,4 @@ public class NoOpMetadataPublisher implements MetadataPublisher {
     // nop-op
   }
 
-  @Override
-  public void publish(EntityId entityId, DatasetInstanceOperation datasetInstanceOperation) {
-    // no-op
-  }
 }

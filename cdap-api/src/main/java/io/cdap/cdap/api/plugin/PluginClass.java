@@ -21,10 +21,8 @@ import io.cdap.cdap.api.annotation.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -38,7 +36,6 @@ public class PluginClass {
   private final String className;
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
-  private final Set<String> endpoints;
   private final Requirements requirements;
 
   // for GSON deserialization should not be made public. VisibleForTesting
@@ -49,34 +46,24 @@ public class PluginClass {
     this.className = null;
     this.configFieldName = null;
     this.properties = Collections.emptyMap();
-    this.endpoints = Collections.emptySet();
     this.requirements = Requirements.EMPTY;
   }
 
   public PluginClass(String type, String name, String description, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
-                     Set<String> endpoints, Requirements requirements) {
+                     Requirements requirements) {
     this.type = type;
     this.name = name;
     this.description = description;
     this.className = className;
     this.configFieldName = configfieldName;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
-    this.endpoints = Collections.unmodifiableSet(new HashSet<>(endpoints));
     this.requirements = requirements;
   }
 
   public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
                      Map<String, PluginPropertyField> properties) {
-    this(type, name, description, className, configfieldName, properties, Collections.emptySet(),
-         Requirements.EMPTY);
-  }
-
-  public PluginClass(String type, String name, String description, String className,
-                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
-                     Set<String> endpoints) {
-    this(type, name, description, className, configfieldName, properties, endpoints,
-         Requirements.EMPTY);
+    this(type, name, description, className, configfieldName, properties, Requirements.EMPTY);
   }
 
   /**
@@ -99,10 +86,6 @@ public class PluginClass {
     }
     if (properties == null) {
       throw new IllegalArgumentException("Plugin class properties cannot be null");
-    }
-
-    if (endpoints == null) {
-      throw new IllegalArgumentException("Plugin class endpoints cannot be null");
     }
     if (requirements == null) {
       throw new IllegalArgumentException("Plugin class requirements cannot be null");
@@ -147,14 +130,6 @@ public class PluginClass {
   }
 
   /**
-   * Returns the set of plugin endpoints available in the plugin.
-   * If no such field will return empty set.
-   */
-  public Set<String> getEndpoints() {
-    return endpoints;
-  }
-
-  /**
    * Returns a map from config property name to {@link PluginPropertyField} that are supported by the plugin class.
    */
   public Map<String, PluginPropertyField> getProperties() {
@@ -185,13 +160,12 @@ public class PluginClass {
       && Objects.equals(className, that.className)
       && Objects.equals(configFieldName, that.configFieldName)
       && Objects.equals(properties, that.properties)
-      && Objects.equals(endpoints, that.endpoints)
       && Objects.equals(requirements, that.requirements);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, description, className, configFieldName, properties, endpoints, requirements);
+    return Objects.hash(type, name, description, className, configFieldName, properties, requirements);
   }
 
   @Override
@@ -203,7 +177,6 @@ public class PluginClass {
       ", className='" + className + '\'' +
       ", configFieldName='" + configFieldName + '\'' +
       ", properties=" + properties +
-      ", endpoints=" + endpoints +
       ", requirements=" + requirements +
       '}';
   }

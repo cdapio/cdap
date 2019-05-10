@@ -202,8 +202,8 @@ function pipelines_download_includes() {
     local base_source="file://${PROJECT_PATH}/../${pipelines_plugins}"
     CDAP_PIPELINES_SOURCE="${base_source}"
   else
-    echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/${pipelines_plugins}..."
-    local base_source="https://raw.githubusercontent.com/caskdata/${pipelines_plugins}"
+    echo_red_bold "Downloading Markdown doc file includes from GitHub repo cdapio/${pipelines_plugins}..."
+    local base_source="https://raw.githubusercontent.com/cdapio/${pipelines_plugins}"
     if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
       local pipelines_branch="develop"
     else

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.StructuredTable;
 
 import java.util.Objects;
@@ -23,6 +24,7 @@ import java.util.Objects;
 /**
  * Specifies the Id of a {@link StructuredTable}.
  */
+@Beta
 public class StructuredTableId {
   private final String name;
 

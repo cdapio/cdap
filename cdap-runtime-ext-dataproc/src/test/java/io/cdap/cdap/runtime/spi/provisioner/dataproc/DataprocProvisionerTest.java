@@ -96,4 +96,28 @@ public class DataprocProvisionerTest {
     }
     Assert.assertEquals(expected, DataprocProvisioner.parseLabels(String.format("a=%s", longStr.toString())));
   }
+
+  @Test
+  public void testDataprocConf() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("zone", "zone");
+    props.put("network", "network");
+    props.put("spark:spark.reducer.maxSizeInFlight", "100");
+    props.put("hadoop-env:MAPREDUCE_CLASSPATH", "xyz");
+    props.put("dataproc:am.primary_only", "true");
+
+    DataprocConf conf = DataprocConf.fromProperties(props);
+
+    Assert.assertEquals(conf.getProjectId(), "pid");
+    Assert.assertEquals(conf.getZone(), "zone");
+
+    Map<String, String> dataprocProps = conf.getDataprocProperties();
+    Assert.assertEquals(3, dataprocProps.size());
+
+    Assert.assertEquals("100", dataprocProps.get("spark:spark.reducer.maxSizeInFlight"));
+    Assert.assertEquals("xyz", dataprocProps.get("hadoop-env:MAPREDUCE_CLASSPATH"));
+    Assert.assertEquals("true", dataprocProps.get("dataproc:am.primary_only"));
+  }
 }

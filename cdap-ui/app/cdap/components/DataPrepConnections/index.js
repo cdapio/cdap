@@ -389,7 +389,7 @@ export default class DataPrepConnections extends Component {
     if (this.props.enableRouting) {
       let namespace = getCurrentNamespace();
 
-      let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+      let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/wrangler/${workspaceId}`;
       window.location.href = navigatePath;
       return;
     }

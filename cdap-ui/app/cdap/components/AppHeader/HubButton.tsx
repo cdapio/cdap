@@ -67,13 +67,17 @@ class HubButton extends React.PureComponent<IHubButtonProps, IHubButtonState> {
   private onClickHandler = () => {
     const newState = !this.state.showMarketPlace;
 
+    /**
+     * Emitting these events here and listening to these events with methods on the same class can be weird
+     * but we have usecases where we want to listen to open market event, say in app drawer which has to close
+     * when market is opened. So instead of setting the state here directly we emit the event
+     * and let listeners take action based on it instead of having separate events.
+     */
     if (newState === false) {
-      this.eventEmitter.emit(globalEvents.MARKETCLOSING);
+      this.eventEmitter.emit(globalEvents.CLOSEMARKET);
+    } else {
+      this.eventEmitter.emit(globalEvents.OPENMARKET);
     }
-
-    this.setState({
-      showMarketPlace: newState,
-    });
   };
 
   private openHubModal = () => {
@@ -83,7 +87,6 @@ class HubButton extends React.PureComponent<IHubButtonProps, IHubButtonState> {
   };
 
   private closeHubModal = () => {
-    this.eventEmitter.emit(globalEvents.MARKETCLOSING);
     this.setState({
       showMarketPlace: false,
     });

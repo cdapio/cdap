@@ -51,7 +51,7 @@ interface IBucketData {
   wrangle?: boolean;
   type?: string;
   scrollId: number;
-  updated?: string;
+  updated?: number;
 }
 
 interface ITableContentsProps {
@@ -152,7 +152,7 @@ export default class TableContents extends React.PureComponent<
       return (
         <div className="gcs-buckets" id="gcs-buckets-container">
           {data.slice(0, this.state.windowSize).map((file, i) => {
-            const lastModified = humanReadableDate(file.updated, true);
+            const lastModified = humanReadableDate(file.updated, false);
             const size =
               convertBytesToHumanReadable(file.size, HUMANREADABLESTORAGE_NODECIMAL, true) || '--';
             let type = file.directory ? T.translate(`${PREFIX}.Content.directory`) : file.type;
