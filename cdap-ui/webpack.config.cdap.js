@@ -257,4 +257,7 @@ var webpackConfig = {
   },
 };
 
+if (!isModeProduction(mode)) {
+  webpackConfig.devtool = 'source-maps';
+}
 module.exports = webpackConfig;

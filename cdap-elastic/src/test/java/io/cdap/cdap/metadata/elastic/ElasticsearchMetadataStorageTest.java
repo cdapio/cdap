@@ -30,6 +30,7 @@ import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageTest;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
@@ -65,7 +66,6 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Config.CONF_ELASTIC_INDEX_NAME,
               "idx" + new Random(System.currentTimeMillis()).nextInt());
-    cConf.setBoolean(Config.CONF_ELASTIC_WAIT_FOR_MUTATIONS, true);
     cConf.set(Config.CONF_ELASTIC_SCROLL_TIMEOUT, "2s");
     cConf.setInt(Config.CONF_ELASTIC_NUM_REPLICAS, 1);
     cConf.setInt(Config.CONF_ELASTIC_NUM_SHARDS, 1);
@@ -318,11 +318,13 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
   @Test
   public void testScrollTimeout() throws IOException, InterruptedException {
     MetadataStorage mds = getMetadataStorage();
+    MutationOptions options = MutationOptions.builder().setAsynchronous(false).build();
 
     List<MetadataRecord> records = IntStream.range(0, 20).boxed().map(i -> new MetadataRecord(
       MetadataEntity.ofDataset("ns" + i, "ds" + i),
       new Metadata(MetadataScope.USER, tags("tag", "t" + i), props("p", "v" + i)))).collect(Collectors.toList());
-    mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()));
+    mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()),
+              options);
 
     SearchRequest request = SearchRequest.of("t*").setCursorRequested(true).setLimit(5).build();
     SearchResponse response = mds.search(request);
@@ -369,7 +371,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(response2.getResults(), response4.getResults());
 
     // clean up
-    mds.batch(records.stream().map(MetadataRecord::getEntity).map(Drop::new).collect(Collectors.toList()));
+    mds.batch(records.stream().map(MetadataRecord::getEntity).map(Drop::new).collect(Collectors.toList()), options);
   }
 
   @Override

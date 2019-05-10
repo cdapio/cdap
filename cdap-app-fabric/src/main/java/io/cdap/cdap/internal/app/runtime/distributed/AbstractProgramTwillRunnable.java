@@ -44,8 +44,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
-import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
-import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
@@ -63,10 +61,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.spi.data.StructuredTableAdmin;
-import io.cdap.cdap.spi.data.TableAlreadyExistsException;
-import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
-import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionManager;
@@ -225,6 +219,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     System.setSecurityManager(new ProgramContainerSecurityManager(System.getSecurityManager()));
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
     SLF4JBridgeHandler.install();
 
     // Create the ProgramOptions
@@ -517,13 +512,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         addOnPremiseServices(injector, programOptions, metricsCollectionService, services);
         break;
       case ISOLATED:
-        try {
-          // Define the relevant StructuredTable before starting any services that need StructuredTable
-          StoreDefinition.createDatasetServiceTables(injector.getInstance(StructuredTableAdmin.class),
-                                                     injector.getInstance(StructuredTableRegistry.class), false);
-        } catch (IOException | TableAlreadyExistsException e) {
-          throw new RuntimeException("Unable to create the system tables.", e);
-        }
         addIsolatedServices(injector, services);
         break;
       default:
@@ -549,8 +537,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     services.add(injector.getInstance(TransactionManager.class));
     services.add(injector.getInstance(MessagingHttpService.class));
     services.add(injector.getInstance(RuntimeMonitorServer.class));
-    services.add(injector.getInstance(DatasetOpExecutorService.class));
-    services.add(injector.getInstance(DatasetService.class));
   }
 
   private void startCoreServices() {

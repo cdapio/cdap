@@ -40,6 +40,7 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
@@ -85,7 +86,7 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   @Override
-  public MetadataChange apply(MetadataMutation mutation) {
+  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) {
     return execute(context -> apply(context, mutation));
   }
 
@@ -110,7 +111,7 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) {
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options) {
     return execute(context -> mutations.stream()
       .map(mutation -> apply(context, mutation)).collect(Collectors.toList()));
   }

@@ -195,7 +195,7 @@ export default class WorkspaceTabs extends Component {
             return (
               <div key={workspace.id} className="workspace-list-dropdown-item">
                 <Link
-                  to={`/ns/${this.namespace}/dataprep/${workspace.id}`}
+                  to={`/ns/${this.namespace}/wrangler/${workspace.id}`}
                   className={classnames('workspace-link', {
                     active: this.state.activeWorkspace === workspace.id,
                   })}

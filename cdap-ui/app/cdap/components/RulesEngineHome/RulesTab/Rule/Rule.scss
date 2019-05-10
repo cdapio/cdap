@@ -28,6 +28,11 @@ $drag_bars_color: gray;
     padding-right: 0;
     font-size: 13px;
 
+    [draggable=true] {
+      width: 100%;
+      display: flex;
+    }
+
     > div > :first-child {
       padding-left: 0;
     }

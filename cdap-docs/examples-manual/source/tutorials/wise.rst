@@ -91,7 +91,7 @@ CDAP Sandbox, and download the WISE source code:
 .. tabbed-parsed-literal::
 
   $ cd <CDAP-HOME>/examples
-  $ curl -w"\n" -X GET "https://codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible" \
+  $ curl -w"\n" -X GET "https://codeload.github.com/cdapio/cdap-apps/zip/release/cdap-|short-version|-compatible" \
   --output cdap-apps-release-cdap-|short-version|-compatible.zip
 
 Unzip the directory and change to the source directory:

@@ -76,7 +76,7 @@ export default class GCSBrowser extends Component {
         if (this.props.enableRouting) {
           window.location.href = `${
             window.location.origin
-          }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+          }/cdap/ns/${namespace}/wrangler/${workspaceId}`;
         }
         if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
           this.props.onWorkspaceCreate(workspaceId);

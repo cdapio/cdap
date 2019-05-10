@@ -1203,9 +1203,12 @@ cdap_ui() {
       MAIN_CMD="${CDAP_HOME}"/ui/bin/node
     elif [[ $(which node 2>/dev/null) ]]; then
       MAIN_CMD=node
+      cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
     else
       die "Unable to locate Node.js binary (node), is it installed and in the PATH?"
     fi
+  else
+    cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
   fi
   local readonly MAIN_CMD=${MAIN_CMD}
   export NODE_ENV="production"

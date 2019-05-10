@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.transaction;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 
@@ -26,6 +27,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
  * @param <V> type of the return value from the {@link #call(StructuredTableContext)}.
  *
  */
+@Beta
 public interface TxCallable<V> {
   /**
    * Provides a {@link StructuredTableContext} to get instances of {@link StructuredTable}s.

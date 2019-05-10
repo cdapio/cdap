@@ -52,10 +52,14 @@ $custom-entry-height: 35px;
       border: 1px solid $border-color;
       margin-left: -$common-padding;
       margin-top: -$common-padding;
-      width: 75%;
+      width: 100%;
       z-index: 2;
 
-      .top-part { padding: $common-padding; }
+      .top-part {
+        padding: $common-padding;
+        display: grid;
+        grid-template-columns: 20px 1fr 20px;
+      }
       .icon-svg { color: $shield-active-color; }
 
       .title {

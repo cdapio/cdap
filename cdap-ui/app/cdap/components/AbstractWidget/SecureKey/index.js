@@ -24,6 +24,8 @@ import classnames from 'classnames';
 import T from 'i18n-react';
 import { objectQuery } from 'services/helpers';
 import { SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX, SYSTEM_NAMESPACE } from 'services/global-constants';
+import Mousetrap from 'mousetrap';
+import { Observable } from 'rxjs/Observable';
 require('./SecureKeyTextarea.scss');
 
 const PREFIX = 'features.AbstractWidget.SecureKeyTextarea';
@@ -34,6 +36,9 @@ export default class SecureKeyTextarea extends Component {
     inputTextType: PropTypes.oneOf(['textarea', 'text', 'password']),
   };
   static defaultProps = DEFAULT_WIDGET_PROPS;
+
+  documentClick$ = null;
+  containerRef = null;
 
   state = {
     secureKeys: [],
@@ -60,7 +65,40 @@ export default class SecureKeyTextarea extends Component {
     });
   }
 
+  setEventListenersForToggle = () => {
+    if (this.documentClick$) {
+      return;
+    }
+    Mousetrap.bind('esc', this.toggleExpand);
+    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
+      /**
+       * eehhh wat?
+       * There will be a case where when the user clicks on the "Specify a different secure key"
+       * button we show a enter a custom secure key. During this transition the helper text(button)
+       * is already removed when the event finally comes here. So even though e.target shows a
+       * valid element it is already removed from the DOM. Hence this check if is actually present
+       * in the DOM.
+       */
+      if (!this.containerRef.contains(e.target) && document.body.contains(e.target)) {
+        this.toggleExpand();
+      }
+    });
+  };
+
+  unsetEventListenersForToggle = () => {
+    Mousetrap.unbind('esc');
+    if (this.documentClick$) {
+      this.documentClick$.unsubscribe();
+      this.documentClick$ = null;
+    }
+  };
+
   toggleExpand = () => {
+    if (!this.state.expanded) {
+      this.setEventListenersForToggle();
+    } else {
+      this.unsetEventListenersForToggle();
+    }
     this.setState({
       expanded: !this.state.expanded,
       customEntry: false,
@@ -165,6 +203,7 @@ export default class SecureKeyTextarea extends Component {
           <IconSVG name="icon-shield" onClick={this.toggleExpand} />
 
           {this.state.expanded ? text : null}
+          {this.state.expanded ? <IconSVG name="icon-close" onClick={this.toggleExpand} /> : null}
         </div>
 
         {this.renderSecureKeyContent()}
@@ -197,7 +236,7 @@ export default class SecureKeyTextarea extends Component {
 
   render() {
     return (
-      <div className="secure-key-textarea-widget">
+      <div className="secure-key-textarea-widget" ref={(ref) => (this.containerRef = ref)}>
         {this.renderInput()}
         {this.renderSecureKey()}
       </div>

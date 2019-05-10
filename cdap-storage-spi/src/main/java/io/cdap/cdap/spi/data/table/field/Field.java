@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table.field;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
 
 import java.util.Objects;
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
  * @param <T> the type of the value. Valid types for regular fields are int, long, double, float and string.
  *           Valid types for primary keys are int, long and string.
  */
+@Beta
 public final class Field<T> {
   private final FieldType fieldType;
   private final T value;

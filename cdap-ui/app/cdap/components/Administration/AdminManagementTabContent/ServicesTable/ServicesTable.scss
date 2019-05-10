@@ -36,6 +36,11 @@
   .table-sm td,
   .table-sm th {
     border-bottom: 2px solid $table-border-color;
+    // FIXME: This is quirky. This is here because of the difference between chrome
+    // and firefox. Browser default styling applied to 'td's and 'tr's are different
+    // causing scrollbar to appear in one browser and not in the other.
+    padding-bottom: 0.2rem;
+    padding-top: 0.2rem;
   }
 
   .table-sm tbody tr {

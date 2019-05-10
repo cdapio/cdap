@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.FieldType;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
  *   <li>indexes - the columns to index on. Only one column can be part of an index</li>
  * </ul>
  */
+@Beta
 public final class StructuredTableSpecification {
   // Only alphanumeric and _ characters allowed in identifiers. Also, has to begin with an alphabet
   // This is to satisfy both SQL and HBase identifier name rules

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,9 @@ public interface StreamingContext extends StageContext, Transactional {
 
   /**
    * Register lineage for this Spark program using the given reference name
+   *
    * @param referenceName reference name used for source
+   *
    * @throws DatasetManagementException thrown if there was an error in creating reference dataset
    * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
    */

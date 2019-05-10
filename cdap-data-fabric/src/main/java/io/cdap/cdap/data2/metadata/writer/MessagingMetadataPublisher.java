@@ -64,17 +64,4 @@ public class MessagingMetadataPublisher implements MetadataPublisher {
       throw new RuntimeException("Failed to publish metadata operation: " + operation, e);
     }
   }
-
-  @Override
-  public void publish(EntityId entityId, DatasetInstanceOperation datasetInstanceOperation) {
-    MetadataMessage message = new MetadataMessage(Type.DATASET_OPERATION, entityId,
-                                                  GSON.toJsonTree(datasetInstanceOperation));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
-    LOG.trace("Publishing message {} to topic {}", message, topic);
-    try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to publish metadata operation: " + datasetInstanceOperation, e);
-    }
-  }
 }

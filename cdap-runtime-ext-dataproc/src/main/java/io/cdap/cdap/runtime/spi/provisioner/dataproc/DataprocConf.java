@@ -32,6 +32,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -43,6 +45,8 @@ public class DataprocConf {
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
+
+  private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
 
   private final String accountKey;
   private final String region;
@@ -69,13 +73,15 @@ public class DataprocConf {
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final SSHPublicKey publicKey;
+  private final Map<String, String> dataprocProperties;
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        boolean preferExternalIP, boolean stackdriverLoggingEnabled,
-                       boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey) {
+                       boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
+                       Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -97,6 +103,7 @@ public class DataprocConf {
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
+    this.dataprocProperties = dataprocProperties;
   }
 
   public String getRegion() {
@@ -170,6 +177,10 @@ public class DataprocConf {
   @Nullable
   public SSHPublicKey getPublicKey() {
     return publicKey;
+  }
+
+  public Map<String, String> getDataprocProperties() {
+    return dataprocProperties;
   }
 
   /**
@@ -284,12 +295,19 @@ public class DataprocConf {
     boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
                                                                                         "true"));
 
+    Map<String, String> dataprocProps = Collections.unmodifiableMap(
+      properties.entrySet().stream()
+        .filter(e -> CLUSTER_PROPERTIES_PATTERN.matcher(e.getKey()).find())
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+    );
+
     // always use 'global' region until CDAP-14376 is fixed.
     return new DataprocConf(accountKey, "global", zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            preferExternalIP, stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey);
+                            preferExternalIP, stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
+                            publicKey, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.

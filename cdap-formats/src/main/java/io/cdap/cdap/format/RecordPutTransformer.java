@@ -96,34 +96,41 @@ public class RecordPutTransformer {
 
     Schema.Type type = validateAndGetType(field);
 
-    switch (type) {
-      case BOOLEAN:
-        put.add(field.getName(), (Boolean) val);
-        break;
-      case INT:
-        put.add(field.getName(), (Integer) val);
-        break;
-      case LONG:
-        put.add(field.getName(), (Long) val);
-        break;
-      case FLOAT:
-        put.add(field.getName(), (Float) val);
-        break;
-      case DOUBLE:
-        put.add(field.getName(), (Double) val);
-        break;
-      case BYTES:
-        if (val instanceof ByteBuffer) {
-          put.add(field.getName(), Bytes.toBytes((ByteBuffer) val));
-        } else {
-          put.add(field.getName(), (byte[]) val);
-        }
-        break;
-      case STRING:
-        put.add(field.getName(), (String) val);
-        break;
-      default:
-        throw new IllegalArgumentException("Field " + field.getName() + " is of unsupported type " + type);
+    try {
+      switch (type) {
+        case BOOLEAN:
+          put.add(field.getName(), (Boolean) val);
+          break;
+        case INT:
+          put.add(field.getName(), (Integer) val);
+          break;
+        case LONG:
+          put.add(field.getName(), (Long) val);
+          break;
+        case FLOAT:
+          put.add(field.getName(), (Float) val);
+          break;
+        case DOUBLE:
+          put.add(field.getName(), (Double) val);
+          break;
+        case BYTES:
+          if (val instanceof ByteBuffer) {
+            put.add(field.getName(), Bytes.toBytes((ByteBuffer) val));
+          } else {
+            put.add(field.getName(), (byte[]) val);
+          }
+          break;
+        case STRING:
+          put.add(field.getName(), (String) val);
+          break;
+        default:
+          throw new IllegalArgumentException("Field " + field.getName() + " is of unsupported type " + type);
+      }
+    } catch (ClassCastException e) {
+      // happens if the record is constructed incorrectly.
+      throw new IllegalArgumentException(
+        String.format("A value for field '%s' is of type '%s', which does not match schema type '%s'. ",
+                      field.getName(), val.getClass().getName(), type));
     }
   }
 

@@ -28,8 +28,8 @@ function download_includes() {
     echo_red_bold "Copying local copy of Apache Sentry and Ranger File..."
     local base_source="file://${PROJECT_PATH}/../cdap-security-extn/"
   else
-    echo_red_bold "Downloading Apache Sentry and Ranger File from GitHub repo caskdata/cdap-security-extn..."
-    local base_source="https://raw.githubusercontent.com/caskdata/cdap-security-extn/"
+    echo_red_bold "Downloading Apache Sentry and Ranger File from GitHub repo cdapio/cdap-security-extn..."
+    local base_source="https://raw.githubusercontent.com/cdapio/cdap-security-extn/"
     if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
       local branch="develop/"
     else
