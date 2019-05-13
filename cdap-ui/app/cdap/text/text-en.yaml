@@ -932,8 +932,6 @@ features:
               OPTION12: "EEE, MMM d, 'yy"
               OPTION13: "h:mm AM/PM"
               OPTION14: "H:mm with timezone"
-          XML:
-            label: XML
           XMLTOJSON:
             fieldLabel: Depth
             label: XML to JSON
