@@ -157,17 +157,8 @@ Guides
   - |integ-man-sq-black|_ *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
 
-.. |examples-manual| replace:: **Examples, Guides, and Tutorials**
-.. _examples-manual: examples-manual/index.html
-
-.. |ex-man-e-black| replace:: `Examples:`
-.. _ex-man-e-black: examples-manual/examples/index.html
-
 .. |ex-man-htg-black| replace:: `How-To Guides:`
 .. _ex-man-htg-black: examples-manual/how-to-guides/index.html
-
-.. |ex-man-t-black| replace:: `Tutorials:`
-.. _ex-man-t-black: examples-manual/tutorials/index.html
 
 .. |ex-man-capr-black| replace:: `CDAP Apps and Packs Repository:`
 .. _ex-man-capr-black: examples-manual/apps-packs.html
