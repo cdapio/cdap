@@ -167,14 +167,6 @@ transactions in Spark programs.
 For all other lifecycle methods and for service handlers, the implicit transaction can be
 turned off by annotating the method with ``@TransactionPolicy(TransactionControl.EXPLICIT)``.
 
-For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fileset>`:
-
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
-   :language: java
-   :lines: 79-83
-   :dedent: 4
-   :append: . . .
-
 This service handler method only accesses FileSets, which do not require transactions.
 Therefore, we can safely turn off the implicit transaction for this method. 
 
@@ -299,19 +291,3 @@ You have these options:
   each transaction, because the transaction system must track writes with greater detail.
   But it can also greatly reduce the number of transaction conflicts, leading to improved
   overall application throughput.
-
-Transaction Examples
-====================
-
-- For an example of using **implicit transactions,** see the :ref:`WordCount example
-  <examples-word-count>` and its ``RetrieveCounts`` service and ``RetrieveCountsHandler``, which uses
-  implicit transactions.
-
-- For an example of using **explicit transactions,** see the :ref:`FileSet example
-  <examples-fileset>` and its ``FileSetService``, whose ``FileSetHandler`` uses explicit
-  transactions for all of its operations.
-
-- For another example of using **explicit transactions,** see the 
-  :ref:`Sport Results example <examples-sport-results>`, where the service
-  ``UploadService`` has an ``UploadHandler`` that reads and writes using explicit
-  transactions.

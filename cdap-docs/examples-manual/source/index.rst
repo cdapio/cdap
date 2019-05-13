@@ -3,9 +3,9 @@
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 
-==================
-CDAP How-To Guides
-==================
+============================================
+CDAP How-To Guides and Tutorials
+============================================
 
 
 .. |guides| replace:: **How-To Guides:**

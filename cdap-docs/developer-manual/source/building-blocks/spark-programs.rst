@@ -422,15 +422,7 @@ To use Spark2, you must add the ``cdap-api-spark2_2.11`` Maven dependency::
 
 Spark Program Examples
 ======================
-- For examples of **Spark programs,** see the :ref:`Log Analysis <examples-log-analysis>`,
-  :ref:`Spam Classifier <examples-spam-classifier>`, :ref:`Spark K-Means <examples-spark-k-means>`,
-  :ref:`Spark Page Rank <examples-spark-page-rank>`, and :ref:`Wikipedia Pipeline
-  <examples-wikipedia-data-pipeline>` examples.
-
-- For an example of a **Spark2 program,** see the :ref:`Decision Tree Regression <examples-decision-tree-regression>`
-  example.
-
-- For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
+- For an example, the how-to guide :ref:`cdap-spark-guide` gives a demonstration.
 
 - If you have problems with resolving methods when developing Spark problems in an IDE 
   or running Spark programs, see :ref:`these hints <development-troubleshooting-spark>`.
