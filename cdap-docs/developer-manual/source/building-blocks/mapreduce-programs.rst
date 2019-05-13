@@ -376,14 +376,7 @@ MapReduce and Resources
 =======================
 
 Both the YARN container size and the number of virtual cores used in a MapReduce job can be specified
-as part of the configuration. They can also be set at runtime through the use of runtime arguments. An
-example of this is shown in the :ref:`Purchase <examples-purchase>` example, where the memory requirements
-are set:
-
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
-   :language: java
-   :lines: 47-57
-   :append: ...
+as part of the configuration. They can also be set at runtime through the use of runtime arguments.
 
 The Resources API, if called with two arguments, sets both the memory used in megabytes
 and the number of virtual cores used.
@@ -392,10 +385,6 @@ and the number of virtual cores used.
 MapReduce Program Examples
 ==========================
 
-- For an example of **a MapReduce program,** see the :ref:`Purchase
-  <examples-purchase>` example.
-
-- For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
-  demonstrates the use of MapReduce.
+- For an example, the how-to guide :ref:`cdap-mapreduce-guide` demonstrates the use of MapReduce.
 
 - The :ref:`Tutorial <tutorials>` :ref:`WISE: Web Analytics <cdap-tutorial-wise>` uses MapReduce.

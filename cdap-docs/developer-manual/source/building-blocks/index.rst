@@ -90,7 +90,5 @@ write data through the data abstraction layer in CDAP.
 For a **high-level view of the concepts** of the Cask Data Application Platform, see the
 platform :doc:`overview. </overview/index>`
 
-For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
-the code in the :ref:`examples <examples-index>` directory, both of which are available at the
-`Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP Sandbox
-installation directory.
+For information beyond this section, see the :ref:`Javadocs <reference:javadocs>`, which are available
+at the `Cask.co resources page, <http://cask.co/resources>`_.

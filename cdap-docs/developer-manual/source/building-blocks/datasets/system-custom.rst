@@ -27,9 +27,8 @@ Tables, but defines its own interface. Examples include:
   table columns. It can be explored through the use of ad-hoc SQL-like queries as described
   in :ref:`ObjectMappedTable Exploration <object-mapped-table-exploration>`.
 
-See the :ref:`Javadocs <reference:javadocs>` for these classes and the :ref:`Examples <examples-index>`
-to learn more about these datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
-system dataset.
+See the :ref:`Javadocs <reference:javadocs>` for these classes. Any class in the CDAP libraries
+that implements the ``Dataset`` interface is a system dataset.
 
 
 .. _custom-datasets:
@@ -129,9 +128,6 @@ Application components can access a custom dataset in the same way as all other 
 via either the ``@UseDataSet`` annotation, or the ``getDataset()`` method of the program context.
 This is described in more detail in the section on
 :ref:`Using Datasets in Programs <datasets-in-programs>`.
-
-A complete application demonstrating the use of a custom dataset is included in our
-:ref:`Purchase Example <examples-purchase>`.
 
 You can also create, drop, and truncate datasets using the :ref:`http-restful-api-dataset`.
 
