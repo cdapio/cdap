@@ -156,16 +156,3 @@ Guides
   - |integ-man-pe-black|_ *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
   - |integ-man-sq-black|_ *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
-
-.. |ex-man-htg-black| replace:: `How-To Guides:`
-.. _ex-man-htg-black: examples-manual/how-to-guides/index.html
-
-.. |ex-man-capr-black| replace:: `CDAP Apps and Packs Repository:`
-.. _ex-man-capr-black: examples-manual/apps-packs.html
-
-- |examples-manual|_
-
-  - |ex-man-e-black|_ Included with the :ref:`CDAP Sandbox <getting-started-index>`, they range from a simple introductory to more elaborate examples
-  - |ex-man-htg-black|_ Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions
-  - |ex-man-t-black|_ Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations
-  - |ex-man-capr-black|_ data applications built using CDAP and useful building blocks for your data applications
