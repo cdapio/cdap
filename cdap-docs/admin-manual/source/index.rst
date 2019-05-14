@@ -141,12 +141,12 @@ installation and its security configuration.
     .. |preferences| replace:: **Preferences and Runtime Arguments:**
     .. _preferences: operations/preferences.html
 
-    - |preferences|_ Flows, MapReduce and Spark programs, services, workers, and workflows can receive **runtime arguments.**
+    - |preferences|_ MapReduce and Spark programs, services, workers, and workflows can receive **runtime arguments.**
 
     .. |scaling-instances| replace:: **Scaling Instances:**
     .. _scaling-instances: operations/scaling-instances.html
 
-    - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets, services, and workers.**
+    - |scaling-instances|_ Covers **querying and setting the number of instances of services and workers.**
 
     .. |resource-guarantees| replace:: **Resource Guarantees:**
     .. _resource-guarantees: operations/resource-guarantees.html

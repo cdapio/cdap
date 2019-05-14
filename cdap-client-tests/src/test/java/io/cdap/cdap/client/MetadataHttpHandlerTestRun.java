@@ -388,14 +388,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ProgramId programId = TEST_NAMESPACE1.app(AllProgramsApp.NAME).service(AllProgramsApp.NoOpService.NAME);
 
     // Set some properties metadata
-    Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
-    addProperties(programId, flowProperties);
+    Map<String, String> serviceProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
+    addProperties(programId, serviceProperties);
 
     // Get properties
     Map<String, String> properties = getProperties(programId, MetadataScope.USER);
     Assert.assertEquals(2, properties.size());
 
-    // Delete the App after stopping the flow
+    // Delete the App after stopping the service
     appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()));
 
     // Delete again should throw not found exception
@@ -460,8 +460,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Tasks.waitFor(false, () -> getProperties(program, MetadataScope.SYSTEM).isEmpty(), 10, TimeUnit.SECONDS);
 
     // Set some properties metadata
-    Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
-    addProperties(program, flowProperties);
+    Map<String, String> serviceProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
+    addProperties(program, serviceProperties);
 
     // Get properties
     Map<String, String> properties = getProperties(program, MetadataScope.USER);
@@ -474,7 +474,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // Get properties from deleted service - should return 404
     Tasks.waitFor(true, () -> getProperties(program, MetadataScope.USER).isEmpty(), 10, TimeUnit.SECONDS);
 
-    // Delete the App after stopping the flow
+    // Delete the App after stopping the service
     appClient.delete(program.getParent());
   }
 

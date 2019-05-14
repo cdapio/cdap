@@ -58,8 +58,7 @@ As an application developer building a Big Data application, you are primarily c
 
 A CDAP application consists of combinations of these components:
 
-- :ref:`Streams <streams>` for real-time data collection;
-- Programs—:ref:`Flows, <flows-flowlets-index>` :ref:`MapReduce, <mapreduce>`
+- Programs—:ref:`MapReduce, <mapreduce>`
   :ref:`Spark <spark>`—for data processing in real time or in batch;
 - :ref:`Datasets <datasets-index>` for data storage abstraction; and
 - :ref:`Services <user-services>` for data serving to external clients.

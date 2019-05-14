@@ -12,8 +12,7 @@ Data Exploration
 
 .. toctree::
    :maxdepth: 1
-   
-    Stream Exploration <streams>
+
     Fileset Exploration <filesets>
     Table Exploration <tables>
     ObjectMappedTable Exploration <object-mapped-tables>
@@ -22,7 +21,7 @@ Data Exploration
 
 
 This section covers how you can explore data in CDAP through the use of ad-hoc SQL-like queries.
-Queries can be run over streams and certain types of datasets. We refer to this as *CDAP Explore*,
+Queries can be run over certain types of datasets. We refer to this as *CDAP Explore*,
 or *Explore* for short.
 
 Enabling exploration for a dataset results in the creation of a SQL table in the Explore system. The
@@ -56,24 +55,16 @@ Note that if you are running a secure cluster, additional :ref:`configuration fo
 cluster <packages-configuration-enabling-kerberos>` is required.
 
 Exploration of data in CDAP is governed by a combination of enabling the CDAP Explore
-Service and then creating datasets and streams that are explorable. The CDAP Explore
+Service and creating datasets that are explorable. The CDAP Explore
 Service is enabled by a :ref:`setting in the CDAP configuration file
 <appendix-cdap-default-explore-service>` (``cdap-site.xml`` file).
 
-Datasets and streams (that were created before the Explore Service was enabled) can be
+Datasets (that were created before the Explore Service was enabled) can be
 enabled for exploration by using the :ref:`Query RESTful API <http-restful-api-query-enable-disable>`. 
 
-You can use the same Query RESTful API to disable exploration of a specific dataset or
-stream. The dataset or stream will still be accessible programmatically; it just won't
-respond to queries through the HTTP RESTful API or be available for exploration using the CDAP UI.
-
-.. |stream-exploration| replace:: **Stream Exploration:**
-.. _stream-exploration: streams.html
-
-- |stream-exploration|_ **All streams can be explored**, with support for attaching read
-  formats and schemas, **enabling powerful queries.** This section covers how you attach a
-  format and schema to a stream.
-
+You can use the same Query RESTful API to disable exploration of a specific dataset. The dataset
+will still be accessible programmatically; it just won't respond to queries through the HTTP RESTful
+API or be available for exploration using the CDAP UI.
 
 .. |fileset-exploration| replace:: **Fileset Exploration:**
 .. _fileset-exploration: filesets.html

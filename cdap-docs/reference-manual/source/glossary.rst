@@ -37,23 +37,9 @@ Glossary
       configure the pipelines. It provides an operational view of the resulting pipeline
       that allows for monitoring of metrics, logs, and other run-time information.
 
-   Stream
-      The primary means of bringing data from external systems into CDAP in real time; an
-      ordered, time-partitioned sequences of data, usable for real-time collection and
-      consumption of data.
-
    Dataset
       Datasets store and retrieve data and are a high-level abstraction of the underlying
       data storage with generic reusable implementations of common data patterns.
-
-   Flow
-      Flows are user-implemented real-time stream processors, comprised of one or
-      more flowlets that are wired together into a directed acyclic graph.
-
-   Flowlet
-      A flowlet represents an individual processing node within a flow. flowlets consume
-      data objects from their inputs and execute custom logic on each data object, able to
-      perform data operations as well as emit data objects to the flowlet’s outputs.
 
    MapReduce
       MapReduce is a processing model used to process data in batch. MapReduce programs can be
@@ -83,7 +69,7 @@ Glossary
 
    Service
       Services can be run in a Cask Data Application Platform (CDAP) application to serve
-      data to external clients. Similar to flows, services run in containers and the
+      data to external clients. Services run in containers and the
       number of running service instances can be dynamically scaled. Developers can
       implement custom services to interface with a legacy system and perform additional
       processing beyond the CDAP processing paradigms. Examples could include running an
@@ -143,7 +129,7 @@ Glossary
       of computers, each of which may be prone to failures."*
 
    DAG
-      A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP UI.
+      A directed acyclic graph. A Pipeline is displayed as a DAG in the CDAP UI.
 
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP applications, create
@@ -200,19 +186,9 @@ Glossary
       and aggregating over time ranges.
 
    Exploring
-      Streams and datasets in CDAP can be explored through ad-hoc SQL-like queries. To
-      enable exploration, you must set several properties when creating the stream or
+      Datasets in CDAP can be explored through ad-hoc SQL-like queries. To
+      enable exploration, you must set several properties when creating the
       dataset, and the files in a dataset must meet certain requirements.
-
-   Producer
-      A producer is an entity that emits events, such as a :term:`stream` or a
-      :term:`flowlet`. Flowlets can at the same time be both :term:`consumers <consumer>`
-      and producers.
-
-   Consumer
-      A consumer is an entity that is a recipient of events, typically a :term:`flowlet`.
-      A consumer flowlet is the recipient of a queue. The difference between the total of
-      a :term:`producer's <producer>` events and the consumed events is the pending events.
 
    Structured Record
       The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.
@@ -224,11 +200,6 @@ Glossary
       A plugin extends an :term:`application` by implementing an interface
       expected by the :term:`application`. Plugins are packaged in an :term:`artifact`.
 
-   View
-      A read-only view of a stream, with a specific read format. Read
-      formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
-      <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
-
    Pipeline
       CDAP provides an easy method of configuring
       pipelines using a visual editor, called :term:`CDAP Studio`. You click and
@@ -237,7 +208,7 @@ Glossary
       metrics, logs, and other run-time information.
 
    Storage Provider
-      For :term:`datasets <dataset>` and :term:`streams <stream>`, a storage provider is the underlying
+      For :term:`datasets <dataset>`, a storage provider is the underlying
       system that CDAP uses for persistence. Examples include HDFS, HBase, and Hive.
 
    Route Configuration

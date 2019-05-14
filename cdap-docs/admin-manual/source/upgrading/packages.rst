@@ -43,7 +43,7 @@ and then restart CDAP:
 
 .. highlight:: console
 
-1. Stop all flows, services, and other programs in all your applications.
+1. Stop all services, and other programs in all your applications.
 
 #. Stop all CDAP processes::
 

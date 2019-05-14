@@ -8,7 +8,7 @@
 Scaling Instances
 =================
 
-You can scale CDAP components (instances of flowlets, services, and workers) using:
+You can scale CDAP components (instances of services and workers) using:
 
 - the :ref:`Scaling <http-restful-api-lifecycle-scale>` methods of the 
   :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`;

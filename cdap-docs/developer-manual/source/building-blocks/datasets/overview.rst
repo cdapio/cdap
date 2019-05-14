@@ -238,7 +238,7 @@ operations and dataset management operations within the same transaction.
 Dataset Time-To-Live (TTL)
 ==========================
 
-Datasets, like :ref:`streams <streams>`, can have a Time-To-Live (TTL) property that
+Datasets can have a Time-To-Live (TTL) property that
 governs how long data will be persisted in a specific dataset. TTL is configured as the
 maximum age (in seconds) that data should be retained.
 
