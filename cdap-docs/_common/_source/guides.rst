@@ -17,9 +17,6 @@ Guides
 .. |user-guide| replace:: **User Guide**
 .. _user-guide: user-guide/index.html
 
-.. |user-guide-t-black| replace:: `Tutorials:`
-.. _user-guide-t-black: user-guide/tutorials/index.html
-
 .. |user-guide-prep-black| replace:: `Data Preparation:`
 .. _user-guide-prep-black: user-guide/data-preparation/index.html
 
@@ -30,8 +27,6 @@ Guides
 .. _user-guide-mmds-black: user-guide/mmds/index.html
 
 - |user-guide|_
-
-  - |user-guide-t-black|_ Tutorials on how to use Data Preparation and Data Pipelines for common data science use cases
 
   - |user-guide-prep-black|_ Documentation on usage of Data Preparation and Data Preparation transforms
 
@@ -157,20 +152,13 @@ Guides
   - |integ-man-sq-black|_ *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
 
-.. |examples-manual| replace:: **Guides and Tutorials**
+.. |examples-manual| replace:: **Guides**
 .. _examples-manual: examples-manual/index.html
 
 .. |ex-man-htg-black| replace:: `How-To Guides:`
 .. _ex-man-htg-black: examples-manual/how-to-guides/index.html
 
-.. |ex-man-t-black| replace:: `Tutorials:`
-.. _ex-man-t-black: examples-manual/tutorials/index.html
-
-.. |ex-man-capr-black| replace:: `CDAP Apps and Packs Repository:`
-.. _ex-man-capr-black: examples-manual/apps-packs.html
-
 - |examples-manual|_
 
   - |ex-man-htg-black|_ Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions
-  - |ex-man-t-black|_ Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations
   - |ex-man-capr-black|_ data applications built using CDAP and useful building blocks for your data applications

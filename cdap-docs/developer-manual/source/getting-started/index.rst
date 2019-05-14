@@ -42,16 +42,16 @@ Follow these steps:
 #. Obtain the CDAP Sandbox, using :ref:`one of the versions <sandbox-setup>`.
 #. Follow the :ref:`installation instructions <sandbox-setup>` for the version you downloaded.
 #. Follow our :ref:`Quick Start <quick-start>` for getting started with CDAP Data pipelines and Data Prep.
-#. We suggest the :ref:`Guides and Tutorials <examples:examples-introduction-index>`
+#. We suggest the :ref:`Guides <examples:examples-introduction-index>`
    as the easiest way to become familiar with CDAP Applications.
 #. To begin writing your own application, start by setting up your :ref:`development environment <dev-env>`.
 #. There are instructions for :doc:`starting and stopping CDAP <start-stop-cdap>`,
    and :doc:`building and running examples and applications <building-apps>`.
 
-Online, we have additional resources ranging from :ref:`user groups <faq-cdap-user-groups>` to these manuals,
-examples, guides, and tutorials:
+Online, we have additional resources ranging from :ref:`user groups <faq-cdap-user-groups>` to these manuals
+and how-to guides:
 
 - :ref:`Developer Manual: <developer-index>` Getting Started with building data pipelines, performing data prep and writing CDAP applications.
 - :ref:`Reference Manual: <reference:reference-index>` APIs, Licenses and Dependencies
 - :ref:`Administration Manual: <admin:admin-index>` Installation and Operation of Distributed CDAP installations
-- :ref:`How-To Guides and Tutorials <examples:examples-introduction-index>`
+- :ref:`How-To Guides <examples:examples-introduction-index>`

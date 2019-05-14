@@ -386,5 +386,3 @@ MapReduce Program Examples
 ==========================
 
 - For an example, the how-to guide :ref:`cdap-mapreduce-guide` demonstrates the use of MapReduce.
-
-- The :ref:`Tutorial <tutorials>` :ref:`WISE: Web Analytics <cdap-tutorial-wise>` uses MapReduce.
