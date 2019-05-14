@@ -101,6 +101,10 @@ installation and its security configuration.
 - |verification|_ How to verify the CDAP installation on your Hadoop cluster by using an
   **example application** and **health checks**.
 
+.. |incompatibilities| replace:: **Incompatibilities with 5.x clusters:**
+.. _incompatibilities: incompatibilities.html
+
+- |incompatibilities|_ What are various incompatibilities with 5.x clusters.
 
 .. |upgrading| replace:: **Upgrading:**
 .. _upgrading: upgrading/index.html
