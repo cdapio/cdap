@@ -59,9 +59,9 @@ import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.LineageWriter;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpLineageWriter;
-import io.cdap.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.data2.util.hbase.CoprocessorManager;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
@@ -236,7 +236,7 @@ public class UpgradeTool {
         @Override
         protected void configure() {
           // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
         }
       }
     );

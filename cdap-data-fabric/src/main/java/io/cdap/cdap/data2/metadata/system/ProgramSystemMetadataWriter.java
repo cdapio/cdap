@@ -24,7 +24,7 @@ import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
@@ -41,9 +41,9 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final ProgramSpecification programSpec;
   private final String creationTime;
 
-  public ProgramSystemMetadataWriter(MetadataPublisher metadataPublisher, ProgramId programId,
+  public ProgramSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ProgramId programId,
                                      ProgramSpecification programSpec, String creationTime) {
-    super(metadataPublisher, programId);
+    super(metadataServiceClient, programId);
     this.programId = programId;
     this.programSpec = programSpec;
     this.creationTime = creationTime;

@@ -87,6 +87,7 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -189,6 +190,7 @@ public class TestBase {
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
+  private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static MetadataStorage metadataStorage;
   private static MetadataAdmin metadataAdmin;
@@ -269,11 +271,6 @@ public class TestBase {
       }
     );
 
-    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataStorage = injector.getInstance(MetadataStorage.class);
-    metadataAdmin = injector.getInstance(MetadataAdmin.class);
-    metadataStorage.createIndex();
-
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -281,6 +278,14 @@ public class TestBase {
 
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
+
+    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    metadataStorage = injector.getInstance(MetadataStorage.class);
+    metadataAdmin = injector.getInstance(MetadataAdmin.class);
+    metadataStorage.createIndex();
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
+
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
@@ -494,14 +499,15 @@ public class TestBase {
     }
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
+    metadataService.stopAndWait();
+    metadataSubscriberService.stopAndWait();
+    Closeables.closeQuietly(metadataStorage);
     txService.stopAndWait();
 
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
     provisioningService.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    Closeables.closeQuietly(metadataStorage);
   }
 
   protected MetricsManager getMetricsManager() {
