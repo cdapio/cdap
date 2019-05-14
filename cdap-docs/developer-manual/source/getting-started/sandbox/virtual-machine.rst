@@ -41,37 +41,6 @@ remove software, the admin user and password are both ``cdap``.
 
 .. include:: ../dev-env.rst
    :start-line: 7
-   :end-line: 22
-
-.. ifconfig:: snapshot_version
-
-  .. tabbed-parsed-literal::
-    :tabs: "Linux Virtual Machine"
-    :independent:
-
-    $ mvn archetype:generate \
-        -DarchetypeGroupId=io.cdap.cdap \
-        -DarchetypeArtifactId=cdap-app-archetype \
-        |archetype-repository| \
-        |archetype-version| \
-        -DartifactId=myExampleApp \
-        -DgroupId=org.example.app
-
-.. ifconfig:: not snapshot_version
-
-  .. tabbed-parsed-literal::
-    :tabs: "Linux Virtual Machine"
-    :independent:
-
-    $ mvn archetype:generate \
-        -DarchetypeGroupId=io.cdap.cdap \
-        -DarchetypeArtifactId=cdap-app-archetype \
-        |archetype-version| \
-        -DartifactId=myExampleApp \
-        -DgroupId=org.example.app
-
-.. include:: ../dev-env.rst
-   :start-line: 46
 
 Starting and Stopping CDAP Sandbox
 ========================================
