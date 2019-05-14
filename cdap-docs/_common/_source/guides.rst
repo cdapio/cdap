@@ -161,4 +161,3 @@ Guides
 - |examples-manual|_
 
   - |ex-man-htg-black|_ Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions
-  - |ex-man-capr-black|_ data applications built using CDAP and useful building blocks for your data applications

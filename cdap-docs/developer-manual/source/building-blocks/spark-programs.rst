@@ -180,65 +180,6 @@ name parameter. (By default, if the namespace parameter is not supplied, the nam
 which the program runs is used.).
 
 
-Spark and Streams
-=================
-Spark programs in CDAP can directly access **streams** similar to the way a MapReduce can.
-These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a stream.
-You can read from a stream using:
-
-.. tabbed-parsed-literal::
-  :tabs: Scala,Java
-  :dependent: java-scala
-  :languages: scala,java
-
-  .. Scala
-
-  val ratingsDataset = sc.fromStream[(Long, String)]("ratingsStream")
-
-  .. Java
-
-  JavaPairRDD<Long, String> ratingsDataset = sec.fromStream("ratingsStream", String.class);
-
-It’s possible to read parts of a stream by specifying start and end timestamps using:
-
-.. tabbed-parsed-literal::
-  :tabs: Scala,Java
-  :dependent: java-scala
-  :languages: scala,java
-
-  .. Scala
-
-  val ratingsDataset = sc.fromStream[(Long, String)]("ratingsStream", startTime, endTime)
-
-  .. Java
-
-  JavaPairRDD<Long, String> ratingsDataset = sec.fromStream("ratingsStream", startTime, endTime, String.class);
-
-.. highlight:: scala
-
-In Scala, custom object conversion is done through an implicit conversion function::
-
-    // The SparkMain provides implicit functions for (Long, String) and String conversion already
-    val pairRDD: RDD[(Long, String)] = sc.fromStream(streamName)
-    val valueRDD: RDD[String] = sc.fromStream(streamName)
-
-    // Defining a custom conversion
-    implicit def toArray(event: StreamEvent): Array[String] = Bytes.toString(event.getBody).split(",")
-    val rdd: RDD[Array[String]] = sc.fromStream(streamName)
-
-.. highlight:: java
-
-In Java, you can read custom objects from a stream by providing a ``decoderType`` extended from
-:javadoc:`StreamEventDecoder <io/cdap/cdap/api/stream/StreamEventDecoder>`::
-
-    sec.fromStream(streamName, startTime, endTime, decoderType, keyType, valueType);
-
-**Note**: Spark programs can read from streams in different namespaces by passing a
-``String`` containing the :term:`namespace` as an additional parameter before the
-:term:`stream` name parameter. (By default, if the namespace parameter is not supplied,
-the namespace in which the program runs is used.)
-
-
 Spark and Services
 ==================
 Spark programs in CDAP, including worker nodes, can discover Services.
