@@ -63,7 +63,7 @@ a prefix can be added to limit the scope of the arguments.
 
 Examples
 ========
-As an example, assume that you have deployed the :ref:`Purchase <examples-purchase>` example in CDAP
+As an example, assume that you have deployed an application named MyApp in CDAP
 in the ``default`` namespace, and would like to set the memory used by its YARN containers.
 
 - To set the memory used by the mappers of *all* MapReduce jobs, in *all* namespaces, as ``2048 MB``, you would use::
@@ -84,7 +84,7 @@ in the ``default`` namespace, and would like to set the memory used by its YARN 
       $ curl -w"\n" -X PUT "http://example.com:11015/v3/preferences" \
           -H 'Content-Type: application/json' -d '{ "task.mapper.system.resources.memory": 2048 }'
 
-- To set the memory used by the mapper of the *PurchaseHistoryBuilder* MapReduce job, you would use::
+- To set the memory used by the mapper of the *MyMapReduce* MapReduce job, you would use::
 
     task.mapper.system.resources.memory = 2048
 
@@ -93,13 +93,13 @@ in the ``default`` namespace, and would like to set the memory used by its YARN 
     .. tabbed-parsed-literal::
        :tabs: "CDAP CLI"
 
-       |cdap >| set preferences mapreduce 'task.mapper.system.resources.memory=2048' PurchaseHistory.PurchaseHistoryBuilder
+       |cdap >| set preferences mapreduce 'task.mapper.system.resources.memory=2048' MyApp.MyMapReduce
 
   or by using a ``curl`` call:
 
     .. tabbed-parsed-literal::
 
-      $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/PurchaseHistory/mapreduce/PurchaseHistoryBuilder/preferences" \
+      $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/MyApp/mapreduce/MyMapReduce/preferences" \
           -H 'Content-Type: application/json' -d '{ "task.mapper.system.resources.memory": 2048 }'
 
 - To set the memory used by the *collector* node of the *PurchaseFlow*, you would use::
@@ -111,13 +111,13 @@ in the ``default`` namespace, and would like to set the memory used by its YARN 
     .. tabbed-parsed-literal::
        :tabs: "CDAP CLI"
 
-       |cdap >| set preferences flow 'flowlet.collector.system.resources.memory=1024' PurchaseHistory.PurchaseFlow
+       |cdap >| set preferences flow 'flowlet.collector.system.resources.memory=1024' MyApp.PurchaseFlow
 
   or by using a ``curl`` call:
 
     .. tabbed-parsed-literal::
 
-      $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/PurchaseHistory/flows/PurchaseFlow/preferences" \
+      $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/MyApp/flows/PurchaseFlow/preferences" \
           -H 'Content-Type: application/json' -d '{ "flowlet.collector.system.resources.memory": 1024 }'
 
 These configurations can also be set through the CDAP UI, either as preferences or runtime arguments.

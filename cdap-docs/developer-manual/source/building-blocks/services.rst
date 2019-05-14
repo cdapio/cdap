@@ -124,8 +124,6 @@ of small chunks::
     // ...
   }
 
-An example of how to implement ``HttpContentConsumer`` is shown in the :ref:`Sport Results Example <examples-sport-results>`.
-
 .. _services-path-parameters:
 
 About Path Parameters

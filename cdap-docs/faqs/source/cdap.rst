@@ -77,10 +77,9 @@ been installed::
 .. rubric:: Installation: YARN
 
 
-I've followed the install instructions, yet CDAP does not start and fails verification. What next?
+I've followed the install instructions, yet CDAP does not start. What next?
 --------------------------------------------------------------------------------------------------
-If you have followed :ref:`the installation instructions <installation-index>`, and CDAP either did not pass the
-:ref:`verification step <admin-manual-verification>` or did not startup, check:
+If you have followed :ref:`the installation instructions <installation-index>`, and CDAP either did not startup, check:
 
 - Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for Distributed CDAP or
   ``$CDAP_HOME/logs`` for CDAP Sandbox)

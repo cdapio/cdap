@@ -143,15 +143,8 @@ By default, CDAP will start an implicit transaction for these methods:
   programs and sub-programs (flowlets, service handlers, and workflow actions), with the
   exception of worker programs.
 
-For example, as shown in the :ref:`WordCount example <examples-word-count>`, the
-``RetrieveCountsHandler`` uses the *wordCounts* ``KeyValueTable``. CDAP implicitly starts a
-transaction for this handler method, and the handler can rely on the transactional
-consistency of the data it reads from the dataset:
-
-.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/RetrieveCountsHandler.java
-   :language: java
-   :lines: 118-140
-   :dedent: 2
+CDAP implicitly starts a transaction for this handler method, and the handler can rely
+on the transactional consistency of the data it reads from the dataset.
 
 For flowlet process methods, this starting of implicit transactions cannot be disabled,
 because that would impact the semantics of flow execution.
@@ -194,16 +187,6 @@ Explicit Transactions
 ----------------------
 Every program context (except for the ``FlowletContext`` and the ``MapReduceTaskContext``)
 allows the executing of a block of code in an explicit transaction. 
-
-For example, this service handler method (from the ``UploadService`` of the
-:ref:`SportResultsExample <examples-sport-results>`) uses an explicit transaction to
-access the partition metadata, whereas the streaming of the file contents to the client is
-performed outside the transaction:
-
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
-   :language: java
-   :lines: 75-104
-   :dedent: 4
 
 Be aware that you cannot nest transactions. For example, either:
 

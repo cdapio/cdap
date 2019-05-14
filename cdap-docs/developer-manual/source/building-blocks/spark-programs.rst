@@ -73,14 +73,6 @@ When a Spark program is configured, the resource requirements for both the Spark
 processes and the Spark executor processes can be set, both in terms of the amount of
 memory (in megabytes) and the number of virtual cores assigned.
 
-For example, in the :ref:`Spark Page Rank <examples-spark-page-rank>` example, in the configuration of
-the ``PageRankSpark``, the amount of memory is specified:
-
-.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
-   :language: java
-   :lines: 110-122
-   :dedent: 2
-
 If both the memory and the number of cores needs to be set, this can be done using::
 
     setExecutorResources(new Resources(1024, 2));
