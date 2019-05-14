@@ -36,7 +36,6 @@ require('./ParseDirective.scss');
 
 const DIRECTIVE_MAP = {
   CSV: 'parse-as-csv',
-  XML: 'parse-as-xml',
   JSON: 'parse-as-json',
   XMLTOJSON: 'parse-xml-to-json',
   LOG: 'parse-as-log',
@@ -62,7 +61,6 @@ export default class ParseDirective extends Component {
       'CSV',
       'AVRO',
       'EXCEL',
-      'XML',
       'JSON',
       'XMLTOJSON',
       'LOG',
