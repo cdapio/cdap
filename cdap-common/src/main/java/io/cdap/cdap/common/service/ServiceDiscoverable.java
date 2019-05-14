@@ -29,6 +29,8 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -43,32 +45,41 @@ public final class ServiceDiscoverable {
   private static final Set<ProgramType> USER_SERVICE_TYPES = Collections.unmodifiableSet(EnumSet.of(ProgramType.SERVICE,
                                                                                                     ProgramType.SPARK));
 
+  // mapping from the short discoverable component name to the program type
+  private static final Map<String, ProgramType> SHORT_NAME_TO_PROGRAM_TYPE_MAPPING = new HashMap<>();
+  static {
+    for (ProgramType userServiceType : USER_SERVICE_TYPES) {
+      SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.put(userServiceType.getDiscoverableTypeName(), userServiceType);
+    }
+  }
+
   public static String getName(ProgramId programId) {
     return getName(programId.getNamespace(), programId.getApplication(), programId.getType(), programId.getProgram());
   }
 
   public static String getName(String namespaceId, String appId, ProgramType programType, String programName) {
     if (!USER_SERVICE_TYPES.contains(programType)) {
-      throw new IllegalArgumentException("Program type should be one of " + USER_SERVICE_TYPES);
+      throw new IllegalArgumentException("Program type should be one of " + SHORT_NAME_TO_PROGRAM_TYPE_MAPPING);
     }
-    return String.format("%s.%s.%s.%s", programType.name().toLowerCase(), namespaceId, appId, programName);
+    return String.format("%s.%s.%s.%s", programType.getDiscoverableTypeName(), namespaceId, appId, programName);
   }
 
   public static ProgramId getId(String name) {
     int firstIndex = name.indexOf('.');
     int secondIndex = name.indexOf('.', firstIndex + 1);
     int thirdIndex = name.indexOf('.', secondIndex + 1);
-    String programType = name.substring(0, firstIndex);
+    String programTypeShortForm = name.substring(0, firstIndex);
     String namespaceId = name.substring(firstIndex + 1, secondIndex);
     String appId = name.substring(secondIndex + 1, thirdIndex);
     String programName = name.substring(thirdIndex + 1);
 
-    return new ProgramId(namespaceId, appId, programType, programName);
+    return new ProgramId(namespaceId, appId, SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.get(programTypeShortForm),
+                         programName);
   }
 
   public static boolean isUserService(String discoverableName) {
-    for (ProgramType type : USER_SERVICE_TYPES) {
-      if (discoverableName.startsWith(type.name().toLowerCase() + ".")) {
+    for (ProgramType programType : USER_SERVICE_TYPES) {
+      if (discoverableName.startsWith(programType.getDiscoverableTypeName() + ".")) {
         return true;
       }
     }

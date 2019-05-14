@@ -83,7 +83,7 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   public ServiceDiscovered discover(String name) {
     // In Remote runtime, we don't support program discovery, hence always return an empty ServiceDiscovered
     for (ProgramType programType : ProgramType.values()) {
-      if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverablePrefix())) {
+      if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverableTypeName() + ".")) {
         return new DefaultServiceDiscovered(name);
       }
     }
