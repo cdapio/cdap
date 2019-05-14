@@ -68,7 +68,6 @@ build_property_tables(defaults_dict, exclusions, dcd.RST_TABLE_HEADER, "logging-
 logging_pipeline_configuration_1 = [
     "log.pipeline.cdap.dir.permissions",
     "log.pipeline.cdap.file.cleanup.batch.size",
-    "log.pipeline.cdap.file.cleanup.transaction.timeout",
     "log.pipeline.cdap.file.max.lifetime.ms",
     "log.pipeline.cdap.file.max.size.bytes",
     "log.pipeline.cdap.file.permissions",
