@@ -367,8 +367,7 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
 - map or reduce methods; or
 - Executors in Spark programs.
 
-You can always read the workflow token in any of the above situations. The :ref:`Wikipedia
-Pipeline example <examples-wikipedia-data-pipeline>` demonstrates some of these techniques.
+You can always read the workflow token in any of the above situations.
 
 
 .. _workflow_parallel:
