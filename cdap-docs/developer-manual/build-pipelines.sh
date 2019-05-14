@@ -243,7 +243,7 @@ function pipelines_download_includes() {
   download_md_file core-plugins KVTable-batchsource.md
   download_md_file core-plugins LogParser-transform.md
   download_md_file core-plugins Projection-transform.md
-  download_md_file core-plugins PythonEvaluator-transform.md
+# download_md_file core-plugins PythonEvaluator-transform.md Moved to https://github.com/data-integrations/python-plugins
   download_md_file core-plugins RowDenormalizer-batchaggregator.md '' "analytic"
 #   download_md_file core-plugins S3-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
 #   download_md_file core-plugins S3Avro-batchsink.md # Moved to https://github.com/hydrator/amazon-s3-plugins
@@ -253,7 +253,7 @@ function pipelines_download_includes() {
   download_md_file core-plugins SnapshotParquet-batchsink.md
   download_md_file core-plugins SnapshotParquet-batchsource.md
   download_md_file core-plugins SSH-action.md
-  download_md_file core-plugins Stream-batchsource.md
+#  download_md_file core-plugins Stream-batchsource.md - Deleted
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
   download_md_file core-plugins Table-batchsink.md
   download_md_file core-plugins Table-batchsource.md
