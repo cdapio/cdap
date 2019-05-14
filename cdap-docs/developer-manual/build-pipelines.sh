@@ -253,7 +253,6 @@ function pipelines_download_includes() {
   download_md_file core-plugins SnapshotParquet-batchsink.md
   download_md_file core-plugins SnapshotParquet-batchsource.md
   download_md_file core-plugins SSH-action.md
-#  download_md_file core-plugins Stream-batchsource.md - Deleted
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
   download_md_file core-plugins Table-batchsink.md
   download_md_file core-plugins Table-batchsource.md

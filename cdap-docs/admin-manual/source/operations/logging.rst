@@ -193,9 +193,9 @@ their preferences before the program starts.
   using the :ref:`CDAP UI <cdap-ui>`, :ref:`CDAP CLI <cdap-cli>`, or other command line
   tools. The logger name should be prefixed with ``system.log.level``.
 
-  For example, if you want to set the log level of the ``UploadService`` class of the
-  :ref:`Sport Results example <examples-sport-results>` to ``DEBUG``, you would use
-  ``system.log.level.io.cdap.cdap.examples.sportresults.UploadService`` as the key and ``DEBUG``
+  For example, if you want to set the log level of a class named ``MyService`` with package
+  ``my.sample.package`` to ``DEBUG``, you would use
+  ``system.log.level.my.sample.package.MyService`` as the key and ``DEBUG``
   as the value. This can be applied to any package or classes. If the logger name is
   omitted, it will change the log level of ROOT.
 
