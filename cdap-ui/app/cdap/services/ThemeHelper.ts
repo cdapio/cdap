@@ -43,6 +43,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'navbar-color'?: string;
     'font-family'?: string;
     'page-name-color'?: string;
+    'plugin-reference-heading-bg-color'?: string;
   };
   content?: {
     'product-name'?: string;
@@ -132,6 +133,13 @@ export function applyTheme() {
     }
     if ('page-name-color' in stylesJSON && isColor(stylesJSON['page-name-color'])) {
       stylesToApply['page-name-color'] = stylesJSON['page-name-color'];
+    }
+    if (
+      'plugin-reference-heading-bg-color' in stylesJSON &&
+      isColor(stylesJSON['plugin-reference-heading-bg-color'])
+    ) {
+      stylesToApply['plugin-reference-heading-bg-color'] =
+        stylesJSON['plugin-reference-heading-bg-color'];
     }
     // this is what's going on under the hood for modern browsers:
     // document.documentElement.style.setProperty(`--${cssVar}`, cssValue);

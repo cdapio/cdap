@@ -65,4 +65,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('toggleSwitch', function(reactDirective) {
     return reactDirective(window.CaskCommon.ToggleSwitch);
+  })
+  .directive('markdown', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Markdown);
   });

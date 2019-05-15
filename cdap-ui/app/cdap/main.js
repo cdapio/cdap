@@ -52,6 +52,7 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 import ThemeWrapper from 'components/ThemeWrapper';
+import { MarkdownImpl } from 'components/Markdown/MarkdownImplExample';
 
 import './globals';
 const SampleTSXComponent = Loadable({
@@ -182,6 +183,7 @@ class CDAP extends Component {
                     </ErrorBoundary>
                   )}
                 />
+                <Route exact path="/markdownexperiment" component={MarkdownImpl} />
                 {/*
                       Eventually handling 404 should move to the error boundary and all container components will have the error object.
                       */}

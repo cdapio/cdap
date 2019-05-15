@@ -38,6 +38,16 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
         400: '#7cd2eb',
         500: '#cae7ef',
       },
+      grey: {
+        50: '#333333',
+        100: '#666666',
+        200: '#999999',
+        300: '#bbbbbb',
+        400: '#cccccc',
+        500: '#dbdbdb',
+        600: '#eeeeee',
+        700: '#f5f5f5',
+      },
     },
     navbarBgColor: 'var(--navbar-color)',
     buttonLink: {
