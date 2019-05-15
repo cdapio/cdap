@@ -35,15 +35,18 @@ $success_alert_bg_color: $brand-success;
     .content-switch {
       flex: 0.4;
     }
+
     .btn-primary-mwc {
       background-color: #03a9f4 !important;
       border-color: #03a9f4 !important;
     }
+
     .content-switch {
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
+
     .left-title {
       padding-left: 0;
       overflow: hidden;
@@ -97,7 +100,9 @@ $success_alert_bg_color: $brand-success;
         cursor: pointer;
         font-size: 14px;
 
-        .fa-pencil { margin-left: 10px; }
+        .fa-pencil {
+          margin-left: 10px;
+        }
       }
     }
 
@@ -118,6 +123,7 @@ $success_alert_bg_color: $brand-success;
 
       .btn-primary {
         margin: 0 10px;
+
         .icon-spinner {
           margin: 0 5px;
         }
@@ -125,13 +131,16 @@ $success_alert_bg_color: $brand-success;
 
       .plus-button {
         margin: 0px 15px 51px 0;
+
         .popper {
           margin-right: 20px;
         }
       }
+
       .more-dropdown {
         margin-right: 20px;
         margin-left: 15px;
+
         > div {
           &:first-of-type {
             line-height: 31px;
@@ -139,21 +148,27 @@ $success_alert_bg_color: $brand-success;
             cursor: pointer;
           }
         }
+
         .popper {
           margin-right: 80px;
+
           ul {
             margin: 0;
           }
+
           .popover-menu-item {
             margin: 0;
+
             .btn.btn-link {
               padding: 0;
             }
+
             svg {
               ~ * {
                 margin-left: 5px;
               }
             }
+
             &.disabled {
               cursor: not-allowed;
               opacity: 0.5;
@@ -184,6 +199,7 @@ $success_alert_bg_color: $brand-success;
   .close-section {
     cursor: pointer;
   }
+
   .modal-body {
     overflow-y: auto;
   }
@@ -207,7 +223,10 @@ $success_alert_bg_color: $brand-success;
 
     .record-delimiter {
       margin-top: 10px;
-      .label-control { margin-right: 10px; }
+
+      .label-control {
+        margin-right: 10px;
+      }
     }
   }
 }
@@ -218,7 +237,9 @@ $success_alert_bg_color: $brand-success;
   .modal-body {
     padding: 0;
 
-    .message { padding: 15px; }
+    .message {
+      padding: 15px;
+    }
 
     pre {
       .btn-link {
@@ -229,13 +250,16 @@ $success_alert_bg_color: $brand-success;
 
     .loading-container {
       padding: 25px;
+
       &.error-message-container {
         padding: 15px;
+
         .fa.fa-exclamation-triangle {
           font-size: 15px;
           margin-right: 5px;
         }
       }
+
       .remedy-message {
         margin: 3px 0;
       }
@@ -252,20 +276,28 @@ $success_alert_bg_color: $brand-success;
         border-top: 1px solid $grey-05;
         padding: 10px 0;
 
-        &:first-child { border-right: 1px solid $grey-05; }
-        .fa { margin-right: 10px; }
+        &:first-child {
+          border-right: 1px solid $grey-05;
+        }
+
+        .fa {
+          margin-right: 10px;
+        }
 
         &.inactive {
           cursor: not-allowed;
           color: $action-btn-inactive-color;
 
-          &:hover { background: transparent; }
+          &:hover {
+            background: transparent;
+          }
         }
       }
 
     }
   }
 }
+
 .add-to-pipeline-dataprep-modal.modal-dialog {
   .modal-footer {
     &.dataset-copy-error-container {
@@ -274,6 +306,7 @@ $success_alert_bg_color: $brand-success;
     }
   }
 }
+
 .dataprep-schema-modal.modal-dialog {
   .modal-header {
     .btn.btn-link {
@@ -294,18 +327,22 @@ $success_alert_bg_color: $brand-success;
       }
     }
   }
+
   .modal-body {
     overflow-y: auto;
     max-height: 75vh;
+
     .remedy-message {
       margin: 3px 0;
     }
+
     .btn-link {
       cursor: pointer;
       color: var(--brand-primary-color);
     }
   }
 }
+
 .persist-view-schema-modal.modal-dialog {
   width: 500px;
 
@@ -327,7 +364,7 @@ $success_alert_bg_color: $brand-success;
     }
 
     .remedy-message {
-      margin: 3px 0 ;
+      margin: 3px 0;
     }
 
     .buttons-container {
