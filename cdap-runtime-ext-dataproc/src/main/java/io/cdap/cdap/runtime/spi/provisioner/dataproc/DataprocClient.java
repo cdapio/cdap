@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -32,7 +33,11 @@ import com.google.api.services.compute.model.AccessConfig;
 import com.google.api.services.compute.model.Firewall;
 import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
+import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkInterface;
+import com.google.api.services.compute.model.NetworkList;
+import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -44,11 +49,21 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -65,12 +80,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
 public class DataprocClient implements AutoCloseable {
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
 
@@ -80,24 +95,74 @@ public class DataprocClient implements AutoCloseable {
   private final String projectId;
   private final String network;
   private final String zone;
-  private final String systemNetwork;
+  private final boolean useInternalIP;
 
   public static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
+    // if project, network, or zone are null, try to auto-detect them
+
+    // If CDAP is running on a GCE or GKE VM, the project of the VM can be fetched from the VM metadata
+    String project = conf.getProjectId();
+    String systemProject = null;
+    if (project == null) {
+      systemProject = getSystemProjectId();
+      project = systemProject;
+      LOG.debug("Auto-detected project {}", project);
+    }
+
+    // There are two ways to determine the network
+    //   1. CDAP is running on a GCE or GKE VM and the configured project is the same as the VM project
+    //      In this scenario, we can use the same network that CDAP is in, which will allow the provisioner
+    //      to use internal IPs to communicate with the cluster, removing the need to check firewalls, etc.
+    //   2. List networks in the configured project with the Compute API and pick one.
+    //      The might end up picking a network that is not actually desired, in which case the user should
+    //      explicitly specify the network and not leave it as auto-detect.
+    String network = conf.getNetwork();
     String systemNetwork = null;
     try {
-      systemNetwork = DataprocConf.getSystemNetwork();
+      systemNetwork = getSystemNetwork();
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP
     }
-
-    ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
+    if (network == null && project.equals(systemProject)) {
+      network = systemNetwork;
+    } else {
+      NetworkList networkList = compute.networks().list(project).execute();
+      List<Network> networks = networkList.getItems();
+      if (networks != null) {
+        for (Network projectNetwork : networks) {
+          if (projectNetwork != null && projectNetwork.getName() != null) {
+            network = projectNetwork.getName();
+            LOG.debug("Auto-detected network {} from project {}", network, project);
+            break;
+          }
+        }
+      }
+    }
+    if (network == null) {
+      throw new IllegalArgumentException("Could not detect a network to use. Please explicitly set the network.");
+    }
 
-    return new DataprocClient(conf, client, compute, systemNetwork);
+    // If CDAP is running on a GCE or GKE VM, use the same zone as the VM
+    // otherwise, the user needs to specify the zone
+    String zone = conf.getZone();
+    if (zone == null) {
+      zone = getSystemZone();
+      LOG.debug("Auto-detected zone {}", zone);
+    }
+
+    // fill in the null values with the detected values
+    conf = new DataprocConf(conf, zone, project, network);
+    ClusterControllerClient client = getClusterControllerClient(conf);
+
+    boolean useInternalIP = network.equals(systemNetwork) && project.equals(systemProject) &&
+      !conf.isPreferExternalIP();
+    return new DataprocClient(conf, client, compute, useInternalIP);
   }
 
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
+    CredentialsProvider credentialsProvider =
+      FixedCredentialsProvider.create(getDataprocCredentials(conf.getAccountKey()));
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)
@@ -107,17 +172,18 @@ public class DataprocClient implements AutoCloseable {
 
   private static Compute getCompute(DataprocConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), conf.getComputeCredential())
+    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(),
+                               getComputeCredential(conf.getAccountKey()))
       .setApplicationName("cdap")
       .build();
   }
 
   private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute,
-                         @Nullable String systemNetwork) {
+                         boolean useInternalIP) {
     this.projectId = conf.getProjectId();
     this.network = conf.getNetwork();
     this.zone = conf.getZone();
-    this.systemNetwork = systemNetwork;
+    this.useInternalIP = useInternalIP;
     this.conf = conf;
     this.client = client;
     this.compute = compute;
@@ -154,8 +220,10 @@ public class DataprocClient implements AutoCloseable {
         .addServiceAccountScopes("https://www.googleapis.com/auth/cloud-platform")
         .setZoneUri(conf.getZone())
         .putAllMetadata(metadata);
-      for (String targetTag : getFirewallTargetTags()) {
-        clusterConfig.addTags(targetTag);
+      if (!useInternalIP) {
+        for (String targetTag : getFirewallTargetTags()) {
+          clusterConfig.addTags(targetTag);
+        }
       }
 
       Map<String, String> dataprocProps = new HashMap<>(conf.getDataprocProperties());
@@ -390,7 +458,7 @@ public class DataprocClient implements AutoCloseable {
       ts = -1L;
     }
     String ip = properties.get("ip.external");
-    if (network.equals(systemNetwork) && !conf.isPreferExternalIP()) {
+    if (useInternalIP) {
       ip = properties.get("ip.internal");
     }
     return new Node(nodeName, type, ip, ts, properties);
@@ -426,6 +494,107 @@ public class DataprocClient implements AutoCloseable {
       throw new RetryableProvisionException(e);
     }
     throw e;
+  }
+
+  /**
+   * @return GoogleCredential for use with Compute
+   * @throws IOException if there was an error reading the account key
+   */
+  private static GoogleCredential getComputeCredential(String accountKey) throws IOException {
+    if (accountKey == null) {
+      return GoogleCredential.getApplicationDefault();
+    }
+
+    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
+      return GoogleCredential.fromStream(is)
+        .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
+    }
+  }
+
+  /**
+   * @return GoogleCredentials for use with Dataproc
+   * @throws IOException if there was an error reading the account key
+   */
+  private static GoogleCredentials getDataprocCredentials(String accountKey) throws IOException {
+    if (accountKey == null) {
+      return getComputeEngineCredentials();
+    }
+
+    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
+      return GoogleCredentials.fromStream(is);
+    }
+  }
+
+  private static GoogleCredentials getComputeEngineCredentials() throws IOException {
+    try {
+      GoogleCredentials credentials = ComputeEngineCredentials.create();
+      credentials.refreshAccessToken();
+      return credentials;
+    } catch (IOException e) {
+      throw new IOException("Unable to get credentials from the environment. "
+                              + "Please explicitly set the account key.", e);
+    }
+  }
+
+  /**
+   * Get network from the metadata server.
+   */
+  private static String getSystemNetwork() {
+    try {
+      String network = getMetadata("instance/network-interfaces/0/network");
+      // will be something like projects/<project-number>/networks/default
+      return network.substring(network.lastIndexOf('/') + 1);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Unable to get the network from the environment. "
+                                           + "Please explicitly set the network.", e);
+    }
+  }
+
+  /**
+   * Get zone from the metadata server.
+   */
+  private static String getSystemZone() {
+    try {
+      String zone = getMetadata("instance/zone");
+      // will be something like projects/<project-number>/zones/us-east1-b
+      return zone.substring(zone.lastIndexOf('/') + 1);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Unable to get the zone from the environment. "
+                                           + "Please explicitly set the zone.", e);
+    }
+  }
+
+  /**
+   * Get project id from the metadata server.
+   */
+  private static String getSystemProjectId() {
+    try {
+      return getMetadata("project/project-id");
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Unable to get project id from the environment. "
+                                           + "Please explicitly set the project id and account key.", e);
+    }
+  }
+
+  /**
+   * Makes a request to the metadata server that lives on the VM, as described at
+   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
+   */
+  private static String getMetadata(String resource) throws IOException {
+    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
+    HttpURLConnection connection = null;
+    try {
+      connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestProperty("Metadata-Flavor", "Google");
+      connection.connect();
+      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+        return CharStreams.toString(reader);
+      }
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
   }
 
   /**

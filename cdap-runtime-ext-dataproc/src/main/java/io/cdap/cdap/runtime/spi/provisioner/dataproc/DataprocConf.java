@@ -16,20 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.auth.oauth2.ComputeEngineCredentials;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -75,9 +63,17 @@ public class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
-  private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
-                       String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
-                       int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
+  DataprocConf(DataprocConf existing, String zone, String projectId, String network) {
+    this(existing.accountKey, existing.region, zone, projectId, network, existing.masterNumNodes, existing.masterCPUs,
+         existing.masterMemoryMB, existing.masterDiskGB, existing.workerNumNodes, existing.workerCPUs,
+         existing.workerMemoryMB, existing.workerDiskGB, existing.pollCreateDelay, existing.pollCreateJitter,
+         existing.pollDeleteDelay, existing.pollInterval, existing.preferExternalIP, existing.stackdriverLoggingEnabled,
+         existing.stackdriverMonitoringEnabled, existing.publicKey, existing.dataprocProperties);
+  }
+
+  private DataprocConf(@Nullable String accountKey, String region, @Nullable String zone, @Nullable String projectId,
+                       @Nullable String network, int masterNumNodes, int masterCPUs, int masterMemoryMB,
+                       int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
@@ -106,18 +102,26 @@ public class DataprocConf {
     this.dataprocProperties = dataprocProperties;
   }
 
+  @Nullable
+  public String getAccountKey() {
+    return accountKey;
+  }
+
   public String getRegion() {
     return region;
   }
 
+  @Nullable
   public String getZone() {
     return zone;
   }
 
+  @Nullable
   public String getProjectId() {
     return projectId;
   }
 
+  @Nullable
   public String getNetwork() {
     return network;
   }
@@ -183,46 +187,6 @@ public class DataprocConf {
     return dataprocProperties;
   }
 
-  /**
-   * @return GoogleCredential for use with Compute
-   * @throws IOException if there was an error reading the account key
-   */
-  public GoogleCredential getComputeCredential() throws IOException {
-    if (accountKey == null) {
-      return GoogleCredential.getApplicationDefault();
-    }
-
-    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      return GoogleCredential.fromStream(is)
-        .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
-    }
-  }
-
-  /**
-   * @return GoogleCredentials for use with Dataproc
-   * @throws IOException if there was an error reading the account key
-   */
-  public GoogleCredentials getDataprocCredentials() throws IOException {
-    if (accountKey == null) {
-      return getComputeEngineCredentials();
-    }
-
-    try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      return GoogleCredentials.fromStream(is);
-    }
-  }
-
-  private static GoogleCredentials getComputeEngineCredentials() throws IOException {
-    try {
-      GoogleCredentials credentials = ComputeEngineCredentials.create();
-      credentials.refreshAccessToken();
-      return credentials;
-    } catch (IOException e) {
-      throw new IOException("Unable to get credentials from the environment. "
-                              + "Please explicitly set the account key.", e);
-    }
-  }
-
   private String getMachineType(int cpus, int memoryGB) {
     // TODO: there are special names for pre-defined cpu and memory
     // for example, 4cpu 3.6gb memory is 'n1-highcpu-4', 4cpu 15gb memory is 'n1-standard-4'
@@ -240,26 +204,9 @@ public class DataprocConf {
 
   public static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
-    if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
-      try {
-        getComputeEngineCredentials();
-      } catch (IOException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
-      }
-    }
     String projectId = getString(properties, PROJECT_ID_KEY);
-    if (projectId == null || AUTO_DETECT.equals(projectId)) {
-      projectId = getSystemProjectId();
-    }
-
     String zone = getString(properties, "zone");
-    if (zone == null || AUTO_DETECT.equals(zone)) {
-      zone = getSystemZone();
-    }
     String network = getString(properties, "network");
-    if (network == null || AUTO_DETECT.equals(network)) {
-      network = getSystemNetwork();
-    }
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
     if (masterNumNodes != 1 && masterNumNodes != 3) {
@@ -314,7 +261,7 @@ public class DataprocConf {
   @Nullable
   private static String getString(Map<String, String> properties, String key) {
     String val = properties.get(key);
-    if (val != null && val.isEmpty()) {
+    if (val != null && (val.isEmpty() || AUTO_DETECT.equals(val))) {
       return null;
     }
     return val;
@@ -353,67 +300,6 @@ public class DataprocConf {
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(
         String.format("Invalid config '%s' = '%s'. Must be a valid, positive long.", key, valStr));
-    }
-  }
-
-  /**
-   * Get network from the metadata server.
-   */
-  static String getSystemNetwork() {
-    try {
-      String network = getMetadata("instance/network-interfaces/0/network");
-      // will be something like projects/<project-number>/networks/default
-      return network.substring(network.lastIndexOf('/') + 1);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to get the network from the environment. "
-                                           + "Please explicitly set the network.", e);
-    }
-  }
-
-  /**
-   * Get zone from the metadata server.
-   */
-  private static String getSystemZone() {
-    try {
-      String zone = getMetadata("instance/zone");
-      // will be something like projects/<project-number>/zones/us-east1-b
-      return zone.substring(zone.lastIndexOf('/') + 1);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to get the zone from the environment. "
-                                           + "Please explicitly set the zone.", e);
-    }
-  }
-
-  /**
-   * Get project id from the metadata server.
-   */
-  private static String getSystemProjectId() {
-    try {
-      return getMetadata("project/project-id");
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to get project id from the environment. "
-                                           + "Please explicitly set the project id and account key.", e);
-    }
-  }
-
-  /**
-   * Makes a request to the metadata server that lives on the VM, as described at
-   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
-   */
-  private static String getMetadata(String resource) throws IOException {
-    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
-    HttpURLConnection connection = null;
-    try {
-      connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestProperty("Metadata-Flavor", "Google");
-      connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
-        return CharStreams.toString(reader);
-      }
-    } finally {
-      if (connection != null) {
-        connection.disconnect();
-      }
     }
   }
 }
