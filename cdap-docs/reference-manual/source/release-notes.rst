@@ -30,6 +30,156 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 6.0.0 <http://docs.cask.co/cdap/6.0.0/index.html>`__
+=============================================================
+
+Summary
+-------
+
+This release introduces a number of new features, improvements, and bug fixes to CDAP. Some of the main highlights of the release are:
+
+1. **Storage SPIs**
+    - Storage SPIs provide abstraction for all system storage used by CDAP so that CDAP is more portable across runtime enviroments - Hadoop or Hadoop-free environments.
+
+2. **Portable Runtime**
+    - Provide a runtime architecture for CDAP to support both Hadoop and Hadoopless environments, such as Kubernetes, in a distributed and secure fashion.
+
+3. **Pipeline Enhancements**
+    - Improve experience of building pipelines with the help of features such as copy & paste and minimap of the pipeline.
+    - Add support for more data types.
+
+
+New Features
+------------
+
+- :cask-issue:`CDAP-14330` - Added Google Cloud Storage copy and move action plugins.
+
+- :cask-issue:`CDAP-14533` - New pipeline list user interface.
+
+- :cask-issue:`CDAP-14613` - Added minimap to pipeline canvas.
+
+- :cask-issue:`CDAP-14645` - Added support for running CDAP system services in Kubernetes environment.
+
+- :cask-issue:`CDAP-14657` - Added the ability to copy and paste a node in pipeline studio.
+
+- :cask-issue:`CDAP-15058` - Added the ability to limit the number of concurrent pipeline runs.
+
+- :cask-issue:`CDAP-15095` - Added support for toggling Stackdriver integration in Google Cloud Dataproc cluster.
+
+- :cask-issue:`CDAP-15256` - Added support for Numeric and Array types in Google BigQuery plugins.
+
+- :cask-issue:`CDAP-15339` - Added support for showing decimal field types in plugin schemas in pipeline view.
+
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-13632` - Added support for CDH 5.15.
+
+- :cask-issue:`CDAP-14653` - Revamps top navbar for CDAP UI based on material design.
+
+- :cask-issue:`CDAP-14667` - Secure store supports integration with other KMS systems such as Google Cloud KMS using new Secure Store SPIs.
+
+- :cask-issue:`CDAP-7208` - Improved CDAP Master logging of events related to programs that it launches.
+
+- :cask-issue:`CDAP-14343` - Use a shared thread pool for provisioning tasks to increase thread utilization.
+
+- :cask-issue:`CDAP-14569` - Improve performance of LevelDB backed Table implementation.
+
+- :cask-issue:`CDAP-14571` - Wrangler supports secure macros in connection.
+
+- :cask-issue:`CDAP-14617` - Significantly improve performance of Transactional Messaging System.
+
+- :cask-issue:`CDAP-14821` - Added early validation for the properties of the Google BigQuery sink to fail during pipeline deployment instead of at runtime.
+
+- :cask-issue:`CDAP-14823` - Improved the error message when a null value is read for a non-nullable field in avro file sources.
+
+- :cask-issue:`CDAP-15047` - Improved loading of system artifacts to load in parallel instead of sequentially.
+
+- :cask-issue:`CDAP-15059` - Improved Google Cloud Dataproc provisioner to allow configuring default projectID from CDAP configuration.
+
+- :cask-issue:`CDAP-15318` - Added support of using runtime arguments to pass in extra configurations for Google Cloud Dataproc provisioner.
+
+- :cask-issue:`CDAP-14579` - Added support for spaces in file path for Google Cloud Storage plugin.
+
+- :cask-issue:`CDAP-14897` - Google BigQuery source now validates schema when the pipeline is deployed.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-12211` - Fixed a casting bug for the DB source where unsigned integer column were incorrectly being treated as integers instead of longs.
+
+- :cask-issue:`CDAP-13410` - Removed the need for ZooKeeper for service discovery in remote runtime environment.
+
+- :cask-issue:`CDAP-7230` - Fixed an issue with recording lineage for realtime sources.
+
+- :cask-issue:`CDAP-12941` - Fixed dynamic Spark plugin to use appropriate context classloader for loading dynamic Spark code.
+
+- :cask-issue:`CDAP-13554` - Fixed a bug that caused MapReduce pipelines to fail when using too many macros.
+
+- :cask-issue:`CDAP-13982` - Fixed an issue that caused pipelines with too many macros to fail when running in MapReduce.
+
+- :cask-issue:`CDAP-14666` - Fixed an issue with publishing metadata changes for profile assignments.
+
+- :cask-issue:`CDAP-14691` - Fixed a bug that would cause workspace ids to clash when wrangling items of the same name.
+
+- :cask-issue:`CDAP-14702` - Fixed a bug in secure store caused by breaking changes in Java update 171. Users should be able to get secure keys on java 8u171.
+
+- :cask-issue:`CDAP-14708` - Fixed a bug that caused Google Cloud Dataproc clusters to fail provisioning if a firewall rule that denies ingress traffic existed in the project.
+
+- :cask-issue:`CDAP-14709` - Fixed a bug that would cause data preparation to fail when preparing a large file in Google Cloud Storage.
+
+- :cask-issue:`CDAP-14724` - Fixed a bug that caused action-only pipelines to fail when running using a cloud profile.
+
+- :cask-issue:`CDAP-14744` - Fixed an issue with adding business tags to an entity.
+
+- :cask-issue:`CDAP-14778` - Fixed an issue in handling metadata search parameters.
+
+- :cask-issue:`CDAP-14779` - Fixed a bug that would cause pipelines to fail on remote clusters if the very first pipeline run was an action-only pipeline.
+
+- :cask-issue:`CDAP-14857` - Fixed the standard deviation aggregate functions to work, even if there is only one element in a group.
+
+- :cask-issue:`CDAP-14951` - Fixed a bug in the Google BigQuery sink that would cause pipelines to fail when writing to a dataset in a different region.
+
+- :cask-issue:`CDAP-15001` - Fixed a race condition in processing profile assignments.
+
+- :cask-issue:`CDAP-15013` - Fixed an issue that could cause inconsistencies in metadata.
+
+- :cask-issue:`CDAP-15069` - Fixed an issue with displaying workspace metadata in the UI.
+
+- :cask-issue:`CDAP-15127` - Fixed a race condition in the remote runtime scp implementation that could cause process to hang.
+
+- :cask-issue:`CDAP-15196` - Fixed an issue with metadata search result pagination.
+
+- :cask-issue:`CDAP-15223` - Fixed Wrangler DB connection where a bad JDBC driver could stay in cache for 60 minutes, making DB connection not usable.
+
+- :cask-issue:`CDAP-15249` - Fixed a NullPointerException in Google Cloud Dataproc provision for when there was no network configured.
+
+- :cask-issue:`CDAP-15299` - Fixed a bug that caused some aggregator and joiner keys to be dropped if they hashed to the same value as another key.
+
+- :cask-issue:`CDAP-15332` - Fixed a bug in the RuntimeMonitor that doesn't reconnect through SSH correctly, causing failure in monitoring the correct program state.
+
+- :cask-issue:`CDAP-15369` - Fixed Google Cloud Dataproc runtime for Google Cloud Platform projects where OS Login is enabled.
+
+
+Deprecated and Removed Features
+-------------------------------
+
+- :cask-issue:`CDAP-15241` - Deprecated HDFSMove and HDFSDelete plugins from core plugins.
+
+- :cask-issue:`CDAP-14591` - Removed Streams and Stream Views, which were deprecated in CDAP 5.0.
+
+- :cask-issue:`CDAP-14592` - Removed Flow, which was deprecated in CDAP 5.0.
+
+- :cask-issue:`CDAP-14529` - Removed deprecated HDFSSink Plugin.
+
+- :cask-issue:`CDAP-14772` - Removed the plugin endpoints feature to prevent execution of plugin code in the cdap master. Endpoints were only used for schema propagation, which has moved to the pipeline system service.
+
+- :cask-issue:`CDAP-14886` - Removed the support for custom routing for user services.
+
+
+
 `Release 5.1.2 <http://docs.cask.co/cdap/5.1.2/index.html>`__
 =============================================================
 
