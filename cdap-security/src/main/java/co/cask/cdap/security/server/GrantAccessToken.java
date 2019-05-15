@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.server;
 
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
@@ -90,6 +91,23 @@ public class GrantAccessToken {
   }
 
   /**
+   *  Get an AccessToken from KNOXToken.
+   */
+  @Path(Paths.GET_TOKEN)
+  @GET
+  @Produces("application/json")
+  public Response tokenFromKNOX(@Context HttpServletRequest request, @Context HttpServletResponse response)
+      throws IOException, ServletException {
+    AccessToken token = getTokenFromKNOX(request, response);
+    if (token != null) {
+      setResponse(request, response, token, tokenExpiration);
+      return Response.status(200).build();
+    } else {
+      return Response.status(201).build();
+    }
+  }  
+
+  /**
    * Get an AccessToken.
    */
   @Path(Paths.GET_TOKEN)
@@ -113,6 +131,56 @@ public class GrantAccessToken {
     return Response.status(200).build();
   }
 
+  private void setResponse(HttpServletRequest request, HttpServletResponse response, AccessToken token,
+      long tokenValidity) throws IOException, ServletException {
+    JsonObject json = new JsonObject();
+    byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
+        new String(encodedIdentifier, Charsets.UTF_8));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
+        ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN,
+        TimeUnit.SECONDS.convert(tokenValidity, TimeUnit.MILLISECONDS));
+
+    response.getOutputStream().print(json.toString());
+    response.setStatus(HttpServletResponse.SC_OK);
+  }
+
+  private AccessToken getTokenFromKNOX(HttpServletRequest request, HttpServletResponse response)
+      throws IOException, ServletException {
+
+    final String authorizationHeader = request.getHeader("Authorization");
+    String wireToken = null;
+    String username = null;
+    long expireTime = -1l;
+    long issueTime = System.currentTimeMillis();
+    wireToken = authorizationHeader.substring(7);
+
+    if (Strings.isNullOrEmpty(wireToken)) {
+      LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
+      return null;
+    } else {
+      LOG.debug("token found: " + wireToken);
+      try {
+        JWTToken token = new JWTToken(wireToken);
+        expireTime = Date.parse(token.getExpiresDate().toString());
+        username = token.getSubject();
+      } catch (ParseException ex) {
+        if (LOG.isDebugEnabled()) {
+          ex.printStackTrace();
+        }
+        LOG.error("Exception in verifying JWT token : ", ex.toString());
+      }
+    }
+
+    List<String> userGroups = Collections.emptyList();
+
+    AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userGroups, issueTime, expireTime);
+    AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
+    LOG.debug("Issued token for user {}", username);
+    return token;
+	}
+ 
   private void grantToken(HttpServletRequest request, HttpServletResponse response, long tokenValidity)
     throws IOException, ServletException {
 
