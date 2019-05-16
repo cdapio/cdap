@@ -14,13 +14,10 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
 import React from 'react';
 import { connect, Provider } from 'react-redux';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
-import T from 'i18n-react';
 import FileDnD from 'components/FileDnD';
 require('./UploadStep.scss');
 
@@ -46,21 +43,12 @@ const ArtifactUploader = connect(
   mapDispatchWithDNDFileProps
 )(FileDnD);
 
-export default function UploadStep(undefined, context) {
+export default function UploadStep() {
   return (
     <Provider store={ArtifactUploadStore}>
       <div className="upload-step-container">
-        {/* TODO: shouldn't do this, replace in 4.2} */
-        context.isMarket ? (
-          <h4 className="upload-instruction">
-            {T.translate('features.Wizard.ArtifactUpload.Step1.uploadHelperText')}
-          </h4>
-        ) : null}
         <ArtifactUploader />
       </div>
     </Provider>
   );
 }
-UploadStep.contextTypes = {
-  isMarket: PropTypes.bool,
-};

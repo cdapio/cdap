@@ -26,6 +26,11 @@ import T from 'i18n-react';
 
 require('./PluginArtifactUpload.scss');
 
+/**
+ * This is used in both uploading a plugin artifact as well as a wrangler directive.
+ * This component renders the wizard and has the success info being given to it
+ * by plugin and directive upload wizards.
+ */
 export default class PluginArtifactUploadWizard extends Component {
   constructor(props) {
     super(props);
