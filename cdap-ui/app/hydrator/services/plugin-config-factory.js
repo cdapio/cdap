@@ -143,6 +143,7 @@ class HydratorPlusPlusPluginConfigFactory {
       });
       groupsConfig.groups.push({
         display: group.label,
+        description: group.description,
         fields: matchedProperties
       });
     });

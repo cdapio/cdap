@@ -95,6 +95,7 @@ function generateConfigForNewSpec(backendProperties, nodeConfig) {
     });
     groupsConfig.groups.push({
       display: group.label,
+      description: group.description,
       fields: matchedProperties,
     });
   });
