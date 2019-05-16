@@ -1,6 +1,5 @@
 ch.qos.logback.logback-classic-1.0.9.jar,ch.qos.logback,logback-classic
 ch.qos.logback.logback-core-1.0.9.jar,ch.qos.logback,logback-core
-com.amazonaws.aws-java-sdk-bom-1.11.133.pom,com.amazonaws,aws-java-sdk-bom
 com.amazonaws.aws-java-sdk-core-1.11.133.jar,com.amazonaws,aws-java-sdk-core
 com.amazonaws.aws-java-sdk-ec2-1.11.133.jar,com.amazonaws,aws-java-sdk-ec2
 com.amazonaws.aws-java-sdk-emr-1.11.133.jar,com.amazonaws,aws-java-sdk-emr
@@ -12,12 +11,15 @@ com.fasterxml.jackson.core.jackson-core-2.8.8.jar,com.fasterxml.jackson.core,jac
 com.fasterxml.jackson.core.jackson-databind-2.8.8.jar,com.fasterxml.jackson.core,jackson-databind
 com.fasterxml.jackson.dataformat.jackson-dataformat-cbor-2.8.8.jar,com.fasterxml.jackson.dataformat,jackson-dataformat-cbor
 com.fasterxml.jackson.module.jackson-module-scala_2.10-2.8.8.jar,com.fasterxml.jackson.module,jackson-module-scala_2.10
+com.google.api-client.google-api-client-1.24.1.jar,com.google.api-client,google-api-client
+com.google.apis.google-api-services-cloudkms-v1-rev59-1.24.1.jar,com.google.apis,google-api-services-cloudkms
 com.google.apis.google-api-services-compute-v1-rev174-1.23.0.jar,com.google.apis,google-api-services-compute
 com.google.cloud.google-cloud-dataproc-0.41.0-alpha.jar,com.google.cloud,google-cloud-dataproc
 com.google.code.findbugs.jsr305-2.0.1.jar,com.google.code.findbugs,jsr305
 com.google.code.gson.gson-2.2.4.jar,com.google.code.gson,gson
 com.google.guava.guava-13.0.1.jar,com.google.guava,guava
 com.google.guava.guava-20.0.jar,com.google.guava,guava
+com.google.http-client.google-http-client-jackson2-1.24.1.jar,com.google.http-client,google-http-client-jackson2
 com.google.inject.extensions.guice-assistedinject-4.0.jar,com.google.inject.extensions,guice-assistedinject
 com.google.inject.extensions.guice-multibindings-4.0.jar,com.google.inject.extensions,guice-multibindings
 com.google.inject.guice-4.0.jar,com.google.inject,guice
@@ -32,6 +34,7 @@ commons-codec.commons-codec-1.10.jar,commons-codec,commons-codec
 commons-codec.commons-codec-1.6.jar,commons-codec,commons-codec
 commons-lang.commons-lang-2.6.jar,commons-lang,commons-lang
 commons-logging.commons-logging-1.2.jar,commons-logging,commons-logging
+io.kubernetes.client-java-3.0.0.jar,io.kubernetes,client-java
 io.netty.netty-all-4.1.16.Final.jar,io.netty,netty-all
 io.netty.netty-buffer-4.1.16.Final.jar,io.netty,netty-buffer
 io.netty.netty-codec-http-4.1.16.Final.jar,io.netty,netty-codec-http
@@ -43,11 +46,9 @@ jline.jline-2.12.jar,jline,jline
 joda-time.joda-time-2.9.9.jar,joda-time,joda-time
 junit.junit-4.11.jar,junit,junit
 org.apache.avro.avro-1.6.2.jar,org.apache.avro,avro
-org.apache.avro.avro-ipc-1.6.2.jar,org.apache.avro,avro-ipc
 org.apache.avro.avro-mapred-1.6.2.jar,org.apache.avro,avro-mapred
-org.apache.commons.commons-compress-1.9.jar,org.apache.commons,commons-compress
-org.apache.flume.flume-ng-core-1.2.0.jar,org.apache.flume,flume-ng-core
-org.apache.flume.flume-ng-sdk-1.2.0.jar,org.apache.flume,flume-ng-sdk
+org.apache.commons.commons-compress-1.18.jar,org.apache.commons,commons-compress
+org.apache.commons.commons-dbcp2-2.6.0.jar,org.apache.commons,commons-dbcp2
 org.apache.geronimo.components.geronimo-jaspi-2.0.0.jar,org.apache.geronimo.components,geronimo-jaspi
 org.apache.hadoop.hadoop-annotations-2.8.0.jar,org.apache.hadoop,hadoop-annotations
 org.apache.hadoop.hadoop-auth-2.8.0.jar,org.apache.hadoop,hadoop-auth
@@ -139,6 +140,7 @@ org.eclipse.jetty.jetty-plus-8.1.15.v20140411.jar,org.eclipse.jetty,jetty-plus
 org.eclipse.jetty.jetty-security-8.1.15.v20140411.jar,org.eclipse.jetty,jetty-security
 org.eclipse.jetty.jetty-server-8.1.15.v20140411.jar,org.eclipse.jetty,jetty-server
 org.eclipse.jetty.jetty-util-8.1.15.v20140411.jar,org.eclipse.jetty,jetty-util
+org.elasticsearch.client.elasticsearch-rest-high-level-client-6.5.3.jar,org.elasticsearch.client,elasticsearch-rest-high-level-client
 org.iq80.leveldb.leveldb-0.6.jar,org.iq80.leveldb,leveldb
 org.jboss.resteasy.resteasy-guice-3.0.8.Final.jar,org.jboss.resteasy,resteasy-guice
 org.jboss.resteasy.resteasy-servlet-initializer-3.0.8.Final.jar,org.jboss.resteasy,resteasy-servlet-initializer

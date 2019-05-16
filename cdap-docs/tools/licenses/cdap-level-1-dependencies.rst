@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2018 Cask Data, Inc.
-    :version: 5.1.0
+    :copyright: Copyright © 2019 Cask Data, Inc.
+    :version: 6.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -23,7 +23,6 @@ Cask Data Application Platform Level 1 Dependencies
 
    "ch.qos.logback","logback-classic","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "ch.qos.logback","logback-core","EPL","http://www.eclipse.org/legal/epl-v10.html"
-   "com.amazonaws","aws-java-sdk-bom","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.amazonaws","aws-java-sdk-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.amazonaws","aws-java-sdk-ec2","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.amazonaws","aws-java-sdk-emr","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -35,12 +34,15 @@ Cask Data Application Platform Level 1 Dependencies
    "com.fasterxml.jackson.core","jackson-databind","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.fasterxml.jackson.dataformat","jackson-dataformat-cbor","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.fasterxml.jackson.module","jackson-module-scala_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.google.api-client","google-api-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.google.apis","google-api-services-cloudkms","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.apis","google-api-services-compute","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.cloud","google-cloud-dataproc","Google Cloud Software License","https://raw.githubusercontent.com/GoogleCloudPlatform/google-cloud-java/master/LICENSE"
    "com.google.code.findbugs","jsr305","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.gson","gson","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava","guava","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava","guava","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.google.http-client","google-http-client-jackson2","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject.extensions","guice-assistedinject","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject.extensions","guice-multibindings","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject","guice","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -55,6 +57,7 @@ Cask Data Application Platform Level 1 Dependencies
    "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-logging","commons-logging","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "io.kubernetes","client-java","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-all","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-buffer","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-codec-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -66,11 +69,9 @@ Cask Data Application Platform Level 1 Dependencies
    "joda-time","joda-time","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "junit","junit","Common Public License Version 1.0","http://www.opensource.org/licenses/cpl1.0.txt"
    "org.apache.avro","avro","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.avro","avro-ipc","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.commons","commons-compress","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.flume","flume-ng-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.flume","flume-ng-sdk","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.commons","commons-dbcp2","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.geronimo.components","geronimo-jaspi","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-annotations","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-auth","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -162,6 +163,7 @@ Cask Data Application Platform Level 1 Dependencies
    "org.eclipse.jetty","jetty-security","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.eclipse.jetty","jetty-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.eclipse.jetty","jetty-util","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.elasticsearch.client","elasticsearch-rest-high-level-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.iq80.leveldb","leveldb","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.jboss.resteasy","resteasy-guice","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.jboss.resteasy","resteasy-servlet-initializer","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
