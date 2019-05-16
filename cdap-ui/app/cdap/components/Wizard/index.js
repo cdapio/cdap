@@ -205,6 +205,9 @@ export default class Wizard extends Component {
   }
 
   handleMainCallToActionClick() {
+    const handleCallToActionClick =
+      this.state.callToActionInfo.handleCallToActionClick ||
+      this.handleCallToActionClick.bind(this);
     if (this.state.callToActionInfo.buttonOnClick) {
       this.setState({ loadingCTA: true });
       let buttonClickReturn = this.state.callToActionInfo.buttonOnClick();
@@ -215,19 +218,19 @@ export default class Wizard extends Component {
               error: false,
               loadingCTA: false,
             });
-            this.handleCallToActionClick();
+            handleCallToActionClick();
           },
           (err) => {
             this.setState({
               error: err,
               loadingCTA: false,
             });
-            this.handleCallToActionClick();
+            handleCallToActionClick();
           }
         );
       }
     } else {
-      this.handleCallToActionClick();
+      handleCallToActionClick();
     }
   }
 

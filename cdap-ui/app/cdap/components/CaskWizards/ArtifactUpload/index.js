@@ -30,6 +30,11 @@ import globalEvents from 'services/global-events';
 
 require('./ArtifactUpload.scss');
 
+/**
+ * This is the base module that is responsible for uploading plugin and directives
+ * both in plus button as well as in market. It falls back to the default success info
+ * if none provided as props.
+ */
 export default class ArtifactUploadWizard extends Component {
   constructor(props) {
     super(props);
@@ -75,12 +80,7 @@ export default class ArtifactUploadWizard extends Component {
       showWizard: !this.state.showWizard,
     });
   }
-  // TODO: shouldn't do this, replace in 4.2
-  getChildContext() {
-    return {
-      isMarket: !this.props.hideUploadHelper && this.props.buildSuccessInfo,
-    };
-  }
+
   buildSuccessInfo() {
     let state = ArtifactUploadStore.getState();
     let artifactName = state.configure.name;
@@ -148,9 +148,7 @@ ArtifactUploadWizard.defaultProps = {
   },
   displayCTA: true,
 };
-ArtifactUploadWizard.childContextTypes = {
-  isMarket: PropTypes.bool,
-};
+
 ArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
