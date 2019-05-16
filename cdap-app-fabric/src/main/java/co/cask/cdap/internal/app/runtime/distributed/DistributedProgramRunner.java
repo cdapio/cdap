@@ -60,6 +60,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -235,7 +236,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       ProgramOptions options = updateProgramOptions(oldOptions, localizeResources,
                                                     DirUtils.createTempDir(tempDir), extraSystemArgs);
-
+ 
       // Localize the serialized program options
       localizeResources.put(PROGRAM_OPTIONS_FILE_NAME,
                             new LocalizeResource(saveJsonFile(
@@ -357,8 +358,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                          ProgramRunners.getRunId(options));
         }
       };
-
-      return impersonator.doAs(program.getId(), callable);
+      
+      ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
+      return impersonator.doAs(programRunId, callable);
 
     } catch (Exception e) {
       deleteDirectory(tempDir);
