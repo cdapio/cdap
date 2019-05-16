@@ -19,14 +19,29 @@ import React, { Component } from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
 import PlusButtonModal from 'components/PlusButtonModal';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 require('./ResourceCenterButton.scss');
 
+/**
+ * This module is used solely for angular side. This includes styling and stripping of context
+ * information used by the PlusButton. We may nee to consider using one component for both angular
+ * and react as it seems redundant.
+ */
 export default class ResourceCenterButton extends Component {
+  eventemitter = ee(ee);
+  onClickHandler = () => {
+    this.setState({
+      showResourceCenter: !this.state.showResourceCenter,
+    });
+  };
   constructor(props) {
     super(props);
     this.state = {
       showResourceCenter: false,
     };
+    this.eventemitter.on(globalEvents.OPENPLUSBUTTON, this.onClickHandler);
+    this.eventemitter.on(globalEvents.CLOSEPLUSBUTTON, this.onClickHandler);
   }
   componentDidMount() {
     this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
@@ -40,11 +55,8 @@ export default class ResourceCenterButton extends Component {
     if (this.plusButtonSubscription) {
       this.plusButtonSubscription();
     }
-  }
-  onClickHandler() {
-    this.setState({
-      showResourceCenter: !this.state.showResourceCenter,
-    });
+    this.eventemitter.off(globalEvents.OPENPLUSBUTTON, this.onClickHandler);
+    this.eventemitter.off(globalEvents.CLOSEPLUSBUTTON, this.onClickHandler);
   }
   render() {
     return (
