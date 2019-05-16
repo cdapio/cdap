@@ -168,7 +168,4 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
 
 Application Example
 ===================
-Applications are included in just about every CDAP :ref:`application <apps-and-packs>`,
-:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
-
-An example demonstrating the usage of a configuration is the :ref:`WordCount example <examples-word-count>`.
+Applications are included in the :ref:`guide <guides-index>`.

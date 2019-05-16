@@ -131,14 +131,3 @@ corresponding program scope.
 the argument will be set for all programs that use ``myTable``. In order to set the argument only for the MapReduce
 program ``myMR``, the dataset argument can be nested inside the program scope as
 ``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
-
-Examples of using Preferences
-=============================
-Other examples of using preferences are in these CDAP examples:
-
-- :ref:`Data Cleansing: <examples-data-cleansing>` Uses a runtime argument with a MapReduce program
-- :ref:`Clicks and Views: <examples-clicks-and-views>` Uses a runtime argument with a MapReduce program and
-  demonstrates a join across two streams using the multiple inputs functionality of MapReduce
-- :ref:`Wikipedia Pipeline: <examples-wikipedia-data-pipeline>` Uses runtime arguments
-  with a stream, MapReduce program, and a Spark program
-- :ref:`Sport Results: <examples-sport-results>` Uses a runtime argument with a MapReduce program

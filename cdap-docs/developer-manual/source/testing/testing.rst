@@ -191,8 +191,7 @@ Strategies in Testing MapReduce Programs
 ========================================
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce programs. Let's write a test case for an
-application that uses MapReduce. Complete source code and test can be
-found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP Sandbox.
+application that uses MapReduce.x.
 
 The ``PurchaseTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -263,7 +262,6 @@ The assertion will verify that the correct result was received.
 Strategies in Testing Spark Programs
 ====================================
 Let's write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at :ref:`Spark PageRank<examples-spark-page-rank>`.
 
 The ``SparkPageRankTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::

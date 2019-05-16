@@ -14,5 +14,3 @@ It can be reached at ``http://<cdap-host>:11011/cdap/administration``, substitut
    :class: bordered-image
 
    **CDAP UI:** Showing started-up, *Administration* page.
-
-Further instructions for verifying your installation are contained in :ref:`admin-manual-verification`.
