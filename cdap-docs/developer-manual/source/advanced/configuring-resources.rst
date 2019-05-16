@@ -36,12 +36,8 @@ persisted and used with each run of the application's programs.
 
 Configuring Sub-components
 ==========================
-For program types that have sub-components (such as flows, MapReduce and Spark programs),
+For program types that have sub-components (such as MapReduce and Spark programs),
 a prefix can be added to limit the scope of the arguments.
-
-**Flow**
-
-- Prefix with ``flowlet.<flowletName>.`` to set resources for a particular flowlet in a flow
 
 **MapReduce Program**
 
@@ -101,23 +97,5 @@ in the ``default`` namespace, and would like to set the memory used by its YARN 
 
       $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/MyApp/mapreduce/MyMapReduce/preferences" \
           -H 'Content-Type: application/json' -d '{ "task.mapper.system.resources.memory": 2048 }'
-
-- To set the memory used by the *collector* node of the *PurchaseFlow*, you would use::
-
-    flowlet.collector.system.resources.memory = 1024
-
-  You could set this using the CDAP CLI:
-
-    .. tabbed-parsed-literal::
-       :tabs: "CDAP CLI"
-
-       |cdap >| set preferences flow 'flowlet.collector.system.resources.memory=1024' MyApp.PurchaseFlow
-
-  or by using a ``curl`` call:
-
-    .. tabbed-parsed-literal::
-
-      $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/apps/MyApp/flows/PurchaseFlow/preferences" \
-          -H 'Content-Type: application/json' -d '{ "flowlet.collector.system.resources.memory": 1024 }'
 
 These configurations can also be set through the CDAP UI, either as preferences or runtime arguments.

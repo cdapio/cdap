@@ -146,9 +146,6 @@ By default, CDAP will start an implicit transaction for these methods:
 CDAP implicitly starts a transaction for this handler method, and the handler can rely
 on the transactional consistency of the data it reads from the dataset.
 
-For flowlet process methods, this starting of implicit transactions cannot be disabled,
-because that would impact the semantics of flow execution.
-
 For MapReduce programs, the lifecycle methods of MapReduce tasks (mappers and reducers)
 and MapReduce helpers (such as partitioners and comparators) are always run inside a
 transaction: the long-running transaction that encapsulates an entire MapReduce job (see
@@ -185,7 +182,7 @@ next section.
 
 Explicit Transactions 
 ----------------------
-Every program context (except for the ``FlowletContext`` and the ``MapReduceTaskContext``)
+Every program context (except for the ``MapReduceTaskContext``)
 allows the executing of a block of code in an explicit transaction. 
 
 Be aware that you cannot nest transactions. For example, either:
@@ -206,10 +203,10 @@ To control the transaction timeout for individual namespaces, applications, or p
 you can :ref:`set a preference <preferences>` for the namespace, application, or program.
 The name of the preference is ``system.data.tx.timeout``. 
 
-To configure the timeout for a sub-program (a flowlet or a custom workflow action), prefix
-the preference name with ``flowlet.<name>`` or ``action.<name>``. For example, setting
-``flowlet.aggregator.system.data.tx.timeout`` to 60 seconds will only affect the flowlet
-named *aggregator* but not the other flowlets of the flow. 
+To configure the timeout for a sub-program (a custom workflow action), prefix
+the preference name with ``action.<name>``. For example, setting
+``action.filecheck.system.data.tx.timeout`` to 60 seconds will only affect the action
+named *filecheck* but not the other actions of the workflow.
 
 To control the transaction timeout for an individual run of a program, you can also
 provide this setting as a runtime argument when starting the program. Note that this will
