@@ -15,5 +15,7 @@
 -->
 
 <div ng-controller="HydratorPlusPlusReferenceTabCtrl as HydratorPlusPlusReferenceTabCtrl" class="reference-tab">
-  <div marked="HydratorPlusPlusReferenceTabCtrl.state.docReference"></div>
+  <div ng-if="HydratorPlusPlusReferenceTabCtrl.state.docReference">
+    <markdown markdown="HydratorPlusPlusReferenceTabCtrl.state.docReference"></markdown>
+  </div>
 </div>
