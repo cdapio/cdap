@@ -82,7 +82,7 @@ public final class DataStreamsConfig extends ETLConfig {
 
   @Nullable
   public String getCheckpointDir() {
-    return checkpointDir;
+    return checkpointDir == null || checkpointDir.isEmpty() ? null : checkpointDir;
   }
 
   @Override
