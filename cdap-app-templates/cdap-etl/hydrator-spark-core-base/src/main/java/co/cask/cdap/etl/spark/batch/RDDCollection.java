@@ -54,6 +54,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -92,6 +93,11 @@ public class RDDCollection<T> implements SparkCollection<T> {
     return wrap(rdd.cache());
   }
 
+  @Override
+  public SparkCollection<T> persist(StorageLevel storageLevel) {
+    return wrap(rdd.persist(storageLevel));
+  }
+  
   @SuppressWarnings("unchecked")
   @Override
   public SparkCollection<T> union(SparkCollection<T> other) {
@@ -152,7 +158,11 @@ public class RDDCollection<T> implements SparkCollection<T> {
     SparkConf sparkconf = jsc.getConf();
     JavaRDD<T> countedInput = null;
     if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+        String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+            "MEMORY_AND_DISK");
+        StorageLevel storageLevel = StorageLevel.fromString(cacheStorageLevelString);
+        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null))
+            .persist(storageLevel);
     } else {
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
     }
@@ -187,7 +197,11 @@ public class RDDCollection<T> implements SparkCollection<T> {
         SparkConf sparkconf = jsc.getConf();
         JavaRDD<T> countedRDD = null;
         if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+            String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+                "MEMORY_AND_DISK");
+            StorageLevel storageLevel = StorageLevel.fromString(cacheStorageLevelString);
+            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null))
+                .persist(storageLevel);
         } else {
             countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
         }
