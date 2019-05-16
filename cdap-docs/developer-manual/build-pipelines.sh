@@ -300,7 +300,6 @@ function pipelines_download_includes() {
   download_md_file transform-plugins XMLParser-transform.md
   download_md_file transform-plugins XMLToJSON-transform.md
 
-  extract_table ${BASE_TARGET} "transforms/validator-transform.md" _includes/validator-extract.txt
 }
 
 # run_command ${1}
