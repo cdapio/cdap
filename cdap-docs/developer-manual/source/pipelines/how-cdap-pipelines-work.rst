@@ -142,8 +142,7 @@ Hadoop. It has a click-and-drag interface for building and configuring data pipe
 also supports the ability to develop, run, automate, and operate pipelines from within
 the CDAP UI. The pipeline interface integrates with the CDAP interface, allowing
 drill-down debugging of pipelines and can build metrics dashboards to closely monitor
-pipelines through CDAP. The CDAP Studio integrates with other capabilities such as Cask
-Tracker.
+pipelines through CDAP. The CDAP Studio integrates with other capabilities.
 
 Testing and Automation Framework
 --------------------------------

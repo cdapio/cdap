@@ -73,7 +73,6 @@ object associated with a single entity is limited to 10K bytes in size.
 - |audit-logging|_ provides a chronological ledger containing evidence of operations or
   changes on CDAP entities.
 
-
 .. |metadata-ui| replace:: **CDAP Metadata UI:**
 .. _metadata-ui: metadata-ui.html
 
