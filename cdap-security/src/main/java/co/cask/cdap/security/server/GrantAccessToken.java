@@ -24,6 +24,7 @@ import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenIdentifier;
 import co.cask.cdap.security.auth.TokenManager;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -32,6 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -87,13 +90,14 @@ public class GrantAccessToken {
    */
   public static final class Paths {
     public static final String GET_TOKEN = "token";
+    public static final String GET_TOKEN_FROM_KNOX = "knoxToken";
     public static final String GET_EXTENDED_TOKEN = "extendedtoken";
   }
 
   /**
    *  Get an AccessToken from KNOXToken.
    */
-  @Path(Paths.GET_TOKEN)
+  @Path(Paths.GET_TOKEN_FROM_KNOX)
   @GET
   @Produces("application/json")
   public Response tokenFromKNOX(@Context HttpServletRequest request, @Context HttpServletResponse response)
@@ -149,13 +153,15 @@ public class GrantAccessToken {
   private AccessToken getTokenFromKNOX(HttpServletRequest request, HttpServletResponse response)
       throws IOException, ServletException {
 
-    final String authorizationHeader = request.getHeader("Authorization");
+    final String authorizationHeader = request.getHeader("knoxToken");
+    LOG.info("knoxtoken header: " + authorizationHeader);
     String wireToken = null;
     String username = null;
     long expireTime = -1l;
     long issueTime = System.currentTimeMillis();
-    wireToken = authorizationHeader.substring(7);
-
+    //wireToken = authorizationHeader.substring(7);
+    wireToken = authorizationHeader;
+    LOG.info("token found: " + wireToken);
     if (Strings.isNullOrEmpty(wireToken)) {
       LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
       return null;
@@ -163,6 +169,9 @@ public class GrantAccessToken {
       LOG.debug("token found: " + wireToken);
       try {
         JWTToken token = new JWTToken(wireToken);
+        LOG.info("JWT token : " + token);
+        LOG.info("expiry : " + token.getExpiresDate().toString());
+        LOG.info("username : " + token.getSubject());
         expireTime = Date.parse(token.getExpiresDate().toString());
         username = token.getSubject();
       } catch (ParseException ex) {
