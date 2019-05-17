@@ -31,7 +31,8 @@ import Home from 'components/Home';
 import AppHeader from 'components/AppHeader';
 import Footer from 'components/Footer';
 import cookie from 'react-cookie';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { Router, Route, Switch } from 'react-router-dom';
+import history from 'services/history';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
@@ -110,7 +111,7 @@ class CDAP extends Component {
 
   render() {
     return (
-      <BrowserRouter basename="/cdap">
+      <Router history={history}>
         <div className="cdap-container">
           <Helmet title={Theme.productName} />
           <AppHeader />
@@ -200,7 +201,7 @@ class CDAP extends Component {
           <Footer />
           <AuthRefresher />
         </div>
-      </BrowserRouter>
+      </Router>
     );
   }
 }

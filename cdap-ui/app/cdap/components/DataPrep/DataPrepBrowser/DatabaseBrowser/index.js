@@ -34,6 +34,7 @@ import { Provider } from 'react-redux';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import isNil from 'lodash/isNil';
+import history from 'services/history';
 
 require('./DatabaseBrowser.scss');
 
@@ -111,9 +112,7 @@ export default class DatabaseBrowser extends Component {
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        window.location.href = `${
-          window.location.origin
-        }/cdap/ns/${namespace}/wrangler/${workspaceId}`;
+        history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       },
       (err) => {
         let error = err;

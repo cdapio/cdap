@@ -33,6 +33,7 @@ import { Provider } from 'react-redux';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import If from 'components/If';
+import history from 'services/history';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.KafkaBrowser`;
 
@@ -116,9 +117,7 @@ export default class KafkaBrowser extends Component {
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        window.location.href = `${
-          window.location.origin
-        }/cdap/ns/${namespace}/wrangler/${workspaceId}`;
+        history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       },
       (err) => {
         setError(err);

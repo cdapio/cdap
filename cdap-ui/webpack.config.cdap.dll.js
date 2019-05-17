@@ -89,7 +89,6 @@ var webpackConfig = {
       'redux-thunk',
       'redux-undo',
       'moment',
-      'react-router',
       'react-router-dom',
       'react-sparklines',
       'react-tether',
