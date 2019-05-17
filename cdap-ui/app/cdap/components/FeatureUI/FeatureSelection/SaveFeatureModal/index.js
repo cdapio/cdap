@@ -22,7 +22,7 @@ import FEDataServiceApi from '../../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
 import { isNil } from 'lodash';
 import T from 'i18n-react';
-import { checkResponseError,getErrorMessage } from '../../util';
+import { checkResponseError,getErrorMessage, getDefaultRequestHeader } from '../../util';
 import { ERROR_MESSAGES, SAVE_PIPELINE } from 'components/FeatureUI/config';
 
 require('./SaveFeatureModal.scss');
@@ -62,7 +62,7 @@ class SaveFeatureModal extends React.Component {
         namespace: NamespaceStore.getState().selectedNamespace,
         pipeline: featureGenerationPipelineName,
 
-      }, this.getSavePipelineRequest(featureGenerationPipelineName)).subscribe(
+      }, this.getSavePipelineRequest(featureGenerationPipelineName), getDefaultRequestHeader()).subscribe(
         result => {
           if (checkResponseError(result)) {
             const message = getErrorMessage(result, ERROR_MESSAGES[SAVE_PIPELINE]);

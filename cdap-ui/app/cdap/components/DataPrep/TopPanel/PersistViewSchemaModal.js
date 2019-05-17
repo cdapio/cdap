@@ -27,7 +27,8 @@ import MyDataPrepApi from 'api/dataprep';
 import MyFeatureEngineeringApi from 'api/featureengineeringapp';
 import NamespaceStore from 'services/NamespaceStore';
 import { directiveRequestBodyCreator, viewSchemaPersistRequestBodyCreator } from 'components/DataPrep/helper';
-
+import isNil from 'lodash/isNil';
+import cookie from 'react-cookie';
 const PREFIX = 'features.DataPrep.TopPanel';
 const mapErrorToMessage = (message) => {
   if (message.indexOf('invalid field name') !== -1) {
@@ -87,8 +88,13 @@ export default class PersistViewSchemaModal extends Component {
       configType: configType
     };
     let requestBody = viewSchemaPersistRequestBodyCreator(JSON.stringify([getSchemaObjFromFieldsArray(this.state.schema)], null, 4), JSON.stringify(config));
+    let requestHeaders = {};
+    if (!isNil(cookie.load('CDAP_Auth_Token'))) {
+      requestHeaders["AccessToken"] = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+    }
+
     MyFeatureEngineeringApi
-      .persistWranglerPluginConfig(requestObj, requestBody)
+      .persistWranglerPluginConfig(requestObj, requestBody, requestHeaders)
       .subscribe(
         (res) => {
           this.setState({

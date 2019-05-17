@@ -31,7 +31,7 @@ import classnames from 'classnames';
 import CorrelationContainer from './CorrelationContainer';
 import FEDataServiceApi from '../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
-import { checkResponseError } from '../util';
+import { checkResponseError, getDefaultRequestHeader } from '../util';
 import SaveFeatureModal from './SaveFeatureModal';
 import PropTypes from 'prop-types';
 
@@ -179,7 +179,7 @@ class FeatureSelection extends Component {
       {
         namespace: NamespaceStore.getState().selectedNamespace,
         pipeline: featureGenerationPipelineName,
-      }, requestObj).subscribe(
+      }, requestObj, getDefaultRequestHeader()).subscribe(
         result => {
           if (checkResponseError(result) || isNil(result["featureStatsList"])) {
             this.handleError(result, GET_PIPE_LINE_FILTERED);
@@ -227,7 +227,7 @@ class FeatureSelection extends Component {
         namespace: NamespaceStore.getState().selectedNamespace,
         pipeline: featureGenerationPipelineName,
         coefficientType: value.coefficientType.name
-      }, selectedFeatures).subscribe(
+      }, selectedFeatures, getDefaultRequestHeader()).subscribe(
         result => {
           if (checkResponseError(result) || isNil(result["featureCorrelationScores"])) {
             this.handleError(result, GET_FEATURE_CORRELAION);
@@ -301,7 +301,7 @@ class FeatureSelection extends Component {
     FEDataServiceApi.pipelineData({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result) || isNil(result["featureStatsList"])) {
           this.handleError(result, GET_PIPE_LINE_DATA);

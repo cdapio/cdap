@@ -18,6 +18,7 @@ import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
+import cookie from 'react-cookie';
 import { Theme } from '../../services/ThemeHelper';
 
 export function toCamelCase(value) {
@@ -210,3 +211,9 @@ export function getClassNameForHeaderFooter() {
   return className;
 }
 
+export function getAccessToken() {
+}
+
+export function getDefaultRequestHeader() {
+  return (isNil(cookie.load('CDAP_Auth_Token'))) ? {}: {"AccessToken": `Bearer ${cookie.load('CDAP_Auth_Token')}`};
+}
