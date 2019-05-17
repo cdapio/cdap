@@ -20,11 +20,18 @@ import Popover from 'components/Popover';
 import PlusButtonModal from 'components/PlusButtonModal';
 import { Link } from 'react-router-dom';
 import PlusButtonStore from 'services/PlusButtonStore';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 require('./PlusButton.scss');
 
 const PLUSBUTTON_DIMENSION = 58;
 
 export default class PlusButton extends Component {
+  static MODE = {
+    marketplace: 'marketplace',
+    resourcecenter: 'resourcecenter',
+  };
+
   static propTypes = {
     contextItems: PropTypes.arrayOf(
       PropTypes.shape({
@@ -33,8 +40,17 @@ export default class PlusButton extends Component {
         onClick: PropTypes.func,
       })
     ),
-    mode: PropTypes.oneOf(['marketplace', 'resourcecenter']),
+    mode: PropTypes.oneOf([PlusButton.MODE.marketplace, PlusButton.MODE.resourcecenter]),
   };
+
+  eventemitter = ee(ee);
+  constructor(props) {
+    super(props);
+    if (this.props.mode === PlusButton.MODE.resourcecenter) {
+      this.eventemitter.on(globalEvents.OPENRESOURCECENTER, this.toggleModal);
+      this.eventemitter.on(globalEvents.CLOSERESOURCECENTER, this.toggleModal);
+    }
+  }
 
   componentDidMount() {
     this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
@@ -49,15 +65,14 @@ export default class PlusButton extends Component {
     if (this.plusButtonSubscription) {
       this.plusButtonSubscription();
     }
+    if (this.props.mode === PlusButton.MODE.resourcecenter) {
+      this.eventemitter.off(globalEvents.OPENRESOURCECENTER, this.toggleModal);
+      this.eventemitter.off(globalEvents.CLOSERESOURCECENTER, this.toggleModal);
+    }
   }
 
   static defaultProps = {
     contextItems: [],
-  };
-
-  static MODE = {
-    marketplace: 'marketplace',
-    resourcecenter: 'resourcecenter',
   };
 
   state = {
