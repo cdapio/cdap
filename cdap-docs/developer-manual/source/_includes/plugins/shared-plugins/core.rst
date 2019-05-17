@@ -24,10 +24,8 @@ common functions and make them easily available.
 
 .. rubric:: Functions
 
-This table lists the methods available in ``CoreValidator`` that can be called from the ``ValidatorTransform``:
-
-.. Imports functions found in the file Validator-transform.md
-
-.. include:: /../target/_includes/plugins/_includes/validator-extract.txt
+The table lists the methods available in ``CoreValidator`` that can be called from the ``ValidatorTransform``.
+A reference to the `Validator Transform Table` can be `found here
+<https://github.com/cdapio/hydrator-plugins/blob/develop/core-plugins/docs/Validator-transform.md>`__
 
 CDAP Pipelines Version |cdap-pipelines-version|
