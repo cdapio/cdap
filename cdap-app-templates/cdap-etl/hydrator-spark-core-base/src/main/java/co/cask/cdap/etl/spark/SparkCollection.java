@@ -44,7 +44,7 @@ public interface SparkCollection<T> {
 
   SparkCollection<T> cache();
 
-  SparkCollection<T> persist(StorageLevel storageLevel);
+  SparkCollection<T> persist(StorageLevel cacheStorageLevel);
   
   SparkCollection<T> union(SparkCollection<T> other);
 

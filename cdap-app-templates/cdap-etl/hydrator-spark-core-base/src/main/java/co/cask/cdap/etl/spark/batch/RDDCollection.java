@@ -94,8 +94,8 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<T> persist(StorageLevel storageLevel) {
-    return wrap(rdd.persist(storageLevel));
+  public SparkCollection<T> persist(StorageLevel cacheStorageLevel) {
+    return wrap(rdd.persist(cacheStorageLevel));
   }
   
   @SuppressWarnings("unchecked")
@@ -159,10 +159,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
     JavaRDD<T> countedInput = null;
     if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
         String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
-            "MEMORY_AND_DISK");
-        StorageLevel storageLevel = StorageLevel.fromString(cacheStorageLevelString);
+            Constants.DEFAUL_CACHING_STORAGE_LEVEL);
+        StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null))
-            .persist(storageLevel);
+            .persist(cacheStorageLevel);
     } else {
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
     }
@@ -198,10 +198,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
         JavaRDD<T> countedRDD = null;
         if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
             String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
-                "MEMORY_AND_DISK");
-            StorageLevel storageLevel = StorageLevel.fromString(cacheStorageLevelString);
+                Constants.DEFAUL_CACHING_STORAGE_LEVEL);
+            StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
             countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null))
-                .persist(storageLevel);
+                .persist(cacheStorageLevel);
         } else {
             countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
         }

@@ -81,8 +81,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
   
   @Override
-  public SparkCollection<T> persist(StorageLevel storageLevel) {
-    return wrap(stream.persist(storageLevel));
+  public SparkCollection<T> persist(StorageLevel cacheStorageLevel) {
+    return wrap(stream.persist(cacheStorageLevel));
   }
 
   @SuppressWarnings("unchecked")
