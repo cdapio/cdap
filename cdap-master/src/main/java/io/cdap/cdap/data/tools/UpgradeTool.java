@@ -430,13 +430,9 @@ public class UpgradeTool {
   }
 
   public static void main(String[] args) {
-    try {
-      UpgradeTool upgradeTool = new UpgradeTool();
-      upgradeTool.doMain(args);
-    } catch (Throwable t) {
-      LOG.error("Failed to upgrade ...", t);
-      System.exit(1);
-    }
+    // TODO CDAP-15401 - revert this change when upgrade is supported.
+    // temporarily throw a runtime exception when upgrade tool is executed.
+    throw new RuntimeException("Upgrade is not supported in CDAP 6.0.0.");
   }
 
   /**
