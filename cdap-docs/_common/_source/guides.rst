@@ -112,7 +112,7 @@ Guides
 .. _integrations: integrations/index.html
 
 .. |integ-man-hub-black| replace:: `Hub:`
-.. _integ-man-hub-black: integrations/cask-market.html
+.. _integ-man-hub-black: integrations/hub.html
 
 .. |integ-man-cl-black| replace:: `Cloudera:`
 .. _integ-man-cl-black: integrations/partners/cloudera/index.html
