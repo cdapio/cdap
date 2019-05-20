@@ -1816,7 +1816,6 @@
           <configuration>
             <nexusUrl>https://oss.sonatype.org</nexusUrl>
             <serverId>sonatype.release</serverId>
-            <stagingProfileId>a08e7cd82c9a38</stagingProfileId>
           </configuration>
         </plugin>
       </plugins>
