@@ -50,6 +50,12 @@ public final class SparkServiceDiscoverer implements ServiceDiscoverer, External
 
   @Nullable
   @Override
+  public URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
+    return delegate.getServiceURL(namespaceId, applicationId, serviceId);
+  }
+
+  @Nullable
+  @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     return delegate.getServiceURL(applicationId, serviceId);
   }

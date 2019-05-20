@@ -25,6 +25,18 @@ import javax.annotation.Nullable;
 public interface ServiceDiscoverer {
 
   /**
+   * Discover the base URL for a Service of an Application running in a Namespace, relative to which Service endpoints
+   * can be accessed
+   *
+   * @param namespaceId   Namespace of the application
+   * @param applicationId Application name
+   * @param serviceId     Service name
+   * @return URL for the discovered service or null if the service is not found
+   */
+  @Nullable
+  URL getServiceURL(String namespaceId, String applicationId, String serviceId);
+
+  /**
    * Discover the base URL for a Service, relative to which Service endpoints can be accessed
    *
    * @param applicationId Application name

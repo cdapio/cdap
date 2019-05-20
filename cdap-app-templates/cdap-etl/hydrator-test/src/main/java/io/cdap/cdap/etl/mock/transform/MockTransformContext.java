@@ -201,6 +201,13 @@ public class MockTransformContext implements TransformContext {
 
   @Nullable
   @Override
+  public URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
+    //no-op
+    return null;
+  }
+
+  @Nullable
+  @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     //no-op
     return null;
