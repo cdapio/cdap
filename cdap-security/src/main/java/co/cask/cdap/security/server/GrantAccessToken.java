@@ -16,7 +16,11 @@
 
 package co.cask.cdap.security.server;
 
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.CertificateUtils;
+import org.apache.shiro.authz.UnauthorizedException;
+
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
@@ -27,13 +31,17 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.Date;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Date;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
@@ -151,45 +159,91 @@ public class GrantAccessToken {
   }
 
   private AccessToken getTokenFromKNOX(HttpServletRequest request, HttpServletResponse response)
-      throws IOException, ServletException {
+			throws IOException, ServletException {
+		
+		final String authorizationHeader = request.getHeader("Authorization");
+        String wireToken = null;
+        long expireTime = -1l;
+        String username = null;
+        long issueTime = System.currentTimeMillis();
 
-    final String authorizationHeader = request.getHeader("knoxToken");
-    LOG.info("knoxtoken header: " + authorizationHeader);
-    String wireToken = null;
-    String username = null;
-    long expireTime = -1l;
-    long issueTime = System.currentTimeMillis();
-    //wireToken = authorizationHeader.substring(7);
-    wireToken = authorizationHeader;
-    LOG.info("token found: " + wireToken);
-    if (Strings.isNullOrEmpty(wireToken)) {
-      LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
-      return null;
-    } else {
-      LOG.debug("token found: " + wireToken);
-      try {
-        JWTToken token = new JWTToken(wireToken);
-        LOG.info("JWT token : " + token);
-        LOG.info("expiry : " + token.getExpiresDate().toString());
-        LOG.info("username : " + token.getSubject());
-        expireTime = Date.parse(token.getExpiresDate().toString());
-        username = token.getSubject();
-      } catch (ParseException ex) {
-        if (LOG.isDebugEnabled()) {
-          ex.printStackTrace();
+        if (authorizationHeader!=null && !Strings.isNullOrEmpty(authorizationHeader) && (authorizationHeader.trim().toLowerCase().startsWith("bearer "))) {
+            wireToken = authorizationHeader.substring(7);
+        } else {
+            wireToken = getJWTTokenFromCookie(request);
         }
-        LOG.error("Exception in verifying JWT token : ", ex.toString());
-      }
-    }
+        if (Strings.isNullOrEmpty(wireToken)) {
+        	LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
+            return null;
+        }
 
-    List<String> userGroups = Collections.emptyList();
+        JWTToken token;
+        try {
+            token = new JWTToken(wireToken);
+            username = token.getSubject();
+        } catch (ParseException | NullPointerException e) {
+            e.printStackTrace();
+            throw new UnauthorizedException("Authorization header missing/invalid");
+        }
 
-    AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userGroups, issueTime, expireTime);
-    AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
-    LOG.debug("Issued token for user {}", username);
-    return token;
-	}
+        boolean validToken = verifyToken(token);
+        if(!validToken)
+            throw new UnauthorizedException("Not authorized");
+
+        Date expires = token.getExpiresDate();
+        LOG.debug("token expiry date: " + expires.toString());
+        if (expires.before(new Date()))
+            throw new UnauthorizedException("Token expired.");
+        
+        expireTime = Date.parse(expires.toString());
+        
+		List<String> userGroups = Collections.emptyList();
+
+		AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userGroups, issueTime, expireTime);
+		AccessToken accessToken = tokenManager.signIdentifier(tokenIdentifier);
+		LOG.debug("Issued token for user {}", username);
+		return accessToken;
+	} 
  
+  private static boolean verifyToken(JWT token) {
+        boolean rc = false;
+        String verificationPem = "KNOX_TOKEN_PUBLIC_KEY";
+        try {
+            RSAPublicKey publicKey = CertificateUtils.parseRSAPublicKey(verificationPem);
+            JWSVerifier verifier = new RSASSAVerifier(publicKey);
+            rc = token.verify(verifier);
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                e.printStackTrace();
+            }
+            LOG.warn("Exception in verifying signature : ", e.toString());
+            e.printStackTrace();
+            return false;
+        }
+        return rc;
+    }
+	
+	private static String getJWTTokenFromCookie(HttpServletRequest request) {
+        String rawCookie = request.getHeader("cookie");
+        if (rawCookie == null) {
+        	return null;
+        }
+        String cookieToken = null;
+        String cookieName = "hadoop-jwt";
+
+        String[] rawCookieParams = rawCookie.split(";");
+        for(String rawCookieNameAndValue :rawCookieParams) {
+            String[] rawCookieNameAndValuePair = rawCookieNameAndValue.split("=");
+            if ((rawCookieNameAndValuePair.length > 1) &&
+                    (rawCookieNameAndValuePair[0].trim().equalsIgnoreCase(cookieName))) {
+                cookieToken = rawCookieNameAndValuePair[1];
+                break;
+            }
+        }
+        return cookieToken;
+    } 
+
+
   private void grantToken(HttpServletRequest request, HttpServletResponse response, long tokenValidity)
     throws IOException, ServletException {
 
