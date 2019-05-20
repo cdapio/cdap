@@ -1812,7 +1812,7 @@
           <configuration>
             <nexusUrl>https://oss.sonatype.org</nexusUrl>
             <serverId>sonatype.release</serverId>
-            <stagingProfileId>655dc88dc770c3</stagingProfileId>
+            <stagingProfileId>a08e7cd82c9a38</stagingProfileId>
           </configuration>
         </plugin>
       </plugins>
