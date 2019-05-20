@@ -89,7 +89,12 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<T> cache() {
-    return wrap(rdd.cache());
+    SparkConf sparkConf = jsc.getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      return wrap(rdd.cache());
+    } else {
+      return wrap(rdd);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -149,12 +154,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
 
-    SparkConf sparkconf = jsc.getConf();
-    JavaRDD<T> countedInput = null;
-    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
-    } else {
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    SparkConf sparkConf = jsc.getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      countedInput = countedInput.cache();
     }
 
     return wrap(compute.transform(sparkPluginContext, countedInput)
@@ -185,11 +188,12 @@ public class RDDCollection<T> implements SparkCollection<T> {
           new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
 
         SparkConf sparkconf = jsc.getConf();
-        JavaRDD<T> countedRDD = null;
-        if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
-        } else {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+        JavaRDD<T> countedRDD = 
+          rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+
+        SparkConf sparkConf = jsc.getConf();
+        if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+          countedRDD = countedRDD.cache();
         }
     
         try {
