@@ -32,7 +32,9 @@ import com.google.api.services.compute.model.AccessConfig;
 import com.google.api.services.compute.model.Firewall;
 import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
+import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkInterface;
+import com.google.api.services.compute.model.NetworkList;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -65,7 +67,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
@@ -80,20 +81,55 @@ public class DataprocClient implements AutoCloseable {
   private final String projectId;
   private final String network;
   private final String zone;
-  private final String systemNetwork;
+  private final boolean useInternalIP;
 
   public static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
+    ClusterControllerClient client = getClusterControllerClient(conf);
+    Compute compute = getCompute(conf);
+
+    String network = conf.getNetwork();
     String systemNetwork = null;
     try {
       systemNetwork = DataprocConf.getSystemNetwork();
     } catch (IllegalArgumentException e) {
-      // expected when not running on GCP
+      // expected when not running on GCP, ignore
     }
 
-    ClusterControllerClient client = getClusterControllerClient(conf);
-    Compute compute = getCompute(conf);
+    String projectId = conf.getProjectId();
+    String systemProjectId = null;
+    try {
+      systemProjectId = DataprocConf.getSystemProjectId();
+    } catch (IllegalArgumentException e) {
+      // expected when not running on GCP, ignore
+    }
+    boolean useInternalIP = false;
 
-    return new DataprocClient(conf, client, compute, systemNetwork);
+    if (network == null && projectId.equals(systemProjectId)) {
+      // If the CDAP instance is running on a GCE/GKE VM from a project that matches the provisioner project,
+      // use the network of that VM.
+      network = systemNetwork;
+      // Also, use internal IPs (unless explicitly configured to use external IPs),
+      // as CDAP and the dataproc cluster will be in the same network.
+      useInternalIP = !conf.isPreferExternalIP();
+    } else if (network == null) {
+      // Otherwise, pick a network from the configured project using the Compute API
+      network = findNetwork(projectId, compute);
+    }
+    if (network == null) {
+      throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
+    }
+
+    return new DataprocClient(new DataprocConf(conf, network), client, compute, useInternalIP);
+  }
+
+  private static String findNetwork(String project, Compute compute) throws IOException {
+    NetworkList networkList = compute.networks().list(project).execute();
+    List<Network> networks = networkList.getItems();
+    if (networks == null || networks.isEmpty()) {
+      throw new IllegalArgumentException(String.format("Unable to find any networks in project '%s'. "
+                                                         + "Please create a network in the project.", project));
+    }
+    return networks.iterator().next().getName();
   }
 
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
@@ -112,12 +148,11 @@ public class DataprocClient implements AutoCloseable {
       .build();
   }
 
-  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute,
-                         @Nullable String systemNetwork) {
+  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, boolean useInternalIP) {
     this.projectId = conf.getProjectId();
     this.network = conf.getNetwork();
     this.zone = conf.getZone();
-    this.systemNetwork = systemNetwork;
+    this.useInternalIP = useInternalIP;
     this.conf = conf;
     this.client = client;
     this.compute = compute;
@@ -390,7 +425,7 @@ public class DataprocClient implements AutoCloseable {
       ts = -1L;
     }
     String ip = properties.get("ip.external");
-    if (network.equals(systemNetwork) && !conf.isPreferExternalIP()) {
+    if (useInternalIP) {
       ip = properties.get("ip.internal");
     }
     return new Node(nodeName, type, ip, ts, properties);
