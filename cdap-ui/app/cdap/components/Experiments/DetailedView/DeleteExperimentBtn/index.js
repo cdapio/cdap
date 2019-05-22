@@ -20,6 +20,7 @@ import DeleteEntityBtn from 'components/DeleteEntityBtn';
 import { myExperimentsApi } from 'api/experiments';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { setExperimentDetailError } from 'components/Experiments/store/ExperimentDetailActionCreator';
+import history from 'services/history';
 
 const deleteExperiment = (experimentId, callback, errCallback) => {
   let namespace = getCurrentNamespace();
@@ -29,7 +30,7 @@ const deleteExperiment = (experimentId, callback, errCallback) => {
       experimentId,
     })
     .subscribe(
-      () => (window.location.href = `${window.location.origin}/cdap/ns/${namespace}/experiments`),
+      () => history.push(`/ns/${namespace}/experiments`),
       (err) => {
         let error = `Failed to delete the experiment '${experimentId}' - ${err.response || err}`;
         errCallback(error);

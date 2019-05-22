@@ -21,8 +21,7 @@ import {
   listSpannerDatabases,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
-import { Link } from 'react-router-dom';
-import { match } from 'react-router';
+import { Link, match } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { objectQuery } from 'services/helpers';

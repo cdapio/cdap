@@ -31,7 +31,7 @@ import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import isEmpty from 'lodash/isEmpty';
-
+import history from 'services/history';
 require('./MicroserviceUpload.scss');
 
 export default class MicroserviceUploadWizard extends Component {
@@ -123,14 +123,10 @@ export default class MicroserviceUploadWizard extends Component {
       action: 'start'
     };
 
-    return MyProgramApi.action(params)
-      .map((res) => {
-        window.location.href = window.getAbsUIUrl({
-          namespaceId: namespace,
-          appId
-        });
-        return res;
-      });
+    return MyProgramApi.action(params).map((res) => {
+      history.push(`/ns/${namespace}/apps/${appId}`);
+      return res;
+    });
   }
   buildSuccessInfo() {
     let appName = MicroserviceUploadStore.getState().general.instanceName;

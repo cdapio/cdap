@@ -34,6 +34,7 @@ import BrowserData from 'components/DataPrep/DataPrepBrowser/GCSBrowser/BrowserD
 import classnames from 'classnames';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
+import history from 'services/history';
 
 require('./GCSBrowser.scss');
 
@@ -74,9 +75,7 @@ export default class GCSBrowser extends Component {
       (res) => {
         let { id: workspaceId } = res.values[0];
         if (this.props.enableRouting) {
-          window.location.href = `${
-            window.location.origin
-          }/cdap/ns/${namespace}/wrangler/${workspaceId}`;
+          history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
         }
         if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
           this.props.onWorkspaceCreate(workspaceId);
