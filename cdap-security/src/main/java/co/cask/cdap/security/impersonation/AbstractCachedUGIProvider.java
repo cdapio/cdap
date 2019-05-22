@@ -18,6 +18,9 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -70,7 +73,13 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
         return ugi;
       }
       boolean isCache = checkExploreAndDetermineCache(impersonationRequest);
-      ImpersonationInfo info = getPrincipalForEntity(impersonationRequest);
+      ImpersonationRequest tmpRequest = impersonationRequest;
+      if (impersonationRequest.getEntityId() instanceof ProgramRunId) {
+          
+          ProgramId progId = ((ProgramRunId) impersonationRequest.getEntityId()).getParent();
+          tmpRequest = new ImpersonationRequest(progId, impersonationRequest.getImpersonatedOpType());
+      }
+      ImpersonationInfo info = getPrincipalForEntity(tmpRequest);
       ImpersonationRequest newRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
                                                                  impersonationRequest.getImpersonatedOpType(),
                                                                  info.getPrincipal(), info.getKeytabURI());
