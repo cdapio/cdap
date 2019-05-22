@@ -24,7 +24,7 @@
         "name": "pipeline",
         "artifact": {
           "name": "cdap-data-pipeline",
-          "version": "[6.0.0, 10.0.0)",
+          "version": "[6.0.1-SNAPSHOT, 10.0.0)",
           "scope": "SYSTEM"
         },
         "config": {
