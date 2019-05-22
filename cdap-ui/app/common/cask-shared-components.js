@@ -70,7 +70,7 @@ var ToggleSwitch = require('../cdap/components/ToggleSwitch').default;
 var PipelineList = require('../cdap/components/PipelineList').default;
 var AppHeader = require('../cdap/components/AppHeader').default;
 var Markdown = require('../cdap/components/Markdown').MarkdownWithStyles;
-
+var AceEditor = require('../cdap/components/AceEditor').default;
 export {
   Store,
   DataPrepHome,
@@ -121,4 +121,5 @@ export {
   PipelineList,
   AppHeader,
   Markdown,
+  AceEditor,
 };

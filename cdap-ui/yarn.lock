@@ -2392,6 +2392,10 @@ accord@^0.20.1:
     uglify-js "2.x"
     when "3.x"
 
+ace-builds@1.4.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/ace-builds/-/ace-builds-1.4.4.tgz#b1ad500f99b451710ce51d20f43313027e9fb73a"
+
 acorn-dynamic-import@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/acorn-dynamic-import/-/acorn-dynamic-import-3.0.0.tgz#901ceee4c7faaef7e07ad2a47e890675da50a278"

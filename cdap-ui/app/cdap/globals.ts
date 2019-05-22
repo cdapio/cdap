@@ -20,6 +20,7 @@ declare global {
     getHydratorUrl: ({}) => string;
     angular;
     Cypress;
+    ace;
   }
 }
 
