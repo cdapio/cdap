@@ -17,7 +17,7 @@
 import * as React from 'react';
 import * as Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import AceEditor from 'components/AceEditor';
+import CodeEditor from 'components/CodeEditor';
 const SubTSXComponent = Loadable({
   loader: () =>
     import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
@@ -59,5 +59,5 @@ class StatefullComponent extends React.PureComponent<IStatefulComponentProps, {}
   }
 }
 export default function SampleTSXComponent() {
-  return [<h1 key="super-title"> Hello from TSX! </h1>, <AceEditor rows={20} />];
+  return [<h1 key="super-title"> Hello from TSX! </h1>, <CodeEditor rows={20} />];
 }

@@ -29,19 +29,21 @@ const styles = (theme) => {
     },
   };
 };
-interface IAceEditorProps extends WithStyles<typeof styles> {
+interface ICodeEditorProps extends WithStyles<typeof styles> {
   mode?: string;
   value: string;
   onChange: (value: string) => void;
   rows?: number;
   className?: string;
+  disabled?: boolean;
 }
-class AceEditor extends React.Component<IAceEditorProps> {
+class CodeEditor extends React.Component<ICodeEditorProps> {
   public static LINE_HEIGHT = 20;
   public static defaultProps = {
     mode: 'plain_text',
     value: '',
     rows: 5,
+    disabled: false,
   };
   public aceRef: HTMLElement;
   public componentDidMount() {
@@ -49,6 +51,9 @@ class AceEditor extends React.Component<IAceEditorProps> {
     const editor = window.ace.edit(this.aceRef);
     editor.getSession().setMode(`ace/mode/${this.props.mode}`);
     editor.getSession().setUseWrapMode(true);
+    if (this.props.disabled) {
+      editor.setReadOnly(true);
+    }
     editor.getSession().on('change', () => {
       if (typeof this.props.onChange === 'function') {
         this.props.onChange(editor.getSession().getValue());
@@ -64,7 +69,7 @@ class AceEditor extends React.Component<IAceEditorProps> {
     return (
       <div
         className={`${className} ${classes.root}`}
-        style={{ height: `${this.props.rows * AceEditor.LINE_HEIGHT}px` }}
+        style={{ height: `${this.props.rows * CodeEditor.LINE_HEIGHT}px` }}
         ref={(ref) => (this.aceRef = ref)}
       >
         {value}
@@ -72,18 +77,19 @@ class AceEditor extends React.Component<IAceEditorProps> {
     );
   }
 }
-const AceEditorWrapper = withStyles(styles)(AceEditor);
-export default function StyledAceEditor(props) {
+const CodeEditorWrapper = withStyles(styles)(CodeEditor);
+export default function StyledCodeEditor(props) {
   return (
     <ThemeWrapper>
-      <AceEditorWrapper {...props} />
+      <CodeEditorWrapper {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledAceEditor as any).propTypes = {
+(StyledCodeEditor as any).propTypes = {
   mode: PropTypes.string,
   value: PropTypes.string,
   onChange: PropTypes.func,
   rows: PropTypes.number,
+  disabled: PropTypes.bool,
 };

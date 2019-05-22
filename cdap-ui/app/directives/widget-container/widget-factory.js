@@ -36,13 +36,13 @@ angular.module(PKG.name + '.commons')
         }
       },
       'textarea': {
-        element: '<ace-editor></ace-editor>',
+        element: '<code-editor></code-editor>',
         attributes: {
           'value': 'model',
           'mode': '"plain_text"',
           'on-change': 'onChange',
           'disabled': 'disabled',
-          'rows': 15,
+          'rows': '{{myconfig["widget-attributes"].rows}}',
         }
       },
       'password': {
@@ -93,7 +93,7 @@ angular.module(PKG.name + '.commons')
         }
       },
       'javascript-editor': {
-        element: '<ace-editor></ace-editor>',
+        element: '<code-editor></code-editor>',
         attributes: {
           'value': 'model',
           'mode': '"javascript"',
@@ -103,7 +103,7 @@ angular.module(PKG.name + '.commons')
         }
       },
       'python-editor': {
-        element: '<ace-editor></ace-editor>',
+        element: '<code-editor></code-editor>',
         attributes: {
           'value': 'model',
           'mode': '"python"',
@@ -113,7 +113,7 @@ angular.module(PKG.name + '.commons')
         }
       },
       'scala-editor': {
-        element: '<ace-editor></ace-editor>',
+        element: '<code-editor></code-editor>',
         attributes: {
           'value': 'model',
           'mode': '"scala"',
@@ -123,7 +123,7 @@ angular.module(PKG.name + '.commons')
         }
       },
       'sql-editor': {
-        element: '<ace-editor></ace-editor>',
+        element: '<code-editor></code-editor>',
         attributes: {
           'value': 'model',
           'mode': '"sql"',
