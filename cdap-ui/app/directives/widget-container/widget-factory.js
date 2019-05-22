@@ -85,11 +85,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'json-editor': {
-        element: '<my-json-textbox></my-json-textbox>',
+        element: '<json-editor></json-editor>',
         attributes: {
-          'ng-model': 'model',
+          'value': 'model',
+          'mode': '"json"',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          placeholder: 'myconfig.properties.default || myconfig["widget-attributes"].default'
         }
       },
       'javascript-editor': {
