@@ -75,9 +75,17 @@ public class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
+  DataprocConf(DataprocConf conf, String network) {
+    this(conf.accountKey, conf.region, conf.zone, conf.projectId, network, conf.masterNumNodes, conf.masterCPUs,
+         conf.masterMemoryMB, conf.masterDiskGB, conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB,
+         conf.workerDiskGB, conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
+         conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled, conf.publicKey,
+         conf.dataprocProperties);
+  }
+
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
-                       String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
-                       int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
+                       @Nullable String network, int masterNumNodes, int masterCPUs, int masterMemoryMB,
+                       int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
@@ -118,6 +126,7 @@ public class DataprocConf {
     return projectId;
   }
 
+  @Nullable
   public String getNetwork() {
     return network;
   }
@@ -258,7 +267,7 @@ public class DataprocConf {
     }
     String network = getString(properties, "network");
     if (network == null || AUTO_DETECT.equals(network)) {
-      network = getSystemNetwork();
+      network = null;
     }
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
@@ -387,7 +396,7 @@ public class DataprocConf {
   /**
    * Get project id from the metadata server.
    */
-  private static String getSystemProjectId() {
+  static String getSystemProjectId() {
     try {
       return getMetadata("project/project-id");
     } catch (IOException e) {

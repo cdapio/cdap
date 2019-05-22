@@ -36,7 +36,7 @@
           "widget-type": "textbox",
           "label": "Network",
           "name": "network",
-          "description": "Select a VPC network in the specified project to use for creating clusters with this profile. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's network will be used.",
+          "description": "Select a VPC network in the specified project to use for creating clusters with this profile. If this is left blank or set to 'auto-detect', a network from the project will be chosen.",
           "widget-attributes": {
             "default": "default",
             "size": "medium"
