@@ -36,13 +36,13 @@ angular.module(PKG.name + '.commons')
         }
       },
       'textarea': {
-        element: '<div my-ace-editor></div>',
+        element: '<ace-editor></ace-editor>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
-          'mode': 'plain_text',
+          'value': 'model',
+          'mode': '"plain_text"',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          'rows': '{{myconfig["widget-attributes"].rows}}',
+          'rows': 15,
         }
       },
       'password': {
@@ -93,44 +93,43 @@ angular.module(PKG.name + '.commons')
         }
       },
       'javascript-editor': {
-        element: '<div my-ace-editor></div>',
+        element: '<ace-editor></ace-editor>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig',
-          'mode': 'javascript',
+          'value': 'model',
+          'mode': '"javascript"',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          placeholder: '{{::myconfig["widget-attributes"].default}}'
+          'rows': 25,
         }
       },
       'python-editor': {
-        element: '<div my-ace-editor></div>',
+        element: '<ace-editor></ace-editor>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
-          'mode': 'python',
+          'value': 'model',
+          'mode': '"python"',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          placeholder: '{{::myconfig["widget-attributes"].default}}'
+          'rows': 25,
         }
       },
       'scala-editor': {
-        element: '<div my-ace-editor></div>',
+        element: '<ace-editor></ace-editor>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
-          'mode': 'scala',
+          'value': 'model',
+          'mode': '"scala"',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          placeholder: '{{::myconfig["widget-attributes"].default}}'
+          'rows': 25,
         }
       },
       'sql-editor': {
-        element: '<div my-ace-editor></div>',
+        element: '<ace-editor></ace-editor>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
-          'mode': 'sql',
+          'value': 'model',
+          'mode': '"sql"',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          'row': '20',
-          placeholder: '{{::myconfig["widget-attributes"].default}}'
+          'rows': 15,
         }
       },
       'schema': {
