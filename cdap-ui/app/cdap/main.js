@@ -52,14 +52,8 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 import ThemeWrapper from 'components/ThemeWrapper';
-import { MarkdownImpl } from 'components/Markdown/MarkdownImplExample';
-
 import './globals';
-const SampleTSXComponent = Loadable({
-  loader: () =>
-    import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
-  loading: LoadingSVGCentered,
-});
+import If from 'components/If';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -174,19 +168,45 @@ class CDAP extends Component {
                     </ErrorBoundary>
                   )}
                 />
-                <Route
-                  exact
-                  path="/ts-example"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <SampleTSXComponent {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route exact path="/markdownexperiment" component={MarkdownImpl} />
+                <If condition={window.CDAP_CONFIG.cdap.mode === 'development'}>
+                  <Route
+                    exact
+                    path="/ts-example"
+                    render={(props) => {
+                      const SampleTSXComponent = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <SampleTSXComponent {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
+                </If>
+                <If condition={window.CDAP_CONFIG.cdap.mode === 'development'}>
+                  <Route
+                    exact
+                    path="/markdownexperiment"
+                    render={(props) => {
+                      const MarkdownImpl = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "SampleTSXComponent" */ 'components/Markdown/MarkdownImplExample'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <MarkdownImpl {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
+                </If>
                 {/*
-                      Eventually handling 404 should move to the error boundary and all container components will have the error object.
-                      */}
+                  Eventually handling 404 should move to the error boundary and all container components will have the error object.
+                */}
                 <Route
                   render={(props) => (
                     <ErrorBoundary>
