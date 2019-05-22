@@ -15,10 +15,7 @@ Building Blocks
 
     Core Abstractions <core>
     Applications <applications>
-    Streams <streams>
     Datasets <datasets/index>
-    Views <views>
-    Flows and Flowlets <flows-flowlets/index> 
     MapReduce Programs<mapreduce-programs>
     Plugins <plugins>
     Schedules <schedules>
@@ -47,13 +44,10 @@ write data through the data abstraction layer in CDAP.
 
 **Data abstractions** include:
 
-- :doc:`Streams <streams>`
 - :doc:`Datasets <datasets/index>`
-- :doc:`Views <views>`
 
 **Applications** are composed from these program building blocks:
 
-- :doc:`Flows and Flowlets <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Plugins <plugins>`
 - :doc:`Schedules <schedules>`
@@ -70,9 +64,9 @@ write data through the data abstraction layer in CDAP.
 - All of the program building blocks follow a :doc:`Program Lifecycle <program-lifecycle>`.
 
 - :ref:`Metadata <metadata>` |---| consisting of **properties** (a list of key-value pairs)
-  or **tags** (a list of keys) |---| can be set for artifacts, applications, programs, datasets, streams, and views.
+  or **tags** (a list of keys) |---| can be set for artifacts, applications, programs, and datasets.
   These can be retrieved and searched, and the metadata used to discover CDAP entities.
-  Access of these entities is tracked, and you can view the :ref:`lineage <metadata-lineage>` of datasets and streams.
+  Access of these entities is tracked, and you can view the :ref:`lineage <metadata-lineage>` of datasets.
   With a lineage diagram, you can then drill down into the metadata of its nodes.
 
 - :ref:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
@@ -96,7 +90,5 @@ write data through the data abstraction layer in CDAP.
 For a **high-level view of the concepts** of the Cask Data Application Platform, see the
 platform :doc:`overview. </overview/index>`
 
-For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
-the code in the :ref:`examples <examples-index>` directory, both of which are available at the
-`Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP Sandbox
-installation directory.
+For information beyond this section, see the :ref:`Javadocs <reference:javadocs>`, which are available
+at the `Cask.co resources page, <http://cask.co/resources>`_.

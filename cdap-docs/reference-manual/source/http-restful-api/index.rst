@@ -22,7 +22,6 @@ CDAP HTTP RESTful API v3
     Lifecycle <lifecycle>
     Logging <logging>
     Metadata <metadata>
-    Metadata Management <metadata-management>
     Metrics <metrics>
     Monitor <monitor>
     Namespace <namespace>
@@ -33,19 +32,16 @@ CDAP HTTP RESTful API v3
     Reports <reports>
     Security <security>
     Service <service>
-    Stream <stream>
     Transactions <transactions>
-    Views <views>
     Workflow <workflow>
 
 .. highlight:: console
 
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of
-purposes: from sending data events to a stream and inspecting the contents of a
-stream through checking the status of system and custom CDAP services. V3 of the
-API includes the namespacing of applications, data, and metadata to achieve application and
-data isolation. This is an inital step towards introducing `multi-tenancy
-<http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
+purposes: from deploying custom applications through checking the status of system and
+custom CDAP services. V3 of the API includes the namespacing of applications, data, and
+metadata to achieve application and data isolation. This is an inital step towards introducing
+`multi-tenancy <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
 
 **Introduction**
 
@@ -56,7 +52,6 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 
 - :doc:`Namespace: <namespace>` creating and managing namespaces
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
-- :doc:`Metadata Management: <metadata-management>` metadata management
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Security: <security>` granting, revoking and listing privileges on CDAP entities,
@@ -68,17 +63,11 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Artifact: <artifact>` deploying artifacts and retrieving details about plugins
   available to artifacts and classes contained within artifacts
 - :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the
-  lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
+  lifecycle of MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Profile: <profile>` management of cloud runtime profiles
-- :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services
 - :doc:`Workflow: <workflow>` retrieving values from workflow tokens and statistics on workflow runs
-
-**Querying and Viewing APIs**
-
-- :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
-- :doc:`Views: <views>` a read-only view of a stream, with a specific read format
 
 **Logging, Metrics, and Monitoring APIs**
 
@@ -101,10 +90,9 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the
-  lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
+  lifecycle of MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Logging: <logging>` retrieving application logs
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
-- :doc:`Metadata Management: <metadata-management>` metadata management
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
 - :doc:`Namespace: <namespace>` creating and managing namespaces
@@ -115,7 +103,5 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Security: <security>` granting, revoking, and listing privileges, as well as adding, retrieving,
   and managing *Secure Keys*
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services
-- :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Transactions: <transactions>` interacting with the transaction service
-- :doc:`Views: <views>` a read-only view of a stream, with a specific read format
 - :doc:`Workflow: <workflow>` retrieving values from workflow tokens and statistics on workflow runs

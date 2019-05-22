@@ -4,7 +4,7 @@
 
 .. :hide-toc: true
 
-.. _cask-market:
+.. _hub:
 
 ===
 Hub
@@ -60,7 +60,7 @@ they would serve any static content. For example, an Apache web server can be pl
 top of a local directory structure that matches the expected Hub directory structure.
 
 
-.. _cask-market-api:
+.. _hub-api:
 
 Hub HTTP RESTful API
 ============================
@@ -77,14 +77,14 @@ The directory structure must be:
 
 .. parsed-literal::
 
-  <base>/|cask-market-version|/packages.json
-  <base>/|cask-market-version|/packages/<package-name>/<version>/icon.png
-  <base>/|cask-market-version|/packages/<package-name>/<version>/spec.json
-  <base>/|cask-market-version|/packages/<package-name>/<version>/spec.json.asc
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource1>
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource1>.asc
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource2>
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource2>.asc
+  <base>/|hub-version|/packages.json
+  <base>/|hub-version|/packages/<package-name>/<version>/icon.png
+  <base>/|hub-version|/packages/<package-name>/<version>/spec.json
+  <base>/|hub-version|/packages/<package-name>/<version>/spec.json.asc
+  <base>/|hub-version|/packages/<package-name>/<version>/<resource1>
+  <base>/|hub-version|/packages/<package-name>/<version>/<resource1>.asc
+  <base>/|hub-version|/packages/<package-name>/<version>/<resource2>
+  <base>/|hub-version|/packages/<package-name>/<version>/<resource2>.asc
   ...
 
 .. directory-structure-end
@@ -93,7 +93,7 @@ The directory structure must be:
 .. --------------------
 .. include:: ../../reference-manual/source/http-restful-api/base-url.txt
 
-.. _cask-market-get-catalog:
+.. _hub-get-catalog:
 
 Get Hub Catalog
 ---------------
@@ -104,7 +104,7 @@ To retrieve a list of available packages, submit an HTTP GET request:
 
 .. parsed-literal::
 
-  GET /|cask-market-version|/packages.json
+  GET /|hub-version|/packages.json
 
 .. highlight:: json-ellipsis
 
@@ -157,7 +157,7 @@ To retrieve a package specification, submit an HTTP GET request:
 
 .. parsed-literal::
 
-  GET /|cask-market-version|/packages/<package-name>/<version>/spec.json
+  GET /|hub-version|/packages/<package-name>/<version>/spec.json
 
 .. highlight:: json-ellipsis
 
@@ -836,7 +836,7 @@ To retrieve the signature for a package specification, submit an HTTP GET reques
 
 .. parsed-literal::
 
-  GET /|cask-market-version|/packages/<package-name>/<version>/spec.json.asc
+  GET /|hub-version|/packages/<package-name>/<version>/spec.json.asc
 
 The signature is a PGP signature that can be used to validate a package resource. The
 package publisher signs the package specification with their private key. The signature can
@@ -852,7 +852,7 @@ To retrieve a package resource, submit an HTTP GET request:
 
 .. parsed-literal::
 
-  GET /|cask-market-version|/packages/<package-name>/<version>/<resource-name>
+  GET /|hub-version|/packages/<package-name>/<version>/<resource-name>
 
 The resource can contain arbitrary data. They can be artifact JARs, configuration files,
 sample data, or anything else that a package action may require.
@@ -866,7 +866,7 @@ To retrieve the signature for a package resource, submit an HTTP GET request:
 
 .. parsed-literal::
 
-  GET /|cask-market-version|/packages/<package-name>/<version>/<resource-name>.asc
+  GET /|hub-version|/packages/<package-name>/<version>/<resource-name>.asc
 
 The signature is a PGP signature that can be used to validate a package resource. The
 package publisher signs the package resource with their private key. The signature can
@@ -882,7 +882,7 @@ To retrieve the icon for a package, submit an HTTP GET request:
 
 .. parsed-literal::
 
-  GET /|cask-market-version|/packages/<package-name>/<version>/icon.png
+  GET /|hub-version|/packages/<package-name>/<version>/icon.png
 
 
 Hosting a Custom Hub
@@ -894,7 +894,7 @@ The Hub APIs are simply a contract about the directory structure of the Hub.
 
 .. Directory structure
 .. --------------------
-.. include:: cask-market.rst
+.. include:: hub.rst
     :start-after: .. directory-structure-start
     :end-before: .. directory-structure-end
 

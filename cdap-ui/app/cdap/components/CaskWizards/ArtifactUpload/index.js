@@ -30,6 +30,13 @@ import globalEvents from 'services/global-events';
 
 require('./ArtifactUpload.scss');
 
+/**
+ * This is the base module that is responsible for uploading plugin and directives
+ * both in plus button as well as in market. It falls back to the default success info
+ * if none provided as props.
+ * One exception: We directly use this component for Driver upload wizard :facepalm:
+ * Check ResourceCenter/index.js for wizard mapping.
+ */
 export default class ArtifactUploadWizard extends Component {
   constructor(props) {
     super(props);
@@ -75,12 +82,7 @@ export default class ArtifactUploadWizard extends Component {
       showWizard: !this.state.showWizard,
     });
   }
-  // TODO: shouldn't do this, replace in 4.2
-  getChildContext() {
-    return {
-      isMarket: !this.props.hideUploadHelper && this.props.buildSuccessInfo,
-    };
-  }
+
   buildSuccessInfo() {
     let state = ArtifactUploadStore.getState();
     let artifactName = state.configure.name;
@@ -100,6 +102,16 @@ export default class ArtifactUploadWizard extends Component {
             namespace,
           },
         }),
+        handleCallToActionClick: () => {
+          /**
+           * FIXME (CDAP-15396): Right now we don't know what context we are in (market vs plus button)
+           * We should be able to pass on that context from the parent to be able to target specific
+           * things in specific environments.
+           * Right now this is here to close the modal when user clicks "Create pipeline" on plugin upload
+           * while in pipeline studio.
+           * */
+          this.eventEmitter.emit(globalEvents.CLOSERESOURCECENTER);
+        },
         linkLabel,
         linkUrl: window.getAbsUIUrl({
           namespaceId: namespace,
@@ -148,9 +160,7 @@ ArtifactUploadWizard.defaultProps = {
   },
   displayCTA: true,
 };
-ArtifactUploadWizard.childContextTypes = {
-  isMarket: PropTypes.bool,
-};
+
 ArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,

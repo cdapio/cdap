@@ -76,8 +76,6 @@ To add a gauge metric to the flowlet *WordProcessor*::
     }
   }
 
-An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`Purchase example. <examples-purchase>`
-
 Under high load, metrics system may overload HBase. To mitigate the effect, Metrics system also provides an option to
 enable/disable metrics using `app.program.metrics.enabled` parameter which can have values as `true` or `false`.
 By default, program metrics are enabled, so the default value for this parameter is `true`.

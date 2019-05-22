@@ -398,7 +398,6 @@ function set_version() {
     GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
   fi
   get_cdap_pipelines_version ${GIT_BRANCH_CDAP_PIPELINES}
-  get_cdap_metadata_management_version ${GIT_BRANCH_CDAP_METADATA_MANAGEMENT}
 }
 
 function display_version() {
@@ -442,18 +441,6 @@ function get_cdap_pipelines_version() {
   CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION#*<version>}
   CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION%%</version>*}
   export CDAP_PIPELINES_VERSION
-}
-
-function get_cdap_metadata_management_version() {
-  # $1 Branch of Tracker to use
-  CDAP_METADATA_MANAGEMENT_VERSION=$(curl --silent "https://raw.githubusercontent.com/cdapio/cask-tracker/${1}/pom.xml" | grep "<version>")
-  CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION#*<version>}
-  CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION%%</version>*}
-  if [[ -z ${CDAP_METADATA_MANAGEMENT_VERSION} ]]; then
-    CDAP_METADATA_MANAGEMENT_VERSION="0.2.0-SNAPSHOT"
-    echo "Using default CDAP_METADATA_MANAGEMENT_VERSION ${CDAP_METADATA_MANAGEMENT_VERSION}"
-  fi
-  export CDAP_METADATA_MANAGEMENT_VERSION
 }
 
 function clear_messages_file() {

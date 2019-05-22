@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2018 Cask Data, Inc.
-    :version: 5.1.0
+    :copyright: Copyright © 2019 Cask Data, Inc.
+    :version: 6.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -22,6 +22,8 @@ Cask Data Application Platform UI Dependencies
    :widths: 20, 10, 10, 20, 40
 
    "@babel/polyfill","7.0.0-beta.53","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://babeljs.io/"
+   "@material-ui/core","3.6.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/mui-org/material-ui/next/LICENSE"
+   "@material-ui/icons","3.0.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/mui-org/material-ui/next/LICENSE"
    "angular","1.5.8","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular/angular.js/blob/v1.4.3/LICENSE"
    "angular-animate","1.4.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular/bower-angular-animate"
    "angular-bootstrap","1.1.2","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular-ui/bootstrap-bower/blob/1.1.2/package.json"
@@ -43,9 +45,9 @@ Cask Data Application Platform UI Dependencies
    "angular-ui-router","0.3.0","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/angular-ui/ui-router/blob/0.3.0/LICENSE"
    "angularjs-dropdown-multiselect","1.5.2","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/dotansimha/angularjs-dropdown-multiselect"
    "body-parser","1.14.2","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/body-parser"
-   "bootstrap","4.0.0-alpha.5","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://getbootstrap.com"
+   "bootstrap","4.1.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://getbootstrap.com"
    "c3","0.4.10","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/masayuki0812/c3"
-   "cdap-avsc","4.1.12","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/cdapio/ui-schema-parser/develop/LICENSE"
+   "cdap-avsc","4.1.13","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/cdapio/ui-schema-parser/develop/LICENSE"
    "classnames","2.2.5","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/JedWatson/classnames/master/LICENSE"
    "clipboard","1.7.1","npm","`MIT License <https://zenorocha.mit-license.org/>`__","https://github.com/zenorocha/clipboard.js#readme"
    "compression","1.6.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/expressjs/compression"
@@ -55,12 +57,14 @@ Cask Data Application Platform UI Dependencies
    "d3-timeline","0.0.5","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/jiahuang/d3-timeline/tree/v0.0.5"
    "d3-tip","0.6.7","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/Caged/d3-tip/blob/v0.6.7/LICENSE"
    "dagre-d3","0.4.10","bower","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/cpettitt/dagre-d3"
+   "ejs","2.6.1","npm","`Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0.html>`__","https://raw.githubusercontent.com/mde/ejs/master/LICENSE"
    "esprima","2.0.0","bower","`BSD License <https://github.com/ariya/esprima/blob/2.0.0/LICENSE.BSD>`__","https://github.com/ariya/esprima/blob/2.0.0/LICENSE.BSD"
    "event-emitter","0.3.4","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/medikoo/event-emitter/master/LICENSE"
    "express","4.16.2","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/strongloop/express"
    "finalhandler","0.4.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/pillarjs/finalhandler"
    "font-awesome","4.6.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://fontawesome.io"
    "fuse.js","2.5.0","npm","`Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0.html>`__","https://raw.githubusercontent.com/krisk/Fuse/master/LICENSE"
+   "helmet-csp","2.7.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/helmetjs/csp/master/LICENSE"
    "history","2.1.2","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/ReactTraining/history/master/LICENSE.md"
    "i18n-react","0.3.0","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/alexdrel/i18n-react/master/LICENSE"
    "immutability-helper","2.7.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/kolodny/immutability-helper#readme"

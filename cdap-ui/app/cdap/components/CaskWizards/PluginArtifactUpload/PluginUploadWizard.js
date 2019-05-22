@@ -24,6 +24,10 @@ import PluginArtifactUploadStore from 'services/WizardStores/PluginArtifactUploa
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
+/**
+ * This is used in Plus button to upload plugin artifact. The buildInfo here is the one that gets
+ * rendered as call-to-actions once user uploads a plugin from Plus button.
+ */
 export default class PluginUploadWizard extends Component {
   constructor(props) {
     super(props);
@@ -55,6 +59,16 @@ export default class PluginUploadWizard extends Component {
           namespace,
         },
       }),
+      handleCallToActionClick: () => {
+        /**
+         * FIXME (CDAP-15396): Right now we don't know what context we are in (market vs plus button)
+         * We should be able to pass on that context from the parent to be able to target specific
+         * things in specific environments.
+         * Right now this is here to close the modal when user clicks "Create pipeline" on plugin upload
+         * while in pipeline studio.
+         * */
+        this.eventEmitter.emit(globalEvents.CLOSERESOURCECENTER);
+      },
       linkLabel,
       linkUrl: window.getAbsUIUrl({
         namespaceId: namespace,

@@ -80,38 +80,6 @@ function download_includes() {
   echo_red_bold "Downloading source files includes from GitHub..."
   set_version
 
-  local includes=${1}
-  local includes_wise="${includes}/tutorial-wise"
-  local project_version=${PROJECT_SHORT_VERSION}
-
-  local source1="https://raw.githubusercontent.com/cdapio/cdap-apps"
-  if [ "x${GIT_BRANCH_CDAP_APPS}" != "x" ]; then
-    local source2="${GIT_BRANCH_CDAP_APPS}"
-  elif [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
-    local source2="develop"
-  else
-    local source2="release/cdap-${project_version}-compatible"
-  fi
-
-  local project_source="${source1}/${source2}/Wise"
-  local project_main=$project_source/src/main/java/io/cdap/cdap/apps/wise
-  local project_test=$project_source/src/test/java/io/cdap/cdap/apps/wise
-  local project_img=$project_source/docs/img
-
-  # 1:Includes directory  2:GitHub directory 3:Java filename       4:MD5 hash of file
-  download_file $includes_wise $project_main BounceCountsMapReduce.java 8e8dd188e7850e75140110243485a51a
-  download_file $includes_wise $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
-  download_file $includes_wise $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
-  download_file $includes_wise $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df
-  download_file $includes_wise $project_test WiseAppTest.java           5145832dc315f4253fa6b2aac3ee9164
-  download_file $includes_wise $project_main WiseFlow.java              94cb2ef13e10386d4c40c4252777d15e
-  download_file $includes_wise $project_main WiseWorkflow.java          d24a138d3a96bfb41e6d166866b72291
-  download_file $includes_wise $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
-
-  echo_red_bold "Downloading image files from GitHub..."
-  download_file $includes_wise $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29
-  download_file $includes_wise $project_img wise_flow.png                 894828f13019dfbda5de43f514a8a49f
-
   echo_red_bold "Downloading files and any images and re-writing all the image links..."
   guide_rewrite_sed $1 cdap-bi-guide
   guide_rewrite_sed $1 cdap-cube-guide
@@ -124,48 +92,6 @@ function download_includes() {
   guide_rewrite_sed $1 cdap-timeseries-guide
   guide_rewrite_sed $1 cdap-twitter-ingest-guide
   guide_rewrite_sed $1 cdap-workflow-guide
-
-  echo_red_bold "Checking included example files for changes"
-
-  # Group alphabetically each example separately, files from each example together
-
-  test_an_include 0d1fdc6d75995c3c417886786ccc8997 ../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViews.java
-  test_an_include 8d900a51c902750a7013dd5d76c46c7e ../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
-
-  test_an_include 5a0df16e31ae9187160a84b5bb5ad013 ../../cdap-examples/DataCleansing/src/main/java/io/cdap/cdap/examples/datacleansing/DataCleansing.java
-  test_an_include 56b92f6e32879b55363fbde823d5e0ea ../../cdap-examples/DataCleansing/src/main/java/io/cdap/cdap/examples/datacleansing/DataCleansingMapReduce.java
-
-  test_an_include ce5a99853f6e2d2298888fdf15d3cfb7 ../../cdap-examples/DecisionTreeRegression/src/main/java/io/cdap/cdap/examples/dtree/DecisionTreeRegressionApp.java
-
-  test_an_include fe679b53a1dc757a15fd3fcafc2046fd ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetExample.java
-  test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
-  test_an_include 4107ad528a3e9ca569a0cdee43b189c5 ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/WordCount.java
-
-  test_an_include 4626aaec1bbc5bdbfd1de28cc721ec76 ../../cdap-examples/LogAnalysis/src/main/java/io/cdap/cdap/examples/loganalysis/LogAnalysisApp.java
-
-  test_an_include 8d6bea3f2e94c8d49370858a32c64922 ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseApp.java
-  test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseStore.java
-  test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
-  test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryService.java
-
-  test_an_include 04abc21d3a3423cecc3b9c9619aa960d ../../cdap-examples/SpamClassifier/src/main/java/io/cdap/cdap/examples/sparkstreaming/SpamClassifier.java
-
-  test_an_include 3f25e035b2de8bd2d127733df1c58ff1 ../../cdap-examples/SparkKMeans/src/main/java/io/cdap/cdap/examples/sparkkmeans/SparkKMeansApp.java
-
-  test_an_include fdf59cc4d67aef9abda0bc35e806a809 ../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
-
-  test_an_include 61aac2c868c7966847aec6520dcf7529 ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/SportResults.java
-  test_an_include 26486a370532d820bde854d42990a868 ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
-  test_an_include 6e0ed4027acafd163e8b891a1045717f ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/ScoreCounter.java
-
-  test_an_include 8a608fa3ffdaa8ac5c79456591ca7603 ../../cdap-examples/WikipediaPipeline/src/main/java/io/cdap/cdap/examples/wikipedia/WikipediaPipelineApp.java
-
-  test_an_include cfe55afe338b6c4aa40debc840594e0b ../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/WordCount.java
-
-  echo_red_bold "Rewriting the Apps-Packs file"
-  rewrite ${includes}/../../source/_includes/apps-packs.txt      ${includes}/apps-packs.txt      "<placeholder-version>" ${source2}
-  echo_red_bold "Rewriting the Tutorial Index file"
-  rewrite ${includes}/../../source/_includes/tutorials-index.txt ${includes}/tutorials-index.txt "<placeholder-version>" ${source2}
 }
 
 run_command ${1}
