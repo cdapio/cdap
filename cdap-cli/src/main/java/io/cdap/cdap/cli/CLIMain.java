@@ -89,6 +89,11 @@ public class CLIMain {
     "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
     " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
+  private static final Option RETRIES_OPTION = new Option(
+    "r", "retries", true,
+    "Set the number of times to retry contacting a service if it is determined to be unavailable."
+      + " Defaults to 0.");
+
   @VisibleForTesting
   static final Option AUTOCONNECT_OPTION = new Option(
     "a", "autoconnect", true, "If \"true\", try provided connection" +
@@ -269,6 +274,7 @@ public class CLIMain {
         ClientConfig clientConfig = ClientConfig.builder()
           .setConnectionConfig(null)
           .setDefaultReadTimeout(parseIntegerOption(command, TIMEOUT_OPTION, 60) * 1000)
+          .setUnavailableRetryLimit(parseIntegerOption(command, RETRIES_OPTION, 0))
           .build();
         final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
@@ -334,6 +340,7 @@ public class CLIMain {
     addOptionalOption(options, DEBUG_OPTION);
     addOptionalOption(options, SCRIPT_OPTION);
     addOptionalOption(options, TIMEOUT_OPTION);
+    addOptionalOption(options, RETRIES_OPTION);
     return options;
   }
 
@@ -349,11 +356,12 @@ public class CLIMain {
     HelpFormatter formatter = new HelpFormatter();
     String args =
       "[--autoconnect <true|false>] " +
-      "[--debug] " +
-      "[--help] " +
-      "[--verify-ssl <true|false>] " +
-      "[--uri <uri>]" +
-      "[--script <script-file>]";
+        "[--debug] " +
+        "[--help] " +
+        "[--verify-ssl <true|false>] " +
+        "[--uri <uri>] " +
+        "[--script <script-file>] " +
+        "[-r | --retries N]";
     formatter.printHelp(toolName + " " + args, getOptions());
     System.exit(0);
   }
