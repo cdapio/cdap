@@ -90,6 +90,9 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
     }
   }
 
+  vm.onChange = (value) => {
+    vm.node.plugin.properties[vm.field.name] = value;
+  };
   init();
 
   $scope.$on('$destroy', () => {

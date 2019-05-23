@@ -27,12 +27,11 @@ angular.module(PKG.name + '.commons')
         }
       },
       'textbox': {
-        element: '<input/>',
+        element: '<text-box></text-box>',
         attributes: {
-          'class': 'form-control',
-          'ng-trim': 'false',
-          'ng-model': 'model',
-          placeholder: '{{ ::myconfig["widget-attributes"].placeholder}}'
+          'value': 'model',
+          'on-change': 'onChange',
+          placeholder: 'myconfig["widget-attributes"].placeholder'
         }
       },
       'textarea': {
