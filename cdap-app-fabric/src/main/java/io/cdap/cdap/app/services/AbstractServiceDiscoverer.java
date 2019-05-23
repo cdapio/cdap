@@ -50,10 +50,15 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   }
 
   @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
+  public URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
     String discoveryName = String.format("service.%s.%s.%s", namespaceId, applicationId, serviceId);
     return createURL(new RandomEndpointStrategy(() -> getDiscoveryServiceClient().discover(discoveryName))
-                       .pick(1, TimeUnit.SECONDS), applicationId, serviceId);
+                       .pick(1, TimeUnit.SECONDS), namespaceId, applicationId, serviceId);
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    return getServiceURL(namespaceId, applicationId, serviceId);
   }
 
   @Override
@@ -67,7 +72,8 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   protected abstract DiscoveryServiceClient getDiscoveryServiceClient();
 
   @Nullable
-  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
+  private URL createURL(@Nullable Discoverable discoverable, String namespaceId, String applicationId,
+                        String serviceId) {
     if (discoverable == null) {
       return null;
     }

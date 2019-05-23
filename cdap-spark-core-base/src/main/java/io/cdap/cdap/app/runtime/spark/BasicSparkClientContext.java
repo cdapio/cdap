@@ -268,6 +268,12 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   @Nullable
   @Override
+  public URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
+    return sparkRuntimeContext.getServiceURL(namespaceId, applicationId, serviceId);
+  }
+
+  @Nullable
+  @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     return sparkRuntimeContext.getServiceURL(applicationId, serviceId);
   }
