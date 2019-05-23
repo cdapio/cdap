@@ -45,7 +45,7 @@ function Number(props: INumberProps) {
     <div>
       <FormControl
         onChange={(e) => {
-          const target = event.target as HTMLInputElement;
+          const target = e.target as HTMLInputElement;
           setValue(target.value);
         }}
       >
