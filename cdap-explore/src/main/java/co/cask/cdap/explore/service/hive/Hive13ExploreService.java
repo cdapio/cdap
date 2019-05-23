@@ -42,6 +42,7 @@ import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
+import org.apache.hive.service.server.HiveServer2;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.File;
@@ -73,6 +74,8 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   protected CLIService createCLIService() {
     try {
+//      HiveServer2 hiveServer2 = new HiveServer2();
+//      CLIService.class.getConstructor(hiveServer2).newInstance();
       return CLIService.class.getDeclaredConstructor().newInstance();
     } catch (Exception e) {
       throw new RuntimeException("Failed to instantiate CLIService", e);
@@ -99,7 +102,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   @Override
   protected QueryStatus doFetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
-    OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
+    OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle, true);
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     HiveSQLException hiveExn = operationStatus.getOperationException();
     if (hiveExn != null) {

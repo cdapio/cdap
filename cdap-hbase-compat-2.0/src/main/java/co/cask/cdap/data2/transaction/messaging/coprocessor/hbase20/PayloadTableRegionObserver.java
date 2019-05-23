@@ -92,7 +92,7 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
     Scan scan = new Scan();
     scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
             topicMetadataCache));
-
+    LOG.info("preFlushScannerOpen is being accessed");
 //    if (!(store instanceof HStore)) {
 //      throw new RuntimeException("store is not an instance of HStore");
 //    }
@@ -108,7 +108,7 @@ public class PayloadTableRegionObserver implements RegionCoprocessor, RegionObse
     Scan scan = new Scan();
     scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
                                          topicMetadataCache));
-    
+    LOG.info("preCompactScannerOpen is being accessed");
 //    if(!(store instanceof HStore)){
 //    	throw new RuntimeException("store is not an instance of HStore");
 //    }

@@ -123,6 +123,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     if(!(store instanceof HStore)){
     	throw new RuntimeException("store is not an instance of HStore");
     }
+    LOG.info("preFlushScanerOpen has been accessed");
 //    return new LoggingInternalScanner("MessageDataFilter", "preFlush",
 //                                      new StoreScanner((HStore) store, ((HStore)store).getScanInfo(),
 //                                                       Collections.singletonList(memstoreScanner),
@@ -166,6 +167,7 @@ public class MessageTableRegionObserver implements RegionCoprocessor,RegionObser
     if(!(store instanceof HStore)){
     	throw new RuntimeException("store is not an instance of HStore");
     }
+    LOG.info("preCompactScanerOpen has been accessed");
 //    return new LoggingInternalScanner("MessageDataFilter", "preCompact",
 //                                      new StoreScanner((HStore)store, ((HStore)store).getScanInfo(), scanners, scanType,
 //                                                       store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);

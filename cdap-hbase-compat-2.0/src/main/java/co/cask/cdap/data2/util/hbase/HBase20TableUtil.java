@@ -124,7 +124,7 @@ public class HBase20TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
+  public List<HRegionInfo> getTableRegions(Admin admin, TableId tableId) throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     return admin.getTableRegions(HTableNameConverter.toTableName(tablePrefix, tableId));
@@ -144,7 +144,7 @@ public class HBase20TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public List<TableId> listTables(HBaseAdmin admin) throws IOException {
+  public List<TableId> listTables(Admin admin) throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
     HTableDescriptor[] hTableDescriptors = admin.listTables();
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {

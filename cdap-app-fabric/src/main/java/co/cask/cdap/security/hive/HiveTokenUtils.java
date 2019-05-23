@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.ExploreUtils;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
+import org.apache.hadoop.hive.metastore.security.DelegationTokenIdentifier;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -106,6 +106,8 @@ public final class HiveTokenUtils {
         String user = UserGroupInformation.getCurrentUser().getShortUserName();
         String tokenStr = (String) getDelegationTokenMethod.invoke(hiveConnection, user, user);
         Token<DelegationTokenIdentifier> delegationToken = new Token<>();
+//        Token delegationTokenA = new Token();
+
         delegationToken.decodeFromUrlString(tokenStr);
         LOG.debug("Adding delegation token {} from HiveServer2 for service {} for user {}",
                   delegationToken, delegationToken.getService(), user);
