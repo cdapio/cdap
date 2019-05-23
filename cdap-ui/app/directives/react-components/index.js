@@ -67,5 +67,5 @@ angular.module(PKG.name + '.commons')
     return reactDirective(window.CaskCommon.ToggleSwitch);
   })
   .directive('number', function(reactDirective) {
-    return reactDirective(window.caskCommon.Number);
-  })
+    return reactDirective(window.CaskCommon.Number);
+  });
