@@ -19,8 +19,10 @@ package co.cask.cdap.explore;
 import co.cask.cdap.explore.service.ExploreException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.ql.exec.SerializationUtilities;
 import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
-import org.apache.hive.service.cli.thrift.TColumnValue;
+//import org.apache.hive.service.cli.thrift.TColumnValue;
+import org.apache.hive.service.rpc.thrift.TColumnValue;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -51,7 +53,8 @@ public class HiveUtilities {
     } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       try {
         // Else try Utilities.deserializeExpression(String)
-        expr = Utilities.deserializeExpression(serializedExpr);
+        expr = SerializationUtilities.deserializeExpression(serializedExpr);
+//        expr = Utilities.deserializeExpression(serializedExpr);
       } catch (NoSuchMethodError e2) {
         try {
           // Else try SerializationUtilities.deserializeExpression(serializedExpr)

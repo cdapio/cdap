@@ -42,9 +42,12 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
+//import org.apache.hive.service.cli.thrift.TColumnValue;
+//import org.apache.hive.service.cli.thrift.TRow;
+//import org.apache.hive.service.cli.thrift.TRowSet;
+import org.apache.hive.service.rpc.thrift.TRowSet;
+import org.apache.hive.service.rpc.thrift.TRow;
+import org.apache.hive.service.rpc.thrift.TColumnValue;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,8 +105,12 @@ public class Hive12ExploreService extends BaseHiveExploreService {
     Object rowSet = fetchResultsMethod.invoke(getCliService(), handle, fetchOrientation, size);
 
     ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-    Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-    Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+    //Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+
+    Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowBasedSet");
+//    Method toTRowSetA =rowSetClass.getMethod("toTRowSet");
+//    toTRowSetA.invoke(rowSet);
+    Method toTRowSetMethod = rowSetClass.getMethod("RowBasedSet");
     TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
     for (TRow tRow : tRowSet.getRows()) {
       List<Object> cols = Lists.newArrayList();

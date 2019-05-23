@@ -26,8 +26,10 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 import java.util.List;
@@ -43,7 +45,7 @@ class DelegatingHBaseTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
+  public Table createHTable(Configuration conf, TableId tableId) throws IOException {
     return delegate.createHTable(conf, tableId);
   }
 
@@ -63,17 +65,17 @@ class DelegatingHBaseTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
+  public HTableDescriptor getHTableDescriptor(Admin admin, TableId tableId) throws IOException {
     return delegate.getHTableDescriptor(admin, tableId);
   }
 
   @Override
-  public boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException {
+  public boolean hasNamespace(Admin admin, String namespace) throws IOException {
     return delegate.hasNamespace(admin, namespace);
   }
 
   @Override
-  public boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException {
+  public boolean tableExists(Admin admin, TableId tableId) throws IOException {
     return delegate.tableExists(admin, tableId);
   }
 
@@ -88,17 +90,17 @@ class DelegatingHBaseTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException {
+  public List<HRegionInfo> getTableRegions(Admin admin, TableId tableId) throws IOException {
     return delegate.getTableRegions(admin, tableId);
   }
 
   @Override
-  public List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException {
+  public List<TableId> listTablesInNamespace(Admin admin, String namespaceId) throws IOException {
     return delegate.listTablesInNamespace(admin, namespaceId);
   }
 
   @Override
-  public List<TableId> listTables(HBaseAdmin admin) throws IOException {
+  public List<TableId> listTables(Admin admin) throws IOException {
     return delegate.listTables(admin);
   }
 

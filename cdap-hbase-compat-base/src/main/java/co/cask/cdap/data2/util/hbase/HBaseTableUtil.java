@@ -435,7 +435,7 @@ public abstract class HBaseTableUtil {
    * @return a list of {@link HRegionInfo} for the specified {@link TableId}
    * @throws IOException
    */
-  public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract List<HRegionInfo> getTableRegions(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Deletes all tables in the specified namespace that satisfy the given {@link Predicate}.
@@ -483,7 +483,7 @@ public abstract class HBaseTableUtil {
    * Lists all tables
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    */
-  public abstract List<TableId> listTables(HBaseAdmin admin) throws IOException;
+  public abstract List<TableId> listTables(Admin admin) throws IOException;
 
   /**
    * Disables and deletes a table.

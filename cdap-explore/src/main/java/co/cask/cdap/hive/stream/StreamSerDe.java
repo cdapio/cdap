@@ -32,7 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde2.SerDe;
+//import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -51,7 +52,7 @@ import java.util.Properties;
  * abstract SerDe class, otherwise we get ClassNotFound exceptions on cdh4.x.
  */
 @SuppressWarnings("deprecation")
-public class StreamSerDe implements SerDe {
+public class StreamSerDe extends AbstractSerDe {
   private static final Logger LOG = LoggerFactory.getLogger(StreamSerDe.class);
   // timestamp and headers are guaranteed to be the first columns in a stream table.
   // the rest of the columns are for the stream body.

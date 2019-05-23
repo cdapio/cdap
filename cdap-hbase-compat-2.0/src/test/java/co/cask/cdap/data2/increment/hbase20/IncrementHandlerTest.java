@@ -24,18 +24,15 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import org.apache.hadoop.hbase.client.Table;
 import co.cask.cdap.test.SlowTests;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -58,12 +55,12 @@ import static org.junit.Assert.assertNotNull;
 public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
 
   @Override
-  public void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
+  public void assertColumn(Table table, byte[] row, byte[] col, long expected) throws Exception {
     Result res = table.get(new Get(row));
     Cell resA = res.getColumnLatestCell(FAMILY, col);
     assertFalse(res.isEmpty());
     assertNotNull(resA);
-    assertEquals(expected, Bytes.toLong(resA.getValue()));
+    assertEquals(expected, Bytes.toLong(CellUtil.cloneValue(resA)));
 
     Scan scan = new Scan(row);
     scan.addFamily(FAMILY);
@@ -72,11 +69,12 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     assertNotNull(scanRes);
     assertFalse(scanRes.isEmpty());
     Cell scanResA = scanRes.getColumnLatestCell(FAMILY, col);
-    assertArrayEquals(row, scanResA.getRow());
-    assertEquals(expected, Bytes.toLong(scanResA.getValue()));
+    // using getRowArray() for scanResA.getRow() [Contiguous raw bytes that may start at any index in the containing array]
+    assertArrayEquals(row, scanResA.getRowArray());
+    assertEquals(expected, Bytes.toLong(CellUtil.cloneValue(scanResA)));
   }
 
-  public void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception {
+  public void assertColumns(Table table, byte[] row, byte[][] cols, long[] expected) throws Exception {
     assertEquals(cols.length, expected.length);
 
     Get get = new Get(row);
@@ -92,7 +90,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     for (int i = 0; i < cols.length; i++) {
       Cell resCell = res.getColumnLatestCell(FAMILY, cols[i]);
       assertNotNull(resCell);
-      assertEquals(expected[i], Bytes.toLong(resCell.getValue()));
+      assertEquals(expected[i], Bytes.toLong(CellUtil.cloneValue(resCell)));
     }
 
     // check scan
@@ -102,13 +100,13 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     assertFalse(scanRes.isEmpty());
     for (int i = 0; i < cols.length; i++) {
       Cell scanResCell = scanRes.getColumnLatestCell(FAMILY, cols[i]);
-      assertArrayEquals(row, scanResCell.getRow());
-      assertEquals(expected[i], Bytes.toLong(scanResCell.getValue()));
+      assertArrayEquals(row, scanResCell.getRowArray());
+      assertEquals(expected[i], Bytes.toLong(CellUtil.cloneValue(scanResCell)));
     }
   }
 
   @Override
-  public HTable createTable(TableId tableId) throws Exception {
+  public Table createTable(TableId tableId) throws Exception {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     HTableDescriptorBuilder tableDesc = tableUtil.buildHTableDescriptor(tableId);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
@@ -118,7 +116,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     HTableDescriptor htd = tableDesc.build();
     TEST_HBASE.getHBaseAdmin().createTable(htd);
-    TEST_HBASE.waitUntilTableAvailable(htd.getName(), 5000);
+    TEST_HBASE.waitUntilTableAvailable(htd.getTableName().getName(), 5000);
     return tableUtil.createHTable(conf, tableId);
   }
 
@@ -185,7 +183,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     public boolean flush() throws IOException {
       // we flush all stores and don't write flush request marker to WAL. This mimics the flush behavior which we
       // have in older versions.
-      HRegion.FlushResult result = region.flushcache(true, false);
+      HRegion.FlushResult result = region.flushcache(true, false, FlushLifeCycleTracker.DUMMY);
       return result.isCompactionNeeded();
     }
 

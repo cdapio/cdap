@@ -89,10 +89,7 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -136,7 +133,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static Injector injector;
 
   protected static HBaseTableUtil tableUtil;
-  private static HBaseAdmin hbaseAdmin;
+  private static Admin hbaseAdmin;
   private static ZKClientService zkClientService;
   private static HBaseDDLExecutor ddlExecutor;
 
@@ -250,10 +247,12 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName)) {
       admin.create(queueName);
     }
-    try (HTable hTable = tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId)) {
+    try (Table hTable = tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId)) {
+      Connection connection = ConnectionFactory.createConnection(hConf);
+      TableName tableName = tableUtil.buildHTableDescriptor(tableId).build().getTableName();
       Assert.assertEquals("Failed for " + admin.getClass().getName(),
                           cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
-                          hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
+                          connection.getRegionLocator(tableName).getAllRegionLocations());
     }
   }
 
@@ -654,7 +653,7 @@ public abstract class HBaseQueueTest extends QueueTest {
    */
   private int countRows(TableId tableId) throws Exception {
     try (
-      HTable hTable = tableUtil.createHTable(hConf, tableId);
+      Table hTable = tableUtil.createHTable(hConf, tableId);
       ResultScanner scanner = hTable.getScanner(QueueEntryRow.COLUMN_FAMILY)
     ) {
       return Iterables.size(scanner);
@@ -664,7 +663,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     String tableName = HBaseQueueAdmin.getConfigTableName();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(queueName.getFirstComponent()), tableName);
-    try (HTable hTable = tableUtil.createHTable(hConf, hTableId)) {
+    try (Table hTable = tableUtil.createHTable(hConf, hTableId)) {
       HTableDescriptor htd = hTable.getTableDescriptor();
       final TableName configTableName = htd.getTableName();
       CConfigurationReader cConfReader = new ClientCConfigurationReader(hConf, cConf);
@@ -678,10 +677,11 @@ public abstract class HBaseQueueTest extends QueueTest {
               throw Throwables.propagate(e);
             }
           }
-        }, new InputSupplier<HTableInterface>() {
+        }, new InputSupplier<Table>() {
           @Override
-          public HTableInterface getInput() throws IOException {
-            return new HTable(hConf, configTableName);
+          public Table getInput() throws IOException {
+            Connection connection = ConnectionFactory.createConnection(hConf);
+            return connection.getTable(configTableName);
           }
         }).get();
     }
@@ -718,7 +718,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void forceEviction(QueueName queueName, int numGroups) throws Exception {
     TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
-    byte[] tableName = tableUtil.getHTableDescriptor(hbaseAdmin, tableId).getName();
+    byte[] tableName = tableUtil.getHTableDescriptor(hbaseAdmin, tableId).getTableName().getName();
 
     // make sure consumer config cache is updated with the latest tx snapshot
     takeTxSnapshot();

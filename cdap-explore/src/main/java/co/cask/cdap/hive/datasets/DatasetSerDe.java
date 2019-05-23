@@ -35,7 +35,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde2.SerDe;
+//import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.AbstractSerDe;   // used Abstract class SerDe instead of SerDe interface
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -55,7 +56,7 @@ import java.util.Properties;
  * SerDe to serialize Dataset Objects. It MUST implement the deprecated SerDe interface instead of extending the
  * abstract SerDe class, otherwise we get ClassNotFound exceptions on cdh4.x.
  */
-public class DatasetSerDe implements SerDe {
+public class DatasetSerDe extends AbstractSerDe {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSerDe.class);
   private static final SchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
 

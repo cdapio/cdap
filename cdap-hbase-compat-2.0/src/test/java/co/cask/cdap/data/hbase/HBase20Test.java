@@ -28,10 +28,14 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
+import org.apache.hadoop.hbase.wal.WAL;
+import org.apache.hadoop.hbase.wal.WALFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +43,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Collection;
 
 /**
  * {@link HBaseTestBase} implementation supporting HBase 1.1.
@@ -73,36 +78,81 @@ public class HBase20Test extends HBaseTestBase {
     return testUtil.getHBaseCluster();
   }
 
+//  @Override
+//  public HRegion createHRegion(byte[] tableName, byte[] startKey,
+//                               byte[] stopKey, String callingMethod, Configuration conf,
+//                               byte[]... families)
+//      throws IOException {
+//    if (conf == null) {
+//      conf = new Configuration();
+//    }
+//
+//    try {
+//      HTableDescriptor htd = HTableDescriptor.parseFrom(tableName);
+//      for (byte[] family : families) {
+//        htd.addFamily(new HColumnDescriptor(family));
+//      }
+////      HRegionInfo info = new HRegionInfo(htd.getTableName(), startKey, stopKey, false);
+//      RegionInfo info = RegionInfoBuilder.newBuilder(htd.getTableName()).setStartKey(startKey).setEndKey(stopKey)
+//              .setSplit(false).build();
+//      Path path = new Path(conf.get(HConstants.HBASE_DIR), callingMethod);
+//      FileSystem fs = FileSystem.get(conf);
+//      WALFactory walFactory = new WALFactory(conf, path.toString());
+//      WAL hLog = walFactory.getWAL(info);
+//      if (fs.exists(path)) {
+//        if (!fs.delete(path, true)) {
+//          throw new IOException("Failed delete of " + path);
+//        }
+//      }
+//      return HRegion.createHRegion(info, path, conf, htd, hLog);
+//    }
+//    catch (DeserializationException e){
+//      e.printStackTrace();
+//    }
+//    return HRegion.createHRegion(info, path, conf, htd);
+//  }
+
   @Override
   public HRegion createHRegion(byte[] tableName, byte[] startKey,
                                byte[] stopKey, String callingMethod, Configuration conf,
                                byte[]... families)
-      throws IOException {
+          throws IOException {
     if (conf == null) {
       conf = new Configuration();
     }
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+//    HTableDescriptor htd = new HTableDescriptor(tableName);
+    Collection<ColumnFamilyDescriptor> columnFamilyDescriptors = null;
     for (byte [] family : families) {
-      htd.addFamily(new HColumnDescriptor(family));
+      columnFamilyDescriptors.add(new HColumnDescriptor(family));
+//      htd.addFamily(new HColumnDescriptor(family));
     }
+    TableDescriptor htd = TableDescriptorBuilder.newBuilder(TableName.valueOf(tableName))
+            .setColumnFamilies(columnFamilyDescriptors).build();
     HRegionInfo info = new HRegionInfo(htd.getTableName(), startKey, stopKey, false);
     Path path = new Path(conf.get(HConstants.HBASE_DIR), callingMethod);
     FileSystem fs = FileSystem.get(conf);
+    WALFactory walFactory = new WALFactory(conf, path.toString());
+    WAL hLog = walFactory.getWAL(info);
     if (fs.exists(path)) {
       if (!fs.delete(path, true)) {
         throw new IOException("Failed delete of " + path);
       }
     }
-    return HRegion.createHRegion(info, path, conf, htd);
+    return HRegion.createHRegion(info, path, conf, htd, hLog);
   }
 
   @Override
   public <T> Map<byte[], T> forEachRegion(byte[] tableName, Function<HRegion, T> function) {
     MiniHBaseCluster hbaseCluster = getHBaseCluster();
+//    try {
+//      Connection connection = ConnectionFactory.createConnection(testUtil.getConfiguration());
+//    }catch (IOException e){
+//      e.printStackTrace();
+//    }
     Map<byte[], T> results = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     // make sure consumer config cache is updated
     for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-      List<Region> serverRegions = t.getRegionServer().getOnlineRegions(TableName.valueOf(tableName));
+      List<HRegion> serverRegions = t.getRegionServer().getRegions(TableName.valueOf(tableName));
       for (Region region : serverRegions) {
         results.put(region.getRegionInfo().getRegionName(), function.apply((HRegion) region));
       }
@@ -123,7 +173,7 @@ public class HBase20Test extends HBaseTestBase {
       @Override
       public void run() {
         try {
-          region.flushcache(true, false);
+          region.flushcache(true, false, null);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
