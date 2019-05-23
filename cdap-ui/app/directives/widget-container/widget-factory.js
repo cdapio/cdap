@@ -18,7 +18,7 @@ angular.module(PKG.name + '.commons')
   .service('WidgetFactory', function() {
     this.registry = {
       'number': {
-        element: '<my-number-widget></my-number-widget>',
+        element: '<number></number>',
         attributes: {
           'value': 'model',
           'disabled': 'disabled',
