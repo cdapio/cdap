@@ -161,14 +161,14 @@ public class GrantAccessToken {
   private AccessToken getTokenFromKNOX(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 		
-		final String authorizationHeader = request.getHeader("Authorization");
+		final String authorizationHeader = request.getHeader("knoxToken");
         String wireToken = null;
         long expireTime = -1l;
         String username = null;
         long issueTime = System.currentTimeMillis();
 
-        if (authorizationHeader!=null && !Strings.isNullOrEmpty(authorizationHeader) && (authorizationHeader.trim().toLowerCase().startsWith("bearer "))) {
-            wireToken = authorizationHeader.substring(7);
+        if (authorizationHeader!=null && !Strings.isNullOrEmpty(authorizationHeader)) {
+            wireToken = authorizationHeader;
         } else {
             wireToken = getJWTTokenFromCookie(request);
         }
@@ -186,9 +186,9 @@ public class GrantAccessToken {
             throw new UnauthorizedException("Authorization header missing/invalid");
         }
 
-        boolean validToken = verifyToken(token);
+        /*boolean validToken = verifyToken(token);
         if(!validToken)
-            throw new UnauthorizedException("Not authorized");
+            throw new UnauthorizedException("Not authorized");*/
 
         Date expires = token.getExpiresDate();
         LOG.debug("token expiry date: " + expires.toString());
