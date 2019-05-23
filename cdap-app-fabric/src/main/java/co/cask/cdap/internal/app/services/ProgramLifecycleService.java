@@ -60,6 +60,7 @@ import co.cask.cdap.proto.RunCountResult;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -105,6 +106,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.security.auth.kerberos.KerberosPrincipal;
 
 /**
  * Service that manages lifecycle of Programs.
@@ -127,6 +129,8 @@ public class ProgramLifecycleService {
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
+  private static final String RUNTIME_ARG_KEYTAB = "pipeline.keytab.path";
+  private static final String RUNTIME_ARG_PRINCIPAL = "pipeline.principal.name";
 
   @Inject
   ProgramLifecycleService(Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
@@ -388,6 +392,15 @@ public class ProgramLifecycleService {
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
+    
+    if ((userArgs.containsKey(RUNTIME_ARG_KEYTAB)) && 
+            (userArgs.containsKey(RUNTIME_ARG_PRINCIPAL))) {
+        String principal = userArgs.get(RUNTIME_ARG_PRINCIPAL);
+        LOG.debug("Checking authorisation for user: " + authenticationContext.getPrincipal() +
+                " , using runtime config principal: " + principal);
+        KerberosPrincipalId kid = new KerberosPrincipalId(principal);
+        authorizationEnforcer.enforce(kid, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
     return runInternal(programId, userArgs, sysArgs, debug);
   }
 
@@ -493,6 +506,15 @@ public class ProgramLifecycleService {
       userArgs.putAll(overrides);
     }
 
+    if ((userArgs.containsKey(RUNTIME_ARG_KEYTAB)) && 
+            (userArgs.containsKey(RUNTIME_ARG_PRINCIPAL))) {
+        String principal = userArgs.get(RUNTIME_ARG_PRINCIPAL);
+        LOG.debug("Checking authorisation for user: " + authenticationContext.getPrincipal() +
+                " , using runtime config principal: " + principal);
+        KerberosPrincipalId kid = new KerberosPrincipalId(principal);
+        authorizationEnforcer.enforce(kid, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
+    
     BasicArguments systemArguments = new BasicArguments(sysArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramOptions options = new SimpleProgramOptions(programId, systemArguments, userArguments, debug);
