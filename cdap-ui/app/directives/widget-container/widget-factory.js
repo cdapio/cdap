@@ -20,8 +20,7 @@ angular.module(PKG.name + '.commons')
       'number': {
         element: '<my-number-widget></my-number-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
+          'value': 'model',
           'disabled': 'disabled',
           'is-field-required': 'isFieldRequired'
         }

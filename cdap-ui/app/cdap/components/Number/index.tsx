@@ -31,15 +31,14 @@ const styles = (theme) => {
   };
 };
 
-interface INumberInputProps extends WithStyles<typeof styles> {
+interface INumberProps extends WithStyles<typeof styles> {
   disabled?: boolean;
-  required?: boolean;
-  rows?: number;
+  isFieldRequired?: boolean;
 }
 
-function NumberInput(props: INumberInputProps) {
+function Number(props: INumberProps) {
   // not required and not disabled by default
-  // default value for number input? Probably not 0
+  // default value for number input?
   const [value, setValue] = useState();
 
   return (
@@ -51,29 +50,27 @@ function NumberInput(props: INumberInputProps) {
         }}
       >
         <Input
-          value={value}
-          required={props.required}
-          disabled={props.disabled}
           type="number"
-          rows={props.rows}
+          value={value}
+          required={props.isFieldRequired}
+          disabled={props.disabled}
         />
       </FormControl>
     </div>
   );
 }
 
-const NumberInputWrapper = withStyles(styles)(NumberInput);
+const NumberWrapper = withStyles(styles)(Number);
 
-export default function StyledNumberInput(props) {
+export default function StyledNumber(props) {
   return (
     <ThemeWrapper>
-      <NumberInputWrapper {...props} />
+      <NumberWrapper {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledNumberInput as any).propTypes = {
+(StyledNumber as any).propTypes = {
   disabled: PropTypes.bool,
-  required: PropTypes.bool,
-  rows: PropTypes.number,
+  isFieldRequired: PropTypes.bool
 };

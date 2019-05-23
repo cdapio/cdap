@@ -69,6 +69,7 @@ var AuthRefresher = require('../cdap/components/AuthRefresher').default;
 var ToggleSwitch = require('../cdap/components/ToggleSwitch').default;
 var PipelineList = require('../cdap/components/PipelineList').default;
 var AppHeader = require('../cdap/components/AppHeader').default;
+var Number = require('../cdap/components/NumberInput').default;
 
 export {
   Store,
@@ -119,4 +120,5 @@ export {
   ToggleSwitch,
   PipelineList,
   AppHeader,
+  Number,
 };
