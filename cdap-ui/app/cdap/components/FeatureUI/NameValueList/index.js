@@ -44,7 +44,7 @@ class NameValueList extends React.Component {
   }
 
   onValueUpdated(item, event) {
-    this.props.updateNameValue(item.itemIndex, {
+    this.props.updateNameValue({
       ...item,
       value: event.target.value
     });

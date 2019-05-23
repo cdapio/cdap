@@ -16,25 +16,27 @@
  */
 
 import React from 'react';
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import PropTypes from 'prop-types';
 import FEDataServiceApi from '../../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
 import { isNil } from 'lodash';
-import { checkResponseError,getErrorMessage } from '../../util';
+import T from 'i18n-react';
+import { checkResponseError,getErrorMessage, getDefaultRequestHeader } from '../../util';
 import { ERROR_MESSAGES, SAVE_PIPELINE } from 'components/FeatureUI/config';
 
 require('./SaveFeatureModal.scss');
-
+const PREFIX = 'features.FeatureEngineering.FeatureSelection.SaveFeatureModal';
 
 class SaveFeatureModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      title: 'Save',
+      loading: false,
+      title: T.translate(`${PREFIX}.title`),
       name: "",
-      hasError:false,
-      errorMessage:""
+      hasError: false,
+      errorMessage: ""
     };
     this.onOk = this.onOk.bind(this);
     this.onCancel = this.onCancel.bind(this);
@@ -45,15 +47,13 @@ class SaveFeatureModal extends React.Component {
   }
 
   onCancel() {
-    this.props.onClose('CANCEL');
+    this.props.onClose(T.translate(`${PREFIX}.cancelButton`));
   }
 
   onOk() {
-    this.setState({hasError:false, errorMessage:""});
+    this.setState({hasError:false, errorMessage:"",loading:true});
     this.savePipeline();
   }
-
-
 
   savePipeline = () => {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
@@ -62,18 +62,18 @@ class SaveFeatureModal extends React.Component {
         namespace: NamespaceStore.getState().selectedNamespace,
         pipeline: featureGenerationPipelineName,
 
-      }, this.getSavePipelineRequest(featureGenerationPipelineName)).subscribe(
+      }, this.getSavePipelineRequest(featureGenerationPipelineName), getDefaultRequestHeader()).subscribe(
         result => {
           if (checkResponseError(result)) {
             const message = getErrorMessage(result, ERROR_MESSAGES[SAVE_PIPELINE]);
-            this.setState({hasError:true, errorMessage:message});
+            this.setState({hasError:true, errorMessage:message,loading:false});
           } else {
-            this.setState({ name:""});
-            this.props.onClose('OK');
+            this.setState({ name:"",loading:false});
+            this.props.onClose(T.translate(`${PREFIX}.okButton`));
           }
         },
         error => {
-          this.setState({hasError:true, errorMessage:getErrorMessage(error, ERROR_MESSAGES[SAVE_PIPELINE])});
+          this.setState({hasError:true, errorMessage:getErrorMessage(error, ERROR_MESSAGES[SAVE_PIPELINE]),loading:false});
         }
       );
 
@@ -105,9 +105,24 @@ class SaveFeatureModal extends React.Component {
                 <label className="error-box">{this.state.errorMessage}</label>
                 : null
             }
-            <Button className="btn-margin" color="secondary" onClick={this.onCancel}>Cancel</Button>
-            <Button className="btn-margin" color="primary" onClick={this.onOk}
-              disabled={this.state.name.trim().length < 1} >OK</Button>
+            <fieldset disabled={this.state.loading} className='button-container'>
+              <button
+                className="btn btn-primary ok-btn"
+                onClick={this.onOk}
+                disabled={this.state.name.trim().length < 1}>
+                {
+                  this.state.loading ?
+                    <span className="fa fa-spin fa-spinner" />
+                  :
+                    null
+                }
+                <span className="apply-label">{T.translate(`${PREFIX}.okButton`)}</span>
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={this.onCancel}
+              >{T.translate(`${PREFIX}.cancelButton`)}</button>
+            </fieldset>
           </ModalFooter>
         </Modal>
       </div>
