@@ -69,6 +69,6 @@ angular.module(PKG.name + '.commons')
   .directive('markdown', function(reactDirective) {
     return reactDirective(window.CaskCommon.Markdown);
   })
-  .directive('aceEditor', function(reactDirective) {
-    return reactDirective(window.CaskCommon.AceEditor);
+  .directive('codeEditor', function(reactDirective) {
+    return reactDirective(window.CaskCommon.CodeEditor);
   });

@@ -17,7 +17,10 @@
 import * as React from 'react';
 import ListItem from '@material-ui/core/ListItem';
 
-const ListItemLink = ({ component = 'a', ...props }) => (
-  <ListItem button component={component} {...props} />
-);
+const ListItemLink = ({ component, ...props }) => {
+  if (!component) {
+    return null;
+  }
+  return <ListItem button component={component} {...props} />;
+};
 export default ListItemLink;
