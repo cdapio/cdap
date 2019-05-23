@@ -23,9 +23,4 @@ import static org.junit.Assert.*;
 
 public class HelloWorldTest {
 
-  @Test
-  public void greet() {
-    HelloWorld helloWorld = new HelloWorld();
-    helloWorld.greet();
-  }
 }
