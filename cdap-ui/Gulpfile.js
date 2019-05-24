@@ -243,9 +243,12 @@ gulp.task('js:lib', function() {
 gulp.task('js:aceworkers', function() {
   gulp
     .src([
+      /** FIXME: (CDAP-15419): Unify ace-builds dependency */
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/ace-builds/src-min-noconflict/mode-javascript.js',
       './bower_components/ace-builds/src-min-noconflict/worker-javascript.js',
+      './node_modules/ace-builds/src-min-noconflict/mode-json.js',
+      './node_modules/ace-builds/src-min-noconflict/worker-json.js',
       './bower_components/ace-builds/src-min-noconflict/mode-python.js',
       './bower_components/ace-builds/src-min-noconflict/mode-sql.js',
       './bower_components/ace-builds/src-min-noconflict/mode-scala.js',

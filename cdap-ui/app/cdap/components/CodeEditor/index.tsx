@@ -19,23 +19,41 @@ import 'ace-builds/src-min-noconflict/ace';
 import ThemeWrapper from 'components/ThemeWrapper';
 import PropTypes from 'prop-types';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import Button from '@material-ui/core/Button';
+import If from 'components/If';
 
 const styles = (theme) => {
   return {
     root: {
+      display: 'block',
+      position: 'relative' as any,
+    },
+    button: {
+      position: 'absolute' as any,
+      right: 0,
+      top: 0,
+      zIndex: 1000,
+      margin: 0,
+    },
+    editor: {
       border: `1px solid ${theme.palette.grey['300']}`,
       borderRadius: 4,
       margin: '10px 0 10px 10px',
     },
   };
 };
+
 interface ICodeEditorProps extends WithStyles<typeof styles> {
   mode?: string;
   value: string;
   onChange: (value: string) => void;
   rows?: number;
+  tabSize?: number;
   className?: string;
   disabled?: boolean;
+  activeLineMarker?: boolean;
+  showPrettyPrintButton?: boolean;
+  prettyPrintFunction?: (value: string) => string;
 }
 class CodeEditor extends React.Component<ICodeEditorProps> {
   public static LINE_HEIGHT = 20;
@@ -44,22 +62,28 @@ class CodeEditor extends React.Component<ICodeEditorProps> {
     value: '',
     rows: 5,
     disabled: false,
+    tabSize: 2,
+    activeLineMarker: true,
+    showPrettyPrintButton: false,
   };
   public aceRef: HTMLElement;
+  private editor;
   public componentDidMount() {
     window.ace.config.set('basePath', '/assets/bundle/ace-editor-worker-scripts/');
-    const editor = window.ace.edit(this.aceRef);
-    editor.getSession().setMode(`ace/mode/${this.props.mode}`);
-    editor.getSession().setUseWrapMode(true);
+    this.editor = window.ace.edit(this.aceRef);
+    this.editor.getSession().setMode(`ace/mode/${this.props.mode}`);
+    this.editor.getSession().setUseWrapMode(true);
+    this.editor.getSession().setOptions({ tabSize: this.props.tabSize });
+    this.editor.setHighlightActiveLine(this.props.activeLineMarker);
     if (this.props.disabled) {
-      editor.setReadOnly(true);
+      this.editor.setReadOnly(true);
     }
-    editor.getSession().on('change', () => {
+    this.editor.getSession().on('change', () => {
       if (typeof this.props.onChange === 'function') {
-        this.props.onChange(editor.getSession().getValue());
+        this.props.onChange(this.editor.getSession().getValue());
       }
     });
-    editor.setShowPrintMargin(false);
+    this.editor.setShowPrintMargin(false);
   }
   public shouldComponentUpdate() {
     return false;
@@ -67,12 +91,30 @@ class CodeEditor extends React.Component<ICodeEditorProps> {
   public render() {
     const { value, className, classes } = this.props;
     return (
-      <div
-        className={`${className} ${classes.root}`}
-        style={{ height: `${this.props.rows * CodeEditor.LINE_HEIGHT}px` }}
-        ref={(ref) => (this.aceRef = ref)}
-      >
-        {value}
+      <div className={classes.root}>
+        <div
+          className={`${className} ${classes.editor}`}
+          style={{ height: `${this.props.rows * CodeEditor.LINE_HEIGHT}px` }}
+          ref={(ref) => (this.aceRef = ref)}
+        >
+          {value}
+        </div>
+        <If condition={this.props.showPrettyPrintButton}>
+          <Button
+            className={classes.button}
+            variant="outlined"
+            onClick={() => {
+              let v;
+              const code = this.editor.getSession().getValue();
+              if (typeof this.props.prettyPrintFunction === 'function') {
+                v = this.props.prettyPrintFunction(code);
+              }
+              this.editor.getSession().setValue(v);
+            }}
+          >
+            Tidy
+          </Button>
+        </If>
       </div>
     );
   }
@@ -92,4 +134,7 @@ export default function StyledCodeEditor(props) {
   onChange: PropTypes.func,
   rows: PropTypes.number,
   disabled: PropTypes.bool,
+  tabSize: PropTypes.number,
+  activeLineMarker: PropTypes.bool,
+  showPrettyPrintButton: PropTypes.bool,
 };
