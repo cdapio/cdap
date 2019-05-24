@@ -34,10 +34,7 @@ public interface ServiceDiscoverer {
    * @return URL for the discovered service or null if the service is not found
    */
   @Nullable
-  default URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
-    throw new UnsupportedOperationException(
-      String.format("NamespaceId service discovery is not supported.");
-  }
+  URL getServiceURL(String namespaceId, String applicationId, String serviceId);
 
   /**
    * Discover the base URL for a Service, relative to which Service endpoints can be accessed
