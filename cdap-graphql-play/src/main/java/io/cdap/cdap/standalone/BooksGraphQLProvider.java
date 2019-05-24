@@ -20,8 +20,7 @@ package io.cdap.cdap.standalone;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
-
-import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
+import io.cdap.cdap.graphql.schema.Types;
 
 /**
  * TODO
@@ -45,12 +44,12 @@ class BooksGraphQLProvider extends AbstractGraphQLProvider {
 
   // TODO use static final strings that map to the schema
   private TypeRuntimeWiring.Builder bookTypeRuntimeWiring() {
-    return newTypeWiring("Book")
-      .dataFetcher("author", booksDataFetchers.getAuthorDataFetcher());
+    return TypeRuntimeWiring.newTypeWiring(BooksTypes.BOOK)
+      .dataFetcher(BooksFields.AUTHOR, booksDataFetchers.getAuthorDataFetcher());
   }
 
   private TypeRuntimeWiring.Builder queryTypeRuntimeWiring() {
-    return newTypeWiring("Query")
-      .dataFetcher("bookById", booksDataFetchers.getBookByIdDataFetcher());
+    return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
+      .dataFetcher(BooksFields.BOOK_BY_ID, booksDataFetchers.getBookByIdDataFetcher());
   }
 }

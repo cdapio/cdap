@@ -31,7 +31,7 @@ public class BooksApplication {
     GraphQLProvider booksGraphQLProvider = new BooksGraphQLProvider(schemaDefinitionFile, booksDataFetchers);
     GraphQL graphQL = booksGraphQLProvider.buildGraphQL();
 
-    ExecutionResult executionResult = graphQL.execute("{bookById(id: \"book-1\") {name }}");
+    ExecutionResult executionResult = graphQL.execute("{bookById(id: \"book-1\") {name author {firstName } }}");
     System.out.println(executionResult.getData().toString());
   }
 

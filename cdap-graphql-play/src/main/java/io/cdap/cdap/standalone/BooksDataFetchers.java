@@ -20,6 +20,7 @@ package io.cdap.cdap.standalone;
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.graphql.datafetchers.DataFetchers;
+import io.cdap.cdap.graphql.schema.Fields;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Map;
  */
 class BooksDataFetchers implements DataFetchers {
 
+  // TODO extract to data
   private static final List<Map<String, String>> BOOKS = Arrays.asList(
     ImmutableMap.of("id", "book-1",
                     "name", "Harry Potter and the Philosopher's Stone",
@@ -59,11 +61,11 @@ class BooksDataFetchers implements DataFetchers {
 
   DataFetcher getBookByIdDataFetcher() {
     return dataFetchingEnvironment -> {
-      String bookId = dataFetchingEnvironment.getArgument("id");
+      String bookId = dataFetchingEnvironment.getArgument(Fields.ID);
 
       return BOOKS
         .stream()
-        .filter(book -> book.get("id").equals(bookId))
+        .filter(book -> book.get(Fields.ID).equals(bookId))
         .findFirst()
         .orElse(null);
     };
@@ -72,11 +74,11 @@ class BooksDataFetchers implements DataFetchers {
   DataFetcher getAuthorDataFetcher() {
     return dataFetchingEnvironment -> {
       Map<String, String> book = dataFetchingEnvironment.getSource();
-      String authorId = book.get("authorId");
+      String authorId = book.get(BooksDataFields.AUTHOR_ID);
 
       return AUTHORS
         .stream()
-        .filter(author -> author.get("id").equals(authorId))
+        .filter(author -> author.get(Fields.ID).equals(authorId))
         .findFirst()
         .orElse(null);
     };
