@@ -17,6 +17,17 @@
 
 package io.cdap.cdap;
 
-public class HelloWorldTest {
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * TODO
+ */
+@SpringBootApplication
+public class BookDetailsApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(BookDetailsApplication.class, args);
+  }
 
 }
