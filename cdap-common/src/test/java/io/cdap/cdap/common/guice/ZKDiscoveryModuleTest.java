@@ -122,10 +122,10 @@ public class ZKDiscoveryModuleTest {
       // Register a service using the twill ZKClient. This is to simulate how a user Service program register
       ProgramId programId = NamespaceId.DEFAULT.app("app").service("service");
       String twillNamespace = injector.getInstance(CConfiguration.class).get(Constants.CFG_TWILL_ZK_NAMESPACE);
-      ZKClient twillZKClient = ZKClients.namespace(zkClient,
-                                                   twillNamespace + "/" + TwillAppNames.toTwillAppName(programId));
 
       String discoverableName = ServiceDiscoverable.getName(programId);
+      ZKClient twillZKClient = ZKClients.namespace(zkClient,
+                                                   twillNamespace + "/" + TwillAppNames.toTwillAppName(programId));
 
       try (ZKDiscoveryService twillDiscoveryService = new ZKDiscoveryService(twillZKClient)) {
         InetSocketAddress socketAddr = new InetSocketAddress(InetAddress.getLoopbackAddress(), 43210);

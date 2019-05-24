@@ -90,6 +90,16 @@ export default class LibraryUploadWizard extends Component {
             namespace,
           },
         }),
+        handleCallToActionClick: () => {
+          /**
+           * FIXME (CDAP-15396): Right now we don't know what context we are in (market vs plus button)
+           * We should be able to pass on that context from the parent to be able to target specific
+           * things in specific environments.
+           * Right now this is here to close the modal when user clicks "Create pipeline" on plugin upload
+           * while in pipeline studio.
+           * */
+          this.eventEmitter.emit(globalEvents.CLOSERESOURCECENTER);
+        },
         linkLabel,
         linkUrl: window.getAbsUIUrl({
           namespaceId: namespace,

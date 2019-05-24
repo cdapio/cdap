@@ -17,8 +17,7 @@ having to worry about conflicts with CDAP's system classloader. Each authorizati
 extension is designed to be a fully self-contained JAR file, packaged with the required
 versions of all its dependencies.
 
-This is similar to how CDAP applications are packaged. In fact, users can use the CDAP
-application archetype to write their own authorization extension for CDAP. Having the
+This is similar to how CDAP applications are packaged. Having the
 required dependencies loaded from a separate class loader constructed using the provided
 JAR file ensures that there will be no conflicts, even if CDAP itself uses a different
 version of the library than the one that the extension requires.

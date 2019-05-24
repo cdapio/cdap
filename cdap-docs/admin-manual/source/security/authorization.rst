@@ -225,8 +225,6 @@ Datasets
      - *WRITE*
    * - Update
      - *ADMIN*
-   * - Upgrade
-     - *ADMIN*
    * - Truncate
      - *ADMIN*
    * - Drop

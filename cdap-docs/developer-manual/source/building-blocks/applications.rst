@@ -15,11 +15,11 @@ abstraction layer in CDAP.
 
 *Applications* are composed from *Programs,* *Services,* and *Schedules*.
 
-Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
+Programs include :doc:`MapReduce programs <mapreduce-programs>`,
 :doc:`Workflows <workflows>`, :doc:`Spark programs <spark-programs>`, and :doc:`Workers <workers>` are used to process
 data. :doc:`Services <services>` are used to serve data.
 
-**Data abstractions** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
+**Data abstractions** include :doc:`Datasets <datasets/index>`.
 
 *Applications* are created using an :doc:`Artifact <artifacts>` and optional configuration.
 An *Artifact* is a JAR file that packages the Java Application class that defines how the
@@ -168,7 +168,4 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
 
 Application Example
 ===================
-Applications are included in just about every CDAP :ref:`application <apps-and-packs>`,
-:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
-
-An example demonstrating the usage of a configuration is the :ref:`WordCount example <examples-word-count>`.
+Applications are included in the :ref:`guide <guides-index>`.

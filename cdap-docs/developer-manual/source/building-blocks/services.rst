@@ -124,8 +124,6 @@ of small chunks::
     // ...
   }
 
-An example of how to implement ``HttpContentConsumer`` is shown in the :ref:`Sport Results Example <examples-sport-results>`.
-
 .. _services-path-parameters:
 
 About Path Parameters
@@ -200,22 +198,12 @@ When a service is configured, the resource requirements for the server that runs
 handlers of the service can be set, both in terms of the amount of memory (in megabytes)
 and the number of virtual cores assigned.
 
-For example, in the :ref:`Purchase <examples-purchase>` example, in the configuration of
-the ``PurchaseHistoryService``, the amount of memory is specified:
-
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryService.java
-   :language: java
-   :lines: 40-46
-
 If both the memory and the number of cores needs to be set, this can be done using::
 
     setResources(new Resources(1024, 2));
 
 The resource requirements can also be altered through runtime arguments,
 as explained in :ref:`Configuring Resources <advanced-configuring-resources>`.
-
-An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
-<examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
 
 Service Thread Model
 ====================
@@ -234,22 +222,4 @@ Both the number of service threads and the thread keep-alive time can be altered
 
 Services Examples
 =================
-- The :ref:`Purchase example <examples-purchase>` includes two services, ``CatalogLookupService``
-  and ``PurchaseHistoryService``; the latter **retrieves a specified customer's purchase 
-  history in a JSON format from a dataset.**
-
-- The :ref:`Spark example <examples-spark-k-means>` includes a service that **responds with
-  a calculated center from a dataset based on an index parameter.**
-
-- For another example of **a service reading from a dataset,** see the :ref:`Spark PageRank
-  example <examples-spark-page-rank>`.
-
-- For an example of **using path and query parameters,** see the 
-  :ref:`WordCount example <examples-word-count>`, where the class ``RetrieveCountsHandler``
-  retrieves a variety of statistics from datasets depending on the path supplied. 
-
-- Almost all of the :ref:`how-to guides <guides-index>` demonstrate the use of services.
-  (The exception is the :ref:`cdap-bi-guide`.)
-
-- From the :ref:`tutorials`, the *WISE: Web Analytics* and the 
-  *MovieRecommender: Recommender System* both demonstrate the use of services.
+- Many of the :ref:`how-to guides <guides-index>` demonstrate the use of services.

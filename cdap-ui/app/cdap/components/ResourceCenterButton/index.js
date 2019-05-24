@@ -19,14 +19,24 @@ import React, { Component } from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
 import PlusButtonModal from 'components/PlusButtonModal';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 require('./ResourceCenterButton.scss');
 
+/**
+ * This module is used solely for angular side. This includes styling and stripping of context
+ * information used by the PlusButton. We may nee to consider using one component for both angular
+ * and react as it seems redundant.
+ */
 export default class ResourceCenterButton extends Component {
+  eventemitter = ee(ee);
   constructor(props) {
     super(props);
     this.state = {
       showResourceCenter: false,
     };
+    this.eventemitter.on(globalEvents.OPENRESOURCECENTER, this.openResourceCenter);
+    this.eventemitter.on(globalEvents.CLOSERESOURCECENTER, this.closeResourceCenter);
   }
   componentDidMount() {
     this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
@@ -40,18 +50,25 @@ export default class ResourceCenterButton extends Component {
     if (this.plusButtonSubscription) {
       this.plusButtonSubscription();
     }
+    this.eventemitter.off(globalEvents.OPENRESOURCECENTER, this.openResourceCenter);
+    this.eventemitter.off(globalEvents.CLOSERESOURCECENTER, this.closeResourceCenter);
   }
-  onClickHandler() {
+  openResourceCenter = () => {
     this.setState({
-      showResourceCenter: !this.state.showResourceCenter,
+      showResourceCenter: true,
     });
-  }
+  };
+  closeResourceCenter = () => {
+    this.setState({
+      showResourceCenter: false,
+    });
+  };
   render() {
     return (
       <div>
         <div
           className={classnames('cask-resourcecenter-button', this.props.className)}
-          onClick={this.onClickHandler.bind(this)}
+          onClick={this.openResourceCenter.bind(this)}
         >
           <img
             id="resource-center-btn"
@@ -61,7 +78,7 @@ export default class ResourceCenterButton extends Component {
         </div>
         <PlusButtonModal
           isOpen={this.state.showResourceCenter}
-          onCloseHandler={this.onClickHandler.bind(this)}
+          onCloseHandler={this.closeResourceCenter.bind(this)}
           mode="resourcecenter"
         />
       </div>

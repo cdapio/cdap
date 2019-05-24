@@ -32,7 +32,7 @@ Here's what we can offer in the way of help:
 .. |admin-manual| replace:: **Administration Manual**
 .. _admin-manual: admin-manual/index.html
 
-.. |examples-manual| replace:: **Examples, Guides, and Tutorials**
+.. |examples-manual| replace:: **Guides and Tutorials**
 .. _examples-manual: examples-manual/index.html
 
 .. |reference-manual| replace:: **Reference Manual**

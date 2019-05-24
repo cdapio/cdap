@@ -245,7 +245,6 @@ Cask Data Application Platform Distributed Dependencies
    "spark-plugins-2.0.0.jar","2.0.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "stax.stax-api-1.0.1.jar","1.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "tomcat.jasper-runtime-5.5.23.jar","5.5.23","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "tracker-0.7.0.jar","0.7.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "transform-plugins-2.0.0.jar","2.0.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "wrangler-api-3.1.0.jar","3.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "wrangler-service-3.1.0.jar","3.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

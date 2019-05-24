@@ -816,7 +816,8 @@
                 </goals>
                 <configuration combine.self="append">
                   <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
-                    org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.scala-lang,org.apache.kafka</excludeGroupIds>
+                    org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.scala-lang,org.apache.kafka,\
+                    commons-logging</excludeGroupIds>
                 </configuration>
               </execution>
             </executions>

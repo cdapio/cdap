@@ -143,18 +143,8 @@ By default, CDAP will start an implicit transaction for these methods:
   programs and sub-programs (flowlets, service handlers, and workflow actions), with the
   exception of worker programs.
 
-For example, as shown in the :ref:`WordCount example <examples-word-count>`, the
-``RetrieveCountsHandler`` uses the *wordCounts* ``KeyValueTable``. CDAP implicitly starts a
-transaction for this handler method, and the handler can rely on the transactional
-consistency of the data it reads from the dataset:
-
-.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/RetrieveCountsHandler.java
-   :language: java
-   :lines: 118-140
-   :dedent: 2
-
-For flowlet process methods, this starting of implicit transactions cannot be disabled,
-because that would impact the semantics of flow execution.
+CDAP implicitly starts a transaction for this handler method, and the handler can rely
+on the transactional consistency of the data it reads from the dataset.
 
 For MapReduce programs, the lifecycle methods of MapReduce tasks (mappers and reducers)
 and MapReduce helpers (such as partitioners and comparators) are always run inside a
@@ -166,14 +156,6 @@ transactions in Spark programs.
 
 For all other lifecycle methods and for service handlers, the implicit transaction can be
 turned off by annotating the method with ``@TransactionPolicy(TransactionControl.EXPLICIT)``.
-
-For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fileset>`:
-
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
-   :language: java
-   :lines: 79-83
-   :dedent: 4
-   :append: . . .
 
 This service handler method only accesses FileSets, which do not require transactions.
 Therefore, we can safely turn off the implicit transaction for this method. 
@@ -200,18 +182,8 @@ next section.
 
 Explicit Transactions 
 ----------------------
-Every program context (except for the ``FlowletContext`` and the ``MapReduceTaskContext``)
+Every program context (except for the ``MapReduceTaskContext``)
 allows the executing of a block of code in an explicit transaction. 
-
-For example, this service handler method (from the ``UploadService`` of the
-:ref:`SportResultsExample <examples-sport-results>`) uses an explicit transaction to
-access the partition metadata, whereas the streaming of the file contents to the client is
-performed outside the transaction:
-
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
-   :language: java
-   :lines: 75-104
-   :dedent: 4
 
 Be aware that you cannot nest transactions. For example, either:
 
@@ -231,10 +203,10 @@ To control the transaction timeout for individual namespaces, applications, or p
 you can :ref:`set a preference <preferences>` for the namespace, application, or program.
 The name of the preference is ``system.data.tx.timeout``. 
 
-To configure the timeout for a sub-program (a flowlet or a custom workflow action), prefix
-the preference name with ``flowlet.<name>`` or ``action.<name>``. For example, setting
-``flowlet.aggregator.system.data.tx.timeout`` to 60 seconds will only affect the flowlet
-named *aggregator* but not the other flowlets of the flow. 
+To configure the timeout for a sub-program (a custom workflow action), prefix
+the preference name with ``action.<name>``. For example, setting
+``action.filecheck.system.data.tx.timeout`` to 60 seconds will only affect the action
+named *filecheck* but not the other actions of the workflow.
 
 To control the transaction timeout for an individual run of a program, you can also
 provide this setting as a runtime argument when starting the program. Note that this will
@@ -299,19 +271,3 @@ You have these options:
   each transaction, because the transaction system must track writes with greater detail.
   But it can also greatly reduce the number of transaction conflicts, leading to improved
   overall application throughput.
-
-Transaction Examples
-====================
-
-- For an example of using **implicit transactions,** see the :ref:`WordCount example
-  <examples-word-count>` and its ``RetrieveCounts`` service and ``RetrieveCountsHandler``, which uses
-  implicit transactions.
-
-- For an example of using **explicit transactions,** see the :ref:`FileSet example
-  <examples-fileset>` and its ``FileSetService``, whose ``FileSetHandler`` uses explicit
-  transactions for all of its operations.
-
-- For another example of using **explicit transactions,** see the 
-  :ref:`Sport Results example <examples-sport-results>`, where the service
-  ``UploadService`` has an ``UploadHandler`` that reads and writes using explicit
-  transactions.
