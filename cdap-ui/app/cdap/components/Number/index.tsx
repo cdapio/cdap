@@ -68,7 +68,6 @@ function Number({ value, onChange, disabled, isFieldRequired, classes }: INumber
       InputProps={{
         classes,
       }}
-      classes={{...classes}}
     />
   );
 }
