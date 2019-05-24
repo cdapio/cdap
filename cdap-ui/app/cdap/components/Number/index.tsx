@@ -22,11 +22,15 @@ import TextField from '@material-ui/core/TextField';
 
 const styles = (theme) => {
   return {
-    root: {
-      // border: `1px solid ${theme.palette.grey['300']}`,
-      // borderRadius: 4,
-      // margin: '10px 0 10px 10px',
+    input: {
+      padding: 10,
     },
+    // root: {
+    //   '&$focused': {
+    //     outline: '1px solid #098cf9',
+    //   },
+    // },
+    // focused: {},
   };
 };
 
@@ -49,11 +53,14 @@ function Number({ value, onChange, disabled, isFieldRequired, classes }: INumber
 
   return (
     <TextField
+      fullWidth
+      variant="outlined"
       type="number"
       value={value}
       onChange={onChangeHandler}
       required={isFieldRequired}
       disabled={disabled}
+      // classes={{ root: classes.root, focused: classes.focused }}
       InputProps={{
         classes,
       }}
