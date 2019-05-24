@@ -15,13 +15,15 @@
  * the License.
  */
 
-package io.cdap.cdap.standalone;
+package io.cdap.cdap.standalone.data;
 
-abstract class BooksTypes {
+public class BooksDataFields {
 
-  static final String BOOK = "Book";
+  public static final String AUTHOR_ID = "authorId";
 
-  private BooksTypes() {
+  private BooksDataFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
+
+
 }

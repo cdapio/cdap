@@ -21,6 +21,9 @@ import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.schema.Types;
+import io.cdap.cdap.standalone.datafetchers.BooksDataFetchers;
+import io.cdap.cdap.standalone.schema.BooksFields;
+import io.cdap.cdap.standalone.schema.BooksTypes;
 
 /**
  * TODO

@@ -15,12 +15,13 @@
  * the License.
  */
 
-package io.cdap.cdap.standalone;
+package io.cdap.cdap.standalone.datafetchers;
 
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.graphql.datafetchers.DataFetchers;
 import io.cdap.cdap.graphql.schema.Fields;
+import io.cdap.cdap.standalone.data.BooksDataFields;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.Map;
 /**
  * TODO
  */
-class BooksDataFetchers implements DataFetchers {
+public class BooksDataFetchers implements DataFetchers {
 
   // TODO extract to data
   private static final List<Map<String, String>> BOOKS = Arrays.asList(
@@ -59,7 +60,7 @@ class BooksDataFetchers implements DataFetchers {
                     "lastName", "Rice")
   );
 
-  DataFetcher getBookByIdDataFetcher() {
+  public DataFetcher getBookByIdDataFetcher() {
     return dataFetchingEnvironment -> {
       String bookId = dataFetchingEnvironment.getArgument(Fields.ID);
 
@@ -71,7 +72,7 @@ class BooksDataFetchers implements DataFetchers {
     };
   }
 
-  DataFetcher getAuthorDataFetcher() {
+  public DataFetcher getAuthorDataFetcher() {
     return dataFetchingEnvironment -> {
       Map<String, String> book = dataFetchingEnvironment.getSource();
       String authorId = book.get(BooksDataFields.AUTHOR_ID);

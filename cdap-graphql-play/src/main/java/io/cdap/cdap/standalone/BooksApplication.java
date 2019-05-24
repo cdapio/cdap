@@ -20,6 +20,7 @@ package io.cdap.cdap.standalone;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
+import io.cdap.cdap.standalone.datafetchers.BooksDataFetchers;
 
 import java.io.IOException;
 
