@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap;
+package io.cdap.cdap.springboot;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;

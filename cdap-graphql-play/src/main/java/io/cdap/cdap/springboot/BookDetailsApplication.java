@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap;
+package io.cdap.cdap.springboot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap;
+package io.cdap.cdap.springboot;
 
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
