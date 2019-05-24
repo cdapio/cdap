@@ -19,6 +19,7 @@ package io.cdap.cdap.standalone;
 
 import graphql.ExecutionResult;
 import graphql.GraphQL;
+import io.cdap.cdap.graphql.provider.GraphQLProvider;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ public class Application {
 
   public static void main(String[] args) throws IOException {
     String schemaDefinitionFile = "schema.graphqls";
-    BooksGraphQLProvider booksGraphQLProvider = new BooksGraphQLProvider(schemaDefinitionFile);
+    GraphQLProvider booksGraphQLProvider = new BooksGraphQLProvider(schemaDefinitionFile);
     GraphQL graphQL = booksGraphQLProvider.getGraphQL();
 
     ExecutionResult executionResult = graphQL.execute("{bookById(id: \"book-1\") {name }}");

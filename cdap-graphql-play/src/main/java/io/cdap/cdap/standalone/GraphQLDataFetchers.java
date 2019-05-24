@@ -19,7 +19,6 @@ package io.cdap.cdap.standalone;
 
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;

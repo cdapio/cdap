@@ -32,7 +32,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URL;
-
 import javax.annotation.PostConstruct;
 
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;

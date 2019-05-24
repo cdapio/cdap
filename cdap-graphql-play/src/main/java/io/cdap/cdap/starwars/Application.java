@@ -18,6 +18,7 @@
 package io.cdap.cdap.starwars;
 
 import graphql.GraphQL;
+import io.cdap.cdap.graphql.provider.GraphQLProvider;
 
 import java.io.IOException;
 
@@ -27,8 +28,9 @@ import java.io.IOException;
 public class Application {
 
   public static void main(String[] args) throws IOException {
-    GraphQLProvider graphQLProvider = new GraphQLProvider();
-    GraphQL graphQL = graphQLProvider.getGraphQL();
+    String schemaDefintionFile = "starWarsSchema.graphqls";
+    GraphQLProvider starWarsGraphQLProvider = new StarWarsGraphQLProvider(schemaDefintionFile);
+    GraphQL graphQL = starWarsGraphQLProvider.getGraphQL();
   }
 
 }

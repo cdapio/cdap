@@ -19,11 +19,7 @@ package io.cdap.cdap.graphql.provider;
 
 import graphql.GraphQL;
 
-import java.io.IOException;
-
 public interface GraphQLProvider {
-
-  GraphQL buildGraphQL() throws IOException;
 
   GraphQL getGraphQL();
 

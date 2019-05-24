@@ -45,8 +45,7 @@ public abstract class AbstractGraphQLProvider implements GraphQLProvider {
     return graphQL;
   }
 
-  @Override
-  public GraphQL buildGraphQL() throws IOException {
+  private GraphQL buildGraphQL() throws IOException {
     URL url = Resources.getResource(schemaDefinitionFile);
     String sdl = Resources.toString(url, Charsets.UTF_8);
     GraphQLSchema graphQLSchema = buildSchema(sdl);
