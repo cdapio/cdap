@@ -15,14 +15,8 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.provider;
+package io.cdap.cdap.graphql.datafetchers;
 
-import graphql.GraphQL;
-
-import java.io.IOException;
-
-public interface GraphQLProvider {
-
-  GraphQL buildGraphQL() throws IOException;
+public interface DataFetchers {
 
 }

@@ -19,6 +19,7 @@ package io.cdap.cdap.standalone;
 
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
+import io.cdap.cdap.graphql.datafetchers.DataFetchers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.Map;
 /**
  * TODO
  */
-class GraphQLDataFetchers {
+class BooksDataFetchers implements DataFetchers {
 
   private static final List<Map<String, String>> BOOKS = Arrays.asList(
     ImmutableMap.of("id", "book-1",
@@ -56,7 +57,7 @@ class GraphQLDataFetchers {
                     "lastName", "Rice")
   );
 
-  static DataFetcher getBookByIdDataFetcher() {
+  DataFetcher getBookByIdDataFetcher() {
     return dataFetchingEnvironment -> {
       String bookId = dataFetchingEnvironment.getArgument("id");
 
@@ -68,7 +69,7 @@ class GraphQLDataFetchers {
     };
   }
 
-  static DataFetcher getAuthorDataFetcher() {
+  DataFetcher getAuthorDataFetcher() {
     return dataFetchingEnvironment -> {
       Map<String, String> book = dataFetchingEnvironment.getSource();
       String authorId = book.get("authorId");

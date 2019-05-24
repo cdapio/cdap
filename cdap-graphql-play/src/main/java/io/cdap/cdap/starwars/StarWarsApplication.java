@@ -15,23 +15,22 @@
  * the License.
  */
 
-package io.cdap.cdap.standalone;
+package io.cdap.cdap.starwars;
 
-import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
 
 import java.io.IOException;
 
-public class Application {
+/**
+ * TODO
+ */
+public class StarWarsApplication {
 
   public static void main(String[] args) throws IOException {
-    String schemaDefinitionFile = "schema.graphqls";
-    GraphQLProvider booksGraphQLProvider = new BooksGraphQLProvider(schemaDefinitionFile);
-    GraphQL graphQL = booksGraphQLProvider.getGraphQL();
-
-    ExecutionResult executionResult = graphQL.execute("{bookById(id: \"book-1\") {name }}");
-    System.out.println(executionResult.getData().toString());
+    String schemaDefintionFile = "starWarsSchema.graphqls";
+    GraphQLProvider starWarsGraphQLProvider = new StarWarsGraphQLProvider(schemaDefintionFile);
+    GraphQL graphQL = starWarsGraphQLProvider.buildGraphQL();
   }
 
 }

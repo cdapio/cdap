@@ -32,20 +32,14 @@ import java.net.URL;
 public abstract class AbstractGraphQLProvider implements GraphQLProvider {
 
   private final String schemaDefinitionFile;
-  private final GraphQL graphQL;
 
   // TODO do we want to throw the exception or pass a more informative message?
-  protected AbstractGraphQLProvider(String schemaDefinitionFile) throws IOException {
+  protected AbstractGraphQLProvider(String schemaDefinitionFile) {
     this.schemaDefinitionFile = schemaDefinitionFile;
-    this.graphQL = buildGraphQL();
   }
 
   @Override
-  public GraphQL getGraphQL() {
-    return graphQL;
-  }
-
-  private GraphQL buildGraphQL() throws IOException {
+  public GraphQL buildGraphQL() throws IOException {
     URL url = Resources.getResource(schemaDefinitionFile);
     String sdl = Resources.toString(url, Charsets.UTF_8);
     GraphQLSchema graphQLSchema = buildSchema(sdl);

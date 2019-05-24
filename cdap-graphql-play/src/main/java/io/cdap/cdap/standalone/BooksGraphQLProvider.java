@@ -21,8 +21,6 @@ import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 
-import java.io.IOException;
-
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
 /**
@@ -30,8 +28,12 @@ import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
  */
 class BooksGraphQLProvider extends AbstractGraphQLProvider {
 
-  BooksGraphQLProvider(String schemaDefinitionFile) throws IOException {
+  private final BooksDataFetchers booksDataFetchers;
+
+  BooksGraphQLProvider(String schemaDefinitionFile, BooksDataFetchers booksDataFetchers) {
     super(schemaDefinitionFile);
+
+    this.booksDataFetchers = booksDataFetchers;
   }
 
   protected RuntimeWiring buildWiring() {
@@ -41,13 +43,14 @@ class BooksGraphQLProvider extends AbstractGraphQLProvider {
       .build();
   }
 
+  // TODO use static final strings that map to the schema
   private TypeRuntimeWiring.Builder bookTypeRuntimeWiring() {
     return newTypeWiring("Book")
-      .dataFetcher("author", GraphQLDataFetchers.getAuthorDataFetcher());
+      .dataFetcher("author", booksDataFetchers.getAuthorDataFetcher());
   }
 
   private TypeRuntimeWiring.Builder queryTypeRuntimeWiring() {
     return newTypeWiring("Query")
-      .dataFetcher("bookById", GraphQLDataFetchers.getBookByIdDataFetcher());
+      .dataFetcher("bookById", booksDataFetchers.getBookByIdDataFetcher());
   }
 }
