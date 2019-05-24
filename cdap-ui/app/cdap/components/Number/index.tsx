@@ -25,12 +25,19 @@ const styles = (theme) => {
     input: {
       padding: 10,
     },
-    // root: {
-    //   '&$focused': {
-    //     outline: '1px solid #098cf9',
-    //   },
-    // },
-    // focused: {},
+    root: {
+      '& $notchedOutline': {
+        borderColor: '#098cf9',
+      },
+      '&:hover $notchedOutline': {
+        borderColor: '#098cf9',
+      },
+      '&$focused $notchedOutline': {
+        border: '1px solid #098cf9',
+      },
+    },
+    focused: {},
+    notchedOutline: {},
   };
 };
 
@@ -60,7 +67,6 @@ function Number({ value, onChange, disabled, isFieldRequired, classes }: INumber
       onChange={onChangeHandler}
       required={isFieldRequired}
       disabled={disabled}
-      // classes={{ root: classes.root, focused: classes.focused }}
       InputProps={{
         classes,
       }}
