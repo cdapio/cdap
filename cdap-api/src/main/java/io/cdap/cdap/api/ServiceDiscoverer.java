@@ -35,8 +35,7 @@ public interface ServiceDiscoverer {
    */
   @Nullable
   default URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
-    throw new UnsupportedOperationException(
-      String.format("NamespaceId service discovery is not supported.");
+    throw new UnsupportedOperationException("NamespaceId service discovery is not supported.");
   }
 
   /**
