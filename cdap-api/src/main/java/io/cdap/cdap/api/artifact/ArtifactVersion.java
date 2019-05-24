@@ -161,11 +161,17 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
     }
 
     // All numerical part of the version are the same, compare the suffix.
-    // A special case is no suffix is "greater" than with suffix. This is usually true (e.g. release > snapshot)
-    if (suffix == null) {
-      return other.suffix == null ? 0 : 1;
+    // A special case is the snapshot version is smaller than any released version
+    if (isSnapshot() && !other.isSnapshot()) {
+      return -1;
     }
-    return other.suffix == null ? -1 : suffix.compareTo(other.suffix);
+
+    if (other.isSnapshot() && !isSnapshot()) {
+      return 1;
+    }
+
+    // The two artifacts can only be both snapshots or release versions, just compare the suffix.
+    return compare(suffix, other.suffix);
   }
 
   @Override
