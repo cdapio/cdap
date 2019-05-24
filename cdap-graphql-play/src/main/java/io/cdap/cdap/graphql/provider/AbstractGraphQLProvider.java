@@ -35,7 +35,7 @@ public abstract class AbstractGraphQLProvider implements GraphQLProvider {
   private final GraphQL graphQL;
 
   // TODO do we want to throw the exception or pass a more informative message?
-  AbstractGraphQLProvider(String schemaDefinitionFile) throws IOException {
+  protected AbstractGraphQLProvider(String schemaDefinitionFile) throws IOException {
     this.schemaDefinitionFile = schemaDefinitionFile;
     this.graphQL = buildGraphQL();
   }
@@ -62,5 +62,5 @@ public abstract class AbstractGraphQLProvider implements GraphQLProvider {
     return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
   }
 
-  abstract RuntimeWiring buildWiring();
+  protected abstract RuntimeWiring buildWiring();
 }

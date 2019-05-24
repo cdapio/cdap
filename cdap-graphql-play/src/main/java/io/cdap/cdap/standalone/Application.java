@@ -25,8 +25,9 @@ import java.io.IOException;
 public class Application {
 
   public static void main(String[] args) throws IOException {
-    GraphQLProvider graphQLProvider = new GraphQLProvider();
-    GraphQL graphQL = graphQLProvider.getGraphQL();
+    String schemaDefinitionFile = "schema.graphqls";
+    BooksGraphQLProvider booksGraphQLProvider = new BooksGraphQLProvider(schemaDefinitionFile);
+    GraphQL graphQL = booksGraphQLProvider.getGraphQL();
 
     ExecutionResult executionResult = graphQL.execute("{bookById(id: \"book-1\") {name }}");
     System.out.println(executionResult.getData().toString());

@@ -17,53 +17,24 @@
 
 package io.cdap.cdap.standalone;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import graphql.GraphQL;
-import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
-import graphql.schema.idl.SchemaGenerator;
-import graphql.schema.idl.SchemaParser;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeRuntimeWiring;
+import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 
 import java.io.IOException;
-import java.net.URL;
 
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
 /**
  * TODO
  */
-class GraphQLProvider {
+class BooksGraphQLProvider extends AbstractGraphQLProvider {
 
-  private final GraphQL graphQL;
-
-  GraphQLProvider() throws IOException {
-    this.graphQL = buildGraphQL();
+  BooksGraphQLProvider(String schemaDefinitionFile) throws IOException {
+    super(schemaDefinitionFile);
   }
 
-  public GraphQL getGraphQL() {
-    return graphQL;
-  }
-
-  private GraphQL buildGraphQL() throws IOException {
-    URL url = Resources.getResource("schema.graphqls");
-    String sdl = Resources.toString(url, Charsets.UTF_8);
-    GraphQLSchema graphQLSchema = buildSchema(sdl);
-
-    return GraphQL.newGraphQL(graphQLSchema).build();
-  }
-
-  private GraphQLSchema buildSchema(String sdl) {
-    TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(sdl);
-    RuntimeWiring runtimeWiring = buildWiring();
-    SchemaGenerator schemaGenerator = new SchemaGenerator();
-
-    return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
-  }
-
-  private RuntimeWiring buildWiring() {
+  protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(queryTypeRuntimeWiring())
       .type(bookTypeRuntimeWiring())
