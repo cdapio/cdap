@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.starwars;
+package io.cdap.cdap.graphql.provider;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -25,22 +25,29 @@ import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import graphql.schema.idl.TypeRuntimeWiring;
 
 import java.io.IOException;
 import java.net.URL;
 
+public abstract class AbstractGraphQLProvider implements GraphQLProvider {
 
-public class GraphQLProvider {
-
+  private final String schemaDefinitionFile;
   private final GraphQL graphQL;
 
-  GraphQLProvider() throws IOException {
+  // TODO do we want to throw the exception or pass a more informative message?
+  AbstractGraphQLProvider(String schemaDefinitionFile) throws IOException {
+    this.schemaDefinitionFile = schemaDefinitionFile;
     this.graphQL = buildGraphQL();
   }
 
-  private GraphQL buildGraphQL() throws IOException {
-    URL url = Resources.getResource("starWarsSchema.graphqls");
+  @Override
+  public GraphQL getGraphQL() {
+    return graphQL;
+  }
+
+  @Override
+  public GraphQL buildGraphQL() throws IOException {
+    URL url = Resources.getResource(schemaDefinitionFile);
     String sdl = Resources.toString(url, Charsets.UTF_8);
     GraphQLSchema graphQLSchema = buildSchema(sdl);
 
@@ -55,37 +62,5 @@ public class GraphQLProvider {
     return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
   }
 
-  private RuntimeWiring buildWiring() {
-    return RuntimeWiring.newRuntimeWiring()
-      .type(getQueryTypeRuntimeWiring())
-      .type(getCharacterTypeRuntimeWiring())
-      .type(getHumanTypeRuntimeWiring())
-      .type(getDroidTypeRuntimeWiring())
-      .build();
-  }
-
-  private TypeRuntimeWiring.Builder getQueryTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Query")
-      .dataFetcher("hero", StarWarsDataFetcher.getHeroDataFetcher())
-      .dataFetcher("human", StarWarsDataFetcher.getHumanDataFetcher())
-      .dataFetcher("droid", StarWarsDataFetcher.getDroidDataFetcher())
-      ;
-  }
-
-  private TypeRuntimeWiring.Builder getCharacterTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Character")
-      .typeResolver(StarWarsTypeResolver.getCharacterTypeResolver());
-  }
-
-  private TypeRuntimeWiring.Builder getHumanTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Human");
-  }
-
-  private TypeRuntimeWiring.Builder getDroidTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Droid");
-  }
-
-  GraphQL getGraphQL() {
-    return graphQL;
-  }
+  abstract RuntimeWiring buildWiring();
 }
