@@ -26,12 +26,10 @@ const styles = (theme) => {
       padding: 10,
     },
     root: {
-      '& $notchedOutline': {
-        borderColor: '#098cf9',
-      },
-      '&:hover $notchedOutline': {
-        borderColor: '#098cf9',
-      },
+      // this doesn't seem to change hover styling
+      // '&:hover $notchedOutline': {
+      //   borderColor: '#cccccc',
+      // },
       '&$focused $notchedOutline': {
         border: '1px solid #098cf9',
       },
@@ -70,6 +68,7 @@ function Number({ value, onChange, disabled, isFieldRequired, classes }: INumber
       InputProps={{
         classes,
       }}
+      classes={{...classes}}
     />
   );
 }
