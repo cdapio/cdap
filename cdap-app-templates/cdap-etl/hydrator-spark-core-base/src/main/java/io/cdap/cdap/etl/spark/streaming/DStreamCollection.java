@@ -49,6 +49,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
@@ -78,9 +79,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<T> cache() {
-    SparkConf sparkconf = stream.context().sparkContext().getConf();
-    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-      return wrap(stream.cache());
+    SparkConf sparkConf = stream.context().sparkContext().getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+                                                     Constants.DEFAULT_CACHING_STORAGE_LEVEL);
+      StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
+      return wrap(stream.persist(cacheStorageLevel));
     } else {
       return wrap(stream);
     }
