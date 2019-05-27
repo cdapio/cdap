@@ -16,6 +16,11 @@
 
 package co.cask.cdap.security.server;
 
+import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.CertificateUtils;
+import org.apache.shiro.authz.UnauthorizedException;
+
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
@@ -23,14 +28,21 @@ import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenIdentifier;
 import co.cask.cdap.security.auth.TokenManager;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
+
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Date;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -86,8 +98,26 @@ public class GrantAccessToken {
    */
   public static final class Paths {
     public static final String GET_TOKEN = "token";
+    public static final String GET_TOKEN_FROM_KNOX = "knoxToken";
     public static final String GET_EXTENDED_TOKEN = "extendedtoken";
   }
+
+  /**
+   *  Get an AccessToken from KNOXToken.
+   */
+  @Path(Paths.GET_TOKEN_FROM_KNOX)
+  @GET
+  @Produces("application/json")
+  public Response tokenFromKNOX(@Context HttpServletRequest request, @Context HttpServletResponse response)
+      throws IOException, ServletException {
+    AccessToken token = getTokenFromKNOX(request, response);
+    if (token != null) {
+      setResponse(request, response, token, tokenExpiration);
+      return Response.status(200).build();
+    } else {
+      return Response.status(201).build();
+    }
+  }  
 
   /**
    * Get an AccessToken.
@@ -112,6 +142,107 @@ public class GrantAccessToken {
     grantToken(request, response, extendedTokenExpiration);
     return Response.status(200).build();
   }
+
+  private void setResponse(HttpServletRequest request, HttpServletResponse response, AccessToken token,
+      long tokenValidity) throws IOException, ServletException {
+    JsonObject json = new JsonObject();
+    byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
+        new String(encodedIdentifier, Charsets.UTF_8));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
+        ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN,
+        TimeUnit.SECONDS.convert(tokenValidity, TimeUnit.MILLISECONDS));
+
+    response.getOutputStream().print(json.toString());
+    response.setStatus(HttpServletResponse.SC_OK);
+  }
+
+  private AccessToken getTokenFromKNOX(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		
+		final String authorizationHeader = request.getHeader("knoxToken");
+        String wireToken = null;
+        long expireTime = -1l;
+        String username = null;
+        long issueTime = System.currentTimeMillis();
+
+        if (authorizationHeader!=null && !Strings.isNullOrEmpty(authorizationHeader)) {
+            wireToken = authorizationHeader;
+        } else {
+            wireToken = getJWTTokenFromCookie(request);
+        }
+        if (Strings.isNullOrEmpty(wireToken)) {
+        	LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
+            return null;
+        }
+
+        JWTToken token;
+        try {
+            token = new JWTToken(wireToken);
+            username = token.getSubject();
+        } catch (ParseException | NullPointerException e) {
+            e.printStackTrace();
+            throw new UnauthorizedException("Authorization header missing/invalid");
+        }
+
+        /*boolean validToken = verifyToken(token);
+        if(!validToken)
+            throw new UnauthorizedException("Not authorized");*/
+
+        Date expires = token.getExpiresDate();
+        LOG.debug("token expiry date: " + expires.toString());
+        if (expires.before(new Date()))
+            throw new UnauthorizedException("Token expired.");
+        
+        expireTime = Date.parse(expires.toString());
+        
+		List<String> userGroups = Collections.emptyList();
+
+		AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userGroups, issueTime, expireTime);
+		AccessToken accessToken = tokenManager.signIdentifier(tokenIdentifier);
+		LOG.debug("Issued token for user {}", username);
+		return accessToken;
+	} 
+ 
+  private static boolean verifyToken(JWT token) {
+        boolean rc = false;
+        String verificationPem = "KNOX_TOKEN_PUBLIC_KEY";
+        try {
+            RSAPublicKey publicKey = CertificateUtils.parseRSAPublicKey(verificationPem);
+            JWSVerifier verifier = new RSASSAVerifier(publicKey);
+            rc = token.verify(verifier);
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                e.printStackTrace();
+            }
+            LOG.warn("Exception in verifying signature : ", e.toString());
+            e.printStackTrace();
+            return false;
+        }
+        return rc;
+    }
+	
+	private static String getJWTTokenFromCookie(HttpServletRequest request) {
+        String rawCookie = request.getHeader("cookie");
+        if (rawCookie == null) {
+        	return null;
+        }
+        String cookieToken = null;
+        String cookieName = "hadoop-jwt";
+
+        String[] rawCookieParams = rawCookie.split(";");
+        for(String rawCookieNameAndValue :rawCookieParams) {
+            String[] rawCookieNameAndValuePair = rawCookieNameAndValue.split("=");
+            if ((rawCookieNameAndValuePair.length > 1) &&
+                    (rawCookieNameAndValuePair[0].trim().equalsIgnoreCase(cookieName))) {
+                cookieToken = rawCookieNameAndValuePair[1];
+                break;
+            }
+        }
+        return cookieToken;
+    } 
+
 
   private void grantToken(HttpServletRequest request, HttpServletResponse response, long tokenValidity)
     throws IOException, ServletException {

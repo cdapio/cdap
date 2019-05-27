@@ -90,14 +90,17 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<T> cache() {
-    return wrap(rdd.cache());
+    SparkConf sparkConf = jsc.getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+          Constants.DEFAUL_CACHING_STORAGE_LEVEL);
+      StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
+      return wrap(rdd.persist(cacheStorageLevel));
+    } else {
+      return wrap(rdd);
+    }
   }
 
-  @Override
-  public SparkCollection<T> persist(StorageLevel cacheStorageLevel) {
-    return wrap(rdd.persist(cacheStorageLevel));
-  }
-  
   @SuppressWarnings("unchecked")
   @Override
   public SparkCollection<T> union(SparkCollection<T> other) {
@@ -155,16 +158,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
 
-    SparkConf sparkconf = jsc.getConf();
-    JavaRDD<T> countedInput = null;
-    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-        String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
-            Constants.DEFAUL_CACHING_STORAGE_LEVEL);
-        StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null))
-            .persist(cacheStorageLevel);
-    } else {
-        countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+    SparkConf sparkConf = jsc.getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      countedInput = countedInput.cache();
     }
 
     return wrap(compute.transform(sparkPluginContext, countedInput)
@@ -195,15 +192,12 @@ public class RDDCollection<T> implements SparkCollection<T> {
           new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
 
         SparkConf sparkconf = jsc.getConf();
-        JavaRDD<T> countedRDD = null;
-        if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-            String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
-                Constants.DEFAUL_CACHING_STORAGE_LEVEL);
-            StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null))
-                .persist(cacheStorageLevel);
-        } else {
-            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+        JavaRDD<T> countedRDD = 
+          rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+
+        SparkConf sparkConf = jsc.getConf();
+        if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+          countedRDD = countedRDD.cache();
         }
     
         try {

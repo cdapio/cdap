@@ -18,7 +18,9 @@ import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
+import cookie from 'react-cookie';
 import { Theme } from '../../services/ThemeHelper';
+import { USE_REMOTE_SERVER, RAF_ACCESS_TOKEN } from './config';
 
 export function toCamelCase(value) {
   return value.replace(/(\w)(.*?)\b/g, function (result, group1, group2) {
@@ -210,3 +212,16 @@ export function getClassNameForHeaderFooter() {
   return className;
 }
 
+export function getAccessToken() {
+}
+
+export function getDefaultRequestHeader() {
+  if (USE_REMOTE_SERVER) {
+    return {
+      "AccessToken": `Bearer ${RAF_ACCESS_TOKEN}`,
+      "Authorization": `Bearer ${RAF_ACCESS_TOKEN}`
+    };
+  } else {
+    return (isNil(cookie.load('CDAP_Auth_Token'))) ? {} : { "AccessToken": `Bearer ${cookie.load('CDAP_Auth_Token')}` };
+  }
+}

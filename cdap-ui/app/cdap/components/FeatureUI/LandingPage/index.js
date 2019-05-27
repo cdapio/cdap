@@ -41,7 +41,7 @@ import {
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
 import FeatureSelection from '../FeatureSelection';
-import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError } from '../util';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError, getDefaultRequestHeader } from '../util';
 import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
 import { Theme } from 'services/ThemeHelper';
@@ -175,7 +175,7 @@ class LandingPage extends React.Component {
       {
         namespace: NamespaceStore.getState().selectedNamespace,
         type: type == "All" ? '' : type
-      }).subscribe(
+      }, {}, getDefaultRequestHeader()).subscribe(
         result => {
           if (checkResponseError(result) || isNil(result["pipelineInfoList"])) {
             this.handleError(result, GET_PIPELINE);
@@ -208,7 +208,7 @@ class LandingPage extends React.Component {
     FEDataServiceApi.pipelineData({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result) || isNil(result["featureStatsList"])) {
           this.handleError(result, GET_PIPE_LINE_DATA);
@@ -237,7 +237,7 @@ class LandingPage extends React.Component {
     FEDataServiceApi.readPipeline({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result) || isNil(result["featureGenerationRequest"])) {
           this.handleError(result, READ_PIPELINE);
@@ -403,7 +403,7 @@ class LandingPage extends React.Component {
     FEDataServiceApi.deletePipeline({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
-    }).subscribe(
+    },{} , getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result)) {
           this.handleError(result, DELETE_PIPELINE);
@@ -447,12 +447,12 @@ class LandingPage extends React.Component {
       fetchObserver = FEDataServiceApi.updatePipeline({
         namespace: NamespaceStore.getState().selectedNamespace,
         pipeline: featureObject.pipelineRunName
-      }, featureObject);
+      }, featureObject, getDefaultRequestHeader());
     } else {
       fetchObserver = FEDataServiceApi.createPipeline({
         namespace: NamespaceStore.getState().selectedNamespace,
         pipeline: featureObject.pipelineRunName
-      }, featureObject);
+      }, featureObject, getDefaultRequestHeader());
     }
 
     return Observable.create((observer) => {
@@ -573,7 +573,7 @@ class LandingPage extends React.Component {
   fetchSchemas() {
     FEDataServiceApi.schema({
       namespace: NamespaceStore.getState().selectedNamespace
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result) || isNil(result["dataSchemaList"])) {
           this.handleError(result, GET_SCHEMA);
@@ -590,7 +590,7 @@ class LandingPage extends React.Component {
   fetchProperties() {
     FEDataServiceApi.metadataConfig({
       namespace: NamespaceStore.getState().selectedNamespace
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result)) {
           this.handleError(result, GET_PROPERTY);
@@ -610,7 +610,7 @@ class LandingPage extends React.Component {
   fetchConfiguration() {
     FEDataServiceApi.engineConfig({
       namespace: NamespaceStore.getState().selectedNamespace
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result) || isNil(result["configParamList"])) {
           this.handleError(result, GET_CONFIGURATION);
@@ -628,7 +628,7 @@ class LandingPage extends React.Component {
   fetchSinks() {
     FEDataServiceApi.availableSinks({
       namespace: NamespaceStore.getState().selectedNamespace
-    }).subscribe(
+    }, {}, getDefaultRequestHeader()).subscribe(
       result => {
         if (checkResponseError(result) || isNil(result["configParamList"])) {
           this.handleError(result, GET_SINKS);

@@ -55,6 +55,7 @@ class RemoteDataSource {
         };
         break;
     }
+    fetchObject["headers"]=  request.headers;
     return fetchObject;
   }
 }

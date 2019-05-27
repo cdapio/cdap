@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
@@ -44,6 +45,7 @@ import co.cask.cdap.etl.spark.streaming.function.StreamingAlertPublishFunction;
 import co.cask.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import co.cask.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import co.cask.cdap.etl.spec.StageSpec;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -77,14 +79,17 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<T> cache() {
-    return wrap(stream.cache());
+    SparkConf sparkConf = stream.context().sparkContext().getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+          Constants.DEFAUL_CACHING_STORAGE_LEVEL);
+      StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
+      return wrap(stream.persist(cacheStorageLevel));
+    } else {
+      return wrap(stream);
+    }
   }
   
-  @Override
-  public SparkCollection<T> persist(StorageLevel cacheStorageLevel) {
-    return wrap(stream.persist(cacheStorageLevel));
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public SparkCollection<T> union(SparkCollection<T> other) {

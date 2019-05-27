@@ -35,7 +35,7 @@ import {
 
 import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
-import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase } from '../util';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase, getDefaultRequestHeader } from '../util';
 import InfoTip from '../InfoTip';
 import FEDataServiceApi from '../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
@@ -47,6 +47,7 @@ class PropertySelector extends React.Component {
   currentSubProperty = "none";
   propertyMap;
   lastSchemas;
+  requestHeaders;
 
   constructor(props) {
     super(props);
@@ -73,8 +74,23 @@ class PropertySelector extends React.Component {
     } else {
       this.setDefaultPropertyTobeConigured();
     }
-
+    this.setState({
+      columnTypes: this.getColumnTypes()
+    });
   }
+
+  getColumnTypes() {
+    const columnTypes = new Set();
+    if (!isEmpty(this.props.selectedSchemas)) {
+      this.state.schemas.map(schema => {
+        schema.schemaColumns.map(column => {
+          columnTypes.add(column.columnType);
+        });
+      });
+    }
+    return columnTypes;
+  }
+
 
   setDefaultPropertyTobeConigured() {
     if (!isEmpty(this.props.availableProperties)) {
@@ -90,7 +106,7 @@ class PropertySelector extends React.Component {
       namespace: NamespaceStore.getState().selectedNamespace
     },
       this.props.selectedSchemas.map(schema => schema.schemaName)
-    ).subscribe(
+    , getDefaultRequestHeader()).subscribe(
       result => {
         this.setDetectedProperties(result);
         this.props.setDetectedProperties(result);

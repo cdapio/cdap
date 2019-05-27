@@ -24,7 +24,6 @@ import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
-import org.apache.spark.storage.StorageLevel;
 
 import javax.annotation.Nullable;
 
@@ -44,8 +43,6 @@ public interface SparkCollection<T> {
 
   SparkCollection<T> cache();
 
-  SparkCollection<T> persist(StorageLevel cacheStorageLevel);
-  
   SparkCollection<T> union(SparkCollection<T> other);
 
   SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector);

@@ -2842,4 +2842,11 @@ features:
         tooltiptext: The stream will be created if it does not exist
       subtitle: to the stream "{streamId}".
       success: You have successfully uploaded the datapack "{datapackName}"
+  FeatureEngineering:
+    FeatureSelection:
+      SaveFeatureModal:
+        title: Save
+        okButton: OK
+        cancelButton: Cancel
+
 ...

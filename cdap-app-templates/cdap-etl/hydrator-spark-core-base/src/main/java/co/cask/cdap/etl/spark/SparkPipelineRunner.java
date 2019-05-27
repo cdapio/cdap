@@ -55,7 +55,6 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.storage.StorageLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,11 +103,7 @@ public abstract class SparkPipelineRunner {
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
 
     boolean autoCache = jsc.getConf().getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true);
-    String cacheStorageLevelString = jsc.getConf().get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
-        Constants.DEFAUL_CACHING_STORAGE_LEVEL);
-    
-    StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
-    
+
     // should never happen, but removes warning
     if (pipelinePhase.getDag() == null) {
       throw new IllegalStateException("Pipeline phase has no connections.");
@@ -193,7 +188,7 @@ public abstract class SparkPipelineRunner {
         if (sourcePluginType.equals(pluginType) || isConnectorSource) {
           SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput, autoCache, cacheStorageLevel);
+                                      combinedData, hasErrorOutput, hasAlertOutput, autoCache);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
@@ -207,13 +202,13 @@ public abstract class SparkPipelineRunner {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache, cacheStorageLevel);
+                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache);
 
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache, cacheStorageLevel);
+                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache);
 
       } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -235,7 +230,7 @@ public abstract class SparkPipelineRunner {
           SparkCollection<RecordInfo<Object>> combinedData =
             inputErrors.flatMap(stageSpec, Compat.convert(new ErrorTransformFunction<>(pluginFunctionContext)));
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput, autoCache, cacheStorageLevel);
+                                      combinedData, hasErrorOutput, hasAlertOutput, autoCache);
         }
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
@@ -253,7 +248,7 @@ public abstract class SparkPipelineRunner {
         Integer partitions = stagePartitions.get(stageName);
         SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache, cacheStorageLevel);
+                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache);
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -319,8 +314,7 @@ public abstract class SparkPipelineRunner {
         }
 
         if (autoCache) {
-            emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector)
-                .persist(cacheStorageLevel));
+            emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector).cache());
         } else {
             emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector));
         }
@@ -409,13 +403,12 @@ public abstract class SparkPipelineRunner {
 
   private EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
                                             StageSpec stageSpec, SparkCollection<RecordInfo<Object>> stageData,
-                                            boolean hasErrors, boolean hasAlerts, boolean autoCache, 
-                                            StorageLevel cacheStorageLevel) {
+                                            boolean hasErrors, boolean hasAlerts, boolean autoCache) {
 
     if (autoCache) {
         if (hasErrors || hasAlerts || stageSpec.getOutputPorts().size() > 1) {
             // need to cache, otherwise the stage can be computed once per type of emitted record
-            stageData = stageData.persist(cacheStorageLevel);
+            stageData = stageData.cache();
         }
     }
 
@@ -428,14 +421,14 @@ public abstract class SparkPipelineRunner {
       SparkCollection<ErrorRecord<Object>> errors =
         stageData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
       if (shouldCache) {
-        errors = errors.persist(cacheStorageLevel);
+        errors = errors.cache();
       }
       builder.setErrors(errors);
     }
     if (hasAlerts) {
       SparkCollection<Alert> alerts = stageData.flatMap(stageSpec, Compat.convert(new AlertPassFilter()));
       if (shouldCache) {
-        alerts = alerts.persist(cacheStorageLevel);
+        alerts = alerts.cache();
       }
       builder.setAlerts(alerts);
     }
@@ -446,14 +439,14 @@ public abstract class SparkPipelineRunner {
         String port = portSpec.getPort();
         SparkCollection<Object> portData = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>(port)));
         if (shouldCache) {
-          portData = portData.persist(cacheStorageLevel);
+          portData = portData.cache();
         }
         builder.addPort(port, portData);
       }
     } else {
       SparkCollection<Object> outputs = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
       if (shouldCache) {
-        outputs = outputs.persist(cacheStorageLevel);
+        outputs = outputs.cache();
       }
       builder.setOutput(outputs);
     }

@@ -16,6 +16,8 @@
 import React from 'react';
 import NameValueList from '../NameValueList';
 import cloneDeep from 'lodash/cloneDeep';
+import isNil from 'lodash/isNil';
+import findIndex from 'lodash/findIndex';
 import PropTypes from 'prop-types';
 
 require('./Configurator.scss');
@@ -36,9 +38,15 @@ class Configurator extends React.Component {
     this.props.updateConfigurationList(this.configPropList);
   }
 
-  updateConfiguration(index, nameValue) {
-    this.configPropList[index] = nameValue;
-    this.props.updateConfigurationList(this.configPropList);
+  updateConfiguration(nameValue) {
+    if(!isNil(nameValue)) {
+      const index = findIndex(this.configPropList, {name : nameValue.name});
+      if(index >= 0) {
+        this.configPropList[index] = nameValue;
+        this.props.updateConfigurationList(this.configPropList);
+      }
+    }
+
   }
 
   render() {

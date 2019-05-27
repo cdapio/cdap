@@ -27,7 +27,8 @@ import MyDataPrepApi from 'api/dataprep';
 import MyFeatureEngineeringApi from 'api/featureengineeringapp';
 import NamespaceStore from 'services/NamespaceStore';
 import { directiveRequestBodyCreator, viewSchemaPersistRequestBodyCreator } from 'components/DataPrep/helper';
-
+import isNil from 'lodash/isNil';
+import cookie from 'react-cookie';
 const PREFIX = 'features.DataPrep.TopPanel';
 const mapErrorToMessage = (message) => {
   if (message.indexOf('invalid field name') !== -1) {
@@ -42,14 +43,14 @@ const mapErrorToMessage = (message) => {
 };
 
 
-export default class PersistViewSchemaModel extends Component {
+export default class PersistViewSchemaModal extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
       configloading: true,
       schemaloading: true,
-      loading: true,
+      loading: false,
       error: null,
       workspaceId: null,
       realtimeConfig: null,
@@ -68,9 +69,6 @@ export default class PersistViewSchemaModel extends Component {
   }
 
   persistViewSchema() {
-    // if (!this.state.loading) {
-    //   return;
-    // }
     this.setState({
       error: false,
       loading: true,
@@ -90,22 +88,26 @@ export default class PersistViewSchemaModel extends Component {
       configType: configType
     };
     let requestBody = viewSchemaPersistRequestBodyCreator(JSON.stringify([getSchemaObjFromFieldsArray(this.state.schema)], null, 4), JSON.stringify(config));
+    let requestHeaders = {};
+    if (!isNil(cookie.load('CDAP_Auth_Token'))) {
+      requestHeaders["AccessToken"] = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+    }
+
     MyFeatureEngineeringApi
-      .persistWranglerPluginConfig(requestObj, requestBody)
+      .persistWranglerPluginConfig(requestObj, requestBody, requestHeaders)
       .subscribe(
         (res) => {
           this.setState({
             navigateFE: true,
             loading: false,
-            response: objectQuery(res, 'response', 'message') || JSON.stringify(res)
+            response: objectQuery(res, 'message') || JSON.stringify(res)
           });
         },
         (err) => {
           this.setState({
             loading: false,
-            error: objectQuery(err, 'response', 'message') || JSON.stringify(err)
+            error: objectQuery(err, 'message') || JSON.stringify(err)
           });
-          console.log('Error', err);
         }
       );
   }
@@ -150,7 +152,7 @@ export default class PersistViewSchemaModel extends Component {
 
 
   handleSubmit = () => {
-    this.setState({ formloaded: true });
+    this.setState({ formloaded: true,error: false,loading: true, });
     this.persistViewSchema();
   }
 
@@ -177,7 +179,7 @@ export default class PersistViewSchemaModel extends Component {
       }, (err) => {
         this.setState({
           schemaloading: false,
-          error: objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.SchemaModal.defaultErrorMessage')
+          error: objectQuery(err, 'message') || T.translate('features.DataPrep.TopPanel.SchemaModal.defaultErrorMessage')
         });
       });
   }
@@ -189,16 +191,9 @@ export default class PersistViewSchemaModel extends Component {
     window.location.href = fePath;
   }
 
-
   render() {
     let content;
-    let inputStyle = {
-      'width': '300px',
-      'margin-left': '10px'
-    };
-    let modalStyle = {
-      'width': '500px'
-    };
+
     if (!this.state.configloading && !this.state.schemaloading && !this.state.formloaded) {
       content = null;
     } else {
@@ -229,7 +224,7 @@ export default class PersistViewSchemaModel extends Component {
         );
       } else {
         content = (
-          <div className="remedy-message">
+          <div className="success-message" title={this.state.response}>
             {this.state.response}
           </div>
         );
@@ -237,40 +232,42 @@ export default class PersistViewSchemaModel extends Component {
     }
 
     return (
-      <Modal style={modalStyle}
+      <Modal
         isOpen={true}
         toggle={this.props.toggle}
         size="lg"
         zIndex="1061"
-        className="dataprep-schema-modal"
+        className="persist-view-schema-modal"
       >
         <ModalHeader>Persist Dataset</ModalHeader>
         <ModalBody>
-            <div className="text-xs-left">
-              <label>
-                Dataset Name:
-                  <input type="text" style={inputStyle} value={this.state.datasetName} onChange={this.handleChange} />
-              </label>
-            </div>
-
-          {content}
+          <div className="text-xs-left">
+            <label>
+              Dataset Name:
+                <input type="text" className='input-style' value={this.state.datasetName} onChange={this.handleChange} />
+            </label>
+          </div>
         </ModalBody>
         <ModalFooter>
-          {
-            this.state.navigateFE ?
-            <Button className="btn-margin" color="primary" onClick={this.navigateToFeature}>Continue in FeatureEngineering</Button>
-            :null
-          }
+          {content}
+          <fieldset className='buttons-container' disabled={this.state.loading}>
+            {
+              this.state.navigateFE ?
+              <Button className="btn-margin" color="primary" onClick={this.navigateToFeature}>Continue in FeatureEngineering</Button>
+              :null
+            }
 
-          <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Cancel</Button>
-          <Button className="btn-margin" color="primary" onClick={this.handleSubmit}
-            disabled={this.state.datasetName.trim().length < 1} >OK</Button>
+            <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Cancel</Button>
+            <Button className="btn-margin" color="primary" onClick={this.handleSubmit}
+              disabled={this.state.datasetName.trim().length < 1} >OK</Button>
+          </fieldset>
+
         </ModalFooter>
       </Modal>
     );
   }
 }
 
-PersistViewSchemaModel.propTypes = {
+PersistViewSchemaModal.propTypes = {
   toggle: PropTypes.func
 };
