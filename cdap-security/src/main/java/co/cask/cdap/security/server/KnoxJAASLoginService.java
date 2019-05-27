@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -41,6 +42,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
@@ -50,8 +52,8 @@ import javax.security.auth.login.LoginException;
  *
  * Creates a UserRealm suitable for use with JAAS
  */
-public class JAASLoginService extends AbstractLifeCycle implements LoginService {
-  private static final Logger LOG = Log.getLogger(JAASLoginService.class);
+public class KnoxJAASLoginService extends AbstractLifeCycle implements LoginService {
+  private static final Logger LOG = Log.getLogger(KnoxJAASLoginService.class);
 
   public static String defaultRoleClassName = "org.eclipse.jetty.plus.jaas.JAASRole";
   public static String[] defaultRoleClassNames = {defaultRoleClassName};
@@ -69,7 +71,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
    * Constructor.
    *
    */
-  public JAASLoginService() {
+  public KnoxJAASLoginService() {
   }
 
 
@@ -79,7 +81,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
    *
    * @param name the name of the realm
    */
-  public JAASLoginService(String name) {
+  public KnoxJAASLoginService(String name) {
     this();
     realmName = name;
     loginModuleName = name;
@@ -180,9 +182,6 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   /* ------------------------------------------------------------ */
   @Override
   public UserIdentity login(final String username, final Object credentials) {
-    LOG.info("here also i am present");
-    LOG.info("username : " + username);
-    LOG.info("credentials : " + credentials);
     try {
       CallbackHandler callbackHandler = null;
 
@@ -220,23 +219,15 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
       //TODO jaspi requires we provide the Configuration parameter
       Subject subject = new Subject();
 
-      LoginContext loginContext = new LoginContext(loginModuleName, subject, callbackHandler, configuration);
-
-      loginContext.login();
+      //LoginContext loginContext = new LoginContext(loginModuleName, subject, callbackHandler, configuration);
+      
+      //loginContext.login();
 
       //login success
-      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(getUserName(callbackHandler), subject, loginContext);
+      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(username, subject, null);
       subject.getPrincipals().add(userPrincipal);
 
-      return identityService.newUserIdentity(subject, userPrincipal, getGroups(subject));
-    } catch (LoginException e) {
-      LOG.debug(e);
-    } catch (IOException e) {
-      LOG.info(e.getMessage());
-      LOG.debug(e);
-    } catch (UnsupportedCallbackException e) {
-      LOG.info(e.getMessage());
-      LOG.debug(e);
+      return identityService.newUserIdentity(subject, userPrincipal, null);
     } catch (InstantiationException e) {
       LOG.info(e.getMessage());
       LOG.debug(e);

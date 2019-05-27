@@ -34,12 +34,14 @@ public abstract class JAASAuthenticationHandler extends AbstractAuthenticationHa
 
   @Override
   protected Authenticator getHandlerAuthenticator() {
-    return new BasicAuthenticator();
+    return new KnoxBasicAuthenticator();
+    //return new BasicAuthenticator();
   }
 
   @Override
   protected LoginService getHandlerLoginService() {
-    JAASLoginService jaasLoginService = new JAASLoginService();
+    KnoxJAASLoginService jaasLoginService = new KnoxJAASLoginService();
+    //JAASLoginService jaasLoginService = new JAASLoginService();
     jaasLoginService.setLoginModuleName("jaasLoginService");
     jaasLoginService.setConfiguration(getLoginModuleConfiguration());
     return jaasLoginService;
