@@ -27,13 +27,13 @@ import java.io.IOException;
 public class ArtifactApp {
 
   public static void main(String[] args) throws IOException {
-    String schemaDefinitionFile = "artifactSchema.graphqls";
-    ArtifactDataFetchers artifactDataFetchers = new ArtifactDataFetchers();
-    GraphQLProvider artifactGraphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, artifactDataFetchers);
-    GraphQL graphQL = artifactGraphQLProvider.buildGraphQL();
-
-    ExecutionResult executionResult = graphQL.execute("{artifact(id: \"1\") {id name }}");
-    System.out.println(executionResult.getData().toString());
+    // String schemaDefinitionFile = "artifactSchema.graphqls";
+    // ArtifactDataFetchers artifactDataFetchers = new ArtifactDataFetchers();
+    // GraphQLProvider artifactGraphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, artifactDataFetchers);
+    // GraphQL graphQL = artifactGraphQLProvider.buildGraphQL();
+    //
+    // ExecutionResult executionResult = graphQL.execute("{artifact(id: \"1\") {id name }}");
+    // System.out.println(executionResult.getData().toString());
   }
 
 }

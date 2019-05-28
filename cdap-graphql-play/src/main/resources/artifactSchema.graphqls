@@ -15,7 +15,7 @@
 # the License.
 #
 type Query {
-  artifact(id: ID): Artifact
+  artifact(namespace: String!, name: String!, version: String!): Artifact
 }
 
 type Artifact {

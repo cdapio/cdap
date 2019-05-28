@@ -25,11 +25,11 @@ import io.cdap.cdap.artifact.schema.ArtifactTypes;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.schema.Types;
 
-class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
+public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
 
   private final ArtifactDataFetchers artifactDataFetchers;
 
-  ArtifactGraphQLProvider(String schemaDefinitionFile, ArtifactDataFetchers artifactDataFetchers) {
+  public ArtifactGraphQLProvider(String schemaDefinitionFile, ArtifactDataFetchers artifactDataFetchers) {
     super(schemaDefinitionFile);
 
     this.artifactDataFetchers = artifactDataFetchers;

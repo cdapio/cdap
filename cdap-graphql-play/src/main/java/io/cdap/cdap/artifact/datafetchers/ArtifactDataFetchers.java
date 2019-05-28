@@ -19,14 +19,27 @@ package io.cdap.cdap.artifact.datafetchers;
 
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+
+import javax.inject.Inject;
 
 public class ArtifactDataFetchers {
 
+  private final ArtifactRepository artifactRepository;
+
+  @Inject
+  ArtifactDataFetchers(ArtifactRepository artifactRepository) {
+    this.artifactRepository = artifactRepository;
+  }
+
   public DataFetcher getArtifactDataFetcher() {
     return dataFetchingEnvironment -> {
-      // String artifactId = dataFetchingEnvironment.getArgument(Fields.ID);
+      String namespace = dataFetchingEnvironment.getArgument("namespace");
+      String name = dataFetchingEnvironment.getArgument("name");
+      String version = dataFetchingEnvironment.getArgument("version");
+      Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespace), name, version);
 
-      return Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
+      return this.artifactRepository.getArtifact(artifactId).getDescriptor().getArtifactId();
     };
   }
 
