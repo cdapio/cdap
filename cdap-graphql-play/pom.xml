@@ -61,6 +61,11 @@
       <version>2.1.0.RELEASE</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -47,24 +47,28 @@ class StarWarsGraphQLProvider extends AbstractGraphQLProvider {
       .build();
   }
 
-  private TypeRuntimeWiring.Builder getQueryTypeRuntimeWiring() {
+  private TypeRuntimeWiring getQueryTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
       .dataFetcher(StarWarsFields.HERO, starWarsDataFetchers.getHeroDataFetcher())
       .dataFetcher(StarWarsFields.HUMAN, starWarsDataFetchers.getHumanDataFetcher())
-      .dataFetcher(StarWarsFields.DROID, starWarsDataFetchers.getDroidDataFetcher());
+      .dataFetcher(StarWarsFields.DROID, starWarsDataFetchers.getDroidDataFetcher())
+      .build();
   }
 
-  private TypeRuntimeWiring.Builder getCharacterTypeRuntimeWiring() {
+  private TypeRuntimeWiring getCharacterTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(StarWarsInterfaces.CHARACTER)
-      .typeResolver(StarWarsTypeResolver.getCharacterTypeResolver());
+      .typeResolver(StarWarsTypeResolver.getCharacterTypeResolver())
+      .build();
   }
 
-  private TypeRuntimeWiring.Builder getHumanTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(StarWarsTypes.HUMAN);
+  private TypeRuntimeWiring getHumanTypeRuntimeWiring() {
+    return TypeRuntimeWiring.newTypeWiring(StarWarsTypes.HUMAN)
+      .build();
   }
 
-  private TypeRuntimeWiring.Builder getDroidTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(StarWarsTypes.DROID);
+  private TypeRuntimeWiring getDroidTypeRuntimeWiring() {
+    return TypeRuntimeWiring.newTypeWiring(StarWarsTypes.DROID)
+      .build();
   }
 
 }

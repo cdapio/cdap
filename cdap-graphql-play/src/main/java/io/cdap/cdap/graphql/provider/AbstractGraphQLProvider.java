@@ -33,7 +33,6 @@ public abstract class AbstractGraphQLProvider implements GraphQLProvider {
 
   private final String schemaDefinitionFile;
 
-  // TODO do we want to throw the exception or pass a more informative message?
   protected AbstractGraphQLProvider(String schemaDefinitionFile) {
     this.schemaDefinitionFile = schemaDefinitionFile;
   }
