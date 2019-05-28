@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,28 +20,36 @@ import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 
+import javax.security.auth.login.Configuration;
 /**
- * An abstract authentication handler that supports the JAAS interface for external authentication.
+ * Handler for knox authentication of users.
  */
-public abstract class JAASAuthenticationHandler extends AbstractAuthenticationHandler {
+public class KnoxAuthenticationHandler extends AbstractAuthenticationHandler {
+  private IdentityService identityService;
 
   @Override
-  public IdentityService getHandlerIdentityService() {
-    return new DefaultIdentityService();
+  protected LoginService getHandlerLoginService() {
+    KnoxJAASLoginService knoxLoginService = new KnoxJAASLoginService();
+    knoxLoginService.setConfiguration(getLoginModuleConfiguration());
+    return knoxLoginService;
   }
 
   @Override
   protected Authenticator getHandlerAuthenticator() {
-    return new BasicAuthenticator();
+    return new KnoxBasicAuthenticator(handlerProps);
   }
 
   @Override
-  protected LoginService getHandlerLoginService() {
-    JAASLoginService jaasLoginService = new JAASLoginService();
-    jaasLoginService.setLoginModuleName("jaasLoginService");
-    jaasLoginService.setConfiguration(getLoginModuleConfiguration());
-    return jaasLoginService;
+  protected IdentityService getHandlerIdentityService() {
+    if (identityService == null) {
+      identityService = new DefaultIdentityService();
+    }
+    return identityService;
+  }
+
+  @Override
+  protected Configuration getLoginModuleConfiguration() {
+    return null;
   }
 }

@@ -3240,6 +3240,22 @@
   </property>
 
   <property>
+    <name>knox.host.value</name>
+    <value>0.0.0.0</value>
+    <description>
+      Knox host value
+    </description>
+  </property>
+
+  <property>
+    <name>knox.post.value</name>
+    <value>8443</value>
+    <description>
+      Knox port value
+    </description>
+  </property> 
+
+  <property>
     <name>kerberos.auth.enabled</name>
     <value>${security.enabled}</value>
     <description>
