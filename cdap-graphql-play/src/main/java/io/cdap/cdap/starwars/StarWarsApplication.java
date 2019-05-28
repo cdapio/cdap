@@ -17,8 +17,10 @@
 
 package io.cdap.cdap.starwars;
 
+import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
+import io.cdap.cdap.starwars.datafetchers.StarWarsDataFetchers;
 
 import java.io.IOException;
 
@@ -28,9 +30,13 @@ import java.io.IOException;
 public class StarWarsApplication {
 
   public static void main(String[] args) throws IOException {
-    String schemaDefintionFile = "starWarsSchema.graphqls";
-    GraphQLProvider starWarsGraphQLProvider = new StarWarsGraphQLProvider(schemaDefintionFile);
+    String schemaDefinitionFile = "starWarsSchema.graphqls";
+    StarWarsDataFetchers starWarsDataFetchers = new StarWarsDataFetchers();
+    GraphQLProvider starWarsGraphQLProvider = new StarWarsGraphQLProvider(schemaDefinitionFile, starWarsDataFetchers);
     GraphQL graphQL = starWarsGraphQLProvider.buildGraphQL();
+
+    ExecutionResult executionResult = graphQL.execute("{human(id: \"1001\") {name }}");
+    System.out.println(executionResult.getData().toString());
   }
 
 }

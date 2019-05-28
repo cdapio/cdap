@@ -15,15 +15,17 @@
  * the License.
  */
 
-package io.cdap.cdap.standalone.schema;
+package io.cdap.cdap.starwars.schema;
 
 import io.cdap.cdap.graphql.schema.Types;
 
-public class BooksTypes implements Types {
+public class StarWarsTypes implements Types {
 
-  public static final String BOOK = "Book";
+  public static final String HUMAN = "Human";
+  public static final String DROID = "Droid";
 
-  private BooksTypes() {
+  private StarWarsTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
+
 }

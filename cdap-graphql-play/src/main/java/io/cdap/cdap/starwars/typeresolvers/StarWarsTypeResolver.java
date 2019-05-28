@@ -15,15 +15,22 @@
  * the License.
  */
 
-package io.cdap.cdap.standalone.schema;
+package io.cdap.cdap.starwars.typeresolvers;
 
-import io.cdap.cdap.graphql.schema.Types;
+import graphql.TypeResolutionEnvironment;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.TypeResolver;
 
-public class BooksTypes implements Types {
+// TODO make class implement interface?
+public class StarWarsTypeResolver {
 
-  public static final String BOOK = "Book";
-
-  private BooksTypes() {
-    throw new UnsupportedOperationException("Helper class should not be instantiated");
+  // TODO change to instance metod?
+  public static TypeResolver getCharacterTypeResolver() {
+    return new TypeResolver() {
+      @Override
+      public GraphQLObjectType getType(TypeResolutionEnvironment typeResolutionEnvironment) {
+        throw new UnsupportedOperationException("Implement");
+      }
+    };
   }
 }

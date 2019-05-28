@@ -20,14 +20,21 @@ package io.cdap.cdap.starwars;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
-
-import java.io.IOException;
-
+import io.cdap.cdap.graphql.schema.Types;
+import io.cdap.cdap.starwars.datafetchers.StarWarsDataFetchers;
+import io.cdap.cdap.starwars.schema.StarWarsFields;
+import io.cdap.cdap.starwars.schema.StarWarsInterfaces;
+import io.cdap.cdap.starwars.schema.StarWarsTypes;
+import io.cdap.cdap.starwars.typeresolvers.StarWarsTypeResolver;
 
 class StarWarsGraphQLProvider extends AbstractGraphQLProvider {
 
-  StarWarsGraphQLProvider(String schemaDefintionFile) throws IOException {
-    super(schemaDefintionFile);
+  private final StarWarsDataFetchers starWarsDataFetchers;
+
+  StarWarsGraphQLProvider(String schemaDefinitionFile, StarWarsDataFetchers starWarsDataFetchers) {
+    super(schemaDefinitionFile);
+
+    this.starWarsDataFetchers = starWarsDataFetchers;
   }
 
   @Override
@@ -41,23 +48,23 @@ class StarWarsGraphQLProvider extends AbstractGraphQLProvider {
   }
 
   private TypeRuntimeWiring.Builder getQueryTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Query")
-      .dataFetcher("hero", StarWarsDataFetcher.getHeroDataFetcher())
-      .dataFetcher("human", StarWarsDataFetcher.getHumanDataFetcher())
-      .dataFetcher("droid", StarWarsDataFetcher.getDroidDataFetcher());
+    return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
+      .dataFetcher(StarWarsFields.HERO, starWarsDataFetchers.getHeroDataFetcher())
+      .dataFetcher(StarWarsFields.HUMAN, starWarsDataFetchers.getHumanDataFetcher())
+      .dataFetcher(StarWarsFields.DROID, starWarsDataFetchers.getDroidDataFetcher());
   }
 
   private TypeRuntimeWiring.Builder getCharacterTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Character")
+    return TypeRuntimeWiring.newTypeWiring(StarWarsInterfaces.CHARACTER)
       .typeResolver(StarWarsTypeResolver.getCharacterTypeResolver());
   }
 
   private TypeRuntimeWiring.Builder getHumanTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Human");
+    return TypeRuntimeWiring.newTypeWiring(StarWarsTypes.HUMAN);
   }
 
   private TypeRuntimeWiring.Builder getDroidTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring("Droid");
+    return TypeRuntimeWiring.newTypeWiring(StarWarsTypes.DROID);
   }
 
 }

@@ -15,37 +15,31 @@
  * the License.
  */
 
-package io.cdap.cdap.starwars;
+package io.cdap.cdap.starwars.datafetchers;
 
 import graphql.schema.DataFetcher;
+import io.cdap.cdap.graphql.datafetchers.DataFetchers;
+import io.cdap.cdap.graphql.schema.Fields;
+import io.cdap.cdap.starwars.data.Data;
 
-class StarWarsDataFetcher {
+public class StarWarsDataFetchers implements DataFetchers {
 
-  static DataFetcher getHeroDataFetcher() {
+  public DataFetcher getHeroDataFetcher() {
     return dataFetchingEnvironment -> {
-      String bookId = dataFetchingEnvironment.getArgument("id");
-
       throw new UnsupportedOperationException("Implement");
     };
   }
 
-  static DataFetcher getHumanDataFetcher() {
+  public DataFetcher getHumanDataFetcher() {
     return dataFetchingEnvironment -> {
-      String bookId = dataFetchingEnvironment.getArgument("id");
+      String humanId = dataFetchingEnvironment.getArgument(Fields.ID);
 
-      throw new UnsupportedOperationException("Implement");
-      // return BOOKS
-      //   .stream()
-      //   .filter(book -> book.get("id").equals(bookId))
-      //   .findFirst()
-      //   .orElse(null);
+      return Data.HUMANS.get(humanId);
     };
   }
 
-  static DataFetcher getDroidDataFetcher() {
+  public DataFetcher getDroidDataFetcher() {
     return dataFetchingEnvironment -> {
-      String bookId = dataFetchingEnvironment.getArgument("id");
-
       throw new UnsupportedOperationException("Implement");
     };
   }

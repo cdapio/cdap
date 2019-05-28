@@ -15,20 +15,16 @@
  * the License.
  */
 
-package io.cdap.cdap.starwars;
+package io.cdap.cdap.starwars.schema;
 
-import graphql.TypeResolutionEnvironment;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.TypeResolver;
+import io.cdap.cdap.graphql.schema.Interfaces;
 
-class StarWarsTypeResolver {
+public class StarWarsInterfaces implements Interfaces {
 
-  static TypeResolver getCharacterTypeResolver() {
-    return new TypeResolver() {
-      @Override
-      public GraphQLObjectType getType(TypeResolutionEnvironment typeResolutionEnvironment) {
-        throw new UnsupportedOperationException("Implement");
-      }
-    };
+  public static final String CHARACTER = "Character";
+
+  private StarWarsInterfaces() {
+    throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
+
 }

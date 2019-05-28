@@ -17,7 +17,9 @@
 
 package io.cdap.cdap.standalone.schema;
 
-public abstract class BooksFields {
+import io.cdap.cdap.graphql.schema.Fields;
+
+public class BooksFields implements Fields {
 
   public static final String AUTHOR = "author";
   public static final String BOOK_BY_ID = "bookById";

@@ -17,12 +17,8 @@
 
 package io.cdap.cdap.graphql.schema;
 
-public abstract class Fields {
+public interface Fields {
 
-  public final static String ID = "id";
-
-  private Fields() {
-    throw new UnsupportedOperationException("Helper class should not be instantiated");
-  }
+  String ID = "id";
 
 }

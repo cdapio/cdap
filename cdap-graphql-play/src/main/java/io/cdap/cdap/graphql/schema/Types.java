@@ -17,12 +17,8 @@
 
 package io.cdap.cdap.graphql.schema;
 
-public abstract class Types {
+public interface Types {
 
-  public final static String QUERY = "Query";
-
-  private Types() {
-    throw new UnsupportedOperationException("Helper class should not be instantiated");
-  }
+  String QUERY = "Query";
 
 }
