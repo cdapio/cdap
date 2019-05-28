@@ -188,9 +188,9 @@ public class GrantAccessToken {
             		throw new UnauthorizedException("Authorization header missing/invalid");
         	}
 
-        	/*boolean validToken = verifyToken(token);
+        	boolean validToken = verifyToken(token);
         	if(!validToken)
-            		throw new UnauthorizedException("Not authorized");*/
+            		throw new UnauthorizedException("Not authorized");
         	
         	Date expires = token.getExpiresDate();
         	LOG.debug("token expiry date: " + expires.toString());
