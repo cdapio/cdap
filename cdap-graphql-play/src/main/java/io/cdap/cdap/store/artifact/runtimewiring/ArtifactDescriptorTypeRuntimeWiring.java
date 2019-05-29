@@ -20,23 +20,23 @@ package io.cdap.cdap.store.artifact.runtimewiring;
 import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
-import io.cdap.cdap.store.artifact.datafetchers.ArtifactDescriptorDataFetcher;
+import io.cdap.cdap.store.artifact.datafetchers.LocationDataFetcher;
 import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.store.artifact.schema.ArtifactTypes;
 
-public class ArtifactDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class ArtifactDescriptorTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private final ArtifactDescriptorDataFetcher artifactDescriptorDataFetcher;
+  private final LocationDataFetcher locationDataFetcher;
 
   @Inject
-  ArtifactDetailTypeRuntimeWiring(ArtifactDescriptorDataFetcher artifactDescriptorDataFetcher) {
-    this.artifactDescriptorDataFetcher = artifactDescriptorDataFetcher;
+  ArtifactDescriptorTypeRuntimeWiring(LocationDataFetcher locationDataFetcher) {
+    this.locationDataFetcher = locationDataFetcher;
   }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DETAIL)
-      .dataFetcher(ArtifactFields.DESCRIPTOR, artifactDescriptorDataFetcher.getArtifactDescriptorDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DESCRIPTOR)
+      .dataFetcher(ArtifactFields.LOCATION, locationDataFetcher.getLocationDataFetcher())
       .build();
   }
 

@@ -20,25 +20,27 @@ package io.cdap.cdap.store.artifact.runtimewiring;
 import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.schema.Types;
-import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetchers;
+import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
+import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetcher;
 import io.cdap.cdap.store.artifact.datafetchers.ArtifactDetailDataFetcher;
 import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 
-public class QueryTypeRuntimeWiring {
+public class QueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private final ArtifactDataFetchers artifactDataFetchers;
+  private final ArtifactDataFetcher artifactDataFetcher;
   private final ArtifactDetailDataFetcher artifactDetailDataFetcher;
 
   @Inject
-  QueryTypeRuntimeWiring(ArtifactDataFetchers artifactDataFetchers,
+  QueryTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher,
                          ArtifactDetailDataFetcher artifactDetailDataFetcher) {
-    this.artifactDataFetchers = artifactDataFetchers;
+    this.artifactDataFetcher = artifactDataFetcher;
     this.artifactDetailDataFetcher = artifactDetailDataFetcher;
   }
 
-  public TypeRuntimeWiring getQueryTypeRuntimeWiring() {
+  @Override
+  public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
-      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetchers.getArtifactsDataFetcher())
+      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsDataFetcher())
       .dataFetcher(ArtifactFields.ARTIFACT_DETAIL, artifactDetailDataFetcher.getArtifactDetailDataFetcher())
       .build();
   }

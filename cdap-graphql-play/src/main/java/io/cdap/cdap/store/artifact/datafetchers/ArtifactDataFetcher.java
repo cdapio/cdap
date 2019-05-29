@@ -32,13 +32,13 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
-public class ArtifactDataFetchers {
+public class ArtifactDataFetcher {
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceQueryAdmin;
 
   @Inject
-  ArtifactDataFetchers(ArtifactRepository artifactRepository, NamespaceAdmin namespaceQueryAdmin) {
+  ArtifactDataFetcher(ArtifactRepository artifactRepository, NamespaceAdmin namespaceQueryAdmin) {
     this.artifactRepository = artifactRepository;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -57,10 +57,9 @@ public class ArtifactDataFetchers {
           return artifactRepository.getArtifactSummaries(namespaceId, false);
         }
       } catch (IOException ioe) {
-        // TODO make sure that the error is passed
-        // LOG.error("Exception reading artifact metadata for namespace {} from the store.", namespace, ioe);
-        throw new UnsupportedOperationException("Check how to pass errors");
+        throw new RuntimeException("Error reading artifact metadata from the store.");
       }
+
     };
   }
 

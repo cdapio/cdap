@@ -28,6 +28,7 @@ public class ArtifactFields implements Fields {
   public static final String DESCRIPTOR = "descriptor";
   public static final String NAME = "name";
   public static final String VERSION = "version";
+  public static final String LOCATION = "location";
 
   private ArtifactFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

@@ -15,17 +15,14 @@
  * the License.
  */
 
-package io.cdap.cdap.store.artifact.schema;
+package io.cdap.cdap.store.artifact.datafetchers;
 
-import io.cdap.cdap.graphql.schema.Types;
+import graphql.schema.DataFetcher;
 
-public class ArtifactTypes implements Types {
+public class LocationDataFetcher {
 
-  public static final String ARTIFACT_DETAIL = "ArtifactDetail";
-  public static final String ARTIFACT_DESCRIPTOR = "ArtifactDescriptor";
-
-  private ArtifactTypes() {
-    throw new UnsupportedOperationException("Helper class should not be instantiated");
+  public DataFetcher getLocationDataFetcher() {
+    return dataFetchingEnvironment -> "Quito";
   }
 
 }

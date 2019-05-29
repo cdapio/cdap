@@ -19,6 +19,7 @@ package io.cdap.cdap.store.artifact;
 
 import graphql.schema.idl.RuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
+import io.cdap.cdap.store.artifact.runtimewiring.ArtifactDescriptorTypeRuntimeWiring;
 import io.cdap.cdap.store.artifact.runtimewiring.ArtifactDetailTypeRuntimeWiring;
 import io.cdap.cdap.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 
@@ -26,20 +27,24 @@ public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
 
   private final QueryTypeRuntimeWiring queryTypeRuntimeWiring;
   private final ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring;
+  private final ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring;
 
   public ArtifactGraphQLProvider(String schemaDefinitionFile, QueryTypeRuntimeWiring queryTypeRuntimeWiring,
-                                 ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring) {
+                                 ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring,
+                                 ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring) {
     super(schemaDefinitionFile);
 
     this.queryTypeRuntimeWiring = queryTypeRuntimeWiring;
     this.artifactDetailTypeRuntimeWiring = artifactDetailTypeRuntimeWiring;
+    this.artifactDescriptorTypeRuntimeWiring = artifactDescriptorTypeRuntimeWiring;
   }
 
   @Override
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
-      .type(queryTypeRuntimeWiring.getQueryTypeRuntimeWiring())
-      .type(artifactDetailTypeRuntimeWiring.getArtifactDetailRuntimeWiring())
+      .type(queryTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(artifactDetailTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(artifactDescriptorTypeRuntimeWiring.getTypeRuntimeWiring())
       .build();
   }
 

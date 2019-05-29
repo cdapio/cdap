@@ -94,8 +94,11 @@ public class QueryTypeRuntimeWiringTest {
     QueryTypeRuntimeWiring queryTypeRuntimeWiring = injector.getInstance(QueryTypeRuntimeWiring.class);
     ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring = injector
       .getInstance(ArtifactDetailTypeRuntimeWiring.class);
+    ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring = injector
+      .getInstance(ArtifactDescriptorTypeRuntimeWiring.class);
     GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, queryTypeRuntimeWiring,
-                                                                  artifactDetailTypeRuntimeWiring);
+                                                                  artifactDetailTypeRuntimeWiring,
+                                                                  artifactDescriptorTypeRuntimeWiring);
     graphQL = graphQLProvider.buildGraphQL();
   }
 
@@ -142,7 +145,8 @@ public class QueryTypeRuntimeWiringTest {
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    Map<String, List<Map<String, String>>> artifactsData = executionResult.getData();
+    Map<String, List<Map<String, String>>> artifactsData = (Map<String, List<Map<String, String>>>) executionResult
+      .toSpecification().get("data");
     Assert.assertEquals(1, artifactsData.size());
 
     List<Map<String, String>> artifacts = artifactsData.get("artifacts");
@@ -171,7 +175,7 @@ public class QueryTypeRuntimeWiringTest {
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    Map<String, Map> artifactDetailData = executionResult.getData();
+    Map<String, Map> artifactDetailData = (Map<String, Map>) executionResult.toSpecification().get("data");
     Map<String, Map> artifactDetail = artifactDetailData.get("artifactDetail");
     Map<String, Object> descriptor = artifactDetail.get("descriptor");
     Assert.assertNotNull(descriptor.get("location"));
