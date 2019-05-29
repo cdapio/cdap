@@ -93,7 +93,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
         
-        
+        Log.info("handlerProps : " + handlerProps); 
         final String authorizationHeader = request.getHeader("Authorization");
         String wireToken = null;
         String username = null;
