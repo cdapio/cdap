@@ -16,6 +16,15 @@
 #
 type Query {
   artifacts(namespace: String = "default", scope: String): [ArtifactInfo]
+  artifactDetail(namespace: String!, name: String!, version: String!): ArtifactDetail
+}
+
+type ArtifactDetail {
+  descriptor: ArtifactDescriptor
+}
+
+type ArtifactDescriptor {
+  location: String
 }
 
 type ArtifactInfo {

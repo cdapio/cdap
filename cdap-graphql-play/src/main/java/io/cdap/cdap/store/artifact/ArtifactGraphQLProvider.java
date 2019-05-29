@@ -19,10 +19,11 @@ package io.cdap.cdap.store.artifact;
 
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetchers;
-import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.schema.Types;
+import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetchers;
+import io.cdap.cdap.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.store.artifact.schema.ArtifactTypes;
 
 public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
 
@@ -38,12 +39,20 @@ public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(getQueryTypeRuntimeWiring())
+      .type(getArtifactDetailRuntimeWiring())
       .build();
   }
 
   private TypeRuntimeWiring getQueryTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
       .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetchers.getArtifactsDataFetcher())
+      .dataFetcher(ArtifactFields.ARTIFACT_DETAIL, artifactDataFetchers.getArtifactDetailDataFetcher())
+      .build();
+  }
+
+  private TypeRuntimeWiring getArtifactDetailRuntimeWiring() {
+    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DETAIL)
+      .dataFetcher(ArtifactFields.DESCRIPTOR, artifactDataFetchers.getArtifactDescriptorDataFetcher())
       .build();
   }
 }

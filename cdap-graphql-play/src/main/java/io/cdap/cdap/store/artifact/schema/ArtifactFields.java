@@ -24,4 +24,14 @@ public class ArtifactFields implements Fields {
   public static final String ARTIFACTS = "artifacts";
   public static final String NAMESPACE = "namespace";
   public static final String SCOPE = "scope";
+  public static final String ARTIFACT_DETAIL = "artifactDetail";
+  public static final String DESCRIPTOR = "descriptor";
+  public static final String NAME = "name";
+  public static final String VERSION = "version";
+  public static final String LOCATION = "location";
+
+  private ArtifactFields() {
+    throw new UnsupportedOperationException("Helper class should not be instantiated");
+  }
+
 }

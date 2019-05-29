@@ -23,7 +23,6 @@ import com.google.inject.Injector;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.app.program.ManifestFields;
-import io.cdap.cdap.store.artifact.ArtifactGraphQLProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -38,9 +37,11 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.store.artifact.ArtifactGraphQLProvider;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -126,11 +127,49 @@ public class ArtifactDataFetchersTest {
   }
 
   @Test
-  public void getArtifactsDataFetcher() {
-    String query = "{artifacts {id name version scope}}";
+  public void testGetArtifactsDataFetcher() {
+    String query = "{"
+      + "  artifacts {"
+      + "    name"
+      + "    version"
+      + "    scope"
+      + "  }"
+      + "}";
     ExecutionResult executionResult = graphQL.execute(query);
-    Map<String, List<Map<String, String>>> data = executionResult.getData();
-    System.out.println(data);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, List<Map<String, String>>> artifactsData = executionResult.getData();
+    Assert.assertEquals(1, artifactsData.size());
+
+    List<Map<String, String>> artifacts = artifactsData.get("artifacts");
+    Assert.assertEquals(1, artifacts.size());
+
+    Map<String, String> artifact = artifacts.get(0);
+    Assert.assertNotNull(artifact.get("name"));
+    Assert.assertNotNull(artifact.get("version"));
+    Assert.assertNotNull(artifact.get("scope"));
+  }
+
+  @Test
+  public void testGetArtifactDetailDataFetcher() {
+    String query = "{"
+      + "artifactDetail(namespace: \"" + APP_ARTIFACT_ID.getNamespace().getId() + "\", name: \"" + APP_ARTIFACT_ID
+      .getName() + "\", version: \"" + APP_ARTIFACT_ID.getVersion() + "\") {"
+      + "    descriptor {"
+      + "      location"
+      + "    }"
+      + "  }"
+      + "}";
+    ExecutionResult executionResult = graphQL.execute(query);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> artifactDetailData = executionResult.getData();
+    Map<String, Map> artifactDetail = artifactDetailData.get("artifactDetail");
+    Map<String, String> descriptor = artifactDetail.get("descriptor");
+
+    Assert.assertNotNull(descriptor.get("location"));
   }
 
 }
