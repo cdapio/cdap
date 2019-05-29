@@ -60,22 +60,24 @@ angular.module(PKG.name + '.commons')
         }
       },
       'csv': {
-        element: '<my-dsv></my-dsv>',
+        element: '<csv-widget></csv-widget>',
         attributes: {
-          'ng-model': 'model',
-          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
-          'type': 'csv',
-          'config': 'myconfig'
-        }
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+        },
       },
       'dsv': {
-        element: '<my-dsv></my-dsv>',
+        element: '<csv-widget></csv-widget>',
         attributes: {
-          'ng-model': 'model',
-          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
-          'type': 'dsv',
-          'config': 'myconfig'
-        }
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+        },
       },
       'ds-multiplevalues': {
         element: '<my-ds-multiple-values></my-ds-multiple-values>',
