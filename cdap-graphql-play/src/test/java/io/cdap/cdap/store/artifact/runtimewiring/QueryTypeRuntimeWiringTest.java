@@ -161,6 +161,9 @@ public class QueryTypeRuntimeWiringTest {
       .getName() + "\", version: \"" + APP_ARTIFACT_ID.getVersion() + "\") {"
       + "    descriptor {"
       + "      location"
+      + "      artifactId {"
+      + "        name"
+      + "      }"
       + "    }"
       + "  }"
       + "}";
@@ -170,8 +173,11 @@ public class QueryTypeRuntimeWiringTest {
 
     Map<String, Map> artifactDetailData = executionResult.getData();
     Map<String, Map> artifactDetail = artifactDetailData.get("artifactDetail");
-    Map<String, String> descriptor = artifactDetail.get("descriptor");
-
+    Map<String, Object> descriptor = artifactDetail.get("descriptor");
     Assert.assertNotNull(descriptor.get("location"));
+
+    Map<String, String> artifactId = (Map<String, String>) descriptor.get("artifactId");
+    Assert.assertNotNull(artifactId.get("name"));
+
   }
 }

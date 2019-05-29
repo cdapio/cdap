@@ -27,7 +27,6 @@ public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
   private final QueryTypeRuntimeWiring queryTypeRuntimeWiring;
   private final ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring;
 
-
   public ArtifactGraphQLProvider(String schemaDefinitionFile, QueryTypeRuntimeWiring queryTypeRuntimeWiring,
                                  ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring) {
     super(schemaDefinitionFile);

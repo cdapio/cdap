@@ -17,19 +17,12 @@
 
 package io.cdap.cdap.store.artifact.datafetchers;
 
-import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 
 public class ArtifactDescriptorDataFetcher {
 
   public DataFetcher getArtifactDescriptorDataFetcher() {
-    return dataFetchingEnvironment -> {
-      ArtifactDescriptor artifactDescriptor = dataFetchingEnvironment.getSource();
-
-      return ImmutableMap.of(ArtifactFields.LOCATION, artifactDescriptor.getLocation().toURI().getPath());
-    };
+    return dataFetchingEnvironment -> dataFetchingEnvironment.getSource();
   }
 
 }

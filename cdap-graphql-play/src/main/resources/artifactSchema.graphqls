@@ -24,11 +24,12 @@ type ArtifactDetail {
 }
 
 type ArtifactDescriptor {
+  artifactId: ArtifactInfo
   location: String
 }
 
 type ArtifactInfo {
-  name: String!
-  version: String!
-  scope: String!
+  name: String
+  version: String
+  scope: String
 }
