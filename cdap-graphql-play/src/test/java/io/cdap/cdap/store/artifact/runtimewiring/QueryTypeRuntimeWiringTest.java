@@ -20,6 +20,7 @@ package io.cdap.cdap.store.artifact.runtimewiring;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
+import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.app.program.ManifestFields;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -141,7 +143,10 @@ public class QueryTypeRuntimeWiringTest {
       + "    scope"
       + "  }"
       + "}";
-    ExecutionResult executionResult = graphQL.execute(query);
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    CompletableFuture<ExecutionResult> promise = graphQL.executeAsync(executionInput);
+    ExecutionResult executionResult = promise.join();
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 

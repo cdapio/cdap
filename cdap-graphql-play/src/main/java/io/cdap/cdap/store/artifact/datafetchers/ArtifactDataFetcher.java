@@ -18,6 +18,7 @@
 package io.cdap.cdap.store.artifact.datafetchers;
 
 import com.google.common.base.Throwables;
+import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.common.BadRequestException;
@@ -44,23 +45,24 @@ public class ArtifactDataFetcher {
   }
 
   public DataFetcher getArtifactsDataFetcher() {
-    return dataFetchingEnvironment -> {
-      String scope = dataFetchingEnvironment.getArgument(ArtifactFields.SCOPE);
-      String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String scope = dataFetchingEnvironment.getArgument(ArtifactFields.SCOPE);
+        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
 
-      try {
-        if (scope == null) {
-          NamespaceId namespaceId = validateAndGetNamespace(namespace);
-          return artifactRepository.getArtifactSummaries(namespaceId, true);
-        } else {
-          NamespaceId namespaceId = validateAndGetScopedNamespace(Ids.namespace(namespace), scope);
-          return artifactRepository.getArtifactSummaries(namespaceId, false);
+        try {
+          if (scope == null) {
+            NamespaceId namespaceId = validateAndGetNamespace(namespace);
+            return artifactRepository.getArtifactSummaries(namespaceId, true);
+          } else {
+            NamespaceId namespaceId = validateAndGetScopedNamespace(Ids.namespace(namespace), scope);
+            return artifactRepository.getArtifactSummaries(namespaceId, false);
+          }
+        } catch (IOException ioe) {
+          throw new RuntimeException("Error reading artifact metadata from the store.");
         }
-      } catch (IOException ioe) {
-        throw new RuntimeException("Error reading artifact metadata from the store.");
       }
-
-    };
+    );
   }
 
   private NamespaceId validateAndGetNamespace(String namespaceId) throws NamespaceNotFoundException {

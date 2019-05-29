@@ -17,12 +17,16 @@
 
 package io.cdap.cdap.store.artifact.datafetchers;
 
+import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
 
 public class ArtifactDescriptorDataFetcher {
 
   public DataFetcher getArtifactDescriptorDataFetcher() {
-    return dataFetchingEnvironment -> dataFetchingEnvironment.getSource();
+    return AsyncDataFetcher.async(
+      DataFetchingEnvironment::getSource
+    );
   }
 
 }

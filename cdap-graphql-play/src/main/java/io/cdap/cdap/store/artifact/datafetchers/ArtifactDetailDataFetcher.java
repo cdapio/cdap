@@ -18,6 +18,7 @@
 package io.cdap.cdap.store.artifact.datafetchers;
 
 import com.google.inject.Inject;
+import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -34,15 +35,17 @@ public class ArtifactDetailDataFetcher {
   }
 
   public DataFetcher getArtifactDetailDataFetcher() {
-    return dataFetchingEnvironment -> {
-      String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
-      String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
-      String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
-      ArtifactDetail artifactDetail = artifactRepository
-        .getArtifact(Id.Artifact.from(Id.Namespace.from(namespace), name, version));
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
+        String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
+        ArtifactDetail artifactDetail = artifactRepository
+          .getArtifact(Id.Artifact.from(Id.Namespace.from(namespace), name, version));
 
-      return artifactDetail.getDescriptor();
-    };
+        return artifactDetail.getDescriptor();
+      }
+    );
   }
 
 }
