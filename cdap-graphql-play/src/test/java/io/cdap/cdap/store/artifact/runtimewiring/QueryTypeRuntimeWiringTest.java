@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.store.artifact.datafetchers;
+package io.cdap.cdap.store.artifact.runtimewiring;
 
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
@@ -55,7 +55,7 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-public class ArtifactDataFetchersTest {
+public class QueryTypeRuntimeWiringTest {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -91,8 +91,11 @@ public class ArtifactDataFetchersTest {
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
     String schemaDefinitionFile = "artifactSchema.graphqls";
-    ArtifactDataFetchers artifactDataFetchers = injector.getInstance(ArtifactDataFetchers.class);
-    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, artifactDataFetchers);
+    QueryTypeRuntimeWiring queryTypeRuntimeWiring = injector.getInstance(QueryTypeRuntimeWiring.class);
+    ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring = injector
+      .getInstance(ArtifactDetailTypeRuntimeWiring.class);
+    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, queryTypeRuntimeWiring,
+                                                                  artifactDetailTypeRuntimeWiring);
     graphQL = graphQLProvider.buildGraphQL();
   }
 
@@ -171,5 +174,4 @@ public class ArtifactDataFetchersTest {
 
     Assert.assertNotNull(descriptor.get("location"));
   }
-
 }

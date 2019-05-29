@@ -18,41 +18,30 @@
 package io.cdap.cdap.store.artifact;
 
 import graphql.schema.idl.RuntimeWiring;
-import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
-import io.cdap.cdap.graphql.schema.Types;
-import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetchers;
-import io.cdap.cdap.store.artifact.schema.ArtifactFields;
-import io.cdap.cdap.store.artifact.schema.ArtifactTypes;
+import io.cdap.cdap.store.artifact.runtimewiring.ArtifactDetailTypeRuntimeWiring;
+import io.cdap.cdap.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 
 public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
 
-  private final ArtifactDataFetchers artifactDataFetchers;
+  private final QueryTypeRuntimeWiring queryTypeRuntimeWiring;
+  private final ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring;
 
-  public ArtifactGraphQLProvider(String schemaDefinitionFile, ArtifactDataFetchers artifactDataFetchers) {
+
+  public ArtifactGraphQLProvider(String schemaDefinitionFile, QueryTypeRuntimeWiring queryTypeRuntimeWiring,
+                                 ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring) {
     super(schemaDefinitionFile);
 
-    this.artifactDataFetchers = artifactDataFetchers;
+    this.queryTypeRuntimeWiring = queryTypeRuntimeWiring;
+    this.artifactDetailTypeRuntimeWiring = artifactDetailTypeRuntimeWiring;
   }
 
   @Override
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
-      .type(getQueryTypeRuntimeWiring())
-      .type(getArtifactDetailRuntimeWiring())
+      .type(queryTypeRuntimeWiring.getQueryTypeRuntimeWiring())
+      .type(artifactDetailTypeRuntimeWiring.getArtifactDetailRuntimeWiring())
       .build();
   }
 
-  private TypeRuntimeWiring getQueryTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
-      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetchers.getArtifactsDataFetcher())
-      .dataFetcher(ArtifactFields.ARTIFACT_DETAIL, artifactDataFetchers.getArtifactDetailDataFetcher())
-      .build();
-  }
-
-  private TypeRuntimeWiring getArtifactDetailRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DETAIL)
-      .dataFetcher(ArtifactFields.DESCRIPTOR, artifactDataFetchers.getArtifactDescriptorDataFetcher())
-      .build();
-  }
 }

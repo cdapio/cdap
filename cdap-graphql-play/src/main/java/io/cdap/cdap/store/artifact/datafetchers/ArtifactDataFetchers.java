@@ -18,15 +18,11 @@
 package io.cdap.cdap.store.artifact.datafetchers;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -45,26 +41,6 @@ public class ArtifactDataFetchers {
   ArtifactDataFetchers(ArtifactRepository artifactRepository, NamespaceAdmin namespaceQueryAdmin) {
     this.artifactRepository = artifactRepository;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-  }
-
-  public DataFetcher getArtifactDetailDataFetcher() {
-    return dataFetchingEnvironment -> {
-      String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
-      String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
-      String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
-      ArtifactDetail artifactDetail = artifactRepository
-        .getArtifact(Id.Artifact.from(Id.Namespace.from(namespace), name, version));
-
-      return artifactDetail.getDescriptor();
-    };
-  }
-
-  public DataFetcher getArtifactDescriptorDataFetcher() {
-    return dataFetchingEnvironment -> {
-      ArtifactDescriptor artifactDescriptor = dataFetchingEnvironment.getSource();
-
-      return ImmutableMap.of(ArtifactFields.LOCATION, artifactDescriptor.getLocation().toURI().getPath());
-    };
   }
 
   public DataFetcher getArtifactsDataFetcher() {
