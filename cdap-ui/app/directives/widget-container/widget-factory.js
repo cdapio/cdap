@@ -59,22 +59,24 @@ angular.module(PKG.name + '.commons')
         }
       },
       'csv': {
-        element: '<my-dsv></my-dsv>',
+        element: '<csv-widget></csv-widget>',
         attributes: {
-          'ng-model': 'model',
-          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
-          'type': 'csv',
-          'config': 'myconfig'
-        }
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+        },
       },
       'dsv': {
-        element: '<my-dsv></my-dsv>',
+        element: '<csv-widget></csv-widget>',
         attributes: {
-          'ng-model': 'model',
-          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
-          'type': 'dsv',
-          'config': 'myconfig'
-        }
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+        },
       },
       'ds-multiplevalues': {
         element: '<my-ds-multiple-values></my-ds-multiple-values>',
@@ -140,17 +142,28 @@ angular.module(PKG.name + '.commons')
         }
       },
       'keyvalue': {
-        element: '<my-key-value></my-key-value>',
+        element: '<key-value-widget></key-value-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
+          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
         }
       },
       'keyvalue-encoded': {
-        element: '<my-key-value-encoded></my-key-value-encoded>',
+        element: '<key-value-widget></key-value-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
+          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'is-encoded': true,
         }
       },
       'keyvalue-dropdown': {
