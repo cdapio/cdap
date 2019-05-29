@@ -15,12 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.artifact;
-
-import graphql.ExecutionResult;
-import graphql.GraphQL;
-import io.cdap.cdap.artifact.datafetchers.ArtifactDataFetchers;
-import io.cdap.cdap.graphql.provider.GraphQLProvider;
+package io.cdap.cdap.store.artifact;
 
 import java.io.IOException;
 

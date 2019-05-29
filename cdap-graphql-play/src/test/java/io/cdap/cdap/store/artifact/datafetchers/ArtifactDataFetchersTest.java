@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.artifact.datafetchers;
+package io.cdap.cdap.store.artifact.datafetchers;
 
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
@@ -23,11 +23,12 @@ import com.google.inject.Injector;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.app.program.ManifestFields;
-import io.cdap.cdap.artifact.ArtifactGraphQLProvider;
+import io.cdap.cdap.store.artifact.ArtifactGraphQLProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
@@ -35,10 +36,10 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,6 +49,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -58,7 +61,6 @@ public class ArtifactDataFetchersTest {
 
   private static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
 
-  private static ArtifactDataFetchers artifactDataFetchers;
   private static CConfiguration cConf;
   private static File tmpDir;
   private static File systemArtifactsDir1;
@@ -66,9 +68,7 @@ public class ArtifactDataFetchersTest {
   private static ArtifactRepository artifactRepository;
   private static File appArtifactFile;
 
-  private static GraphQLProvider graphQLProvider;
   private static GraphQL graphQL;
-
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -82,21 +82,17 @@ public class ArtifactDataFetchersTest {
               systemArtifactsDir1.getAbsolutePath() + ";" + systemArtifactsDir2.getAbsolutePath());
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
-    // metadataStorage = injector.getInstance(MetadataStorage.class);
-    //
+
     appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
                                    createManifest(ManifestFields.EXPORT_PACKAGE,
                                                   PluginTestRunnable.class.getPackage().getName()));
 
-    artifactDataFetchers = injector.getInstance(ArtifactDataFetchers.class);
+    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
     String schemaDefinitionFile = "artifactSchema.graphqls";
-    // ArtifactDataFetchers artifactDataFetchers = new ArtifactDataFetchers();
-    graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, artifactDataFetchers);
+    ArtifactDataFetchers artifactDataFetchers = injector.getInstance(ArtifactDataFetchers.class);
+    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, artifactDataFetchers);
     graphQL = graphQLProvider.buildGraphQL();
-
-    // ExecutionResult executionResult = graphQL.execute("{artifact(id: \"1\") {id name }}");
-    // System.out.println(executionResult.getData().toString());
   }
 
   @AfterClass
@@ -127,25 +123,14 @@ public class ArtifactDataFetchersTest {
   public void setupData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null, null);
-    // appClassLoader = createAppClassLoader(appArtifactFile);
-  }
-
-  @After
-  public void cleanup() throws IOException {
-    // File unpackedDir = appClassLoader.getDir();
-    // try {
-    //   appClassLoader.close();
-    // } finally {
-    //   DirUtils.deleteDirectoryContents(unpackedDir);
-    // }
   }
 
   @Test
-  public void getArtifactDataFetcher() {
-    String query =
-      "{artifact(namespace: \"" + APP_ARTIFACT_ID.getNamespace().getId() + "\", name: \"" + APP_ARTIFACT_ID.getName()
-        + "\", version: \"" + APP_ARTIFACT_ID.getVersion() + "\") {name }}";
+  public void getArtifactsDataFetcher() {
+    String query = "{artifacts {id name version scope}}";
     ExecutionResult executionResult = graphQL.execute(query);
-    System.out.println(executionResult.getData().toString());
+    Map<String, List<Map<String, String>>> data = executionResult.getData();
+    System.out.println(data);
   }
+
 }

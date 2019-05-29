@@ -15,11 +15,13 @@
  * the License.
  */
 
-package io.cdap.cdap.artifact.schema;
+package io.cdap.cdap.store.artifact.schema;
 
-import io.cdap.cdap.graphql.schema.Types;
+import io.cdap.cdap.graphql.schema.Fields;
 
-public class ArtifactTypes implements Types {
+public class ArtifactFields implements Fields {
 
-  public static final String ARTIFACT = "Artifact";
+  public static final String ARTIFACTS = "artifacts";
+  public static final String NAMESPACE = "namespace";
+  public static final String SCOPE = "scope";
 }

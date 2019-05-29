@@ -15,13 +15,12 @@
  * the License.
  */
 
-package io.cdap.cdap.artifact;
+package io.cdap.cdap.store.artifact;
 
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.artifact.datafetchers.ArtifactDataFetchers;
-import io.cdap.cdap.artifact.schema.ArtifactFields;
-import io.cdap.cdap.artifact.schema.ArtifactTypes;
+import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetchers;
+import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.schema.Types;
 
@@ -39,18 +38,12 @@ public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(getQueryTypeRuntimeWiring())
-      .type(getArtifactTypeRuntimeWiring())
       .build();
   }
 
   private TypeRuntimeWiring getQueryTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
-      .dataFetcher(ArtifactFields.ARTIFACT, artifactDataFetchers.getArtifactDataFetcher())
+      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetchers.getArtifactsDataFetcher())
       .build();
-  }
-
-
-  private TypeRuntimeWiring getArtifactTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT).build();
   }
 }

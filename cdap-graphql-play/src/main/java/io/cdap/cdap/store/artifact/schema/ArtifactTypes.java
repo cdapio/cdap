@@ -15,8 +15,10 @@
  * the License.
  */
 
-package io.cdap.cdap.artifact.data;
+package io.cdap.cdap.store.artifact.schema;
 
-public class Data {
+import io.cdap.cdap.graphql.schema.Types;
+
+public class ArtifactTypes implements Types {
 
 }
