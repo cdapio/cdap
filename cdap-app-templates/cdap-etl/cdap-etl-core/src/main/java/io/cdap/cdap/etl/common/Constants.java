@@ -31,6 +31,8 @@ public final class Constants {
   public static final String MDC_STAGE_KEY = "pipeline.stage";
   public static final String FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN = "field.operations";
   public static final String SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG = "spark.cdap.pipeline.autocache.enable";
+  public static final String SPARK_PIPELINE_CACHING_STORAGE_LEVEL = "spark.cdap.pipeline.caching.storage.level";
+  public static final String DEFAULT_CACHING_STORAGE_LEVEL = "MEMORY_AND_DISK"; 
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
