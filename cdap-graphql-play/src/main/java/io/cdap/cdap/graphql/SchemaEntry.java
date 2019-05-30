@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.graphql;
 
+/**
+ * TODO
+ */
 public class SchemaEntry {
 
 }

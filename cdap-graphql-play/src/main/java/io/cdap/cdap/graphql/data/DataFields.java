@@ -17,8 +17,14 @@
 
 package io.cdap.cdap.graphql.data;
 
+/**
+ * TODO
+ */
 public class DataFields {
 
+  /**
+   * TODO
+   */
   private DataFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

@@ -25,15 +25,24 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 
+/**
+ * TODO
+ */
 public class ArtifactDetailDataFetcher {
 
   private final ArtifactRepository artifactRepository;
 
+  /**
+   * TODO
+   */
   @Inject
   public ArtifactDetailDataFetcher(ArtifactRepository artifactRepository) {
     this.artifactRepository = artifactRepository;
   }
 
+  /**
+   * TODO
+   */
   public DataFetcher getArtifactDetailDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {

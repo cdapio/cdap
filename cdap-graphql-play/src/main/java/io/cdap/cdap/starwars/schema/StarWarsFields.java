@@ -19,12 +19,18 @@ package io.cdap.cdap.starwars.schema;
 
 import io.cdap.cdap.graphql.schema.Fields;
 
+/**
+ * TODO
+ */
 public class StarWarsFields implements Fields {
 
   public static final String HERO = "hero";
   public static final String HUMAN = "human";
   public static final String DROID = "droid";
 
+  /**
+   * TODO
+   */
   private StarWarsFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

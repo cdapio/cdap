@@ -19,11 +19,17 @@ package io.cdap.cdap.standalone.schema;
 
 import io.cdap.cdap.graphql.schema.Fields;
 
+/**
+ * TODO
+ */
 public class BooksFields implements Fields {
 
   public static final String AUTHOR = "author";
   public static final String BOOK_BY_ID = "bookById";
 
+  /**
+   * TODO
+   */
   private BooksFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

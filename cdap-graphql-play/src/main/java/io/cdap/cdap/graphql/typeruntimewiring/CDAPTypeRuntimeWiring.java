@@ -19,8 +19,14 @@ package io.cdap.cdap.graphql.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
 
+/**
+ * TODO
+ */
 public interface CDAPTypeRuntimeWiring {
 
+  /**
+   * TODO
+   */
   TypeRuntimeWiring getTypeRuntimeWiring();
 
 }

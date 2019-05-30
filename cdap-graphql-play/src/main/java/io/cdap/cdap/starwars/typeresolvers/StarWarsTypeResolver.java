@@ -21,9 +21,15 @@ import graphql.TypeResolutionEnvironment;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.TypeResolver;
 
+/**
+ * TODO
+ */
 // TODO make class implement interface?
 public class StarWarsTypeResolver {
 
+  /**
+   * TODO
+   */
   // TODO change to instance metod?
   public static TypeResolver getCharacterTypeResolver() {
     return new TypeResolver() {

@@ -19,10 +19,16 @@ package io.cdap.cdap.starwars.schema;
 
 import io.cdap.cdap.graphql.schema.Interfaces;
 
+/**
+ * TODO
+ */
 public class StarWarsInterfaces implements Interfaces {
 
   public static final String CHARACTER = "Character";
 
+  /**
+   * TODO
+   */
   private StarWarsInterfaces() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

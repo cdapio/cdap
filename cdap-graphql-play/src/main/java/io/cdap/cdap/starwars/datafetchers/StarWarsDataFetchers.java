@@ -22,14 +22,23 @@ import io.cdap.cdap.graphql.datafetchers.DataFetchers;
 import io.cdap.cdap.graphql.schema.Fields;
 import io.cdap.cdap.starwars.data.Data;
 
+/**
+ * TODO
+ */
 public class StarWarsDataFetchers implements DataFetchers {
 
+  /**
+   * TODO
+   */
   public DataFetcher getHeroDataFetcher() {
     return dataFetchingEnvironment -> {
       throw new UnsupportedOperationException("Implement");
     };
   }
 
+  /**
+   * TODO
+   */
   public DataFetcher getHumanDataFetcher() {
     return dataFetchingEnvironment -> {
       String humanId = dataFetchingEnvironment.getArgument(Fields.ID);
@@ -38,6 +47,9 @@ public class StarWarsDataFetchers implements DataFetchers {
     };
   }
 
+  /**
+   * TODO
+   */
   public DataFetcher getDroidDataFetcher() {
     return dataFetchingEnvironment -> {
       throw new UnsupportedOperationException("Implement");

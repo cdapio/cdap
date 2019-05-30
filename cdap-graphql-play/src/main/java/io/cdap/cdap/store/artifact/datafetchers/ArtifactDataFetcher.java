@@ -33,17 +33,26 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
+/**
+ * TODO
+ */
 public class ArtifactDataFetcher {
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceQueryAdmin;
 
+  /**
+   * TODO
+   */
   @Inject
   ArtifactDataFetcher(ArtifactRepository artifactRepository, NamespaceAdmin namespaceQueryAdmin) {
     this.artifactRepository = artifactRepository;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
+  /**
+   * TODO
+   */
   public DataFetcher getArtifactsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {

@@ -19,12 +19,19 @@ package io.cdap.cdap.store.artifact;
 
 import java.io.IOException;
 
+/**
+ * TODO
+ */
 public class ArtifactApp {
 
+  /**
+   * TODO
+   */
   public static void main(String[] args) throws IOException {
     // String schemaDefinitionFile = "artifactSchema.graphqls";
     // ArtifactDataFetchers artifactDataFetchers = new ArtifactDataFetchers();
-    // GraphQLProvider artifactGraphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, artifactDataFetchers);
+    // GraphQLProvider artifactGraphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile,
+    // artifactDataFetchers);
     // GraphQL graphQL = artifactGraphQLProvider.buildGraphQL();
     //
     // ExecutionResult executionResult = graphQL.execute("{artifact(id: \"1\") {id name }}");

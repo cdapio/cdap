@@ -19,6 +19,9 @@ package io.cdap.cdap.starwars.schema;
 
 import io.cdap.cdap.graphql.schema.Types;
 
+/**
+ * TODO
+ */
 public class StarWarsTypes implements Types {
 
   public static final String HUMAN = "Human";

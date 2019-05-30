@@ -21,8 +21,14 @@ import graphql.GraphQL;
 
 import java.io.IOException;
 
+/**
+ * TODO
+ */
 public interface GraphQLProvider {
 
+  /**
+   * TODO
+   */
   GraphQL buildGraphQL() throws IOException;
 
 }

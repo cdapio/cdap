@@ -24,15 +24,24 @@ import io.cdap.cdap.store.artifact.datafetchers.LocationDataFetcher;
 import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.store.artifact.schema.ArtifactTypes;
 
+/**
+ * TODO
+ */
 public class ArtifactDescriptorTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final LocationDataFetcher locationDataFetcher;
 
+  /**
+   * TODO
+   */
   @Inject
   ArtifactDescriptorTypeRuntimeWiring(LocationDataFetcher locationDataFetcher) {
     this.locationDataFetcher = locationDataFetcher;
   }
 
+  /**
+   * TODO
+   */
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DESCRIPTOR)

@@ -19,6 +19,9 @@ package io.cdap.cdap.store.artifact.schema;
 
 import io.cdap.cdap.graphql.schema.Fields;
 
+/**
+ * TODO
+ */
 public class ArtifactFields implements Fields {
 
   public static final String ARTIFACTS = "artifacts";

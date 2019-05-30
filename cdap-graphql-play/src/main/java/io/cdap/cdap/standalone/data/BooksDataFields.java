@@ -17,10 +17,16 @@
 
 package io.cdap.cdap.standalone.data;
 
+/**
+ * TODO
+ */
 public class BooksDataFields {
 
   public static final String AUTHOR_ID = "authorId";
 
+  /**
+   * TODO
+   */
   private BooksDataFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

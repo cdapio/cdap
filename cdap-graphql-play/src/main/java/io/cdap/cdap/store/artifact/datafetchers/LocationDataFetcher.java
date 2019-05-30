@@ -20,8 +20,14 @@ package io.cdap.cdap.store.artifact.datafetchers;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 
+/**
+ * TODO
+ */
 public class LocationDataFetcher {
 
+  /**
+   * TODO
+   */
   public DataFetcher getLocationDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> "Quito"

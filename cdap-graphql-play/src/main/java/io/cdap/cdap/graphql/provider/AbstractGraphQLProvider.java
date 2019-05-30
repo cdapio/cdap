@@ -29,10 +29,16 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * TODO
+ */
 public abstract class AbstractGraphQLProvider implements GraphQLProvider {
 
   private final String schemaDefinitionFile;
 
+  /**
+   * TODO
+   */
   protected AbstractGraphQLProvider(String schemaDefinitionFile) {
     this.schemaDefinitionFile = schemaDefinitionFile;
   }
@@ -46,6 +52,9 @@ public abstract class AbstractGraphQLProvider implements GraphQLProvider {
     return GraphQL.newGraphQL(graphQLSchema).build();
   }
 
+  /**
+   * TODO
+   */
   private GraphQLSchema buildSchema(String sdl) {
     TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(sdl);
     RuntimeWiring runtimeWiring = buildWiring();
@@ -54,5 +63,8 @@ public abstract class AbstractGraphQLProvider implements GraphQLProvider {
     return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
   }
 
+  /**
+   * TODO
+   */
   protected abstract RuntimeWiring buildWiring();
 }

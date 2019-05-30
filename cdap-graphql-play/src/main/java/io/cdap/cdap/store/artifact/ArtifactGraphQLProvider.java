@@ -23,12 +23,18 @@ import io.cdap.cdap.store.artifact.runtimewiring.ArtifactDescriptorTypeRuntimeWi
 import io.cdap.cdap.store.artifact.runtimewiring.ArtifactDetailTypeRuntimeWiring;
 import io.cdap.cdap.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 
+/**
+ * TODO
+ */
 public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
 
   private final QueryTypeRuntimeWiring queryTypeRuntimeWiring;
   private final ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring;
   private final ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring;
 
+  /**
+   * TODO
+   */
   public ArtifactGraphQLProvider(String schemaDefinitionFile, QueryTypeRuntimeWiring queryTypeRuntimeWiring,
                                  ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring,
                                  ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring) {

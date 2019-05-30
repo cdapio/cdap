@@ -21,8 +21,14 @@ import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 
+/**
+ * TODO
+ */
 public class ArtifactDescriptorDataFetcher {
 
+  /**
+   * TODO
+   */
   public DataFetcher getArtifactDescriptorDataFetcher() {
     return AsyncDataFetcher.async(
       DataFetchingEnvironment::getSource

@@ -19,10 +19,16 @@ package io.cdap.cdap.standalone.schema;
 
 import io.cdap.cdap.graphql.schema.Types;
 
+/**
+ * TODO
+ */
 public class BooksTypes implements Types {
 
   public static final String BOOK = "Book";
 
+  /**
+   * TODO
+   */
   private BooksTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

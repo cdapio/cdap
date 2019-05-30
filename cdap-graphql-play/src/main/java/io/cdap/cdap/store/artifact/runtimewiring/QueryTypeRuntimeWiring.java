@@ -25,11 +25,17 @@ import io.cdap.cdap.store.artifact.datafetchers.ArtifactDataFetcher;
 import io.cdap.cdap.store.artifact.datafetchers.ArtifactDetailDataFetcher;
 import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 
+/**
+ * TODO
+ */
 public class QueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final ArtifactDataFetcher artifactDataFetcher;
   private final ArtifactDetailDataFetcher artifactDetailDataFetcher;
 
+  /**
+   * TODO
+   */
   @Inject
   QueryTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher,
                          ArtifactDetailDataFetcher artifactDetailDataFetcher) {
@@ -37,6 +43,9 @@ public class QueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
     this.artifactDetailDataFetcher = artifactDetailDataFetcher;
   }
 
+  /**
+   * TODO
+   */
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(Types.QUERY)

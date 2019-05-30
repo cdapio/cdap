@@ -24,15 +24,24 @@ import io.cdap.cdap.store.artifact.datafetchers.ArtifactDescriptorDataFetcher;
 import io.cdap.cdap.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.store.artifact.schema.ArtifactTypes;
 
+/**
+ * TODO
+ */
 public class ArtifactDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final ArtifactDescriptorDataFetcher artifactDescriptorDataFetcher;
 
+  /**
+   * TODO
+   */
   @Inject
   ArtifactDetailTypeRuntimeWiring(ArtifactDescriptorDataFetcher artifactDescriptorDataFetcher) {
     this.artifactDescriptorDataFetcher = artifactDescriptorDataFetcher;
   }
 
+  /**
+   * TODO
+   */
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DETAIL)

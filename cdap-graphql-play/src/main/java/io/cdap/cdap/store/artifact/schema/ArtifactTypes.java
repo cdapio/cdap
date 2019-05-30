@@ -19,6 +19,9 @@ package io.cdap.cdap.store.artifact.schema;
 
 import io.cdap.cdap.graphql.schema.Types;
 
+/**
+ * TODO
+ */
 public class ArtifactTypes implements Types {
 
   public static final String ARTIFACT_DETAIL = "ArtifactDetail";
