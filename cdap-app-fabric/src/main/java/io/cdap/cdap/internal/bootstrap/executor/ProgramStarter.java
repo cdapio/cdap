@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@
 package io.cdap.cdap.internal.bootstrap.executor;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
@@ -47,20 +48,16 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
   public void execute(Arguments arguments) throws Exception {
     ProgramId programId = arguments.getId();
 
-    try {
-      programLifecycleService.getProgramSpecification(programId);
-    } catch (NotFoundException e) {
-      throw new IllegalArgumentException(String.format("Cannot start %s because it does not exist.", programId), e);
-    }
-
-    // do nothing if the program is already running
-    ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
-    if (currentStatus != ProgramStatus.STOPPED) {
-      LOG.info("Program {} is in the {} state, skipping start program bootstrap step.", programId, currentStatus);
-      return;
-    }
+    Preconditions.checkArgument(programLifecycleService.getProgramSpecification(programId) != null,
+                                "Cannot start %s because it does not exist.", programId);
 
     try {
+      // do nothing if the program is already running
+      ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
+      if (currentStatus != ProgramStatus.STOPPED) {
+        LOG.info("Program {} is in the {} state, skipping start program bootstrap step.", programId, currentStatus);
+        return;
+      }
       programLifecycleService.run(programId, Collections.emptyMap(), false);
     } catch (ConflictException e) {
       // thrown if the program is already running, which means it was started after the status check above.
@@ -68,11 +65,6 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
     } catch (NotFoundException e) {
       // use a nicer error message
       throw new IllegalArgumentException(String.format("Cannot start %s because it does not exist.", programId), e);
-    } catch (Exception e) {
-      // it is unclear if other types of errors can safely be retried.
-      // Choose the safe option and don't retry, as retrying will generate side effects, such as
-      // a bunch of failed run records.
-      throw e;
     }
   }
 
