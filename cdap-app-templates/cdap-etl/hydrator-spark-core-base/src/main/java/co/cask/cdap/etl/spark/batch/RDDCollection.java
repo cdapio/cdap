@@ -93,7 +93,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
     SparkConf sparkConf = jsc.getConf();
     if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
       String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
-          Constants.DEFAUL_CACHING_STORAGE_LEVEL);
+                                                     Constants.DEFAULT_CACHING_STORAGE_LEVEL);
       StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
       return wrap(rdd.persist(cacheStorageLevel));
     } else {
