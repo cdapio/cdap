@@ -144,6 +144,17 @@ public class QueryTypeRuntimeWiringTest {
       + "    location {"
       + "      name"
       + "    }"
+      + "    plugins {"
+      + "      type"
+      + "      name"
+      + "      description"
+      + "      className"
+      + "      configFieldName"
+      + "    }"
+      + "    applications {"
+      + "      className"
+      + "      description"
+      + "    }"
       + "  }"
       + "}";
 

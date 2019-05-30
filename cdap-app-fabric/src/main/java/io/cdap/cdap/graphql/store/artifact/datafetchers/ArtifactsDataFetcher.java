@@ -39,7 +39,7 @@ import javax.inject.Inject;
 /**
  * TODO
  */
-public class ArtifactDataFetcher {
+public class ArtifactsDataFetcher {
 
   private final ArtifactStore artifactStore;
 
@@ -47,12 +47,12 @@ public class ArtifactDataFetcher {
    * TODO
    */
   @Inject
-  ArtifactDataFetcher(ArtifactStore artifactStore) {
+  ArtifactsDataFetcher(ArtifactStore artifactStore) {
     this.artifactStore = artifactStore;
   }
 
   /**
-   * TODO
+   * TODO how would we get a single artifact
    */
   public DataFetcher getArtifactsDataFetcher() {
     return AsyncDataFetcher.async(
@@ -66,28 +66,13 @@ public class ArtifactDataFetcher {
           ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
           ArtifactId artifactId = artifactDescriptor.getArtifactId();
 
-          ArtifactMeta artifactMeta = artifactDetail.getMeta();
-
-          // TODO handle
-          ArtifactClasses classes = artifactMeta.getClasses();
-          Map<String, String> properties = artifactMeta.getProperties();
-
-          if(!properties.isEmpty()) {
-            throw new UnsupportedOperationException("Implement");
-          }
-
-          Set<ArtifactRange> usables = artifactMeta.getUsableBy();
-
-          if(!usables.isEmpty()) {
-            throw new UnsupportedOperationException("Implement");
-          }
-
           Artifact artifact = new Artifact.Builder()
             .name(artifactId.getName())
             .version(artifactId.getVersion().getVersion())
             .scope(artifactId.getScope().toString())
             .namespace(namespace)
-            .location(artifactDetail.getDescriptor().getLocation())
+            .location(artifactDescriptor.getLocation())
+            .meta(artifactDetail.getMeta())
             .build();
 
           artifacts.add(artifact);

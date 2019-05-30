@@ -24,8 +24,26 @@ type Artifact {
   scope: String!
   namespace: String!
   location: Location!
+  plugins: [Plugin]
+  applications: [Application]
 }
 
 type Location {
   name: String
+}
+
+type Plugin {
+  type: String
+  name: String
+  description: String
+  className: String
+  configFieldName: String
+  # properties: Map<String, PluginPropertyField>
+  # requirements: Requirements
+}
+
+type Application {
+  className: String
+  description: String
+  # configSchema: Schema
 }

@@ -17,7 +17,12 @@
 
 package io.cdap.cdap.graphql.objects;
 
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import org.apache.twill.filesystem.Location;
+
+import java.util.List;
 
 /**
  * TODO
@@ -29,6 +34,7 @@ public class Artifact {
   private final String scope;
   private final String namespace;
   private final Location location;
+  private final ArtifactMeta meta;
 
   private Artifact(Builder builder) {
     name = builder.name;
@@ -36,6 +42,7 @@ public class Artifact {
     scope = builder.scope;
     namespace = builder.namespace;
     location = builder.location;
+    meta = builder.meta;
   }
 
   public String getName() {
@@ -58,6 +65,10 @@ public class Artifact {
     return location;
   }
 
+  public ArtifactMeta getMeta() {
+    return meta;
+  }
+
   /**
    * TODO
    */
@@ -68,6 +79,7 @@ public class Artifact {
     private String scope;
     private String namespace;
     private Location location;
+    private ArtifactMeta meta;
 
     public Builder name(String name) {
       this.name = name;
@@ -98,6 +110,13 @@ public class Artifact {
 
       return this;
     }
+
+    public Builder meta(ArtifactMeta meta) {
+      this.meta = meta;
+
+      return this;
+    }
+
 
     public Artifact build() {
       return new Artifact(this);
