@@ -82,6 +82,7 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
         },
       },
     },
+    spacing: (factor) => [0, 4, 8, 16, 32, 64][factor],
   } as ThemeOptions);
   public render() {
     let Component;

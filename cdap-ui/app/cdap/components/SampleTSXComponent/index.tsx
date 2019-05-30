@@ -24,6 +24,8 @@ const SubTSXComponent = Loadable({
     import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
   loading: LoadingSVGCentered,
 });
+import CustomTable from 'components/Table';
+
 interface IFCProps {
   prop1: boolean;
   prop2: string;
@@ -59,5 +61,5 @@ class StatefullComponent extends React.PureComponent<IStatefulComponentProps, {}
   }
 }
 export default function SampleTSXComponent() {
-  return [<h1 key="super-title"> Hello from TSX! </h1>, <CodeEditor rows={20} />];
+  return [<h1 key="super-title"> Hello from TSX! </h1>, <CustomTable />];
 }
