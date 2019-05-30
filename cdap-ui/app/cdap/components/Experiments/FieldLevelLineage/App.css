@@ -1,0 +1,11 @@
+.fll-container {
+  padding-left: 100px;
+  padding-right: 100px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.fll-header {
+  height: 100px;
+  width: 100%;
+}

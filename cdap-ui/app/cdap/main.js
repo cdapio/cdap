@@ -207,6 +207,25 @@ class CDAP extends Component {
                     );
                   }}
                 />
+                <Route
+                  exact
+                  path="/fll-experiment"
+                  render={(props) => {
+                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                      return <Page404 {...props} />;
+                    }
+                    const FllExperiment = Loadable({
+                      loader: () =>
+                        import(/* webpackChunkName: "FLLExperiment" */ 'components/Experiments/FieldLevelLineage'),
+                      loading: LoadingSVGCentered,
+                    });
+                    return (
+                      <ErrorBoundary>
+                        <FllExperiment {...props} />
+                      </ErrorBoundary>
+                    );
+                  }}
+                />
                 {/*
                   Eventually handling 404 should move to the error boundary and all container components will have the error object.
                 */}

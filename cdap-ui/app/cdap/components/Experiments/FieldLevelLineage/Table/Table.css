@@ -1,0 +1,30 @@
+.table {
+  width: 170px;
+  border: 1px solid #bbbbbb;
+  margin: 10px;
+}
+
+.row {
+  border-bottom: 0.5px solid lightgray;
+  height: 20px;
+  padding-left: 10px;
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.table-header {
+  border-bottom: 2px solid #bbbbbb;
+  height: 40px;
+  padding-left: 10px;
+  font-weight: bold;
+}
+
+.table-subheader {
+  font-weight: normal;
+  color: #999999;
+  padding-bottom: 5px;
+}
+
+.table-subheader {
+  padding-top: 3px;
+}
