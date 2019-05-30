@@ -17,27 +17,23 @@
 
 package io.cdap.cdap.graphql.store.artifact.datafetchers;
 
-import com.google.common.base.Throwables;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.api.artifact.ArtifactClasses;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.graphql.objects.Artifact;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.proto.id.Ids;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.proto.id.NamespaceId;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -45,16 +41,14 @@ import javax.inject.Inject;
  */
 public class ArtifactDataFetcher {
 
-  private final ArtifactRepository artifactRepository;
-  private final NamespaceAdmin namespaceQueryAdmin;
+  private final ArtifactStore artifactStore;
 
   /**
    * TODO
    */
   @Inject
-  ArtifactDataFetcher(ArtifactRepository artifactRepository, NamespaceAdmin namespaceQueryAdmin) {
-    this.artifactRepository = artifactRepository;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
+  ArtifactDataFetcher(ArtifactStore artifactStore) {
+    this.artifactStore = artifactStore;
   }
 
   /**
@@ -63,31 +57,36 @@ public class ArtifactDataFetcher {
   public DataFetcher getArtifactsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        List<ArtifactSummary> artifactSummaries = getArtifactSummaries(dataFetchingEnvironment);
-
-        // artifactmeta
-        // artifactdescriptor
-        // artifactinfo
-        // artifactsummary
+        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        List<ArtifactDetail> artifactDetails = this.artifactStore.getArtifacts(new NamespaceId(namespace));
 
         List<Artifact> artifacts = new ArrayList<>();
 
-        for (ArtifactSummary artifactSummary : artifactSummaries) {
-          Id.Namespace namespace = Id.Namespace.from(artifactSummary.getScope().name().toLowerCase());
+        for (ArtifactDetail artifactDetail : artifactDetails) {
+          ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
+          ArtifactId artifactId = artifactDescriptor.getArtifactId();
 
-          ArtifactDetail artifactDetail = artifactRepository
-            .getArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0"));
+          ArtifactMeta artifactMeta = artifactDetail.getMeta();
 
-          // ArtifactMeta artifactMeta = artifactDetail.getMeta();
-          // ArtifactClasses classes = artifactMeta.getClasses();
-          // Map<String, String> properties = artifactMeta.getProperties();
-          // Set<ArtifactRange> usables = artifactMeta.getUsableBy();
+          // TODO handle
+          ArtifactClasses classes = artifactMeta.getClasses();
+          Map<String, String> properties = artifactMeta.getProperties();
+
+          if(!properties.isEmpty()) {
+            throw new UnsupportedOperationException("Implement");
+          }
+
+          Set<ArtifactRange> usables = artifactMeta.getUsableBy();
+
+          if(!usables.isEmpty()) {
+            throw new UnsupportedOperationException("Implement");
+          }
 
           Artifact artifact = new Artifact.Builder()
-            .name(artifactSummary.getName())
-            .version(artifactSummary.getVersion())
-            .scope(artifactSummary.getScope().toString())
-            .namespace(namespace.toString())
+            .name(artifactId.getName())
+            .version(artifactId.getVersion().getVersion())
+            .scope(artifactId.getScope().toString())
+            .namespace(namespace)
             .location(artifactDetail.getDescriptor().getLocation())
             .build();
 
@@ -99,59 +98,4 @@ public class ArtifactDataFetcher {
     );
   }
 
-  private List<ArtifactSummary> getArtifactSummaries(DataFetchingEnvironment dataFetchingEnvironment) throws Exception {
-    String scope = dataFetchingEnvironment.getArgument(ArtifactFields.SCOPE);
-    String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
-
-    try {
-      if (scope == null) {
-        NamespaceId namespaceId = validateAndGetNamespace(namespace);
-        return artifactRepository.getArtifactSummaries(namespaceId, true);
-      } else {
-        NamespaceId namespaceId = validateAndGetScopedNamespace(Ids.namespace(namespace), scope);
-        return artifactRepository.getArtifactSummaries(namespaceId, false);
-      }
-    } catch (IOException ioe) {
-      throw new RuntimeException("Error reading artifact metadata from the store.");
-    }
-  }
-
-  private NamespaceId validateAndGetNamespace(String namespaceId) throws NamespaceNotFoundException {
-    return validateAndGetScopedNamespace(Ids.namespace(namespaceId), ArtifactScope.USER);
-  }
-
-  // check that the namespace exists, and check if the request is only supposed to include system artifacts,
-  // and returning the system namespace if so.
-  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, ArtifactScope scope)
-    throws NamespaceNotFoundException {
-
-    try {
-      namespaceQueryAdmin.get(namespace);
-    } catch (NamespaceNotFoundException e) {
-      throw e;
-    } catch (Exception e) {
-      // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
-      // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
-      // Hence, this should never happen.
-      throw Throwables.propagate(e);
-    }
-
-    return ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : namespace;
-  }
-
-  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, @Nullable String scope)
-    throws NamespaceNotFoundException, BadRequestException {
-    if (scope != null) {
-      return validateAndGetScopedNamespace(namespace, validateScope(scope));
-    }
-    return validateAndGetScopedNamespace(namespace, ArtifactScope.USER);
-  }
-
-  private ArtifactScope validateScope(String scope) throws BadRequestException {
-    try {
-      return ArtifactScope.valueOf(scope.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException("Invalid scope " + scope);
-    }
-  }
 }
