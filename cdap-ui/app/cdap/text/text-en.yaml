@@ -1411,7 +1411,7 @@ features:
       Title:
         incoming: "Cause for:"
         outgoing: "Impact for:"
-      viewOperations: View operations
+      viewOperations: View operations 
     TimeRangeOptions:
       CUSTOM: Custom
       last14d: Last 14 days
@@ -1424,6 +1424,13 @@ features:
       subtitle: Explore root cause and impact for each of the fields of the dataset
       timePickerCaption: View field level info in the
       title: Field level lineage
+    v2:
+      FllHeader:
+        RelatedHeader: "Datasets used as {type} by {target}"
+        RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
+        TargetHeader: 'Select a field to view lineage and operations' 
+        TargetSubheader: "Viewing {first} to {last} of {total} fields"
+      TableSubheader: "{count} fields"
 
   FileBrowser:
     directory: Directory
