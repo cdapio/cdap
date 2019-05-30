@@ -48,6 +48,7 @@ import io.cdap.cdap.gateway.handlers.BootstrapHttpHandler;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.gateway.handlers.ConfigHandler;
 import io.cdap.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
+import io.cdap.cdap.gateway.handlers.GraphQLArtifactHttpHandler;
 import io.cdap.cdap.gateway.handlers.ImpersonationHandler;
 import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationalStatsHttpHandler;
@@ -312,6 +313,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
+      handlerBinder.addBinding().to(GraphQLArtifactHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
