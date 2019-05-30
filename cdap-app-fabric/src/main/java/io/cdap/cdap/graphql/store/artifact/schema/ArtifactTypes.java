@@ -24,8 +24,6 @@ import io.cdap.cdap.graphql.schema.Types;
  */
 public class ArtifactTypes implements Types {
 
-  public static final String ARTIFACT_DETAIL = "ArtifactDetail";
-  public static final String ARTIFACT_DESCRIPTOR = "ArtifactDescriptor";
   public static final String ARTIFACT = "Artifact";
 
   private ArtifactTypes() {

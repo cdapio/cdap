@@ -25,7 +25,7 @@ import graphql.schema.idl.TypeRuntimeWiring;
 public interface CDAPTypeRuntimeWiring {
 
   /**
-   * TODO
+   * Get the type runtime wiring
    */
   TypeRuntimeWiring getTypeRuntimeWiring();
 

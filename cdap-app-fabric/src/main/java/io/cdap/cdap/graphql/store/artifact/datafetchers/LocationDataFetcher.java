@@ -23,12 +23,14 @@ import io.cdap.cdap.graphql.objects.Artifact;
 import org.apache.twill.filesystem.Location;
 
 /**
- * TODO
+ * Fetchers to get locations
  */
 public class LocationDataFetcher {
 
   /**
-   * TODO
+   * Fetcher to get a location
+   *
+   * @return the data fetcher
    */
   public DataFetcher getLocationDataFetcher() {
     return AsyncDataFetcher.async(

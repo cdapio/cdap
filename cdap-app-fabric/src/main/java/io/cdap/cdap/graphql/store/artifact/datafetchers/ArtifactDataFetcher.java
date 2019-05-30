@@ -19,40 +19,35 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.graphql.objects.Artifact;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 
 /**
- * TODO
+ * Fetchers to get artifacts
  */
-public class ArtifactsDataFetcher {
+public class ArtifactDataFetcher {
 
   private final ArtifactStore artifactStore;
 
-  /**
-   * TODO
-   */
   @Inject
-  ArtifactsDataFetcher(ArtifactStore artifactStore) {
+  ArtifactDataFetcher(ArtifactStore artifactStore) {
     this.artifactStore = artifactStore;
   }
 
   /**
-   * TODO how would we get a single artifact
+   * Fetcher to get a list of artifacts
+   *
+   * @return the data fetcher
    */
   public DataFetcher getArtifactsDataFetcher() {
     return AsyncDataFetcher.async(
@@ -63,24 +58,47 @@ public class ArtifactsDataFetcher {
         List<Artifact> artifacts = new ArrayList<>();
 
         for (ArtifactDetail artifactDetail : artifactDetails) {
-          ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
-          ArtifactId artifactId = artifactDescriptor.getArtifactId();
-
-          Artifact artifact = new Artifact.Builder()
-            .name(artifactId.getName())
-            .version(artifactId.getVersion().getVersion())
-            .scope(artifactId.getScope().toString())
-            .namespace(namespace)
-            .location(artifactDescriptor.getLocation())
-            .meta(artifactDetail.getMeta())
-            .build();
-
+          Artifact artifact = getArtifact(artifactDetail, namespace);
           artifacts.add(artifact);
         }
 
         return artifacts;
       }
     );
+  }
+
+  /**
+   * Fetcher to get an artifact
+   *
+   * @return the data fetcher
+   */
+  public DataFetcher getArtifactDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
+        String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
+
+        Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespace), name, version);
+        ArtifactDetail artifactDetail = this.artifactStore.getArtifact(artifactId);
+
+        return getArtifact(artifactDetail, namespace);
+      }
+    );
+  }
+
+  private Artifact getArtifact(ArtifactDetail artifactDetail, String namespace) {
+    ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
+    ArtifactId artifactId = artifactDescriptor.getArtifactId();
+
+    return new Artifact.Builder()
+      .name(artifactId.getName())
+      .version(artifactId.getVersion().getVersion())
+      .scope(artifactId.getScope().toString())
+      .namespace(namespace)
+      .location(artifactDescriptor.getLocation())
+      .meta(artifactDetail.getMeta())
+      .build();
   }
 
 }

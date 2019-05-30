@@ -19,43 +19,37 @@ package io.cdap.cdap.graphql.store.artifact.runtimewiring;
 
 import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.datafetchers.ApplicationsDataFetcher;
+import io.cdap.cdap.graphql.store.artifact.datafetchers.ApplicationDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.LocationDataFetcher;
-import io.cdap.cdap.graphql.store.artifact.datafetchers.PluginsDataFetcher;
+import io.cdap.cdap.graphql.store.artifact.datafetchers.PluginDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
- * TODO
+ *
  */
 public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final LocationDataFetcher locationDataFetcher;
-  private final PluginsDataFetcher pluginsDataFetcher;
-  private final ApplicationsDataFetcher applicationsDataFetcher;
+  private final PluginDataFetcher pluginDataFetcher;
+  private final ApplicationDataFetcher applicationDataFetcher;
 
-  /**
-   * TODO
-   */
   @Inject
   ArtifactTypeRuntimeWiring(LocationDataFetcher locationDataFetcher,
-                            PluginsDataFetcher pluginsDataFetcher,
-                            ApplicationsDataFetcher applicationsDataFetcher) {
+                            PluginDataFetcher pluginDataFetcher,
+                            ApplicationDataFetcher applicationDataFetcher) {
     this.locationDataFetcher = locationDataFetcher;
-    this.pluginsDataFetcher = pluginsDataFetcher;
-    this.applicationsDataFetcher = applicationsDataFetcher;
+    this.pluginDataFetcher = pluginDataFetcher;
+    this.applicationDataFetcher = applicationDataFetcher;
   }
 
-  /**
-   * TODO
-   */
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT)
       .dataFetcher(ArtifactFields.LOCATION, locationDataFetcher.getLocationDataFetcher())
-      .dataFetcher(ArtifactFields.PLUGINS, pluginsDataFetcher.getPluginsDataFetcher())
-      .dataFetcher(ArtifactFields.APPLICATIONS, applicationsDataFetcher.getApplicationsDataFetcher())
+      .dataFetcher(ArtifactFields.PLUGINS, pluginDataFetcher.getPluginsDataFetcher())
+      .dataFetcher(ArtifactFields.APPLICATIONS, applicationDataFetcher.getApplicationsDataFetcher())
       .build();
   }
 

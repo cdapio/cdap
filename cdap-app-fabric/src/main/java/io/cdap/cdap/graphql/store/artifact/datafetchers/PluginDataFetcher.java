@@ -20,22 +20,24 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.graphql.objects.Artifact;
-import org.apache.twill.filesystem.Location;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 
 /**
- * TODO
+ * Fetchers to get plugins
  */
-public class ApplicationsDataFetcher {
+public class PluginDataFetcher {
 
   /**
-   * TODO
+   * Fetcher to get plugins
+   *
+   * @return the data fetcher
    */
-  public DataFetcher getApplicationsDataFetcher() {
+  public DataFetcher getPluginsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         Artifact artifact = dataFetchingEnvironment.getSource();
 
-        return artifact.getMeta().getClasses().getApps();
+        return artifact.getMeta().getClasses().getPlugins();
       }
     );
   }

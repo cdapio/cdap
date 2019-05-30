@@ -183,4 +183,24 @@ public class QueryTypeRuntimeWiringTest {
     System.out.println(executionResult.getData().toString());
   }
 
+  @Test
+  public void testGetArtifactDataFetcher() {
+    String query = "{"
+      + "  artifact(name: \"PluginTest\", version: \"1.0.0\") {"
+      + "    name"
+      + "    version"
+      + "    scope"
+      + "    namespace"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    CompletableFuture<ExecutionResult> promise = graphQL.executeAsync(executionInput);
+    ExecutionResult executionResult = promise.join();
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    System.out.println(executionResult.getData().toString());
+  }
+
 }
