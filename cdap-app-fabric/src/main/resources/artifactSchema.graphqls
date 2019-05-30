@@ -15,21 +15,17 @@
 # the License.
 #
 type Query {
-  artifacts(namespace: String = "default", scope: String): [ArtifactInfo]
-  artifactDetail(namespace: String!, name: String!, version: String!): ArtifactDetail
+  artifacts(namespace: String = "default", scope: String): [Artifact]
 }
 
-type ArtifactDetail {
-  descriptor: ArtifactDescriptor
+type Artifact {
+  name: String!
+  version: String!
+  scope: String!
+  namespace: String!
+  location: Location!
 }
 
-type ArtifactDescriptor {
-  artifactId: ArtifactInfo
-  location: String
-}
-
-type ArtifactInfo {
+type Location {
   name: String
-  version: String
-  scope: String
 }

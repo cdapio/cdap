@@ -33,8 +33,7 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.artifact.ArtifactGraphQLProvider;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactDescriptorTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactDetailTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -97,13 +96,10 @@ public class QueryTypeRuntimeWiringTest {
 
     String schemaDefinitionFile = "artifactSchema.graphqls";
     QueryTypeRuntimeWiring queryTypeRuntimeWiring = injector.getInstance(QueryTypeRuntimeWiring.class);
-    ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring = injector
-      .getInstance(ArtifactDetailTypeRuntimeWiring.class);
-    ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring = injector
-      .getInstance(ArtifactDescriptorTypeRuntimeWiring.class);
-    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile, queryTypeRuntimeWiring,
-                                                                  artifactDetailTypeRuntimeWiring,
-                                                                  artifactDescriptorTypeRuntimeWiring);
+    ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring = injector.getInstance(ArtifactTypeRuntimeWiring.class);
+    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile,
+                                                                  queryTypeRuntimeWiring,
+                                                                  artifactTypeRuntimeWiring);
     graphQL = graphQLProvider.buildGraphQL();
   }
 
@@ -144,6 +140,10 @@ public class QueryTypeRuntimeWiringTest {
       + "    name"
       + "    version"
       + "    scope"
+      + "    namespace"
+      + "    location {"
+      + "      name"
+      + "    }"
       + "  }"
       + "}";
 
@@ -153,43 +153,23 @@ public class QueryTypeRuntimeWiringTest {
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    Map<String, List<Map<String, String>>> artifactsData = (Map<String, List<Map<String, String>>>) executionResult
-      .toSpecification().get("data");
+    Map<String, List> artifactsData = (Map<String, List>) executionResult.toSpecification().get("data");
     Assert.assertEquals(1, artifactsData.size());
 
-    List<Map<String, String>> artifacts = artifactsData.get("artifacts");
+    List<Map> artifacts = artifactsData.get("artifacts");
     Assert.assertEquals(1, artifacts.size());
 
-    Map<String, String> artifact = artifacts.get(0);
+    Map<String, Object> artifact = artifacts.get(0);
     Assert.assertNotNull(artifact.get("name"));
     Assert.assertNotNull(artifact.get("version"));
     Assert.assertNotNull(artifact.get("scope"));
+    Assert.assertNotNull(artifact.get("namespace"));
+    Assert.assertNotNull(artifact.get("location"));
+
+    Map<String, String> location = (Map<String, String>) artifact.get("location");
+    Assert.assertNotNull(location.get("name"));
+
+    System.out.println(executionResult.getData().toString());
   }
 
-  @Test
-  public void testGetArtifactDetailDataFetcher() {
-    String query = "{"
-      + "artifactDetail(namespace: \"" + APP_ARTIFACT_ID.getNamespace().getId() + "\", name: \"" + APP_ARTIFACT_ID
-      .getName() + "\", version: \"" + APP_ARTIFACT_ID.getVersion() + "\") {"
-      + "    descriptor {"
-      + "      location"
-      + "      artifactId {"
-      + "        name"
-      + "      }"
-      + "    }"
-      + "  }"
-      + "}";
-    ExecutionResult executionResult = graphQL.execute(query);
-
-    Assert.assertTrue(executionResult.getErrors().isEmpty());
-
-    Map<String, Map> artifactDetailData = (Map<String, Map>) executionResult.toSpecification().get("data");
-    Map<String, Map> artifactDetail = artifactDetailData.get("artifactDetail");
-    Map<String, Object> descriptor = artifactDetail.get("descriptor");
-    Assert.assertNotNull(descriptor.get("location"));
-
-    Map<String, String> artifactId = (Map<String, String>) descriptor.get("artifactId");
-    Assert.assertNotNull(artifactId.get("name"));
-
-  }
 }

@@ -19,6 +19,8 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
+import io.cdap.cdap.graphql.objects.Artifact;
+import org.apache.twill.filesystem.Location;
 
 /**
  * TODO
@@ -30,7 +32,12 @@ public class LocationDataFetcher {
    */
   public DataFetcher getLocationDataFetcher() {
     return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> "Quito"
+      dataFetchingEnvironment -> {
+        Artifact artifact = dataFetchingEnvironment.getSource();
+        Location location = artifact.getLocation();
+
+        return new io.cdap.cdap.graphql.objects.Location(location.toURI().getPath());
+      }
     );
   }
 

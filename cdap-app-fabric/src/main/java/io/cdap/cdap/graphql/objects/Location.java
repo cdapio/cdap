@@ -15,24 +15,17 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.artifact.datafetchers;
+package io.cdap.cdap.graphql.objects;
 
-import graphql.schema.AsyncDataFetcher;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
+public class Location {
 
-/**
- * TODO
- */
-public class ArtifactDescriptorDataFetcher {
+  private final String name;
 
-  /**
-   * TODO
-   */
-  public DataFetcher getArtifactDescriptorDataFetcher() {
-    return AsyncDataFetcher.async(
-      DataFetchingEnvironment::getSource
-    );
+  public Location(String name) {
+    this.name = name;
   }
 
+  public String getName() {
+    return name;
+  }
 }

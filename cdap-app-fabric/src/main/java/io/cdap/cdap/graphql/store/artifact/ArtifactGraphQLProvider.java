@@ -19,8 +19,7 @@ package io.cdap.cdap.graphql.store.artifact;
 
 import graphql.schema.idl.RuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactDescriptorTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactDetailTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 
 /**
@@ -29,28 +28,25 @@ import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
 
   private final QueryTypeRuntimeWiring queryTypeRuntimeWiring;
-  private final ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring;
-  private final ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring;
+  private final ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring;
 
   /**
    * TODO
    */
-  public ArtifactGraphQLProvider(String schemaDefinitionFile, QueryTypeRuntimeWiring queryTypeRuntimeWiring,
-                                 ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring,
-                                 ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring) {
+  public ArtifactGraphQLProvider(String schemaDefinitionFile,
+                                 QueryTypeRuntimeWiring queryTypeRuntimeWiring,
+                                 ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring) {
     super(schemaDefinitionFile);
 
     this.queryTypeRuntimeWiring = queryTypeRuntimeWiring;
-    this.artifactDetailTypeRuntimeWiring = artifactDetailTypeRuntimeWiring;
-    this.artifactDescriptorTypeRuntimeWiring = artifactDescriptorTypeRuntimeWiring;
+    this.artifactTypeRuntimeWiring = artifactTypeRuntimeWiring;
   }
 
   @Override
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(queryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(artifactDetailTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(artifactDescriptorTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
       .build();
   }
 

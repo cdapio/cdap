@@ -27,7 +27,7 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 /**
  * TODO
  */
-public class ArtifactDescriptorTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final LocationDataFetcher locationDataFetcher;
 
@@ -35,7 +35,7 @@ public class ArtifactDescriptorTypeRuntimeWiring implements CDAPTypeRuntimeWirin
    * TODO
    */
   @Inject
-  ArtifactDescriptorTypeRuntimeWiring(LocationDataFetcher locationDataFetcher) {
+  ArtifactTypeRuntimeWiring(LocationDataFetcher locationDataFetcher) {
     this.locationDataFetcher = locationDataFetcher;
   }
 
@@ -44,7 +44,7 @@ public class ArtifactDescriptorTypeRuntimeWiring implements CDAPTypeRuntimeWirin
    */
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_DESCRIPTOR)
+    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT)
       .dataFetcher(ArtifactFields.LOCATION, locationDataFetcher.getLocationDataFetcher())
       .build();
   }

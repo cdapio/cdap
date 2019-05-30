@@ -28,8 +28,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.artifact.ArtifactGraphQLProvider;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactDescriptorTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactDetailTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.http.AbstractHttpHandler;
@@ -41,7 +40,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * TODO
@@ -57,14 +56,12 @@ public class GraphQLArtifactHttpHandler extends AbstractHttpHandler {
 
   @Inject
   GraphQLArtifactHttpHandler(QueryTypeRuntimeWiring queryTypeRuntimeWiring,
-                             ArtifactDetailTypeRuntimeWiring artifactDetailTypeRuntimeWiring,
-                             ArtifactDescriptorTypeRuntimeWiring artifactDescriptorTypeRuntimeWiring)
+                             ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring)
     throws IOException {
     String schemaDefinitionFile = "artifactSchema.graphqls";
     GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile,
                                                                   queryTypeRuntimeWiring,
-                                                                  artifactDetailTypeRuntimeWiring,
-                                                                  artifactDescriptorTypeRuntimeWiring);
+                                                                  artifactTypeRuntimeWiring);
     this.graphQL = graphQLProvider.buildGraphQL();
   }
 
@@ -72,9 +69,8 @@ public class GraphQLArtifactHttpHandler extends AbstractHttpHandler {
    * TODO
    */
   @GET
-  @Path("/namespaces/{namespace-id}/work")
-  public void getArtifacts(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
+  @Path("/graphql/artifacts/default")
+  public void getArtifacts(HttpRequest request, HttpResponder responder) {
 
     String query = "{"
       + "  artifacts {"
@@ -84,6 +80,19 @@ public class GraphQLArtifactHttpHandler extends AbstractHttpHandler {
       + "  }"
       + "}";
 
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    CompletableFuture<ExecutionResult> promise = graphQL.executeAsync(executionInput);
+    ExecutionResult executionResult = promise.join();
+
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(executionResult.toSpecification()));
+  }
+
+  /**
+   * TODO
+   */
+  @GET
+  @Path("/graphql/artifacts")
+  public void getArtifacts(HttpRequest request, HttpResponder responder, @QueryParam("query") String query) {
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
     CompletableFuture<ExecutionResult> promise = graphQL.executeAsync(executionInput);
     ExecutionResult executionResult = promise.join();

@@ -20,16 +20,23 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 import com.google.common.base.Throwables;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.graphql.objects.Artifact;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -56,22 +63,57 @@ public class ArtifactDataFetcher {
   public DataFetcher getArtifactsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        String scope = dataFetchingEnvironment.getArgument(ArtifactFields.SCOPE);
-        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        List<ArtifactSummary> artifactSummaries = getArtifactSummaries(dataFetchingEnvironment);
 
-        try {
-          if (scope == null) {
-            NamespaceId namespaceId = validateAndGetNamespace(namespace);
-            return artifactRepository.getArtifactSummaries(namespaceId, true);
-          } else {
-            NamespaceId namespaceId = validateAndGetScopedNamespace(Ids.namespace(namespace), scope);
-            return artifactRepository.getArtifactSummaries(namespaceId, false);
-          }
-        } catch (IOException ioe) {
-          throw new RuntimeException("Error reading artifact metadata from the store.");
+        // artifactmeta
+        // artifactdescriptor
+        // artifactinfo
+        // artifactsummary
+
+        List<Artifact> artifacts = new ArrayList<>();
+
+        for (ArtifactSummary artifactSummary : artifactSummaries) {
+          Id.Namespace namespace = Id.Namespace.from(artifactSummary.getScope().name().toLowerCase());
+
+          ArtifactDetail artifactDetail = artifactRepository
+            .getArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0"));
+
+          // ArtifactMeta artifactMeta = artifactDetail.getMeta();
+          // ArtifactClasses classes = artifactMeta.getClasses();
+          // Map<String, String> properties = artifactMeta.getProperties();
+          // Set<ArtifactRange> usables = artifactMeta.getUsableBy();
+
+          Artifact artifact = new Artifact.Builder()
+            .name(artifactSummary.getName())
+            .version(artifactSummary.getVersion())
+            .scope(artifactSummary.getScope().toString())
+            .namespace(namespace.toString())
+            .location(artifactDetail.getDescriptor().getLocation())
+            .build();
+
+          artifacts.add(artifact);
         }
+
+        return artifacts;
       }
     );
+  }
+
+  private List<ArtifactSummary> getArtifactSummaries(DataFetchingEnvironment dataFetchingEnvironment) throws Exception {
+    String scope = dataFetchingEnvironment.getArgument(ArtifactFields.SCOPE);
+    String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+
+    try {
+      if (scope == null) {
+        NamespaceId namespaceId = validateAndGetNamespace(namespace);
+        return artifactRepository.getArtifactSummaries(namespaceId, true);
+      } else {
+        NamespaceId namespaceId = validateAndGetScopedNamespace(Ids.namespace(namespace), scope);
+        return artifactRepository.getArtifactSummaries(namespaceId, false);
+      }
+    } catch (IOException ioe) {
+      throw new RuntimeException("Error reading artifact metadata from the store.");
+    }
   }
 
   private NamespaceId validateAndGetNamespace(String namespaceId) throws NamespaceNotFoundException {
