@@ -35,6 +35,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;

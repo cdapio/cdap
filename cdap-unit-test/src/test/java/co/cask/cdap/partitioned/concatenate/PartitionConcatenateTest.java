@@ -117,9 +117,9 @@ public class PartitionConcatenateTest extends TestFrameworkTestBase {
 
     Configuration hConf = new Configuration();
     FileSystem fileSystem = FileSystem.get(hConf);
-    long stripeSize = HiveConf.getLongVar(hConf, HiveConf.ConfVars.HIVE_ORC_DEFAULT_STRIPE_SIZE);
+    long stripeSize = HiveConf.getLongVar(hConf, HiveConf.ConfVars.HIVE_ORC_CACHE_STRIPE_DETAILS_MEMORY_SIZE);
     CompressionKind compressionKind =
-      CompressionKind.valueOf(HiveConf.getVar(hConf, HiveConf.ConfVars.HIVE_ORC_DEFAULT_COMPRESS));
+      CompressionKind.valueOf(HiveConf.getVar(hConf, HiveConf.ConfVars.COMPRESSRESULT));
     int bufferSize = HiveConf.getIntVar(hConf, HiveConf.ConfVars.HIVE_ORC_DEFAULT_BUFFER_SIZE);
     int rowIndexStride = HiveConf.getIntVar(hConf, HiveConf.ConfVars.HIVE_ORC_DEFAULT_ROW_INDEX_STRIDE);
 
