@@ -52,7 +52,7 @@ interface ITextBoxProps extends WithStyles<typeof styles> {
 function TextBox({ value, onChange, placeholder, classes }: ITextBoxProps) {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
-    if (v && typeof onChange === 'function') {
+    if (typeof onChange === 'function') {
       onChange(v);
     }
   };

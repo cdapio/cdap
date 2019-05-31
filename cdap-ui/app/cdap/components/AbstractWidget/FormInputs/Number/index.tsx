@@ -45,7 +45,7 @@ interface INumberProps extends WithStyles<typeof styles> {
 function Number({ value, onChange, disabled, isFieldRequired, classes }: INumberProps) {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
-    if (v && typeof onChange === 'function') {
+    if (typeof onChange === 'function') {
       onChange(v);
     }
   };
@@ -76,8 +76,9 @@ export default function StyledNumberWrapper(props) {
   );
 }
 
-(StyledNumber as any).propTypes = {
+(StyledNumberWrapper as any).propTypes = {
   value: PropTypes.string,
   disabled: PropTypes.bool,
   isFieldRequired: PropTypes.bool,
+  onChange: PropTypes.bool,
 };
