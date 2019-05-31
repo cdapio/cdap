@@ -106,9 +106,9 @@ public final class HiveTokenUtils {
         String user = UserGroupInformation.getCurrentUser().getShortUserName();
         String tokenStr = (String) getDelegationTokenMethod.invoke(hiveConnection, user, user);
         Token<DelegationTokenIdentifier> delegationToken = new Token<>();
-        Token delegationTokenA = new Token();
+//        Token delegationTokenA = new Token();
 
-        delegationTokenA.decodeFromUrlString(tokenStr);
+        delegationToken.decodeFromUrlString(tokenStr);
         LOG.debug("Adding delegation token {} from HiveServer2 for service {} for user {}",
                   delegationToken, delegationToken.getService(), user);
         credentials.addToken(delegationToken.getService(), delegationToken);
