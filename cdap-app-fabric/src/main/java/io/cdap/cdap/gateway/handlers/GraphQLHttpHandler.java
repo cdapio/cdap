@@ -42,11 +42,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * TODO
+ * {@link io.cdap.http.HttpHandler} for the GraphQL server
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
-public class GraphQLArtifactHttpHandler extends AbstractHttpHandler {
+public class GraphQLHttpHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -54,8 +54,8 @@ public class GraphQLArtifactHttpHandler extends AbstractHttpHandler {
   private final GraphQL graphQL;
 
   @Inject
-  GraphQLArtifactHttpHandler(QueryTypeRuntimeWiring queryTypeRuntimeWiring,
-                             ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring)
+  GraphQLHttpHandler(QueryTypeRuntimeWiring queryTypeRuntimeWiring,
+                     ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring)
     throws IOException {
     String schemaDefinitionFile = "artifactSchema.graphqls";
     GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile,
