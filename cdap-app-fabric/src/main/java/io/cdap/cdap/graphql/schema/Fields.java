@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.schema;
 
 /**
- * TODO
+ * Base fields in a GraphQL schema
  */
 public interface Fields {
 

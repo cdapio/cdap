@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.typeruntimewiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 
 /**
- * TODO
+ * Defines a type runtime wiring for a type object in the schema
  */
 public interface CDAPTypeRuntimeWiring {
 

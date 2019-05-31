@@ -17,15 +17,11 @@
 
 package io.cdap.cdap.graphql.objects;
 
-import io.cdap.cdap.api.artifact.ApplicationClass;
-import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import org.apache.twill.filesystem.Location;
 
-import java.util.List;
-
 /**
- * TODO
+ * Data transfer object (DTO) that defines an artifact
  */
 public class Artifact {
 

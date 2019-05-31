@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.objects;
 
 /**
- *
+ * Data transfer object (DTO) that defines a location
  */
 public class Location {
 

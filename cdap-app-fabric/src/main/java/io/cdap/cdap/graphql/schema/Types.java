@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.schema;
 
 /**
- * TODO
+ * Base types in a GraphQL schema
  */
 public interface Types {
 

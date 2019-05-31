@@ -22,12 +22,12 @@ import graphql.GraphQL;
 import java.io.IOException;
 
 /**
- * TODO
+ * Defines a provider to create a GraphQL server
  */
 public interface GraphQLProvider {
 
   /**
-   * TODO
+   * Build the graphQL server
    */
   GraphQL buildGraphQL() throws IOException;
 
