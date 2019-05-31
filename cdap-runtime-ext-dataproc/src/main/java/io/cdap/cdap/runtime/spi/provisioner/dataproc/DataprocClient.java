@@ -119,7 +119,63 @@ public class DataprocClient implements AutoCloseable {
       throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
     }
 
-    return new DataprocClient(new DataprocConf(conf, network), client, compute, useInternalIP);
+    String subnet = conf.getSubnet();
+    Network networkInfo = getNetworkInfo(projectId, network, compute);
+
+    List<String> subnets = networkInfo.getSubnetworks();
+    if (subnet != null && !subnetExists(subnets, subnet)) {
+      throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
+                                                         + "Please use a different subnet.",
+                                                       subnet, network, projectId));
+    }
+
+    // if the network uses custom subnets, a subnet must be provided to the dataproc api
+    boolean autoCreateSubnet = networkInfo.getAutoCreateSubnetworks() == null ?
+      false : networkInfo.getAutoCreateSubnetworks();
+    if (!autoCreateSubnet) {
+      // if the network uses custom subnets but none exist, error out
+      if (subnets == null || subnets.isEmpty()) {
+        throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
+                                                           + "Please create a subnet or use a different network.",
+                                                         network, projectId));
+      }
+
+      // if no subnet was configured, choose one
+      if (subnet == null) {
+        subnet = chooseSubnet(network, subnets, conf.getZone());
+      }
+    }
+
+    return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
+  }
+
+  private static boolean subnetExists(List<String> subnets, String subnet) {
+    // subnets are of the form
+    // "https://www.googleapis.com/compute/v1/projects/<project>/regions/<region>/subnetworks/<name>"
+    // the provided subnet can be the full URI but is most often just the name
+    for (String networkSubnet : subnets) {
+      if (networkSubnet.equals(subnet) || networkSubnet.endsWith("subnetworks/" + subnet)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // subnets are identified as
+  // "https://www.googleapis.com/compute/v1/projects/<project>/regions/<region>/subnetworks/<name>"
+  // a subnet in the same region as the dataproc cluster must be chosen
+  private static String chooseSubnet(String network, List<String> subnets, String zone) {
+    // zones are always <region>-<letter>
+    String region = zone.substring(0, zone.lastIndexOf('-'));
+    for (String subnet : subnets) {
+      if (subnet.contains(region + "/subnetworks")) {
+        return subnet;
+      }
+    }
+    throw new IllegalArgumentException(
+      String.format("Could not find any subnets in network '%s' that are for region '%s'. "
+                      + "Please specify a subnet that is in the same region as the selected zone.",
+                    network, region));
   }
 
   private static String findNetwork(String project, Compute compute) throws IOException {
@@ -130,6 +186,15 @@ public class DataprocClient implements AutoCloseable {
                                                          + "Please create a network in the project.", project));
     }
     return networks.iterator().next().getName();
+  }
+
+  private static Network getNetworkInfo(String project, String network, Compute compute) throws IOException {
+    Network networkObj = compute.networks().get(project, network).execute();
+    if (networkObj == null) {
+      throw new IllegalArgumentException(String.format("Unable to find network '%s' in project '%s'. "
+                                                         + "Please specify another network.", network, project));
+    }
+    return networkObj;
   }
 
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
@@ -185,10 +250,15 @@ public class DataprocClient implements AutoCloseable {
       metadata.put("enable-oslogin", "false");
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-        .setNetworkUri(conf.getNetwork())
         .addServiceAccountScopes("https://www.googleapis.com/auth/cloud-platform")
         .setZoneUri(conf.getZone())
         .putAllMetadata(metadata);
+      // subnets are unique within a location, not within a network, which is why these configs are mutually exclusive.
+      if (conf.getSubnet() != null) {
+        clusterConfig.setSubnetworkUri(conf.getSubnet());
+      } else {
+        clusterConfig.setNetworkUri(network);
+      }
       for (String targetTag : getFirewallTargetTags()) {
         clusterConfig.addTags(targetTag);
       }
