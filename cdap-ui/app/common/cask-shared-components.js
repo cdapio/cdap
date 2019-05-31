@@ -73,6 +73,7 @@ var Markdown = require('../cdap/components/Markdown').MarkdownWithStyles;
 var CodeEditor = require('../cdap/components/CodeEditor').default;
 var JSONEditor = require('../cdap/components/CodeEditor/JSONEditor').default;
 var TextBox = require('../cdap/components/AbstractWidget/FormInputs/TextBox').default;
+var Number = require('../cdap/components/AbstractWidget/FormInputs/Number').default;
 
 export {
   Store,
@@ -127,4 +128,5 @@ export {
   CodeEditor,
   JSONEditor,
   TextBox,
+  Number,
 };

@@ -77,4 +77,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('textBox', function(reactDirective) {
     return reactDirective(window.CaskCommon.TextBox);
+  })
+  .directive('number', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Number);
   });
