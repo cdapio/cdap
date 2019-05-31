@@ -15,26 +15,31 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.cdap.runtimewiring;
+package io.cdap.cdap.graphql.store.namespace.runtimewiring;
 
+import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLTypes;
+import io.cdap.cdap.graphql.store.namespace.datafetchers.NamespaceDataFetcher;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
-
-import java.sql.Timestamp;
 
 /**
  *
  */
-public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class NamespaceQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+
+  private final NamespaceDataFetcher namespaceDataFetcher;
+
+  @Inject
+  NamespaceQueryTypeRuntimeWiring(NamespaceDataFetcher namespaceDataFetcher) {
+    this.namespaceDataFetcher = namespaceDataFetcher;
+  }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(GraphQLTypes.CDAP_QUERY)
-      .dataFetcher(GraphQLFields.TIMESTAMP, dataFetchingEnvironment -> new Timestamp(System.currentTimeMillis()))
-      .dataFetcher(GraphQLFields.ARTIFACT, dataFetchingEnvironment -> dataFetchingEnvironment)
-      .dataFetcher(GraphQLFields.NAMESPACE, dataFetchingEnvironment -> dataFetchingEnvironment)
+    return TypeRuntimeWiring.newTypeWiring(NamespaceTypes.NAMESPACE_QUERY)
+      .dataFetcher(NamespaceFields.NAMESPACES, namespaceDataFetcher.getNamespacesDataFetcher())
       .build();
   }
 
