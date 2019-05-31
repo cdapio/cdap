@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.graphql.objects;
 
+/**
+ *
+ */
 public class Location {
 
   private final String name;
