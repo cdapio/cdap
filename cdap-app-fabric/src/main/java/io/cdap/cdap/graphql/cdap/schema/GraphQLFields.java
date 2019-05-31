@@ -23,10 +23,10 @@ public class GraphQLFields implements Fields {
 
   public static final String TIMESTAMP = "timestamp";
   public static final String ARTIFACT = "artifact";
+  public static final String NAMESPACE = "namespace";
 
   private GraphQLFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
-
 
 }

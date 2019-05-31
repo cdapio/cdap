@@ -15,23 +15,13 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.artifact.schema;
+package io.cdap.cdap.graphql.store.namespace.schema;
 
-import io.cdap.cdap.graphql.schema.Fields;
+public class NamespaceSchemaFiles {
 
-/**
- * TODO
- */
-public class ArtifactFields implements Fields {
+  public static final String NAMESPACE_SCHEMA = "namespaceSchema.graphqls";
 
-  public static final String ARTIFACTS = "artifacts";
-  public static final String LOCATION = "location";
-  public static final String PLUGINS = "plugins";
-  public static final String APPLICATIONS = "applications";
-  public static final String NAME = "name";
-  public static final String VERSION = "version";
-
-  private ArtifactFields() {
+  private NamespaceSchemaFiles() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
 

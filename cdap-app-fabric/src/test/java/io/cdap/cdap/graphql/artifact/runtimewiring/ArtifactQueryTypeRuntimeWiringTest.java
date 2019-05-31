@@ -38,6 +38,7 @@ import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceSchemaFiles;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
@@ -59,7 +60,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -98,8 +98,9 @@ public class ArtifactQueryTypeRuntimeWiringTest {
 
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
-    List<String> schemaDefinitionFiles = Arrays
-      .asList(GraphQLSchemaFiles.ROOT_SCHEMA, ArtifactSchemaFiles.ARTIFACT_SCHEMA);
+    List<String> schemaDefinitionFiles = Arrays.asList(GraphQLSchemaFiles.ROOT_SCHEMA,
+                                                       ArtifactSchemaFiles.ARTIFACT_SCHEMA,
+                                                       NamespaceSchemaFiles.NAMESPACE_SCHEMA);
     ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring = injector
       .getInstance(ArtifactQueryTypeRuntimeWiring.class);
     ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring = injector.getInstance(ArtifactTypeRuntimeWiring.class);

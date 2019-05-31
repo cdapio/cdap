@@ -21,6 +21,7 @@ import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
@@ -44,6 +45,7 @@ public class ArtifactDataFetcher {
     this.artifactStore = artifactStore;
   }
 // TODO use look ahead to see if we get the metadata info or not
+
   /**
    * Fetcher to get a list of artifacts
    *
@@ -52,7 +54,7 @@ public class ArtifactDataFetcher {
   public DataFetcher getArtifactsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
         List<ArtifactDetail> artifactDetails = this.artifactStore.getArtifacts(new NamespaceId(namespace));
 
         List<Artifact> artifacts = new ArrayList<>();
@@ -75,7 +77,7 @@ public class ArtifactDataFetcher {
   public DataFetcher getArtifactDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
         String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
         String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
 
