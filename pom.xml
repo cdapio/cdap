@@ -70,6 +70,18 @@
       </snapshots>
     </repository>
     <repository>
+      <id>hortonworks</id>
+      <name>hortonworks</name>
+      <url>http://repo.hortonworks.com/content/repositories/releases/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
       <releases>
@@ -149,7 +161,7 @@
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>-->
 	<hbase20.version>2.0.2</hbase20.version>
-    <hive.version>3.1.0</hive.version>
+    <hive.version>3.1.0.3.1.0.0-78</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.3.2</http.component.version>
     <javamail.version>1.4.1</javamail.version>
