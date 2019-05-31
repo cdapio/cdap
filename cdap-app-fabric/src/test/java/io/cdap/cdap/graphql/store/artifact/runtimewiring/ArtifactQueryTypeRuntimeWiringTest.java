@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.artifact.runtimewiring;
+package io.cdap.cdap.graphql.store.artifact.runtimewiring;
 
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
@@ -143,7 +143,7 @@ public class ArtifactQueryTypeRuntimeWiringTest {
   }
 
   @Test
-  public void testGetArtifactsDataFetcher() {
+  public void testArtifacts() {
     String query = "{"
       + "  artifact {"
       + "    artifacts {"
@@ -195,7 +195,7 @@ public class ArtifactQueryTypeRuntimeWiringTest {
   }
 
   @Test
-  public void testGetArtifactDataFetcher() {
+  public void testArtifact() {
     String query = "{ "
       + "  artifact {"
       + "    artifact(name: \"PluginTest\", version: \"1.0.0\") {"
