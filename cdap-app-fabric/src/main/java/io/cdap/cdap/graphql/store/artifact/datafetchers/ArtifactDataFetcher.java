@@ -43,7 +43,7 @@ public class ArtifactDataFetcher {
   ArtifactDataFetcher(ArtifactStore artifactStore) {
     this.artifactStore = artifactStore;
   }
-
+// TODO use look ahead to see if we get the metadata info or not
   /**
    * Fetcher to get a list of artifacts
    *

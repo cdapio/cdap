@@ -15,32 +15,25 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.artifact.runtimewiring;
+package io.cdap.cdap.graphql.cdap.runtimewiring;
 
-import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.schema.Types;
-import io.cdap.cdap.graphql.store.artifact.datafetchers.ArtifactDataFetcher;
-import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
+
+import java.sql.Timestamp;
 
 /**
  *
  */
-public class QueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
-
-  private final ArtifactDataFetcher artifactDataFetcher;
-
-  @Inject
-  QueryTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher) {
-    this.artifactDataFetcher = artifactDataFetcher;
-  }
+public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(Types.QUERY)
-      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsDataFetcher())
-      .dataFetcher(ArtifactFields.ARTIFACT, artifactDataFetcher.getArtifactDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(GraphQLTypes.CDAP_QUERY)
+      .dataFetcher(GraphQLFields.TIMESTAMP, dataFetchingEnvironment -> new Timestamp(System.currentTimeMillis()))
+      .dataFetcher(GraphQLFields.ARTIFACT, dataFetchingEnvironment -> dataFetchingEnvironment)
       .build();
   }
 

@@ -25,6 +25,7 @@ import io.cdap.cdap.graphql.schema.Types;
 public class ArtifactTypes implements Types {
 
   public static final String ARTIFACT = "Artifact";
+  public static final String ARTIFACT_QUERY = "ArtifactQuery";
 
   private ArtifactTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

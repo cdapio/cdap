@@ -26,10 +26,13 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.graphql.cdap.provider.CDAPGraphQLProvider;
+import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLSchemaFiles;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
-import io.cdap.cdap.graphql.store.artifact.ArtifactGraphQLProvider;
+import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -38,6 +41,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -54,13 +59,17 @@ public class GraphQLHttpHandler extends AbstractHttpHandler {
   private final GraphQL graphQL;
 
   @Inject
-  GraphQLHttpHandler(QueryTypeRuntimeWiring queryTypeRuntimeWiring,
+  GraphQLHttpHandler(CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
+                     ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring,
                      ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring)
     throws IOException {
-    String schemaDefinitionFile = "artifactSchema.graphqls";
-    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile,
-                                                                  queryTypeRuntimeWiring,
-                                                                  artifactTypeRuntimeWiring);
+    List<String> schemaDefinitionFiles = Arrays.asList(
+      GraphQLSchemaFiles.ROOT_SCHEMA,
+      ArtifactSchemaFiles.ARTIFACT_SCHEMA);
+    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
+                                                              cdapQueryTypeRuntimeWiring,
+                                                              artifactQueryTypeRuntimeWiring,
+                                                              artifactTypeRuntimeWiring);
     this.graphQL = graphQLProvider.buildGraphQL();
   }
 

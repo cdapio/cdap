@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-type Query {
+type ArtifactQuery {
   artifacts(namespace: String = "default"): [Artifact]
   artifact(namespace: String = "default", name: String!, version: String!): Artifact
 }

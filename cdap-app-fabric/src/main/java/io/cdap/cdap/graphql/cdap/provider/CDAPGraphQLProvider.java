@@ -15,39 +15,47 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.artifact;
+package io.cdap.cdap.graphql.cdap.provider;
 
 import graphql.schema.idl.RuntimeWiring;
+import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
+
+import java.util.List;
 
 /**
  * TODO
  */
-public class ArtifactGraphQLProvider extends AbstractGraphQLProvider {
+public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
 
-  private final QueryTypeRuntimeWiring queryTypeRuntimeWiring;
+  private final CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring;
+  private final ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring;
   private final ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring;
 
   /**
    * TODO
    */
-  public ArtifactGraphQLProvider(String schemaDefinitionFile,
-                                 QueryTypeRuntimeWiring queryTypeRuntimeWiring,
-                                 ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring) {
-    super(schemaDefinitionFile);
+  public CDAPGraphQLProvider(List<String> schemaDefinitionFiles,
+                             CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
+                             ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring,
+                             ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring) {
+    super(schemaDefinitionFiles);
 
-    this.queryTypeRuntimeWiring = queryTypeRuntimeWiring;
+    this.cdapQueryTypeRuntimeWiring = cdapQueryTypeRuntimeWiring;
+    this.artifactQueryTypeRuntimeWiring = artifactQueryTypeRuntimeWiring;
     this.artifactTypeRuntimeWiring = artifactTypeRuntimeWiring;
   }
 
   @Override
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
-      .type(queryTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(cdapQueryTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(artifactQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
       .build();
   }
+
 
 }

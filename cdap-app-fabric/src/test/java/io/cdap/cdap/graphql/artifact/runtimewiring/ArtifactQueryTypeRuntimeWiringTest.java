@@ -31,10 +31,13 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.graphql.cdap.provider.CDAPGraphQLProvider;
+import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLSchemaFiles;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
-import io.cdap.cdap.graphql.store.artifact.ArtifactGraphQLProvider;
+import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.QueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
@@ -53,13 +56,14 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-public class QueryTypeRuntimeWiringTest {
+public class ArtifactQueryTypeRuntimeWiringTest {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -94,12 +98,16 @@ public class QueryTypeRuntimeWiringTest {
 
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
-    String schemaDefinitionFile = "artifactSchema.graphqls";
-    QueryTypeRuntimeWiring queryTypeRuntimeWiring = injector.getInstance(QueryTypeRuntimeWiring.class);
+    List<String> schemaDefinitionFiles = Arrays
+      .asList(GraphQLSchemaFiles.ROOT_SCHEMA, ArtifactSchemaFiles.ARTIFACT_SCHEMA);
+    ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring = injector
+      .getInstance(ArtifactQueryTypeRuntimeWiring.class);
     ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring = injector.getInstance(ArtifactTypeRuntimeWiring.class);
-    GraphQLProvider graphQLProvider = new ArtifactGraphQLProvider(schemaDefinitionFile,
-                                                                  queryTypeRuntimeWiring,
-                                                                  artifactTypeRuntimeWiring);
+    CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring = injector.getInstance(CDAPQueryTypeRuntimeWiring.class);
+    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
+                                                              cdapQueryTypeRuntimeWiring,
+                                                              artifactQueryTypeRuntimeWiring,
+                                                              artifactTypeRuntimeWiring);
     graphQL = graphQLProvider.buildGraphQL();
   }
 
@@ -136,38 +144,40 @@ public class QueryTypeRuntimeWiringTest {
   @Test
   public void testGetArtifactsDataFetcher() {
     String query = "{"
-      + "  artifacts {"
-      + "    name"
-      + "    version"
-      + "    scope"
-      + "    namespace"
-      + "    location {"
+      + "  artifact {"
+      + "    artifacts {"
       + "      name"
-      + "    }"
-      + "    plugins {"
-      + "      type"
-      + "      name"
-      + "      description"
-      + "      className"
-      + "      configFieldName"
-      + "    }"
-      + "    applications {"
-      + "      className"
-      + "      description"
+      + "      version"
+      + "      scope"
+      + "      namespace"
+      + "      location {"
+      + "        name"
+      + "      }"
+      + "      plugins {"
+      + "        type"
+      + "        name"
+      + "        description"
+      + "        className"
+      + "        configFieldName"
+      + "      }"
+      + "      applications {"
+      + "        className"
+      + "        description"
+      + "      }"
       + "    }"
       + "  }"
       + "}";
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
-    CompletableFuture<ExecutionResult> promise = graphQL.executeAsync(executionInput);
-    ExecutionResult executionResult = promise.join();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    Map<String, List> artifactsData = (Map<String, List>) executionResult.toSpecification().get("data");
-    Assert.assertEquals(1, artifactsData.size());
+    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get("data");
+    Assert.assertEquals(1, data.size());
 
-    List<Map> artifacts = artifactsData.get("artifacts");
+    Map<String, List> artifactQuery = (Map<String, List>) data.get("artifact");
+    List<Map> artifacts = artifactQuery.get("artifacts");
     Assert.assertEquals(1, artifacts.size());
 
     Map<String, Object> artifact = artifacts.get(0);
@@ -185,18 +195,19 @@ public class QueryTypeRuntimeWiringTest {
 
   @Test
   public void testGetArtifactDataFetcher() {
-    String query = "{"
-      + "  artifact(name: \"PluginTest\", version: \"1.0.0\") {"
-      + "    name"
-      + "    version"
-      + "    scope"
-      + "    namespace"
+    String query = "{ "
+      + "  artifact {"
+      + "    artifact(name: \"PluginTest\", version: \"1.0.0\") {"
+      + "      name"
+      + "      version"
+      + "      scope"
+      + "      namespace"
+      + "    }"
       + "  }"
       + "}";
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
-    CompletableFuture<ExecutionResult> promise = graphQL.executeAsync(executionInput);
-    ExecutionResult executionResult = promise.join();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 

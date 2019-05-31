@@ -28,33 +28,62 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Abstract class that implements {@link GraphQLProvider} to create a GraphQL server
  */
 public abstract class AbstractGraphQLProvider implements GraphQLProvider {
 
-  private final String schemaDefinitionFile;
+  private final List<String> schemaDefinitionFiles;
 
-  protected AbstractGraphQLProvider(String schemaDefinitionFile) {
-    this.schemaDefinitionFile = schemaDefinitionFile;
+  protected AbstractGraphQLProvider(List<String> schemaDefinitionFiles) {
+    this.schemaDefinitionFiles = schemaDefinitionFiles;
   }
 
   @Override
   public GraphQL buildGraphQL() throws IOException {
-    URL url = Resources.getResource(schemaDefinitionFile);
-    String sdl = Resources.toString(url, Charsets.UTF_8);
-    GraphQLSchema graphQLSchema = buildSchema(sdl);
+    GraphQLSchema graphQLSchema = buildSchema();
 
     return GraphQL.newGraphQL(graphQLSchema).build();
   }
 
-  private GraphQLSchema buildSchema(String sdl) {
-    TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(sdl);
-    RuntimeWiring runtimeWiring = buildWiring();
+  private GraphQLSchema buildSchema() throws IOException {
+    List<String> schemaFiles = loadSchemaFiles();
+    TypeDefinitionRegistry typeDefinitionRegistry = parseSchemas(schemaFiles);
+
     SchemaGenerator schemaGenerator = new SchemaGenerator();
+    RuntimeWiring runtimeWiring = buildWiring();
 
     return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
+  }
+
+  private TypeDefinitionRegistry parseSchemas(List<String> schemaFiles) {
+    SchemaParser schemaParser = new SchemaParser();
+    TypeDefinitionRegistry typeDefinitionRegistry = new TypeDefinitionRegistry();
+
+    for (String schemaFile : schemaFiles) {
+      typeDefinitionRegistry.merge(schemaParser.parse(schemaFile));
+    }
+
+    return typeDefinitionRegistry;
+  }
+
+  private List<String> loadSchemaFiles() throws IOException {
+    List<String> schemaFiles = new ArrayList<>();
+
+    for (String schemaFile : schemaDefinitionFiles) {
+      schemaFiles.add(loadSchema(schemaFile));
+    }
+
+    return schemaFiles;
+  }
+
+  private String loadSchema(String s) throws IOException {
+    URL url = Resources.getResource(s);
+
+    return Resources.toString(url, Charsets.UTF_8);
   }
 
   /**

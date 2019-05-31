@@ -17,22 +17,11 @@
 
 package io.cdap.cdap.graphql.store.artifact.schema;
 
-import io.cdap.cdap.graphql.schema.Fields;
+public class ArtifactSchemaFiles {
 
-/**
- * TODO
- */
-public class ArtifactFields implements Fields {
+  public static final String ARTIFACT_SCHEMA = "artifactSchema.graphqls";
 
-  public static final String ARTIFACTS = "artifacts";
-  public static final String LOCATION = "location";
-  public static final String PLUGINS = "plugins";
-  public static final String APPLICATIONS = "applications";
-  public static final String NAMESPACE = "namespace";
-  public static final String NAME = "name";
-  public static final String VERSION = "version";
-
-  private ArtifactFields() {
+  private ArtifactSchemaFiles() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
 
