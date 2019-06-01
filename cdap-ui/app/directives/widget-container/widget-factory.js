@@ -22,6 +22,7 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'value': 'model',
           'disabled': 'disabled',
+          'on-change': 'onChange',
           'is-field-required': 'isFieldRequired'
         }
       },
