@@ -25,7 +25,7 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 import java.sql.Timestamp;
 
 /**
- *
+ * Top level CDAP query type runtime wiring. Mainly use to integrate multiple schemas in the server
  */
 public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 

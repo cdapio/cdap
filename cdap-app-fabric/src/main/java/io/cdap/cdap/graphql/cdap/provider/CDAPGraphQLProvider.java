@@ -28,7 +28,7 @@ import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceTypeRuntimeWi
 import java.util.List;
 
 /**
- * TODO
+ * Implementation of an {@link AbstractGraphQLProvider} to create the CDAP GraphQL server
  */
 public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
 
@@ -38,9 +38,6 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
   private final NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring;
 
-  /**
-   * TODO
-   */
   public CDAPGraphQLProvider(List<String> schemaDefinitionFiles,
                              CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
                              ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring,

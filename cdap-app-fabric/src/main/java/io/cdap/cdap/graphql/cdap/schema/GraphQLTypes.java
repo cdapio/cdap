@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.cdap.schema;
 
 /**
- *
+ * Helper class with a collection of types used in the server
  */
 public class GraphQLTypes {
 

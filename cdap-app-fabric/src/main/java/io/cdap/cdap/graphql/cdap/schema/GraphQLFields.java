@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.cdap.schema;
 import io.cdap.cdap.graphql.schema.Fields;
 
 /**
- *
+ * Helper class with a collection of fields used in the server
  */
 public class GraphQLFields implements Fields {
 
