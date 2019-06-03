@@ -1,0 +1,8 @@
+{
+  namespace {
+    namespaces {
+      name
+      description
+    }
+  }
+}
