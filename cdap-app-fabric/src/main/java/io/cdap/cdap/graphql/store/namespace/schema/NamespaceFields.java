@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.store.namespace.schema;
 import io.cdap.cdap.graphql.schema.Fields;
 
 /**
- * TODO
+ * Helper class with a collection of fields relevant to namespaces that are used in the server
  */
 public class NamespaceFields implements Fields {
 

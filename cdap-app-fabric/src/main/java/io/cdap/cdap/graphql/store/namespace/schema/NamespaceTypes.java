@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.store.namespace.schema;
 import io.cdap.cdap.graphql.schema.Types;
 
 /**
- * TODO
+ * Helper class with a collection of types relevant to namespaces that are used in the server
  */
 public class NamespaceTypes implements Types {
 

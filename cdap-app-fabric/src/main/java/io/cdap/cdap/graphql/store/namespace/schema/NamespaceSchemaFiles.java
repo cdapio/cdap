@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.store.namespace.schema;
 
 /**
- *
+ * Helper class with a collection of scheme files relevant to namespaces that are used in the server
  */
 public class NamespaceSchemaFiles {
 
