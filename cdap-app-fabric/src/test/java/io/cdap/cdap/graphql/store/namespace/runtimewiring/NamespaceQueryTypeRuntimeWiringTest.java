@@ -20,8 +20,14 @@ package io.cdap.cdap.graphql.store.namespace.runtimewiring;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiringTest;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Map;
 
 public class NamespaceQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiringTest {
 
@@ -44,6 +50,21 @@ public class NamespaceQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWir
     ExecutionResult executionResult = graphQL.execute(executionInput);
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
+    Assert.assertEquals(1, data.size());
+
+    Map<String, List> namespaceQuery = (Map<String, List>) data.get(GraphQLFields.NAMESPACE);
+    List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
+    Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
+    Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
+    Assert.assertNotNull(namespace.get(GraphQLFields.DESCRIPTION));
+    Assert.assertNotNull(namespace.get(NamespaceFields.GENERATION));
+    Assert.assertNotNull(namespace.get(ArtifactFields.ARTIFACTS));
+
+    List<Map> artifacts = (List<Map>) namespace.get(ArtifactFields.ARTIFACTS);
+    Map artifact = artifacts.get(0);
+    Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
 
     System.out.println(executionResult.getData().toString());
   }

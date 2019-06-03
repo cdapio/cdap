@@ -45,11 +45,11 @@ public class ArtifactQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiri
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get("data");
+    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
     Assert.assertEquals(1, data.size());
 
-    Map<String, List> artifactQuery = (Map<String, List>) data.get("artifact");
-    List<Map> artifacts = artifactQuery.get("artifacts");
+    Map<String, List> artifactQuery = (Map<String, List>) data.get(GraphQLFields.ARTIFACT);
+    List<Map> artifacts = artifactQuery.get(ArtifactFields.ARTIFACTS);
     Assert.assertEquals(1, artifacts.size());
 
     Map<String, Object> artifact = artifacts.get(0);
@@ -92,11 +92,11 @@ public class ArtifactQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiri
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get("data");
+    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
     Assert.assertEquals(1, data.size());
 
-    Map<String, Map> artifactQuery = (Map<String, Map>) data.get("artifact");
-    Map<String, Object> artifact = artifactQuery.get("artifact");
+    Map<String, Map> artifactQuery = (Map<String, Map>) data.get(GraphQLFields.ARTIFACT);
+    Map<String, Object> artifact = artifactQuery.get(GraphQLFields.ARTIFACT);
     Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
     Assert.assertNotNull(artifact.get(ArtifactFields.VERSION));
     Assert.assertNotNull(artifact.get(ArtifactFields.SCOPE));
@@ -123,7 +123,7 @@ public class ArtifactQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiri
     List<Map> applications = (List<Map>) artifact.get(ArtifactFields.APPLICATIONS);
     Map<String, String> application = (Map<String, String>) applications.get(0);
     Assert.assertNotNull(application.get(ArtifactFields.CLASS_NAME));
-    Assert.assertNotNull(application.get(ArtifactFields.DESCRIPTION));
+    Assert.assertNotNull(application.get(GraphQLFields.DESCRIPTION));
 
     System.out.println(executionResult.getData().toString());
   }

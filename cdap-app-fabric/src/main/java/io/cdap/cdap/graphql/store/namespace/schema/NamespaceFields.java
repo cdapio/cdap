@@ -25,6 +25,7 @@ import io.cdap.cdap.graphql.schema.Fields;
 public class NamespaceFields implements Fields {
 
   public static final String NAMESPACES = "namespaces";
+  public static final String GENERATION = "generation";
 
   private NamespaceFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
