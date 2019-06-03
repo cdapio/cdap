@@ -22,4 +22,5 @@ type Namespace {
   name: String!
   description: String!
   generation: Long!
+  artifacts: [Artifact]
 }

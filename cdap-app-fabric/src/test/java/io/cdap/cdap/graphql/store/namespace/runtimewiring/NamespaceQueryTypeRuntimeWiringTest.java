@@ -33,6 +33,9 @@ public class NamespaceQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWir
       + "      name"
       + "      description"
       + "      generation"
+      + "      artifacts {"
+      + "        name"
+      + "      }"
       + "    }"
       + "  }"
       + "}";

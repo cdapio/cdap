@@ -23,13 +23,14 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
-import io.cdap.cdap.graphql.objects.Namespace;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -52,20 +53,22 @@ public class ArtifactDataFetcher {
    *
    * @return the data fetcher
    */
-  public DataFetcher getArtifactsDataFetcher() {
+  public DataFetcher getArtifactsFromQueryDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
-        List<ArtifactDetail> artifactDetails = this.artifactStore.getArtifacts(new NamespaceId(namespace));
 
-        List<Artifact> artifacts = new ArrayList<>();
+        return getArtifacts(namespace);
+      }
+    );
+  }
 
-        for (ArtifactDetail artifactDetail : artifactDetails) {
-          Artifact artifact = getArtifact(artifactDetail, namespace);
-          artifacts.add(artifact);
-        }
+  public DataFetcher getArtifactsFromSourceDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        NamespaceMeta namespace = dataFetchingEnvironment.getSource();
 
-        return artifacts;
+        return getArtifacts(namespace.getName());
       }
     );
   }
@@ -88,6 +91,19 @@ public class ArtifactDataFetcher {
         return getArtifact(artifactDetail, namespace);
       }
     );
+  }
+
+  private List<Artifact> getArtifacts(String namespace) throws IOException {
+    List<ArtifactDetail> artifactDetails = this.artifactStore.getArtifacts(new NamespaceId(namespace));
+
+    List<Artifact> artifacts = new ArrayList<>();
+
+    for (ArtifactDetail artifactDetail : artifactDetails) {
+      Artifact artifact = getArtifact(artifactDetail, namespace);
+      artifacts.add(artifact);
+    }
+
+    return artifacts;
   }
 
   private Artifact getArtifact(ArtifactDetail artifactDetail, String namespace) {

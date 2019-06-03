@@ -15,33 +15,31 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.artifact.runtimewiring;
+package io.cdap.cdap.graphql.store.namespace.runtimewiring;
 
 import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.ArtifactDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
-import io.cdap.cdap.graphql.store.artifact.schema.ArtifactTypes;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
  *
  */
-public class ArtifactQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class NamespaceTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final ArtifactDataFetcher artifactDataFetcher;
 
   @Inject
-  ArtifactQueryTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher) {
+  NamespaceTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher) {
     this.artifactDataFetcher = artifactDataFetcher;
   }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ArtifactTypes.ARTIFACT_QUERY)
-      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsFromQueryDataFetcher())
-      .dataFetcher(GraphQLFields.ARTIFACT, artifactDataFetcher.getArtifactDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(NamespaceTypes.NAMESPACE)
+      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsFromSourceDataFetcher())
       .build();
   }
 

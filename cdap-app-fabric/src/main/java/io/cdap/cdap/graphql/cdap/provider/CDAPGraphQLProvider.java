@@ -23,6 +23,7 @@ import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceTypeRuntimeWiring;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring;
   private final ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring;
   private final NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
+  private final NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring;
 
   /**
    * TODO
@@ -43,13 +45,15 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
                              CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
                              ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring,
                              ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring,
-                             NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring) {
+                             NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring,
+                             NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring) {
     super(schemaDefinitionFiles);
 
     this.cdapQueryTypeRuntimeWiring = cdapQueryTypeRuntimeWiring;
     this.artifactQueryTypeRuntimeWiring = artifactQueryTypeRuntimeWiring;
     this.artifactTypeRuntimeWiring = artifactTypeRuntimeWiring;
     this.namespaceQueryTypeRuntimeWiring = namespaceQueryTypeRuntimeWiring;
+    this.namespaceTypeRuntimeWiring = namespaceTypeRuntimeWiring;
   }
 
   @Override
@@ -59,8 +63,8 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
       .type(artifactQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
       .build();
   }
-
 
 }
