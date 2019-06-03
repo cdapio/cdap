@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.store.artifact.schema;
 
 /**
- *
+ * Helper class with a collection of schemas relevant to artifacts that are used in the server
  */
 public class ArtifactSchemaFiles {
 

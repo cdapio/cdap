@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.store.artifact.schema;
 import io.cdap.cdap.graphql.schema.Fields;
 
 /**
- * TODO
+ * Helper class with a collection of fields relevant to artifacts that are used in the server
  */
 public class ArtifactFields implements Fields {
 

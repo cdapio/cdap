@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.store.artifact.schema;
 import io.cdap.cdap.graphql.schema.Types;
 
 /**
- * TODO
+ * Helper class with a collection of types relevant to artifacts that are used in the server
  */
 public class ArtifactTypes implements Types {
 

@@ -26,7 +26,7 @@ import io.cdap.cdap.graphql.store.namespace.schema.NamespaceTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
- *  Namespace query type runtime wiring. Registers the data fetchers for the NamespaceQuery type.
+ * NamespaceQuery type runtime wiring. Registers the data fetchers for the NamespaceQuery type.
  */
 public class NamespaceQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 

@@ -26,7 +26,7 @@ import io.cdap.cdap.graphql.store.artifact.schema.ArtifactTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
- *
+ * ArtifactQuery type runtime wiring. Registers the data fetchers for the ArtifactQuery type.
  */
 public class ArtifactQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 

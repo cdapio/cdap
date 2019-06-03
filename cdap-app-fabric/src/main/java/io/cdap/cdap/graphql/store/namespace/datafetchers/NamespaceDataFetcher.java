@@ -54,6 +54,7 @@ public class NamespaceDataFetcher {
   }
 
   // TODO naming of method a bit weird? Talking about implementation?
+
   /**
    * Fetcher to get a namespace. The request originates from other fetchers that query a namespace
    *
@@ -71,6 +72,7 @@ public class NamespaceDataFetcher {
   }
 
   // TODO naming of method a bit weird? Talking about implementation?
+
   /**
    * Fetcher to get a namespace. The request originates from a query
    *

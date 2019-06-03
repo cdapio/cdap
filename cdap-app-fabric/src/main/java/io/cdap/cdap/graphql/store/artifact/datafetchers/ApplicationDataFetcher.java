@@ -20,7 +20,6 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.graphql.objects.Artifact;
-import org.apache.twill.filesystem.Location;
 
 /**
  * Fetchers to get applications

@@ -20,7 +20,6 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.graphql.objects.Artifact;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 
 /**
  * Fetchers to get plugins

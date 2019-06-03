@@ -48,8 +48,9 @@ public class ArtifactDataFetcher {
   }
 // TODO use look ahead to see if we get the metadata info or not
 
+  // TODO naming is a bit weird? Implementation?
   /**
-   * Fetcher to get a list of artifacts
+   * Fetcher to get a list of artifacts. The request originates from a query
    *
    * @return the data fetcher
    */
@@ -63,6 +64,12 @@ public class ArtifactDataFetcher {
     );
   }
 
+  // TODO naming is a bit weird? Implementation?
+  /**
+   * Fetcher to get a list of artifacts. The request originates from other fetchers that query artifacts
+   *
+   * @return the data fetcher
+   */
   public DataFetcher getArtifactsFromSourceDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {

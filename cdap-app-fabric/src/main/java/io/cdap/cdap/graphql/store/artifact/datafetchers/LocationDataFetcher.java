@@ -22,7 +22,6 @@ import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
-import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import org.apache.twill.filesystem.Location;
 
 /**
