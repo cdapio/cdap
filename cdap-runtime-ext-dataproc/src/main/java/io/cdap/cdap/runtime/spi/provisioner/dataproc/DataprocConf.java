@@ -53,6 +53,7 @@ public class DataprocConf {
   private final String zone;
   private final String projectId;
   private final String network;
+  private final String subnet;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -75,16 +76,18 @@ public class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
-  DataprocConf(DataprocConf conf, String network) {
-    this(conf.accountKey, conf.region, conf.zone, conf.projectId, network, conf.masterNumNodes, conf.masterCPUs,
-         conf.masterMemoryMB, conf.masterDiskGB, conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB,
-         conf.workerDiskGB, conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
+  DataprocConf(DataprocConf conf, String network, String subnet) {
+    this(conf.accountKey, conf.region, conf.zone, conf.projectId, network, subnet,
+         conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
+         conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
+         conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled, conf.publicKey,
          conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
-                       @Nullable String network, int masterNumNodes, int masterCPUs, int masterMemoryMB,
+                       @Nullable String network, @Nullable String subnet,
+                       int masterNumNodes, int masterCPUs, int masterMemoryMB,
                        int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        boolean preferExternalIP, boolean stackdriverLoggingEnabled,
@@ -95,6 +98,7 @@ public class DataprocConf {
     this.zone = zone;
     this.projectId = projectId;
     this.network = network;
+    this.subnet = subnet;
     this.masterNumNodes = masterNumNodes;
     this.masterCPUs = masterCPUs;
     this.masterMemoryMB = masterMemoryMB;
@@ -129,6 +133,11 @@ public class DataprocConf {
   @Nullable
   public String getNetwork() {
     return network;
+  }
+
+  @Nullable
+  public String getSubnet() {
+    return subnet;
   }
 
   public int getMasterNumNodes() {
@@ -269,6 +278,7 @@ public class DataprocConf {
     if (network == null || AUTO_DETECT.equals(network)) {
       network = null;
     }
+    String subnet = getString(properties, "subnet");
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
     if (masterNumNodes != 1 && masterNumNodes != 3) {
@@ -311,7 +321,7 @@ public class DataprocConf {
     );
 
     // always use 'global' region until CDAP-14376 is fixed.
-    return new DataprocConf(accountKey, "global", zone, projectId, network,
+    return new DataprocConf(accountKey, "global", zone, projectId, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
