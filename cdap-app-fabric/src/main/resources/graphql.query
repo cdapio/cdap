@@ -1,0 +1,12 @@
+{
+  namespace {
+    namespace(name: "default") {
+      name
+      description
+      generation
+      artifacts {
+        name
+      }
+    }
+  }
+}

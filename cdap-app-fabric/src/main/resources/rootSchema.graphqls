@@ -23,9 +23,9 @@ type CDAPQuery {
 }
 
 extend type CDAPQuery {
-  artifact: ArtifactQuery
+  artifact: ArtifactQuery!
 }
 
 extend type CDAPQuery {
-  namespace: NamespaceQuery
+  namespace: NamespaceQuery!
 }

@@ -15,7 +15,7 @@
 # the License.
 #
 type ArtifactQuery {
-  artifacts(namespace: String = "default"): [Artifact]
+  artifacts(namespace: String = "default"): [Artifact]!
   artifact(namespace: String = "default", name: String!, version: String!): Artifact
 }
 
@@ -25,26 +25,26 @@ type Artifact {
   scope: String!
   namespace: Namespace!
   location: Location!
-  plugins: [Plugin]
-  applications: [Application]
+  plugins: [Plugin]!
+  applications: [Application]!
 }
 
 type Location {
-  name: String
+  name: String!
 }
 
 type Plugin {
-  type: String
-  name: String
-  description: String
-  className: String
-  configFieldName: String
+  type: String!
+  name: String!
+  description: String!
+  className: String!
+  configFieldName: String!
   # properties: Map<String, PluginPropertyField>
   # requirements: Requirements
 }
 
 type Application {
-  className: String
-  description: String
+  className: String!
+  description: String!
   # configSchema: Schema
 }
