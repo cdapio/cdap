@@ -67,10 +67,10 @@ public class Artifact {
   }
 
   /**
-   * TODO
+   * Base implementation of a Builder for an Artifact
    */
   public static class Builder {
-
+    // TODO check which ones are required
     private String name;
     private String version;
     private String scope;
