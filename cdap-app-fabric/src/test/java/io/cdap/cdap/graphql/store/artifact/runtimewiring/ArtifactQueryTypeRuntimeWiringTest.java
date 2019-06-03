@@ -20,6 +20,8 @@ package io.cdap.cdap.graphql.store.artifact.runtimewiring;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiringTest;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,9 +36,39 @@ public class ArtifactQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiri
       + "  artifact {"
       + "    artifacts {"
       + "      name"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get("data");
+    Assert.assertEquals(1, data.size());
+
+    Map<String, List> artifactQuery = (Map<String, List>) data.get("artifact");
+    List<Map> artifacts = artifactQuery.get("artifacts");
+    Assert.assertEquals(1, artifacts.size());
+
+    Map<String, Object> artifact = artifacts.get(0);
+    Assert.assertNotNull(artifact.get("name"));
+
+    System.out.println(executionResult.getData().toString());
+  }
+
+  @Test
+  public void testArtifact() {
+    String query = "{ "
+      + "  artifact {"
+      + "    artifact(name: \"PluginTest\", version: \"1.0.0\") {"
+      + "      name"
       + "      version"
       + "      scope"
-      + "      namespace"
+      + "      namespace {"
+      + "        name"
+      + "      }"
       + "      location {"
       + "        name"
       + "      }"
@@ -63,47 +95,35 @@ public class ArtifactQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiri
     Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get("data");
     Assert.assertEquals(1, data.size());
 
-    Map<String, List> artifactQuery = (Map<String, List>) data.get("artifact");
-    List<Map> artifacts = artifactQuery.get("artifacts");
-    Assert.assertEquals(1, artifacts.size());
+    Map<String, Map> artifactQuery = (Map<String, Map>) data.get("artifact");
+    Map<String, Object> artifact = artifactQuery.get("artifact");
+    Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
+    Assert.assertNotNull(artifact.get(ArtifactFields.VERSION));
+    Assert.assertNotNull(artifact.get(ArtifactFields.SCOPE));
+    Assert.assertNotNull(artifact.get(GraphQLFields.NAMESPACE));
+    Assert.assertNotNull(artifact.get(ArtifactFields.LOCATION));
+    Assert.assertNotNull(artifact.get(ArtifactFields.PLUGINS));
+    Assert.assertNotNull(artifact.get(ArtifactFields.APPLICATIONS));
 
-    Map<String, Object> artifact = artifacts.get(0);
-    Assert.assertNotNull(artifact.get("name"));
-    Assert.assertNotNull(artifact.get("version"));
-    Assert.assertNotNull(artifact.get("scope"));
-    Assert.assertNotNull(artifact.get("namespace"));
-    Assert.assertNotNull(artifact.get("location"));
+    Map<String, String> namespace = (Map<String, String>) artifact.get(GraphQLFields.NAMESPACE);
+    Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
 
-    Map<String, String> location = (Map<String, String>) artifact.get("location");
-    Assert.assertNotNull(location.get("name"));
+    Map<String, String> location = (Map<String, String>) artifact.get(ArtifactFields.LOCATION);
+    Assert.assertNotNull(location.get(GraphQLFields.NAME));
 
-    System.out.println(executionResult.getData().toString());
-  }
+    List<Map> plugins = (List<Map>) artifact.get(ArtifactFields.PLUGINS);
+    Assert.assertTrue(plugins.isEmpty());
+    // Map<String, String> plugin = (Map<String, String>) plugins.get(0);
+    // Assert.assertNotNull(plugin.get(ArtifactFields.TYPE));
+    // Assert.assertNotNull(plugin.get(GraphQLFields.NAME));
+    // Assert.assertNotNull(plugin.get(ArtifactFields.DESCRIPTION));
+    // Assert.assertNotNull(plugin.get(ArtifactFields.CLASS_NAME));
+    // Assert.assertNotNull(plugin.get(ArtifactFields.CONFIG_FIELD_NAME));
 
-  @Test
-  public void testArtifact() {
-    String query = "{ "
-      + "  artifact {"
-      + "    artifact(name: \"PluginTest\", version: \"1.0.0\") {"
-      + "      name"
-      + "      version"
-      + "      scope"
-      + "      namespace {"
-      + "        name"
-      + "        description"
-      + "        generation"
-      + "      }"
-      + "      location {"
-      + "        name"
-      + "      }"
-      + "    }"
-      + "  }"
-      + "}";
-
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
-    ExecutionResult executionResult = graphQL.execute(executionInput);
-
-    Assert.assertTrue(executionResult.getErrors().isEmpty());
+    List<Map> applications = (List<Map>) artifact.get(ArtifactFields.APPLICATIONS);
+    Map<String, String> application = (Map<String, String>) applications.get(0);
+    Assert.assertNotNull(application.get(ArtifactFields.CLASS_NAME));
+    Assert.assertNotNull(application.get(ArtifactFields.DESCRIPTION));
 
     System.out.println(executionResult.getData().toString());
   }

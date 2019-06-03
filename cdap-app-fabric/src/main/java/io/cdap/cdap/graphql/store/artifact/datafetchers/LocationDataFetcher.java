@@ -20,6 +20,7 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 import com.google.common.collect.ImmutableMap;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import org.apache.twill.filesystem.Location;
@@ -40,7 +41,7 @@ public class LocationDataFetcher {
         Artifact artifact = dataFetchingEnvironment.getSource();
         Location location = artifact.getLocation();
 
-        return ImmutableMap.of(ArtifactFields.NAME, location.toURI().getPath());
+        return ImmutableMap.of(GraphQLFields.NAME, location.toURI().getPath());
       }
     );
   }

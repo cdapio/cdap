@@ -27,6 +27,7 @@ public class GraphQLFields implements Fields {
   public static final String TIMESTAMP = "timestamp";
   public static final String ARTIFACT = "artifact";
   public static final String NAMESPACE = "namespace";
+  public static final String NAME = "name";
 
   private GraphQLFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

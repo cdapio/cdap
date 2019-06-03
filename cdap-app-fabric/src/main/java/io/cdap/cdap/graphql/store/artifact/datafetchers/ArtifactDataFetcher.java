@@ -82,7 +82,7 @@ public class ArtifactDataFetcher {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
-        String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
+        String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
         String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
 
         Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespace), name, version);
