@@ -88,6 +88,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .registerTypeAdapter(Metadata.class, new MetadataCodec())
+    .create();
+  // for internal calls (create/update/drop/delete) we need to use a different codec for ScopedName and
+  // ScopedNameOfKind: they are used as map keys, where JSON only allows plain strings, so we serialize
+  // as [kind:]scope:name instead of a record. In other methods (the external metadata endpoint), however,
+  // we need to keep the serialization as a json record.
+  private static final Gson GSON_INTERNAL = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .registerTypeAdapter(Metadata.class, new MetadataCodec())
     .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
     .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
     .create();
@@ -234,36 +242,36 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/metadata-internals/create")
   public void create(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Create createMutation =
-      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Create.class);
+      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Create.class);
     metadataAdmin.applyMutation(createMutation, SYNC);
-    responder.sendString(HttpResponseStatus.OK, String.format("Create Metadata mutation applied successfully."));
+    responder.sendString(HttpResponseStatus.OK, "Create Metadata mutation applied successfully.");
   }
 
   @POST
   @Path("/metadata-internals/update")
   public void update(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Update updateMutation =
-      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Update.class);
+      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Update.class);
     metadataAdmin.applyMutation(updateMutation, SYNC);
-    responder.sendString(HttpResponseStatus.OK, String.format("Update Metadata mutation applied successfully."));
+    responder.sendString(HttpResponseStatus.OK, "Update Metadata mutation applied successfully.");
   }
 
   @DELETE
   @Path("/metadata-internals/drop")
   public void drop(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Drop dropMutation =
-      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Drop.class);
+      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Drop.class);
     metadataAdmin.applyMutation(dropMutation, SYNC);
-    responder.sendString(HttpResponseStatus.OK, String.format(" Drop Metadata mutation applied successfully."));
+    responder.sendString(HttpResponseStatus.OK, "Drop Metadata mutation applied successfully.");
   }
 
   @DELETE
   @Path("/metadata-internals/remove")
   public void remove(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Remove removeMutation =
-      GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Remove.class);
+      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Remove.class);
     metadataAdmin.applyMutation(removeMutation, SYNC);
-    responder.sendString(HttpResponseStatus.OK, String.format("Remove Metadata mutation applied successfully."));
+    responder.sendString(HttpResponseStatus.OK, "Remove Metadata mutation applied successfully.");
   }
 
   @GET
