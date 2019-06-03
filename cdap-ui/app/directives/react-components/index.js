@@ -80,4 +80,10 @@ angular.module(PKG.name + '.commons')
   })
   .directive('number', function(reactDirective) {
     return reactDirective(window.CaskCommon.Number);
+  })
+  .directive('csvWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.CSVWidget);
+  })
+  .directive('keyValueWidget', function (reactDirective) {
+    return reactDirective(window.CaskCommon.KeyValueWidget);
   });

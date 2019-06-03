@@ -27,13 +27,13 @@ export default class Experimental extends Component {
       const state = SchemaStore.getState();
       const schema = state.schema;
 
-      this.setState({parsed: schema});
+      this.setState({ parsed: schema });
     });
   }
 
   state = {
-    parsed: ''
-  }
+    parsed: '',
+  };
 
   componentWillMount() {
     const schema = {
@@ -45,47 +45,46 @@ export default class Experimental extends Component {
           type: [
             {
               type: 'long',
-              logicalType: 'timestamp-micros'
+              logicalType: 'timestamp-micros',
             },
-            'null'
-          ]
+            'null',
+          ],
         },
         {
           name: 'time',
           type: {
             type: 'long',
-            logicalType: 'time-micros'
-          }
+            logicalType: 'time-micros',
+          },
         },
         {
           name: 'date',
           type: {
             type: 'int',
-            logicalType: 'date'
-          }
+            logicalType: 'date',
+          },
         },
         {
           name: 'haha',
           type: [
             {
               type: 'int',
-              logicalType: 'date'
+              logicalType: 'date',
             },
             {
               type: 'long',
-              logicalType: 'time-micros'
-            }
-          ]
-        }
-      ]
+              logicalType: 'time-micros',
+            },
+          ],
+        },
+      ],
     };
-
 
     SchemaStore.dispatch({
       type: 'FIELD_UPDATE',
       payload: {
-        schema
-      }
+        schema,
+      },
     });
   }
 
