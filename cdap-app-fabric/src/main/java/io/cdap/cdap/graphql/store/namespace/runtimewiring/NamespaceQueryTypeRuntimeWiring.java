@@ -19,6 +19,7 @@ package io.cdap.cdap.graphql.store.namespace.runtimewiring;
 
 import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.namespace.datafetchers.NamespaceDataFetcher;
 import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
 import io.cdap.cdap.graphql.store.namespace.schema.NamespaceTypes;
@@ -40,6 +41,7 @@ public class NamespaceQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(NamespaceTypes.NAMESPACE_QUERY)
       .dataFetcher(NamespaceFields.NAMESPACES, namespaceDataFetcher.getNamespacesDataFetcher())
+      .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceFromQueryDataFetcher())
       .build();
   }
 

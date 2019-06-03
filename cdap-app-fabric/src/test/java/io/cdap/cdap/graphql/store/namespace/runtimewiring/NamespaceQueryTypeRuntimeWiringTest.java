@@ -32,10 +32,10 @@ import java.util.Map;
 public class NamespaceQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiringTest {
 
   @Test
-  public void testNamespaces() {
+  public void testNamespace() {
     String query = "{ "
       + "  namespace {"
-      + "    namespaces {"
+      + "    namespace(name: \"default\") {"
       + "      name"
       + "      description"
       + "      generation"
@@ -55,8 +55,7 @@ public class NamespaceQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWir
     Assert.assertEquals(1, data.size());
 
     Map<String, List> namespaceQuery = (Map<String, List>) data.get(GraphQLFields.NAMESPACE);
-    List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
-    Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
+    Map<String, Object> namespace = (Map<String, Object>) namespaceQuery.get(GraphQLFields.NAMESPACE);
     Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
     Assert.assertNotNull(namespace.get(GraphQLFields.DESCRIPTION));
     Assert.assertNotNull(namespace.get(NamespaceFields.GENERATION));
@@ -65,6 +64,32 @@ public class NamespaceQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWir
     List<Map> artifacts = (List<Map>) namespace.get(ArtifactFields.ARTIFACTS);
     Map artifact = artifacts.get(0);
     Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
+
+    System.out.println(executionResult.getData().toString());
+  }
+
+  @Test
+  public void testNamespaces() {
+    String query = "{ "
+      + "  namespace {"
+      + "    namespaces {"
+      + "      name"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
+    Assert.assertEquals(1, data.size());
+
+    Map<String, List> namespaceQuery = (Map<String, List>) data.get(GraphQLFields.NAMESPACE);
+    List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
+    Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
+    Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
 
     System.out.println(executionResult.getData().toString());
   }

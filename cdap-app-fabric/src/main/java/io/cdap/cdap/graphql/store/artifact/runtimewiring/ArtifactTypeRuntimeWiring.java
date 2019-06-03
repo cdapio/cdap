@@ -26,7 +26,6 @@ import io.cdap.cdap.graphql.store.artifact.datafetchers.PluginDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactTypes;
 import io.cdap.cdap.graphql.store.namespace.datafetchers.NamespaceDataFetcher;
-import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
@@ -56,7 +55,7 @@ public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(ArtifactFields.LOCATION, locationDataFetcher.getLocationDataFetcher())
       .dataFetcher(ArtifactFields.PLUGINS, pluginDataFetcher.getPluginsDataFetcher())
       .dataFetcher(ArtifactFields.APPLICATIONS, applicationDataFetcher.getApplicationsDataFetcher())
-      .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceDataFetcher())
+      .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceFromSourceDataFetcher())
       .build();
   }
 

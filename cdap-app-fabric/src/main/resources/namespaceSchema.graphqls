@@ -16,6 +16,7 @@
 #
 type NamespaceQuery {
   namespaces: [Namespace]
+  namespace(name: String!): Namespace
 }
 
 type Namespace {
