@@ -21,6 +21,11 @@ import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.graphql.objects.Artifact;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
+
+import java.util.stream.Collectors;
 
 /**
  * Fetchers to get applications
@@ -41,13 +46,26 @@ public class NamespaceDataFetcher {
    */
   public DataFetcher getNamespacesDataFetcher() {
     return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> {
-        // List<NamespaceMeta> x = namespaceAdmin.list().stream()
-        //   .map(meta ->
-        //          new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
-        //   .collect(Collectors.toList());
+      dataFetchingEnvironment -> namespaceAdmin.list().stream()
+        .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
+        .collect(Collectors.toList())
+    );
+  }
 
-        return namespaceAdmin.list();
+  /**
+   * Fetcher to get a namespace
+   *
+   * @return the data fetcher
+   */
+  public DataFetcher getNamespaceDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        Artifact artifact = dataFetchingEnvironment.getSource();
+        String namespace = artifact.getNamespace();
+
+        return new NamespaceMeta.Builder(
+          namespaceAdmin.get(new NamespaceId(namespace))
+        ).buildWithoutKeytabURIVersion();
       }
     );
   }

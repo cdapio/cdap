@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.graphql.store.namespace.schema;
 
+/**
+ *
+ */
 public class NamespaceSchemaFiles {
 
   public static final String NAMESPACE_SCHEMA = "namespaceSchema.graphqls";

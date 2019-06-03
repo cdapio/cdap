@@ -20,4 +20,6 @@ type NamespaceQuery {
 
 type Namespace {
   name: String!
+  description: String!
+  generation: Long!
 }

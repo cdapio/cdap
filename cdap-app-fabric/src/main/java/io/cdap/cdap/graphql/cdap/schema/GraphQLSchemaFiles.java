@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.graphql.cdap.schema;
 
+/**
+ *
+ */
 public class GraphQLSchemaFiles {
 
   public static final String ROOT_SCHEMA = "rootSchema.graphqls";

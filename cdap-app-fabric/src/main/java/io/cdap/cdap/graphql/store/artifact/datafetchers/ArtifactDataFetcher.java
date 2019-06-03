@@ -23,6 +23,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
+import io.cdap.cdap.graphql.objects.Namespace;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;

@@ -30,6 +30,7 @@ public class Artifact {
   private final String scope;
   private final String namespace;
   private final Location location;
+  // TODO this should not be an object, but rather a sort of key to access metadata
   private final ArtifactMeta meta;
 
   private Artifact(Builder builder) {
@@ -112,7 +113,6 @@ public class Artifact {
 
       return this;
     }
-
 
     public Artifact build() {
       return new Artifact(this);

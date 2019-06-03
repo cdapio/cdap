@@ -19,6 +19,9 @@ package io.cdap.cdap.graphql.cdap.schema;
 
 import io.cdap.cdap.graphql.schema.Fields;
 
+/**
+ *
+ */
 public class GraphQLFields implements Fields {
 
   public static final String TIMESTAMP = "timestamp";

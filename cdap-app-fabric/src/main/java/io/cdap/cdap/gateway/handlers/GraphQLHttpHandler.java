@@ -34,6 +34,7 @@ import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntim
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
 import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceSchemaFiles;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -67,7 +68,8 @@ public class GraphQLHttpHandler extends AbstractHttpHandler {
     throws IOException {
     List<String> schemaDefinitionFiles = Arrays.asList(
       GraphQLSchemaFiles.ROOT_SCHEMA,
-      ArtifactSchemaFiles.ARTIFACT_SCHEMA);
+      ArtifactSchemaFiles.ARTIFACT_SCHEMA,
+      NamespaceSchemaFiles.NAMESPACE_SCHEMA);
     GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
                                                               cdapQueryTypeRuntimeWiring,
                                                               artifactQueryTypeRuntimeWiring,

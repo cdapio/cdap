@@ -49,7 +49,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -59,23 +58,19 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import static org.junit.Assert.*;
-
 public class CDAPQueryTypeRuntimeWiringTest {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
-
+  protected static GraphQL graphQL;
   private static CConfiguration cConf;
   private static File tmpDir;
   private static File systemArtifactsDir1;
   private static File systemArtifactsDir2;
   private static ArtifactRepository artifactRepository;
   private static File appArtifactFile;
-
-  protected static GraphQL graphQL;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -103,7 +98,8 @@ public class CDAPQueryTypeRuntimeWiringTest {
       .getInstance(ArtifactQueryTypeRuntimeWiring.class);
     ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring = injector.getInstance(ArtifactTypeRuntimeWiring.class);
     CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring = injector.getInstance(CDAPQueryTypeRuntimeWiring.class);
-    NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring = injector.getInstance(NamespaceQueryTypeRuntimeWiring.class);
+    NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring = injector
+      .getInstance(NamespaceQueryTypeRuntimeWiring.class);
     GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
                                                               cdapQueryTypeRuntimeWiring,
                                                               artifactQueryTypeRuntimeWiring,

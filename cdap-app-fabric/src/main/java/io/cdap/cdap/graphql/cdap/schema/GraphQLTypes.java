@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.graphql.cdap.schema;
 
+/**
+ *
+ */
 public class GraphQLTypes {
 
   public static final String CDAP_QUERY = "CDAPQuery";

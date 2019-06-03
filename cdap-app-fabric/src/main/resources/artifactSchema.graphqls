@@ -23,7 +23,7 @@ type Artifact {
   name: String!
   version: String!
   scope: String!
-  namespace: String!
+  namespace: Namespace!
   location: Location!
   plugins: [Plugin]
   applications: [Application]

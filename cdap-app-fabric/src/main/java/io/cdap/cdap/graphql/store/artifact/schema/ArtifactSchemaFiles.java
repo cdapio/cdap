@@ -17,6 +17,9 @@
 
 package io.cdap.cdap.graphql.store.artifact.schema;
 
+/**
+ *
+ */
 public class ArtifactSchemaFiles {
 
   public static final String ARTIFACT_SCHEMA = "artifactSchema.graphqls";

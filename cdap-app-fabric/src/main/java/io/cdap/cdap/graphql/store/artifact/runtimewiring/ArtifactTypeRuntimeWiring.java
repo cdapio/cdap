@@ -24,6 +24,8 @@ import io.cdap.cdap.graphql.store.artifact.datafetchers.LocationDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.PluginDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactTypes;
+import io.cdap.cdap.graphql.store.namespace.datafetchers.NamespaceDataFetcher;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
@@ -34,14 +36,17 @@ public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   private final LocationDataFetcher locationDataFetcher;
   private final PluginDataFetcher pluginDataFetcher;
   private final ApplicationDataFetcher applicationDataFetcher;
+  private final NamespaceDataFetcher namespaceDataFetcher;
 
   @Inject
   ArtifactTypeRuntimeWiring(LocationDataFetcher locationDataFetcher,
                             PluginDataFetcher pluginDataFetcher,
-                            ApplicationDataFetcher applicationDataFetcher) {
+                            ApplicationDataFetcher applicationDataFetcher,
+                            NamespaceDataFetcher namespaceDataFetcher) {
     this.locationDataFetcher = locationDataFetcher;
     this.pluginDataFetcher = pluginDataFetcher;
     this.applicationDataFetcher = applicationDataFetcher;
+    this.namespaceDataFetcher = namespaceDataFetcher;
   }
 
   @Override
@@ -50,6 +55,7 @@ public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(ArtifactFields.LOCATION, locationDataFetcher.getLocationDataFetcher())
       .dataFetcher(ArtifactFields.PLUGINS, pluginDataFetcher.getPluginsDataFetcher())
       .dataFetcher(ArtifactFields.APPLICATIONS, applicationDataFetcher.getApplicationsDataFetcher())
+      .dataFetcher(NamespaceFields.NAMESPACE, namespaceDataFetcher.getNamespaceDataFetcher())
       .build();
   }
 
