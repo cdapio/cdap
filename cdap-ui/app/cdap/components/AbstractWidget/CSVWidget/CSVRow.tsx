@@ -17,20 +17,14 @@
 import * as React from 'react';
 import Input from '@material-ui/core/Input';
 import withStyles from '@material-ui/core/styles/withStyles';
-
 import AbstractRow, {
   IAbstractRowProps,
+  AbstractRowStyles,
 } from 'components/AbstractWidget/AbstractMultiRowWidget/AbstractRow';
 
 const styles = (theme) => {
   return {
-    root: {
-      height: '44px',
-    },
-    input: {
-      width: 'calc(100% - 100px)',
-      marginRight: '10px',
-    },
+    ...AbstractRowStyles(theme),
     disabled: {
       color: `${theme.palette.grey['50']}`,
     },
@@ -67,7 +61,6 @@ class CSVRow extends AbstractRow<ICSVRowProps, ICSVRowState> {
   public renderInput = () => {
     return (
       <Input
-        className={this.props.classes.input}
         classes={{ disabled: this.props.classes.disabled }}
         placeholder={this.props.valuePlaceholder}
         onChange={this.handleChange}

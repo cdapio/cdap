@@ -167,11 +167,15 @@ angular.module(PKG.name + '.commons')
         }
       },
       'keyvalue-dropdown': {
-        element: '<my-key-value></my-key-value>',
+        element: '<key-value-dropdown-widget></key-value-dropdown-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
-          'is-dropdown': 'true'
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
+          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
+          'dropdown-options': 'myconfig["widget-attributes"]["dropdownOptions"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
         }
       },
       'function-dropdown-with-alias': {
