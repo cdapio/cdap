@@ -23,6 +23,7 @@ import graphql.schema.DataFetcher;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
@@ -58,4 +59,15 @@ public class ApplicationRecordDataFetcher {
     );
   }
 
+  public DataFetcher getApplicationDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
+        String applicationName = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
+
+        ApplicationId appId = new ApplicationId(namespace, applicationName);
+        return applicationClient.get(appId);
+      }
+    );
+  }
 }

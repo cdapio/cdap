@@ -16,6 +16,7 @@
 #
 type ApplicationQuery {
   applications(namespace: String = "default"): [ApplicationRecord]!
+  application(namespace: String = "default", name: String!): ApplicationDetail!
 }
 
 type ApplicationRecord {
@@ -23,6 +24,18 @@ type ApplicationRecord {
   name: String!
   version: String!
   description: String!
+  artifact: ArtifactSummary!
+  ownerPrincipal: String
+}
+
+type ApplicationDetail {
+  name: String!
+  appVersion: String!
+  description: String!
+  configuration: String!
+  #List<DatasetDetail> datasets;
+  #List<ProgramRecord> programs;
+  #List<PluginDetail> plugins;
   artifact: ArtifactSummary!
   ownerPrincipal: String
 }

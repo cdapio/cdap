@@ -81,4 +81,29 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
     System.out.println(executionResult.getData().toString());
   }
 
+  @Test
+  public void testGetApplication() {
+    String query = "{ "
+      + "  application {"
+      + "    application(name: \"Test\") {"
+      + "      name"
+      + "      appVersion"
+      + "      description"
+      + "      configuration"
+      + "      artifact {"
+      + "        name"
+      + "      }"
+      + "      ownerPrincipal"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    System.out.println(executionResult.getData().toString());
+  }
+
 }
