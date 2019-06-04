@@ -98,20 +98,7 @@ public abstract class CDAPQueryTypeRuntimeWiringTest {
     List<String> schemaDefinitionFiles = Arrays.asList(GraphQLSchemaFiles.ROOT_SCHEMA,
                                                        ArtifactSchemaFiles.ARTIFACT_SCHEMA,
                                                        NamespaceSchemaFiles.NAMESPACE_SCHEMA);
-    ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring = injector
-      .getInstance(ArtifactQueryTypeRuntimeWiring.class);
-    ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring = injector.getInstance(ArtifactTypeRuntimeWiring.class);
-    CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring = injector.getInstance(CDAPQueryTypeRuntimeWiring.class);
-    NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring = injector
-      .getInstance(NamespaceQueryTypeRuntimeWiring.class);
-    NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring = injector
-      .getInstance(NamespaceTypeRuntimeWiring.class);
-    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
-                                                              cdapQueryTypeRuntimeWiring,
-                                                              artifactQueryTypeRuntimeWiring,
-                                                              artifactTypeRuntimeWiring,
-                                                              namespaceQueryTypeRuntimeWiring,
-                                                              namespaceTypeRuntimeWiring);
+    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles);
     graphQL = graphQLProvider.buildGraphQL();
   }
   //

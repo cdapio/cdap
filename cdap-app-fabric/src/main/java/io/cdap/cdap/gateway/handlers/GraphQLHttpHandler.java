@@ -27,14 +27,9 @@ import graphql.GraphQL;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.graphql.cdap.provider.CDAPGraphQLProvider;
-import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLSchemaFiles;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
-import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.namespace.schema.NamespaceSchemaFiles;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.http.AbstractHttpHandler;
@@ -62,22 +57,12 @@ public class GraphQLHttpHandler extends AbstractHttpHandler {
   private final GraphQL graphQL;
 
   @Inject
-  GraphQLHttpHandler(CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
-                     ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring,
-                     ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring,
-                     NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring,
-                     NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring)
-    throws IOException {
+  GraphQLHttpHandler() throws IOException {
     List<String> schemaDefinitionFiles = Arrays.asList(
       GraphQLSchemaFiles.ROOT_SCHEMA,
       ArtifactSchemaFiles.ARTIFACT_SCHEMA,
       NamespaceSchemaFiles.NAMESPACE_SCHEMA);
-    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
-                                                              cdapQueryTypeRuntimeWiring,
-                                                              artifactQueryTypeRuntimeWiring,
-                                                              artifactTypeRuntimeWiring,
-                                                              namespaceQueryTypeRuntimeWiring,
-                                                              namespaceTypeRuntimeWiring);
+    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles);
     this.graphQL = graphQLProvider.buildGraphQL();
   }
 

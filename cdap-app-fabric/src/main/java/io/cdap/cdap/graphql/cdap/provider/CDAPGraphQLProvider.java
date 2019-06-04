@@ -20,6 +20,7 @@ package io.cdap.cdap.graphql.cdap.provider;
 import graphql.schema.idl.RuntimeWiring;
 import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
+import io.cdap.cdap.graphql.store.application.runtimewiring.ApplicationQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRuntimeWiring;
@@ -37,20 +38,17 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring;
   private final NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
   private final NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring;
+  private final ApplicationQueryTypeRuntimeWiring applicationQueryTypeRuntimeWiring;
 
-  public CDAPGraphQLProvider(List<String> schemaDefinitionFiles,
-                             CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
-                             ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring,
-                             ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring,
-                             NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring,
-                             NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring) {
+  public CDAPGraphQLProvider(List<String> schemaDefinitionFiles) {
     super(schemaDefinitionFiles);
 
-    this.cdapQueryTypeRuntimeWiring = cdapQueryTypeRuntimeWiring;
-    this.artifactQueryTypeRuntimeWiring = artifactQueryTypeRuntimeWiring;
-    this.artifactTypeRuntimeWiring = artifactTypeRuntimeWiring;
-    this.namespaceQueryTypeRuntimeWiring = namespaceQueryTypeRuntimeWiring;
-    this.namespaceTypeRuntimeWiring = namespaceTypeRuntimeWiring;
+    this.cdapQueryTypeRuntimeWiring = new CDAPQueryTypeRuntimeWiring();
+    this.artifactQueryTypeRuntimeWiring = new ArtifactQueryTypeRuntimeWiring();
+    this.artifactTypeRuntimeWiring = new ArtifactTypeRuntimeWiring();
+    this.namespaceQueryTypeRuntimeWiring = new NamespaceQueryTypeRuntimeWiring();
+    this.namespaceTypeRuntimeWiring = new NamespaceTypeRuntimeWiring();
+    this.applicationQueryTypeRuntimeWiring = new ApplicationQueryTypeRuntimeWiring();
   }
 
   @Override
@@ -61,6 +59,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
       .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(applicationQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .build();
   }
 

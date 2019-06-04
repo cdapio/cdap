@@ -24,6 +24,8 @@ import io.cdap.cdap.graphql.schema.Types;
  */
 public class ApplicationTypes implements Types {
 
+  public static final String APPLICATION_QUERY = "ApplicationQuery";
+
   private ApplicationTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }

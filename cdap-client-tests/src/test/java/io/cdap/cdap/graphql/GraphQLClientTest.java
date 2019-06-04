@@ -19,6 +19,7 @@ package io.cdap.cdap.graphql;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class GraphQLClientTest extends CDAPGraphQLTest {
@@ -42,7 +43,7 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
     ExecutionResult executionResult = graphQL.execute(executionInput);
 
-    org.junit.Assert.assertTrue(executionResult.getErrors().isEmpty());
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
 
     // Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
     // Assert.assertEquals(1, data.size());
@@ -51,6 +52,28 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
     // List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
     // Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
     // Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
+
+    System.out.println(executionResult.getData().toString());
+  }
+
+  @Test
+  public void testGetApplications() {
+    String query = "{ "
+      + "  application {"
+      + "    applications {"
+      + "      type"
+      + "      name"
+      + "      version"
+      + "      description"
+      + "      ownerPrincipal"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
 
     System.out.println(executionResult.getData().toString());
   }

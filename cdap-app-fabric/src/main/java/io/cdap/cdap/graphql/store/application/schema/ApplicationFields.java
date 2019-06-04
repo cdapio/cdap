@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.namespace.schema;
+package io.cdap.cdap.graphql.store.application.schema;
 
 import io.cdap.cdap.graphql.schema.Fields;
 
@@ -23,6 +23,8 @@ import io.cdap.cdap.graphql.schema.Fields;
  * Helper class with a collection of fields relevant to applications that are used in the server
  */
 public class ApplicationFields implements Fields {
+
+  public static final String APPLICATIONS = "applications";
 
   private ApplicationFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
