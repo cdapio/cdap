@@ -1,4 +1,4 @@
-export default {
+{
     "direction": "both",
     "start-ts": "1558571821",
     "end-ts": "1559176621",
