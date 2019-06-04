@@ -17,7 +17,6 @@ import * as React from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import BrandImage from 'components/AppHeader/BrandImage';
-import { preventPropagation } from 'services/helpers';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconSVG from 'components/IconSVG';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -33,8 +32,7 @@ import If from 'components/If';
 import AboutPageModal from 'components/AppHeader/AboutPageModal';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
-import Button from '@material-ui/core/Button';
-import { ClickAwayListener } from '@material-ui/core';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import Grow from '@material-ui/core/Grow';
 import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
@@ -45,6 +43,7 @@ const styles = (theme) => {
     iconButton: {
       marginLeft: '-20px',
       padding: '10px',
+      fontSize: '1.8rem',
     },
     iconButtonFocus: theme.iconButtonFocus,
     customToolbar: {
@@ -107,6 +106,7 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
   private toggleAboutPage = () => {
     this.setState({
       aboutPageOpen: !this.state.aboutPageOpen,
+      anchorEl: null,
     });
   };
   private getDocsUrl = () => {
@@ -129,9 +129,10 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
           onClick={onMenuIconClick}
           color="inherit"
           className={classnames(classes.iconButton, classes.iconButtonFocus)}
+          edge="start"
           data-cy="navbar-hamburger-icon"
         >
-          <MenuIcon />
+          <MenuIcon fontSize="inherit" />
         </IconButton>
         <div className={classes.grow}>
           <BrandImage />
@@ -169,25 +170,27 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             >
               <Paper>
                 <ClickAwayListener onClickAway={this.closeSettings}>
-                  <a
-                    className={classes.anchorMenuItem}
-                    href={this.getDocsUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MenuItem onClick={this.closeSettings}>
-                      {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-                    </MenuItem>
-                  </a>
-                  <If condition={Theme.showAboutProductModal === true}>
-                    <MenuItem onClick={this.toggleAboutPage}>
-                      <a>
-                        {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                          productName: Theme.productName,
-                        })}
-                      </a>
-                    </MenuItem>
-                  </If>
+                  <div>
+                    <a
+                      className={classes.anchorMenuItem}
+                      href={this.getDocsUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MenuItem onClick={this.closeSettings}>
+                        {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
+                      </MenuItem>
+                    </a>
+                    <If condition={Theme.showAboutProductModal === true}>
+                      <MenuItem onClick={this.toggleAboutPage}>
+                        <a>
+                          {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
+                            productName: Theme.productName,
+                          })}
+                        </a>
+                      </MenuItem>
+                    </If>
+                  </div>
                 </ClickAwayListener>
               </Paper>
             </Grow>

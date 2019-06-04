@@ -42,7 +42,14 @@ const AboutPageModal: React.SFC<IAboutPageModalProps> = ({ cdapVersion, isOpen, 
   const mode = getModeWithCloudProvider();
   const productLogoSrc = Theme.productLogoAbout || '/cdap_assets/img/CDAP_darkgray.png';
   return (
-    <Modal isOpen={isOpen} toggle={toggle} size="md" className="about-page-modal" backdrop="static">
+    <Modal
+      isOpen={isOpen}
+      toggle={toggle}
+      zIndex={1301}
+      size="md"
+      className="about-page-modal"
+      backdrop="static"
+    >
       <ModalBody>
         <div className="close-section float-right" onClick={toggle}>
           <Heading type={HeadingTypes.h3} label={<IconSVG name="icon-close" />} />

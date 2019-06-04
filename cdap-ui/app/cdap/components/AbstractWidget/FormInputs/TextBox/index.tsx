@@ -22,9 +22,6 @@ import ThemeWrapper from 'components/ThemeWrapper';
 
 const styles = (theme) => {
   return {
-    ':hover': {
-      borderColor: theme.palette.grey['300'],
-    },
     input: {
       padding: 10,
     },

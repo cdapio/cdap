@@ -88,7 +88,7 @@ const PipelineList = Loadable({
   loading: LoadingSVGCentered,
 });
 const SecureKeys = Loadable({
-  loader: () => import(/* webpackChunkName: "PipelineList" */ 'components/SecureKeys'),
+  loader: () => import(/* webpackChunkName: "SecureKeys" */ 'components/SecureKeys'),
   loading: LoadingSVGCentered,
 });
 
