@@ -23,6 +23,6 @@ type ApplicationRecord {
   name: String!
   version: String!
   description: String!
-  # ArtifactSummary artifact;
+  artifact: ArtifactSummary!
   ownerPrincipal: String
 }

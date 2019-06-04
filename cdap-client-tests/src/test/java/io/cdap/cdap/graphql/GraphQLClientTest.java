@@ -66,6 +66,9 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
       + "      version"
       + "      description"
       + "      ownerPrincipal"
+      + "      artifact {"
+      + "        name"
+      + "      }"
       + "    }"
       + "  }"
       + "}";
