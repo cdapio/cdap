@@ -33,15 +33,15 @@ public class NamespaceQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   private final NamespaceDataFetcher namespaceDataFetcher;
 
   @Inject
-  NamespaceQueryTypeRuntimeWiring(NamespaceDataFetcher namespaceDataFetcher) {
-    this.namespaceDataFetcher = namespaceDataFetcher;
+  public NamespaceQueryTypeRuntimeWiring() {
+    this.namespaceDataFetcher = NamespaceDataFetcher.getInstance();
   }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(NamespaceTypes.NAMESPACE_QUERY)
       .dataFetcher(NamespaceFields.NAMESPACES, namespaceDataFetcher.getNamespacesDataFetcher())
-      .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceFromQueryDataFetcher())
+      // .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceFromQueryDataFetcher())
       .build();
   }
 

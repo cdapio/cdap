@@ -15,24 +15,16 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.cdap.schema;
+package io.cdap.cdap.graphql.store.application.schema;
 
-import io.cdap.cdap.graphql.schema.Fields;
+import io.cdap.cdap.graphql.schema.Types;
 
 /**
- * Helper class with a collection of fields used in the server
+ * Helper class with a collection of types relevant to applications that are used in the server
  */
-public class GraphQLFields implements Fields {
+public class ApplicationTypes implements Types {
 
-  public static final String TIMESTAMP = "timestamp";
-  public static final String ARTIFACT = "artifact";
-  public static final String NAMESPACE = "namespace";
-  public static final String NAME = "name";
-  public static final String DATA = "data";
-  public static final String DESCRIPTION = "description";
-  public static final String APPLICATION = "application";
-
-  private GraphQLFields() {
+  private ApplicationTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
 

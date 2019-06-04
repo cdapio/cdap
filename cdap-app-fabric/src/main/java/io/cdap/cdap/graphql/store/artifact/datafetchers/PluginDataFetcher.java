@@ -26,6 +26,16 @@ import io.cdap.cdap.graphql.objects.Artifact;
  */
 public class PluginDataFetcher {
 
+  private static final PluginDataFetcher INSTANCE = new PluginDataFetcher();
+
+  private PluginDataFetcher() {
+
+  }
+
+  public static PluginDataFetcher getInstance() {
+    return INSTANCE;
+  }
+
   /**
    * Fetcher to get plugins
    *

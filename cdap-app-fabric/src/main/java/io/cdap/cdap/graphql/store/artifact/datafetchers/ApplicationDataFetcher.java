@@ -26,6 +26,16 @@ import io.cdap.cdap.graphql.objects.Artifact;
  */
 public class ApplicationDataFetcher {
 
+  private static final ApplicationDataFetcher INSTANCE = new ApplicationDataFetcher();
+
+  private ApplicationDataFetcher() {
+
+  }
+
+  public static ApplicationDataFetcher getInstance() {
+    return INSTANCE;
+  }
+
   /**
    * Fetcher to get applications
    *

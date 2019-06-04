@@ -22,7 +22,6 @@ import graphql.GraphQL;
 import io.cdap.cdap.StandaloneTester;
 import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.cdap.client.NamespaceClient;
-import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -47,19 +46,18 @@ import java.util.List;
 
 public abstract class CDAPQueryTypeRuntimeWiringTest {
 
-  static GraphQL graphQL;
-  static NamespaceClient namespaceClient;
-  static ClientConfig clientConfig;
-
   @ClassRule
   public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(
     new StandaloneTester(Constants.Explore.EXPLORE_ENABLED, false));
+  static GraphQL graphQL;
+  static NamespaceClient namespaceClient;
+  static ClientConfig clientConfig;
 
   // @ClassRule
   // public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   //
   // private static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
-  // private static CConfiguration cConf;
+  private static CConfiguration cConf;
   // private static File tmpDir;
   // private static File systemArtifactsDir1;
   // private static File systemArtifactsDir2;
@@ -84,7 +82,7 @@ public abstract class CDAPQueryTypeRuntimeWiringTest {
     //   systemArtifactsDir2 = TMP_FOLDER.newFolder();
     //   tmpDir = TMP_FOLDER.newFolder();
     //
-      cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     //   cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     //   cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR,
     //             systemArtifactsDir1.getAbsolutePath() + ";" + systemArtifactsDir2.getAbsolutePath());

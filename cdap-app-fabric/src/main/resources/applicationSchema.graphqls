@@ -14,22 +14,15 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-schema {
-  query : CDAPQuery
+type ApplicationQuery {
+  applications(namespace: String = "default"): [ApplicationRecord]!
 }
 
-type CDAPQuery {
-  timestamp: String!
-}
-
-extend type CDAPQuery {
-  artifact: ArtifactQuery!
-}
-
-extend type CDAPQuery {
-  namespace: NamespaceQuery!
-}
-
-extend type CDAPQuery {
-  application: ApplicationQuery!
+type ApplicationRecord {
+  type: String!
+  name: String!
+  version: String!
+  description: String!
+  # ArtifactSummary artifact;
+  # String ownerPrincipal;
 }

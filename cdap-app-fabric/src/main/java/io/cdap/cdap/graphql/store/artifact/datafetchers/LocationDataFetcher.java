@@ -29,6 +29,16 @@ import org.apache.twill.filesystem.Location;
  */
 public class LocationDataFetcher {
 
+  private static final LocationDataFetcher INSTANCE = new LocationDataFetcher();
+
+  private LocationDataFetcher() {
+
+  }
+
+  public static LocationDataFetcher getInstance() {
+    return INSTANCE;
+  }
+
   /**
    * Fetcher to get a location
    *

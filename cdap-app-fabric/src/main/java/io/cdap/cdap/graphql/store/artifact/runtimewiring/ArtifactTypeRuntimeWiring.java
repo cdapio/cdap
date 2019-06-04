@@ -39,14 +39,11 @@ public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   private final NamespaceDataFetcher namespaceDataFetcher;
 
   @Inject
-  ArtifactTypeRuntimeWiring(LocationDataFetcher locationDataFetcher,
-                            PluginDataFetcher pluginDataFetcher,
-                            ApplicationDataFetcher applicationDataFetcher,
-                            NamespaceDataFetcher namespaceDataFetcher) {
-    this.locationDataFetcher = locationDataFetcher;
-    this.pluginDataFetcher = pluginDataFetcher;
-    this.applicationDataFetcher = applicationDataFetcher;
-    this.namespaceDataFetcher = namespaceDataFetcher;
+  public ArtifactTypeRuntimeWiring() {
+    this.locationDataFetcher = LocationDataFetcher.getInstance();
+    this.pluginDataFetcher = PluginDataFetcher.getInstance();
+    this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
+    this.namespaceDataFetcher = NamespaceDataFetcher.getInstance();
   }
 
   @Override
@@ -55,7 +52,7 @@ public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(ArtifactFields.LOCATION, locationDataFetcher.getLocationDataFetcher())
       .dataFetcher(ArtifactFields.PLUGINS, pluginDataFetcher.getPluginsDataFetcher())
       .dataFetcher(ArtifactFields.APPLICATIONS, applicationDataFetcher.getApplicationsDataFetcher())
-      .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceFromSourceDataFetcher())
+      // .dataFetcher(GraphQLFields.NAMESPACE, namespaceDataFetcher.getNamespaceFromSourceDataFetcher())
       .build();
   }
 

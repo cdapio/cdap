@@ -17,21 +17,17 @@
 
 package io.cdap.cdap.graphql;
 
-import graphql.Assert;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
-import io.cdap.cdap.proto.NamespaceMeta;
 import org.junit.Test;
 
-import java.util.List;
+public class GraphQLClientTest extends CDAPGraphQLTest {
 
-public class GraphQLClienTest extends CDAPQueryTypeRuntimeWiringTest {
-
-  @Test
-  public void testNamespaces() throws Exception {
-    List<NamespaceMeta> namespaces = namespaceClient.list();
-    Assert.assertTrue(!namespaces.isEmpty());
-  }
+  // @Test
+  // public void testNamespaces() throws Exception {
+  //   List<NamespaceMeta> namespaces = namespaceClient.list();
+  //   Assert.assertTrue(!namespaces.isEmpty());
+  // }
 
   @Test
   public void testGetNamespaces() {

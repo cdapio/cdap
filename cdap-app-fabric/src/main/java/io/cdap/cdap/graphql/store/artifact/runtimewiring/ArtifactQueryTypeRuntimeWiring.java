@@ -33,8 +33,8 @@ public class ArtifactQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   private final ArtifactDataFetcher artifactDataFetcher;
 
   @Inject
-  ArtifactQueryTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher) {
-    this.artifactDataFetcher = artifactDataFetcher;
+  public ArtifactQueryTypeRuntimeWiring() {
+    this.artifactDataFetcher = ArtifactDataFetcher.getInstance();
   }
 
   @Override

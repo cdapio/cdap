@@ -32,8 +32,8 @@ public class NamespaceTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   private final ArtifactDataFetcher artifactDataFetcher;
 
   @Inject
-  NamespaceTypeRuntimeWiring(ArtifactDataFetcher artifactDataFetcher) {
-    this.artifactDataFetcher = artifactDataFetcher;
+  public NamespaceTypeRuntimeWiring() {
+    this.artifactDataFetcher = ArtifactDataFetcher.getInstance();
   }
 
   @Override

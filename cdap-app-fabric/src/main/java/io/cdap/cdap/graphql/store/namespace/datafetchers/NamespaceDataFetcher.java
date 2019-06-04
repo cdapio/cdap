@@ -22,13 +22,8 @@ import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.config.ClientConfig;
-import io.cdap.cdap.client.util.RESTClient;
-import io.cdap.cdap.common.namespace.AbstractNamespaceQueryClient;
-import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,13 +31,17 @@ import java.util.List;
  */
 public class NamespaceDataFetcher {
 
-  private final NamespaceClient namespaceQueryAdmin;
+  private static final NamespaceDataFetcher INSTANCE = new NamespaceDataFetcher();
+  private final NamespaceClient namespaceClient;
 
   @Inject
-  NamespaceDataFetcher(ClientConfig clientConfig) {
-    // ClientConfig d = ClientConfig.getDefault();
-    // this.namespaceQueryAdmin = new NamespaceClient(d);
-    this.namespaceQueryAdmin = null;
+  private NamespaceDataFetcher() {
+    // TODO the client config should, somehow, get passed
+    this.namespaceClient = new NamespaceClient(ClientConfig.getDefault());
+  }
+
+  public static NamespaceDataFetcher getInstance() {
+    return INSTANCE;
   }
 
   /**
@@ -52,60 +51,51 @@ public class NamespaceDataFetcher {
    */
   public DataFetcher getNamespacesDataFetcher() {
     return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> {
-        List<NamespaceMeta> x = namespaceQueryAdmin.list();
-        // namespaceAdmin.list().stream()
-        // .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
-        // .collect(Collectors.toList())
-
-
-
-        throw new UnsupportedOperationException("Implement");
-      }
+      dataFetchingEnvironment -> namespaceClient.list()
     );
   }
 
-  // TODO naming of method a bit weird? Talking about implementation?
-
-  /**
-   * Fetcher to get a namespace. The request originates from other fetchers that query a namespace
-   *
-   * @return the data fetcher
-   */
-  public DataFetcher getNamespaceFromSourceDataFetcher() {
-    return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> {
-        // Artifact artifact = dataFetchingEnvironment.getSource();
-        // String namespace = artifact.getNamespace();
-        //
-        // return getNamespace(namespace);
-        throw new UnsupportedOperationException("Implement");
-      }
-    );
-  }
-
-  // TODO naming of method a bit weird? Talking about implementation?
-
-  /**
-   * Fetcher to get a namespace. The request originates from a query
-   *
-   * @return the data fetcher
-   */
-  public DataFetcher getNamespaceFromQueryDataFetcher() {
-    return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> {
-        // String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
-        //
-        // return getNamespace(name);
-        throw new UnsupportedOperationException("Implement");
-      }
-    );
-  }
-
-  private NamespaceMeta getNamespace(String namespace) throws Exception {
-    // return new NamespaceMeta.Builder(
-    //   namespaceAdmin.get(new NamespaceId(namespace))
-    // ).buildWithoutKeytabURIVersion();
-    throw new UnsupportedOperationException("Implement");
-  }
+  // // TODO naming of method a bit weird? Talking about implementation?
+  //
+  // /**
+  //  * Fetcher to get a namespace. The request originates from other fetchers that query a namespace
+  //  *
+  //  * @return the data fetcher
+  //  */
+  // public DataFetcher getNamespaceFromSourceDataFetcher() {
+  //   return AsyncDataFetcher.async(
+  //     dataFetchingEnvironment -> {
+  //       // Artifact artifact = dataFetchingEnvironment.getSource();
+  //       // String namespace = artifact.getNamespace();
+  //       //
+  //       // return getNamespace(namespace);
+  //       throw new UnsupportedOperationException("Implement");
+  //     }
+  //   );
+  // }
+  //
+  // // TODO naming of method a bit weird? Talking about implementation?
+  //
+  // /**
+  //  * Fetcher to get a namespace. The request originates from a query
+  //  *
+  //  * @return the data fetcher
+  //  */
+  // public DataFetcher getNamespaceFromQueryDataFetcher() {
+  //   return AsyncDataFetcher.async(
+  //     dataFetchingEnvironment -> {
+  //       // String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
+  //       //
+  //       // return getNamespace(name);
+  //       throw new UnsupportedOperationException("Implement");
+  //     }
+  //   );
+  // }
+  //
+  // private NamespaceMeta getNamespace(String namespace) throws Exception {
+  //   // return new NamespaceMeta.Builder(
+  //   //   namespaceAdmin.get(new NamespaceId(namespace))
+  //   // ).buildWithoutKeytabURIVersion();
+  //   throw new UnsupportedOperationException("Implement");
+  // }
 }
