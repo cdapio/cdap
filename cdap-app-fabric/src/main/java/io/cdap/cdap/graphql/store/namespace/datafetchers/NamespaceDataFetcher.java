@@ -17,17 +17,33 @@
 
 package io.cdap.cdap.graphql.store.namespace.datafetchers;
 
+import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
-import io.cdap.cdap.graphql.objects.Artifact;
+import io.cdap.cdap.client.NamespaceClient;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.util.RESTClient;
+import io.cdap.cdap.common.namespace.AbstractNamespaceQueryClient;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.id.NamespaceId;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Fetchers to get applications
  */
 public class NamespaceDataFetcher {
+
+  private final NamespaceClient namespaceQueryAdmin;
+
+  @Inject
+  NamespaceDataFetcher(ClientConfig clientConfig) {
+    // ClientConfig d = ClientConfig.getDefault();
+    // this.namespaceQueryAdmin = new NamespaceClient(d);
+    this.namespaceQueryAdmin = null;
+  }
 
   /**
    * Fetcher to get namespaces
@@ -37,9 +53,13 @@ public class NamespaceDataFetcher {
   public DataFetcher getNamespacesDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
+        List<NamespaceMeta> x = namespaceQueryAdmin.list();
         // namespaceAdmin.list().stream()
         // .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
         // .collect(Collectors.toList())
+
+
+
         throw new UnsupportedOperationException("Implement");
       }
     );

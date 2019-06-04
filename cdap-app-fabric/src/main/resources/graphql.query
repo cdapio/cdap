@@ -1,14 +1,9 @@
 {
   namespace {
-    namespace(name: "default") {
+    namespaces {
       name
-      description
-      generation
       artifacts {
         name
-        namespace {
-          name
-        }
       }
     }
   }

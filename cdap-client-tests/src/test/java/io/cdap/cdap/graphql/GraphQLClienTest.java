@@ -18,27 +18,45 @@
 package io.cdap.cdap.graphql;
 
 import graphql.Assert;
-import io.cdap.cdap.client.NamespaceClient;
-import io.cdap.cdap.client.common.ClientTestBase;
+import graphql.ExecutionInput;
+import graphql.ExecutionResult;
 import io.cdap.cdap.proto.NamespaceMeta;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
-public class GraphQLClienTest extends ClientTestBase {
-
-  private NamespaceClient namespaceClient;
-
-  @Before
-  public void setup() {
-    namespaceClient = new NamespaceClient(clientConfig);
-  }
+public class GraphQLClienTest extends CDAPQueryTypeRuntimeWiringTest {
 
   @Test
   public void testNamespaces() throws Exception {
     List<NamespaceMeta> namespaces = namespaceClient.list();
     Assert.assertTrue(!namespaces.isEmpty());
+  }
+
+  @Test
+  public void testGetNamespaces() {
+    String query = "{ "
+      + "  namespace {"
+      + "    namespaces {"
+      + "      name"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    org.junit.Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    // Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
+    // Assert.assertEquals(1, data.size());
+    //
+    // Map<String, List> namespaceQuery = (Map<String, List>) data.get(GraphQLFields.NAMESPACE);
+    // List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
+    // Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
+    // Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
+
+    System.out.println(executionResult.getData().toString());
   }
 
 }

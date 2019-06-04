@@ -24,6 +24,7 @@ type NamespaceMeta {
   description: String!
   generation: Long!
   config: NamespaceConfig!
+  artifacts: [ArtifactSummary]!
 }
 
 type NamespaceConfig {
