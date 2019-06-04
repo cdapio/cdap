@@ -15,8 +15,40 @@
 # the License.
 #
 type ArtifactQuery {
-  artifacts(namespace: String = "default"): [Artifact]!
+  artifacts(namespace: String = "default"): [ArtifactSummary]!
+  #  artifacts(namespace: String = "default"): [Artifact]!
   artifact(namespace: String = "default", name: String!, version: String!): Artifact
+}
+
+type ArtifactSummary {
+  name: String!
+  version: String!
+  scope: String!
+}
+
+type ArtifactInfo {
+  classes: ArtifactClasses
+}
+
+type ArtifactClasses {
+  apps: [ApplicationClass]
+  plugins: [PluginClass]
+}
+
+type ApplicationClass {
+  className: String!
+  description: String!
+  # configSchema: Schema
+}
+
+type PluginClass {
+  type: String!
+  name: String!
+  description: String!
+  className: String!
+  configFieldName: String!
+  # properties: Map<String, PluginPropertyField>
+  # requirements: Requirements
 }
 
 type Artifact {

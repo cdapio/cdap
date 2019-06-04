@@ -17,28 +17,17 @@
 
 package io.cdap.cdap.graphql.store.namespace.datafetchers;
 
-import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 
-import java.util.stream.Collectors;
-
 /**
  * Fetchers to get applications
  */
 public class NamespaceDataFetcher {
-
-  private final NamespaceAdmin namespaceAdmin;
-
-  @Inject
-  NamespaceDataFetcher(NamespaceAdmin namespaceAdmin) {
-    this.namespaceAdmin = namespaceAdmin;
-  }
 
   /**
    * Fetcher to get namespaces
@@ -47,9 +36,12 @@ public class NamespaceDataFetcher {
    */
   public DataFetcher getNamespacesDataFetcher() {
     return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> namespaceAdmin.list().stream()
-        .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
-        .collect(Collectors.toList())
+      dataFetchingEnvironment -> {
+        // namespaceAdmin.list().stream()
+        // .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
+        // .collect(Collectors.toList())
+        throw new UnsupportedOperationException("Implement");
+      }
     );
   }
 
@@ -63,10 +55,11 @@ public class NamespaceDataFetcher {
   public DataFetcher getNamespaceFromSourceDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        Artifact artifact = dataFetchingEnvironment.getSource();
-        String namespace = artifact.getNamespace();
-
-        return getNamespace(namespace);
+        // Artifact artifact = dataFetchingEnvironment.getSource();
+        // String namespace = artifact.getNamespace();
+        //
+        // return getNamespace(namespace);
+        throw new UnsupportedOperationException("Implement");
       }
     );
   }
@@ -81,16 +74,18 @@ public class NamespaceDataFetcher {
   public DataFetcher getNamespaceFromQueryDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
-
-        return getNamespace(name);
+        // String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
+        //
+        // return getNamespace(name);
+        throw new UnsupportedOperationException("Implement");
       }
     );
   }
 
   private NamespaceMeta getNamespace(String namespace) throws Exception {
-    return new NamespaceMeta.Builder(
-      namespaceAdmin.get(new NamespaceId(namespace))
-    ).buildWithoutKeytabURIVersion();
+    // return new NamespaceMeta.Builder(
+    //   namespaceAdmin.get(new NamespaceId(namespace))
+    // ).buildWithoutKeytabURIVersion();
+    throw new UnsupportedOperationException("Implement");
   }
 }

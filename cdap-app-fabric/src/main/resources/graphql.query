@@ -6,6 +6,9 @@
       generation
       artifacts {
         name
+        namespace {
+          name
+        }
       }
     }
   }

@@ -15,23 +15,26 @@
 # the License.
 #
 type NamespaceQuery {
-  namespaces: [Namespace]!
-  namespace(name: String!): Namespace!
+  namespaces: [NamespaceMeta]!
+  namespace(name: String!): NamespaceMeta!
 }
 
-type Namespace {
+type NamespaceMeta {
   name: String!
   description: String!
   generation: Long!
-#  exploreAsPrincipal: Boolean!
-#  schedulerQueueName: String
-#  rootDirectory: String
-#  hbaseNamespace: String
-#  hiveDatabase: String
-#  principal: String
-#  groupName: String
-#  keytabURIWithoutVersion: String
-#  keytabURIVersion: Int
-  artifacts: [Artifact]!
+  config: NamespaceConfig!
 }
+
+type NamespaceConfig {
+  schedulerQueueName: String
+  rootDirectory: String
+  hbaseNamespace: String
+  hiveDatabase: String
+  principal: String
+  groupName: String
+  keytabURI: String
+  exploreAsPrincipal: Boolean
+}
+
 

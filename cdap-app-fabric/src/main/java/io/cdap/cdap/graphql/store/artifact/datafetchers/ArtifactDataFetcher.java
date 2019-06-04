@@ -20,35 +20,22 @@ package io.cdap.cdap.graphql.store.artifact.datafetchers;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.objects.Artifact;
-import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Fetchers to get artifacts
  */
 public class ArtifactDataFetcher {
 
-  private final ArtifactStore artifactStore;
-
-  @Inject
-  ArtifactDataFetcher(ArtifactStore artifactStore) {
-    this.artifactStore = artifactStore;
-  }
-// TODO use look ahead to see if we get the metadata info or not
-
   // TODO naming is a bit weird? Implementation?
+
   /**
    * Fetcher to get a list of artifacts. The request originates from a query
    *
@@ -65,6 +52,7 @@ public class ArtifactDataFetcher {
   }
 
   // TODO naming is a bit weird? Implementation?
+
   /**
    * Fetcher to get a list of artifacts. The request originates from other fetchers that query artifacts
    *
@@ -88,29 +76,32 @@ public class ArtifactDataFetcher {
   public DataFetcher getArtifactDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
-        String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
-        String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
-
-        Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespace), name, version);
-        ArtifactDetail artifactDetail = this.artifactStore.getArtifact(artifactId);
-
-        return getArtifact(artifactDetail, namespace);
+        // String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
+        // String name = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
+        // String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
+        //
+        // Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespace), name, version);
+        // ArtifactDetail artifactDetail = this.artifactStore.getArtifact(artifactId);
+        //
+        // return getArtifact(artifactDetail, namespace);
+        throw new UnsupportedOperationException("Implement");
       }
     );
   }
 
   private List<Artifact> getArtifacts(String namespace) throws IOException {
-    List<ArtifactDetail> artifactDetails = this.artifactStore.getArtifacts(new NamespaceId(namespace));
+    // List<ArtifactDetail> artifactDetails = this.artifactStore.getArtifacts(new NamespaceId(namespace));
+    //
+    // List<Artifact> artifacts = new ArrayList<>();
+    //
+    // for (ArtifactDetail artifactDetail : artifactDetails) {
+    //   Artifact artifact = getArtifact(artifactDetail, namespace);
+    //   artifacts.add(artifact);
+    // }
+    //
+    // return artifacts;
 
-    List<Artifact> artifacts = new ArrayList<>();
-
-    for (ArtifactDetail artifactDetail : artifactDetails) {
-      Artifact artifact = getArtifact(artifactDetail, namespace);
-      artifacts.add(artifact);
-    }
-
-    return artifacts;
+    throw new UnsupportedOperationException("Implement");
   }
 
   private Artifact getArtifact(ArtifactDetail artifactDetail, String namespace) {

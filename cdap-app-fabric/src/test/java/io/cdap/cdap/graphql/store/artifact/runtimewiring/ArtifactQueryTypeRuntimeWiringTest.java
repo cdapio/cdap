@@ -53,7 +53,7 @@ public class ArtifactQueryTypeRuntimeWiringTest extends CDAPQueryTypeRuntimeWiri
     Assert.assertEquals(1, artifacts.size());
 
     Map<String, Object> artifact = artifacts.get(0);
-    Assert.assertNotNull(artifact.get("name"));
+    Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
 
     System.out.println(executionResult.getData().toString());
   }
