@@ -22,37 +22,30 @@ import graphql.execution.DataFetcherResult;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.client.ApplicationClient;
-import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.ProgramRecord;
-import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.WorkflowId;
 
-import java.util.List;
 import java.util.Map;
 
 /**
  * Fetchers to get applications
  */
-public class ApplicationRecordDataFetcher {
+public class ApplicationDataFetcher {
 
-  private static final ApplicationRecordDataFetcher INSTANCE = new ApplicationRecordDataFetcher();
+  private static final ApplicationDataFetcher INSTANCE = new ApplicationDataFetcher();
 
   private final ApplicationClient applicationClient;
-  private final ScheduleClient scheduleClient;
 
   @Inject
-  private ApplicationRecordDataFetcher() {
+  private ApplicationDataFetcher() {
     // TODO the client config should, somehow, get passed
     this.applicationClient = new ApplicationClient(ClientConfig.getDefault());
-    this.scheduleClient = new ScheduleClient(ClientConfig.getDefault());
   }
 
-  public static ApplicationRecordDataFetcher getInstance() {
+  public static ApplicationDataFetcher getInstance() {
     return INSTANCE;
   }
 
@@ -89,25 +82,6 @@ public class ApplicationRecordDataFetcher {
         ApplicationDetail applicationDetail = applicationClient.get(appId);
 
         return DataFetcherResult.newResult().data(applicationDetail).build();
-      }
-    );
-  }
-
-  // TODO add in its own class?
-  public DataFetcher getSomeDataFetcher() {
-    return AsyncDataFetcher.async(
-      dataFetchingEnvironment -> {
-        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
-
-        String namespace = (String) localContext.get(GraphQLFields.NAMESPACE);
-        String application = (String) localContext.get(GraphQLFields.NAME);
-        ProgramRecord programRecord = dataFetchingEnvironment.getSource();
-        String w = programRecord.getName();
-
-        WorkflowId workflowId = new WorkflowId(namespace, application, w);
-        List<ScheduledRuntime> x = scheduleClient.nextRuntimes(workflowId);
-        // TODO probably return list?
-        return x.get(0).getTime();
       }
     );
   }

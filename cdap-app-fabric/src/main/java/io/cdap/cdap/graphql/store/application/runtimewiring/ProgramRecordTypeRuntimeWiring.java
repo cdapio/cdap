@@ -18,8 +18,7 @@
 package io.cdap.cdap.graphql.store.application.runtimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
-import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationRecordDataFetcher;
+import io.cdap.cdap.graphql.store.application.datafetchers.ScheduleDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
@@ -31,10 +30,10 @@ public class ProgramRecordTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private static final ProgramRecordTypeRuntimeWiring INSTANCE = new ProgramRecordTypeRuntimeWiring();
 
-  private final ApplicationRecordDataFetcher applicationRecordDataFetcher;
+  private final ScheduleDataFetcher someDataFetcher;
 
   private ProgramRecordTypeRuntimeWiring() {
-    this.applicationRecordDataFetcher = ApplicationRecordDataFetcher.getInstance();
+    this.someDataFetcher = ScheduleDataFetcher.getInstance();
   }
 
   public static ProgramRecordTypeRuntimeWiring getInstance() {
@@ -44,7 +43,7 @@ public class ProgramRecordTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.PROGRAM_RECORD)
-      .dataFetcher(ApplicationFields.TIME, applicationRecordDataFetcher.getSomeDataFetcher())
+      .dataFetcher(ApplicationFields.RUNTIMES, someDataFetcher.getNextRuntimesDataFetcher())
       .build();
   }
 

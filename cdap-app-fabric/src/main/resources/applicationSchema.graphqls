@@ -40,17 +40,17 @@ type ApplicationDetail {
   ownerPrincipal: String
 }
 
-type ScheduledRuntime {
-  id: String!
-  time: String!
-}
-
 type ProgramRecord {
   #type: ProgramType
   type: String!
   app: String!
   name: String!
   description: String!
-  # TODO add a new ScheduleTime type
+  # Field added for composition
+  runtimes: [ScheduledRuntime]!
+}
+
+type ScheduledRuntime {
+  id: String!
   time: String!
 }
