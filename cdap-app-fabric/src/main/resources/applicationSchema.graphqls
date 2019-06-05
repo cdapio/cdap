@@ -34,8 +34,20 @@ type ApplicationDetail {
   description: String!
   configuration: String!
   #List<DatasetDetail> datasets;
-  #List<ProgramRecord> programs;
+  programs: [ProgramRecord]!
   #List<PluginDetail> plugins;
   artifact: ArtifactSummary!
   ownerPrincipal: String
+}
+
+type ScheduledRuntime {
+  id: String!
+  time: String!
+}
+
+type ProgramRecord {
+  # type: ProgramType
+  app: String!
+  name: String!
+  description: String!
 }
