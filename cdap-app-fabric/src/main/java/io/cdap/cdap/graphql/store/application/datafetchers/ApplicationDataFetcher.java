@@ -82,6 +82,7 @@ public class ApplicationDataFetcher {
   public DataFetcher getApplicationDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
+        // TODO add helper method that takes in old local context and returns a new one?
         Map<String, Object> newLocalContext = new ConcurrentHashMap<>(dataFetchingEnvironment.getArguments());
 
         String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
@@ -109,7 +110,7 @@ public class ApplicationDataFetcher {
     );
   }
 
-  public DataFetcher getSome() {
+  public DataFetcher getApplicationDetailDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();

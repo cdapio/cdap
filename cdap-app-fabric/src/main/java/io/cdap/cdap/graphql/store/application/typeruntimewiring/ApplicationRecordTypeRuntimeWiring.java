@@ -19,7 +19,6 @@ package io.cdap.cdap.graphql.store.application.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationDataFetcher;
-import io.cdap.cdap.graphql.store.application.datafetchers.ProgramRecordDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
@@ -43,7 +42,7 @@ public class ApplicationRecordTypeRuntimeWiring implements CDAPTypeRuntimeWiring
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_RECORD)
-      .dataFetcher("applicationDetail", applicationDataFetcher.getSome())
+      .dataFetcher("applicationDetail", applicationDataFetcher.getApplicationDetailDataFetcher())
       .build();
   }
 
