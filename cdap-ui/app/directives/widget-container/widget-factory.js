@@ -189,12 +189,11 @@ angular.module(PKG.name + '.commons')
         }
       },
       'select': {
-        element: '<select></select>',
+        element: '<select-dropdown></select-dropdown>',
         attributes: {
-          'ng-model': 'model',
-          'class': 'form-control',
-          'ng-options': 'item as item for item in (myconfig.properties.values || myconfig["widget-attributes"].values)',
-          'ng-init': 'model = model.length ? model : (myconfig.properties.default || myconfig["widget-attributes"].default)'
+          'value': 'model || myconfig.properties.default || myconfig["widget-attributes"].default',
+          'options': '(myconfig.properties.values || myconfig["widget-attributes"].values)',
+          'on-change': 'onChange'
         }
       },
       'dataset-selector': {
