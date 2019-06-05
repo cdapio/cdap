@@ -17,12 +17,14 @@
 
 package io.cdap.cdap.graphql.cdap.runtimewiring;
 
+import graphql.execution.DataFetcherResult;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 import java.sql.Timestamp;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Top level CDAP query type runtime wiring. Mainly use to integrate multiple schemas in the server
@@ -45,7 +47,10 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(GraphQLFields.TIMESTAMP, dataFetchingEnvironment -> new Timestamp(System.currentTimeMillis()))
       .dataFetcher(GraphQLFields.ARTIFACT, dataFetchingEnvironment -> dataFetchingEnvironment)
       .dataFetcher(GraphQLFields.NAMESPACE, dataFetchingEnvironment -> dataFetchingEnvironment)
-      .dataFetcher(GraphQLFields.APPLICATION, dataFetchingEnvironment -> dataFetchingEnvironment)
+      .dataFetcher(GraphQLFields.APPLICATION,
+                   dataFetchingEnvironment -> DataFetcherResult.newResult().data(dataFetchingEnvironment)
+                     .localContext(new ConcurrentHashMap<String, Object>()).build()
+      )
       .build();
   }
 

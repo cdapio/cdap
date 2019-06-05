@@ -25,6 +25,8 @@ import io.cdap.cdap.graphql.schema.Fields;
 public class ApplicationFields implements Fields {
 
   public static final String APPLICATIONS = "applications";
+  // TODO add in its own class?
+  public static final String TIME = "time";
 
   private ApplicationFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

@@ -225,7 +225,8 @@
     <dependency>
       <groupId>com.graphql-java</groupId>
       <artifactId>graphql-java</artifactId>
-      <version>12.0</version>
+      <!--<version>12.0</version>-->
+      <version>2019-06-03T06-53-20-dca93a9</version>
     </dependency>
   </dependencies>
 

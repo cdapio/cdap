@@ -25,6 +25,8 @@ import io.cdap.cdap.graphql.schema.Types;
 public class ApplicationTypes implements Types {
 
   public static final String APPLICATION_QUERY = "ApplicationQuery";
+  // TODO add in its own class?
+  public static final String PROGRAM_RECORD = "ProgramRecord";
 
   private ApplicationTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

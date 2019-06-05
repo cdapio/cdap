@@ -46,8 +46,11 @@ type ScheduledRuntime {
 }
 
 type ProgramRecord {
-  # type: ProgramType
+  #type: ProgramType
+  type: String!
   app: String!
   name: String!
   description: String!
+  # TODO add a new ScheduleTime type
+  time: String!
 }
