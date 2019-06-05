@@ -15,7 +15,37 @@
 */
 
 import React from 'react';
-import './Table.css';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import { createStyles } from '@material-ui/core';
+
+const styles = (theme) => {
+  return createStyles({
+    root: {
+      width: '170px',
+      border: `1px solid ${theme.palette.grey[300]}`,
+      margin: '10px',
+    },
+    row: {
+      borderBottom: `0.5px solid ${theme.palette.grey[500]}`,
+      height: '20px',
+      paddingLeft: '10px',
+      marginRight: '0px',
+      marginLeft: '0px',
+    },
+    tableHeader: {
+      borderBottom: `2px solid ${theme.palette.grey[300]}`,
+      height: '40px',
+      paddingLeft: '10px',
+      fontWeight: 'bold',
+    },
+    tableSubheader: {
+      fontWeight: 'normal',
+      color: theme.palette.grey[500],
+      paddingBottom: 5,
+      paddingTop: 3,
+    },
+  });
+};
 
 interface INode {
   id: string;
@@ -23,23 +53,23 @@ interface INode {
   group: number;
 }
 
-interface ITableProps {
+interface ITableProps extends WithStyles<typeof styles> {
   nodes: INode[];
   tableName: string;
 }
 
 // TO DO: We can probably replace this component with the SortableStickyGrid - will investigate!
 
-export default function Table({ nodes, tableName }: ITableProps) {
+function Table({ nodes, tableName, classes }: ITableProps) {
   return (
-    <div className="table" id={`table-${tableName}`}>
-      <div className="table-header">
+    <div className={classes.root} id={`table-${tableName}`}>
+      <div className={classes.tableHeader}>
         {tableName}
-        <div className="table-subheader">{`${nodes.length} fields`}</div>
+        <div className={classes.tableSubheader}>{`${nodes.length} fields`}</div>
       </div>
       {nodes.map((node) => {
         return (
-          <div className="row" id={node.id} key={node.id}>
+          <div id={node.id} key={node.id} className={classes.row}>
             {node.name}
           </div>
         );
@@ -47,3 +77,6 @@ export default function Table({ nodes, tableName }: ITableProps) {
     </div>
   );
 }
+
+const StyledTable = withStyles(styles)(Table);
+export default StyledTable;

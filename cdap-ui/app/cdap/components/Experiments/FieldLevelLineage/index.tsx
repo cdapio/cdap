@@ -15,7 +15,6 @@
 */
 
 import React from 'react';
-import './index.css';
 import LineageSummary from 'components/FieldLevelLineage/v2/LineageSummary';
 import { Provider } from 'components/FieldLevelLineage/v2/Context/FllContext';
 

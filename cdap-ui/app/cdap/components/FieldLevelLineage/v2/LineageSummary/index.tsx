@@ -15,17 +15,28 @@
 */
 
 import React from 'react';
-import './LineageSummary.css';
 import Table from '../Table';
 import Header from '../Header';
+import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from '../Context/FllContext';
 
-function LineageSummary() {
+const styles = (theme) => {
+  return {
+    fllContainer: {
+      paddingLeft: 100,
+      paddingRight: 100,
+      display: 'flex',
+      justifyContent: 'space-between',
+    },
+  };
+};
+
+function LineageSummary({ classes }) {
   return (
     <Consumer>
       {({ causeSets, target, targetFields, impactSets, firstCause, firstImpact, firstField }) => {
         return (
-          <div className="fll-container">
+          <div className={classes.fllContainer}>
             <div className="cause-col">
               <div className="cause-header" />
               <Header type="cause" first={firstCause} total={Object.keys(causeSets).length} />
@@ -56,4 +67,6 @@ function LineageSummary() {
   );
 }
 
-export default LineageSummary;
+const StyledLineageSummary = withStyles(styles)(LineageSummary);
+
+export default StyledLineageSummary;
