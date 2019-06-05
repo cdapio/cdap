@@ -28,6 +28,7 @@ public class ApplicationTypes implements Types {
   public static final String WORKFLOW = "Workflow";
   public static final String PROGRAM_RECORD = "ProgramRecord";
   public static final String MAP_REDUCE = "MapReduce";
+  public static final String APPLICATION_DETAIL = "ApplicationDetail";
 
   private ApplicationTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

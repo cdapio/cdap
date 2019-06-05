@@ -93,6 +93,7 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
       // + "      artifact {"
       // + "        name"
       // + "      }"
+      // + "      programs(type: \"Workflow\") {"
       + "      programs {"
       + "        name"
       + "        type"

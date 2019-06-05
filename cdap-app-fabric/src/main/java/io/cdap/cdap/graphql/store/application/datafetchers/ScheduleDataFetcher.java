@@ -41,6 +41,11 @@ public class ScheduleDataFetcher {
     return INSTANCE;
   }
 
+  /**
+   * Fetcher to get the next runtimes
+   *
+   * @return the data fetcher
+   */
   public DataFetcher getNextRuntimesDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {

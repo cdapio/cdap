@@ -26,6 +26,8 @@ public class ApplicationFields implements Fields {
 
   public static final String APPLICATIONS = "applications";
   public static final String RUNTIMES = "runtimes";
+  public static final String PROGRAMS = "programs";
+  public static final String TYPE = "type";
 
   private ApplicationFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
