@@ -16,13 +16,13 @@
 
 import React from 'react';
 import './index.css';
-import App from './App';
-import { Provider } from './FllContext';
+import LineageSummary from 'components/FieldLevelLineage/v2/LineageSummary';
+import { Provider } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 export default function FllExpt() {
   return (
     <Provider>
-      <App />
+      <LineageSummary />
     </Provider>
   );
 }

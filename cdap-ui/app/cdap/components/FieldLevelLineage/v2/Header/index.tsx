@@ -15,7 +15,7 @@
 */
 
 import React from 'react';
-import { Consumer } from '../FllContext';
+import { Consumer } from '../Context/FllContext';
 
 interface IHeaderProps {
   type: string;

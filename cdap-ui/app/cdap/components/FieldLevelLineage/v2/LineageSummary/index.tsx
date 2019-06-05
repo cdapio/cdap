@@ -15,12 +15,12 @@
 */
 
 import React from 'react';
-import './App.css';
-import Table from './Table'; // TO DO: Look into SortableStickyGrid instead of Table
-import Header from './Header';
-import { Consumer } from './FllContext';
+import './LineageSummary.css';
+import Table from '../Table';
+import Header from '../Header';
+import { Consumer } from '../Context/FllContext';
 
-function App() {
+function LineageSummary() {
   return (
     <Consumer>
       {({ causeSets, target, targetFields, impactSets, firstCause, firstImpact, firstField }) => {
@@ -56,4 +56,4 @@ function App() {
   );
 }
 
-export default App;
+export default LineageSummary;
