@@ -19,10 +19,13 @@ package io.cdap.cdap.graphql.store.application.datafetchers;
 
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
+import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.WorkflowId;
 
 import java.util.Map;
@@ -32,9 +35,11 @@ public class ScheduleDataFetcher {
   private static final ScheduleDataFetcher INSTANCE = new ScheduleDataFetcher();
 
   private final ScheduleClient scheduleClient;
+  private final ProgramClient programClient;
 
   private ScheduleDataFetcher() {
     this.scheduleClient = new ScheduleClient(ClientConfig.getDefault());
+    this.programClient = new ProgramClient(ClientConfig.getDefault());
   }
 
   public static ScheduleDataFetcher getInstance() {
@@ -59,6 +64,24 @@ public class ScheduleDataFetcher {
         WorkflowId workflowId = new WorkflowId(namespace, applicationName, programRecordName);
 
         return scheduleClient.nextRuntimes(workflowId);
+      }
+    );
+  }
+
+  public DataFetcher getsome() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        ProgramRecord programRecord = dataFetchingEnvironment.getSource();
+        ProgramType programType = programRecord.getType();
+        String programName = programRecord.getName();
+
+        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
+        String namespace = (String) localContext.get(GraphQLFields.NAMESPACE);
+        String applicationName = (String) localContext.get(GraphQLFields.NAME);
+
+        ProgramId programId = new ProgramId(namespace, applicationName, programType, programName);
+
+        return programClient.getAllProgramRuns(programId, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
       }
     );
   }

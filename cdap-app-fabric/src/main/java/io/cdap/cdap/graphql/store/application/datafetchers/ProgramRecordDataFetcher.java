@@ -26,7 +26,6 @@ import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Fetchers to get program records
@@ -56,7 +55,7 @@ public class ProgramRecordDataFetcher {
 
         String type = dataFetchingEnvironment.getArgument(ApplicationFields.TYPE);
 
-        if(type == null) {
+        if (type == null) {
           return programs;
         }
 

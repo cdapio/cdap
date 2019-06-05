@@ -57,6 +57,7 @@ type Workflow implements ProgramRecord {
   description: String!
   # Field added for composition
   runtimes: [ScheduledRuntime]!
+  runs: [RunRecord]!
 }
 
 type MapReduce implements ProgramRecord {
@@ -69,4 +70,17 @@ type MapReduce implements ProgramRecord {
 type ScheduledRuntime {
   id: String!
   time: String!
+}
+
+type RunRecord {
+  pid: String!
+  startTs: String!
+  runTs: String!
+  stopTs: String
+  suspendTs: String
+  resumeTs: String
+  status: String!
+  # Map<String, String> properties:
+  # ProgramRunCluster cluster:
+  profileId: String
 }
