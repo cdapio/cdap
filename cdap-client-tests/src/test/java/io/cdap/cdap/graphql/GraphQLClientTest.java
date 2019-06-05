@@ -104,7 +104,7 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
       + "            status"
       + "            startTs"
       + "          }"
-      + "          runtimes {"
+      + "          startTimes {"
       + "            time"
       + "          }"
       + "        }"

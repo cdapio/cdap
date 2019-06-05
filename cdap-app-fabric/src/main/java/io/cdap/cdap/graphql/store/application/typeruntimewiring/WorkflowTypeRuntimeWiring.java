@@ -43,7 +43,7 @@ public class WorkflowTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.WORKFLOW)
-      .dataFetcher(ApplicationFields.RUNTIMES, scheduleDataFetcher.getNextRuntimesDataFetcher())
+      .dataFetcher("startTimes", scheduleDataFetcher.getNextRuntimesDataFetcher())
       .dataFetcher("runs", scheduleDataFetcher.getsome())
       .build();
   }

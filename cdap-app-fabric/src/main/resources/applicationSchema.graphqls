@@ -56,7 +56,7 @@ type Workflow implements ProgramRecord {
   name: String!
   description: String!
   # Field added for composition
-  runtimes: [ScheduledRuntime]!
+  startTimes: [ScheduledRuntime]!
   runs: [RunRecord]!
 }
 
