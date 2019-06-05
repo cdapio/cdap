@@ -60,7 +60,7 @@ public class ProgramRecordDataFetcher {
         }
 
         ProgramType programType = ProgramType.valueOfPrettyName(type);
-        programs.removeIf(programRecord -> programRecord.getType().equals(programType));
+        programs.removeIf(programRecord -> !programRecord.getType().equals(programType));
 
         return programs;
       }
