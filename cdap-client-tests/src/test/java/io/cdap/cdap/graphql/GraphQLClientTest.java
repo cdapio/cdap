@@ -86,15 +86,16 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
     String query = "{ "
       + "  application {"
       + "    application(name: \"Test\") {"
-      // + "      name"
+      + "      name"
+      + "      namespace"
       // + "      appVersion"
       // + "      description"
       // + "      configuration"
-      // + "      artifact {"
-      // + "        name"
-      // + "      }"
-      // + "      programs(type: \"Workflow\") {"
-      + "      programs {"
+      + "      artifact {"
+      + "        name"
+      + "      }"
+      + "      programs(type: \"Workflow\") {"
+      // + "      programs {"
       + "        name"
       + "        type"
       + "        ... on Workflow {"
@@ -115,5 +116,6 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
   }
+
 
 }

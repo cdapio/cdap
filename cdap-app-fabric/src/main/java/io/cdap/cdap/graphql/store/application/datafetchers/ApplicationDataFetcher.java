@@ -85,4 +85,15 @@ public class ApplicationDataFetcher {
       }
     );
   }
+
+  // TODO weird data fetcher
+  public DataFetcher getNamespaceDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
+
+        return localContext.get(GraphQLFields.NAMESPACE);
+      }
+    );
+  }
 }

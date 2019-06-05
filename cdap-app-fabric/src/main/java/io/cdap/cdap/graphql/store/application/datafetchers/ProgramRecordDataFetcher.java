@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Fetchers to get program records
@@ -66,4 +67,5 @@ public class ProgramRecordDataFetcher {
       }
     );
   }
+
 }

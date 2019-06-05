@@ -29,6 +29,8 @@ type ApplicationRecord {
 }
 
 type ApplicationDetail {
+  # Added field for convenience
+  namespace: String!
   name: String!
   appVersion: String!
   description: String!
