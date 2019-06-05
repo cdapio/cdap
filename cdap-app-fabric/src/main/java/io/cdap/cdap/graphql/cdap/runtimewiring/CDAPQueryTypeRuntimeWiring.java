@@ -29,6 +29,16 @@ import java.sql.Timestamp;
  */
 public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
+  private static final CDAPQueryTypeRuntimeWiring INSTANCE = new CDAPQueryTypeRuntimeWiring();
+
+  private CDAPQueryTypeRuntimeWiring() {
+
+  }
+
+  public static CDAPTypeRuntimeWiring getInstance() {
+    return INSTANCE;
+  }
+
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(GraphQLTypes.CDAP_QUERY)

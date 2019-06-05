@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.graphql.store.application.runtimewiring;
 
-import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationRecordDataFetcher;
@@ -30,11 +29,16 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
  */
 public class ApplicationQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
+  private static final ApplicationQueryTypeRuntimeWiring INSTANCE = new ApplicationQueryTypeRuntimeWiring();
+
   private final ApplicationRecordDataFetcher applicationRecordDataFetcher;
 
-  @Inject
-  public ApplicationQueryTypeRuntimeWiring() {
+  private ApplicationQueryTypeRuntimeWiring() {
     this.applicationRecordDataFetcher = ApplicationRecordDataFetcher.getInstance();
+  }
+
+  public static ApplicationQueryTypeRuntimeWiring getInstance() {
+    return INSTANCE;
   }
 
   @Override

@@ -22,9 +22,6 @@ import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.config.ClientConfig;
-import io.cdap.cdap.proto.NamespaceMeta;
-
-import java.util.List;
 
 /**
  * Fetchers to get applications

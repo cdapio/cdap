@@ -32,6 +32,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 public class ApplicationRecordDataFetcher {
 
   private static final ApplicationRecordDataFetcher INSTANCE = new ApplicationRecordDataFetcher();
+
   private final ApplicationClient applicationClient;
 
   @Inject
@@ -59,6 +60,11 @@ public class ApplicationRecordDataFetcher {
     );
   }
 
+  /**
+   * Fetcher to get an application
+   *
+   * @return the data fetcher
+   */
   public DataFetcher getApplicationDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {

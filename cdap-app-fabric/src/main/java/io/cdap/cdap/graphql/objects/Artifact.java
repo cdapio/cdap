@@ -20,6 +20,7 @@ package io.cdap.cdap.graphql.objects;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import org.apache.twill.filesystem.Location;
 
+@Deprecated
 /**
  * Data transfer object (DTO) that defines an artifact
  */

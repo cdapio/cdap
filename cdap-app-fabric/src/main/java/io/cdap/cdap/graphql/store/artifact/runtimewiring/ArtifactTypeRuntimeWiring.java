@@ -17,15 +17,12 @@
 
 package io.cdap.cdap.graphql.store.artifact.runtimewiring;
 
-import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.ApplicationDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.LocationDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.PluginDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactTypes;
-import io.cdap.cdap.graphql.store.namespace.datafetchers.NamespaceDataFetcher;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
@@ -33,17 +30,22 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
  */
 public class ArtifactTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
+  private static final ArtifactTypeRuntimeWiring INSTANCE = new ArtifactTypeRuntimeWiring();
+
   private final LocationDataFetcher locationDataFetcher;
   private final PluginDataFetcher pluginDataFetcher;
   private final ApplicationDataFetcher applicationDataFetcher;
-  private final NamespaceDataFetcher namespaceDataFetcher;
+  // private final NamespaceDataFetcher namespaceDataFetcher;
 
-  @Inject
-  public ArtifactTypeRuntimeWiring() {
+  private ArtifactTypeRuntimeWiring() {
     this.locationDataFetcher = LocationDataFetcher.getInstance();
     this.pluginDataFetcher = PluginDataFetcher.getInstance();
     this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
-    this.namespaceDataFetcher = NamespaceDataFetcher.getInstance();
+    // this.namespaceDataFetcher = NamespaceDataFetcher.getInstance();
+  }
+
+  public static CDAPTypeRuntimeWiring getInstance() {
+    return INSTANCE;
   }
 
   @Override

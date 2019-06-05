@@ -36,12 +36,12 @@ public class ArtifactDataFetcher {
 
   private static final ArtifactDataFetcher INSTANCE = new ArtifactDataFetcher();
 
-  public static ArtifactDataFetcher getInstance() {
-    return INSTANCE;
-  }
-
   private ArtifactDataFetcher() {
 
+  }
+
+  public static ArtifactDataFetcher getInstance() {
+    return INSTANCE;
   }
 
   // TODO naming is a bit weird? Implementation?
