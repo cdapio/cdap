@@ -28,6 +28,8 @@ interface ITableProps {
   tableName: string;
 }
 
+// TO DO: We can probably replace this component with the SortableStickyGrid - will investigate!
+
 export default function Table({ nodes, tableName }: ITableProps) {
   return (
     <div className="table" id={`table-${tableName}`}>
