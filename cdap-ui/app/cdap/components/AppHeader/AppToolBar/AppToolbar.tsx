@@ -17,9 +17,6 @@ import * as React from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import BrandImage from 'components/AppHeader/BrandImage';
-import { preventPropagation } from 'services/helpers';
-import MenuItem from '@material-ui/core/MenuItem';
-import IconSVG from 'components/IconSVG';
 import MenuIcon from '@material-ui/icons/Menu';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
@@ -27,17 +24,9 @@ import { withContext, INamespaceLinkContext } from 'components/AppHeader/Namespa
 import ToolBarFeatureLink from 'components/AppHeader/AppToolBar/ToolBarFeatureLink';
 import HubButton from 'components/AppHeader/HubButton';
 import { Theme } from 'services/ThemeHelper';
-import VersionStore from 'services/VersionStore';
-import T from 'i18n-react';
-import If from 'components/If';
-import AboutPageModal from 'components/AppHeader/AboutPageModal';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
-import Button from '@material-ui/core/Button';
-import { ClickAwayListener } from '@material-ui/core';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
+import AppToolbarMenu from 'components/AppHeader/AppToolBar/AppToolbarMenu';
 
 const styles = (theme) => {
   return {
@@ -50,19 +39,6 @@ const styles = (theme) => {
     customToolbar: {
       height: '48px',
       minHeight: '48px',
-    },
-    buttonLink: theme.buttonLink,
-    cogWheelFontSize: {
-      // This is because the icon is not the same size as it should be.
-      // So beside a normal text this looks small. Hence the bump in font size
-      fontSize: '1.3rem',
-    },
-    anchorMenuItem: {
-      '&:focus': {
-        outline: 'none',
-      },
-      textDecoration: 'none !important',
-      color: 'inherit',
     },
   };
 };
@@ -83,46 +59,9 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     aboutPageOpen: false,
   };
 
-  public toggleSettings = (event: React.MouseEvent<HTMLElement>) => {
-    if (this.state.anchorEl) {
-      this.setState({
-        anchorEl: null,
-      });
-    } else {
-      this.setState({
-        anchorEl: event.currentTarget,
-      });
-    }
-  };
-
-  public closeSettings = (e) => {
-    if (this.state.anchorEl && this.state.anchorEl.contains(e.target)) {
-      return;
-    }
-    this.setState({
-      anchorEl: null,
-    });
-  };
-
-  private toggleAboutPage = () => {
-    this.setState({
-      aboutPageOpen: !this.state.aboutPageOpen,
-    });
-  };
-  private getDocsUrl = () => {
-    if (Theme.productDocumentationLink === null) {
-      const cdapVersion = VersionStore.getState().version;
-      return `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
-    }
-
-    return Theme.productDocumentationLink;
-  };
-
   public render() {
     const { onMenuIconClick, classes } = this.props;
-    const { anchorEl } = this.state;
     const { namespace } = this.props.context;
-    const cdapVersion = VersionStore.getState().version;
     return (
       <Toolbar className={classes.customToolbar} data-cy="navbar-toolbar">
         <IconButton
@@ -155,51 +94,8 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             featureUrl={`/administration`}
           />
         </div>
-        <div onClick={this.toggleSettings}>
-          <IconButton className={classnames(classes.buttonLink, classes.iconButtonFocus)}>
-            <IconSVG name="icon-cogs" className={classes.cogWheelFontSize} />
-          </IconButton>
-        </div>
+        <AppToolbarMenu />
         <ProductEdition />
-        <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} transition disablePortal>
-          {({ TransitionProps, placement }) => (
-            <Grow
-              {...TransitionProps}
-              style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-            >
-              <Paper>
-                <ClickAwayListener onClickAway={this.closeSettings}>
-                  <a
-                    className={classes.anchorMenuItem}
-                    href={this.getDocsUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MenuItem onClick={this.closeSettings}>
-                      {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-                    </MenuItem>
-                  </a>
-                  <If condition={Theme.showAboutProductModal === true}>
-                    <MenuItem onClick={this.toggleAboutPage}>
-                      <a>
-                        {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                          productName: Theme.productName,
-                        })}
-                      </a>
-                    </MenuItem>
-                  </If>
-                </ClickAwayListener>
-              </Paper>
-            </Grow>
-          )}
-        </Popper>
-        <If condition={Theme.showAboutProductModal === true}>
-          <AboutPageModal
-            cdapVersion={cdapVersion}
-            isOpen={this.state.aboutPageOpen}
-            toggle={this.toggleAboutPage}
-          />
-        </If>
       </Toolbar>
     );
   }
