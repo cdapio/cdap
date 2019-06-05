@@ -15,22 +15,18 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.schema;
+package io.cdap.cdap.graphql.typeresolver;
 
-import io.cdap.cdap.graphql.schema.Types;
+import graphql.schema.idl.TypeRuntimeWiring;
 
 /**
- * Helper class with a collection of types relevant to applications that are used in the server
+ * Defines a type resolver for an interface object in the schema
  */
-public class ApplicationTypes implements Types {
+public interface CDAPTypeResolver {
 
-  public static final String APPLICATION_QUERY = "ApplicationQuery";
-  public static final String WORKFLOW = "Workflow";
-  public static final String PROGRAM_RECORD = "ProgramRecord";
-  public static final String MAP_REDUCE = "MapReduce";
-
-  private ApplicationTypes() {
-    throw new UnsupportedOperationException("Helper class should not be instantiated");
-  }
+  /**
+   * Get the type resolver
+   */
+  TypeRuntimeWiring getTypeResolver();
 
 }

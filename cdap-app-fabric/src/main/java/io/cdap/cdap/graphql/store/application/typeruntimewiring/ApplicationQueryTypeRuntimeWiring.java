@@ -15,10 +15,11 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.runtimewiring;
+package io.cdap.cdap.graphql.store.application.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.application.datafetchers.ScheduleDataFetcher;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
@@ -26,24 +27,25 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 /**
  * ApplicationQuery type runtime wiring. Registers the data fetchers for the ApplicationQuery type.
  */
-public class ProgramRecordTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class ApplicationQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private static final ProgramRecordTypeRuntimeWiring INSTANCE = new ProgramRecordTypeRuntimeWiring();
+  private static final ApplicationQueryTypeRuntimeWiring INSTANCE = new ApplicationQueryTypeRuntimeWiring();
 
-  private final ScheduleDataFetcher someDataFetcher;
+  private final ApplicationDataFetcher applicationDataFetcher;
 
-  private ProgramRecordTypeRuntimeWiring() {
-    this.someDataFetcher = ScheduleDataFetcher.getInstance();
+  private ApplicationQueryTypeRuntimeWiring() {
+    this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
   }
 
-  public static ProgramRecordTypeRuntimeWiring getInstance() {
+  public static ApplicationQueryTypeRuntimeWiring getInstance() {
     return INSTANCE;
   }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.PROGRAM_RECORD)
-      .dataFetcher(ApplicationFields.RUNTIMES, someDataFetcher.getNextRuntimesDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_QUERY)
+      .dataFetcher(ApplicationFields.APPLICATIONS, applicationDataFetcher.getApplicationsDataFetcher())
+      .dataFetcher(GraphQLFields.APPLICATION, applicationDataFetcher.getApplicationDataFetcher())
       .build();
   }
 

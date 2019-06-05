@@ -40,14 +40,28 @@ type ApplicationDetail {
   ownerPrincipal: String
 }
 
-type ProgramRecord {
+interface ProgramRecord {
   #type: ProgramType
+  type: String!
+  app: String!
+  name: String!
+  description: String!
+}
+
+type Workflow implements ProgramRecord {
   type: String!
   app: String!
   name: String!
   description: String!
   # Field added for composition
   runtimes: [ScheduledRuntime]!
+}
+
+type MapReduce implements ProgramRecord {
+  type: String!
+  app: String!
+  name: String!
+  description: String!
 }
 
 type ScheduledRuntime {

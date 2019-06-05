@@ -17,16 +17,24 @@
 
 package io.cdap.cdap.graphql.cdap.provider;
 
+import graphql.TypeResolutionEnvironment;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.TypeResolver;
 import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
-import io.cdap.cdap.graphql.store.application.runtimewiring.ApplicationQueryTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.application.runtimewiring.ProgramRecordTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.application.typeresolver.ProgramRecordTypeResolver;
+import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.application.typeruntimewiring.WorkflowTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceTypeRuntimeWiring;
+import io.cdap.cdap.graphql.typeresolver.CDAPTypeResolver;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
+import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
 
 import java.util.List;
 
@@ -43,16 +51,19 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final CDAPTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
   private final CDAPTypeRuntimeWiring namespaceTypeRuntimeWiring;
 
+  private final CDAPTypeResolver programRecordTypeResolver;
+
   public CDAPGraphQLProvider(List<String> schemaDefinitionFiles) {
     super(schemaDefinitionFiles);
 
     this.cdapQueryTypeRuntimeWiring = CDAPQueryTypeRuntimeWiring.getInstance();
     this.applicationQueryTypeRuntimeWiring = ApplicationQueryTypeRuntimeWiring.getInstance();
-    this.programRecordQueryTypeRuntimeWiring = ProgramRecordTypeRuntimeWiring.getInstance();
+    this.programRecordQueryTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
     this.artifactQueryTypeRuntimeWiring = ArtifactQueryTypeRuntimeWiring.getInstance();
     this.artifactTypeRuntimeWiring = ArtifactTypeRuntimeWiring.getInstance();
     this.namespaceQueryTypeRuntimeWiring = NamespaceQueryTypeRuntimeWiring.getInstance();
     this.namespaceTypeRuntimeWiring = NamespaceTypeRuntimeWiring.getInstance();
+    this.programRecordTypeResolver = ProgramRecordTypeResolver.getInstance();
   }
 
   @Override
@@ -65,6 +76,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
       .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(programRecordTypeResolver.getTypeResolver())
       .build();
   }
 

@@ -15,11 +15,10 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.runtimewiring;
+package io.cdap.cdap.graphql.store.application.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
-import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationDataFetcher;
+import io.cdap.cdap.graphql.store.application.datafetchers.ScheduleDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
@@ -27,25 +26,24 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 /**
  * ApplicationQuery type runtime wiring. Registers the data fetchers for the ApplicationQuery type.
  */
-public class ApplicationQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class WorkflowTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private static final ApplicationQueryTypeRuntimeWiring INSTANCE = new ApplicationQueryTypeRuntimeWiring();
+  private static final WorkflowTypeRuntimeWiring INSTANCE = new WorkflowTypeRuntimeWiring();
 
-  private final ApplicationDataFetcher applicationDataFetcher;
+  private final ScheduleDataFetcher scheduleDataFetcher;
 
-  private ApplicationQueryTypeRuntimeWiring() {
-    this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
+  private WorkflowTypeRuntimeWiring() {
+    this.scheduleDataFetcher = ScheduleDataFetcher.getInstance();
   }
 
-  public static ApplicationQueryTypeRuntimeWiring getInstance() {
+  public static WorkflowTypeRuntimeWiring getInstance() {
     return INSTANCE;
   }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_QUERY)
-      .dataFetcher(ApplicationFields.APPLICATIONS, applicationDataFetcher.getApplicationsDataFetcher())
-      .dataFetcher(GraphQLFields.APPLICATION, applicationDataFetcher.getApplicationDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.WORKFLOW)
+      .dataFetcher(ApplicationFields.RUNTIMES, scheduleDataFetcher.getNextRuntimesDataFetcher())
       .build();
   }
 
