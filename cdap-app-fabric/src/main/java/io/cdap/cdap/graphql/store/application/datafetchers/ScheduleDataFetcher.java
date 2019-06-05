@@ -23,8 +23,10 @@ import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.proto.ProgramRecord;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.WorkflowId;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class ScheduleDataFetcher {
@@ -45,12 +47,17 @@ public class ScheduleDataFetcher {
   public DataFetcher getNextRuntimesDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
+        ProgramRecord programRecord = dataFetchingEnvironment.getSource();
+
+        if(!programRecord.getType().equals(ProgramType.WORKFLOW)) {
+          return new ArrayList<>();
+        }
+
+        String programRecordName = programRecord.getName();
+
         Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
         String namespace = (String) localContext.get(GraphQLFields.NAMESPACE);
         String applicationName = (String) localContext.get(GraphQLFields.NAME);
-
-        ProgramRecord programRecord = dataFetchingEnvironment.getSource();
-        String programRecordName = programRecord.getName();
 
         WorkflowId workflowId = new WorkflowId(namespace, applicationName, programRecordName);
 
