@@ -61,24 +61,40 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
     String query = "{ "
       + "  application {"
       + "    applications {"
-      + "      type"
+      // + "      type"
       + "      name"
-      + "      version"
-      + "      description"
-      + "      ownerPrincipal"
+      // + "      version"
+      // + "      description"
+      // + "      ownerPrincipal"
       + "      artifact {"
       + "        name"
       + "      }"
+      + "      applicationDetail {"
+      + "        programs(type: \"Workflow\") {"
+      // + "        programs {"
+      + "          name"
+      // + "          type"
+      + "          ... on Workflow {"
+      + "            runs {"
+      + "              status"
+      + "              startTs"
+      + "            }"
+      + "            startTimes {"
+      + "              time"
+      + "            }"
+      + "          }"
+      + "        }"
+    + "        }"
       + "    }"
       + "  }"
       + "}";
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
     ExecutionResult executionResult = graphQL.execute(executionInput);
+    System.out.println(executionResult.getData().toString());
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    System.out.println(executionResult.getData().toString());
   }
 
   @Test

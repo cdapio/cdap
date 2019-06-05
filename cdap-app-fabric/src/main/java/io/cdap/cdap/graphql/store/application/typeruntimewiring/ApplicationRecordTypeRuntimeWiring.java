@@ -18,32 +18,32 @@
 package io.cdap.cdap.graphql.store.application.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.application.datafetchers.ScheduleDataFetcher;
+import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationDataFetcher;
+import io.cdap.cdap.graphql.store.application.datafetchers.ProgramRecordDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
- * ApplicationQuery type runtime wiring. Registers the data fetchers for the ApplicationQuery type.
+ * ApplicationRecord type runtime wiring. Registers the data fetchers for the ApplicationRecord type.
  */
-public class WorkflowTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
+public class ApplicationRecordTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private static final WorkflowTypeRuntimeWiring INSTANCE = new WorkflowTypeRuntimeWiring();
+  private static final ApplicationRecordTypeRuntimeWiring INSTANCE = new ApplicationRecordTypeRuntimeWiring();
 
-  private final ScheduleDataFetcher scheduleDataFetcher;
+  private final ApplicationDataFetcher applicationDataFetcher;
 
-  private WorkflowTypeRuntimeWiring() {
-    this.scheduleDataFetcher = ScheduleDataFetcher.getInstance();
+  private ApplicationRecordTypeRuntimeWiring() {
+    this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
   }
 
-  public static WorkflowTypeRuntimeWiring getInstance() {
+  public static ApplicationRecordTypeRuntimeWiring getInstance() {
     return INSTANCE;
   }
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.WORKFLOW)
-      .dataFetcher("startTimes", scheduleDataFetcher.getNextRuntimesDataFetcher())
-      .dataFetcher("runs", scheduleDataFetcher.getRunsDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_RECORD)
+      .dataFetcher("applicationDetail", applicationDataFetcher.getSome())
       .build();
   }
 

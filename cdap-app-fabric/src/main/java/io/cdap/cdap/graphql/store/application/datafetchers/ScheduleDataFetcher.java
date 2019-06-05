@@ -68,7 +68,7 @@ public class ScheduleDataFetcher {
     );
   }
 
-  public DataFetcher getsome() {
+  public DataFetcher getRunsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         ProgramRecord programRecord = dataFetchingEnvironment.getSource();
@@ -81,6 +81,7 @@ public class ScheduleDataFetcher {
 
         ProgramId programId = new ProgramId(namespace, applicationName, programType, programName);
 
+        System.out.println(programId);
         return programClient.getAllProgramRuns(programId, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
       }
     );

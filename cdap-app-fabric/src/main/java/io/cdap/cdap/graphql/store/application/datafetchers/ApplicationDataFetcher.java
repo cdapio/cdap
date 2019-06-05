@@ -25,10 +25,13 @@ import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Fetchers to get applications
@@ -57,9 +60,16 @@ public class ApplicationDataFetcher {
   public DataFetcher getApplicationsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
+        Map<String, Object> newLocalContext = new ConcurrentHashMap<>(dataFetchingEnvironment.getArguments());
+
         String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
 
-        return applicationClient.list(new NamespaceId(namespace));
+        List<ApplicationRecord> applicationRecords = applicationClient.list(new NamespaceId(namespace));
+
+        return DataFetcherResult.newResult()
+          .data(applicationRecords)
+          .localContext(newLocalContext)
+          .build();
       }
     );
   }
@@ -72,8 +82,7 @@ public class ApplicationDataFetcher {
   public DataFetcher getApplicationDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
-        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
-        localContext.putAll(dataFetchingEnvironment.getArguments());
+        Map<String, Object> newLocalContext = new ConcurrentHashMap<>(dataFetchingEnvironment.getArguments());
 
         String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
         String applicationName = dataFetchingEnvironment.getArgument(GraphQLFields.NAME);
@@ -81,7 +90,10 @@ public class ApplicationDataFetcher {
         ApplicationId appId = new ApplicationId(namespace, applicationName);
         ApplicationDetail applicationDetail = applicationClient.get(appId);
 
-        return DataFetcherResult.newResult().data(applicationDetail).build();
+        return DataFetcherResult.newResult()
+          .data(applicationDetail)
+          .localContext(newLocalContext)
+          .build();
       }
     );
   }
@@ -93,6 +105,27 @@ public class ApplicationDataFetcher {
         Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
 
         return localContext.get(GraphQLFields.NAMESPACE);
+      }
+    );
+  }
+
+  public DataFetcher getSome() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
+        String namespace = (String) localContext.get(GraphQLFields.NAMESPACE);
+        String applicationName = ((ApplicationRecord)dataFetchingEnvironment.getSource()).getName();
+
+        ApplicationId appId = new ApplicationId(namespace, applicationName);
+        ApplicationDetail applicationDetail = applicationClient.get(appId);
+
+        Map<String, Object> newLocalContext = new ConcurrentHashMap<>(localContext);
+        newLocalContext.put("name", applicationName);
+
+        return DataFetcherResult.newResult()
+          .data(applicationDetail)
+          .localContext(newLocalContext)
+          .build();
       }
     );
   }

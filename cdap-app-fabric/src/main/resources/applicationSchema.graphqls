@@ -26,6 +26,8 @@ type ApplicationRecord {
   description: String!
   artifact: ArtifactSummary!
   ownerPrincipal: String
+  # Field added for composition
+  applicationDetail: ApplicationDetail!
 }
 
 type ApplicationDetail {

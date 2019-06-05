@@ -27,6 +27,7 @@ import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.application.typeresolver.ProgramRecordTypeResolver;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.WorkflowTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
@@ -52,6 +53,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final CDAPTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
   private final CDAPTypeRuntimeWiring namespaceTypeRuntimeWiring;
   private final CDAPTypeRuntimeWiring applicationDetailTypeRuntimeWiring;
+  private final CDAPTypeRuntimeWiring applicationRecordTypeRuntimeWiring;
 
   private final CDAPTypeResolver programRecordTypeResolver;
 
@@ -66,6 +68,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     this.namespaceQueryTypeRuntimeWiring = NamespaceQueryTypeRuntimeWiring.getInstance();
     this.namespaceTypeRuntimeWiring = NamespaceTypeRuntimeWiring.getInstance();
     this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
+    this.applicationRecordTypeRuntimeWiring = ApplicationRecordTypeRuntimeWiring.getInstance();
     this.programRecordTypeResolver = ProgramRecordTypeResolver.getInstance();
   }
 
@@ -80,6 +83,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
       .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(applicationDetailTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(applicationRecordTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordTypeResolver.getTypeResolver())
       .build();
   }
