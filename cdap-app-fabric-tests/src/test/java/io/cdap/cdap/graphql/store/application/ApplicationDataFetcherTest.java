@@ -28,12 +28,27 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
   @Test
   public void testGetApplication() {
     String query = "{ "
-      + "  application(name: \"Test\") {"
+      + "  application(name: \"JavascriptTransform\") {"
       + "    name"
       + "    appVersion"
       + "    description"
       + "    configuration"
       + "    ownerPrincipal"
+      + "    programs {"
+      + "      name"
+      + "      type"
+      + "      app"
+      + "      description"
+      + "      ... on Workflow {"
+      + "        runs {"
+      + "          status"
+      + "          startTs"
+      + "        }"
+      + "        startTimes {"
+      + "          time"
+      + "        }"
+      + "      }"
+      + "    }"
       + "  }"
       + "}";
 

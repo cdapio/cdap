@@ -15,19 +15,20 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.schema;
+package io.cdap.cdap.graphql.store.programrecord.schema;
 
 import io.cdap.cdap.graphql.schema.Fields;
 
 /**
- * Helper class with a collection of fields relevant to applications that are used in the server
+ * Helper class with a collection of fields relevant to program records that are used in the server
  */
-public class ApplicationFields implements Fields {
+public class ProgramRecordFields implements Fields {
 
-  public static final String APPLICATION = "application";
-  public static final String PROGRAMS = "programs";
+  public static final String START_TIMES = "startTimes";
+  public static final String RUNS = "runs";
+  public static final String TYPE = "type";
 
-  private ApplicationFields() {
+  private ProgramRecordFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
 

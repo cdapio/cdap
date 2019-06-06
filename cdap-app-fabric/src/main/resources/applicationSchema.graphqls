@@ -18,7 +18,7 @@ type ApplicationDetail {
   description: String!
   configuration: String!
   #List<DatasetDetail> datasets;
-  #programs(type: String): [ProgramRecord]!
+  programs: [ProgramRecord]!
   #List<PluginDetail> plugins;
   #artifact: ArtifactSummary!
   ownerPrincipal: String
