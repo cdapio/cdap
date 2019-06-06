@@ -79,10 +79,15 @@ angular.module(PKG.name + '.commons')
         },
       },
       'ds-multiplevalues': {
-        element: '<my-ds-multiple-values></my-ds-multiple-values>',
+        element: '<multiple-values-widget></multiple-values-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'placeholders': 'myconfig["widget-attributes"].placeholders',
+          'values-delimiter': 'myconfig["widget-attributes"]["values-delimiter"]',
+          'num-values': 'myconfig["widget-attributes"].numValues',
         }
       },
       'json-editor': {

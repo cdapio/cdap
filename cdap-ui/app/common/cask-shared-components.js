@@ -79,6 +79,8 @@ var KeyValueWidget = require('../cdap/components/AbstractWidget/KeyValueWidget')
 var Select = require('../cdap/components/AbstractWidget/FormInputs/Select').default;
 var KeyValueDropdownWidget = require('../cdap/components/AbstractWidget/KeyValueDropdownWidget')
   .default;
+var MultipleValuesWidget = require('../cdap/components/AbstractWidget/MultipleValuesWidget')
+  .default;
 
 export {
   Store,
@@ -138,4 +140,5 @@ export {
   KeyValueWidget,
   Select,
   KeyValueDropdownWidget,
+  MultipleValuesWidget,
 };
