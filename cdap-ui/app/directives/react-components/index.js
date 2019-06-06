@@ -89,4 +89,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('selectDropdown', function(reactDirective) {
     return reactDirective(window.CaskCommon.Select);
+  })
+  .directive('keyValueDropdownWidget', function (reactDirective) {
+    return reactDirective(window.CaskCommon.KeyValueDropdownWidget);
   });

@@ -77,6 +77,8 @@ var Number = require('../cdap/components/AbstractWidget/FormInputs/Number').defa
 var CSVWidget = require('../cdap/components/AbstractWidget/CSVWidget').default;
 var KeyValueWidget = require('../cdap/components/AbstractWidget/KeyValueWidget').default;
 var Select = require('../cdap/components/AbstractWidget/FormInputs/Select').default;
+var KeyValueDropdownWidget = require('../cdap/components/AbstractWidget/KeyValueDropdownWidget')
+  .default;
 
 export {
   Store,
@@ -135,4 +137,5 @@ export {
   CSVWidget,
   KeyValueWidget,
   Select,
+  KeyValueDropdownWidget,
 };

@@ -17,6 +17,8 @@
 import * as React from 'react';
 import Input from '@material-ui/core/Input';
 import withStyles from '@material-ui/core/styles/withStyles';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 import AbstractRow, {
   IAbstractRowProps,
   AbstractRowStyles,
@@ -36,11 +38,17 @@ const styles = (theme) => {
   };
 };
 
-interface IKeyValueRowProps extends IAbstractRowProps<typeof styles> {
-  valuePlaceholder?: string;
+interface IComplexDropdown {
+  value: string | number;
+  label: string;
+}
+
+export type IDropdownOption = string | number | IComplexDropdown;
+
+interface IKeyValueDropdownRowProps extends IAbstractRowProps<typeof styles> {
   keyPlaceholder?: string;
   kvDelimiter?: string;
-  isEncoded: boolean;
+  dropdownOptions: IDropdownOption[];
 }
 
 interface IKeyValueState {
@@ -50,12 +58,11 @@ interface IKeyValueState {
 
 type StateKeys = keyof IKeyValueState;
 
-class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
+class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyValueState> {
   public static defaultProps = {
     keyPlaceholder: 'Key',
-    valuePlaceholder: 'Value',
     kvDelimiter: ':',
-    isEncoded: false,
+    dropdownOptions: [],
   };
 
   public state = {
@@ -64,12 +71,7 @@ class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
   };
 
   public componentDidMount() {
-    let [key = '', value = ''] = this.props.value.split(this.props.kvDelimiter);
-
-    if (this.props.isEncoded) {
-      key = decodeURIComponent(key);
-      value = decodeURIComponent(value);
-    }
+    const [key = '', value = ''] = this.props.value.split(this.props.kvDelimiter);
 
     this.setState({
       key,
@@ -83,13 +85,8 @@ class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
         [type]: e.target.value,
       } as Pick<IKeyValueState, StateKeys>,
       () => {
-        let key = this.state.key;
-        let value = this.state.value;
-
-        if (this.props.isEncoded) {
-          key = encodeURIComponent(key);
-          value = encodeURIComponent(value);
-        }
+        const key = this.state.key;
+        const value = this.state.value;
 
         const updatedValue = key.length > 0 ? [key, value].join(this.props.kvDelimiter) : '';
         this.onChange(updatedValue);
@@ -98,6 +95,17 @@ class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
   };
 
   public renderInput = () => {
+    const dropdownOptions = this.props.dropdownOptions.map((option: IDropdownOption) => {
+      if (typeof option === 'object') {
+        return option;
+      }
+
+      return {
+        label: option.toString(),
+        value: option,
+      };
+    });
+
     return (
       <div className={this.props.classes.inputContainer}>
         <Input
@@ -112,19 +120,25 @@ class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
           inputRef={this.props.forwardedRef}
         />
 
-        <Input
+        <Select
           classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.valuePlaceholder}
-          onChange={this.handleChange.bind(this, 'value')}
           value={this.state.value}
-          onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
+          onChange={this.handleChange.bind(this, 'value')}
+          displayEmpty={true}
           disabled={this.props.disabled}
-        />
+        >
+          {dropdownOptions.map((option) => {
+            return (
+              <MenuItem value={option.value} key={option.value}>
+                {option.label}
+              </MenuItem>
+            );
+          })}
+        </Select>
       </div>
     );
   };
 }
 
-const StyledKeyValueRow = withStyles(styles)(KeyValueRow);
-export default StyledKeyValueRow;
+const StyledKeyValuDropdownRow = withStyles(styles)(KeyValueDropdownRow);
+export default StyledKeyValuDropdownRow;
