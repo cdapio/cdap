@@ -14,10 +14,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-type ApplicationQuery {
-  applications(namespace: String = "default"): [ApplicationRecord]!
-  application(namespace: String = "default", name: String!): ApplicationDetail!
-}
+# type ApplicationQuery {
+#   applications(namespace: String = "default"): [ApplicationRecord]!
+#   application(namespace: String = "default", name: String!): ApplicationDetail!
+# }
 
 type ApplicationRecord {
   type: String!

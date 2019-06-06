@@ -17,11 +17,7 @@
 
 package io.cdap.cdap.graphql.cdap.provider;
 
-import graphql.TypeResolutionEnvironment;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.TypeResolver;
 import graphql.schema.idl.RuntimeWiring;
-import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.application.typeresolver.ProgramRecordTypeResolver;
@@ -35,8 +31,6 @@ import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRunt
 import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceTypeRuntimeWiring;
 import io.cdap.cdap.graphql.typeresolver.CDAPTypeResolver;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
-import io.cdap.cdap.proto.ProgramRecord;
-import io.cdap.cdap.proto.ProgramType;
 
 import java.util.List;
 
