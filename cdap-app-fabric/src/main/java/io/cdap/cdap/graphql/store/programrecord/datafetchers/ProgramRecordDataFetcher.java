@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.store.programrecord.datafetchers;
 import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
+import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
@@ -53,7 +53,7 @@ public class ProgramRecordDataFetcher {
         ApplicationDetail applicationDetail = dataFetchingEnvironment.getSource();
         List<ProgramRecord> programs = applicationDetail.getPrograms();
 
-        String type = dataFetchingEnvironment.getArgument(ApplicationFields.TYPE);
+        String type = dataFetchingEnvironment.getArgument(ProgramRecordFields.TYPE);
 
         if (type == null) {
           return programs;

@@ -24,7 +24,7 @@ import io.cdap.cdap.graphql.store.programrecord.datafetchers.ProgramRecordDataFe
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
- * ApplicationQuery type runtime wiring. Registers the data fetchers for the ApplicationQuery type.
+ * ApplicationDetail type runtime wiring. Registers the data fetchers for the ApplicationDetail type.
  */
 public class ApplicationDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 

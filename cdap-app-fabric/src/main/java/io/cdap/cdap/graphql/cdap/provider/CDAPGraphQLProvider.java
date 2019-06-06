@@ -18,7 +18,7 @@
 package io.cdap.cdap.graphql.cdap.provider;
 
 import graphql.schema.idl.RuntimeWiring;
-import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
+import io.cdap.cdap.graphql.cdap.typeruntimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
@@ -48,9 +48,10 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     super(schemaDefinitionFiles);
 
     this.cdapQueryTypeRuntimeWiring = CDAPQueryTypeRuntimeWiring.getInstance();
-    this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
     this.applicationRecordTypeRuntimeWiring = ApplicationRecordTypeRuntimeWiring.getInstance();
+    this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
     this.workflowTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
+
     // this.artifactQueryTypeRuntimeWiring = ArtifactQueryTypeRuntimeWiring.getInstance();
     // this.artifactTypeRuntimeWiring = ArtifactTypeRuntimeWiring.getInstance();
     // this.namespaceQueryTypeRuntimeWiring = NamespaceQueryTypeRuntimeWiring.getInstance();
@@ -63,15 +64,17 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(cdapQueryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(applicationDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(applicationRecordTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(applicationDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(workflowTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordTypeResolver.getTypeResolver())
+
       // .type(programRecordQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       // .type(artifactQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       // .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
       // .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       // .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
+
       .build();
   }
 

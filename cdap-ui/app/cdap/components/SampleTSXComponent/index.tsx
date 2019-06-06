@@ -18,12 +18,12 @@ import * as React from 'react';
 import * as Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CodeEditor from 'components/CodeEditor';
+import InformationIcon from 'components/InformationIcon';
 const SubTSXComponent = Loadable({
   loader: () =>
     import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
   loading: LoadingSVGCentered,
 });
-
 interface IFCProps {
   prop1: boolean;
   prop2: string;

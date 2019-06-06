@@ -180,7 +180,7 @@ export default class Popover extends PureComponent {
 
     return (
       <Manager className={this.props.className} tag={this.props.tag}>
-        <Target {...targetProps}>
+        <Target {...targetProps} tag="span">
           <TargetElement
             className={classnames({
               active: this.state.showPopover,

@@ -20,7 +20,7 @@ package io.cdap.cdap.graphql.store.programrecord.schema;
 import io.cdap.cdap.graphql.schema.Types;
 
 /**
- * Helper class with a collection of fields relevant to program records that are used in the server
+ * Helper class with a collection of types relevant to program records that are used in the server
  */
 public class ProgramRecordTypes implements Types {
 

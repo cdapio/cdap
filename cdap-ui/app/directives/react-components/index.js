@@ -71,4 +71,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('codeEditor', function(reactDirective) {
     return reactDirective(window.CaskCommon.CodeEditor);
+  })
+  .directive('jsonEditor', function(reactDirective) {
+    return reactDirective(window.CaskCommon.JSONEditor);
   });

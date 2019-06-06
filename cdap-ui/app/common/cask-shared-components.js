@@ -71,6 +71,7 @@ var PipelineList = require('../cdap/components/PipelineList').default;
 var AppHeader = require('../cdap/components/AppHeader').default;
 var Markdown = require('../cdap/components/Markdown').MarkdownWithStyles;
 var CodeEditor = require('../cdap/components/CodeEditor').default;
+var JSONEditor = require('../cdap/components/CodeEditor/JSONEditor').default;
 export {
   Store,
   DataPrepHome,
@@ -122,4 +123,5 @@ export {
   AppHeader,
   Markdown,
   CodeEditor,
+  JSONEditor,
 };

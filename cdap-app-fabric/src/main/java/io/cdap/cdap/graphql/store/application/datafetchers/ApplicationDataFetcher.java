@@ -111,11 +111,10 @@ public class ApplicationDataFetcher {
         String namespace = (String) localContext.get(GraphQLFields.NAMESPACE);
         ApplicationRecord applicationRecord = dataFetchingEnvironment.getSource();
         String applicationName = applicationRecord.getName();
-
         ApplicationDetail applicationDetail = fetchApplicationDetail(namespace, applicationName);
 
         Map<String, Object> newLocalContext = new ConcurrentHashMap<>(localContext);
-        newLocalContext.put("name", applicationName);
+        newLocalContext.put(GraphQLFields.NAME, applicationName);
 
         return DataFetcherResult.newResult()
           .data(applicationDetail)

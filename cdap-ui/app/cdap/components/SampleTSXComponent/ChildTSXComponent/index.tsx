@@ -17,5 +17,5 @@
 import * as React from 'react';
 
 export default function() {
-  return <div> Sub TSX Component </div>;
+  return <div style={{ height: '50px' }}> Sub TSX Component </div>;
 }
