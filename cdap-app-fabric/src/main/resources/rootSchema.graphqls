@@ -21,5 +21,6 @@ type CDAPQuery {
 }
 
 extend type CDAPQuery {
+  applications(namespace: String = "default"): [ApplicationRecord]!
   application(namespace: String = "default", name: String!): ApplicationDetail!
 }

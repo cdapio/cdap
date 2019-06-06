@@ -27,9 +27,12 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,6 +53,27 @@ public class ApplicationDataFetcher {
 
   public static ApplicationDataFetcher getInstance() {
     return INSTANCE;
+  }
+
+  /**
+   * Fetcher to get ApplicationRecords
+   *
+   * @return the data fetcher
+   */
+  public DataFetcher getApplicationRecordsDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
+        List<ApplicationRecord> applicationRecords = applicationClient.list(new NamespaceId(namespace));
+
+        Map<String, Object> newLocalContext = new ConcurrentHashMap<>(dataFetchingEnvironment.getArguments());
+
+        return DataFetcherResult.newResult()
+          .data(applicationRecords)
+          .localContext(newLocalContext)
+          .build();
+      }
+    );
   }
 
   /**

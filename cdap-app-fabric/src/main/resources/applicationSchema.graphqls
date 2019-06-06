@@ -12,6 +12,15 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+type ApplicationRecord {
+  type: String!
+  name: String!
+  version: String!
+  description: String!
+  # artifact: ArtifactSummary!
+  ownerPrincipal: String
+}
+
 type ApplicationDetail {
   name: String!
   appVersion: String!
