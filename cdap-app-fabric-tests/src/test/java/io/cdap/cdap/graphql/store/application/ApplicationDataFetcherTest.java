@@ -26,6 +26,25 @@ import org.junit.Test;
 public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
+  public void testGetApplications() {
+    String query = "{ "
+      + "  applications {"
+      + "    type"
+      + "    name"
+      + "    version"
+      + "    description"
+      + "    ownerPrincipal"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+    System.out.println(executionResult.getData().toString());
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+  }
+
+  @Test
   public void testGetApplication() {
     String query = "{ "
       + "  application(name: \"JavascriptTransform\") {"
