@@ -65,6 +65,7 @@ public class GrantAccessToken {
   private final Codec<AccessToken> tokenCodec;
   private final long tokenExpiration;
   private final long extendedTokenExpiration;
+  private static CConfiguration conf;
 
   /**
    * Create a new GrantAccessToken object to generate tokens for authorized users.
@@ -75,6 +76,7 @@ public class GrantAccessToken {
                           CConfiguration cConf) {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
+    this.conf = cConf;
     this.tokenExpiration = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
     this.extendedTokenExpiration = cConf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
   }
@@ -162,40 +164,40 @@ public class GrantAccessToken {
 			throws IOException, ServletException {
 		
 		final String authorizationHeader = request.getHeader("knoxToken");
-        String wireToken = null;
-        long expireTime = -1l;
-        String username = null;
-        long issueTime = System.currentTimeMillis();
+        	String wireToken = null;
+        	long expireTime = -1l;
+        	String username = null;
+        	long issueTime = System.currentTimeMillis();
 
-        if (authorizationHeader!=null && !Strings.isNullOrEmpty(authorizationHeader)) {
-            wireToken = authorizationHeader;
-        } else {
-            wireToken = getJWTTokenFromCookie(request);
-        }
-        if (Strings.isNullOrEmpty(wireToken)) {
-        	LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
-            return null;
-        }
+        	if (authorizationHeader!=null && !Strings.isNullOrEmpty(authorizationHeader)) {
+            		wireToken = authorizationHeader;
+        	} else {
+            		wireToken = getJWTTokenFromCookie(request);
+        	}
+        	if (Strings.isNullOrEmpty(wireToken)) {
+        		LOG.debug("No valid 'Bearer Authorization' or 'Cookie' found in header, send 401");
+            		return null;
+        	}
 
-        JWTToken token;
-        try {
-            token = new JWTToken(wireToken);
-            username = token.getSubject();
-        } catch (ParseException | NullPointerException e) {
-            e.printStackTrace();
-            throw new UnauthorizedException("Authorization header missing/invalid");
-        }
+        	JWTToken token;
+        	try {
+            		token = new JWTToken(wireToken);
+            		username = token.getSubject();
+        	} catch (ParseException | NullPointerException e) {
+            		e.printStackTrace();
+            		throw new UnauthorizedException("Authorization header missing/invalid");
+        	}
 
-        /*boolean validToken = verifyToken(token);
-        if(!validToken)
-            throw new UnauthorizedException("Not authorized");*/
-
-        Date expires = token.getExpiresDate();
-        LOG.debug("token expiry date: " + expires.toString());
-        if (expires.before(new Date()))
-            throw new UnauthorizedException("Token expired.");
+        	boolean validToken = verifyToken(token);
+        	if(!validToken)
+            		throw new UnauthorizedException("Not authorized");
+        	
+        	Date expires = token.getExpiresDate();
+        	LOG.debug("token expiry date: " + expires.toString());
+        	if (expires.before(new Date()))
+            		throw new UnauthorizedException("Token expired.");
         
-        expireTime = Date.parse(expires.toString());
+        	expireTime = Date.parse(expires.toString());
         
 		List<String> userGroups = Collections.emptyList();
 
@@ -207,7 +209,8 @@ public class GrantAccessToken {
  
   private static boolean verifyToken(JWT token) {
         boolean rc = false;
-        String verificationPem = "KNOX_TOKEN_PUBLIC_KEY";
+        String verificationPem = conf.get(Constants.Security.KNOX_TOKEN_PUBLIC_KEY);
+        LOG.info("key value : " + verificationPem);
         try {
             RSAPublicKey publicKey = CertificateUtils.parseRSAPublicKey(verificationPem);
             JWSVerifier verifier = new RSASSAVerifier(publicKey);

@@ -233,6 +233,9 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     copyPropIfExists(handlerProps, cConfiguration, Constants.Security.BASIC_REALM_FILE);
     // used by BJASPIAuthenticationHandler
     copyPropIfExists(handlerProps, cConfiguration, Constants.Security.LOGIN_MODULE_CLASS_NAME);
+    copyPropIfExists(handlerProps, cConfiguration, Constants.Security.KNOX_HOST);
+    copyPropIfExists(handlerProps, cConfiguration, Constants.Security.KNOX_PORT);
+    copyPropIfExists(handlerProps, cConfiguration, Constants.Security.KNOX_TOKEN_PUBLIC_KEY);
 
     copyProps(handlerProps, getAuthHandlerConfigs(cConfiguration));
     copyProps(handlerProps, getAuthHandlerConfigs(sConfiguration));

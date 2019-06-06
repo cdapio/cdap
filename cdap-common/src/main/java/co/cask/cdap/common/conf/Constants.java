@@ -952,6 +952,12 @@ public final class Constants {
    * Security configuration.
    */
   public static final class Security {
+    /** Enables key to set KNOX_TOKEN_PUBLIC_KEY */
+    public static final String KNOX_TOKEN_PUBLIC_KEY = "security.authentication.knox.token.public.key";
+    /** Knox Host value */
+    public static final String KNOX_HOST = "security.authentication.knox.host.value";
+    /** Knox Port value */
+    public static final String KNOX_PORT = "security.authentication.knox.post.value";
     /** Enables security. */
     public static final String ENABLED = "security.enabled";
     /** Enables Kerberos authentication. */
