@@ -17,13 +17,17 @@
 
 package io.cdap.cdap.application;
 
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
@@ -40,5 +44,29 @@ public abstract class AbstractApplicationClient {
    * Resolved the specified URL
    */
   protected abstract URL resolve(String resource) throws IOException;
+
+  public void listApplications() throws BadRequestException, IOException, UnauthenticatedException {
+    String path = String.format("namespaces/%s/apps", "default");
+
+    HttpResponse x = makeRequest(path, HttpMethod.GET, null);
+    System.out.println(x.getResponseMessage());
+  }
+
+  private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
+    URL url = resolve(path);
+    HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
+    if (body != null) {
+      builder.withBody(body);
+    }
+    HttpResponse response = execute(builder.build(),
+                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+    return response;
+
+
+  }
 
 }

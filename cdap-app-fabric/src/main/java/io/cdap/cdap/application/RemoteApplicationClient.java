@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -40,27 +41,35 @@ public class RemoteApplicationClient extends AbstractApplicationClient {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteApplicationClient.class);
 
   private final RemoteClient remoteClient;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  public RemoteApplicationClient(final DiscoveryServiceClient discoveryClient) {
+  public RemoteApplicationClient(final DiscoveryServiceClient discoveryClient,
+                                 AuthenticationContext authenticationContext) {
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
-    UnauthorizedException {
-    LOG.trace("Making application request {}", request);
-    HttpResponse response = remoteClient.execute(request);
-    LOG.trace("Received response {} for request {}", response, request);
+    UnauthorizedException {//http://miguelvelez-macbookpro.roam.corp.google.com:58565/v3/namespaces/default/metadata
+    LOG.info("Making application request {}", request.getBody());
+    HttpResponse response = remoteClient.execute(addUserIdHeader(request));
+    LOG.info("Received response {} for request {}", response, request);
     return response;
   }
 
   @Override
   protected URL resolve(String resource) {
     URL url = remoteClient.resolve(resource);
-    LOG.trace("Resolved URL {} for resources {}", url, resource);
+    LOG.info("Resolved URL {} for resources {}", url, resource);
     return url;
+  }
+
+  private HttpRequest addUserIdHeader(HttpRequest request) {
+    return new HttpRequest.Builder(request).addHeader(Constants.Security.Headers.USER_ID,
+                                                      authenticationContext.getPrincipal().getName()).build();
   }
 
 }
