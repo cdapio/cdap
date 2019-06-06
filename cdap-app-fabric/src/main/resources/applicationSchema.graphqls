@@ -14,10 +14,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-# type ApplicationQuery {
-#   applications(namespace: String = "default"): [ApplicationRecord]!
-#   application(namespace: String = "default", name: String!): ApplicationDetail!
-# }
 
 type ApplicationRecord {
   type: String!
@@ -31,8 +27,6 @@ type ApplicationRecord {
 }
 
 type ApplicationDetail {
-  # Added field for convenience
-  namespace: String!
   name: String!
   appVersion: String!
   description: String!
@@ -44,14 +38,15 @@ type ApplicationDetail {
   ownerPrincipal: String
 }
 
+# TODO add in separate file
 interface ProgramRecord {
-  #type: ProgramType
   type: String!
   app: String!
   name: String!
   description: String!
 }
 
+# TODO add in separate file
 type Workflow implements ProgramRecord {
   type: String!
   app: String!
@@ -62,6 +57,7 @@ type Workflow implements ProgramRecord {
   runs: [RunRecord]!
 }
 
+# TODO add in separate file
 type MapReduce implements ProgramRecord {
   type: String!
   app: String!
@@ -69,11 +65,13 @@ type MapReduce implements ProgramRecord {
   description: String!
 }
 
+# TODO add in separate file
 type ScheduledRuntime {
   id: String!
   time: String!
 }
 
+# TODO add in separate file
 type RunRecord {
   pid: String!
   startTs: String!

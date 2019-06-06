@@ -22,7 +22,6 @@ import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.application.typeresolver.ProgramRecordTypeResolver;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.WorkflowTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
@@ -40,7 +39,6 @@ import java.util.List;
 public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
 
   private final CDAPTypeRuntimeWiring cdapQueryTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring applicationQueryTypeRuntimeWiring;
   private final CDAPTypeRuntimeWiring programRecordQueryTypeRuntimeWiring;
   private final CDAPTypeRuntimeWiring artifactQueryTypeRuntimeWiring;
   private final CDAPTypeRuntimeWiring artifactTypeRuntimeWiring;
@@ -55,7 +53,6 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     super(schemaDefinitionFiles);
 
     this.cdapQueryTypeRuntimeWiring = CDAPQueryTypeRuntimeWiring.getInstance();
-    this.applicationQueryTypeRuntimeWiring = ApplicationQueryTypeRuntimeWiring.getInstance();
     this.programRecordQueryTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
     this.artifactQueryTypeRuntimeWiring = ArtifactQueryTypeRuntimeWiring.getInstance();
     this.artifactTypeRuntimeWiring = ArtifactTypeRuntimeWiring.getInstance();
@@ -70,7 +67,6 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(cdapQueryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(applicationQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(artifactQueryTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())

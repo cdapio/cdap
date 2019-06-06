@@ -32,11 +32,11 @@ public class ApplicationDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring
 
   private static final ApplicationDetailTypeRuntimeWiring INSTANCE = new ApplicationDetailTypeRuntimeWiring();
 
-  private final ApplicationDataFetcher applicationDataFetcher;
+  // private final ApplicationDataFetcher applicationDataFetcher;
   private final ProgramRecordDataFetcher programRecordDataFetcher;
 
   private ApplicationDetailTypeRuntimeWiring() {
-    this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
+    // this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
     this.programRecordDataFetcher = ProgramRecordDataFetcher.getInstance();
   }
 
@@ -47,7 +47,7 @@ public class ApplicationDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_DETAIL)
-      .dataFetcher(GraphQLFields.NAMESPACE, applicationDataFetcher.getNamespaceDataFetcher())
+      // .dataFetcher(GraphQLFields.NAMESPACE, applicationDataFetcher.getNamespaceDataFetcher())
       .dataFetcher(ApplicationFields.PROGRAMS, programRecordDataFetcher.getProgramRecordsDataFetcher())
       .build();
   }
