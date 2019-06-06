@@ -12,23 +12,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-type ApplicationRecord {
-  type: String!
+type ArtifactSummary {
   name: String!
   version: String!
-  description: String!
-  artifact: ArtifactSummary!
-  ownerPrincipal: String
-}
-
-type ApplicationDetail {
-  name: String!
-  appVersion: String!
-  description: String!
-  configuration: String!
-  #List<DatasetDetail> datasets;
-  programs(type: String): [ProgramRecord]!
-  #List<PluginDetail> plugins;
-  #artifact: ArtifactSummary!
-  ownerPrincipal: String
+  scope: String!
 }
