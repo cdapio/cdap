@@ -180,9 +180,6 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   /* ------------------------------------------------------------ */
   @Override
   public UserIdentity login(final String username, final Object credentials) {
-    LOG.info("here also i am present");
-    LOG.info("username : " + username);
-    LOG.info("credentials : " + credentials);
     try {
       CallbackHandler callbackHandler = null;
 

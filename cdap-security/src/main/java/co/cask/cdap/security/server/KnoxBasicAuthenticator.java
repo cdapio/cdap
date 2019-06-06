@@ -140,7 +140,6 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
         
         
         String credentials = request.getHeader(HttpHeaders.AUTHORIZATION);
-        Log.info("credentials : " + credentials);
         
         try
         {
@@ -162,9 +161,6 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
                         {
                             username = credentials.substring(0,i);
                             String password = credentials.substring(i+1);
-                            
-                            Log.info("username : " + username);
-                            Log.info("password : " + password);
                             
                             String username_password = username + ":" + password;
                             String encryptedCredentials = Base64.getEncoder().encodeToString(username_password.getBytes());
@@ -212,7 +208,6 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
     private boolean verifyToken(JWT token) {
         boolean rc = false;
         String verificationPem = handlerProps.get(Constants.Security.KNOX_TOKEN_PUBLIC_KEY);
-	Log.info("verificationPem : " + verificationPem);
         try {
             RSAPublicKey publicKey = CertificateUtils.parseRSAPublicKey(verificationPem);
             JWSVerifier verifier = new RSASSAVerifier(publicKey);
