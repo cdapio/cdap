@@ -30,31 +30,31 @@ public class GraphQLClientTest extends CDAPGraphQLTest {
   //   Assert.assertTrue(!namespaces.isEmpty());
   // }
 
-  @Test
-  public void testGetNamespaces() {
-    String query = "{ "
-      + "  namespace {"
-      + "    namespaces {"
-      + "      name"
-      + "    }"
-      + "  }"
-      + "}";
-
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
-    ExecutionResult executionResult = graphQL.execute(executionInput);
-
-    Assert.assertTrue(executionResult.getErrors().isEmpty());
-
-    // Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
-    // Assert.assertEquals(1, data.size());
-    //
-    // Map<String, List> namespaceQuery = (Map<String, List>) data.get(GraphQLFields.NAMESPACE);
-    // List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
-    // Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
-    // Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
-
-    System.out.println(executionResult.getData().toString());
-  }
+  // @Test
+  // public void testGetNamespaces() {
+  //   String query = "{ "
+  //     + "  namespace {"
+  //     + "    namespaces {"
+  //     + "      name"
+  //     + "    }"
+  //     + "  }"
+  //     + "}";
+  //
+  //   ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+  //   ExecutionResult executionResult = graphQL.execute(executionInput);
+  //
+  //   Assert.assertTrue(executionResult.getErrors().isEmpty());
+  //
+  //   // Map<String, List> data = (Map<String, List>) executionResult.toSpecification().get(GraphQLFields.DATA);
+  //   // Assert.assertEquals(1, data.size());
+  //   //
+  //   // Map<String, List> namespaceQuery = (Map<String, List>) data.get(GraphQLFields.NAMESPACE);
+  //   // List<Map> namespaces = namespaceQuery.get(NamespaceFields.NAMESPACES);
+  //   // Map<String, Object> namespace = (Map<String, Object>) namespaces.get(0);
+  //   // Assert.assertNotNull(namespace.get(GraphQLFields.NAME));
+  //
+  //   System.out.println(executionResult.getData().toString());
+  // }
 
   @Test
   public void testGetApplications() {

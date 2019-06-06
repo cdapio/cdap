@@ -24,7 +24,6 @@ import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationSchemaFiles;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
 import io.cdap.cdap.graphql.store.namespace.schema.NamespaceSchemaFiles;
-import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordSchemaFiles;
 import org.junit.BeforeClass;
 
@@ -33,7 +32,7 @@ import java.util.List;
 
 public class CDAPGraphQLTest {
 
-  protected static GraphQL graphQL;
+  static GraphQL graphQL;
 
   @BeforeClass
   public static void setup() throws Exception {

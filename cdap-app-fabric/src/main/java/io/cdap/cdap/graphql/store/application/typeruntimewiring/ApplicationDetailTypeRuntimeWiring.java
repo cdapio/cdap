@@ -18,9 +18,9 @@
 package io.cdap.cdap.graphql.store.application.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.programrecord.datafetchers.ProgramRecordDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
+import io.cdap.cdap.graphql.store.programrecord.datafetchers.ProgramRecordDataFetcher;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**

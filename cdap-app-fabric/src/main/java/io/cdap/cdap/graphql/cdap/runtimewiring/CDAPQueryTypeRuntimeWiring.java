@@ -39,7 +39,7 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
     this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
   }
 
-  public static CDAPTypeRuntimeWiring getInstance() {
+  public static CDAPQueryTypeRuntimeWiring getInstance() {
     return INSTANCE;
   }
 
@@ -47,8 +47,8 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(GraphQLTypes.CDAP_QUERY)
       .dataFetcher(GraphQLFields.TIMESTAMP, dataFetchingEnvironment -> new Timestamp(System.currentTimeMillis()))
-      .dataFetcher(GraphQLFields.ARTIFACT, dataFetchingEnvironment -> dataFetchingEnvironment)
-      .dataFetcher(GraphQLFields.NAMESPACE, dataFetchingEnvironment -> dataFetchingEnvironment)
+      // .dataFetcher(GraphQLFields.ARTIFACT, dataFetchingEnvironment -> dataFetchingEnvironment)
+      // .dataFetcher(GraphQLFields.NAMESPACE, dataFetchingEnvironment -> dataFetchingEnvironment)
       .dataFetcher(ApplicationFields.APPLICATIONS, applicationDataFetcher.getApplicationRecordsDataFetcher())
       .dataFetcher(ApplicationFields.APPLICATION, applicationDataFetcher.getApplicationDetailFromQueryDataFetcher())
       .build();

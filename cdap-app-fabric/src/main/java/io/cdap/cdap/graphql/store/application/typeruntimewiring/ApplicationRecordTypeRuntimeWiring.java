@@ -43,7 +43,8 @@ public class ApplicationRecordTypeRuntimeWiring implements CDAPTypeRuntimeWiring
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
     return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_RECORD)
-      .dataFetcher(ApplicationFields.APPLICATION_DETAIL, applicationDataFetcher.getApplicationDetailFromTypeDataFetcher())
+      .dataFetcher(ApplicationFields.APPLICATION_DETAIL,
+                   applicationDataFetcher.getApplicationDetailFromTypeDataFetcher())
       .build();
   }
 

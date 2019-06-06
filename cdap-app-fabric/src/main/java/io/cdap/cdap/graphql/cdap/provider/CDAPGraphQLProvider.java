@@ -20,16 +20,11 @@ package io.cdap.cdap.graphql.cdap.provider;
 import graphql.schema.idl.RuntimeWiring;
 import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
-import io.cdap.cdap.graphql.store.programrecord.typeresolver.ProgramRecordTypeResolver;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
+import io.cdap.cdap.graphql.store.programrecord.typeresolver.ProgramRecordTypeResolver;
 import io.cdap.cdap.graphql.store.programrecord.typeruntimewiring.WorkflowTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactQueryTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.artifact.runtimewiring.ArtifactTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceQueryTypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.namespace.runtimewiring.NamespaceTypeRuntimeWiring;
 import io.cdap.cdap.graphql.typeresolver.CDAPTypeResolver;
-import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 import java.util.List;
 
@@ -38,14 +33,14 @@ import java.util.List;
  */
 public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
 
-  private final CDAPTypeRuntimeWiring cdapQueryTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring programRecordQueryTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring artifactQueryTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring artifactTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring namespaceTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring applicationDetailTypeRuntimeWiring;
-  private final CDAPTypeRuntimeWiring applicationRecordTypeRuntimeWiring;
+  private final CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring;
+  private final ApplicationDetailTypeRuntimeWiring applicationDetailTypeRuntimeWiring;
+  private final ApplicationRecordTypeRuntimeWiring applicationRecordTypeRuntimeWiring;
+  private final WorkflowTypeRuntimeWiring workflowTypeRuntimeWiring;
+  // private final ArtifactQueryTypeRuntimeWiring artifactQueryTypeRuntimeWiring;
+  // private final ArtifactTypeRuntimeWiring artifactTypeRuntimeWiring;
+  // private final NamespaceQueryTypeRuntimeWiring namespaceQueryTypeRuntimeWiring;
+  // private final NamespaceTypeRuntimeWiring namespaceTypeRuntimeWiring;
 
   private final CDAPTypeResolver programRecordTypeResolver;
 
@@ -53,13 +48,14 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     super(schemaDefinitionFiles);
 
     this.cdapQueryTypeRuntimeWiring = CDAPQueryTypeRuntimeWiring.getInstance();
-    this.programRecordQueryTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
-    this.artifactQueryTypeRuntimeWiring = ArtifactQueryTypeRuntimeWiring.getInstance();
-    this.artifactTypeRuntimeWiring = ArtifactTypeRuntimeWiring.getInstance();
-    this.namespaceQueryTypeRuntimeWiring = NamespaceQueryTypeRuntimeWiring.getInstance();
-    this.namespaceTypeRuntimeWiring = NamespaceTypeRuntimeWiring.getInstance();
     this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
     this.applicationRecordTypeRuntimeWiring = ApplicationRecordTypeRuntimeWiring.getInstance();
+    this.workflowTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
+    // this.artifactQueryTypeRuntimeWiring = ArtifactQueryTypeRuntimeWiring.getInstance();
+    // this.artifactTypeRuntimeWiring = ArtifactTypeRuntimeWiring.getInstance();
+    // this.namespaceQueryTypeRuntimeWiring = NamespaceQueryTypeRuntimeWiring.getInstance();
+    // this.namespaceTypeRuntimeWiring = NamespaceTypeRuntimeWiring.getInstance();
+
     this.programRecordTypeResolver = ProgramRecordTypeResolver.getInstance();
   }
 
@@ -67,14 +63,15 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(cdapQueryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(programRecordQueryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(artifactQueryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
-      .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(applicationDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(applicationRecordTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(workflowTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordTypeResolver.getTypeResolver())
+      // .type(programRecordQueryTypeRuntimeWiring.getTypeRuntimeWiring())
+      // .type(artifactQueryTypeRuntimeWiring.getTypeRuntimeWiring())
+      // .type(artifactTypeRuntimeWiring.getTypeRuntimeWiring())
+      // .type(namespaceQueryTypeRuntimeWiring.getTypeRuntimeWiring())
+      // .type(namespaceTypeRuntimeWiring.getTypeRuntimeWiring())
       .build();
   }
 
