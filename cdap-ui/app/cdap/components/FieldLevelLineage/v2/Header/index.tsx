@@ -15,6 +15,7 @@
 */
 
 import React from 'react';
+import T from 'i18n-react';
 import { Consumer } from '../Context/FllContext';
 
 interface IHeaderProps {
@@ -36,15 +37,23 @@ function Header({ type, first, total }: IHeaderProps) {
 
         const header =
           type === 'target'
-            ? 'Select a field to view lineage and operations'
-            : `Datasets used as ${type} by ${target}`;
-        const subheaderRange = `${first} to ${last}`;
+            ? T.translate('features.FieldLevelLineage.Summary.Header.TargetHeader')
+            : T.translate('features.FieldLevelLineage.Summary.Header.RelatedHeader', {
+                type,
+                target,
+              });
         const units = type === 'target' ? 'fields' : 'datasets';
-
         return (
           <div className={`${type} header`}>
             <div className="main-header">{header}</div>
-            <div>{`Viewing ${subheaderRange} of ${total} ${units}`}</div>
+            <div>
+              {T.translate('features.FieldLevelLineage.Summary.Header.Subheader', {
+                first,
+                last,
+                total,
+                units,
+              })}
+            </div>
           </div>
         );
       }}

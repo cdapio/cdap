@@ -1407,11 +1407,16 @@ features:
       Empty:
         incoming: "There is no cause for __'{fieldId}'__"
         outgoing: "There is no impact for __'{fieldId}'__"
+      Header:
+        Range: "{first} to {last}"
+        RelatedHeader: "Datasets used as {type} by {target}"
+        Subheader: "Viewing {first} to {last} of {total} {units}"
+        TargetHeader: 'Select a field to view lineage and operations' 
       noFieldSelected: No field selected
       Title:
         incoming: "Cause for:"
         outgoing: "Impact for:"
-      viewOperations: View operations
+      viewOperations: View operations 
     TimeRangeOptions:
       CUSTOM: Custom
       last14d: Last 14 days

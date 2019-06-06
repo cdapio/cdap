@@ -53,7 +53,7 @@ function LineageSummary({ classes }) {
               </div>
             </div>
             <div className="impact-col">
-              <Header type="target" first={firstImpact} total={Object.keys(impactSets).length} />
+              <Header type="impact" first={firstImpact} total={Object.keys(impactSets).length} />
               <div className="impact-tables col">
                 {Object.keys(impactSets).map((key) => {
                   return <Table tableName={key} key={`impact ${key}`} nodes={impactSets[key]} />;
