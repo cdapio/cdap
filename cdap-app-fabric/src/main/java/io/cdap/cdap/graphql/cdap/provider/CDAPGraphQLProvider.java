@@ -20,6 +20,7 @@ package io.cdap.cdap.graphql.cdap.provider;
 import graphql.schema.idl.RuntimeWiring;
 import io.cdap.cdap.graphql.cdap.typeruntimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
+import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.programrecord.typeresolver.ProgramRecordTypeResolver;
 import io.cdap.cdap.graphql.store.programrecord.typeruntimewiring.WorkflowTypeRuntimeWiring;
 
@@ -31,6 +32,7 @@ import java.util.List;
 public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
 
   private final CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring;
+  private final ApplicationDetailTypeRuntimeWiring applicationDetailTypeRuntimeWiring;
   private final WorkflowTypeRuntimeWiring workflowTypeRuntimeWiring;
 
   private final ProgramRecordTypeResolver programRecordTypeResolver;
@@ -39,6 +41,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     super(schemaDefinitionFiles);
 
     this.cdapQueryTypeRuntimeWiring = CDAPQueryTypeRuntimeWiring.getInstance();
+    this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
     this.workflowTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
 
     this.programRecordTypeResolver = ProgramRecordTypeResolver.getInstance();
@@ -48,6 +51,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   protected RuntimeWiring buildWiring() {
     return RuntimeWiring.newRuntimeWiring()
       .type(cdapQueryTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(applicationDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(workflowTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordTypeResolver.getTypeResolver())
       .build();
