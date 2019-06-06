@@ -98,6 +98,31 @@ public class ApplicationDataFetcher {
     );
   }
 
+  /**
+   * Fetcher to get an ApplicationDetail from an object type (i.e., the field of an object)
+   *
+   * @return the data fetcher
+   */
+  public DataFetcher getApplicationDetailFromTypeDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
+        String namespace = (String) localContext.get(GraphQLFields.NAMESPACE);
+        ApplicationRecord applicationRecord = dataFetchingEnvironment.getSource();
+        String applicationName = applicationRecord.getName();
+        ApplicationDetail applicationDetail = fetchApplicationDetail(namespace, applicationName);
+
+        Map<String, Object> newLocalContext = new ConcurrentHashMap<>(localContext);
+        newLocalContext.put(GraphQLFields.NAME, applicationName);
+
+        return DataFetcherResult.newResult()
+          .data(applicationDetail)
+          .localContext(newLocalContext)
+          .build();
+      }
+    );
+  }
+
   private ApplicationDetail fetchApplicationDetail(String namespace, String applicationName)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException {
     ApplicationId appId = new ApplicationId(namespace, applicationName);
