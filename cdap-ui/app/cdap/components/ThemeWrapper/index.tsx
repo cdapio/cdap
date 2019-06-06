@@ -73,7 +73,7 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
       useNextVariants: true,
     },
     zIndex: {
-      drawer: 1060,
+      drawer: 1300,
     },
     overrides: {
       MuiTypography: {
@@ -82,6 +82,7 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
         },
       },
     },
+    Spacing: (factor) => [0, 4, 8, 16, 24, 32, 40, 48, 56, 64][factor],
   } as ThemeOptions);
   public render() {
     let Component;

@@ -36,11 +36,11 @@ const PaginationStepper: React.SFC<IPaginationStepperProps> = ({
   return (
     <div className="pagination-stepper-container">
       <IconButton onClick={onPrev} disabled={prevDisabled} className="step-button">
-        <ChevronLeft fontSize="small" />
+        <ChevronLeft />
       </IconButton>
 
       <IconButton onClick={onNext} disabled={nextDisabled} className="step-button">
-        <ChevronRight fontSize="small" />
+        <ChevronRight />
       </IconButton>
     </div>
   );

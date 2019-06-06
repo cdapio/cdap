@@ -19,7 +19,6 @@ import List from '@material-ui/core/List';
 import Drawer from '@material-ui/core/Drawer';
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-const colorVariables = require('styles/variables.scss');
 import { Link } from 'react-router-dom';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import DrawerFeatureLink from 'components/AppHeader/AppDrawer/DrawerFeatureLink';
@@ -28,16 +27,20 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 
 const DRAWER_WIDTH = '240px';
-export const appDrawerListItemTextStyles = {
+export const appDrawerListItemTextStyles = (theme) => ({
   fontWeight: 400,
-  fontSize: '14px',
-};
-export const appDrawerListItemStyles = {
+  fontSize: '1.1rem',
+  paddingLeft: theme.Spacing(3),
+  paddingRight: theme.Spacing(3),
+  lineHeight: 1.5,
+});
+export const appDrawerListItemStyles = (theme) => ({
+  padding: `${theme.Spacing(1)}px ${theme.Spacing(4)}px`,
   '&:hover': {
-    backgroundColor: colorVariables.grey06,
-    color: colorVariables.grey02,
+    backgroundColor: theme.palette.grey['500'],
+    color: theme.palette.grey['100'],
   },
-};
+});
 const styles = (theme) => {
   return {
     drawer: {
@@ -46,21 +49,23 @@ const styles = (theme) => {
     },
     drawerPaper: {
       width: DRAWER_WIDTH,
-      backgroundColor: colorVariables.grey08,
+      backgroundColor: theme.palette.grey['700'],
     },
-    listItemText: appDrawerListItemTextStyles,
+    listItemText: appDrawerListItemTextStyles(theme),
     toolbar: {
       minHeight: '48px',
     },
     mainMenu: {
-      borderTop: `1px solid ${colorVariables.grey06}`,
+      borderTop: `1px solid ${theme.palette.grey['500']}`,
+      paddingTop: theme.Spacing(1),
+      paddingBottom: theme.Spacing(1),
     },
     namespaceAdminMenu: {
       // WUT TS?
       position: 'absolute' as 'absolute',
       bottom: '0px',
       width: '100%',
-      borderTop: `1px solid ${colorVariables.grey06}`,
+      borderTop: `1px solid ${theme.palette.grey['500']}`,
     },
   };
 };

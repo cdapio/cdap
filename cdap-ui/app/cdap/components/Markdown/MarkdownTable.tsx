@@ -63,7 +63,7 @@ const styles = (theme) => ({
     minWidth: 400,
     display: 'inline-block',
     height: 'auto',
-    marginTop: theme.spacing.unit * 3,
+    marginTop: theme.Spacing(3),
   },
   table: {
     minWidth: 700,
