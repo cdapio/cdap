@@ -15,25 +15,44 @@
 # the License.
 #
 
-type ApplicationRecord {
+interface ProgramRecord {
   type: String!
+  app: String!
   name: String!
-  version: String!
   description: String!
-  artifact: ArtifactSummary!
-  ownerPrincipal: String
-  # Field added for composition
-  applicationDetail: ApplicationDetail!
 }
 
-type ApplicationDetail {
+type Workflow implements ProgramRecord {
+  type: String!
+  app: String!
   name: String!
-  appVersion: String!
   description: String!
-  configuration: String!
-  #List<DatasetDetail> datasets;
-  programs(type: String): [ProgramRecord]!
-  #List<PluginDetail> plugins;
-  artifact: ArtifactSummary!
-  ownerPrincipal: String
+  # Field added for composition
+  startTimes: [ScheduledRuntime]!
+  runs: [RunRecord]!
+}
+
+type MapReduce implements ProgramRecord {
+  type: String!
+  app: String!
+  name: String!
+  description: String!
+}
+
+type ScheduledRuntime {
+  id: String!
+  time: String!
+}
+
+type RunRecord {
+  pid: String!
+  startTs: String!
+  runTs: String!
+  stopTs: String
+  suspendTs: String
+  resumeTs: String
+  status: String!
+  # Map<String, String> properties:
+  # ProgramRunCluster cluster:
+  profileId: String
 }

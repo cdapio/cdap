@@ -15,15 +15,16 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.typeruntimewiring;
+package io.cdap.cdap.graphql.store.programrecord.typeruntimewiring;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.application.datafetchers.ScheduleDataFetcher;
-import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
+import io.cdap.cdap.graphql.store.programrecord.datafetchers.ScheduleDataFetcher;
+import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
+import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordTypes;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 /**
- * ApplicationQuery type runtime wiring. Registers the data fetchers for the ApplicationQuery type.
+ * Workflow type runtime wiring. Registers the data fetchers for the Workflow type.
  */
 public class WorkflowTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
@@ -41,9 +42,9 @@ public class WorkflowTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   @Override
   public TypeRuntimeWiring getTypeRuntimeWiring() {
-    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.WORKFLOW)
-      .dataFetcher("startTimes", scheduleDataFetcher.getNextRuntimesDataFetcher())
-      .dataFetcher("runs", scheduleDataFetcher.getRunsDataFetcher())
+    return TypeRuntimeWiring.newTypeWiring(ProgramRecordTypes.WORKFLOW)
+      .dataFetcher(ProgramRecordFields.START_TIMES, scheduleDataFetcher.getStartTimesDataFetcher())
+      .dataFetcher(ProgramRecordFields.RUNS, scheduleDataFetcher.getRunsDataFetcher())
       .build();
   }
 

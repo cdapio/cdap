@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.datafetchers;
+package io.cdap.cdap.graphql.store.programrecord.datafetchers;
 
 import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;

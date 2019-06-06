@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.datafetchers;
+package io.cdap.cdap.graphql.store.programrecord.datafetchers;
 
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
@@ -30,6 +30,9 @@ import io.cdap.cdap.proto.id.WorkflowId;
 
 import java.util.Map;
 
+/**
+ * Fetchers to get schedules
+ */
 public class ScheduleDataFetcher {
 
   private static final ScheduleDataFetcher INSTANCE = new ScheduleDataFetcher();
@@ -47,11 +50,11 @@ public class ScheduleDataFetcher {
   }
 
   /**
-   * Fetcher to get the next runtimes
+   * Fetcher to get the start times
    *
    * @return the data fetcher
    */
-  public DataFetcher getNextRuntimesDataFetcher() {
+  public DataFetcher getStartTimesDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         ProgramRecord programRecord = dataFetchingEnvironment.getSource();
@@ -68,6 +71,11 @@ public class ScheduleDataFetcher {
     );
   }
 
+  /**
+   * Fetcher to get the runs
+   *
+   * @return the data fetcher
+   */
   public DataFetcher getRunsDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {

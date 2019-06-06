@@ -15,10 +15,10 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.typeresolver;
+package io.cdap.cdap.graphql.store.programrecord.typeresolver;
 
 import graphql.schema.idl.TypeRuntimeWiring;
-import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
+import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordTypes;
 import io.cdap.cdap.graphql.typeresolver.CDAPTypeResolver;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
@@ -40,15 +40,15 @@ public class ProgramRecordTypeResolver implements CDAPTypeResolver {
 
   @Override
   public TypeRuntimeWiring getTypeResolver() {
-    return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.PROGRAM_RECORD)
+    return TypeRuntimeWiring.newTypeWiring(ProgramRecordTypes.PROGRAM_RECORD)
       .typeResolver(
         typeResolutionEnvironment -> {
           ProgramRecord programRecord = typeResolutionEnvironment.getObject();
 
           if (programRecord.getType().equals(ProgramType.MAPREDUCE)) {
-            return typeResolutionEnvironment.getSchema().getObjectType(ApplicationTypes.MAP_REDUCE);
+            return typeResolutionEnvironment.getSchema().getObjectType(ProgramRecordTypes.MAP_REDUCE);
           } else {
-            return typeResolutionEnvironment.getSchema().getObjectType(ApplicationTypes.WORKFLOW);
+            return typeResolutionEnvironment.getSchema().getObjectType(ProgramRecordTypes.WORKFLOW);
           }
         }
       )

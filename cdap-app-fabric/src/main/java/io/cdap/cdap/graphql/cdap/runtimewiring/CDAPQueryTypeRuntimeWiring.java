@@ -50,7 +50,7 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(GraphQLFields.ARTIFACT, dataFetchingEnvironment -> dataFetchingEnvironment)
       .dataFetcher(GraphQLFields.NAMESPACE, dataFetchingEnvironment -> dataFetchingEnvironment)
       .dataFetcher(ApplicationFields.APPLICATIONS, applicationDataFetcher.getApplicationRecordsDataFetcher())
-      .dataFetcher(GraphQLFields.APPLICATION, applicationDataFetcher.getApplicationDetailFromQueryDataFetcher())
+      .dataFetcher(ApplicationFields.APPLICATION, applicationDataFetcher.getApplicationDetailFromQueryDataFetcher())
       .build();
   }
 
