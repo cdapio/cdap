@@ -34,6 +34,9 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
       + "    version"
       + "    description"
       + "    ownerPrincipal"
+      + "    artifact {"
+      + "      name"
+      + "    }"
       + "  }"
       + "}";
 
