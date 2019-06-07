@@ -22,7 +22,7 @@ var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var uuidV4 = require('uuid/v4');
-var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var TerserPlugin = require('terser-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
@@ -188,18 +188,6 @@ if (isModeProduction(mode)) {
         NODE_ENV: JSON.stringify('production'),
         __DEVTOOLS__: false,
       },
-    }),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false,
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        },
-      },
     })
   );
 }
@@ -260,4 +248,23 @@ var webpackConfig = {
 if (!isModeProduction(mode)) {
   webpackConfig.devtool = 'source-maps';
 }
+
+if (isModeProduction(mode)) {
+  webpackConfig.optimization.minimizer = [
+    new TerserPlugin({
+      terserOptions: {
+        cache: false,
+        parallel: true,
+        sourceMap: true,
+        extractComments: true,
+        output: {
+          comments: false,
+        },
+        ie8: false,
+        safari10: false,
+      },
+    }),
+  ];
+}
+
 module.exports = webpackConfig;
