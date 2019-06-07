@@ -134,4 +134,34 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertTrue(run.containsKey(ProgramRecordFields.RESUME_TS));
   }
 
+  @Test
+  public void testGetStartTimes() {
+    String query = "{ "
+      + "  application(name: \"Test\") {"
+      + "    programs(type: \"Workflow\") {"
+      + "      ... on Workflow {"
+      + "        startTimes {"
+      + "          id"
+      + "          time"
+      + "        }"
+      + "      }"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+    Map<String, List> application = data.get(ApplicationFields.APPLICATION);
+    List programs = application.get(ApplicationFields.PROGRAMS);
+    Map<String, List> programRecord = (Map<String, List>) programs.get(0);
+
+    Map<String, String> startTime = (Map<String, String>) programRecord.get(ProgramRecordFields.START_TIMES).get(0);
+    Assert.assertNotNull(startTime.get(ProgramRecordFields.ID));
+    Assert.assertNotNull(startTime.get(ProgramRecordFields.TIME));
+  }
+
 }
