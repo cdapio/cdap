@@ -37,6 +37,7 @@ public class ProgramRecordFields implements Fields {
   public static final String RESUME_TS = "resumeTs";
   public static final String STATUS = "status";
   public static final String PROFILE_ID = "profileId";
+  public static final String TIME = "time";
 
   private ProgramRecordFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
