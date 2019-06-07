@@ -94,7 +94,7 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
   @Test
   public void testGetRuns() {
     String query = "{ "
-      + "  application(name: \"JavascriptTransform\") {"
+      + "  application(name: \"Test\") {"
       + "    programs(type: \"Workflow\") {"
       + "      ... on Workflow {"
       + "        runs {"
@@ -137,7 +137,7 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
   @Test
   public void testGetStartTimes() {
     String query = "{ "
-      + "  application(name: \"Test\") {"
+      + "  application(name: \"JavascriptTransform\") {"
       + "    programs(type: \"Workflow\") {"
       + "      ... on Workflow {"
       + "        startTimes {"
