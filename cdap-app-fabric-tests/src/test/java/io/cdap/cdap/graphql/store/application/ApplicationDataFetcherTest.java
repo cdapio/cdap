@@ -20,10 +20,41 @@ package io.cdap.cdap.graphql.store.application;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import io.cdap.cdap.graphql.CDAPGraphQLTest;
+import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Map;
+
 public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
+
+  @Test
+  public void testGetApplicationDetail() {
+    String query = "{ "
+      + "  application(name: \"JavascriptTransform\") {"
+      + "    name"
+      + "    appVersion"
+      + "    description"
+      + "    configuration"
+      + "    ownerPrincipal"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+    Map<String, String> application = data.get(ApplicationFields.APPLICATION);
+    Assert.assertNotNull(application.get(GraphQLFields.NAME));
+    Assert.assertNotNull(application.get(ApplicationFields.APP_VERSION));
+    Assert.assertNotNull(application.get(ApplicationFields.DESCRIPTION));
+    Assert.assertNotNull(application.get(ApplicationFields.CONFIGURATION));
+
+    Assert.assertTrue(application.containsKey(ApplicationFields.OWNER_PRINCIPAL));
+  }
 
   @Test
   public void testGetApplications() {
