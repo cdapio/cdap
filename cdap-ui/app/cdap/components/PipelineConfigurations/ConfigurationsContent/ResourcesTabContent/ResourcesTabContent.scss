@@ -20,6 +20,10 @@ $input-label-color: $grey-03;
 
 .configuration-content {
   #resources-tab-content {
+    .resource-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
     .client,
     .driver {
       padding-left: 0;
