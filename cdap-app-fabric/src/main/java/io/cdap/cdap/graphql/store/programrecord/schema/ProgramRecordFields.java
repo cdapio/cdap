@@ -29,6 +29,14 @@ public class ProgramRecordFields implements Fields {
   public static final String TYPE = "type";
   public static final String DESCRIPTION = "description";
   public static final String APP = "app";
+  public static final String PID = "pid";
+  public static final String START_TS = "startTs";
+  public static final String RUN_TS = "runTs";
+  public static final String STOP_TS = "stopTs";
+  public static final String SUSPEND_TS = "suspendTs";
+  public static final String RESUME_TS = "resumeTs";
+  public static final String STATUS = "status";
+  public static final String PROFILE_ID = "profileId";
 
   private ProgramRecordFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
