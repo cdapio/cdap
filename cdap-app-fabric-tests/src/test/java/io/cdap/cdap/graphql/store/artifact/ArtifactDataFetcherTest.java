@@ -37,6 +37,8 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
       + "  application(name: \"JavascriptTransform\") {"
       + "    artifact {"
       + "      name"
+      + "      version"
+      + "      scope"
       + "    }"
       + "  }"
       + "}";
@@ -51,6 +53,8 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
     Map<String, String> artifact = application.get(ArtifactFields.ARTIFACT);
     Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
+    Assert.assertNotNull(artifact.get(ArtifactFields.VERSION));
+    Assert.assertNotNull(artifact.get(ArtifactFields.SCOPE));
   }
 
 }

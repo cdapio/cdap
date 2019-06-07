@@ -25,6 +25,8 @@ import io.cdap.cdap.graphql.schema.Fields;
 public class ArtifactFields implements Fields {
 
   public static final String ARTIFACT = "artifact";
+  public static final String VERSION = "version";
+  public static final String SCOPE = "scope";
 
   private ArtifactFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
