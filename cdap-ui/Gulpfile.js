@@ -385,7 +385,7 @@ gulp.task('clean', function() {
 gulp.task('js:minify', ['js'], function() {
   return gulp
     .src('./dist/assets/bundle/{app,lib}.js')
-    .pipe(plug.uglify())
+    .pipe(plug.terser())
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 gulp.task('css:minify', ['css'], function() {
