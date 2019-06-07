@@ -92,7 +92,7 @@ class SinkSelector extends React.Component {
   onSinkChange(evt) {
     let sinkList = [...this.state.sinks];
     if (evt.target.checked) {
-      sinkList.push(evt.target.value)
+      sinkList.push(evt.target.value);
     } else {
       sinkList = remove(sinkList, function (item) {
         return item !== evt.target.value;
