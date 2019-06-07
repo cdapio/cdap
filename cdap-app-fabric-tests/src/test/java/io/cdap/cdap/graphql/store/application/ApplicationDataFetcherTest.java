@@ -104,13 +104,16 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
       + "            status"
       + "            startTs"
       + "          }"
-      + "          startTimes {"
+      + "          schedules {"
       + "            time"
       + "          }"
       + "        }"
       + "      }"
       + "      metadata {"
-      + "        tags"
+      + "        tags {"
+      + "          name"
+      + "          scope"
+      + "        }"
       + "      }"
       + "    }"
       + "  }"
@@ -142,13 +145,56 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
       + "          status"
       + "          startTs"
       + "        }"
-      + "        startTimes {"
+      + "        schedules {"
       + "          time"
       + "        }"
       + "      }"
       + "    }"
       + "    metadata {"
-      + "      tags"
+      + "      tags {"
+      + "          name"
+      + "          scope"
+      + "      }"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+    System.out.println(executionResult.getData().toString());
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+  }
+
+
+  @Test
+  public void testPipelineUI() {
+    String query = "{ "
+      + "  applications {"
+      + "    name"
+      + "    artifact {"
+      + "      name"
+      + "    }"
+      + "    applicationDetail {"
+      + "      programs(type: \"Workflow\") {"
+      + "        name"
+      + "        ... on Workflow {"
+      + "          runs {"
+      + "            status"
+      + "            startTs"
+      + "          }"
+      + "          schedules {"
+      + "            id"
+      + "            time"
+      + "          }"
+      + "        }"
+      + "      }"
+      + "      metadata {"
+      + "        tags {"
+      + "          name"
+      + "          scope"
+      + "        }"
+      + "      }"
       + "    }"
       + "  }"
       + "}";

@@ -40,7 +40,7 @@ type Workflow implements ProgramRecord {
   """
   Field added for composition
   """
-  startTimes: [ScheduledRuntime]!
+  schedules: [ScheduledRuntime]!
 }
 
 type MapReduce implements ProgramRecord {

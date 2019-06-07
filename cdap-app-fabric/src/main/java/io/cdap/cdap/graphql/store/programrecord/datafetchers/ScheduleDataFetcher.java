@@ -54,7 +54,7 @@ public class ScheduleDataFetcher {
    *
    * @return the data fetcher
    */
-  public DataFetcher getStartTimesDataFetcher() {
+  public DataFetcher getSchedulesDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         ProgramRecord programRecord = dataFetchingEnvironment.getSource();
