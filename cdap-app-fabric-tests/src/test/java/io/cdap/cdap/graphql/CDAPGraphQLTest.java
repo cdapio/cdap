@@ -23,6 +23,7 @@ import io.cdap.cdap.graphql.cdap.schema.GraphQLSchemaFiles;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationSchemaFiles;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
+import io.cdap.cdap.graphql.store.metadata.schema.MetadataSchemaFiles;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordSchemaFiles;
 import org.junit.BeforeClass;
 
@@ -41,7 +42,8 @@ public class CDAPGraphQLTest {
     List<String> schemaDefinitionFiles = Arrays.asList(GraphQLSchemaFiles.ROOT_SCHEMA,
                                                        ApplicationSchemaFiles.APPLICATION_SCHEMA,
                                                        ProgramRecordSchemaFiles.PROGRAM_RECORD_SCHEMA,
-                                                       ArtifactSchemaFiles.ARTIFACT_SCHEMA);
+                                                       ArtifactSchemaFiles.ARTIFACT_SCHEMA,
+                                                       MetadataSchemaFiles.METADATA_SCHEMA);
     GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles);
     graphQL = graphQLProvider.buildGraphQL();
   }
