@@ -14,15 +14,24 @@
  the License.
 """
 
-type MetadataRecord {
+type Metadata {
 
-  #MetadataEntity metadataEntity;
+  # MetadataEntity metadataEntity;
 
-  #MetadataScope scope;
+  # MetadataScope scope;
 
-  #Map<String, String> properties;
+  # Map<String, String> properties;
 
-  tags: [String]!
+  # tags: [Tag]!
+
+  tags: [Tag]!
+
+  # properties: [Properties]
+}
+
+type Tag {
+  name: String!
+  scope: String!
 }
 
 

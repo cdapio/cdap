@@ -57,5 +57,5 @@ type ApplicationDetail {
   """
   Field added for composition
   """
-  metadata: [MetadataRecord]!
+  metadata: Metadata
 }

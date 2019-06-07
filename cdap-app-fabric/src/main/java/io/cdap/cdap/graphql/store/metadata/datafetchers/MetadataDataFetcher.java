@@ -23,10 +23,15 @@ import graphql.schema.DataFetcher;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.common.metadata.MetadataRecord;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
+import io.cdap.cdap.graphql.store.metadata.dto.Metadata;
+import io.cdap.cdap.graphql.store.metadata.dto.Tag;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Fetchers to get metadata
@@ -63,8 +68,32 @@ public class MetadataDataFetcher {
           .append(ApplicationFields.APPLICATION, application)
           .build();
 
-        return metadataClient.getMetadata(metadataEntity);
+        Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(metadataEntity);
+        Set<Tag> tags = getTags(metadataRecords);
+
+        return new Metadata(tags);
       }
     );
+  }
+
+  private Set<Tag> getTags(Set<MetadataRecord> metadataRecords) {
+    Set<Tag> tags = new HashSet<>();
+
+    for (MetadataRecord metadataRecord : metadataRecords) {
+      Set<String> metadataRecordTags = metadataRecord.getTags();
+
+      if (metadataRecordTags.isEmpty()) {
+        continue;
+      }
+
+      String scope = metadataRecord.getScope().name();
+
+      for (String metadataRecordTag : metadataRecordTags) {
+        Tag tag = new Tag(metadataRecordTag, scope);
+        tags.add(tag);
+      }
+    }
+
+    return tags;
   }
 }
