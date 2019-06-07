@@ -75,21 +75,18 @@ class SinkSelector extends React.Component {
 
 
   updateConfiguration() {
+    const sinkConfigurations = {};
     if (!isEmpty(this.state.sinks) && this.state.sinks.length>0) {
-      const sinkConfigurations = {};
-
       this.state.sinks.forEach(element => {
         sinkConfigurations[element] = {};
         if (!isNil(this.configMap[element])) {
           sinkConfigurations[element] = this.configMap[element];
         }
       });
-
-      this.sinkConfigurations = sinkConfigurations;
-      console.log("Update store with Sink -> ", this.sinkConfigurations);
-      this.props.setSinkConfigurations(this.sinkConfigurations);
     }
-
+    this.sinkConfigurations = sinkConfigurations;
+    console.log("Update store with Sink -> ", this.sinkConfigurations);
+    this.props.setSinkConfigurations(this.sinkConfigurations);
   }
 
   onSinkChange(evt) {
@@ -103,6 +100,9 @@ class SinkSelector extends React.Component {
     }
     this.setState({
       sinks: sinkList
+    });
+    setTimeout(()=>{
+      this.updateConfiguration();
     });
   }
 

@@ -104,9 +104,9 @@ const isFeatureComplete = (state) => {
   } else {
     for (let property in state.sinkConfigurations) {
       if (property) {
-        const initialSinkConfig = find(state.sinkConfigurations, { paramName: property });
+        const initialSinkConfig = state.sinkConfigurations[property];
         if (!isEmpty(initialSinkConfig)) {
-          for (let subParams of initialSinkConfig.subParams) {
+          for (let subParams in initialSinkConfig) {
             if (subParams.isMandatory && isEmpty(state.sinkConfigurations[property][subParams.paramName])) {
               return false;
             }
