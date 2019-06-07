@@ -25,6 +25,7 @@ import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 
 public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
@@ -52,6 +53,33 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertNotNull(application.get(ApplicationFields.APP_VERSION));
     Assert.assertNotNull(application.get(ApplicationFields.DESCRIPTION));
     Assert.assertNotNull(application.get(ApplicationFields.CONFIGURATION));
+
+    Assert.assertTrue(application.containsKey(ApplicationFields.OWNER_PRINCIPAL));
+  }
+
+  @Test
+  public void testGetApplicationRecord() {
+    String query = "{ "
+      + "  applications {"
+      + "    type"
+      + "    name"
+      + "    version"
+      + "    description"
+      + "    ownerPrincipal"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, List> data = executionResult.getData();
+    Map<String, String> application = (Map<String, String>) data.get(ApplicationFields.APPLICATIONS).get(0);
+    Assert.assertNotNull(application.get(ApplicationFields.TYPE));
+    Assert.assertNotNull(application.get(GraphQLFields.NAME));
+    Assert.assertNotNull(application.get(ApplicationFields.VERSION));
+    Assert.assertNotNull(application.get(ApplicationFields.DESCRIPTION));
 
     Assert.assertTrue(application.containsKey(ApplicationFields.OWNER_PRINCIPAL));
   }
