@@ -33,6 +33,8 @@ public class ApplicationFields implements Fields {
   public static final String DESCRIPTION = "description";
   public static final String CONFIGURATION = "configuration";
   public static final String OWNER_PRINCIPAL = "ownerPrincipal";
+  public static final String TYPE = "type";
+  public static final String VERSION = "version";
 
   private ApplicationFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
