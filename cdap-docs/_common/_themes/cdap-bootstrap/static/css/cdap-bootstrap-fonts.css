@@ -186,3 +186,69 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('fonts/GoogleSans-Italic.eot');
+  src: url('fonts/GoogleSans-Italic.eot?#iefix') format('embedded-opentype'),
+  url('fonts/GoogleSans-Italic.woff2') format('woff2'),
+  url('fonts/GoogleSans-Italic.woff') format('woff'),
+  url('fonts/GoogleSans-Italic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('fonts/GoogleSans-Medium.eot');
+  src: url('fonts/GoogleSans-Medium.eot?#iefix') format('embedded-opentype'),
+  url('fonts/GoogleSans-Medium.woff2') format('woff2'),
+  url('fonts/GoogleSans-Medium.woff') format('woff'),
+  url('fonts/GoogleSans-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('fonts/GoogleSans-Bold.eot');
+  src: url('fonts/GoogleSans-Bold.eot?#iefix') format('embedded-opentype'),
+  url('fonts/GoogleSans-Bold.woff2') format('woff2'),
+  url('fonts/GoogleSans-Bold.woff') format('woff'),
+  url('fonts/GoogleSans-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('fonts/GoogleSans-MediumItalic.eot');
+  src: url('fonts/GoogleSans-MediumItalic.eot?#iefix') format('embedded-opentype'),
+  url('fonts/GoogleSans-MediumItalic.woff2') format('woff2'),
+  url('fonts/GoogleSans-MediumItalic.woff') format('woff'),
+  url('fonts/GoogleSans-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('fonts/GoogleSans-Regular.eot');
+  src: url('fonts/GoogleSans-Regular.eot?#iefix') format('embedded-opentype'),
+  url('fonts/GoogleSans-Regular.woff2') format('woff2'),
+  url('fonts/GoogleSans-Regular.woff') format('woff'),
+  url('fonts/GoogleSans-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('fonts/GoogleSans-BoldItalic.eot');
+  src: url('fonts/GoogleSans-BoldItalic.eot?#iefix') format('embedded-opentype'),
+  url('fonts/GoogleSans-BoldItalic.woff2') format('woff2'),
+  url('fonts/GoogleSans-BoldItalic.woff') format('woff'),
+  url('fonts/GoogleSans-BoldItalic.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
