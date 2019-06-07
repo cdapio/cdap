@@ -91,7 +91,6 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
-import org.apache.hive.service.server.HiveServer2;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
@@ -242,7 +241,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected CLIService createCLIService() {
-    return new CLIService(null);
+    boolean allowSessions = true;
+    return new CLIService(null, allowSessions);
   }
 
   private HiveConf createHiveConf() {
