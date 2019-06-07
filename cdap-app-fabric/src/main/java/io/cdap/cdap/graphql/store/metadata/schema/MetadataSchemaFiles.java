@@ -15,22 +15,16 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.application.schema;
-
-import io.cdap.cdap.graphql.schema.Fields;
+package io.cdap.cdap.graphql.store.metadata.schema;
 
 /**
- * Helper class with a collection of fields relevant to applications that are used in the server
+ * Helper class with a collection of schema files relevant to metadata that are used in the server
  */
-public class ApplicationFields implements Fields {
+public class MetadataSchemaFiles {
 
-  public static final String APPLICATIONS = "applications";
-  public static final String APPLICATION = "application";
-  public static final String PROGRAMS = "programs";
-  public static final String APPLICATION_DETAIL = "applicationDetail";
-  public static final String METADATA = "metadata";
+  public static final String METADATA_SCHEMA = "metadataSchema.graphqls";
 
-  private ApplicationFields() {
+  private MetadataSchemaFiles() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
   }
 

@@ -31,7 +31,6 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.graphql.cdap.runtimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
@@ -42,6 +41,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -90,21 +90,6 @@ public class RemoteApplicationClientTest extends AppFabricTestBase {
     AppFabricTestHelper.shutdown();
   }
 
-  @Test
-  public void listApplications() throws Exception {
-    AbstractApplicationClient applicationClient = injector.getInstance(RemoteApplicationClient.class);
-    applicationClient.listApplications();
-
-  }
-
-  @Test
-  public void metadata() throws BadRequestException, IOException, UnauthenticatedException {
-    Injector injector = AppFabricTestHelper.getInjector();
-    AbstractMetadataClient applicationClient = injector.getInstance(RemoteMetadataClient.class);
-    MetadataEntity metadataEntity = MetadataEntity.ofNamespace("default");
-    applicationClient.getMetadata(metadataEntity);
-  }
-
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               cls, manifest);
@@ -122,5 +107,26 @@ public class RemoteApplicationClientTest extends AppFabricTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().putAll(attributes);
     return manifest;
+  }
+
+  @Before
+  public void setupData() throws Exception {
+    artifactRepository.clear(NamespaceId.DEFAULT);
+    artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null, null);
+  }
+
+  @Test
+  public void listApplications() throws Exception {
+    AbstractApplicationClient applicationClient = injector.getInstance(RemoteApplicationClient.class);
+    applicationClient.listApplications();
+
+  }
+
+  @Test
+  public void metadata() throws BadRequestException, IOException, UnauthenticatedException {
+    Injector injector = AppFabricTestHelper.getInjector();
+    AbstractMetadataClient applicationClient = injector.getInstance(RemoteMetadataClient.class);
+    MetadataEntity metadataEntity = MetadataEntity.ofNamespace("default");
+    applicationClient.getMetadata(metadataEntity);
   }
 }

@@ -51,30 +51,30 @@ import javax.ws.rs.Path;
 @Path(Constants.Gateway.API_VERSION_3)
 public class GraphQLHttpHandler extends AbstractHttpHandler {
 
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
-
-  private final GraphQL graphQL;
-
-  @Inject
-  GraphQLHttpHandler() throws IOException {
-    List<String> schemaDefinitionFiles = Arrays.asList(
-      GraphQLSchemaFiles.ROOT_SCHEMA,
-      ArtifactSchemaFiles.ARTIFACT_SCHEMA,
-      NamespaceSchemaFiles.NAMESPACE_SCHEMA);
-    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles);
-    this.graphQL = graphQLProvider.buildGraphQL();
-  }
-
-  @POST
-  @Path("/graphql")
-  public void queryGraphQL(FullHttpRequest request, HttpResponder responder) {
-    String query = request.content().toString(StandardCharsets.UTF_8);
-
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
-    ExecutionResult executionResult = graphQL.execute(executionInput);
-
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(executionResult.toSpecification()));
-  }
+  // private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+  //   .create();
+  //
+  // private final GraphQL graphQL;
+  //
+  // @Inject
+  // GraphQLHttpHandler() throws IOException {
+  //   List<String> schemaDefinitionFiles = Arrays.asList(
+  //     GraphQLSchemaFiles.ROOT_SCHEMA,
+  //     ArtifactSchemaFiles.ARTIFACT_SCHEMA,
+  //     NamespaceSchemaFiles.NAMESPACE_SCHEMA);
+  //   GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles);
+  //   this.graphQL = graphQLProvider.buildGraphQL();
+  // }
+  //
+  // @POST
+  // @Path("/graphql")
+  // public void queryGraphQL(FullHttpRequest request, HttpResponder responder) {
+  //   String query = request.content().toString(StandardCharsets.UTF_8);
+  //
+  //   ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+  //   ExecutionResult executionResult = graphQL.execute(executionInput);
+  //
+  //   responder.sendJson(HttpResponseStatus.OK, GSON.toJson(executionResult.toSpecification()));
+  // }
 
 }

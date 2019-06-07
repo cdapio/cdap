@@ -20,6 +20,7 @@ package io.cdap.cdap.graphql.store.application.typeruntimewiring;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationTypes;
+import io.cdap.cdap.graphql.store.metadata.datafetcher.MetadataDataFetcher;
 import io.cdap.cdap.graphql.store.programrecord.datafetchers.ProgramRecordDataFetcher;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
@@ -32,10 +33,12 @@ public class ApplicationDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring
 
   // private final ApplicationDataFetcher applicationDataFetcher;
   private final ProgramRecordDataFetcher programRecordDataFetcher;
+  private final MetadataDataFetcher metadataDataFetcher;
 
   private ApplicationDetailTypeRuntimeWiring() {
     // this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
     this.programRecordDataFetcher = ProgramRecordDataFetcher.getInstance();
+    this.metadataDataFetcher = MetadataDataFetcher.getInstance();
   }
 
   public static ApplicationDetailTypeRuntimeWiring getInstance() {
@@ -47,6 +50,7 @@ public class ApplicationDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring
     return TypeRuntimeWiring.newTypeWiring(ApplicationTypes.APPLICATION_DETAIL)
       // .dataFetcher(GraphQLFields.NAMESPACE, applicationDataFetcher.getNamespaceDataFetcher())
       .dataFetcher(ApplicationFields.PROGRAMS, programRecordDataFetcher.getProgramRecordsDataFetcher())
+      .dataFetcher(ApplicationFields.METADATA, metadataDataFetcher.getMetadataDataFetcher())
       .build();
   }
 
