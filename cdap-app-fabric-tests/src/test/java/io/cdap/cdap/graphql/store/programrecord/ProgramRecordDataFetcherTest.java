@@ -69,7 +69,7 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
       + "        runs {"
       + "          pid"
       + "        }"
-      + "        startTimes {"
+      + "        schedules {"
       + "          id"
       + "        }"
       + "      }"
@@ -88,7 +88,7 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
 
     Map<String, String> programRecord = (Map<String, String>) programs.get(0);
     Assert.assertNotNull(programRecord.get(ProgramRecordFields.RUNS));
-    Assert.assertNotNull(programRecord.get(ProgramRecordFields.START_TIMES));
+    Assert.assertNotNull(programRecord.get(ProgramRecordFields.SCHEDULES));
   }
 
   @Test
@@ -135,12 +135,12 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
   }
 
   @Test
-  public void testGetStartTimes() {
+  public void testGetSchedules() {
     String query = "{ "
       + "  application(name: \"JavascriptTransform\") {"
       + "    programs(type: \"Workflow\") {"
       + "      ... on Workflow {"
-      + "        startTimes {"
+      + "        schedules {"
       + "          id"
       + "          time"
       + "        }"
@@ -159,7 +159,7 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     List programs = application.get(ApplicationFields.PROGRAMS);
     Map<String, List> programRecord = (Map<String, List>) programs.get(0);
 
-    Map<String, String> startTime = (Map<String, String>) programRecord.get(ProgramRecordFields.START_TIMES).get(0);
+    Map<String, String> startTime = (Map<String, String>) programRecord.get(ProgramRecordFields.SCHEDULES).get(0);
     Assert.assertNotNull(startTime.get(ProgramRecordFields.ID));
     Assert.assertNotNull(startTime.get(ProgramRecordFields.TIME));
   }

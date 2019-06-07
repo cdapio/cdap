@@ -24,7 +24,7 @@ import io.cdap.cdap.graphql.schema.Fields;
  */
 public class ProgramRecordFields implements Fields {
 
-  public static final String START_TIMES = "startTimes";
+  public static final String SCHEDULES = "schedules";
   public static final String RUNS = "runs";
   public static final String TYPE = "type";
   public static final String DESCRIPTION = "description";
