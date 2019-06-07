@@ -18,7 +18,7 @@ import { withContext, INamespaceLinkContext } from 'components/AppHeader/Namespa
 import ExtendedLinkButton from 'components/AppHeader/ExtendedLinkButton';
 import classnames from 'classnames';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import Button from '@material-ui/core/Button';
+import Button, { ButtonProps } from '@material-ui/core/Button';
 const colors = require('styles/colors.scss');
 
 interface IToolBarFeatureLinkProps extends WithStyles<typeof styles> {
@@ -34,6 +34,7 @@ const styles = (theme) => {
       ...theme.buttonLink,
       fontWeight: 300,
       color: colors.grey08,
+      padding: `${theme.Spacing(2)}px ${theme.Spacing(3)}px`,
     },
   };
 };
@@ -45,9 +46,13 @@ class ToolBarFeatureLink extends React.PureComponent<IToolBarFeatureLinkProps> {
       return null;
     }
     const { isNativeLink } = this.props.context;
+    const Comp = isNativeLink ? 'a' : ExtendedLinkButton(featureUrl);
+    const ReactRef = React.forwardRef<HTMLElement, ButtonProps>((props, ref) => (
+      <Comp {...props} />
+    ));
     return (
       <Button
-        component={isNativeLink ? 'a' : ExtendedLinkButton(featureUrl)}
+        component={ReactRef}
         className={classnames(classes.buttonLink)}
         href={`/cdap${featureUrl}`}
         data-cy={featureName}

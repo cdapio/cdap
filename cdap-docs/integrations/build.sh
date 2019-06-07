@@ -38,10 +38,10 @@ function download_includes() {
   fi
   local file_source="${base_source}${branch}cdap-sentry/cdap-sentry-extension/"
   # Download Apache Sentry File
-  download_file ${target_includes_dir} ${file_source} README.rst bcf5148f45a778a7bc9f842ba84cbc10 cdap-sentry-extension-readme.txt
+  download_file ${target_includes_dir} ${file_source} README.rst dd94634ab6e0b2729e53c3fdf11c8743 cdap-sentry-extension-readme.txt
   # Download Apache Ranger File
   local file_source="${base_source}${branch}cdap-ranger/"
-  download_file ${target_includes_dir} ${file_source} README.rst 9ba1a8cff7fcaebfdb69bdae6bd2ca33 cdap-ranger-extension-readme.txt
+  download_file ${target_includes_dir} ${file_source} README.rst 62a4384022002e1f3f45f1fab5205e42 cdap-ranger-extension-readme.txt
 }
 
 run_command ${1}

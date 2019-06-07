@@ -10,7 +10,7 @@ CDAP Integrations Table of Contents
    :titlesonly:
 
     Introduction <index>
-    Hub <cask-market>
+    Hub <hub>
     Cloudera <partners/cloudera/index>
     Apache Sentry <apache-sentry>
     Apache Ranger <apache-ranger>

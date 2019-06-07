@@ -54,6 +54,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -91,7 +92,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public SparkCollection<T> cache() {
     SparkConf sparkConf = jsc.getConf();
     if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-      return wrap(rdd.cache());
+      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+                                                     Constants.DEFAULT_CACHING_STORAGE_LEVEL);
+      StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
+      return wrap(rdd.persist(cacheStorageLevel));
     } else {
       return wrap(rdd);
     }

@@ -26,7 +26,10 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -105,7 +108,7 @@ public final class ZKDiscoveryModule extends PrivateModule {
     @Override
     public ServiceDiscovered discover(final String name) {
       for (ProgramType programType : ProgramType.values()) {
-        if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverablePrefix())) {
+        if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverableTypeName() + ".")) {
           return clients.getUnchecked(name).discover(name);
         }
       }
@@ -116,7 +119,8 @@ public final class ZKDiscoveryModule extends PrivateModule {
       return new CacheLoader<String, ZKDiscoveryService>() {
         @Override
         public ZKDiscoveryService load(String key) {
-          String ns = String.format("%s/%s", twillNamespace, key);
+          ProgramId programID = ServiceDiscoverable.getId(key);
+          String ns = String.format("%s/%s", twillNamespace, TwillAppNames.toTwillAppName(programID));
           LOG.info("Create ZKDiscoveryClient for {}", ns);
           return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
         }

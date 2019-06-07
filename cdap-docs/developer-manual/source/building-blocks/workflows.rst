@@ -170,67 +170,6 @@ you use  multiple instances of the same program in the same workflow.
 These unique names can be set when the Workflow is first configured, passed to the
 instance of the program, and then be used when the program performs its own configuration.
 
-An example of this is the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example, and
-its use of the *StreamToDataset* MapReduce program multiple times::
-
-  public class StreamToDataset extends AbstractMapReduce {
-    ...
-    private final String name;
-  
-    public StreamToDataset(String name) {
-      this.name = name;
-    }
-  
-    @Override
-    public void configure() {
-      setName(name);
-      ...
-    }
-
-In its declaration of the application, the example specifies the unique names for each instance::
-
-  public class WikipediaPipelineApp extends AbstractApplication {
-    ...
-    static final String LIKES_TO_DATASET_MR_NAME = "likesToDataset";
-    static final String WIKIPEDIA_TO_DATASET_MR_NAME = "wikiDataToDataset";
-
-    @Override
-    public void configure() {
-      ...
-      addMapReduce(new StreamToDataset(LIKES_TO_DATASET_MR_NAME));
-      addMapReduce(new StreamToDataset(WIKIPEDIA_TO_DATASET_MR_NAME));
-      ...
-      addWorkflow(new WikipediaPipelineWorkflow());
-    }
-  }
-
-The workflow itself uses the same names in its configuration::
-
-  public class WikipediaPipelineWorkflow extends AbstractWorkflow {
-
-    public static final String NAME = WikipediaPipelineWorkflow.class.getSimpleName();
-
-    @Override
-    protected void configure() {
-      setName(NAME);
-      setDescription("A workflow that demonstrates a typical data pipeline to process Wikipedia data.");
-      addMapReduce(WikipediaPipelineApp.LIKES_TO_DATASET_MR_NAME);
-      condition(new EnoughDataToProceed())
-        .condition(new IsWikipediaSourceOnline())
-          .addAction(new DownloadWikiDataAction())
-        .otherwise()
-          .addMapReduce(WikipediaPipelineApp.WIKIPEDIA_TO_DATASET_MR_NAME)
-        .end()
-        .addMapReduce(WikiContentValidatorAndNormalizer.NAME)
-        .fork()
-          .addSpark(SparkWikipediaAnalyzer.NAME)
-        .also()
-          .addMapReduce(TopNMapReduce.NAME)
-        .join()
-      .otherwise()
-      .end();
-    }
-
 .. _workflow-concurrent:
 
 Local Datasets in Workflow
@@ -320,13 +259,6 @@ object as a class member in the ``initialize()`` method. This is because the con
 object passed to those methods is a Hadoop class that is unaware of CDAP and its workflow
 tokens.
 
-Here is an example, taken from the
-:ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
-
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/io/cdap/cdap/examples/wikipedia/TopNMapReduce.java
-   :language: java
-   :lines: 112-130
-
 **Note:** The test of ``workflowToken != null`` is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
 be non-null.
@@ -388,13 +320,7 @@ Spark Accumulators and Workflow Tokens
 --------------------------------------
 `Spark Accumulators <https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka>`__ 
 can be accessed through the SparkContext, and used with workflow tokens. This allows the 
-values in the accumulators to be accessed through workflow tokens. An example of this is in
-the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ClusteringUtils.scala``:
-
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/io/cdap/cdap/examples/wikipedia/ClusteringUtils.scala
-   :language: scala
-   :lines: 121-125
-   :dedent: 4
+values in the accumulators to be accessed through workflow tokens.
 
 Persisting the WorkflowToken
 ----------------------------
@@ -441,8 +367,7 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
 - map or reduce methods; or
 - Executors in Spark programs.
 
-You can always read the workflow token in any of the above situations. The :ref:`Wikipedia
-Pipeline example <examples-wikipedia-data-pipeline>` demonstrates some of these techniques.
+You can always read the workflow token in any of the above situations.
 
 
 .. _workflow_parallel:
@@ -721,10 +646,3 @@ and from within a workflow with a predicate, fork and joins::
     WorkflowToken.Scope.SYSTEM).getAsLong();
    ...
   }
-
-
-Workflow Examples
-=================
-- For an example of the use of **a workflow,** see the :ref:`Purchase
-  <examples-purchase>` example.
-- The :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example is another workflow example.

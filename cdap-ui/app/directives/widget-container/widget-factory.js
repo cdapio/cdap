@@ -18,21 +18,20 @@ angular.module(PKG.name + '.commons')
   .service('WidgetFactory', function() {
     this.registry = {
       'number': {
-        element: '<my-number-widget></my-number-widget>',
+        element: '<number></number>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
+          'value': 'model',
           'disabled': 'disabled',
+          'on-change': 'onChange',
           'is-field-required': 'isFieldRequired'
         }
       },
       'textbox': {
-        element: '<input/>',
+        element: '<text-box></text-box>',
         attributes: {
-          'class': 'form-control',
-          'ng-trim': 'false',
-          'ng-model': 'model',
-          placeholder: '{{ ::myconfig["widget-attributes"].placeholder}}'
+          'value': 'model',
+          'on-change': 'onChange',
+          placeholder: 'myconfig["widget-attributes"].placeholder'
         }
       },
       'textarea': {
@@ -60,22 +59,24 @@ angular.module(PKG.name + '.commons')
         }
       },
       'csv': {
-        element: '<my-dsv></my-dsv>',
+        element: '<csv-widget></csv-widget>',
         attributes: {
-          'ng-model': 'model',
-          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
-          'type': 'csv',
-          'config': 'myconfig'
-        }
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+        },
       },
       'dsv': {
-        element: '<my-dsv></my-dsv>',
+        element: '<csv-widget></csv-widget>',
         attributes: {
-          'ng-model': 'model',
-          'delimiter': '{{::myconfig["widget-attributes"].delimiter}}',
-          'type': 'dsv',
-          'config': 'myconfig'
-        }
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+        },
       },
       'ds-multiplevalues': {
         element: '<my-ds-multiple-values></my-ds-multiple-values>',
@@ -141,25 +142,40 @@ angular.module(PKG.name + '.commons')
         }
       },
       'keyvalue': {
-        element: '<my-key-value></my-key-value>',
+        element: '<key-value-widget></key-value-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
+          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
         }
       },
       'keyvalue-encoded': {
-        element: '<my-key-value-encoded></my-key-value-encoded>',
+        element: '<key-value-widget></key-value-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
+          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
+          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'is-encoded': true,
         }
       },
       'keyvalue-dropdown': {
-        element: '<my-key-value></my-key-value>',
+        element: '<key-value-dropdown-widget></key-value-dropdown-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig',
-          'is-dropdown': 'true'
+          'value': 'model',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
+          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
+          'dropdown-options': 'myconfig["widget-attributes"]["dropdownOptions"]',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
         }
       },
       'function-dropdown-with-alias': {
@@ -177,12 +193,11 @@ angular.module(PKG.name + '.commons')
         }
       },
       'select': {
-        element: '<select></select>',
+        element: '<select-dropdown></select-dropdown>',
         attributes: {
-          'ng-model': 'model',
-          'class': 'form-control',
-          'ng-options': 'item as item for item in (myconfig.properties.values || myconfig["widget-attributes"].values)',
-          'ng-init': 'model = model.length ? model : (myconfig.properties.default || myconfig["widget-attributes"].default)'
+          'value': 'model || myconfig.properties.default || myconfig["widget-attributes"].default',
+          'options': '(myconfig.properties.values || myconfig["widget-attributes"].values)',
+          'on-change': 'onChange'
         }
       },
       'dataset-selector': {

@@ -35,14 +35,14 @@ const colorVariables = require('styles/variables.scss');
 
 const styles = (theme) => {
   return {
-    listItemText: appDrawerListItemTextStyles,
-    listItem: appDrawerListItemStyles,
+    listItemText: appDrawerListItemTextStyles(theme),
+    listItem: appDrawerListItemStyles(theme),
     nestListPadding: {
-      paddingLeft: theme.spacing.unit * 5,
+      paddingLeft: theme.Spacing(6),
     },
     listItemWithSubmenu: {
       cursor: 'pointer',
-      ...appDrawerListItemStyles,
+      ...appDrawerListItemStyles(theme),
     },
     featureIconSize: {
       fontSize: '1.3rem',

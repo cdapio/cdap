@@ -40,7 +40,7 @@ You can extend from the abstract class ``AbstractSpark`` to simplify the impleme
     ...
   }
 
-The configure method is similar to the one found in flows and MapReduce programs. It
+The configure method is similar to the one found in service and MapReduce programs. It
 defines the name, description, and the class containing the Spark program to be executed
 by the Spark framework.
 
@@ -72,14 +72,6 @@ Spark and Resources
 When a Spark program is configured, the resource requirements for both the Spark driver
 processes and the Spark executor processes can be set, both in terms of the amount of
 memory (in megabytes) and the number of virtual cores assigned.
-
-For example, in the :ref:`Spark Page Rank <examples-spark-page-rank>` example, in the configuration of
-the ``PageRankSpark``, the amount of memory is specified:
-
-.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
-   :language: java
-   :lines: 110-122
-   :dedent: 2
 
 If both the memory and the number of cores needs to be set, this can be done using::
 
@@ -186,65 +178,6 @@ be used, provided its classes are serializable.
 ``String`` containing the :term:`namespace` as an additional parameter before the :term:`dataset`
 name parameter. (By default, if the namespace parameter is not supplied, the namespace in
 which the program runs is used.).
-
-
-Spark and Streams
-=================
-Spark programs in CDAP can directly access **streams** similar to the way a MapReduce can.
-These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a stream.
-You can read from a stream using:
-
-.. tabbed-parsed-literal::
-  :tabs: Scala,Java
-  :dependent: java-scala
-  :languages: scala,java
-
-  .. Scala
-
-  val ratingsDataset = sc.fromStream[(Long, String)]("ratingsStream")
-
-  .. Java
-
-  JavaPairRDD<Long, String> ratingsDataset = sec.fromStream("ratingsStream", String.class);
-
-It’s possible to read parts of a stream by specifying start and end timestamps using:
-
-.. tabbed-parsed-literal::
-  :tabs: Scala,Java
-  :dependent: java-scala
-  :languages: scala,java
-
-  .. Scala
-
-  val ratingsDataset = sc.fromStream[(Long, String)]("ratingsStream", startTime, endTime)
-
-  .. Java
-
-  JavaPairRDD<Long, String> ratingsDataset = sec.fromStream("ratingsStream", startTime, endTime, String.class);
-
-.. highlight:: scala
-
-In Scala, custom object conversion is done through an implicit conversion function::
-
-    // The SparkMain provides implicit functions for (Long, String) and String conversion already
-    val pairRDD: RDD[(Long, String)] = sc.fromStream(streamName)
-    val valueRDD: RDD[String] = sc.fromStream(streamName)
-
-    // Defining a custom conversion
-    implicit def toArray(event: StreamEvent): Array[String] = Bytes.toString(event.getBody).split(",")
-    val rdd: RDD[Array[String]] = sc.fromStream(streamName)
-
-.. highlight:: java
-
-In Java, you can read custom objects from a stream by providing a ``decoderType`` extended from
-:javadoc:`StreamEventDecoder <io/cdap/cdap/api/stream/StreamEventDecoder>`::
-
-    sec.fromStream(streamName, startTime, endTime, decoderType, keyType, valueType);
-
-**Note**: Spark programs can read from streams in different namespaces by passing a
-``String`` containing the :term:`namespace` as an additional parameter before the
-:term:`stream` name parameter. (By default, if the namespace parameter is not supplied,
-the namespace in which the program runs is used.)
 
 
 Spark and Services
@@ -422,15 +355,7 @@ To use Spark2, you must add the ``cdap-api-spark2_2.11`` Maven dependency::
 
 Spark Program Examples
 ======================
-- For examples of **Spark programs,** see the :ref:`Log Analysis <examples-log-analysis>`,
-  :ref:`Spam Classifier <examples-spam-classifier>`, :ref:`Spark K-Means <examples-spark-k-means>`,
-  :ref:`Spark Page Rank <examples-spark-page-rank>`, and :ref:`Wikipedia Pipeline
-  <examples-wikipedia-data-pipeline>` examples.
-
-- For an example of a **Spark2 program,** see the :ref:`Decision Tree Regression <examples-decision-tree-regression>`
-  example.
-
-- For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
+- For an example, the how-to guide :ref:`cdap-spark-guide` gives a demonstration.
 
 - If you have problems with resolving methods when developing Spark problems in an IDE 
   or running Spark programs, see :ref:`these hints <development-troubleshooting-spark>`.

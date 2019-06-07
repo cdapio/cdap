@@ -63,7 +63,7 @@ function download_includes() {
 # https://raw.githubusercontent.com/cdapio/cdap-clients/develop/cdap-authentication-clients/java/README.rst
   local clients_url="${github_url}/cdap-clients/${clients_branch}"
 
-  download_readme_file_and_test ${includes_dir} ${clients_url} 9bdc7d9ab874bfb6ec044964d3df804e cdap-authentication-clients/java
+  download_readme_file_and_test ${includes_dir} ${clients_url} 36d4c7515fa4c1c1a46f4f7674b5df94 cdap-authentication-clients/java
   download_readme_file_and_test ${includes_dir} ${clients_url} 6f937cbf71ed2312a4893cba27e6145f cdap-authentication-clients/python
 
 # cdap-ingest
@@ -74,23 +74,6 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} a852e493aff54ffd726368691f248d80 cdap-stream-clients/java
   download_readme_file_and_test ${includes_dir} ${ingest_url} da242d9be7051417bd5ff73b3dc5edc2 cdap-stream-clients/python
   download_readme_file_and_test ${includes_dir} ${ingest_url} 4475514acbba0a5f32a61d5c13c30fdb cdap-stream-clients/ruby
-
-  echo_red_bold "Check included example files for changes"
-
-  test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
-
-  test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
-  test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryService.java
-  test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseStore.java
-
-  test_an_include fdf59cc4d67aef9abda0bc35e806a809 ../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
-
-  test_an_include 26486a370532d820bde854d42990a868 ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
-
-  test_an_include ce88887b4e60273e60deeb6d233be7ae ../../cdap-examples/WikipediaPipeline/src/main/java/io/cdap/cdap/examples/wikipedia/TopNMapReduce.java
-  test_an_include 76f187d9ad8ea4d14bde0f2ef8617a97 ../../cdap-examples/WikipediaPipeline/src/main/scala/io/cdap/cdap/examples/wikipedia/ClusteringUtils.scala
-
-  test_an_include eb9c28563b1ef25f7740c796ecf005b2 ../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/RetrieveCountsHandler.java
 }
 
 function test_includes () {

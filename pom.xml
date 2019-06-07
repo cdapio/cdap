@@ -1816,7 +1816,6 @@
           <configuration>
             <nexusUrl>https://oss.sonatype.org</nexusUrl>
             <serverId>sonatype.release</serverId>
-            <stagingProfileId>655dc88dc770c3</stagingProfileId>
           </configuration>
         </plugin>
       </plugins>
@@ -2051,8 +2050,8 @@
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
-                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12</excludeGroupIds>
-                    <excludeArtifactIds>hive-exec</excludeArtifactIds>
+                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</excludeGroupIds>
+                    <excludeArtifactIds>hive-exec,jackson-core-asl,jackson-mapper-asl</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
                     <includeScope>runtime</includeScope>

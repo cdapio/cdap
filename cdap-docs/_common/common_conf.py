@@ -309,7 +309,7 @@ git_vars = {
     'GIT_HDP_VERSIONS':  'hdp-versions',
     'GIT_MAPR_VERSIONS': 'mapr-versions',
     'GIT_EMR_VERSIONS':  'emr-versions',
-    'GIT_CASK_MARKET_VERSION': 'cask-market-version',
+    'GIT_HUB_VERSION': 'hub-version',
     'GIT_PLUGINS_SPEC_VERSION': 'plugins-spec-version',
     'GIT_NODE_JS_MIN_VERSION': 'node-js-min-version',
 #     'GIT_NODE_JS_MAX_VERSION': 'node-js-max-version',
@@ -419,18 +419,6 @@ if cdap_apps_version and cdap_apps_compatibile_version:
 """ % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
 else:
     print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'
-
-cdap_metadata_management_version = os.environ.get('CDAP_METADATA_MANAGEMENT_VERSION')
-if cdap_metadata_management_version:
-    rst_epilog += """
-.. |cdap-metadata-management-version| replace:: %(cdap-metadata-management-version)s
-.. |cdap-metadata-management-version-jar| replace:: tracker-%(cdap-metadata-management-version)s.jar
-.. |literal-cdap-metadata-management-version| replace:: ``%(cdap-metadata-management-version)s``
-.. |literal-cdap-metadata-management-version-jar| replace:: ``tracker-%(cdap-metadata-management-version)s.jar``
-
-""" % {'cdap-metadata-management-version': cdap_metadata_management_version}
-else:
-    print 'Unable to find CDAP_METADATA_MANAGEMENT_VERSION'
 
 cdap_pipelines_version = os.environ.get('CDAP_PIPELINES_VERSION')
 if cdap_pipelines_version:

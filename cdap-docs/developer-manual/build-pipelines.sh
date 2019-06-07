@@ -181,14 +181,14 @@ function pipelines_download_includes() {
   echo_red_bold "Checking Plugin Archetypes"
   local cdap_app_templates="cdap-app-templates/cdap-etl/cdap-etl-archetypes/cdap-data-pipeline-plugins-archetype/src/main/resources/archetype-resources/src/main/java"
 
-  test_an_include 88ef4c43707322f700ccd7a1b445100f ../../${cdap_app_templates}/FilesetMoveAction.java
-  test_an_include 83c6e8e47dff67a8fd5d744ac81f4ee3 ../../${cdap_app_templates}/FilesetDeletePostAction.java
-  test_an_include 4b1ec5f3df66e8242bffe5ca13d55668 ../../${cdap_app_templates}/TextFileSetSource.java
-  test_an_include 26cb2a53c3ec41ec81591d381b5fa758 ../../${cdap_app_templates}/TextFileSetSink.java
-  test_an_include 00778d7ba7bfb16c9ad97fac20b6d327 ../../${cdap_app_templates}/WordCountAggregator.java
-  test_an_include 3fba43f907e701b1bb72efad2496d7b6 ../../${cdap_app_templates}/WordCountCompute.java
-  test_an_include 9f4d179eb127337e352f2b0a814b57b0 ../../${cdap_app_templates}/WordCountSink.java
-  test_an_include 54e652348b15068b7de10e3f05fde1e5 ../../${cdap_app_templates}/StringCaseTransform.java
+  test_an_include 56b425f6a262030aba303ec4e07b6387 ../../${cdap_app_templates}/FilesetMoveAction.java
+  test_an_include 09eb086c99c3fd9767537be57f59b9c5 ../../${cdap_app_templates}/FilesetDeletePostAction.java
+  test_an_include 000a58fcc3e9021f6e34427fcd8d7d8d ../../${cdap_app_templates}/TextFileSetSource.java
+  test_an_include ee3ab5c675abc81354c213c7cffb2d10 ../../${cdap_app_templates}/TextFileSetSink.java
+  test_an_include b9c79faf16013771cd5c412e643e6628 ../../${cdap_app_templates}/WordCountAggregator.java
+  test_an_include 18d0644a29847c3e32f5def0c8162b50 ../../${cdap_app_templates}/WordCountCompute.java
+  test_an_include 399b6583124c83fc6b0766cea0a89e93 ../../${cdap_app_templates}/WordCountSink.java
+  test_an_include d6df20a148bd397592f58c41d5988851 ../../${cdap_app_templates}/StringCaseTransform.java
 
   echo_red_bold "Checking CDAP Pipeline Plugin Documentation"
   local pipelines_plugins="hydrator-plugins"
@@ -243,7 +243,7 @@ function pipelines_download_includes() {
   download_md_file core-plugins KVTable-batchsource.md
   download_md_file core-plugins LogParser-transform.md
   download_md_file core-plugins Projection-transform.md
-  download_md_file core-plugins PythonEvaluator-transform.md
+# download_md_file core-plugins PythonEvaluator-transform.md Moved to https://github.com/data-integrations/python-plugins
   download_md_file core-plugins RowDenormalizer-batchaggregator.md '' "analytic"
 #   download_md_file core-plugins S3-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
 #   download_md_file core-plugins S3Avro-batchsink.md # Moved to https://github.com/hydrator/amazon-s3-plugins
@@ -253,7 +253,6 @@ function pipelines_download_includes() {
   download_md_file core-plugins SnapshotParquet-batchsink.md
   download_md_file core-plugins SnapshotParquet-batchsource.md
   download_md_file core-plugins SSH-action.md
-  download_md_file core-plugins Stream-batchsource.md
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
   download_md_file core-plugins Table-batchsink.md
   download_md_file core-plugins Table-batchsource.md
@@ -301,7 +300,6 @@ function pipelines_download_includes() {
   download_md_file transform-plugins XMLParser-transform.md
   download_md_file transform-plugins XMLToJSON-transform.md
 
-  extract_table ${BASE_TARGET} "transforms/validator-transform.md" _includes/validator-extract.txt
 }
 
 # run_command ${1}

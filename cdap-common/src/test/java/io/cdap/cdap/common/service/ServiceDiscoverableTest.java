@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,10 @@ import org.junit.Test;
 public class ServiceDiscoverableTest {
 
   @Test
-  public void testProgramId() throws Exception {
+  public void testProgramId() {
     ProgramId serviceId = new ApplicationId("ns", "app").service("s1");
     String discoverableName = ServiceDiscoverable.getName(serviceId);
-    Assert.assertEquals("service.ns.app.s1", discoverableName);
+    Assert.assertEquals("svc.ns.app.s1", discoverableName);
     Assert.assertTrue(ServiceDiscoverable.isUserService(discoverableName));
     Assert.assertFalse(ServiceDiscoverable.isUserService("service1."));
     Assert.assertEquals(serviceId, ServiceDiscoverable.getId(discoverableName));
