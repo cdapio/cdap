@@ -164,4 +164,33 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertNotNull(startTime.get(ProgramRecordFields.TIME));
   }
 
+  @Test
+  public void testGeMapReduceWithType() {
+    String query = "{ "
+      + "  application(name: \"JavascriptTransform\") {"
+      + "    programs(type: \"MapReduce\") {"
+      + "      type"
+      + "      app"
+      + "      name"
+      + "      description"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+    Map<String, List> application = data.get(ApplicationFields.APPLICATION);
+    List programs = application.get(ApplicationFields.PROGRAMS);
+
+    Map<String, String> programRecord = (Map<String, String>) programs.get(0);
+    Assert.assertNotNull(programRecord.get(ProgramRecordFields.TYPE));
+    Assert.assertNotNull(programRecord.get(ProgramRecordFields.APP));
+    Assert.assertNotNull(programRecord.get(GraphQLFields.NAME));
+    Assert.assertNotNull(programRecord.get(ProgramRecordFields.DESCRIPTION));
+  }
+
 }
