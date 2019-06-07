@@ -85,6 +85,9 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
       + "        }"
       + "      }"
       + "    }"
+      + "    metadata {"
+      + "      tags"
+      + "    }"
       + "  }"
       + "}";
 
