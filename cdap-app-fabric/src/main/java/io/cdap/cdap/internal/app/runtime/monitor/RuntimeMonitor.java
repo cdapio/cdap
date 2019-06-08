@@ -28,6 +28,8 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -56,6 +58,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -66,6 +69,11 @@ import java.util.stream.Stream;
 public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitor.class);
+  // Skip the first error log, and at most log once per 30 seconds.
+  // This helps debugging errors that persist more than 30 seconds.
+  private static final Logger OUTAGE_LOGGER = Loggers.sampling(
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(1), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
+
 
   private static final Gson GSON = new Gson();
 
@@ -182,10 +190,14 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     try {
       monitorResponses = monitorClient.fetchMessages(topicsToRequest);
     } catch (ServiceUnavailableException | IOException e) {
+      OUTAGE_LOGGER.warn("Failed to fetch monitoring messages for program {}", programRunId, e);
+
       // If the remote process is still running, just try to poll again in the next cycle
       if (remoteProcessController.isRunning()) {
         return pollTimeMillis;
       }
+
+      LOG.error("Remote process for program {} is no longer running.", programRunId, e);
 
       // If failed to fetch messages and the remote process is not running, emit a failure program state and
       // terminates the monitor
