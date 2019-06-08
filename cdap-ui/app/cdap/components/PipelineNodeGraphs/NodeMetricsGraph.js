@@ -35,6 +35,7 @@ import findIndex from 'lodash/findIndex';
 import capitalize from 'lodash/capitalize';
 import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
 import isEqual from 'lodash/isEqual';
+var data = require('./sampledata.js');
 import T from 'i18n-react';
 
 const RECORDS_IN_COLOR = '#58B7F6';
@@ -93,7 +94,7 @@ export default class NodeMetricsGraph extends Component {
   constructor(props) {
     super(props);
 
-    this.data = this.props.data;
+    this.data = data; // this.props.data;
 
     let dataToShow = Object.keys(this.data).map((dataKey) => this.data[dataKey].label);
 
