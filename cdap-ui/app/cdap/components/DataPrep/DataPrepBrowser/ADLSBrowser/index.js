@@ -39,6 +39,8 @@ import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPre
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import FilePath from 'components/FileBrowser/FilePath';
+import history from 'services/history';
+
 const BASEPATH = '/';
 const PREFIX = 'features.ADLSBrowser';
 
@@ -234,8 +236,7 @@ export default class ADLSBrowser extends Component {
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-        window.location.href = navigatePath;
+        history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       },
       (err) => {
         setError(err);
