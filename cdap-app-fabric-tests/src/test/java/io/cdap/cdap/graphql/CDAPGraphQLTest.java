@@ -24,6 +24,7 @@ import io.cdap.cdap.graphql.cdap.schema.GraphQLSchemaFiles;
 import io.cdap.cdap.graphql.cdap.typeruntimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationSchemaFiles;
+import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
 import io.cdap.cdap.graphql.store.metadata.schema.MetadataSchemaFiles;
@@ -58,10 +59,13 @@ public class CDAPGraphQLTest extends AppFabricTestBase {
     CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring = injector.getInstance(CDAPQueryTypeRuntimeWiring.class);
     ApplicationRecordTypeRuntimeWiring applicationRecordTypeRuntimeWiring = injector
       .getInstance(ApplicationRecordTypeRuntimeWiring.class);
+    ApplicationDetailTypeRuntimeWiring applicationDetailTypeRuntimeWiring = injector
+      .getInstance(ApplicationDetailTypeRuntimeWiring.class);
 
     GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
                                                               cdapQueryTypeRuntimeWiring,
-                                                              applicationRecordTypeRuntimeWiring);
+                                                              applicationRecordTypeRuntimeWiring,
+                                                              applicationDetailTypeRuntimeWiring);
     graphQL = graphQLProvider.buildGraphQL();
   }
 

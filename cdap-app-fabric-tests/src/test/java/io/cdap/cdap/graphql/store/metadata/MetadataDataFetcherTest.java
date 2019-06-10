@@ -19,10 +19,12 @@ package io.cdap.cdap.graphql.store.metadata;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.graphql.CDAPGraphQLTest;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.metadata.schema.MetadataFields;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,9 +34,11 @@ import java.util.Map;
 public class MetadataDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
-  public void testGetMetadataRecord() {
+  public void testGetMetadataRecord() throws Exception {
+    deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+
     String query = "{ "
-      + "  application(name: \"JavascriptTransform\") {"
+      + "  application(name: \"" + AppWithServices.NAME + "\") {"
       + "    metadata {"
       + "      tags {"
       + "        name"
@@ -56,6 +60,8 @@ public class MetadataDataFetcherTest extends CDAPGraphQLTest {
     Map<String, String> tag = (Map<String, String>) metadata.get(MetadataFields.TAGS).get(0);
     Assert.assertNotNull(tag.get(GraphQLFields.NAME));
     Assert.assertNotNull(tag.get(MetadataFields.SCOPE));
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
   }
 
 }

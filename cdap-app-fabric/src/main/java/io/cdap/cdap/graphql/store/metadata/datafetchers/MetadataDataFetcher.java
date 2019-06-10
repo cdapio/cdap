@@ -21,13 +21,12 @@ import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.api.metadata.MetadataEntity;
-import io.cdap.cdap.client.MetadataClient;
-import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.common.metadata.MetadataRecord;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.metadata.dto.Metadata;
 import io.cdap.cdap.graphql.store.metadata.dto.Tag;
+import io.cdap.cdap.metadata.RemoteMetadataClient;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -38,18 +37,11 @@ import java.util.Set;
  */
 public class MetadataDataFetcher {
 
-  private static final MetadataDataFetcher INSTANCE = new MetadataDataFetcher();
-
-  private final MetadataClient metadataClient;
+  private final RemoteMetadataClient metadataClient;
 
   @Inject
-  private MetadataDataFetcher() {
-    // TODO the client config should, somehow, get passed
-    this.metadataClient = new MetadataClient(ClientConfig.getDefault());
-  }
-
-  public static MetadataDataFetcher getInstance() {
-    return INSTANCE;
+  public MetadataDataFetcher(RemoteMetadataClient remoteMetadataClient) {
+    this.metadataClient = remoteMetadataClient;
   }
 
   /**
