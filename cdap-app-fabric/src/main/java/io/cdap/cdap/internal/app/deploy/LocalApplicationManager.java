@@ -25,7 +25,7 @@ import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
@@ -74,7 +74,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetricsSystemClient metricsSystemClient;
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
-  private final MetadataPublisher metadataPublisher;
+  private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final io.cdap.cdap.scheduler.Scheduler programScheduler;
@@ -88,7 +88,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                           @Assisted ProgramTerminator programTerminator, MetricsSystemClient metricsSystemClient,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          MetadataPublisher metadataPublisher,
+                          MetadataServiceClient metadataServiceClient,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
                           Scheduler programScheduler,
                           AuthorizationEnforcer authorizationEnforcer,
@@ -103,7 +103,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.metricsSystemClient = metricsSystemClient;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
-    this.metadataPublisher = metadataPublisher;
+    this.metadataServiceClient = metadataServiceClient;
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.programScheduler = programScheduler;
@@ -123,11 +123,11 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
                                                      authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
-                                                    metricsSystemClient, metadataPublisher, programScheduler));
+                                                    metricsSystemClient, metadataServiceClient, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
-    pipeline.addLast(new SystemMetadataWriterStage(metadataPublisher));
+    pipeline.addLast(new SystemMetadataWriterStage(metadataServiceClient));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

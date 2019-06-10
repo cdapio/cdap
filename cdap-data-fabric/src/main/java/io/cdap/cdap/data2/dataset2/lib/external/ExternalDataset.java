@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package io.cdap.cdap.data2.dataset2.lib.external;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -72,5 +73,14 @@ public class ExternalDataset implements Dataset, InputFormatProvider, OutputForm
   @Override
   public void close() throws IOException {
     // Nothing to do
+  }
+
+  /**
+   * Record read access to this dataset. This method does nothing, but the
+   * @ReadOnly annotation causes recording of a read access to this dataset.
+   */
+  @ReadOnly
+  public void recordRead() {
+    // Nothing to do, the platform will record the access based on the @ReadOnly annotation
   }
 }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Registry of structured table specification.
  */
+@Beta
 public interface StructuredTableRegistry {
   /**
    * Initializes the underlying storage for the registry.

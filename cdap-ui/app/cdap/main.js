@@ -31,7 +31,8 @@ import Home from 'components/Home';
 import AppHeader from 'components/AppHeader';
 import Footer from 'components/Footer';
 import cookie from 'react-cookie';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { Router, Route, Switch } from 'react-router-dom';
+import history from 'services/history';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
@@ -52,13 +53,7 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 import ThemeWrapper from 'components/ThemeWrapper';
-
 import './globals';
-const SampleTSXComponent = Loadable({
-  loader: () =>
-    import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
-  loading: LoadingSVGCentered,
-});
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -109,7 +104,7 @@ class CDAP extends Component {
 
   render() {
     return (
-      <BrowserRouter basename="/cdap">
+      <Router history={history}>
         <div className="cdap-container">
           <Helmet title={Theme.productName} />
           <AppHeader />
@@ -173,18 +168,48 @@ class CDAP extends Component {
                     </ErrorBoundary>
                   )}
                 />
+
                 <Route
                   exact
                   path="/ts-example"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <SampleTSXComponent {...props} />
-                    </ErrorBoundary>
-                  )}
+                  render={(props) => {
+                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                      return <Page404 {...props} />;
+                    }
+                    const SampleTSXComponent = Loadable({
+                      loader: () =>
+                        import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+                      loading: LoadingSVGCentered,
+                    });
+                    return (
+                      <ErrorBoundary>
+                        <SampleTSXComponent {...props} />
+                      </ErrorBoundary>
+                    );
+                  }}
+                />
+                <Route
+                  exact
+                  path="/markdownexperiment"
+                  render={(props) => {
+                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                      return <Page404 {...props} />;
+                    }
+                    const MarkdownImpl = Loadable({
+                      loader: () =>
+                        import(/* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'),
+                      loading: LoadingSVGCentered,
+                    });
+                    return (
+                      <ErrorBoundary>
+                        <MarkdownImpl {...props} />
+                      </ErrorBoundary>
+                    );
+                  }}
                 />
                 {/*
-                      Eventually handling 404 should move to the error boundary and all container components will have the error object.
-                      */}
+                  Eventually handling 404 should move to the error boundary and all container components will have the error object.
+                */}
                 <Route
                   render={(props) => (
                     <ErrorBoundary>
@@ -198,7 +223,7 @@ class CDAP extends Component {
           <Footer />
           <AuthRefresher />
         </div>
-      </BrowserRouter>
+      </Router>
     );
   }
 }

@@ -109,7 +109,9 @@ export default class RuleBooksTab extends Component {
         <span className="rule-books-search-label">{T.translate(`${PREFIX}.searchLabel`)}</span>
         <InputGroup className="rule-books-search-group">
           <InputGroupAddon addonType="prepend">
-            <IconSVG name="icon-search" />
+            <div className="input-group-text">
+              <IconSVG name="icon-search" />
+            </div>
           </InputGroupAddon>
           <Input
             placeholder={T.translate(`${PREFIX}.searchplaceholder`)}

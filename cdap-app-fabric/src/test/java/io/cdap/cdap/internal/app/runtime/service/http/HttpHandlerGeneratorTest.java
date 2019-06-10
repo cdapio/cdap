@@ -737,6 +737,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
+      return null;
+    }
+
+    @Override
     public URL getServiceURL(String applicationId, String serviceId) {
       return null;
     }

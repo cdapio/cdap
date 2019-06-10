@@ -39,7 +39,6 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
-import io.cdap.cdap.api.plugin.EndpointPluginContext;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
@@ -69,7 +68,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.file.Files;
@@ -78,7 +76,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -244,11 +241,9 @@ final class ArtifactInspector {
         Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
         try {
           String configField = getProperties(TypeToken.of(cls), pluginProperties);
-          Set<String> pluginEndpoints = getPluginEndpoints(cls);
           PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
                                                     getPluginDescription(cls), cls.getName(),
-                                                    configField, pluginProperties, pluginEndpoints,
-                                                    getPluginRequirements(cls));
+                                                    configField, pluginProperties, getPluginRequirements(cls));
           builder.addPlugin(pluginClass);
         } catch (UnsupportedTypeException e) {
           LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
@@ -373,44 +368,6 @@ final class ArtifactInspector {
     }
     return new Requirements(Arrays.stream(annotation.datasetTypes()).map(s -> s.trim().toLowerCase())
                               .filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toSet()));
-  }
-
-  /**
-   * Extracts and returns set of endpoints in the plugin.
-   * @throws IllegalArgumentException if there are duplicate endpoints found or
-   * if the number of arguments is not 1 or 2, or if type of 2nd argument is not an EndpointPluginContext.
-   */
-  private Set<String> getPluginEndpoints(Class<?> cls) throws IllegalArgumentException {
-    Set<String> endpoints = new HashSet<>();
-    Method[] methods = cls.getMethods();
-    for (Method method : methods) {
-      javax.ws.rs.Path pathAnnotation = method.getAnnotation(javax.ws.rs.Path.class);
-      // method should have path annotation else continue
-      if (pathAnnotation != null) {
-        if (!endpoints.add(pathAnnotation.value())) {
-          // if the endpoint already exists throw an exception saying, plugin has two methods with same endpoint name.
-          throw new IllegalArgumentException(String.format("Two Endpoints with same name : %s found in Plugin : %s",
-                                                           pathAnnotation.value(), getPluginName(cls)));
-        }
-        // check that length of method parameters is 1 or 2. if length is 2,
-        // check that 2nd param is of type EndpointPluginContext
-        if (!(method.getParameterTypes().length == 1 || method.getParameterTypes().length == 2)) {
-          throw new IllegalArgumentException(
-            String.format("Endpoint parameters can only be of length 1 or 2, " +
-                            "found endpoint %s with %s parameters",
-                          pathAnnotation.value(), method.getParameterTypes().length));
-        }
-        if (method.getParameterTypes().length == 2 &&
-          !EndpointPluginContext.class.isAssignableFrom(method.getParameterTypes()[1])) {
-          throw new IllegalArgumentException(
-            String.format("2nd parameter of endpoint should be EndpointPluginContext, " +
-                            "%s is not of type %s in endpoint %s",
-                          method.getParameterTypes()[1], EndpointPluginContext.class.getName(),
-                          pathAnnotation.value()));
-        }
-      }
-    }
-    return endpoints;
   }
 
   /**

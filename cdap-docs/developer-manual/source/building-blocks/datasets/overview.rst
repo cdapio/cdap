@@ -118,9 +118,6 @@ the dataset in a member variable at that time (similar to static datasets, but a
       counters.increment(key.getBytes(), 1L);
     }
 
-See :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
-the dataset names used by an application.
-
 Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
 after you are finished using them. You can do that by calling the ``discardDataset()`` method of the program context:
 it marks the dataset to be closed and removed from all transactions. If a transaction is
@@ -209,27 +206,10 @@ Dataset Management in Programs
 Instantiating a dataset in a program allows you to perform any of the dataset's data operations |---| the Java
 methods defined in the dataset's API. However, you cannot perform administrative operations such as creating or
 dropping a dataset. For these operations, the program context offers an ``Admin`` interface that can be obtained
-through the ``getAdmin()`` method of the context. This is available in all types of programs. For example, in
-a service handler, you can obtain the ``Admin`` through the ``HttpServiceContext``. The ``FileSetHandler`` of the
-:ref:`examples-fileset` extends ``AbstractHttpServiceHandler`` |---| its ``configure`` method saves the context
-in an instance variable and makes it available through ``getContext()``:
-
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
-    :language: java
-    :lines: 65-71
-    :dedent: 2
-    :append: ...
-             }
+through the ``getAdmin()`` method of the context. This is available in all types of programs.
 
 The handler defines several endpoints for dataset management, one of which can be used to create a new file set,
-either by cloning an existing file set's dataset properties, or by using the properties submitted in the request body:
-
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
-    :language: java
-    :lines: 161-201
-    :dedent: 4
-
-For more details, see the :ref:`examples-fileset`.
+either by cloning an existing file set's dataset properties, or by using the properties submitted in the request body.
 
 Note that even though you can call dataset management methods within a transaction, these operations are *not*
 transactional, and they are not rolled back in case the current transaction fails. It is advisable not to mix data
@@ -238,7 +218,7 @@ operations and dataset management operations within the same transaction.
 Dataset Time-To-Live (TTL)
 ==========================
 
-Datasets, like :ref:`streams <streams>`, can have a Time-To-Live (TTL) property that
+Datasets can have a Time-To-Live (TTL) property that
 governs how long data will be persisted in a specific dataset. TTL is configured as the
 maximum age (in seconds) that data should be retained.
 
@@ -359,34 +339,3 @@ such as the format and schema, while abstracting from the actual underlying file
 
   An example of using the Cube dataset is provided in the :ref:`Data Analysis with OLAP
   Cube <cdap-cube-guide>` guide.
-
-
-Dataset Examples
-================
-Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,
-:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
-
-- For an example of **custom datasets,** see the :ref:`Word Count <examples-word-count>` example.
-
-- For an example of **a dataset and a Map Reduce Job,** see the :ref:`Purchase
-  <examples-purchase>` example.
-
-- For an example of a **Table dataset,** see the :ref:`Word Count <examples-word-count>` example.
-
-- For an example of a **Cube dataset,** see the :ref:`Data Analysis with OLAP Cube <cdap-cube-guide>` guide.
-
-- For an example of a **FileSet dataset,** see the :ref:`FileSet <examples-fileset>` example.
-
-- For an example of a **PartitionedFileSet,** see the :ref:`Sport Results <examples-sport-results>`
-  example.
-
-- For examples of **key-value Table datasets,** see the
-  :ref:`Word Count <examples-word-count>` and
-  :ref:`Purchase <examples-purchase>` examples.
-
-- For an example of an **ObjectMappedTable dataset,** see the :ref:`Purchase <examples-purchase>` example.
-
-- For examples of **ObjectStore datasets,** see the :ref:`Purchase <examples-purchase>`,
-  :ref:`Spark K-Means <examples-spark-k-means>`, and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
-
-- For an example of a **Timeseries Table dataset,** see the how-to guide :ref:`cdap-timeseries-guide`.

@@ -120,7 +120,19 @@ $toppanel-border-bottom-color: $grey-05;
         border-radius: 0;
 
         .icon-svg {
+          // This is to maintain the same height for all svg icons.
+          // This is required because we have a mix of font icons converted to svg
+          // from different libraries (font-awesome, custom etc.,) which differ
+          // in the spacing and dimensions. FIXME: CDAP-15287
+          height: 21px;
           font-size: 18px;
+
+          &.icon-stop,
+          &.icon-play,
+          &.icon-sliders {
+            font-size: 14px;
+          }
+
         }
 
         &:active {

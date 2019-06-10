@@ -56,6 +56,7 @@ import NoDefaultConnection from 'components/DataPrepConnections/NoDefaultConnect
 import isObject from 'lodash/isObject';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import { Theme } from 'services/ThemeHelper';
+import history from 'services/history';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -398,9 +399,7 @@ export default class DataPrepConnections extends Component {
   onUploadSuccess = (workspaceId) => {
     if (this.props.enableRouting) {
       let namespace = getCurrentNamespace();
-
-      let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-      window.location.href = navigatePath;
+      history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       return;
     }
     if (this.props.onWorkspaceCreate) {

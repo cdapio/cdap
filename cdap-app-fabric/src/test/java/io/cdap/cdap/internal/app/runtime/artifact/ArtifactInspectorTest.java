@@ -52,7 +52,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -149,7 +148,7 @@ public class ArtifactInspectorTest {
         ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
-        new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)));
+        new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)));
       Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
     }
   }

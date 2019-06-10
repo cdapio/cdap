@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,7 +65,10 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
   Cancellable addSSHConfig(ProgramRunId programRunId, SSHConfig sshConfig, Consumer<SSHSession> sessionConsumer) {
     sshInfos.put(programRunId, new SSHInfo(sshConfig, sessionConsumer));
     return () ->
-      Optional.ofNullable(sshInfos.remove(programRunId)).map(SSHInfo::getSession).ifPresent(Closeables::closeQuietly);
+      Optional.ofNullable(sshInfos.remove(programRunId))
+        .map(SSHInfo::getSession)
+        .map(CloseDisabledSSHSession::getDelegate)
+        .ifPresent(Closeables::closeQuietly);
   }
 
   /**
@@ -92,7 +96,11 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
    */
   @Override
   public void close() {
-    sshInfos.values().stream().map(SSHInfo::getSession).forEach(Closeables::closeQuietly);
+    sshInfos.values().stream()
+      .map(SSHInfo::getSession)
+      .filter(Objects::nonNull)
+      .map(CloseDisabledSSHSession::getDelegate)
+      .forEach(Closeables::closeQuietly);
     sshInfos.clear();
   }
 
@@ -137,12 +145,14 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
             // On closing of the ssh session, replace the SSHInfo with a null session
             // We do replace such that if the SSHInfo was removed, we won't add it back.
             sshInfos.replace(programRunId, new SSHInfo(config, sessionConsumer));
+            super.close();
           }
         };
 
         // Call the session consumer. If failed, close the session and rethrow
+        CloseDisabledSSHSession resultSession = new CloseDisabledSSHSession(session);
         try {
-          sessionConsumer.accept(session);
+          sessionConsumer.accept(resultSession);
         } catch (Exception e) {
           Closeables.closeQuietly(session);
           throw e;
@@ -152,14 +162,13 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
         // in between, hence we should close the new session and throw exception.
         // It is also possible that the info was removed and then added back.
         // In that case, we still treat that it is no longer valid to create the SSH session using the old config.
-        CloseDisabledSSHSession resultSession = new CloseDisabledSSHSession(session);
         if (!sshInfos.replace(programRunId, sshInfo, new SSHInfo(config, sessionConsumer, resultSession))) {
           Closeables.closeQuietly(session);
           throw new IllegalStateException("No SSHSession available for run " + programRunId);
         }
         return resultSession;
       } catch (IOException e) {
-        throw new IllegalStateException("Failed to create SSHSession for run " + programRunId);
+        throw new IllegalStateException("Failed to create SSHSession for run " + programRunId, e);
       }
     }
   }
@@ -178,7 +187,7 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
       throw new IllegalStateException("No SSHSession available for run " + programRunId);
     }
 
-    SSHSession session = sshInfo.getSession();
+    CloseDisabledSSHSession session = sshInfo.getSession();
     if (session == null) {
       return null;
     }
@@ -188,7 +197,7 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
     }
 
     // Close the not alive session
-    session.close();
+    session.getDelegate().close();
 
     // If the session is not alive, replacing the value with a SSHInfo that doesn't have SSHSession.
     sshInfos.replace(programRunId, sshInfo, new SSHInfo(sshInfo.getConfig(), sshInfo.getSessionConsumer()));
@@ -202,13 +211,13 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
 
     private final SSHConfig config;
     private final Consumer<SSHSession> sessionConsumer;
-    private final SSHSession session;
+    private final CloseDisabledSSHSession session;
 
     SSHInfo(SSHConfig config, Consumer<SSHSession> sessionConsumer) {
       this(config, sessionConsumer, null);
     }
 
-    SSHInfo(SSHConfig config, Consumer<SSHSession> sessionConsumer, @Nullable SSHSession session) {
+    SSHInfo(SSHConfig config, Consumer<SSHSession> sessionConsumer, @Nullable CloseDisabledSSHSession session) {
       this.config = config;
       this.sessionConsumer = sessionConsumer;
       this.session = session;
@@ -223,7 +232,7 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
     }
 
     @Nullable
-    SSHSession getSession() {
+    CloseDisabledSSHSession getSession() {
       return session;
     }
   }

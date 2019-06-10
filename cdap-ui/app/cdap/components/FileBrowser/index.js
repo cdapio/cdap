@@ -37,7 +37,7 @@ import lastIndexOf from 'lodash/lastIndexOf';
 import isNil from 'lodash/isNil';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
-
+import history from 'services/history';
 require('./FileBrowser.scss');
 
 const BASEPATH = '/';
@@ -226,10 +226,7 @@ export default class FileBrowser extends Component {
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        const navigatePath = `${
-          window.location.origin
-        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-        window.location.href = navigatePath;
+        history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       },
       (err) => {
         setError(err);

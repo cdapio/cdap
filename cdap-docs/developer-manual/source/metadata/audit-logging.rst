@@ -18,11 +18,6 @@ entity's :ref:`metadata <metadata>`. For data entities (datasets and
 streams), it includes access information used to generate the entity's :ref:`lineage
 <metadata-lineage>`.
 
-Please note that audit logs are not published during a CDAP upgrade, as CDAP services are
-not available. Hence, any application which uses CDAP audit logs to sync metadata will go 
-out of sync with respect to changes made during the upgrade. Please see 
-`CDAP-5954 <https://issues.cask.co/browse/CDAP-5954>`__ for details.
-
 .. _audit-logging-supported-audit-events:
 
 Supported Audit Events
@@ -78,7 +73,7 @@ When audit publishing is :ref:`enabled <audit-logging-configuring-audit-publishi
 
 The contents of the message are a JSON representation of
 the `AuditMessage
-<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/io/cdap/cdap/proto/audit/AuditMessage.java>`__
+<https://github.com/cdapio/cdap/blob/develop/cdap-proto/src/main/java/io/cdap/cdap/proto/audit/AuditMessage.java>`__
 class.
 
 Here are some example JSON messages, pretty-printed:
@@ -177,5 +172,5 @@ Here are some example JSON messages, pretty-printed:
   }
 
 CDAP also provides an `adapter class 
-<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/io/cdap/cdap/proto/codec/AuditMessageTypeAdapter.java>`__
+<https://github.com/cdapio/cdap/blob/develop/cdap-proto/src/main/java/io/cdap/cdap/proto/codec/AuditMessageTypeAdapter.java>`__
 to enable deserializing of the audit messages using the `GSON <https://github.com/google/gson>`__ library.

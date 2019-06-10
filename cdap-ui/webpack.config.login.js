@@ -23,7 +23,7 @@ var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var TerserPlugin = require('terser-webpack-plugin');
 let pathsToClean = ['login_dist'];
 
 // the clean options to use
@@ -200,23 +200,29 @@ if (isModeProduction(mode)) {
         NODE_ENV: JSON.stringify('production'),
         __DEVTOOLS__: false,
       },
-    }),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false,
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        },
-      },
     })
   );
   webpackConfig = Object.assign({}, webpackConfig, {
     plugins,
   });
+}
+
+if (isModeProduction(mode)) {
+  webpackConfig.optimization.minimizer = [
+    new TerserPlugin({
+      terserOptions: {
+        cache: false,
+        parallel: true,
+        sourceMap: true,
+        extractComments: true,
+        output: {
+          comments: false,
+        },
+        ie8: false,
+        safari10: false,
+      },
+    }),
+  ];
 }
 
 module.exports = webpackConfig;

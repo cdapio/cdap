@@ -62,7 +62,7 @@ export default class DatabaseOptions extends Component {
       this.sub();
     }
 
-    this.eventEmitter.off(globalEvents.MARKETCLOSING, this.fetchDrivers);
+    this.eventEmitter.off(globalEvents.CLOSEMARKET, this.fetchDrivers);
   }
 
   fetchDrivers() {
@@ -106,7 +106,7 @@ export default class DatabaseOptions extends Component {
         });
       });
 
-    this.eventEmitter.off(globalEvents.MARKETCLOSING, this.fetchDrivers);
+    this.eventEmitter.off(globalEvents.CLOSEMARKET, this.fetchDrivers);
   }
 
   toggleArtifactUploadWizard(db) {
@@ -149,7 +149,7 @@ export default class DatabaseOptions extends Component {
       });
     });
 
-    this.eventEmitter.on(globalEvents.MARKETCLOSING, this.fetchDrivers);
+    this.eventEmitter.on(globalEvents.CLOSEMARKET, this.fetchDrivers);
 
     MarketAction.setFilter('3rd-party-artifact');
   }

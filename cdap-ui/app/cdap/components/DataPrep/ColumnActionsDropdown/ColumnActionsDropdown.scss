@@ -15,7 +15,14 @@
  */
 
 $border-shadow-color: #cccccc;
+$normal-caret-color: #666666;
+$normal-caret-outline-color: $normal-caret-color;
+$normal-caret-bg-color: white;
+$hover-caret-color: white;
+$hover-caret-bg-color: #0076dc;
+$hover-caret-outline-color: $hover-caret-bg-color;
 $dropdown-expanded-caret-bg-color: #999999;
+$dropdown-expanded-caret-color: $hover-caret-color;
 $action-item-bg-color: white;
 $action-item-hover-color: #eeeeee;
 $action-item-active-color: #dddddd;
@@ -27,11 +34,32 @@ $column-type-label-color: #b6babc;
 
 .column-actions-dropdown-container {
   > .fa.fa-caret-down {
-    padding: 3px 5px;
+    padding: 0;
     position: relative;
+    height: 15px;
+    width: 15px;
+    border-radius: 4px;
+    box-shadow: 1px 1px 5px $border-shadow-color;
+    outline: 0;
+    color: $normal-caret-color;
+    background-color: $normal-caret-bg-color;
+    border-color: $normal-caret-outline-color;
+    justify-content: center;
+    display: flex;
+    border-width: 1px;
+
+    &:hover {
+      box-shadow: none;
+      background-color: $hover-caret-bg-color;
+      color: $hover-caret-color;
+      border-color: $hover-caret-outline-color;
+    }
 
     &.expanded {
+      box-shadow: none;
       background-color: $dropdown-expanded-caret-bg-color;
+      color: $dropdown-expanded-caret-color;
+      border-color: $dropdown-expanded-caret-bg-color;
     }
   }
 }

@@ -30,6 +30,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { Link } from 'react-router-dom';
 import T from 'i18n-react';
 import { objectQuery } from 'services/helpers';
+import history from 'services/history';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.BigQueryBrowser`;
 
@@ -124,9 +125,7 @@ class TableListView extends Component {
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        window.location.href = `${
-          window.location.origin
-        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       },
       (err) => {
         setError(err);

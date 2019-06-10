@@ -59,7 +59,6 @@ import org.junit.experimental.categories.Category;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -310,7 +309,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get plugin details for plugin1 for myapp-2.0.0
     PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", "p1 description", Plugin1.class.getName(), "conf",
-      pluginArtifactSummary, props, new HashSet<>());
+      pluginArtifactSummary, props);
     Assert.assertEquals(Sets.newHashSet(pluginInfo),
                         Sets.newHashSet(artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1")));
   }

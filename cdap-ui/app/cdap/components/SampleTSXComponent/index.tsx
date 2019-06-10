@@ -17,12 +17,12 @@
 import * as React from 'react';
 import * as Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import CodeEditor from 'components/CodeEditor';
 const SubTSXComponent = Loadable({
   loader: () =>
     import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
   loading: LoadingSVGCentered,
 });
-
 interface IFCProps {
   prop1: boolean;
   prop2: string;
@@ -58,9 +58,5 @@ class StatefullComponent extends React.PureComponent<IStatefulComponentProps, {}
   }
 }
 export default function SampleTSXComponent() {
-  return [
-    <h1 key="super-title"> Hello from TSX! </h1>,
-    <FunctionalComponent prop1={true} prop2="Nice!" />,
-    <StatefullComponent prop3="hurray!! stateful prop" />,
-  ];
+  return [<h1 key="super-title"> Hello from TSX! </h1>, <CodeEditor key="code-editor" rows={20} />];
 }

@@ -83,8 +83,7 @@ Limitations
 
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
   the application jar. However, if you define your own dataset type ``MyObjectStore`` that extends or encapsulates an
-  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the dataset definition for ``MyObjectStore``. See the
-  :ref:`Purchase <examples-purchase>` application for an example.
+  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the dataset definition for ``MyObjectStore``.
 
 
 Parameterized Types

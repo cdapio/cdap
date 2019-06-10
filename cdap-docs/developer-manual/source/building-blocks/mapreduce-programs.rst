@@ -44,10 +44,10 @@ class, which allows the overriding of these three methods:
       setDescription("Builds a purchase history for each customer");
     }
 
-The configure method is similar to the one found in flows and
-applications. It defines the name and description of the MapReduce.
-You can also :ref:`specify resources <mapreduce-resources>` (memory and virtual cores) used by the
-mappers and reducers.
+The configure method is similar to the one found in applications.
+It defines the name and description of the MapReduce program.
+You can also :ref:`specify resources <mapreduce-resources>` (memory and virtual cores)
+used by the mappers and reducers.
 
 The ``initialize()`` method is invoked at runtime, before the MapReduce is executed.
 Through the ``getContext()`` method you can obtain an instance of the ``MapReduceContext``.
@@ -338,7 +338,7 @@ is a single output to the MapReduce program.
 MapReduce and Transactions
 ==========================
 When you run a MapReduce that interacts with datasets, the system creates a
-long-running transaction. Similar to the transaction of a flowlet, here are
+long-running transaction. Similar to the transaction of a service handler, here are
 some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed
@@ -376,14 +376,7 @@ MapReduce and Resources
 =======================
 
 Both the YARN container size and the number of virtual cores used in a MapReduce job can be specified
-as part of the configuration. They can also be set at runtime through the use of runtime arguments. An
-example of this is shown in the :ref:`Purchase <examples-purchase>` example, where the memory requirements
-are set:
-
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
-   :language: java
-   :lines: 47-57
-   :append: ...
+as part of the configuration. They can also be set at runtime through the use of runtime arguments.
 
 The Resources API, if called with two arguments, sets both the memory used in megabytes
 and the number of virtual cores used.
@@ -392,10 +385,4 @@ and the number of virtual cores used.
 MapReduce Program Examples
 ==========================
 
-- For an example of **a MapReduce program,** see the :ref:`Purchase
-  <examples-purchase>` example.
-
-- For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
-  demonstrates the use of MapReduce.
-
-- The :ref:`Tutorial <tutorials>` :ref:`WISE: Web Analytics <cdap-tutorial-wise>` uses MapReduce.
+- For an example, the how-to guide :ref:`cdap-mapreduce-guide` demonstrates the use of MapReduce.

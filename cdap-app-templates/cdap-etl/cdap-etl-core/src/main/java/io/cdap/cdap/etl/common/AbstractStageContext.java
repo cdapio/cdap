@@ -160,6 +160,13 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Nullable
   @Override
+  public URL getServiceURL(final String namespaceId, final String applicationId, final String serviceId) {
+    return CALLER.callUnchecked(
+      () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(namespaceId, applicationId, serviceId));
+  }
+
+  @Nullable
+  @Override
   public URL getServiceURL(final String applicationId, final String serviceId) {
     return CALLER.callUnchecked(
       () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId));

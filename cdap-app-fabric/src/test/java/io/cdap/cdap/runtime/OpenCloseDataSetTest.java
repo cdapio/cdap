@@ -111,7 +111,8 @@ public class OpenCloseDataSetTest {
       getInstance(DiscoveryServiceClient.class);
 
     Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(
-      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getEntityName(), "dummy", "DummyService")))
+      String.format("%s.%s.%s.%s", ProgramType.SERVICE.getDiscoverableTypeName(), DefaultId.NAMESPACE.getEntityName(),
+                    "dummy", "DummyService")))
       .pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 

@@ -22,8 +22,6 @@
   .node {
     .node-splitter-endpoint {
       .node-splitter-popover {
-        min-width: 80px;
-        max-width: 200px;
         min-height: 40px;
         position: absolute;
         top: -25px;
@@ -63,22 +61,32 @@
         }
 
         .popover-content {
-          padding: 10px;
+          padding: 10px 0 10px 10px;
           color: @text-color;
+          // warning magic number. This is to make sure the endoint arrow
+          // is on the edge of the popvover in splitter
+          margin-right: -8px;
+          white-space: nowrap;
 
-          .port-name {
-            width: 65%;
-            display: inline-block;
+          .splitter-popover-row {
+            display: grid;
+            grid-template-columns: 1fr 14px;
+            grid-template-rows: 13px;
+            padding: 3px 0;
+            grid-gap: 10px;
+            align-items: center;
+            &:first-child {
+              padding-top: 0;
+            }
+            &:last-child {
+              padding-bottom: 0;
+            }
           }
 
           .endpoint-circle {
-            position: relative;
-            display: inline-flex;
-            top: -3px;
-            right: -20px;
-
-            &.disabled {
-              top: 2px;
+            position: static;
+            &:before {
+              transform: translateX(7px);
             }
           }
         }

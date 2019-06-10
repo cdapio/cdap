@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table.field;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * A field validator class which can be used to validate the given field.
  */
+@Beta
 public final class FieldValidator {
   private final StructuredTableSchema tableSchema;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spi.data.transaction;
 
+import io.cdap.cdap.api.annotation.Beta;
+
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -25,6 +27,7 @@ import static java.util.Objects.requireNonNull;
  * Helper class for interacting with {@link TransactionRunner}.
  * TODO: Figure out better way to propagate the exception: https://issues.cask.co/browse/CDAP-14736
  */
+@Beta
 public class TransactionRunners {
 
   // private constructor to prevent instantiation of this class.

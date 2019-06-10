@@ -19,7 +19,7 @@ var path = require('path');
 var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
 
-var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var TerserPlugin = require('terser-webpack-plugin');
 const processEnv = {
   NODE_ENV: JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
   __DEVTOOLS__: false,
@@ -56,23 +56,6 @@ var plugins = [
   getWebpackDLLPlugin(mode),
 ];
 
-if (isModeProduction(mode)) {
-  plugins.push(
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        compress: {
-          warnings: false,
-        },
-        output: {
-          comments: false,
-          beautify: false,
-        },
-      },
-    })
-  );
-}
-
 var webpackConfig = {
   mode,
   node: {
@@ -89,7 +72,6 @@ var webpackConfig = {
       'redux-thunk',
       'redux-undo',
       'moment',
-      'react-router',
       'react-router-dom',
       'react-sparklines',
       'react-tether',
@@ -121,5 +103,24 @@ var webpackConfig = {
     modules: ['node_modules'],
   },
 };
+
+if (isModeProduction(mode)) {
+  webpackConfig.optimization = webpackConfig.optimization || {};
+  webpackConfig.optimization.minimizer = [
+    new TerserPlugin({
+      terserOptions: {
+        cache: false,
+        parallel: true,
+        sourceMap: true,
+        extractComments: true,
+        output: {
+          comments: false,
+        },
+        ie8: false,
+        safari10: false,
+      },
+    }),
+  ];
+}
 
 module.exports = webpackConfig;

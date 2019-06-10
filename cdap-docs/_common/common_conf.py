@@ -221,13 +221,13 @@ git_build_vars = get_git_build_vars()
 # use %% to preserve substitution
 GIT_BRANCH_PARENT = 'GIT_BRANCH_PARENT'
 if git_build_vars.has_key(GIT_BRANCH_PARENT):
-    cdap_java_source_github_pattern = "https://github.com/caskdata/cdap/blob/%s/%%s" % git_build_vars[GIT_BRANCH_PARENT]
+    cdap_java_source_github_pattern = "https://github.com/cdapio/cdap/blob/%s/%%s" % git_build_vars[GIT_BRANCH_PARENT]
 else:
     cdap_java_source_github_pattern = ''
 
 GIT_BRANCH_CDAP_SECURITY_EXTN = 'GIT_BRANCH_CDAP_SECURITY_EXTN'
 if git_build_vars.has_key(GIT_BRANCH_CDAP_SECURITY_EXTN):
-    cdap_security_extn_github_pattern = "https://github.com/caskdata/cdap-security-extn/blob/%s/%%s" % \
+    cdap_security_extn_github_pattern = "https://github.com/cdapio/cdap-security-extn/blob/%s/%%s" % \
         git_build_vars[GIT_BRANCH_CDAP_SECURITY_EXTN]
 else:
     cdap_security_extn_github_pattern = ''
@@ -241,7 +241,7 @@ else:
 
 GIT_BRANCH_HYDRATOR_PLUGINS = 'GIT_BRANCH_HYDRATOR_PLUGINS'
 if git_build_vars.has_key(GIT_BRANCH_HYDRATOR_PLUGINS):
-    hydrator_plugins_github_pattern = "https://github.com/caskdata/hydrator-plugins/blob/%s/%%s" % \
+    hydrator_plugins_github_pattern = "https://github.com/cdapio/hydrator-plugins/blob/%s/%%s" % \
         git_build_vars[GIT_BRANCH_HYDRATOR_PLUGINS]
 else:
     hydrator_plugins_github_pattern = ''
@@ -309,7 +309,7 @@ git_vars = {
     'GIT_HDP_VERSIONS':  'hdp-versions',
     'GIT_MAPR_VERSIONS': 'mapr-versions',
     'GIT_EMR_VERSIONS':  'emr-versions',
-    'GIT_CASK_MARKET_VERSION': 'cask-market-version',
+    'GIT_HUB_VERSION': 'hub-version',
     'GIT_PLUGINS_SPEC_VERSION': 'plugins-spec-version',
     'GIT_NODE_JS_MIN_VERSION': 'node-js-min-version',
 #     'GIT_NODE_JS_MAX_VERSION': 'node-js-max-version',
@@ -390,9 +390,9 @@ if release and version:
     else:
         source_link = "v%s" % release
     rst_epilog += """
-.. |git-clone-command| replace:: ``$ git clone -b %(source_link)s https://github.com/caskdata/cdap.git``
-.. |source-link| replace:: `GitHub <https://github.com/caskdata/cdap/archive/%(source_link)s.zip>`__
-.. |ui-read-me| replace:: `CDAP UI README <https://github.com/caskdata/cdap/blob/%(source_link)s/cdap-ui/README.rst>`__
+.. |git-clone-command| replace:: ``$ git clone -b %(source_link)s https://github.com/cdapio/cdap.git``
+.. |source-link| replace:: `GitHub <https://github.com/cdapio/cdap/archive/%(source_link)s.zip>`__
+.. |ui-read-me| replace:: `CDAP UI README <https://github.com/cdapio/cdap/blob/%(source_link)s/cdap-ui/README.rst>`__
 .. |release-range| replace:: %(release_range)s
 """ % {'source_link': source_link, 'release_range': release_range}
 
@@ -406,7 +406,7 @@ if copyright:
 .. |copyright| replace:: %(copyright)s
 """ % {'copyright': copyright}
 
-# cdap_apps_version is for https://github.com/caskdata/cdap-apps repo
+# cdap_apps_version is for https://github.com/cdapio/cdap-apps repo
 cdap_apps_version = git_build_vars["GIT_VERSION_CDAP_APPS"]
 cdap_apps_compatibile_version = git_build_vars["GIT_BRANCH_CDAP_APPS"]
 
@@ -419,18 +419,6 @@ if cdap_apps_version and cdap_apps_compatibile_version:
 """ % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
 else:
     print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'
-
-cdap_metadata_management_version = os.environ.get('CDAP_METADATA_MANAGEMENT_VERSION')
-if cdap_metadata_management_version:
-    rst_epilog += """
-.. |cdap-metadata-management-version| replace:: %(cdap-metadata-management-version)s
-.. |cdap-metadata-management-version-jar| replace:: tracker-%(cdap-metadata-management-version)s.jar
-.. |literal-cdap-metadata-management-version| replace:: ``%(cdap-metadata-management-version)s``
-.. |literal-cdap-metadata-management-version-jar| replace:: ``tracker-%(cdap-metadata-management-version)s.jar``
-
-""" % {'cdap-metadata-management-version': cdap_metadata_management_version}
-else:
-    print 'Unable to find CDAP_METADATA_MANAGEMENT_VERSION'
 
 cdap_pipelines_version = os.environ.get('CDAP_PIPELINES_VERSION')
 if cdap_pipelines_version:

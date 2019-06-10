@@ -111,4 +111,16 @@ describe('Navbar tests', () => {
     assetFeatureHighlight('navbar-metadata-link');
     assetFeatureHighlight('navbar-project-admin-link');
   });
+  it.only('Should close when hub is opened', () => {
+    cy.visit('/cdap');
+    cy.get('[data-cy="navbar-hamburger-icon"]').click();
+    cy.get('#navbar-hub').click();
+    // For the animation -_-
+    cy.wait(200).then(() => {
+      cy.get('[data-cy="navbar-drawer"]').then((drawerEl) => {
+        const visibility = drawerEl.css('visibility');
+        expect(visibility).to.be.eq('hidden');
+      });
+    });
+  });
 });

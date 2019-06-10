@@ -89,6 +89,30 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     public void ping(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       // Discover the CatalogLookup service via discovery service
       URL serviceURL = getContext().getServiceURL(CENTRAL_SERVICE);
+      sendResponse(serviceURL, responder);
+    }
+
+    @GET
+    @Path("forward/{namespace}")
+    public void forward(HttpServiceRequest request, HttpServiceResponder responder,
+                        @PathParam("namespace") String namespace) throws IOException {
+      URL serviceURL = getContext().getServiceURL(namespace, APP_NAME, CENTRAL_SERVICE);
+      sendResponse(serviceURL, responder);
+    }
+
+    @GET
+    @Path("read/{key}")
+    public void readDataSet(HttpServiceRequest request, HttpServiceResponder responder,
+                            @PathParam("key") String key) throws IOException {
+      byte[] value = table.read(key);
+      if (value == null) {
+        responder.sendError(404, "Table returned null for value: " + key);
+        return;
+      }
+      responder.sendJson(Bytes.toString(value));
+    }
+
+    void sendResponse(URL serviceURL, HttpServiceResponder responder) throws IOException {
       if (serviceURL == null) {
         responder.sendError(404, "serviceURL is null");
         return;
@@ -105,18 +129,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       } finally {
         conn.disconnect();
       }
-    }
-
-    @GET
-    @Path("read/{key}")
-    public void readDataSet(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("key") String key) throws IOException {
-      byte[] value = table.read(key);
-      if (value == null) {
-        responder.sendError(404, "Table returned null for value: " + key);
-        return;
-      }
-      responder.sendJson(Bytes.toString(value));
     }
   }
 

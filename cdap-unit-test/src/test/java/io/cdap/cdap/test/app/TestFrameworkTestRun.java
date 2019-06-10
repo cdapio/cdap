@@ -1036,6 +1036,62 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     centralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
+  @Category(SlowTests.class)
+  @Test
+  public void testGetServiceURLDiffNamespace() throws Exception {
+    ApplicationManager defaultApplicationManager = deployApplication(AppUsingGetServiceURL.class);
+    ServiceManager defaultForwardingServiceManager = defaultApplicationManager
+      .getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
+    defaultForwardingServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    ServiceManager defaultCentralServiceManager = defaultApplicationManager
+      .getServiceManager(AppUsingGetServiceURL.CENTRAL_SERVICE).start();
+    defaultCentralServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    // Call non-existent namespace from default
+    String path = "forward/nonexitent";
+    int responseCode = callServiceGetResponseCode(defaultForwardingServiceManager.getServiceURL(), path);
+    Assert.assertEquals(404, responseCode);
+
+    // Call non-initialized system namespace from default
+    ApplicationManager systemApplicationManager = deployApplication(NamespaceId.SYSTEM, AppUsingGetServiceURL.class);
+
+    path = "forward/" + NamespaceId.SYSTEM.getNamespace();
+    responseCode = callServiceGetResponseCode(defaultForwardingServiceManager.getServiceURL(), path);
+    Assert.assertEquals(404, responseCode);
+
+    // Call system app from default
+    ServiceManager systemForwardingServiceManager = systemApplicationManager
+      .getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
+    systemForwardingServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    ServiceManager systemCentralServiceManager = systemApplicationManager
+      .getServiceManager(AppUsingGetServiceURL.CENTRAL_SERVICE).start();
+    systemCentralServiceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    String result = callServiceGet(defaultForwardingServiceManager.getServiceURL(), path);
+    result = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, result);
+
+    // Call default app from system
+    path = "forward/" + NamespaceId.DEFAULT.getNamespace();
+    result = callServiceGet(systemForwardingServiceManager.getServiceURL(), path);
+    result = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, result);
+
+    // Call stopped system app from default
+    defaultCentralServiceManager.stop();
+    defaultForwardingServiceManager.stop();
+    defaultCentralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
+    defaultForwardingServiceManager.waitForStopped(10, TimeUnit.SECONDS);
+
+    responseCode = callServiceGetResponseCode(systemForwardingServiceManager.getServiceURL(), path);
+    Assert.assertEquals(404, responseCode);
+
+    systemCentralServiceManager.stop();
+    systemForwardingServiceManager.stop();
+    systemCentralServiceManager.waitForStopped(10, TimeUnit.SECONDS);
+    systemForwardingServiceManager.waitForStopped(10, TimeUnit.SECONDS);
+  }
+
   /**
    * Checks to ensure that a particular  {@param workerManager} has {@param expected} number of
    * instances while retrying every 50 ms for 15 seconds.
@@ -2013,6 +2069,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     scopeMetadata = GSON.fromJson(result, MAP_METADATASCOPE_METADATA_TYPE);
     Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getTags().isEmpty());
     Assert.assertTrue(scopeMetadata.get(MetadataScope.USER).getProperties().isEmpty());
+  }
+
+  private int callServiceGetResponseCode(URL serviceURL, String path) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
+
+    return connection.getResponseCode();
   }
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {

@@ -24,13 +24,13 @@ import {
   setError,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import IconSVG from 'components/IconSVG';
-import { Link } from 'react-router-dom';
-import { match } from 'react-router';
+import { Link, match } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
+import history from 'services/history';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.SpannerBrowser`;
 
@@ -95,9 +95,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        window.location.href = `${
-          window.location.origin
-        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        history.push(`/ns/${namespace}/wrangler/${workspaceId}`);
       },
       (err) => {
         setError(err);

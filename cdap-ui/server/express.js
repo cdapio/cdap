@@ -230,6 +230,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         standaloneWebsiteSDKDownload:
           uiSettings['standalone.website.sdk.download'] === 'true' || false,
         uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
+        mode: process.env.NODE_ENV,
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true',

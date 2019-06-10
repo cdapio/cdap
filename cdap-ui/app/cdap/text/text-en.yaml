@@ -379,11 +379,11 @@ features:
         toggle:
           clearAll: Clear All
           selectAll: Select All
-      directivesTabLabel: Directives ({directivesCount})
+      directivesTabLabel: Transformation steps ({directivesCount})
       DirectivesTab:
-        label: Directives
+        label: Transformations
       noColumns: No columns
-      noDirectives: No directives
+      noDirectives: No transformations
     DataPrepTable:
       DataType:
         unknown: unknown
@@ -396,7 +396,7 @@ features:
       dataErrorMessageTitle: Unable to load data.
       dataErrorMessageTitle2: Unable to load data for "{workspaceName}".
       emptyWorkspace: No data
-      noData: No data. Try removing some directives.
+      noData: No data. Try removing some transformation steps.
       refreshBtnLinkLabel: Refresh
       suggestion1: the page
       suggestionTitle: "You can try to:"
@@ -530,7 +530,7 @@ features:
         columnTypeLabel:
           numeric: Numeric
         destinationColumnInputLabel: Name destination column
-        disabledTooltip: "Calculate directives can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        disabledTooltip: "Calculate can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
         newColumnInputCountSuffix: _count
         Options:
           POWEROF:
@@ -562,7 +562,7 @@ features:
           TAN: Tan
         title: Calculate
       ChangeDataType:
-        disabledTooltip: "Change data type directive is not available on columns of data type 'LocalDate', 'LocalTime', or 'ZonedDateTime'"
+        disabledTooltip: "Change data type is not available on columns of data type 'LocalDate', 'LocalTime', or 'ZonedDateTime'"
         Options:
           boolean: Boolean
           bytes: Bytes
@@ -703,7 +703,7 @@ features:
           pipe: Pipe
           tab: Tab
           whitespace: Whitespace
-      failedApplyDirectiveMessage: Failed to apply directive. Please modify input and try again #temporary fallback until backend sends non-null error
+      failedApplyDirectiveMessage: Failed to apply. Please modify input and try again #temporary fallback until backend sends non-null error
       FillNullOrEmpty:
         title: Fill null or empty cells
       Filter:
@@ -740,7 +740,7 @@ features:
         replaceWith: Replace with
         title: Find and replace
       Format:
-        disabledTooltip: "Format directives can only be executed on columns of data type 'string' or 'date'"
+        disabledTooltip: "Format can only be executed on columns of data type 'string' or 'date'"
         Formats:
           CONCATENATE:
             addDescription: of the content of each row
@@ -945,8 +945,6 @@ features:
               OPTION12: "EEE, MMM d, 'yy"
               OPTION13: "h:mm AM/PM"
               OPTION14: "H:mm with timezone"
-          XML:
-            label: XML
           XMLTOJSON:
             fieldLabel: Depth
             label: XML to JSON
@@ -1065,7 +1063,7 @@ features:
         cancelButton: No, keep tab open
         confirmButton: Yes, close tab
         header: Close tab
-        helperMessage: Any directives you have applied in this tab will be lost.
+        helperMessage: Any transformation steps you have applied in this tab will be lost.
         mainMessage: Are you sure you want to close {workspace}?
   DataPrepConnections:
     AddConnections:
@@ -1334,7 +1332,7 @@ features:
       modelNameWithColon: "Model name:"
       moreInfo: for more info
       nextSelect: Next, select a machine learning algorithm
-      numDirectives: "No of directives: "
+      numDirectives: "No of transformation steps: "
       pageTitle: '{productName} | {featureName} | {experimentIdWithSuffix}'
       random: Random
       selectMLAlgorithm: Select a machine learning algorithm
@@ -2190,7 +2188,7 @@ features:
     title: 'Summary (Max: 100 runs)'
 
   PipelineTriggers:
-    collapsedTabLabel: "Show inbound triggers ({count})"
+    collapsedTabLabel: "Inbound triggers ({count})"
     description: Description
     EnabledTriggers:
       buttonLabel: Disable Trigger
@@ -2203,7 +2201,7 @@ features:
       COMPLETED: Succeeds
       FAILED: Fails
       KILLED: Stops
-    expandedTabLabel: "Hide inbound triggers ({count})"
+    expandedTabLabel: "Inbound triggers ({count})"
     helperText: "\"{pipelineName}\" is triggered when this pipeline"
     namespace: Namespace
     pipelineName: Pipeline Name
@@ -2519,13 +2517,13 @@ features:
     notags: No tags found. Click to add a new business tag.
 
   TriggeredPipelines:
-    collapsedTabLabel: "Show outbound triggers ({count})"
+    collapsedTabLabel: "Outbound triggers ({count})"
     description: Description
     Events:
       COMPLETED: Succeeds
       KILLED: Stopped
       FAILED: Fails
-    expandedTabLabel: "Hide outbound triggers ({count})"
+    expandedTabLabel: "Outbound triggers ({count})"
     helperText: "This pipeline is triggered when \"{pipelineName}\""
     namespace: Namespace
     pipelineCount:

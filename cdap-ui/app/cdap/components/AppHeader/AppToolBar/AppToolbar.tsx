@@ -17,7 +17,6 @@ import * as React from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import BrandImage from 'components/AppHeader/BrandImage';
-import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconSVG from 'components/IconSVG';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -33,6 +32,10 @@ import If from 'components/If';
 import AboutPageModal from 'components/AppHeader/AboutPageModal';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
+import Grow from '@material-ui/core/Grow';
+import Paper from '@material-ui/core/Paper';
+import Popper from '@material-ui/core/Popper';
 
 const styles = (theme) => {
   return {
@@ -40,6 +43,7 @@ const styles = (theme) => {
     iconButton: {
       marginLeft: '-20px',
       padding: '10px',
+      fontSize: '1.8rem',
     },
     iconButtonFocus: theme.iconButtonFocus,
     customToolbar: {
@@ -56,7 +60,7 @@ const styles = (theme) => {
       '&:focus': {
         outline: 'none',
       },
-      textDecoration: 'none',
+      textDecoration: 'none !important',
       color: 'inherit',
     },
   };
@@ -78,13 +82,22 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     aboutPageOpen: false,
   };
 
-  public openSettings = (event: React.MouseEvent<HTMLElement>) => {
-    this.setState({
-      anchorEl: event.currentTarget,
-    });
+  public toggleSettings = (event: React.MouseEvent<HTMLElement>) => {
+    if (this.state.anchorEl) {
+      this.setState({
+        anchorEl: null,
+      });
+    } else {
+      this.setState({
+        anchorEl: event.currentTarget,
+      });
+    }
   };
 
-  public closeSettings = () => {
+  public closeSettings = (e) => {
+    if (this.state.anchorEl && this.state.anchorEl.contains(e.target)) {
+      return;
+    }
     this.setState({
       anchorEl: null,
     });
@@ -93,8 +106,8 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
   private toggleAboutPage = () => {
     this.setState({
       aboutPageOpen: !this.state.aboutPageOpen,
+      anchorEl: null,
     });
-    this.closeSettings();
   };
   private getDocsUrl = () => {
     if (Theme.productDocumentationLink === null) {
@@ -116,9 +129,10 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
           onClick={onMenuIconClick}
           color="inherit"
           className={classnames(classes.iconButton, classes.iconButtonFocus)}
+          edge="start"
           data-cy="navbar-hamburger-icon"
         >
-          <MenuIcon />
+          <MenuIcon fontSize="inherit" />
         </IconButton>
         <div className={classes.grow}>
           <BrandImage />
@@ -142,42 +156,46 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             featureUrl={`/administration`}
           />
         </div>
-        <div onClick={this.openSettings}>
+        <div onClick={this.toggleSettings}>
           <IconButton className={classnames(classes.buttonLink, classes.iconButtonFocus)}>
             <IconSVG name="icon-cogs" className={classes.cogWheelFontSize} />
           </IconButton>
         </div>
         <ProductEdition />
-        <Menu
-          id="simple-menu"
-          anchorEl={anchorEl as HTMLElement}
-          open={Boolean(anchorEl)}
-          onClose={this.closeSettings}
-          anchorPosition={{
-            left: 0,
-            top: 40,
-          }}
-        >
-          <a
-            className={classes.anchorMenuItem}
-            href={this.getDocsUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <MenuItem onClick={this.closeSettings}>
-              {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-            </MenuItem>
-          </a>
-          <If condition={Theme.showAboutProductModal === true}>
-            <MenuItem onClick={this.toggleAboutPage}>
-              <a>
-                {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                  productName: Theme.productName,
-                })}
-              </a>
-            </MenuItem>
-          </If>
-        </Menu>
+        <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} transition disablePortal>
+          {({ TransitionProps, placement }) => (
+            <Grow
+              {...TransitionProps}
+              style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
+            >
+              <Paper>
+                <ClickAwayListener onClickAway={this.closeSettings}>
+                  <div>
+                    <a
+                      className={classes.anchorMenuItem}
+                      href={this.getDocsUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MenuItem onClick={this.closeSettings}>
+                        {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
+                      </MenuItem>
+                    </a>
+                    <If condition={Theme.showAboutProductModal === true}>
+                      <MenuItem onClick={this.toggleAboutPage}>
+                        <a>
+                          {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
+                            productName: Theme.productName,
+                          })}
+                        </a>
+                      </MenuItem>
+                    </If>
+                  </div>
+                </ClickAwayListener>
+              </Paper>
+            </Grow>
+          )}
+        </Popper>
         <If condition={Theme.showAboutProductModal === true}>
           <AboutPageModal
             cdapVersion={cdapVersion}

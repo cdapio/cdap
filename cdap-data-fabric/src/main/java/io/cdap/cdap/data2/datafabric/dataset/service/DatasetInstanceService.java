@@ -31,8 +31,6 @@ import io.cdap.cdap.common.DatasetTypeNotFoundException;
 import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data2.audit.AuditPublisher;
@@ -45,9 +43,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.metadata.system.DelegateSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
 import io.cdap.cdap.data2.metadata.system.SystemMetadataWriter;
-import io.cdap.cdap.data2.metadata.writer.DatasetInstanceOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
-import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.explore.client.ExploreFacade;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
@@ -66,6 +62,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,15 +93,13 @@ public class DatasetInstanceService {
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final boolean publishCUD;
 
   private AuditPublisher auditPublisher;
-  private MetadataPublisher metadataPublisher;
+  private MetadataServiceClient metadataServiceClient;
 
   @VisibleForTesting
   @Inject
-  public DatasetInstanceService(CConfiguration cConf,
-                                DatasetTypeService authorizationDatasetTypeService,
+  public DatasetInstanceService(DatasetTypeService authorizationDatasetTypeService,
                                 @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE)
                                   DatasetTypeService noAuthDatasetTypeService,
                                 DatasetInstanceManager instanceManager,
@@ -112,7 +107,7 @@ public class DatasetInstanceService {
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MetadataPublisher metadataPublisher) {
+                                MetadataServiceClient metadataServiceClient) {
     this.opExecutorClient = opExecutorClient;
     this.authorizationDatasetTypeService = authorizationDatasetTypeService;
     this.noAuthDatasetTypeService = noAuthDatasetTypeService;
@@ -120,8 +115,7 @@ public class DatasetInstanceService {
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ownerAdmin = ownerAdmin;
-    this.metadataPublisher = metadataPublisher;
-    this.publishCUD = cConf.getBoolean(Constants.Dataset.Manager.PUBLISH_CUD, false);
+    this.metadataServiceClient = metadataServiceClient;
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<DatasetId, DatasetMeta>() {
         @Override
@@ -350,12 +344,6 @@ public class DatasetInstanceService {
       LOG.trace("Publishing audit for creation of dataset {}", name);
       publishAudit(datasetId, AuditType.CREATE);
       LOG.trace("Published audit for creation of dataset {}", name);
-      if (publishCUD && !isLocalDataset(datasetProperties.getProperties()) && !isLocalDataset(spec.getProperties())) {
-        LOG.trace("Publishing metadata for creation of dataset {}", name);
-        metadataPublisher.publish(datasetId, DatasetInstanceOperation.create(requestingUser,
-                                                                             props.getTypeName(), datasetProperties));
-        LOG.trace("Published metadata for creation of dataset {}", name);
-      }
       SystemMetadata metadata = response.getMetadata();
       LOG.trace("Publishing system metadata for creation of dataset {}: {}", name, metadata);
       publishMetadata(datasetId, metadata);
@@ -412,9 +400,6 @@ public class DatasetInstanceService {
 
     updateExplore(instance, datasetProperties, existing, spec);
     publishAudit(instance, AuditType.UPDATE);
-    if (publishCUD && !isLocalDataset(datasetProperties.getProperties()) && !isLocalDataset(spec.getProperties())) {
-      metadataPublisher.publish(instance, DatasetInstanceOperation.update(requestingUser, datasetProperties));
-    }
     publishMetadata(instance, response.getMetadata());
   }
 
@@ -440,12 +425,6 @@ public class DatasetInstanceService {
     }
 
     dropDataset(instance, spec);
-
-    // Publish in here instead of the dropDataset(instance, spec) method as that private method
-    // is used in the dropAll case. For metadata publishing, the dropAll is a different operation.
-    if (publishCUD && !isLocalDataset(spec.getOriginalProperties()) && !isLocalDataset(spec.getProperties())) {
-      metadataPublisher.publish(instance, DatasetInstanceOperation.delete(requestingUser));
-    }
   }
 
   /**
@@ -471,10 +450,6 @@ public class DatasetInstanceService {
     // auth check passed, we can start deleting the datasets
     for (DatasetId datasetId : datasets.keySet()) {
       dropDataset(datasetId, datasets.get(datasetId));
-    }
-
-    if (publishCUD) {
-      metadataPublisher.publish(namespaceId, DatasetInstanceOperation.delete(requestingUser));
     }
   }
 
@@ -595,7 +570,7 @@ public class DatasetInstanceService {
 
     // Remove metadata for the dataset
     LOG.trace("Removing metadata for dataset {}", instance);
-    metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(instance.toMetadataEntity()));
+    metadataServiceClient.drop(new MetadataMutation.Drop(instance.toMetadataEntity()));
     LOG.trace("Removed metadata for dataset {}", instance);
 
     publishAudit(instance, AuditType.DELETE);
@@ -658,18 +633,9 @@ public class DatasetInstanceService {
     AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 
-  /**
-   * Returns {@code true} if the given properties Map has the key
-   * {@link Constants.AppFabric#WORKFLOW_LOCAL_DATASET_PROPERTY} set to {@code "true"}.
-   */
-  private boolean isLocalDataset(@Nullable Map<String, String> properties) {
-    return properties != null
-      && Boolean.parseBoolean(properties.get(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
-  }
-
   private void publishMetadata(DatasetId dataset, SystemMetadata metadata) {
     if (metadata != null && !metadata.isEmpty()) {
-      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataPublisher, dataset, metadata);
+      SystemMetadataWriter metadataWriter = new DelegateSystemMetadataWriter(metadataServiceClient, dataset, metadata);
       metadataWriter.write();
     }
   }

@@ -70,16 +70,16 @@ public class AppWithServices extends AbstractApplication {
   public static final String WRITE_VALUE_RUN_KEY = "write.value.run";
   public static final String WRITE_VALUE_STOP_KEY = "write.value.stop";
 
-    @Override
-    public void configure() {
-      setName(APP_NAME);
-      addService(new BasicService("NoOpService", new NoOpHandler()));
-      addService(new BasicService(SERVICE_NAME, new ServerService()));
-      addService(new DatasetUpdateService());
-      addService(new TransactionalHandlerService());
-      addWorker(new DatasetUpdateWorker());
-      createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
-   }
+  @Override
+  public void configure() {
+    setName(APP_NAME);
+    addService(new BasicService("NoOpService", new NoOpHandler()));
+    addService(new BasicService(SERVICE_NAME, new ServerService()));
+    addService(new DatasetUpdateService());
+    addService(new TransactionalHandlerService());
+    addWorker(new DatasetUpdateWorker());
+    createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
+  }
 
   public static final class NoOpHandler extends AbstractHttpServiceHandler {
     @UseDataSet(DATASET_NAME)

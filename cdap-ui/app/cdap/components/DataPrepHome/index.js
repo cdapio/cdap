@@ -361,7 +361,7 @@ DataPrepHome.propTypes = {
          is updated. This is for DataPrepConnections when navigating from '/connections' url
        - When set to 'false' suppresses all anchor navigations.
           The final click on a file (or eventually a database table) should navigate to dataprep via a url update
-          - User goes to go /dataprep
+          - User goes to go /wrangler
           - Toggles connections arrow to choose another file
           - Navigates through differnet connection and folders
           - Chooses a file which then navigates to a workspaceId (using url)

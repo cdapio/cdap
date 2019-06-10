@@ -105,7 +105,7 @@ class ProfileCreateView extends Component {
      * can be proactive in not passing empty string for nullable fields while creating
      * a profile.
      */
-    if (properties['projectId'].value === '') {
+    if (properties['projectId'] && properties['projectId'].value === '') {
       delete properties['projectId'];
     }
     let jsonBody = {

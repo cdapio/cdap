@@ -23,12 +23,13 @@ export enum HeadingTypes {
   h5 = 'h5',
   h6 = 'h6',
 }
-interface IHeadingProps {
+export interface IHeadingProps {
   type: HeadingTypes;
   label: string | React.ReactNode;
   className?: string;
+  id?: string;
 }
-const Heading: React.SFC<IHeadingProps> = ({ type, label, className }) => {
+const Heading: React.SFC<IHeadingProps> = ({ type, label, className, id }) => {
   let HtmlHeading: string = '';
   switch (type) {
     case HeadingTypes.h2:
@@ -49,7 +50,13 @@ const Heading: React.SFC<IHeadingProps> = ({ type, label, className }) => {
     default:
       HtmlHeading = 'h1';
   }
-  return <HtmlHeading className={className}>{label}</HtmlHeading>;
+  const props: Partial<IHeadingProps> = {
+    className,
+  };
+  if (id) {
+    props.id = id;
+  }
+  return <HtmlHeading {...props}>{label}</HtmlHeading>;
 };
 
 export default Heading;

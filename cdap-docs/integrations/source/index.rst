@@ -11,21 +11,21 @@ Integrations
 
 .. rubric:: Hub
 
-.. |cask-market-overview| replace:: **Overview:**
-.. _cask-market-overview: cask-market.html#overview
+.. |hub-overview| replace:: **Overview:**
+.. _hub-overview: hub.html#overview
 
-- |cask-market-overview|_ Summary of the **Hub,** a source for re-usable
+- |hub-overview|_ Summary of the **Hub,** a source for re-usable
   applications, data, and code for CDAP users
 
-.. |cask-market-api| replace:: **API:**
-.. _cask-market-api: cask-market.html#api
+.. |hub-api| replace:: **API:**
+.. _hub-api: hub.html#api
 
-- |cask-market-api|_ Hub APIs used to create entities in a Hub
+- |hub-api|_ Hub APIs used to create entities in a Hub
 
-.. |cask-market-custom| replace:: **Custom Hosting:**
-.. _cask-market-custom: cask-market.html#custom
+.. |hub-custom| replace:: **Custom Hosting:**
+.. _hub-custom: hub.html#custom
 
-- |cask-market-custom|_ Hosting your own custom Hub
+- |hub-custom|_ Hosting your own custom Hub
 
 
 .. rubric:: Cloudera

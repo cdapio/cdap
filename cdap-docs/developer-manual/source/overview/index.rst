@@ -56,7 +56,6 @@ Here are some places to start:
 - If you haven't already, go through our :ref:`Quick Start example <quick-start>`, which guides you
   through the development and the components of a complete web log analytics application; 
 
-- There are additional :ref:`examples, <examples-index>` :ref:`how-to guides, <guides-index>` and
-  :ref:`tutorials <tutorials>` on building CDAP applications; and
+- There are additional :ref:`how-to guides, <guides-index>`.
   
 - :ref:`building-blocks` describes in detail the components of CDAP, and how they interact.

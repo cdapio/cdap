@@ -36,6 +36,7 @@
       <div class="field-header subtitle">
         <h4>{{::group.display}}</h4>
       </div>
+      <small class="plugin-group-description">{{group.description}}</small>
       <div ng-repeat="field in group.fields">
         <div
           ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty && field['widget-type'] !== 'hidden'"
@@ -47,7 +48,7 @@
                   <plugin-functions
                     fn-config="field['plugin-function']"
                     node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                    nodeConfig="field"
+                    node-config="field"
                   >
                   </plugin-functions>
                 </span>
@@ -66,7 +67,7 @@
                 <plugin-functions
                   fn-config="field['plugin-function']"
                   node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                  nodeConfig="field"
+                  node-config="field"
                 >
                 </plugin-functions>
               </span>

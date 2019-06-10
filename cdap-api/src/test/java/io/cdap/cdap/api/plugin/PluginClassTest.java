@@ -34,7 +34,7 @@ public class PluginClassTest {
     // test that old json representation which does not have a requirements field can be be converted to Plugin class
     // by normal GSON without any custom deserializer (CDAP-14515)
     PluginClass pluginClass = new PluginClass("sparkprogram", "wordcount", "desc", "className", "config",
-                                              Collections.emptyMap(), Collections.emptySet(), null);
+                                              Collections.emptyMap(), null);
     PluginClass deserializedPluginClass = GSON.fromJson(GSON.toJson(pluginClass), PluginClass.class);
     Assert.assertEquals("wordcount", deserializedPluginClass.getName());
     Assert.assertEquals("sparkprogram", deserializedPluginClass.getType());

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Field;
@@ -31,6 +32,7 @@ import java.util.Optional;
  * The schema of the table is fixed, and has to be specified in the
  * {@link StructuredTableSpecification} during the table creation.
  */
+@Beta
 public interface StructuredTable extends Closeable {
   /**
    * Insert or replace the collection of fields to the table.

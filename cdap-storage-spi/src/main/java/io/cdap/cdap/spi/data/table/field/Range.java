@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.table.field;
 
+import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 
 import java.util.Collection;
@@ -25,6 +26,7 @@ import java.util.Collections;
  * Represents a range of fields.
  * The range has two endpoints - begin and end, to represent the beginning and the end of a range.
  */
+@Beta
 public final class Range {
   /**
    * Indicates if the endpoint is part of the range (INCLUSIVE) or not (EXCLUSIVE).

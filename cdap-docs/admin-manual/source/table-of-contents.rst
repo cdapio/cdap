@@ -16,8 +16,7 @@ CDAP Administration Manual Table of Contents
     CDAP and Hadoop Compatibility <cdap-hadoop-compatibility>
     System Requirements <system-requirements>
     Installation <installation/index>
-    Verification <verification>
-    Upgrading <upgrading/index>
+    Incompatibilities <incompatibilities>
     Security <security/index>
     Operations <operations/index>
     Appendices <appendices/index>

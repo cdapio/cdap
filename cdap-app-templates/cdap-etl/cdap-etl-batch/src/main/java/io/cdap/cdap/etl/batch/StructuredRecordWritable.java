@@ -19,12 +19,14 @@ package io.cdap.cdap.etl.batch;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.common.record.StructuredRecordComparator;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -36,6 +38,7 @@ import java.util.TreeMap;
 public class StructuredRecordWritable implements WritableComparable<StructuredRecordWritable> {
   // schema cache so that we do not parse schema string for each incoming record
   private static final Map<byte[], Schema> schemaCache = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+  private static final Comparator<StructuredRecord> COMPARATOR = new StructuredRecordComparator();
   private StructuredRecord record;
 
   // required by Hadoop
@@ -91,7 +94,7 @@ public class StructuredRecordWritable implements WritableComparable<StructuredRe
 
   @Override
   public int compareTo(StructuredRecordWritable o) {
-    return Integer.compare(hashCode(), o.hashCode());
+    return COMPARATOR.compare(record, o.record);
   }
 
   @Override

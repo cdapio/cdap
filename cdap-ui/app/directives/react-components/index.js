@@ -65,4 +65,31 @@ angular.module(PKG.name + '.commons')
   })
   .directive('toggleSwitch', function(reactDirective) {
     return reactDirective(window.CaskCommon.ToggleSwitch);
+  })
+  .directive('markdown', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Markdown);
+  })
+  .directive('codeEditor', function(reactDirective) {
+    return reactDirective(window.CaskCommon.CodeEditor);
+  })
+  .directive('jsonEditor', function(reactDirective) {
+    return reactDirective(window.CaskCommon.JSONEditor);
+  })
+  .directive('textBox', function(reactDirective) {
+    return reactDirective(window.CaskCommon.TextBox);
+  })
+  .directive('number', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Number);
+  })
+  .directive('csvWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.CSVWidget);
+  })
+  .directive('keyValueWidget', function (reactDirective) {
+    return reactDirective(window.CaskCommon.KeyValueWidget);
+  })
+  .directive('selectDropdown', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Select);
+  })
+  .directive('keyValueDropdownWidget', function (reactDirective) {
+    return reactDirective(window.CaskCommon.KeyValueDropdownWidget);
   });

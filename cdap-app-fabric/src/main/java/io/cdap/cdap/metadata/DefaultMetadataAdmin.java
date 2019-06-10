@@ -31,6 +31,7 @@ import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
@@ -63,16 +64,17 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties, MutationOptions options)
     throws InvalidMetadataException, IOException {
     validateProperties(metadataEntity, properties);
-    storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, properties)));
+    storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, properties)), options);
   }
 
   @Override
-  public void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException, IOException {
+  public void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
+    throws InvalidMetadataException, IOException {
     validateTags(metadataEntity, tags);
-    storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, tags)));
+    storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, tags)), options);
   }
 
   @Override
@@ -126,30 +128,39 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public void removeMetadata(MetadataEntity metadataEntity) throws IOException {
-    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER));
+  public void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER), options);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity) throws IOException {
-    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.PROPERTY));
+  public void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.PROPERTY), options);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity, Set<String> keys) throws IOException {
+  public void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options)
+    throws IOException {
     storage.apply(new MetadataMutation.Remove(metadataEntity, keys.stream()
-      .map(key -> new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.USER, key)).collect(Collectors.toSet())));
+      .map(key -> new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.USER, key))
+      .collect(Collectors.toSet())), options);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity) throws IOException {
-    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.TAG));
+  public void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.TAG), options);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, Set<String> tags) throws IOException {
+  public void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException {
     storage.apply(new MetadataMutation.Remove(metadataEntity, tags.stream()
-      .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag)).collect(Collectors.toSet())));
+      .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag))
+      .collect(Collectors.toSet())), options);
+  }
+
+
+  @Override
+  public void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException {
+    storage.apply(mutation, options);
   }
 
   @Override

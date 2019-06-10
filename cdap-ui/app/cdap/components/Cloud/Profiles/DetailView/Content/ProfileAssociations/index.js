@@ -242,7 +242,7 @@ export default class ProfileAssociations extends Component {
               <div>{appObj.name}</div>
               <div>{appObj.namespace}</div>
               <div>
-                {timeSinceCreated((Date.now() - parseInt(appObj.created, 10)) / 1000, true) || '--'}
+                {timeSinceCreated((Date.now() - parseInt(appObj.created, 10)) / 1000, true)}
               </div>
               {/*
                   We should set the defaults in the metrics call but since it is not certain that we get metrics

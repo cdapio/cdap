@@ -146,6 +146,8 @@ public class DataprocClient implements AutoCloseable {
         // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
         metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
       }
+      // override any os-login that may be set on the project-level metadata
+      metadata.put("enable-oslogin", "false");
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .setNetworkUri(conf.getNetwork())
@@ -155,6 +157,21 @@ public class DataprocClient implements AutoCloseable {
       for (String targetTag : getFirewallTargetTags()) {
         clusterConfig.addTags(targetTag);
       }
+
+      Map<String, String> dataprocProps = new HashMap<>(conf.getDataprocProperties());
+      // The additional property is needed to be able to provision a singlenode cluster on
+      // dataproc. Dataproc has an issue that it will treat 0 number of worker
+      // nodes as the default number, which means it will always provision a
+      // cluster with 2 worker nodes if this property is not set. Refer to
+      // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
+      // for more information.
+      dataprocProps.put("dataproc:dataproc.allow.zero.workers", "true");
+      // Enable/Disable stackdriver
+      dataprocProps.put("dataproc:dataproc.logging.stackdriver.enable",
+                        Boolean.toString(conf.isStackdriverLoggingEnabled()));
+      dataprocProps.put("dataproc:dataproc.monitoring.stackdriver.enable",
+                        Boolean.toString(conf.isStackdriverMonitoringEnabled()));
+
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)
@@ -177,22 +194,9 @@ public class DataprocClient implements AutoCloseable {
                                                          .build())
                                         .build())
                      .setGceClusterConfig(clusterConfig.build())
-                     .setSoftwareConfig(
-                       SoftwareConfig.newBuilder()
-                         // The additional property is needed to be able to provision a singlenode cluster on
-                         // dataproc. Dataproc has an issue that it will treat 0 number of worker
-                         // nodes as the default number, which means it will always provision a
-                         // cluster with 2 worker nodes if this property is not set. Refer to
-                         // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
-                         // for more information.
-                         .setImageVersion(imageVersion)
-                         .putProperties("dataproc:dataproc.allow.zero.workers", "true")
-                         // Enable/Disable stackdriver
-                         .putProperties("dataproc:dataproc.logging.stackdriver.enable",
-                                        Boolean.toString(conf.isStackdriverLoggingEnabled()))
-                         .putProperties("dataproc:dataproc.monitoring.stackdriver.enable",
-                                        Boolean.toString(conf.isStackdriverMonitoringEnabled()))
-                     )
+                     .setSoftwareConfig(SoftwareConfig.newBuilder()
+                                          .setImageVersion(imageVersion)
+                                          .putAllProperties(dataprocProps))
                      .build())
         .build();
 
