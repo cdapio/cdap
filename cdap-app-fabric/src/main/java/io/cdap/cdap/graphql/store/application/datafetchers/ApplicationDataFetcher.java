@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import graphql.execution.DataFetcherResult;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.application.RemoteApplicationClient;
+import io.cdap.cdap.client.application.RemoteApplicationClient;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.UnauthenticatedException;

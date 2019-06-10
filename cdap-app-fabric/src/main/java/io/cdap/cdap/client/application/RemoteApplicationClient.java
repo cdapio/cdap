@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.application;
+package io.cdap.cdap.client.application;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;

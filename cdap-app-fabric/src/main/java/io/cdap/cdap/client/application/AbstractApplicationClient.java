@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.application;
+package io.cdap.cdap.client.application;
 
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.common.ApplicationNotFoundException;
