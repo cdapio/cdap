@@ -50,16 +50,16 @@ public class RemoteApplicationClient extends AbstractApplicationClient {
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
     UnauthorizedException {
-    LOG.trace("Making application request {}", request);
+    LOG.info("Making application request {}", request.getBody());
     HttpResponse response = remoteClient.execute(request);
-    LOG.trace("Received response {} for request {}", response, request);
+    LOG.info("Received response {} for request {}", response, request);
     return response;
   }
 
   @Override
   protected URL resolve(String resource) {
     URL url = remoteClient.resolve(resource);
-    LOG.trace("Resolved URL {} for resources {}", url, resource);
+    LOG.info("Resolved URL {} for resources {}", url, resource);
     return url;
   }
 
