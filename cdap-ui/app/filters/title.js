@@ -25,7 +25,7 @@ function myTitleFilter () {
   return function(state) {
     if (!state) { return '';}
     var title = state.data && state.data.title;
-    return (title ? title + ' | ' : '') + 'CDAP';
+    return (title ? title + ' | ' : '') + 'Data Playbook';
   };
 
 });

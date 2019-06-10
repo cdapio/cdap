@@ -46,12 +46,12 @@ if(process.env.LOG4JS_CONFIG) {
 // Get a log handle.
 var log = log4js.getLogger('default');
 
-log.info("Starting CDAP UI ...");
+log.info("Starting Data Playbook UI ...");
 parser.extractConfig('cdap')
   .then(function (c) {
     cdapConfig = c;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
-      log.debug("CDAP Security has been enabled");
+      log.debug("Data Playbook Security has been enabled");
       return parser.extractConfig('security');
     }
   })
@@ -87,7 +87,7 @@ parser.extractConfig('cdap')
     }
 
     server.listen(port, cdapConfig['dashboard.bind.address'], function () {
-      log.info('CDAP UI listening on port %s', port);
+      log.info('Data Playbook UI listening on port %s', port);
     });
 
     return server;
