@@ -21,6 +21,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -46,12 +47,23 @@ public class RemoteApplicationClientTest extends AppFabricTestBase {
   }
 
   @Test
-  public void listApplications() throws Exception {
+  public void testList() throws Exception {
     deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
 
     AbstractApplicationClient applicationClient = injector.getInstance(RemoteApplicationClient.class);
     List<ApplicationRecord> applications = applicationClient.list(NamespaceId.DEFAULT);
     Assert.assertEquals(1, applications.size());
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
+  }
+
+  @Test
+  public void testGet() throws Exception {
+    deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+
+    AbstractApplicationClient applicationClient = injector.getInstance(RemoteApplicationClient.class);
+    ApplicationDetail applicationDetail = applicationClient.get(NamespaceId.DEFAULT.app(AppWithServices.NAME));
+    Assert.assertNotNull(applicationDetail);
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
   }
