@@ -38,6 +38,11 @@ public class ProgramRecordFields implements Fields {
   public static final String STATUS = "status";
   public static final String PROFILE_ID = "profileId";
   public static final String TIME = "time";
+  public static final String NAME = "name";
+  public static final String WORKFLOW_ID = "workflowId";
+  public static final String NAMESPACE = "namespace";
+  public static final String APPLICATION = "application";
+  public static final String APPLICATION_VERSION = "applicationVersion";
 
   private ProgramRecordFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

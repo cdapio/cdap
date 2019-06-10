@@ -184,7 +184,7 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
       + "            startTs"
       + "          }"
       + "          schedules {"
-      + "            id"
+      + "            name"
       + "            time"
       + "          }"
       + "        }"

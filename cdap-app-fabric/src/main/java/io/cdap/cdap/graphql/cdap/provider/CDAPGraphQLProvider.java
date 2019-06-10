@@ -23,6 +23,7 @@ import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.programrecord.typeresolver.ProgramRecordTypeResolver;
+import io.cdap.cdap.graphql.store.programrecord.typeruntimewiring.ScheduleDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.programrecord.typeruntimewiring.WorkflowTypeRuntimeWiring;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final ApplicationRecordTypeRuntimeWiring applicationRecordTypeRuntimeWiring;
   private final ApplicationDetailTypeRuntimeWiring applicationDetailTypeRuntimeWiring;
   private final WorkflowTypeRuntimeWiring workflowTypeRuntimeWiring;
+  private final ScheduleDetailTypeRuntimeWiring scheduleDetailTypeRuntimeWiring;
 
   private final ProgramRecordTypeResolver programRecordTypeResolver;
 
@@ -46,6 +48,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     this.applicationRecordTypeRuntimeWiring = ApplicationRecordTypeRuntimeWiring.getInstance();
     this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
     this.workflowTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
+    this.scheduleDetailTypeRuntimeWiring = ScheduleDetailTypeRuntimeWiring.getInstance();
 
     this.programRecordTypeResolver = ProgramRecordTypeResolver.getInstance();
   }
@@ -57,6 +60,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
       .type(applicationRecordTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(applicationDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(workflowTypeRuntimeWiring.getTypeRuntimeWiring())
+      .type(scheduleDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordTypeResolver.getTypeResolver())
       .build();
   }

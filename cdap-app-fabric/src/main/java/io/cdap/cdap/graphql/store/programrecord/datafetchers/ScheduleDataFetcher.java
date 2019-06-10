@@ -17,18 +17,25 @@
 
 package io.cdap.cdap.graphql.store.programrecord.datafetchers;
 
+import graphql.execution.DataFetcherResult;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
+import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.WorkflowId;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Fetchers to get schedules
@@ -65,8 +72,15 @@ public class ScheduleDataFetcher {
         String applicationName = (String) localContext.get(GraphQLFields.NAME);
 
         WorkflowId workflowId = new WorkflowId(namespace, applicationName, programRecordName);
+        List<ScheduleDetail> scheduleDetails = scheduleClient.listSchedules(workflowId);
 
-        return scheduleClient.nextRuntimes(workflowId);
+        Map<String, Object> newLocalContext = new ConcurrentHashMap<>(localContext);
+        newLocalContext.put(ProgramRecordFields.WORKFLOW_ID, workflowId);
+
+        return DataFetcherResult.newResult()
+          .data(scheduleDetails)
+          .localContext(newLocalContext)
+          .build();
       }
     );
   }
@@ -94,5 +108,27 @@ public class ScheduleDataFetcher {
     );
   }
 
+  /**
+   * Fetcher to get the times of the next runs
+   *
+   * @return the data fetcher
+   */
+  public DataFetcher getTimeDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
+        WorkflowId workflowId = (WorkflowId) localContext.get(ProgramRecordFields.WORKFLOW_ID);
+
+        List<ScheduledRuntime> scheduledRuntimes = scheduleClient.nextRuntimes(workflowId);
+        List<Long> times = new ArrayList<>();
+
+        for (ScheduledRuntime scheduledRuntime : scheduledRuntimes) {
+          times.add(scheduledRuntime.getTime());
+        }
+
+        return times;
+      }
+    );
+  }
 }
 

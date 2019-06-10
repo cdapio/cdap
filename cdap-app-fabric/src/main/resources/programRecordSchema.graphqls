@@ -40,7 +40,7 @@ type Workflow implements ProgramRecord {
   """
   Field added for composition
   """
-  schedules: [ScheduledRuntime]!
+  schedules: [ScheduleDetail]!
 }
 
 type MapReduce implements ProgramRecord {
@@ -54,11 +54,34 @@ type MapReduce implements ProgramRecord {
   description: String!
 }
 
-type ScheduledRuntime {
+type ScheduleDetail {
 
-  id: String!
+  namespace: String!
 
-  time: String!
+  application: String!
+
+  applicationVersion: String!
+
+  name: String!
+
+  description: String!
+
+  # ScheduleProgramInfo program;
+
+  # Map<String, String> properties;
+
+  # Trigger trigger;
+
+  # List<? extends Constraint> constraints;
+
+  # Long timeoutMillis;
+
+  status: String!
+
+  """
+  Field added for composition
+  """
+  time: [String]!
 }
 
 type RunRecord {
