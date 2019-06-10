@@ -488,9 +488,9 @@ export default class PipelineNodeMetricsGraph extends Component {
   };
 
   renderMetrics(data, type) {
-    if (this.state.aggregate) {
-      return this.renderSingleMetric(data);
-    }
+    // if (this.state.aggregate) {
+    //   return this.renderSingleMetric(data);
+    // }
 
     return <div className="graph-container">{this.renderChart(data, type)}</div>;
   }

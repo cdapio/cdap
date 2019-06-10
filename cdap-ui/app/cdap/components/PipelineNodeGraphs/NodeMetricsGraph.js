@@ -94,7 +94,21 @@ export default class NodeMetricsGraph extends Component {
   constructor(props) {
     super(props);
 
-    this.data = data; // this.props.data;
+    let runningSum = 0;
+    data.recordsIn.data = data.recordsIn.data.map((d) => {
+      runningSum = runningSum + d.y;
+      if (d.actualRecords) {
+        return d;
+      }
+      return {
+        x: d.x,
+        y: runningSum,
+        actualRecords: d.y,
+        time: d.x,
+      };
+    });
+    this.props.data = data;
+    this.data = this.props.data;
 
     let dataToShow = Object.keys(this.data).map((dataKey) => this.data[dataKey].label);
 
