@@ -23,6 +23,7 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -42,24 +43,25 @@ public class RemoteApplicationClient extends AbstractApplicationClient {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteApplicationClient(final DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+  public RemoteApplicationClient(DiscoveryServiceClient discoveryClient) {
+    HttpRequestConfig httpRequestConfig = new DefaultHttpRequestConfig(false);
+    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP, httpRequestConfig,
+                                         Constants.Gateway.API_VERSION_3);
   }
 
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
     UnauthorizedException {
-    LOG.info("Making application request {}", request.getBody());
+    LOG.trace("Making application request {}", request.getBody());
     HttpResponse response = remoteClient.execute(request);
-    LOG.info("Received response {} for request {}", response, request);
+    LOG.trace("Received response {} for request {}", response, request);
     return response;
   }
 
   @Override
   protected URL resolve(String resource) {
     URL url = remoteClient.resolve(resource);
-    LOG.info("Resolved URL {} for resources {}", url, resource);
+    LOG.trace("Resolved URL {} for resources {}", url, resource);
     return url;
   }
 
