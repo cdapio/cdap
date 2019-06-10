@@ -171,34 +171,3 @@ export function getDuration(time) {
   }
   return moment.duration(time, 'seconds').humanize();
 }
-
-export function getGapFilledAccumulatedData(data, numOfDataPoints) {
-  let { x: minx, y: miny } = data[0];
-  let maxx = data[data.length - 1].x;
-  let numberOfEntries = maxx - minx;
-  let lasty = miny;
-  let finalData = Array.apply(null, { length: numberOfEntries + 1 }).map((i, index) => {
-    let matchInActualData = data.find((d) => d.x === minx + index);
-    if (!isNil(matchInActualData)) {
-      lasty = matchInActualData.y;
-    }
-    return {
-      ...matchInActualData,
-      x: minx + index,
-      y: lasty,
-    };
-  });
-  if (finalData.length < numOfDataPoints) {
-    let diff = numOfDataPoints - finalData.length;
-    let lastDataPoint = finalData[finalData.length - 1];
-    for (var i = 0; i < diff; i++) {
-      let currDataPoint = {
-        ...lastDataPoint,
-        x: lastDataPoint.x + i,
-        y: lastDataPoint.y,
-      };
-      finalData.push(currDataPoint);
-    }
-  }
-  return finalData;
-}

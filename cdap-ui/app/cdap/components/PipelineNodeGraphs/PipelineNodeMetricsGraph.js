@@ -27,7 +27,6 @@ import isNil from 'lodash/isNil';
 import findIndex from 'lodash/findIndex';
 import capitalize from 'lodash/capitalize';
 import cloneDeep from 'lodash/cloneDeep';
-import { getGapFilledAccumulatedData } from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CopyableID from 'components/CopyableID';
 import { humanReadableDuration, isPluginSource, isPluginSink } from 'services/helpers';
@@ -118,26 +117,16 @@ export default class PipelineNodeMetricsGraph extends Component {
     }
   }
 
-  formatData = (records, numOfDataPoints) => {
-    let totalRecords = 0;
+  formatData = (records) => {
     let formattedRecords = [];
     if (Array.isArray(records.data)) {
       formattedRecords = records.data.map((d) => {
-        totalRecords += d.value;
         return {
           x: d.time,
-          y: totalRecords,
+          y: d.value,
           actualRecords: d.value,
         };
       });
-      formattedRecords = getGapFilledAccumulatedData(formattedRecords, numOfDataPoints).map(
-        (data, i) => ({
-          x: i,
-          y: data.y,
-          time: data.x * 1000,
-          actualRecords: data.actualRecords,
-        })
-      );
     }
     return formattedRecords;
   };
@@ -343,7 +332,8 @@ export default class PipelineNodeMetricsGraph extends Component {
           run: runRecord.runid,
         },
         timeRange: {
-          start: 0,
+          resolution: '60s',
+          start: 'now-24h',
           end: 'now',
         },
       },

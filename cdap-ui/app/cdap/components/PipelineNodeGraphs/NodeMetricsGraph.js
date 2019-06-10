@@ -29,14 +29,13 @@ import {
 import NodeMetricsGraphLegends from 'components/PipelineNodeGraphs/NodeMetricsGraphLegends';
 import { getYAxisProps } from 'components/PipelineSummary/RunsGraphHelpers';
 import { humanReadableDate, objectQuery } from 'services/helpers';
-import maxBy from 'lodash/maxBy';
 import findKey from 'lodash/findKey';
 import findIndex from 'lodash/findIndex';
 import capitalize from 'lodash/capitalize';
 import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
 import isEqual from 'lodash/isEqual';
-var data = require('./sampledata.js');
 import T from 'i18n-react';
+var data = require('./sampledata.js');
 
 const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
@@ -93,16 +92,13 @@ export default class NodeMetricsGraph extends Component {
 
   constructor(props) {
     super(props);
-
-    let runningSum = 0;
     data.recordsIn.data = data.recordsIn.data.map((d) => {
-      runningSum = runningSum + d.y;
       if (d.actualRecords) {
         return d;
       }
       return {
         x: d.x,
-        y: runningSum,
+        y: d.y,
         actualRecords: d.y,
         time: d.x,
       };
@@ -153,8 +149,17 @@ export default class NodeMetricsGraph extends Component {
       ];
     } else if (!Array.isArray(this.data) && typeof this.data === 'object') {
       let dataObjects = Object.keys(this.data).map((key) => this.data[key]);
-      let objectWithMaxLength = maxBy(dataObjects, (dataObject) => dataObject.data.length);
-      this.xDomain[1] = objectWithMaxLength.data.length;
+      let min = Infinity,
+        max = 0;
+      dataObjects[0].data.forEach((d) => {
+        if (d.x < min) {
+          min = d.x;
+        }
+        if (d.x > max) {
+          max = d.x;
+        }
+      });
+      this.xDomain = [min, max];
       Object.keys(this.data).forEach((d) => {
         this.colorLegend.push({
           title: this.data[d].label,
@@ -289,6 +294,9 @@ export default class NodeMetricsGraph extends Component {
     }
     let metricLabel =
       objectQuery(this.state, 'currentHoveredElement', 'key') || this.props.metricType;
+    let dataObjects = Object.keys(this.data).map((key) => this.data[key]);
+    let numOfDataPoints = objectQuery(dataObjects, 0, 'data', 'length');
+    let numOfXTicks = numOfDataPoints > 20 ? 20 : numOfDataPoints;
     return (
       <div className="graph-plot-container">
         <FPlot
@@ -299,7 +307,17 @@ export default class NodeMetricsGraph extends Component {
           tickTotal={this.xDomain[1]}
           className="run-history-fp-plot"
         >
-          <XAxis />
+          <XAxis
+            tickTotal={numOfXTicks}
+            style={{
+              text: {
+                transform: 'rotate(-45deg) translate(-45px)',
+              },
+            }}
+            tickFormat={function(d) {
+              return humanReadableDate(d, false, false, 'MM-DD hh:mm');
+            }}
+          />
           <YAxis tickFormat={this.tickFormat} />
           <HorizontalGridLines />
           {this.renderAreaChart(this.data, this.metricType)}
@@ -326,7 +344,7 @@ export default class NodeMetricsGraph extends Component {
                 </div>
                 <div>
                   <span>{T.translate(`${PREFIX}.ts`)}</span>
-                  <span>{humanReadableDate(this.state.currentHoveredElement.time, true)}</span>
+                  <span>{humanReadableDate(this.state.currentHoveredElement.time, false)}</span>
                 </div>
                 <div>
                   <span>{T.translate(`${PREFIX}.accumulatedRecords`)}</span>
