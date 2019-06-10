@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.graphql.store.programrecord.typeruntimewiring;
 
+import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.programrecord.datafetchers.ScheduleDataFetcher;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
@@ -28,16 +29,11 @@ import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
  */
 public class ScheduleDetailTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private static final ScheduleDetailTypeRuntimeWiring INSTANCE = new ScheduleDetailTypeRuntimeWiring();
-
   private final ScheduleDataFetcher scheduleDataFetcher;
 
-  private ScheduleDetailTypeRuntimeWiring() {
-    this.scheduleDataFetcher = ScheduleDataFetcher.getInstance();
-  }
-
-  public static ScheduleDetailTypeRuntimeWiring getInstance() {
-    return INSTANCE;
+  @Inject
+  public ScheduleDetailTypeRuntimeWiring(ScheduleDataFetcher scheduleDataFetcher) {
+    this.scheduleDataFetcher = scheduleDataFetcher;
   }
 
   @Override

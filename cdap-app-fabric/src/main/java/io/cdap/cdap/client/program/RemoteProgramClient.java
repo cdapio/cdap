@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.client.application;
+package io.cdap.cdap.client.program;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
@@ -32,17 +32,17 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * Application client to make requests to the App Fabric service which is discovered through {@link
+ * Program client to make requests to the App Fabric service which is discovered through {@link
  * DiscoveryServiceClient}.
  */
-public class RemoteApplicationClient extends AbstractApplicationClient {
+public class RemoteProgramClient extends AbstractProgramClient {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteApplicationClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteProgramClient.class);
 
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteApplicationClient(final DiscoveryServiceClient discoveryClient) {
+  public RemoteProgramClient(final DiscoveryServiceClient discoveryClient) {
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }

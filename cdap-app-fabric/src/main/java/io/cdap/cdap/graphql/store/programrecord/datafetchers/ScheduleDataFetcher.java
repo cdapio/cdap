@@ -17,12 +17,13 @@
 
 package io.cdap.cdap.graphql.store.programrecord.datafetchers;
 
+import com.google.inject.Inject;
 import graphql.execution.DataFetcherResult;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.program.RemoteProgramClient;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -42,18 +43,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ScheduleDataFetcher {
 
-  private static final ScheduleDataFetcher INSTANCE = new ScheduleDataFetcher();
-
   private final ScheduleClient scheduleClient;
-  private final ProgramClient programClient;
+  private final RemoteProgramClient remoteProgramClient;
 
-  private ScheduleDataFetcher() {
+  @Inject
+  public ScheduleDataFetcher(RemoteProgramClient remoteProgramClient) {
     this.scheduleClient = new ScheduleClient(ClientConfig.getDefault());
-    this.programClient = new ProgramClient(ClientConfig.getDefault());
-  }
-
-  public static ScheduleDataFetcher getInstance() {
-    return INSTANCE;
+    this.remoteProgramClient = remoteProgramClient;
   }
 
   /**
@@ -103,7 +99,7 @@ public class ScheduleDataFetcher {
 
         ProgramId programId = new ProgramId(namespace, applicationName, programType, programName);
 
-        return programClient.getAllProgramRuns(programId, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        return remoteProgramClient.getAllProgramRuns(programId, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
       }
     );
   }

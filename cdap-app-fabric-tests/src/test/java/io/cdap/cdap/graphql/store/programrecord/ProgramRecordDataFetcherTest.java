@@ -19,11 +19,15 @@ package io.cdap.cdap.graphql.store.programrecord;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.graphql.CDAPGraphQLTest;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
+import io.cdap.cdap.proto.id.NamespaceId;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
@@ -31,10 +35,20 @@ import java.util.Map;
 
 public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
 
+  @Before
+  public void setupTest() throws Exception {
+    deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+  }
+
+  @After
+  public void tearDownTest() throws Exception {
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
+  }
+
   @Test
   public void testGetProgramRecords() {
     String query = "{ "
-      + "  application(name: \"JavascriptTransform\") {"
+      + "  application(name: \"" + AppWithServices.NAME + "\") {"
       + "    programs {"
       + "      type"
       + "      app"
