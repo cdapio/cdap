@@ -17,14 +17,21 @@
 
 package io.cdap.cdap.graphql;
 
+import com.google.inject.Injector;
 import graphql.GraphQL;
 import io.cdap.cdap.graphql.cdap.provider.CDAPGraphQLProvider;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLSchemaFiles;
+import io.cdap.cdap.graphql.cdap.typeruntimewiring.CDAPQueryTypeRuntimeWiring;
 import io.cdap.cdap.graphql.provider.GraphQLProvider;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationSchemaFiles;
+import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactSchemaFiles;
 import io.cdap.cdap.graphql.store.metadata.schema.MetadataSchemaFiles;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordSchemaFiles;
+import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.id.ApplicationId;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.util.Arrays;
@@ -33,19 +40,38 @@ import java.util.List;
 /**
  * Test class for GraphQL queries. The tests were executed with the CDAP sandbox running locally
  */
-public class CDAPGraphQLTest {
+public class CDAPGraphQLTest extends AppFabricTestBase {
 
   protected static GraphQL graphQL;
+  private static Injector injector;
 
   @BeforeClass
   public static void setup() throws Exception {
+    injector = AppFabricTestHelper.getInjector();
+
     List<String> schemaDefinitionFiles = Arrays.asList(GraphQLSchemaFiles.ROOT_SCHEMA,
                                                        ApplicationSchemaFiles.APPLICATION_SCHEMA,
                                                        ProgramRecordSchemaFiles.PROGRAM_RECORD_SCHEMA,
                                                        ArtifactSchemaFiles.ARTIFACT_SCHEMA,
                                                        MetadataSchemaFiles.METADATA_SCHEMA);
-    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles);
+
+    CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring = injector.getInstance(CDAPQueryTypeRuntimeWiring.class);
+    ApplicationRecordTypeRuntimeWiring applicationRecordTypeRuntimeWiring = injector
+      .getInstance(ApplicationRecordTypeRuntimeWiring.class);
+
+    GraphQLProvider graphQLProvider = new CDAPGraphQLProvider(schemaDefinitionFiles,
+                                                              cdapQueryTypeRuntimeWiring,
+                                                              applicationRecordTypeRuntimeWiring);
     graphQL = graphQLProvider.buildGraphQL();
   }
 
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
+  }
+
+  protected void deleteAppAndData(ApplicationId applicationId) throws Exception {
+    deleteApp(applicationId, 200);
+    deleteNamespaceData(applicationId.getNamespace());
+  }
 }

@@ -21,9 +21,9 @@ import com.google.inject.Inject;
 import graphql.execution.DataFetcherResult;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
-import io.cdap.cdap.client.ApplicationClient;
-import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.application.RemoteApplicationClient;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.proto.ApplicationDetail;
@@ -41,18 +41,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ApplicationDataFetcher {
 
-  private static final ApplicationDataFetcher INSTANCE = new ApplicationDataFetcher();
-
-  private final ApplicationClient applicationClient;
+  private final RemoteApplicationClient remoteApplicationClient;
 
   @Inject
-  private ApplicationDataFetcher() {
-    // TODO the client config should, somehow, get passed
-    this.applicationClient = new ApplicationClient(ClientConfig.getDefault());
-  }
-
-  public static ApplicationDataFetcher getInstance() {
-    return INSTANCE;
+  public ApplicationDataFetcher(RemoteApplicationClient remoteApplicationClient) {
+    this.remoteApplicationClient = remoteApplicationClient;
   }
 
   /**
@@ -64,7 +57,7 @@ public class ApplicationDataFetcher {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> {
         String namespace = dataFetchingEnvironment.getArgument(GraphQLFields.NAMESPACE);
-        List<ApplicationRecord> applicationRecords = applicationClient.list(new NamespaceId(namespace));
+        List<ApplicationRecord> applicationRecords = remoteApplicationClient.list(new NamespaceId(namespace));
 
         Map<String, Object> newLocalContext = new ConcurrentHashMap<>(dataFetchingEnvironment.getArguments());
 
@@ -124,9 +117,9 @@ public class ApplicationDataFetcher {
   }
 
   private ApplicationDetail fetchApplicationDetail(String namespace, String applicationName)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, BadRequestException {
     ApplicationId appId = new ApplicationId(namespace, applicationName);
 
-    return applicationClient.get(appId);
+    return remoteApplicationClient.get(appId);
   }
 }

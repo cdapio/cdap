@@ -41,11 +41,14 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
 
   private final ProgramRecordTypeResolver programRecordTypeResolver;
 
-  public CDAPGraphQLProvider(List<String> schemaDefinitionFiles) {
+  public CDAPGraphQLProvider(List<String> schemaDefinitionFiles,
+                             CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
+                             ApplicationRecordTypeRuntimeWiring applicationRecordTypeRuntimeWiring) {
     super(schemaDefinitionFiles);
 
-    this.cdapQueryTypeRuntimeWiring = CDAPQueryTypeRuntimeWiring.getInstance();
-    this.applicationRecordTypeRuntimeWiring = ApplicationRecordTypeRuntimeWiring.getInstance();
+    this.cdapQueryTypeRuntimeWiring = cdapQueryTypeRuntimeWiring;
+    this.applicationRecordTypeRuntimeWiring = applicationRecordTypeRuntimeWiring;
+
     this.applicationDetailTypeRuntimeWiring = ApplicationDetailTypeRuntimeWiring.getInstance();
     this.workflowTypeRuntimeWiring = WorkflowTypeRuntimeWiring.getInstance();
     this.scheduleDetailTypeRuntimeWiring = ScheduleDetailTypeRuntimeWiring.getInstance();

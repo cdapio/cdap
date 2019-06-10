@@ -62,7 +62,7 @@ public abstract class AbstractApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  List<ApplicationRecord> list(NamespaceId namespace)
+  public List<ApplicationRecord> list(NamespaceId namespace)
     throws BadRequestException, IOException, UnauthenticatedException {
     String path = String.format("namespaces/%s/apps", namespace.getNamespace());
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
@@ -81,7 +81,7 @@ public abstract class AbstractApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  ApplicationDetail get(ApplicationId appId)
+  public ApplicationDetail get(ApplicationId appId)
     throws ApplicationNotFoundException, BadRequestException, IOException, UnauthenticatedException {
     String path = String.format("namespaces/%s/apps/%s/versions/%s",
                                 appId.getParent().getNamespace(), appId.getApplication(), appId.getVersion());

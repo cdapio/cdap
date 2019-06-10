@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.graphql.cdap.typeruntimewiring;
 
+import com.google.inject.Inject;
 import graphql.schema.idl.TypeRuntimeWiring;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLTypes;
@@ -31,16 +32,11 @@ import java.sql.Timestamp;
  */
 public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
-  private static final CDAPQueryTypeRuntimeWiring INSTANCE = new CDAPQueryTypeRuntimeWiring();
-
   private final ApplicationDataFetcher applicationDataFetcher;
 
-  private CDAPQueryTypeRuntimeWiring() {
-    this.applicationDataFetcher = ApplicationDataFetcher.getInstance();
-  }
-
-  public static CDAPQueryTypeRuntimeWiring getInstance() {
-    return INSTANCE;
+  @Inject
+  public CDAPQueryTypeRuntimeWiring(ApplicationDataFetcher applicationDataFetcher) {
+    this.applicationDataFetcher = applicationDataFetcher;
   }
 
   @Override
