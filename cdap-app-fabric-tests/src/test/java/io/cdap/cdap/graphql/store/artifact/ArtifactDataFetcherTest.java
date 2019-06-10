@@ -19,10 +19,12 @@ package io.cdap.cdap.graphql.store.artifact;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import io.cdap.cdap.AppWithServices;
 import io.cdap.cdap.graphql.CDAPGraphQLTest;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,9 +33,11 @@ import java.util.Map;
 public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
-  public void testGetArtifactSummary() {
+  public void testGetArtifactSummary() throws Exception {
+    deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+
     String query = "{ "
-      + "  application(name: \"JavascriptTransform\") {"
+      + "  application(name: \"" + AppWithServices.NAME + "\") {"
       + "    artifact {"
       + "      name"
       + "      version"
@@ -54,6 +58,8 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
     Assert.assertNotNull(artifact.get(ArtifactFields.VERSION));
     Assert.assertNotNull(artifact.get(ArtifactFields.SCOPE));
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
   }
 
 }
