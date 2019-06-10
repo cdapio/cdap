@@ -60,9 +60,12 @@ import java.util.Map;
  *
  */
 public class AppWithMapReduce extends AbstractApplication {
+
+  public static final String NAME = AppWithMapReduce.class.getSimpleName();
+
   @Override
   public void configure() {
-    setName("AppWithMapReduce");
+    setName(NAME);
     setDescription("Application with MapReduce job");
     createDataset("beforeSubmit", KeyValueTable.class);
     createDataset("onFinish", KeyValueTable.class);

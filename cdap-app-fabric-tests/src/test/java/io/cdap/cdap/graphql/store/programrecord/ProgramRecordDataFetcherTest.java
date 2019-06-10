@@ -24,6 +24,7 @@ import io.cdap.cdap.graphql.CDAPGraphQLTest;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
+import io.cdap.cdap.internal.app.runtime.batch.AppWithMapReduce;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.After;
 import org.junit.Assert;
@@ -189,9 +190,11 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
   }
 
   @Test
-  public void testGeMapReduceWithType() {
+  public void testGeMapReduceWithType() throws Exception {
+    deploy(AppWithMapReduce.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+
     String query = "{ "
-      + "  application(name: \"JavascriptTransform\") {"
+      + "  application(name: \"" + AppWithMapReduce.NAME + "\") {"
       + "    programs(type: \"MapReduce\") {"
       + "      type"
       + "      app"
@@ -215,6 +218,8 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertNotNull(programRecord.get(ProgramRecordFields.APP));
     Assert.assertNotNull(programRecord.get(GraphQLFields.NAME));
     Assert.assertNotNull(programRecord.get(ProgramRecordFields.DESCRIPTION));
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithMapReduce.NAME));
   }
 
 }
