@@ -24,6 +24,7 @@ import graphql.schema.DataFetcher;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.program.RemoteProgramClient;
+import io.cdap.cdap.client.schedule.RemoteScheduleClient;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.programrecord.schema.ProgramRecordFields;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -43,13 +44,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ScheduleDataFetcher {
 
-  private final ScheduleClient scheduleClient;
   private final RemoteProgramClient remoteProgramClient;
+  private final RemoteScheduleClient remoteScheduleClient;
 
   @Inject
-  public ScheduleDataFetcher(RemoteProgramClient remoteProgramClient) {
-    this.scheduleClient = new ScheduleClient(ClientConfig.getDefault());
+  public ScheduleDataFetcher(RemoteProgramClient remoteProgramClient, RemoteScheduleClient remoteScheduleClient) {
     this.remoteProgramClient = remoteProgramClient;
+    this.remoteScheduleClient = remoteScheduleClient;
   }
 
   /**
@@ -68,7 +69,7 @@ public class ScheduleDataFetcher {
         String applicationName = (String) localContext.get(GraphQLFields.NAME);
 
         WorkflowId workflowId = new WorkflowId(namespace, applicationName, programRecordName);
-        List<ScheduleDetail> scheduleDetails = scheduleClient.listSchedules(workflowId);
+        List<ScheduleDetail> scheduleDetails = remoteScheduleClient.listSchedules(workflowId);
 
         Map<String, Object> newLocalContext = new ConcurrentHashMap<>(localContext);
         newLocalContext.put(ProgramRecordFields.WORKFLOW_ID, workflowId);
@@ -115,7 +116,7 @@ public class ScheduleDataFetcher {
         Map<String, Object> localContext = dataFetchingEnvironment.getLocalContext();
         WorkflowId workflowId = (WorkflowId) localContext.get(ProgramRecordFields.WORKFLOW_ID);
 
-        List<ScheduledRuntime> scheduledRuntimes = scheduleClient.nextRuntimes(workflowId);
+        List<ScheduledRuntime> scheduledRuntimes = remoteScheduleClient.nextRuntimes(workflowId);
         List<Long> times = new ArrayList<>();
 
         for (ScheduledRuntime scheduledRuntime : scheduledRuntimes) {
