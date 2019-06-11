@@ -37,7 +37,7 @@ import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTable;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
-import co.cask.cdap.data2.increment.hbase98.IncrementHandler;
+import co.cask.cdap.data2.increment.hbase20.IncrementHandler;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;

@@ -43,6 +43,7 @@ import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.hadoop.hbase.util.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -164,7 +165,7 @@ public abstract class StreamDataFileTestBase {
     // The StreamDataFileWriter has an internal data block buffer size of 256K,
     // hence writing ~175K data block shouldn't go over the flush limit in the writer, making sure all
     // events are in one data block
-    ByteBuffer body = Charsets.UTF_8.encode(Strings.repeat('0', 150));
+    ByteBuffer body = Charsets.UTF_8.encode(StringUtils.repeat('0', 150));
     for (int i = 0; i < 1200; i++) {
       writer.append(new StreamEvent(ImmutableMap.<String, String>of(), body.duplicate(), 0));
     }

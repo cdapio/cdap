@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.twill.filesystem.Location;
+import org.apache.orc.OrcConf;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -120,8 +121,8 @@ public class PartitionConcatenateTest extends TestFrameworkTestBase {
     long stripeSize = HiveConf.getLongVar(hConf, HiveConf.ConfVars.HIVE_ORC_CACHE_STRIPE_DETAILS_MEMORY_SIZE);
     CompressionKind compressionKind =
       CompressionKind.valueOf(HiveConf.getVar(hConf, HiveConf.ConfVars.COMPRESSRESULT));
-    int bufferSize = HiveConf.getIntVar(hConf, HiveConf.ConfVars.HIVE_ORC_DEFAULT_BUFFER_SIZE);
-    int rowIndexStride = HiveConf.getIntVar(hConf, HiveConf.ConfVars.HIVE_ORC_DEFAULT_ROW_INDEX_STRIDE);
+    int bufferSize = (int) OrcConf.BUFFER_SIZE.getLong(hConf);
+    int rowIndexStride = (int) OrcConf.ROW_INDEX_STRIDE.getLong(hConf);
 
     List<String> writtenData = new ArrayList<>();
     for (int i = 0; i < numInputFiles; i++) {

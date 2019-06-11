@@ -118,13 +118,13 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-hbase-compat-0.98</artifactId>
+      <artifactId>cdap-hbase-compat-2.0</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-hbase-compat-0.98</artifactId>
+      <artifactId>cdap-hbase-compat-2.0</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <type>test-jar</type>
