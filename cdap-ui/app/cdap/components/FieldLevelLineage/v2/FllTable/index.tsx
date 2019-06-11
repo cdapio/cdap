@@ -14,19 +14,23 @@
  * the License.
 */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import SortableStickyGrid from 'components/SortableStickyGrid/index.js';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
+import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
+// TO DO: Consolidate different fontsizes in ThemeWrapper
 const styles = (theme) => {
   return createStyles({
     table: {
       width: '170px',
       border: `1px solid ${theme.palette.grey[300]}`,
+      fontSize: '0.92rem',
       marginBottom: '10px',
       '& .grid.grid-container': {
         maxHeight: 'none',
@@ -40,7 +44,15 @@ const styles = (theme) => {
       '& .grid-row': {
         paddingLeft: '10px',
         paddingRight: '10px',
-        borderBottom: `1px solid ${theme.palette.grey[500]}`,
+        borderTop: `1px solid ${theme.palette.grey[500]}`,
+      },
+      ' & .grid-row:hover': {
+        backgroundColor: theme.palette.grey[700],
+      },
+      ' & .grid-row.selected': {
+        backgroundColor: theme.palette.yellow[200],
+        color: theme.palette.orange[50],
+        fontWeight: 'bold',
       },
     },
     tableHeader: {
@@ -48,58 +60,63 @@ const styles = (theme) => {
       height: '40px',
       paddingLeft: '10px',
       fontWeight: 'bold',
+      fontSize: '1rem',
     },
     tableSubheader: {
       fontWeight: 'normal',
       color: theme.palette.grey[200],
-      paddingBottom: 5,
-      paddingTop: 3,
+      fontSize: '0.92rem',
+    },
+    viewLineage: {
+      visibility: 'hidden',
+      color: theme.palette.blue[300],
     },
   });
 };
 
 interface ITableProps extends WithStyles<typeof styles> {
   tableId: string;
-  fields: INode[];
-  isTarget?: boolean;
+  fields: IField[];
 }
 
-function renderGridHeader(fields, tableId, classes) {
+function renderGridHeader(fields: IField[], showingOneField: boolean, classes) {
   const count: number = fields.length;
-  const tableName = fields[0].group;
+  const tableName = fields[0].dataset;
   return (
     <div className={classes.tableHeader}>
-      {tableName}
+      <div>{tableName}</div>
       <div className={classes.tableSubheader}>
-        {T.translate('features.FieldLevelLineage.v2.TableSubheader', { count })}
+        {showingOneField
+          ? T.translate('features.FieldLevelLineage.v2.FllTable.relatedFieldsCount', {
+              context: count,
+            })
+          : T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', { context: count })}
       </div>
     </div>
   );
 }
 
-function renderGridBody(fields, tableName, classes) {
+function renderGridBody(fields: IField[], tableName: string, classes) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
-        return (
-          <div className={classnames('grid-row', 'grid-link')} key={field.id} id={field.id}>
-            {field.name}
-          </div>
-        );
+        return <FllField key={field.id} field={field} />;
       })}
     </div>
   );
 }
 
-function FllTable({ tableId, fields, classes, isTarget = false }: ITableProps) {
+function FllTable({ tableId, fields, classes }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
+  const { showingOneField } = useContext<IContextState>(FllContext);
+  const isTarget = fields[0].type === 'target';
   return (
     <SortableStickyGrid
       key={`cause ${tableId}`}
       entities={fields}
       gridHeaders={GRID_HEADERS}
       className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-      renderGridHeader={renderGridHeader.bind(null, fields, tableId, classes)}
+      renderGridHeader={renderGridHeader.bind(null, fields, showingOneField, classes)}
       renderGridBody={renderGridBody.bind(this, fields, tableId, classes)}
     />
   );
