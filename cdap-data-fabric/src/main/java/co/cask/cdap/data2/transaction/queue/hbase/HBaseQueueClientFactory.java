@@ -44,6 +44,7 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -115,7 +116,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
       }
       Preconditions.checkState(!groupConfigs.isEmpty(), "Missing consumer group information for queue %s", queueName);
 
-      HTable hTable = createHTable(admin.getDataTableId(queueName, queueAdmin.getType()));
+      Table hTable = createHTable(admin.getDataTableId(queueName, queueAdmin.getType()));
       int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
       return createProducer(hTable, queueName, queueMetrics,
                             new ShardedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets), groupConfigs);
@@ -183,7 +184,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
           List<HBaseQueueConsumer> consumers = Lists.newArrayList();
           for (HBaseConsumerState state : states) {
             QueueType queueType = (state.getPreviousBarrier() == null) ? QueueType.QUEUE : QueueType.SHARDED_QUEUE;
-            HTable hTable = createHTable(admin.getDataTableId(queueName, queueType));
+            Table hTable = createHTable(admin.getDataTableId(queueName, queueType));
             int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
 
             HBaseQueueStrategy strategy = (state.getPreviousBarrier() == null)
@@ -216,7 +217,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
                           queueName, queueMetrics, queueStrategy, groupConfigs);
   }
 
-  private HBaseQueueProducer createProducer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics,
+  private HBaseQueueProducer createProducer(Table hTable, QueueName queueName, QueueMetrics queueMetrics,
                                             HBaseQueueStrategy queueStrategy,
                                             Iterable<? extends ConsumerGroupConfig> groupConfigs) throws IOException {
     return new HBaseQueueProducer(hTable, queueName, queueMetrics, queueStrategy, groupConfigs, txMaxLifeTimeInMillis);
@@ -243,11 +244,11 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
     return queueAdmin;
   }
 
-  public HTable createHTable(TableId hTableId) throws IOException {
-    HTable consumerTable = hBaseTableUtil.createHTable(hConf, hTableId);
+  public Table createHTable(TableId hTableId) throws IOException {
+    Table consumerTable = hBaseTableUtil.createHTable(hConf, hTableId);
     // TODO: make configurable
-    consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    consumerTable.setAutoFlushTo(false);
+//    consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+//    consumerTable.setAutoFlushTo(false);
     return consumerTable;
   }
 

@@ -241,7 +241,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected CLIService createCLIService() {
-    return new CLIService(null);
+    boolean allowSessions = true;
+    return new CLIService(null, allowSessions);
   }
 
   private HiveConf createHiveConf() {

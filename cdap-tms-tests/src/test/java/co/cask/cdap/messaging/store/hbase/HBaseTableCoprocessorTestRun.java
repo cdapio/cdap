@@ -46,6 +46,7 @@ import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionManager;
@@ -98,7 +99,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   private static InvalidTxList invalidList = new InvalidTxList();
 
   private static Configuration hConf;
-  private static HBaseAdmin hBaseAdmin;
+  private static Admin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
   private static TableFactory tableFactory;
   private static HBaseDDLExecutor ddlExecutor;
@@ -216,7 +217,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
       tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
     }
 
-    byte[] tableName = tableUtil.getHTableDescriptor(hBaseAdmin, tableId).getName();
+    byte[] tableName = tableUtil.getHTableDescriptor(hBaseAdmin, tableId).getTableName().getName();
     HBASE_TEST_BASE.forceRegionFlush(tableName);
     HBASE_TEST_BASE.forceRegionCompact(tableName, true);
   }

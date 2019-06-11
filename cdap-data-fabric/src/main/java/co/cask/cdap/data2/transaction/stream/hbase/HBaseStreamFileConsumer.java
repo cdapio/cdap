@@ -32,12 +32,7 @@ import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.IOException;
@@ -57,7 +52,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
 
   private final HBaseTableUtil tableUtil;
-  private final HTable hTable;
+  private final Table hTable;
   private final AbstractRowKeyDistributor keyDistributor;
   private final ExecutorService scanExecutor;
 
@@ -65,7 +60,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
    * Constructor.
    */
   public HBaseStreamFileConsumer(CConfiguration cConf, StreamConfig streamConfig,
-                                 ConsumerConfig consumerConfig, HBaseTableUtil tableUtil, HTable hTable,
+                                 ConsumerConfig consumerConfig, HBaseTableUtil tableUtil, Table hTable,
                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                  @Nullable ReadFilter extraFilter,
@@ -86,7 +81,7 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
   @Override
   protected boolean claimFifoEntry(byte[] row, byte[] value, byte[] oldValue) throws IOException {
     Put put = new Put(keyDistributor.getDistributedKey(row));
-    put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
+    put.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
     return hTable.checkAndPut(put.getRow(), QueueEntryRow.COLUMN_FAMILY, stateColumnName, oldValue, put);
   }
 
@@ -96,11 +91,11 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
 
     for (byte[] row : rows) {
       Put put = new Put(keyDistributor.getDistributedKey(row));
-      put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
+      put.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName, value);
       puts.add(put);
     }
     hTable.put(puts);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -108,11 +103,11 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
     List<Delete> deletes = Lists.newArrayListWithCapacity(size);
     for (byte[] row : rows) {
       Delete delete = new Delete(keyDistributor.getDistributedKey(row));
-      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+      delete.addColumns(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       deletes.add(delete);
     }
     hTable.delete(deletes);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override

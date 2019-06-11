@@ -22,8 +22,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +42,9 @@ public final class CoprocessorUtil {
   /**
    * @return all non-coprocessor properties.
    */
-  public static Map<String, String> getNonCoprocessorProperties(HTableDescriptor tableDescriptor) {
+  public static Map<String, String> getNonCoprocessorProperties(TableDescriptor tableDescriptor) {
     Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry : tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<org.apache.hadoop.hbase.util.Bytes,org.apache.hadoop.hbase.util.Bytes > entry : tableDescriptor.getValues().entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String val = Bytes.toString(entry.getValue().get()).trim();
 
@@ -62,12 +61,11 @@ public final class CoprocessorUtil {
    *
    * @return a Map from coprocessor class name to {@link CoprocessorDescriptor}
    */
-  public static Map<String, CoprocessorDescriptor> getCoprocessors(HTableDescriptor tableDescriptor) {
+  public static Map<String, CoprocessorDescriptor> getCoprocessors(TableDescriptor tableDescriptor) {
     Map<String, CoprocessorDescriptor> info = Maps.newHashMap();
-
     // Extract information about existing data janitor coprocessor
     // The following logic is copied from RegionCoprocessorHost in HBase
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<org.apache.hadoop.hbase.util.Bytes, org.apache.hadoop.hbase.util.Bytes> entry: tableDescriptor.getValues().entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String spec = Bytes.toString(entry.getValue().get()).trim();
 

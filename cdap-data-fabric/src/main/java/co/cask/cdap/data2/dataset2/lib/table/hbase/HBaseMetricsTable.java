@@ -40,13 +40,7 @@ import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -76,7 +70,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private final HBaseTableUtil tableUtil;
   private final TableId tableId;
-  private final HTable hTable;
+  private final Table hTable;
   private final byte[] columnFamily;
   private AbstractRowKeyDistributor rowKeyDistributor;
   private ExecutorService scanExecutor;
@@ -88,10 +82,10 @@ public class HBaseMetricsTable implements MetricsTable {
 
     initializeV3Vars(cConf, spec);
 
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
+    Table hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
-    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlushTo(false);
+//    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
+//    hTable.setAutoFlushTo(false);
     this.hTable = hTable;
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
   }
@@ -163,7 +157,7 @@ public class HBaseMetricsTable implements MetricsTable {
     }
     try {
       hTable.put(puts);
-      hTable.flushCommits();
+//      hTable.flushCommits();
     } catch (IOException e) {
       throw new DataSetException("Put failed on table " + tableId, e);
     }
@@ -182,7 +176,7 @@ public class HBaseMetricsTable implements MetricsTable {
     }
     try {
       hTable.put(puts);
-      hTable.flushCommits();
+//      hTable.flushCommits();
     } catch (IOException e) {
       throw new DataSetException("Put failed on table " + tableId, e);
     }
@@ -215,7 +209,7 @@ public class HBaseMetricsTable implements MetricsTable {
     Put increment = getIncrementalPut(distributedKey, increments);
     try {
       hTable.put(increment);
-      hTable.flushCommits();
+//      hTable.flushCommits();
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -237,7 +231,7 @@ public class HBaseMetricsTable implements MetricsTable {
       // note: we use default timestamp (current), which is fine because we know we collect metrics no more
       //       frequent than each second. We also rely on same metric value to be processed by same metric processor
       //       instance, so no conflicts are possible.
-      increment.add(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
+      increment.addColumn(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
     }
     return increment;
   }
@@ -259,7 +253,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
     try {
       hTable.put(puts);
-      hTable.flushCommits();
+//      hTable.flushCommits();
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match

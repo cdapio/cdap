@@ -16,10 +16,11 @@
 package co.cask.cdap.hbase.wd;
 
 import com.google.common.base.Throwables;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class DistributedScanner implements ResultScanner {
     }
   }
 
-  public static DistributedScanner create(HTableInterface hTable,
+  public static DistributedScanner create(Table hTable,
                                           Scan originalScan,
                                           AbstractRowKeyDistributor keyDistributor,
                                           ExecutorService scansExecutor) throws IOException {
@@ -194,6 +195,15 @@ public class DistributedScanner implements ResultScanner {
     }
 
     return result;
+  }
+
+  //unchecked
+  public boolean renewLease(){
+    throw new UnsupportedOperationException();
+  }
+
+  public ScanMetrics getScanMetrics() {
+    throw new UnsupportedOperationException();
   }
 
   @Override

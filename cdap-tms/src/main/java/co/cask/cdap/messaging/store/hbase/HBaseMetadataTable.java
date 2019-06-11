@@ -29,12 +29,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 import java.io.IOException;
@@ -59,11 +54,11 @@ public final class HBaseMetadataTable implements MetadataTable {
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
-  private final HTable hTable;
+  private final Table hTable;
   private final int scanCacheRows;
   private final HBaseExceptionHandler exceptionHandler;
 
-  HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+  HBaseMetadataTable(HBaseTableUtil tableUtil, Table hTable, byte[] columnFamily,
                      int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;

@@ -46,13 +46,7 @@ import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -320,7 +314,7 @@ public abstract class HBaseTableUtil {
 
     // Extract information about existing data janitor coprocessor
     // The following logic is copied from RegionCoprocessorHost in HBase
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<org.apache.hadoop.hbase.util.Bytes, org.apache.hadoop.hbase.util.Bytes> entry: tableDescriptor.getValues().entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String spec = Bytes.toString(entry.getValue().get()).trim();
 
@@ -370,7 +364,7 @@ public abstract class HBaseTableUtil {
    * @param tableId the {@link TableId} to create an {@link HTable} for
    * @return an {@link HTable} for the tableName in the namespace
    */
-  public abstract HTable createHTable(Configuration conf, TableId tableId) throws IOException;
+  public abstract Table createHTable(Configuration conf, TableId tableId) throws IOException;
 
   /**
    * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
@@ -395,7 +389,7 @@ public abstract class HBaseTableUtil {
    * @return an {@link HTableDescriptor} for the table
    * @throws IOException
    */
-  public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract HTableDescriptor getHTableDescriptor(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Checks if an HBase namespace already exists
@@ -404,7 +398,7 @@ public abstract class HBaseTableUtil {
    * @param namespace the namespace to check for existence
    * @throws IOException if an I/O error occurs during the operation
    */
-  public abstract boolean hasNamespace(HBaseAdmin admin, String namespace) throws IOException;
+  public abstract boolean hasNamespace(Admin admin, String namespace) throws IOException;
 
   /**
    * Check if an HBase table exists
@@ -413,7 +407,7 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException
    */
-  public abstract boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract boolean tableExists(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Delete an HBase table
@@ -441,7 +435,7 @@ public abstract class HBaseTableUtil {
    * @return a list of {@link HRegionInfo} for the specified {@link TableId}
    * @throws IOException
    */
-  public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract List<HRegionInfo> getTableRegions(Admin admin, TableId tableId) throws IOException;
 
   /**
    * Deletes all tables in the specified namespace that satisfy the given {@link Predicate}.
@@ -454,7 +448,8 @@ public abstract class HBaseTableUtil {
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
                                    Configuration hConf, Predicate<TableId> predicate) throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
         if (predicate.apply(tableId)) {
           dropTable(ddlExecutor, tableId);
@@ -482,13 +477,13 @@ public abstract class HBaseTableUtil {
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId HBase namespace for which the tables are being requested
    */
-  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException;
+  public abstract List<TableId> listTablesInNamespace(Admin admin, String namespaceId) throws IOException;
 
   /**
    * Lists all tables
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    */
-  public abstract List<TableId> listTables(HBaseAdmin admin) throws IOException;
+  public abstract List<TableId> listTables(Admin admin) throws IOException;
 
   /**
    * Disables and deletes a table.
@@ -615,7 +610,7 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+  public Map<TableId, TableStats> getTableStats(Admin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
     // metrics.
     Map<TableId, TableStats> datasetStat = Maps.newHashMap();

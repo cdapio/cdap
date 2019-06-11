@@ -32,11 +32,13 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+//import org.eclipse.jetty.server.nio.SelectChannelConnector;
+//import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -119,18 +121,17 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     }
 
     // assumes we only have one connector
-    Connector connector = server.getConnectors()[0];
+    ServerConnector connector = (ServerConnector) server.getConnectors()[0];
     return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
   }
 
   @Override
   protected void startUp() throws Exception {
-    server = new Server();
-    InetAddress bindAddress = InetAddress.getByName(cConfiguration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
-
     QueuedThreadPool threadPool = new QueuedThreadPool();
     threadPool.setMaxThreads(maxThreads);
-    server.setThreadPool(threadPool);
+    server = new Server(threadPool);
+    InetAddress bindAddress = InetAddress.getByName(cConfiguration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
+
 
     initHandlers();
 
@@ -146,6 +147,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     statusContext.setServer(server);
     statusContext.setHandler(new StatusRequestHandler());
 
+    
     if (cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false)) {
       SslContextFactory sslContextFactory = new SslContextFactory();
       String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
@@ -175,19 +177,25 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
         // server continues with the connection but the client is considered to be unauthenticated
         sslContextFactory.setWantClientAuth(true);
 
-        sslContextFactory.setTrustStore(trustStorePath);
+        sslContextFactory.setTrustStorePath(trustStorePath);
         sslContextFactory.setTrustStorePassword(trustStorePassword);
         sslContextFactory.setTrustStoreType(trustStoreType);
         sslContextFactory.setValidateCerts(true);
       }
       // TODO Figure out how to pick a certificate from key store
-
-      SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+      /*
+       * Original implementation
+       */
+//      SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+//      sslConnector.setHost(bindAddress.getCanonicalHostName());
+//      sslConnector.setPort(port);
+//      server.setConnectors(new Connector[]{sslConnector});
+      ServerConnector sslConnector = new ServerConnector(server, sslContextFactory);
       sslConnector.setHost(bindAddress.getCanonicalHostName());
       sslConnector.setPort(port);
       server.setConnectors(new Connector[]{sslConnector});
     } else {
-      SelectChannelConnector connector = new SelectChannelConnector();
+      ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory());
       connector.setHost(bindAddress.getCanonicalHostName());
       connector.setPort(port);
       server.setConnectors(new Connector[]{connector});
@@ -211,7 +219,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     }
 
     // assumes we only have one connector
-    Connector connector = server.getConnectors()[0];
+    ServerConnector connector = (ServerConnector) server.getConnectors()[0];
     InetSocketAddress inetSocketAddress = new InetSocketAddress(connector.getHost(), connector.getLocalPort());
     serviceCancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.EXTERNAL_AUTHENTICATION, inetSocketAddress)));

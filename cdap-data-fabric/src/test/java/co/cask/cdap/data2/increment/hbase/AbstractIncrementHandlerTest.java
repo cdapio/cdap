@@ -27,11 +27,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
 import org.junit.Assert;
@@ -80,7 +76,7 @@ public abstract class AbstractIncrementHandlerTest {
     TableId tableId = TableId.from(NamespaceId.DEFAULT.getEntityName(), "incrementTest");
     createTable(tableId);
 
-    try (HTable table = new HBaseTableUtilFactory(cConf).get().createHTable(conf, tableId)) {
+    try (Table table = new HBaseTableUtilFactory(cConf).get().createHTable(conf, tableId)) {
       byte[] colA = Bytes.toBytes("a");
       byte[] row1 = Bytes.toBytes("row1");
 
@@ -128,8 +124,8 @@ public abstract class AbstractIncrementHandlerTest {
 
     TableId tableId = TableId.from(NamespaceId.DEFAULT.getEntityName(), "incrementCompactTest");
 
-    HTable table = createTable(tableId);
-    byte[] tableBytes = table.getTableName();
+    Table table = createTable(tableId);
+    byte[] tableBytes = table.getName().getName();
     try {
       byte[] colA = Bytes.toBytes("a");
       byte[] row1 = Bytes.toBytes("row1");
@@ -242,7 +238,7 @@ public abstract class AbstractIncrementHandlerTest {
 
     byte[] row1 = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
-    try (HTable table = createTable(tableId)) {
+    try (Table table = createTable(tableId)) {
       // perform 100 increments on a column
       for (int i = 0; i < 100; i++) {
         table.put(newIncrement(row1, col, 1));
@@ -278,7 +274,8 @@ public abstract class AbstractIncrementHandlerTest {
         .deleteFamily(FAMILY)
         .build();
       // use batch to work around a bug in delete coprocessor hooks on HBase 0.94
-      table.batch(Lists.newArrayList(delete));
+      Object[] results = new Object[delete.size()];
+      table.batch(Lists.newArrayList(delete),results);
 
       get = tableUtil.buildGet(row1).build();
       result = table.get(get);
@@ -461,7 +458,7 @@ public abstract class AbstractIncrementHandlerTest {
       .build();
   }
 
-  public abstract void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception;
+  public abstract void assertColumn(Table table, byte[] row, byte[] col, long expected) throws Exception;
 
   public void assertSingleVersionColumn(RegionWrapper region, byte[] row, byte[] col, long expected) throws Exception {
     List<ColumnCell> results = Lists.newArrayList();
@@ -474,11 +471,11 @@ public abstract class AbstractIncrementHandlerTest {
     Assert.assertEquals(expected, longValue);
   }
 
-  public abstract void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception;
+  public abstract void assertColumns(Table table, byte[] row, byte[][] cols, long[] expected) throws Exception;
 
   public abstract RegionWrapper createRegion(TableId tableId, Map<String, String> familyProperties) throws Exception;
 
-  public abstract HTable createTable(TableId tableId) throws Exception;
+  public abstract Table createTable(TableId tableId) throws Exception;
 
   public static class ColumnCell {
     private final byte[] row;

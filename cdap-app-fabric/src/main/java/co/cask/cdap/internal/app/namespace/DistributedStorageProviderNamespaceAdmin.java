@@ -32,6 +32,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,8 +106,8 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
         throw t;
       }
     }
-
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (Admin admin = connection.getAdmin()) {
       if (!tableUtil.hasNamespace(admin, hbaseNamespace)) {
         throw new IOException(String.format("HBase namespace '%s' specified for new namespace '%s' does not" +
                                               " exist. Please specify an existing HBase namespace.", hbaseNamespace,

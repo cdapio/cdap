@@ -280,9 +280,9 @@ public class HBaseQueueDebugger extends AbstractIdleService {
 
     HBaseQueueAdmin admin = queueClientFactory.getQueueAdmin();
     TableId tableId = admin.getDataTableId(queueName, QueueConstants.QueueType.SHARDED_QUEUE);
-    HTable hTable = queueClientFactory.createHTable(tableId);
+    org.apache.hadoop.hbase.client.Table hTable = queueClientFactory.createHTable(tableId);
 
-    printProgress("Looking at HBase table: %s\n", Bytes.toString(hTable.getTableName()));
+    printProgress("Looking at HBase table: %s\n", Bytes.toString(hTable.getName().getName()));
 
     final byte[] stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX,
                                              Bytes.toBytes(groupConfig.getGroupId()));

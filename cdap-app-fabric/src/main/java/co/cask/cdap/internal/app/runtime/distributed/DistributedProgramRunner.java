@@ -62,6 +62,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
@@ -210,8 +213,13 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       localizeResources.put(programJarName, new LocalizeResource(program.getJarLocation().toURI(), false));
 
       // Localize an expanded program jar
-      final String expandedProgramJarName = "expanded." + programJarName;
-      localizeResources.put(expandedProgramJarName, new LocalizeResource(program.getJarLocation().toURI(), true));
+      FileSystem fs = FileSystem.get(hConf);
+      final String expandedProgramJarName = "expanded." + programJarName.substring(0, programJarName.indexOf(".jar")) + ".zip";
+      final String expandedProgramJarLocation = programJarLocation.toString().substring(0, programJarLocation.toString().lastIndexOf(File.separator)) + File.separator + expandedProgramJarName;
+      Path expandedProgramJarLocationPath = new Path(expandedProgramJarLocation);
+      System.out.println("expandedProgramJarLocationPath=" + expandedProgramJarLocationPath.toUri());
+      FileUtil.copy(fs, new Path(programJarLocation.toURI()), fs, expandedProgramJarLocationPath, false, true, hConf);
+      localizeResources.put(expandedProgramJarName, new LocalizeResource(expandedProgramJarLocationPath.toUri(), true));
 
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,

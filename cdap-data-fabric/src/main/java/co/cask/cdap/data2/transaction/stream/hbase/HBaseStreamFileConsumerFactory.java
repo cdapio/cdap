@@ -44,8 +44,7 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -98,9 +97,9 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), splitKeys);
     }
 
-    HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
-    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlushTo(false);
+    Table hTable = tableUtil.createHTable(hConf, hBaseTableId);
+//    hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
+//    hTable.setAutoFlushTo(false);
 
     return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, tableUtil, hTable, reader,
                                        stateStore, beginConsumerState, extraFilter,
@@ -109,7 +108,8 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
   @Override
   protected void dropTable(TableId tableId) throws IOException {
-    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
+    Connection connection = ConnectionFactory.createConnection(hConf);
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); Admin admin = connection.getAdmin()) {
       TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
       if (tableUtil.tableExists(admin, hBaseTableId)) {
         tableUtil.dropTable(ddlExecutor, hBaseTableId);

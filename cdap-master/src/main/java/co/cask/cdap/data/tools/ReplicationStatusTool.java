@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -293,7 +294,7 @@ public class ReplicationStatusTool {
 
   private static Map<String, Long> getMapFromTable(String rowType) throws IOException {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTable hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
+    Table hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
 
     // Scan the table to scan for all regions.
     ScanBuilder scan = getScanBuilder(tableUtil, rowType);
@@ -393,7 +394,7 @@ public class ReplicationStatusTool {
 
     System.out.println("\nThis is all the HBase regions on the Cluster:");
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTable hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
+    Table hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
     ScanBuilder scan = tableUtil.buildScan();
     scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
                    Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));

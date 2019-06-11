@@ -404,7 +404,8 @@ cdap_set_classpath() {
 #
 cdap_set_hbase() {
   local readonly __compat __compatlib __class=co.cask.cdap.data2.util.hbase.HBaseVersion
-  HBASE_VERSION=${HBASE_VERSION:-$("${JAVA}" -cp ${CLASSPATH} ${__class} 2>/dev/null)}
+  #HBASE_VERSION=${HBASE_VERSION:-$("${JAVA}" -cp ${CLASSPATH} ${__class} 2>/dev/null)}
+  HBASE_VERSION=2.0.2
   case ${HBASE_VERSION} in
     0.96*) __compat=hbase-compat-0.96 ;;
     0.98*) __compat=hbase-compat-0.98 ;;
@@ -414,6 +415,7 @@ cdap_set_hbase() {
     1.1*) __compat=hbase-compat-1.1 ;;
     1.2-cdh*) __compat=hbase-compat-1.2-cdh5.7.0 ;; # 5.7 and 5.8 are compatible
     1.2*) __compat=hbase-compat-1.1 ;; # 1.1 and 1.2 are compatible
+    2.0*) __compat=hbase-compat-2.0 ;;
     "") die "Unable to determine HBase version! Aborting." ;;
     *)
       if [[ $(cdap_get_conf "hbase.version.resolution.strategy" "${CDAP_CONF}"/cdap-site.xml auto.strict) == 'auto.latest' ]]; then

@@ -51,9 +51,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -131,7 +129,7 @@ public final class HBaseTableFactory implements TableFactory {
   @Override
   public MetadataTable createMetadataTable(String tableName) throws IOException {
     TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
-    HTable hTable = null;
+    Table hTable = null;
 
     // If the table descriptor is in the cache, we assume the table exists.
     if (!tableDescriptors.containsKey(tableId)) {
@@ -276,7 +274,8 @@ public final class HBaseTableFactory implements TableFactory {
   private void upgradeCoProcessor(TableId tableId, Class<? extends Coprocessor> coprocessor) throws IOException {
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       HTableDescriptor tableDescriptor;
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      try (Connection connection = ConnectionFactory.createConnection(hConf);
+           Admin admin = connection.getAdmin()) {
         // If table doesn't exist, then skip upgrading coprocessor
         if (!tableUtil.tableExists(admin, tableId)) {
           LOG.debug("TMS Table {} was not found. Skip upgrading coprocessor.", tableId);
@@ -346,7 +345,7 @@ public final class HBaseTableFactory implements TableFactory {
 
     // Lookup the table descriptor from the cache first. If it is there, we assume the HBase table exists
     // Otherwise, attempt to create it.
-    HTable hTable = null;
+    Table hTable = null;
     HTableDescriptor htd = tableDescriptors.get(tableId);
 
     if (htd == null) {
@@ -354,7 +353,8 @@ public final class HBaseTableFactory implements TableFactory {
         htd = tableDescriptors.get(tableId);
         if (htd == null) {
           boolean tableExists;
-          try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+          try (Connection connection = ConnectionFactory.createConnection(hConf);
+              Admin admin = connection.getAdmin()) {
             tableExists = tableUtil.tableExists(admin, tableId);
           }
 
@@ -400,7 +400,7 @@ public final class HBaseTableFactory implements TableFactory {
     if (hTable == null) {
       hTable = tableUtil.createHTable(hConf, tableId);
     }
-    hTable.setAutoFlushTo(false);
+//    hTable.setAutoFlushTo(false);
     return new HTableWithRowKeyDistributor(
       hTable, new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(tableId, htd)))
     );
@@ -429,15 +429,15 @@ public final class HBaseTableFactory implements TableFactory {
    * A holder class for {@link HTable} and a {@link AbstractRowKeyDistributor} for operating on the given table.
    */
   private static final class HTableWithRowKeyDistributor {
-    private final HTable hTable;
+    private final Table hTable;
     private final AbstractRowKeyDistributor rowKeyDistributor;
 
-    private HTableWithRowKeyDistributor(HTable hTable, AbstractRowKeyDistributor rowKeyDistributor) {
+    private HTableWithRowKeyDistributor(Table hTable, AbstractRowKeyDistributor rowKeyDistributor) {
       this.hTable = hTable;
       this.rowKeyDistributor = rowKeyDistributor;
     }
 
-    HTable getHTable() {
+    Table getHTable() {
       return hTable;
     }
 

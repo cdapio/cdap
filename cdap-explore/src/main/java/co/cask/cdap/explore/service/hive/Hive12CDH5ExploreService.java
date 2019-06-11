@@ -35,15 +35,16 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
+import org.apache.hive.service.rpc.thrift.TColumnValue;
+import org.apache.hive.service.rpc.thrift.TRow;
+import org.apache.hive.service.rpc.thrift.TRowSet;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.File;
@@ -108,7 +109,9 @@ public class Hive12CDH5ExploreService extends BaseHiveExploreService {
   @Override
   protected QueryStatus doFetchStatus(OperationHandle handle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
-    OperationStatus operationStatus = getCliService().getOperationStatus(handle);
+    // TODO Setting getProgressUpdate as true for now
+    Boolean getProgressUpdate = true;
+    OperationStatus operationStatus = getCliService().getOperationStatus(handle, getProgressUpdate);
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     HiveSQLException hiveExn = operationStatus.getOperationException();
     if (hiveExn != null) {

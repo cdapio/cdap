@@ -29,6 +29,7 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.util.TxUtils;
 
@@ -46,11 +47,11 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
   private final HBaseQueueStrategy queueStrategy;
   private final List<ConsumerGroupConfig> consumerGroupConfigs;
   private final byte[] queueRowPrefix;
-  private final HTable hTable;
+  private final Table hTable;
   private final List<byte[]> rollbackKeys;
   private final long txMaxLifeTimeInMillis;
 
-  public HBaseQueueProducer(HTable hTable, QueueName queueName,
+  public HBaseQueueProducer(Table hTable, QueueName queueName,
                             QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy,
                             Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
                             long txMaxLifeTimeInMillis) {
@@ -105,8 +106,8 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
       for (byte[] rowKey : rowKeys) {
         // No need to write ts=writePointer, as the row key already contains the writePointer
         Put put = new Put(rowKey);
-        put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN, entry.getData());
-        put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN, metaData);
+        put.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN, entry.getData());
+        put.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN, metaData);
         puts.add(put);
 
         bytes += entry.getData().length;
@@ -114,7 +115,7 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
       count++;
     }
     hTable.put(puts);
-    hTable.flushCommits();
+//    hTable.flushCommits();
 
     return bytes;
   }
@@ -133,7 +134,7 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
       deletes.add(delete);
     }
     hTable.delete(deletes);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   private void ensureValidTxLifetime(long transactionWritePointer) throws IOException {

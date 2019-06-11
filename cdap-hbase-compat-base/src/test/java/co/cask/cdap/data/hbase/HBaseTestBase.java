@@ -25,6 +25,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -60,8 +63,11 @@ public abstract class HBaseTestBase extends ExternalResource {
 
   public abstract Configuration getConfiguration();
 
-  public HBaseAdmin getHBaseAdmin() throws IOException {
-    return new HBaseAdmin(getConfiguration());
+  public Admin getHBaseAdmin() throws IOException {
+    Connection connection = ConnectionFactory.createConnection(getConfiguration());
+    return connection.getAdmin();
+//    this.admin = connection.getAdmin();
+//    return new HBaseAdmin(getConfiguration());
   }
 
   public String getZkConnectionString() {
@@ -119,7 +125,7 @@ public abstract class HBaseTestBase extends ExternalResource {
     if (hbaseCluster != null) {
       TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
+        List<HRegion> serverRegions = t.getRegionServer().getRegions(qualifiedTableName);
         List<Runnable> flushers = new ArrayList<>();
         for (HRegion region : serverRegions) {
           flushers.add(createFlushRegion(region));
@@ -142,7 +148,7 @@ public abstract class HBaseTestBase extends ExternalResource {
     if (hbaseCluster != null) {
       TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
+        List<HRegion> serverRegions = t.getRegionServer().getRegions(qualifiedTableName);
         List<Runnable> compacters = new ArrayList<>();
         for (HRegion region : serverRegions) {
           compacters.add(createCompactRegion(region, majorCompact));
@@ -163,7 +169,8 @@ public abstract class HBaseTestBase extends ExternalResource {
       @Override
       public void run() {
         try {
-          region.flushcache();
+        	//Added tracker null for compilation to HBase 2
+          region.flushcache(false, false, null);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
@@ -179,7 +186,7 @@ public abstract class HBaseTestBase extends ExternalResource {
       @Override
       public void run() {
         try {
-          region.compactStores(majorCompact);
+          region.compactStores();
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }

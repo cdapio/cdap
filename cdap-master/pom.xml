@@ -211,14 +211,8 @@
     <profile>
       <id>dist</id>
       <properties>
-        <package.deb.depends>--depends cdap --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98
-        --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh
-        --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0
-        --depends cdap-hbase-compat-1.2-cdh5.7.0</package.deb.depends>
-        <package.rpm.depends>--depends cdap --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98
-        --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh
-        --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0
-        --depends cdap-hbase-compat-1.2-cdh5.7.0</package.rpm.depends>
+        <package.deb.depends>--depends cdap --depends cdap-hbase-compat-2.0</package.deb.depends>
+        <package.rpm.depends>--depends cdap --depends cdap-hbase-compat-2.0</package.rpm.depends>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>

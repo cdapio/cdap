@@ -18,11 +18,7 @@ package co.cask.cdap.data2.transaction.stream.hbase;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 
 import java.io.IOException;
@@ -34,7 +30,7 @@ import java.util.Set;
  */
 public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStore {
 
-  private final HTable hTable;
+  private final Table hTable;
 
   /**
    * Constructor to create an instance for a given stream.
@@ -42,7 +38,7 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
    * @param streamConfig configuration information of the stream.
    * @param hTable for communicating with HBase for backing store.
    */
-  public HBaseStreamConsumerStateStore(StreamConfig streamConfig, HTable hTable) {
+  public HBaseStreamConsumerStateStore(StreamConfig streamConfig, Table hTable) {
     super(streamConfig);
     this.hTable = hTable;
   }
@@ -85,9 +81,9 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
   @Override
   protected void store(byte[] row, byte[] column, byte[] value) throws IOException {
     Put put = new Put(row);
-    put.add(QueueEntryRow.COLUMN_FAMILY, column, value);
+    put.addColumn(QueueEntryRow.COLUMN_FAMILY, column, value);
     hTable.put(put);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -97,10 +93,10 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
     }
     Put put = new Put(row);
     for (Map.Entry<byte[], byte[]> entry : values.entrySet()) {
-      put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
+      put.addColumn(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
     }
     hTable.put(put);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 
   @Override
@@ -110,9 +106,9 @@ public final class HBaseStreamConsumerStateStore extends StreamConsumerStateStor
     }
     Delete delete = new Delete(row);
     for (byte[] column : columns) {
-      delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, column);
+      delete.addColumns(QueueEntryRow.COLUMN_FAMILY, column);
     }
     hTable.delete(delete);
-    hTable.flushCommits();
+//    hTable.flushCommits();
   }
 }
