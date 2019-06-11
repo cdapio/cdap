@@ -87,7 +87,7 @@ public abstract class AbstractProgramClient {
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
     String path = String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs?%s",
-                                program.getNamespaceId(), program.getApplication(), program.getVersion(),
+                                program.getNamespace(), program.getApplication(), program.getVersion(),
                                 program.getType().getCategoryName(), program.getProgram(), queryParams);
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
 
