@@ -16,7 +16,7 @@
 
 // Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
 
-export function parseRelations(namespace, ents, isCause = true) {
+export function parseRelations(namespace, target, ents, isCause = true) {
   const tables = {};
   const relNodes = [];
   const relLinks = [];
@@ -43,8 +43,10 @@ export function parseRelations(namespace, ents, isCause = true) {
         relNodes.push(field);
       }
       relLinks.push({
-        source: isCause ? fieldIds.get(fieldName) : rel.source,
-        destination: isCause ? rel.destination : fieldIds.get(fieldName),
+        source: isCause ? fieldIds.get(fieldName) : `${namespace}_${target}_${rel.source}`,
+        destination: isCause
+          ? `${namespace}_${target}_${rel.destination}`
+          : fieldIds.get(fieldName),
       });
     });
   });

@@ -21,7 +21,7 @@ import {
   makeTargetNodes,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 
-interface INode {
+export interface INode {
   id: string;
   name: string;
   group: number;
@@ -30,8 +30,8 @@ interface INode {
 const FllContext = React.createContext({});
 
 function getFieldsAndLinks(d) {
-  const incoming = parseRelations(d.entityId.namespace, d.incoming);
-  const outgoing = parseRelations(d.entityId.namespace, d.outgoing, false);
+  const incoming = parseRelations(d.entityId.namespace, d.entityId.dataset, d.incoming);
+  const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
   const causeTables = incoming.tables;
   const impactTables = outgoing.tables;
   const nodes = incoming.relNodes.concat(outgoing.relNodes);
