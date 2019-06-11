@@ -15,12 +15,13 @@
  * the License.
  */
 
-package io.cdap.cdap.client.schedule;
+package io.cdap.cdap.schedule;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.schedule.AbstractScheduleClient;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;

@@ -19,6 +19,8 @@ package io.cdap.cdap.client.application;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.application.RemoteApplicationClient;
+import io.cdap.cdap.common.application.AbstractApplicationClient;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ApplicationDetail;

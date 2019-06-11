@@ -15,7 +15,7 @@
  * the License.
  */
 
-package io.cdap.cdap.client.schedule;
+package io.cdap.cdap.common.schedule;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

@@ -15,12 +15,13 @@
  * the License.
  */
 
-package io.cdap.cdap.client.application;
+package io.cdap.cdap.program;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.program.AbstractProgramClient;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -33,17 +34,17 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * Application client to make requests to the App Fabric service which is discovered through {@link
+ * Program client to make requests to the App Fabric service which is discovered through {@link
  * DiscoveryServiceClient}.
  */
-public class RemoteApplicationClient extends AbstractApplicationClient {
+public class RemoteProgramClient extends AbstractProgramClient {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteApplicationClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteProgramClient.class);
 
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteApplicationClient(DiscoveryServiceClient discoveryClient) {
+  public RemoteProgramClient(DiscoveryServiceClient discoveryClient) {
     HttpRequestConfig httpRequestConfig = new DefaultHttpRequestConfig(false);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP, httpRequestConfig,
                                          Constants.Gateway.API_VERSION_3);

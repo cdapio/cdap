@@ -15,16 +15,16 @@
  * the License.
  */
 
-package io.cdap.cdap.client.application;
+package io.cdap.cdap.common.program;
 
 import com.google.common.reflect.TypeToken;
-import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
-import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
  */
-public abstract class AbstractApplicationClient {
+public abstract class AbstractProgramClient {
 
   /**
    * Executes an HTTP request.
@@ -54,44 +54,49 @@ public abstract class AbstractApplicationClient {
   protected abstract URL resolve(String resource) throws IOException;
 
   /**
-   * Lists all applications currently deployed.
+   * Gets the run records of a program.
    *
-   * @param namespace the namespace to list applications from
-   * @return list of {@link ApplicationRecord ApplicationRecords}.
-   * @throws BadRequestException if the request is invalid
+   * @param program ID of the program
+   * @return the run records of the program
    * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public List<ApplicationRecord> list(NamespaceId namespace)
-    throws BadRequestException, IOException, UnauthenticatedException {
-    String path = String.format("namespaces/%s/apps", namespace.getNamespace());
-    HttpResponse response = makeRequest(path, HttpMethod.GET, null);
-
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
-    }).getResponseObject();
+  public List<RunRecord> getAllProgramRuns(ProgramId program, long startTime, long endTime, int limit)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    return getProgramRuns(program, ProgramRunStatus.ALL.name(), startTime, endTime, limit);
   }
 
   /**
-   * Get details about the specified application.
+   * Gets the run records of a program.
    *
-   * @param appId the id of the application to get
-   * @return details about the specified application
-   * @throws ApplicationNotFoundException if the application with the given ID was not found
-   * @throws BadRequestException if the request is invalid
+   * @param program the program
+   * @param state - filter by status of the program
+   * @return the run records of the program
    * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public ApplicationDetail get(ApplicationId appId)
-    throws ApplicationNotFoundException, BadRequestException, IOException, UnauthenticatedException {
-    String path = String.format("namespaces/%s/apps/%s/versions/%s",
-                                appId.getParent().getNamespace(), appId.getApplication(), appId.getVersion());
+  public List<RunRecord> getProgramRuns(ProgramId program, String state,
+                                        long startTime, long endTime, int limit)
+    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+
+    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d",
+                                       Constants.AppFabric.QUERY_PARAM_STATUS, state,
+                                       Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
+                                       Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
+                                       Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
+    String path = String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs?%s",
+                                program.getNamespace(), program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram(), queryParams);
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
+      throw new NotFoundException(program);
     }
 
-    return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() {
+    }).getResponseObject();
   }
 
   private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
