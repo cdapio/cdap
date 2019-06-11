@@ -16,20 +16,32 @@
 
 import React from 'react';
 import SortableStickyGrid from 'components/SortableStickyGrid/index.js';
-import withStyles from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
+import classnames from 'classnames';
+import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme) => {
   return createStyles({
     table: {
       width: '170px',
       border: `1px solid ${theme.palette.grey[300]}`,
-      margin: '10px',
-      '& .grid-row': {
-        height: '20px',
+      marginBottom: '10px',
+      '& .grid.grid-container': {
+        maxHeight: 'none',
       },
-      // TO DO: Fix overflow-y and maxHeight of grid-container to get rid of vertical scroll
+    },
+    targetTable: {
+      border: `2px solid #3cc801`,
+    },
+    // had to add this in to fix styling after adding custom renderGridBody method...
+    gridBody: {
+      '& .grid-row': {
+        paddingLeft: '10px',
+        paddingRight: '10px',
+        borderBottom: `1px solid ${theme.palette.grey[500]}`,
+      },
     },
     tableHeader: {
       borderBottom: `2px solid ${theme.palette.grey[300]}`,
@@ -46,8 +58,15 @@ const styles = (theme) => {
   });
 };
 
-function renderGridHeader(nodes, tableName, classes) {
-  const count: number = nodes.length;
+interface ITableProps extends WithStyles<typeof styles> {
+  tableId: string;
+  fields: INode[];
+  isTarget?: boolean;
+}
+
+function renderGridHeader(fields, tableId, classes) {
+  const count: number = fields.length;
+  const tableName = fields[0].group;
   return (
     <div className={classes.tableHeader}>
       {tableName}
@@ -58,15 +77,30 @@ function renderGridHeader(nodes, tableName, classes) {
   );
 }
 
-function FllTable({ tableName, fields, classes }) {
-  const GRID_HEADERS = [{ property: 'name', label: tableName }];
+function renderGridBody(fields, tableName, classes) {
+  return (
+    <div className={classes.gridBody} id={tableName}>
+      {fields.map((field) => {
+        return (
+          <div className={classnames('grid-row', 'grid-link')} key={field.id} id={field.id}>
+            {field.name}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FllTable({ tableId, fields, classes, isTarget = false }: ITableProps) {
+  const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
     <SortableStickyGrid
-      key={`cause ${tableName}`}
+      key={`cause ${tableId}`}
       entities={fields}
       gridHeaders={GRID_HEADERS}
-      className={classes.table}
-      renderGridHeader={renderGridHeader.bind(null, fields, tableName, classes)}
+      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
+      renderGridHeader={renderGridHeader.bind(null, fields, tableId, classes)}
+      renderGridBody={renderGridBody.bind(this, fields, tableId, classes)}
     />
   );
 }

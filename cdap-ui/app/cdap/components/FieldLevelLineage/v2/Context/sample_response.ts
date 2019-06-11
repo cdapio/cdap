@@ -145,7 +145,7 @@ export default {
       relations: [
         {
           source: 'vacation',
-          destination: 'cities',
+          destination: 'city',
         },
       ],
     },
