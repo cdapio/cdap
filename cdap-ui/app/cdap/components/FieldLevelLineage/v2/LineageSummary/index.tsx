@@ -21,7 +21,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
-import { grey } from 'components/ThemeWrapper/colors';
+import { grey, orange, yellow } from 'components/ThemeWrapper/colors';
 
 const styles = (theme) => {
   return {
@@ -35,6 +35,7 @@ const styles = (theme) => {
       position: 'absolute' as 'absolute',
       height: '100%',
       width: '100%',
+      pointerEvents: 'none',
     },
   };
 };
@@ -43,7 +44,7 @@ class LineageSummary extends React.Component<{ classes }> {
   private activeLinks;
 
   // TO DO: Get colors from theme once we've created a separate theme colors file
-  private drawLineFromLink({ source, destination }) {
+  private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
     const sourceEl = d3.select(`#${source}`);
     const destEl = d3.select(`#${destination}`);
@@ -74,9 +75,11 @@ class LineageSummary extends React.Component<{ classes }> {
       [sourceX2, sourceY2],
     ];
 
+    const edgeColor = isSelected ? orange[50] : grey[300];
+
     linkContainer
       .append('path')
-      .style('stroke', grey[300])
+      .style('stroke', edgeColor)
       .style('stroke-width', '1')
       .style('fill', 'none')
       .attr('d', lineGenerator(points));
@@ -91,7 +94,8 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('width', anchorHeight)
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
-      .style('fill', grey[300]);
+      .attr('pointer-events', 'fill') // To make rect clickable
+      .style('fill', edgeColor);
 
     // draw right anchor
     linkContainer
@@ -101,18 +105,29 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('width', anchorHeight)
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
-      .style('fill', grey[300]);
+      .attr('pointer-events', 'fill') // To make rect clickable
+      .style('fill', edgeColor);
   }
 
-  private drawLinks() {
+  private drawLinks(activeFieldId = null) {
     // clear any existing links and anchors
     d3.select('#links-container')
       .selectAll('path,rect')
       .remove();
 
     this.activeLinks.forEach((link) => {
-      this.drawLineFromLink(link);
+      const isSelected = link.source === activeFieldId || link.destination === activeFieldId;
+      this.drawLineFromLink(link, isSelected);
     });
+  }
+
+  private handleFieldClick(e) {
+    const fieldId = (e.target as HTMLAreaElement).id;
+    d3.selectAll('.grid-row').style('background-color', 'white');
+
+    d3.select(`#${fieldId}`).style('background-color', yellow[200]); // change background
+    // highlight active fields
+    this.drawLinks(fieldId);
   }
 
   public componentWillUnmount() {
@@ -150,7 +165,14 @@ class LineageSummary extends React.Component<{ classes }> {
               <div>
                 <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
                 {Object.keys(causeSets).map((key) => {
-                  return <FllTable key={key} tableId={key} fields={causeSets[key]} />;
+                  return (
+                    <FllTable
+                      clickFieldHandler={this.handleFieldClick.bind(this)}
+                      key={key}
+                      tableId={key}
+                      fields={causeSets[key]}
+                    />
+                  );
                 })}
               </div>
               <div>
@@ -159,7 +181,12 @@ class LineageSummary extends React.Component<{ classes }> {
                   first={firstField}
                   total={Object.keys(targetFields).length}
                 />
-                <FllTable isTarget={true} tableId={target} fields={targetFields} />
+                <FllTable
+                  clickFieldHandler={this.handleFieldClick.bind(this)}
+                  isTarget={true}
+                  tableId={target}
+                  fields={targetFields}
+                />
               </div>
               <div>
                 <FllHeader
@@ -168,7 +195,14 @@ class LineageSummary extends React.Component<{ classes }> {
                   total={Object.keys(impactSets).length}
                 />
                 {Object.keys(impactSets).map((key) => {
-                  return <FllTable key={key} tableId={key} fields={impactSets[key]} />;
+                  return (
+                    <FllTable
+                      clickFieldHandler={this.handleFieldClick.bind(this)}
+                      key={key}
+                      tableId={key}
+                      fields={impactSets[key]}
+                    />
+                  );
                 })}
               </div>
             </div>
