@@ -88,7 +88,6 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     startProgram(sampleWorkflow);
     waitState(sampleWorkflow, "RUNNING");
 
-    // stopProgram(sampleWorkflow);
     waitState(sampleWorkflow, "STOPPED");
 
     String query = "{ "
@@ -133,7 +132,6 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     startProgram(sampleWorkflow);
     waitState(sampleWorkflow, "RUNNING");
 
-    // stopProgram(sampleWorkflow);
     waitState(sampleWorkflow, "STOPPED");
 
     String query = "{ "

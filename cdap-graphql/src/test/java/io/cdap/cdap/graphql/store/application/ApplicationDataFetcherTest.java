@@ -19,11 +19,17 @@ package io.cdap.cdap.graphql.store.application;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import io.cdap.cdap.AppWithMultipleSchedules;
 import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.graphql.CDAPGraphQLTest;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -182,7 +188,34 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
 
 
   @Test
-  public void testPipelineUI() {
+  public void testPipelineUI() throws Exception {
+    deploy(AppWithMultipleSchedules.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
+           NamespaceId.DEFAULT.getNamespace());
+
+    ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AppWithMultipleSchedules.NAME);
+    ProgramId sampleWorkflow = appId.workflow(AppWithMultipleSchedules.AnotherWorkflow.NAME);
+    Assert.assertEquals("STOPPED", getProgramStatus(sampleWorkflow));
+
+    startProgram(sampleWorkflow);
+    waitState(sampleWorkflow, "RUNNING");
+
+    waitState(sampleWorkflow, "STOPPED");
+
+    ScheduleDetail updateDetail = new ScheduleDetail(NamespaceId.DEFAULT.getNamespace(),
+                                                     AppWithMultipleSchedules.NAME,
+                                                     null,
+                                                     "AnotherSchedule1",
+                                                     null,
+                                                     null,
+                                                     null,
+                                                     new TimeTrigger("0 4 * * *"),
+                                                     null,
+                                                     null,
+                                                     null);
+
+    updateSchedule(NamespaceId.DEFAULT.getNamespace(), AppWithMultipleSchedules.NAME, null, "AnotherSchedule1",
+                   updateDetail);
+
     String query = "{ "
       + "  applications {"
       + "    name"
@@ -200,6 +233,7 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
       + "          schedules {"
       + "            name"
       + "            time"
+      + "            status"
       + "          }"
       + "        }"
       + "      }"
@@ -218,6 +252,8 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
     System.out.println(executionResult.getData().toString());
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithMultipleSchedules.NAME));
   }
 
 }
