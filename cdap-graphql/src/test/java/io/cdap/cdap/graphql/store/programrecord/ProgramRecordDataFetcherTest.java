@@ -209,14 +209,14 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     List programs = application.get(ApplicationFields.PROGRAMS);
     Map<String, List> programRecord = (Map<String, List>) programs.get(0);
 
-    Map<String, String> schedules = (Map<String, String>) programRecord.get(ProgramRecordFields.SCHEDULES).get(0);
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.NAMESPACE));
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.APPLICATION));
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.APPLICATION_VERSION));
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.NAME));
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.DESCRIPTION));
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.STATUS));
-    Assert.assertNotNull(schedules.get(ProgramRecordFields.TIME));
+    Map<String, String> schedule = (Map<String, String>) programRecord.get(ProgramRecordFields.SCHEDULES).get(0);
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.NAMESPACE));
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.APPLICATION));
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.APPLICATION_VERSION));
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.NAME));
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.DESCRIPTION));
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.STATUS));
+    Assert.assertNotNull(schedule.get(ProgramRecordFields.TIME));
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithSchedule.NAME));
   }
