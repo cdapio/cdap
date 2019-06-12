@@ -16,15 +16,31 @@
 
 import React from 'react';
 import T from 'i18n-react';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import { Consumer } from '../Context/FllContext';
 
-interface IHeaderProps {
+interface IHeaderProps extends WithStyles<typeof styles> {
   type: string;
   first: number;
   total: number;
 }
 
-function FllHeader({ type, first, total }: IHeaderProps) {
+const styles = (theme) => {
+  return {
+    root: {
+      color: `${theme.palette.grey[200]}`,
+      height: 60, // this is closer to 75 in the design
+      '& .target': {
+        fontSize: '1.25rem',
+      },
+    },
+    subHeader: {
+      borderBottom: `2px solid ${theme.palette.grey[200]}`,
+    },
+  };
+};
+
+function FllHeader({ type, first, total, classes }: IHeaderProps) {
   return (
     <Consumer>
       {({ numTables, target }) => {
@@ -49,14 +65,15 @@ function FllHeader({ type, first, total }: IHeaderProps) {
             : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedSubheader', options);
 
         return (
-          <React.Fragment>
-            <div>{header}</div>
-            <div>{subHeader}</div>
-          </React.Fragment>
+          <div className={classes.root}>
+            <div className={type}>{header}</div>
+            <div className={classes.subHeader}>{subHeader}</div>
+          </div>
         );
       }}
     </Consumer>
   );
 }
+const StyledFllHeader = withStyles(styles)(FllHeader);
 
-export default FllHeader;
+export default StyledFllHeader;

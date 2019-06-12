@@ -27,12 +27,11 @@ const styles = (theme) => {
     table: {
       width: '170px',
       border: `1px solid ${theme.palette.grey[300]}`,
-      margin: '10px',
-      '& .grid-row': {
-        height: '20px',
+      '& .grid.grid-container': {
+        maxHeight: 'none',
       },
-      // TO DO: Fix overflow-y and maxHeight of grid-container to get rid of vertical scroll
     },
+    // had to add this in to fix styling after adding custom renderGridBody method...
     gridBody: {
       '& .grid-row': {
         paddingLeft: '10px',

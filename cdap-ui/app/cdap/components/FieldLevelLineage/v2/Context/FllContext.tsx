@@ -44,7 +44,7 @@ export function Provider({ children }) {
 
   const defaultState = {
     target: data.entityId.dataset,
-    targetFields: makeTargetNodes(data.entityId.dataset, data.fields) as INode[],
+    targetFields: makeTargetNodes(data.entityId, data.fields) as INode[],
     nodes: parsedRes.nodes,
     links: parsedRes.links,
     causeSets: parsedRes.causeTables,
