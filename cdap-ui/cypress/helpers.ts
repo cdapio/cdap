@@ -14,55 +14,49 @@
  * the License.
 */
 
-const DUMMY_USERNAME = 'alice';
-const DUMMY_PW = 'alicepassword';
+const username = Cypress.env('username') || 'admin';
+const password = Cypress.env('password') || 'admin';
+let isAuthEnabled = false;
+let authToken = null;
 
 function loginIfRequired() {
-  cy.visit('/');
-  cy.request({
-    method: 'GET',
-    url: `http://${Cypress.env('host')}:11015/v3/namespaces`,
-    failOnStatusCode: false,
-  }).then((response) => {
-    // only login when ping request returns 401
-    if (response.status === 401) {
-      cy.request({
-        method: 'POST',
-        url: '/login',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: DUMMY_USERNAME,
-          password: DUMMY_PW,
-        }),
-      }).then((res) => {
-        expect(res.status).to.be.at.least(200);
-        expect(res.status).to.be.lessThan(300);
-        const respBody = JSON.parse(res.body);
-        cy.setCookie('CDAP_Auth_Token', respBody.access_token);
-        cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
-        cy.visit('/', {
-          onBeforeLoad: (win) => {
-            win.sessionStorage.setItem('showWelcome', 'false');
-          },
-        });
-        cy.url().should('include', '/cdap/ns/default');
-        cy.getCookie('CDAP_Auth_Token').should('exist');
-        cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
-      });
-    }
-  });
-}
-
-function getAuthHeaders() {
-  const authTokenCookie = cy.getCookie('CDAP_Auth_Token');
-  let headers = null;
-  if (authTokenCookie) {
-    Cypress.Cookies.preserveOnce('CDAP_Auth_Token');
-    headers = {
-      Authorization: 'Bearer ' + authTokenCookie.value,
-    };
+  if (isAuthEnabled && authToken !== null) {
+    cy.setCookie('CDAP_Auth_Token', authToken);
+    cy.setCookie('CDAP_Auth_User', username);
+    Cypress.Cookies.defaults({
+      whitelist: ['CDAP_Auth_Token', 'CDAP_Auth_User'],
+    });
+    return;
   }
-  return headers;
+  return cy
+    .request({
+      method: 'GET',
+      url: `http://${Cypress.env('host')}:11015/v3/namespaces`,
+      failOnStatusCode: false,
+    })
+    .then((response) => {
+      // only login when ping request returns 401
+      if (response.status === 401) {
+        isAuthEnabled = true;
+        cy.request({
+          method: 'POST',
+          url: '/login',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            password,
+          }),
+        }).then((res) => {
+          const respBody = JSON.parse(res.body);
+          authToken = respBody.access_token;
+          cy.setCookie('CDAP_Auth_Token', respBody.access_token);
+          cy.setCookie('CDAP_Auth_User', username);
+          Cypress.Cookies.defaults({
+            whitelist: ['CDAP_Auth_Token', 'CDAP_Auth_User'],
+          });
+        });
+      }
+    });
 }
 
 function getArtifactsPoll(headers, retries = 0) {
@@ -82,4 +76,4 @@ function getArtifactsPoll(headers, retries = 0) {
   });
 }
 
-export { loginIfRequired, getAuthHeaders, getArtifactsPoll };
+export { loginIfRequired, getArtifactsPoll };

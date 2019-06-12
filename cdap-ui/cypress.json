@@ -7,5 +7,6 @@
   "pluginsFile": "cypress/plugins/index.js",
   "supportFile": "cypress/support/index.js",
   "fixturesFolder": "cypress/fixtures",
-  "chromeWebSecurity": false
+  "chromeWebSecurity": false,
+  "defaultCommandTimeout": 20000
 }
