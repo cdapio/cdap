@@ -225,7 +225,7 @@ export default class DataPrepTopPanel extends Component {
       } else if (info.properties.connection === 'upload') {
         return (
           <div className="data-prep-name">
-            <div className="connection-type truncate" title={`${T.translate(`${PREFIX}.upload`)}`}>
+            <div className="connection-type truncate" title={T.translate(`${PREFIX}.upload`)}>
               {T.translate(`${PREFIX}.upload`)}
               <span className="connection-name">{info.properties.connectionid}</span>
             </div>
