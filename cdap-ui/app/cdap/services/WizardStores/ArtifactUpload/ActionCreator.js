@@ -19,7 +19,6 @@ import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import isNil from 'lodash/isNil';
-import { Observable } from 'rxjs/Observable';
 
 // FIXME: Extract it out???
 const uploadArtifact = (includeParents = true) => {
@@ -40,7 +39,17 @@ const uploadArtifact = (includeParents = true) => {
     if (version && Array.isArray(version)) {
       version = version[0];
     }
-    let name = version ? nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1) : null;
+    let name = version
+      ? nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1)
+      : nameWithVersion;
+    // If version is not present, use default.
+    if (!version) {
+      version = '1.0.0-SNAPSHOT';
+    }
+    // If name is not present i.e 1.2.3.jar, use 1.2.3 as name and version.
+    if (!name) {
+      name = version;
+    }
     return { version, name };
   };
 
@@ -49,9 +58,6 @@ const uploadArtifact = (includeParents = true) => {
     filename = state.upload.file.name.split('.jar')[0];
   }
   let { name, version } = getArtifactNameAndVersion(filename);
-  if (!name || !version) {
-    return Observable.throw('Invalid driver JAR file name. The driver JAR file name must conform to the format <name>-<version>.jar (eg: mysql-connector-java-5.1.39-bin.jar)');
-  }
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = `/namespaces/${namespace}/artifacts/${name}`;
