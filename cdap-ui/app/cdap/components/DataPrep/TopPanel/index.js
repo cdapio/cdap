@@ -199,7 +199,9 @@ export default class DataPrepTopPanel extends Component {
       if (info.properties.connection === 'file') {
         return (
           <div className="data-prep-name">
-            <div className="connection-type">{T.translate(`${PREFIX}.file`)}</div>
+            <div className="connection-type truncate" title={T.translate(`${PREFIX}.file`)}>
+              {T.translate(`${PREFIX}.file`)}
+            </div>
             <div className="title" title={info.properties.file}>
               {info.properties.file}
             </div>
@@ -208,9 +210,12 @@ export default class DataPrepTopPanel extends Component {
       } else if (info.properties.connection === 'database') {
         return (
           <div className="data-prep-name">
-            <div className="connection-type">
+            <div
+              className="connection-type truncate"
+              title={`${T.translate(`${PREFIX}.database`)} - ${info.properties.connectionid}`}
+            >
               {T.translate(`${PREFIX}.database`)}
-              <span className="connection-name">{info.properties.connectionid}</span>
+              <span className="connection-name">{`- ${info.properties.connectionid}`}</span>
             </div>
             <div className="title" title={info.properties.name}>
               {T.translate(`${PREFIX}.databaseTitle`, { name: info.properties.name })}
@@ -220,7 +225,7 @@ export default class DataPrepTopPanel extends Component {
       } else if (info.properties.connection === 'upload') {
         return (
           <div className="data-prep-name">
-            <div className="connection-type">
+            <div className="connection-type truncate" title={T.translate(`${PREFIX}.upload`)}>
               {T.translate(`${PREFIX}.upload`)}
               <span className="connection-name">{info.properties.connectionid}</span>
             </div>
@@ -234,8 +239,14 @@ export default class DataPrepTopPanel extends Component {
       ) {
         return (
           <div className="data-prep-name">
-            <div className="connection-type">
+            <div
+              className="connection-type truncate"
+              title={`${T.translate(`${PREFIX}.${info.properties.connection}`)} - ${
+                info.properties.connectionid
+              }`}
+            >
               {T.translate(`${PREFIX}.${info.properties.connection}`)}
+              <span className="connection-name">{`- ${info.properties.connectionid}`}</span>
             </div>
             <div className="title" title={info.properties.name}>
               {info.properties.name}
