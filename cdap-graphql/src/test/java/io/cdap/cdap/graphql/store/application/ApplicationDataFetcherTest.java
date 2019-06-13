@@ -191,10 +191,7 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
 
     ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AppWithMultipleSchedules.NAME);
     ProgramId sampleWorkflow = appId.workflow(AppWithMultipleSchedules.SOME_WORKFLOW);
-    Assert.assertEquals("STOPPED", getProgramStatus(sampleWorkflow));
-
     startProgram(sampleWorkflow);
-    waitState(sampleWorkflow, "RUNNING");
     waitState(sampleWorkflow, "STOPPED");
 
     resumeSchedule(NamespaceId.DEFAULT.getNamespace(), AppWithMultipleSchedules.NAME, "AnotherSchedule1");
@@ -235,6 +232,10 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
     System.out.println(executionResult.getData().toString());
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    stopProgram(sampleWorkflow);
+    waitState(sampleWorkflow, "STOPPED");
+    Thread.sleep(3000);
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithMultipleSchedules.NAME));
   }
