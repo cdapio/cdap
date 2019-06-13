@@ -2,20 +2,20 @@
 CDAP UI
 =======
 
-CDAP UI comprises three different webapps -- CDAP, Hydrator, and Tracker -- that we ship as part of every release.
-CDAP is built in React while Hydrator and Tracker are written in Angular.
+CDAP is built part using React and part Angular. We are on the process migrating the entire app to react.
+Until then the UI webserver (nodejs proxy) will serve three different applications to browser, two Angular and one React app.
 
 Building the UI
 ===============
 
 Prerequisites
 -------------
-- NodeJS Version: 4.5.0 or higher
+- NodeJS Version: 8.7.0
 
-  CDAP UI requires a minimum NodeJS version of 4.5.0.
+  CDAP UI requires  NodeJS version 8.7.0.
   You could either download from the nodejs.org website or use a version manager.
 
-  - `v4.5.0 Download <https://nodejs.org/download/release/v4.5.0/>`__
+  - `v8.7.0 Download <https://nodejs.org/download/release/v8.7.0/>`__
 
   - `nvm <https://github.com/creationix/nvm#install-script>`__ or
 
@@ -23,18 +23,21 @@ Prerequisites
 
   The node version managers help switching between node version quite seamlessly.
 
-- Build tools: ``gulp``, ``webpack``, and ``bower``
+- Build tools: ``yarn``, ``gulp``, ``webpack``, and ``bower``
+
+  For CDAP UI development we use ``yarn`` as node build tool.
+  For installing yarn please follow `yarn installation docs <https://yarnpkg.com/lang/en/docs/install/>`__
 
   CDAP UI extensively uses ``bower``, ``gulp``, and ``webpack`` during its build process.
   Even though it's not necessary, it will be useful if they are installed globally::
 
-    $ npm install gulp bower webpack -g
+    $ yarn global add gulp bower webpack -g
 
 Install Dependencies
 --------------------
 ::
 
-  $ npm install
+  $ yarn
   $ bower install
 
 
@@ -42,23 +45,35 @@ Building CDAP in React
 ======================
 ::
 
-  $ npm run cdap-dev-build ## build version
-  $ npm run cdap-dev-build-w ## watch version
+  $ yarn cdap-dev-build ## build version
+  $ yarn cdap-dev-build-w ## watch version
 
+Building CDAP in React to be shared in Angular code
+===================================================
+::
+
+  $ yarn build-dev-common ## build version
+  $ yarn build-dev-common-w ## watch version
 
 Building Hydrator and Tracker in Angular
 ========================================
 ::
 
-  $ npm run build ## build version
-  $ npm run build-w ## watch version
+  $ yarn build ## build version
+  $ yarn build-w ## watch version
+
+Building entire UI
+==================
+::
+
+  $ yarn cdap-full-build ## builds both angular and react code.
 
 
 Building DLLs for updating pre-built libraries used by CDAP
 ===========================================================
 ::
 
-  $ npm run build-dlls
+  $ yarn build-dlls
 
 This will build the pre-built library dlls that we use in CDAP
 
@@ -100,7 +115,7 @@ then you need to build an additional ``common`` library that is used across all:
 License and Trademarks
 ======================
 
-Copyright © 2016-2017 Cask Data, Inc.
+Copyright © 2019 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
