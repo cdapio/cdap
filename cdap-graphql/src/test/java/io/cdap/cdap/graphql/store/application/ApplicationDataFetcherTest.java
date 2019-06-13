@@ -233,10 +233,7 @@ public class ApplicationDataFetcherTest extends CDAPGraphQLTest {
 
     Assert.assertTrue(executionResult.getErrors().isEmpty());
 
-    stopProgram(sampleWorkflow);
-    waitState(sampleWorkflow, "STOPPED");
-    Thread.sleep(3000);
-
+    Thread.sleep(10000);
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithMultipleSchedules.NAME));
   }
 
