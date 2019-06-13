@@ -51,7 +51,7 @@ public class RemoteScheduleClient extends AbstractScheduleClient {
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
     UnauthorizedException {
-    LOG.trace("Making application request {}", request.getBody());
+    LOG.trace("Making schedule request {}", request.getBody());
     HttpResponse response = remoteClient.execute(request);
     LOG.trace("Received response {} for request {}", response, request);
     return response;

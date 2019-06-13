@@ -53,7 +53,7 @@ public class RemoteProgramClient extends AbstractProgramClient {
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
     UnauthorizedException {
-    LOG.trace("Making application request {}", request.getBody());
+    LOG.trace("Making program request {}", request.getBody());
     HttpResponse response = remoteClient.execute(request);
     LOG.trace("Received response {} for request {}", response, request);
     return response;
