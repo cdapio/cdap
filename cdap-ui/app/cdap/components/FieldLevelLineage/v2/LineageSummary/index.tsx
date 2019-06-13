@@ -20,6 +20,7 @@ import FllTable from 'components/FieldLevelLineage/v2/FllTable';
 import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
+import debounce from 'lodash/debounce';
 
 const styles = (theme) => {
   return {
@@ -101,14 +102,24 @@ class LineageSummary extends React.Component<{ classes }> {
       .style('fill', '#bbbbbb');
   }
 
-  private drawLinks() {
+  public drawLinks() {
+    // clear any existing links and anchors
+    d3.select('#links-container')
+      .selectAll('path,rect')
+      .remove();
+
     this.activeLinks.forEach((link) => {
       this.drawLineFromLink(link);
     });
   }
 
+  public componentWillUnmount() {
+    window.removeEventListener('resize', debounce(this.drawLinks.bind(this), 1));
+  }
+
   public componentDidMount() {
     this.drawLinks();
+    window.addEventListener('resize', debounce(this.drawLinks.bind(this), 1));
   }
   public render() {
     return (
@@ -146,7 +157,7 @@ class LineageSummary extends React.Component<{ classes }> {
                   first={firstField}
                   total={Object.keys(targetFields).length}
                 />
-                <FllTable key={target} tableName={target} fields={targetFields} />
+                <FllTable key={target} isTarget={true} tableName={target} fields={targetFields} />
               </div>
               <div>
                 <FllHeader

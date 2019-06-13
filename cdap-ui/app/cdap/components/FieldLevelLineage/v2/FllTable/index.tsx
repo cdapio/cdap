@@ -27,9 +27,13 @@ const styles = (theme) => {
     table: {
       width: '170px',
       border: `1px solid ${theme.palette.grey[300]}`,
+      marginBottom: '10px',
       '& .grid.grid-container': {
         maxHeight: 'none',
       },
+    },
+    targetTable: {
+      border: `2px solid #3cc801`,
     },
     // had to add this in to fix styling after adding custom renderGridBody method...
     gridBody: {
@@ -57,6 +61,7 @@ const styles = (theme) => {
 interface ITableProps extends WithStyles<typeof styles> {
   tableName: string;
   fields: INode[];
+  isTarget?: boolean;
 }
 
 function renderGridHeader(fields, tableName, classes) {
@@ -91,14 +96,14 @@ function renderGridBody(fields, tableName, classes) {
   );
 }
 
-function FllTable({ tableName, fields, classes }: ITableProps) {
+function FllTable({ tableName, fields, classes, isTarget = false }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableName }];
   return (
     <SortableStickyGrid
       key={`cause ${tableName}`}
       entities={fields}
       gridHeaders={GRID_HEADERS}
-      className={classes.table}
+      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
       renderGridHeader={renderGridHeader.bind(null, fields, tableName, classes)}
       renderGridBody={renderGridBody.bind(this, fields, tableName, classes)}
     />

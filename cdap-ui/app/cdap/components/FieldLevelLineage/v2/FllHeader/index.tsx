@@ -29,7 +29,7 @@ const styles = (theme) => {
   return {
     root: {
       color: `${theme.palette.grey[200]}`,
-      height: 60, // this is closer to 75 in the design
+      height: 70, // this is closer to 75 in the design
       '& .target': {
         fontSize: '1.25rem',
       },
