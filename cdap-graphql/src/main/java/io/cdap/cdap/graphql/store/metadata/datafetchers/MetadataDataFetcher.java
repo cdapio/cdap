@@ -25,6 +25,7 @@ import io.cdap.cdap.common.metadata.MetadataRecord;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.metadata.dto.Metadata;
+import io.cdap.cdap.graphql.store.metadata.dto.Property;
 import io.cdap.cdap.graphql.store.metadata.dto.Tag;
 import io.cdap.cdap.metadata.RemoteMetadataClient;
 
@@ -62,10 +63,35 @@ public class MetadataDataFetcher {
 
         Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(metadataEntity);
         Set<Tag> tags = getTags(metadataRecords);
+        Set<Property> properties = getProperties(metadataRecords);
 
-        return new Metadata(tags);
+        return new Metadata(tags, properties);
       }
     );
+  }
+
+  private Set<Property> getProperties(Set<MetadataRecord> metadataRecords) {
+    Set<Property> properties = new HashSet<>();
+
+    for (MetadataRecord metadataRecord : metadataRecords) {
+      Map<String, String> metadataProperties = metadataRecord.getProperties();
+
+      if (metadataProperties.isEmpty()) {
+        continue;
+      }
+
+      String scope = metadataRecord.getScope().name();
+
+      for (Map.Entry<String, String> metadataProperty : metadataProperties.entrySet()) {
+        String name = metadataProperty.getKey();
+        String value = metadataProperty.getValue();
+
+        Property property = new Property(name, scope, value);
+        properties.add(property);
+      }
+    }
+
+    return properties;
   }
 
   private Set<Tag> getTags(Set<MetadataRecord> metadataRecords) {

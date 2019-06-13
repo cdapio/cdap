@@ -20,21 +20,9 @@ package io.cdap.cdap.graphql.store.metadata.dto;
 /**
  * DTO object for structuring tags
  */
-public class Tag {
-
-  private final String name;
-  private final String scope;
+public class Tag extends MetadataElement {
 
   public Tag(String name, String scope) {
-    this.name = name;
-    this.scope = scope;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getScope() {
-    return scope;
+    super(name, scope);
   }
 }

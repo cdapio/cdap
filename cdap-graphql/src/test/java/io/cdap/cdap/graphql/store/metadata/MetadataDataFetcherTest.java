@@ -44,6 +44,11 @@ public class MetadataDataFetcherTest extends CDAPGraphQLTest {
       + "        name"
       + "        scope"
       + "      }"
+      + "      properties {"
+      + "        name"
+      + "        value"
+      + "        scope"
+      + "      }"
       + "    }"
       + "  }"
       + "}";
@@ -60,6 +65,11 @@ public class MetadataDataFetcherTest extends CDAPGraphQLTest {
     Map<String, String> tag = (Map<String, String>) metadata.get(MetadataFields.TAGS).get(0);
     Assert.assertNotNull(tag.get(GraphQLFields.NAME));
     Assert.assertNotNull(tag.get(MetadataFields.SCOPE));
+
+    Map<String, String> property = (Map<String, String>) metadata.get(MetadataFields.PROPERTIES).get(0);
+    Assert.assertNotNull(property.get(GraphQLFields.NAME));
+    Assert.assertNotNull(property.get(MetadataFields.VALUE));
+    Assert.assertNotNull(property.get(MetadataFields.SCOPE));
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
   }

@@ -16,23 +16,24 @@
 
 type Metadata {
 
-  # MetadataEntity metadataEntity;
-
-  # MetadataScope scope;
-
-  # Map<String, String> properties;
-
-  # tags: [Tag]!
-
   tags: [Tag]!
 
-  # properties: [Properties]
+  properties: [Property]!
 }
 
 type Tag {
+
   name: String!
+
   scope: String!
 }
 
+type Property {
 
+  name: String!
+
+  scope: String!
+
+  value: String!
+}
 

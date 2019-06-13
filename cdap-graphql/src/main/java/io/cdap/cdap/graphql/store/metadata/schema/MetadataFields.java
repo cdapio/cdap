@@ -26,6 +26,8 @@ public class MetadataFields implements Fields {
 
   public static final String SCOPE = "scope";
   public static final String TAGS = "tags";
+  public static final String VALUE = "value";
+  public static final String PROPERTIES = "properties";
 
   private MetadataFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

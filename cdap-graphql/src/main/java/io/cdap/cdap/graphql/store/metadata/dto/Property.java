@@ -17,27 +17,20 @@
 
 package io.cdap.cdap.graphql.store.metadata.dto;
 
-import java.util.Set;
-
 /**
- * DTO object for structuring a metadata
+ * DTO object for structuring a property
  */
-public class Metadata {
+public class Property extends MetadataElement {
 
-  private final Set<Tag> tags;
-  private final Set<Property> properties;
+  private final String value;
 
-  public Metadata(Set<Tag> tags, Set<Property> properties) {
-    this.tags = tags;
-    this.properties = properties;
+  public Property(String name, String scope, String value) {
+    super(name, scope);
+
+    this.value = value;
   }
 
-  public Set<Tag> getTags() {
-    return tags;
+  public String getValue() {
+    return value;
   }
-
-  public Set<Property> getProperties() {
-    return properties;
-  }
-
 }
