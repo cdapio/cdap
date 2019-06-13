@@ -43,6 +43,9 @@ public class ProgramRecordFields implements Fields {
   public static final String NAMESPACE = "namespace";
   public static final String APPLICATION = "application";
   public static final String APPLICATION_VERSION = "applicationVersion";
+  public static final String TIMEOUT_MILLIS = "timeoutMillis";
+  public static final String TRIGGER = "trigger";
+  public static final String CRON_EXPRESSION = "cronExpression";
 
   private ProgramRecordFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

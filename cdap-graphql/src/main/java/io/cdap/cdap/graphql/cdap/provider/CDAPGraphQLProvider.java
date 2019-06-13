@@ -23,6 +23,7 @@ import io.cdap.cdap.graphql.provider.AbstractGraphQLProvider;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.application.typeruntimewiring.ApplicationRecordTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.programrecord.typeresolver.ProgramRecordTypeResolver;
+import io.cdap.cdap.graphql.store.programrecord.typeresolver.ProtoTriggerTypeResolver;
 import io.cdap.cdap.graphql.store.programrecord.typeruntimewiring.ScheduleDetailTypeRuntimeWiring;
 import io.cdap.cdap.graphql.store.programrecord.typeruntimewiring.WorkflowTypeRuntimeWiring;
 
@@ -40,6 +41,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
   private final ScheduleDetailTypeRuntimeWiring scheduleDetailTypeRuntimeWiring;
 
   private final ProgramRecordTypeResolver programRecordTypeResolver;
+  private final ProtoTriggerTypeResolver protoTriggerTypeResolver;
 
   public CDAPGraphQLProvider(List<String> schemaDefinitionFiles,
                              CDAPQueryTypeRuntimeWiring cdapQueryTypeRuntimeWiring,
@@ -56,6 +58,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
     this.scheduleDetailTypeRuntimeWiring = scheduleDetailTypeRuntimeWiring;
 
     this.programRecordTypeResolver = ProgramRecordTypeResolver.getInstance();
+    this.protoTriggerTypeResolver = ProtoTriggerTypeResolver.getInstance();
   }
 
   @Override
@@ -67,6 +70,7 @@ public class CDAPGraphQLProvider extends AbstractGraphQLProvider {
       .type(workflowTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(scheduleDetailTypeRuntimeWiring.getTypeRuntimeWiring())
       .type(programRecordTypeResolver.getTypeResolver())
+      .type(protoTriggerTypeResolver.getTypeResolver())
       .build();
   }
 

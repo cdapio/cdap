@@ -70,11 +70,11 @@ type ScheduleDetail {
 
   # Map<String, String> properties;
 
-  # Trigger trigger;
+  trigger: ProtoTrigger
 
   # List<? extends Constraint> constraints;
 
-  # Long timeoutMillis;
+  timeoutMillis: String
 
   status: String!
 
@@ -105,4 +105,16 @@ type RunRecord {
   # ProgramRunCluster cluster;
 
   profileId: String
+}
+
+interface ProtoTrigger {
+
+  type: String!
+}
+
+type TimeTrigger implements ProtoTrigger {
+
+  type: String!
+
+  cronExpression: String!
 }

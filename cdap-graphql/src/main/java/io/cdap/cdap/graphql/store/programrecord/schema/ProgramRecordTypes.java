@@ -28,6 +28,8 @@ public class ProgramRecordTypes implements Types {
   public static final String PROGRAM_RECORD = "ProgramRecord";
   public static final String MAP_REDUCE = "MapReduce";
   public static final String SCHEDULE_DETAIL = "ScheduleDetail";
+  public static final String PROTO_TRIGGER = "ProtoTrigger";
+  public static final String TIME_TRIGGER = "TimeTrigger";
 
   private ProgramRecordTypes() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

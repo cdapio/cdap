@@ -192,7 +192,11 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
       + "          name"
       + "          description"
       + "          status"
+      + "          timeoutMillis"
       + "          time"
+      + "          trigger {"
+      + "            type"
+      + "          }"
       + "        }"
       + "      }"
       + "    }"
@@ -217,6 +221,9 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertNotNull(schedule.get(ProgramRecordFields.DESCRIPTION));
     Assert.assertNotNull(schedule.get(ProgramRecordFields.STATUS));
     Assert.assertNotNull(schedule.get(ProgramRecordFields.TIME));
+
+    Assert.assertTrue(schedule.containsKey(ProgramRecordFields.TIMEOUT_MILLIS));
+    Assert.assertTrue(schedule.containsKey(ProgramRecordFields.TRIGGER));
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithSchedule.NAME));
   }
@@ -252,6 +259,46 @@ public class ProgramRecordDataFetcherTest extends CDAPGraphQLTest {
     Assert.assertNotNull(programRecord.get(ProgramRecordFields.DESCRIPTION));
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithMapReduce.NAME));
+  }
+
+
+  @Test
+  public void testGetTrigger() throws Exception {
+    deploy(AppWithSchedule.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+
+    String query = "{ "
+      + "  application(name: \"" + AppWithSchedule.NAME + "\") {"
+      + "    programs(type: \"Workflow\") {"
+      + "      ... on Workflow {"
+      + "        schedules {"
+      + "          trigger {"
+      + "            type"
+      + "            ... on TimeTrigger {"
+      + "              cronExpression"
+      + "            }"
+      + "          }"
+      + "        }"
+      + "      }"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+    Map<String, List> application = data.get(ApplicationFields.APPLICATION);
+    List programs = application.get(ApplicationFields.PROGRAMS);
+    Map<String, List> programRecord = (Map<String, List>) programs.get(0);
+    Map<String, Object> schedule = (Map<String, Object>) programRecord.get(ProgramRecordFields.SCHEDULES).get(0);
+
+    Map<String, String> trigger = (Map<String, String>) schedule.get(ProgramRecordFields.TRIGGER);
+    Assert.assertNotNull(trigger.get(ProgramRecordFields.TYPE));
+    Assert.assertNotNull(trigger.get(ProgramRecordFields.CRON_EXPRESSION));
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithSchedule.NAME));
   }
 
 }
