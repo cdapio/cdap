@@ -981,6 +981,7 @@ features:
       kafka: Unable to find Kafka Plugins. Please install Kafka Plugins from Hub.
       s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Hub.
       spanner: Unable find Google Cloud Spanner plugin. Please install Google Cloud Plugins from Hub.
+      adls: Unable find ADLS Handler plugin. Please make sure ADLS Plugins are available.
       missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Hub
     sidePanelTooltip:
       collapse: Collapse the side panel
