@@ -82,8 +82,8 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
             self.enabled = true;
             self.addresses = JSON.parse(body).auth_uri || [];
           }
-          log.info('Successfully connected to CDAP Router.');
-          log.info('CDAP security is '+(self.enabled ? 'enabled': 'disabled')+'.');
+          log.info('Successfully connected to Data Playbook Router.');
+          log.info('Data Playbook security is '+(self.enabled ? 'enabled': 'disabled')+'.');
           deferred.resolve(self);
         }
         else {
@@ -112,7 +112,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
 
           if (attempts == 1) {
             log.warn('Unable to connect to CDAP Router. Will keep trying to connect in background. ' +
-              (checkTimeout > 0 ? 'CDAP UI will exit in ' + checkTimeout + ' seconds if unable to connect.' : ''));
+              (checkTimeout > 0 ? 'Data Playbook UI will exit in ' + checkTimeout + ' seconds if unable to connect.' : ''));
           }
 
           setTimeout(pingAttempt, attempts<PING_MAX_RETRIES ? PING_INTERVAL : PING_INTERVAL*60);
