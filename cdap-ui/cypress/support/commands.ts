@@ -32,7 +32,7 @@ Cypress.Commands.add('upload_pipeline', (fileName, selector) => {
         const dataTransfer = new win.DataTransfer();
         dataTransfer.items.add(testFile);
         el.files = dataTransfer.files;
-        return subject;
+        return cy.wrap(subject).trigger('change', { force: true });
       });
     });
   });

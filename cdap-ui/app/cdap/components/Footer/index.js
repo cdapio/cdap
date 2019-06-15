@@ -17,13 +17,14 @@
 import React from 'react';
 import { Theme } from 'services/ThemeHelper';
 import If from '../If';
+import { objectQuery } from 'services/helpers';
 require('./Footer.scss');
 
 export default function Footer() {
   const footerText = Theme.footerText;
   const footerUrl = Theme.footerLink;
   // 'project-id-30-characters-name1/instance-id-30-characters-name';
-  const instanceMetadataId = window.CDAP_CONFIG.instanceMetadataId;
+  const instanceMetadataId = objectQuery(window, 'CDAP_CONFIG', 'instanceMetadataId');
   return (
     <footer className="app-footer">
       <p className="text-center text-muted">

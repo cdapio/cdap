@@ -15,11 +15,20 @@
  */
 
 import * as Helpers from '../helpers';
-
+let headers = {};
 describe('Pipeline Upgrade should work fine', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
-    Helpers.loginIfRequired();
+    Helpers.loginIfRequired().then(() => {
+      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
+        if (!cookie) {
+          return;
+        }
+        headers = {
+          Authorization: 'Bearer ' + cookie.value,
+        };
+      });
+    });
     const stub = cy.stub();
     cy.window().then((win) => {
       win.onbeforeunload = null;
@@ -28,7 +37,6 @@ describe('Pipeline Upgrade should work fine', () => {
   });
 
   beforeEach(() => {
-    const headers = Helpers.getAuthHeaders();
     Helpers.getArtifactsPoll(headers);
   });
 

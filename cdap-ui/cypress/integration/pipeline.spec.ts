@@ -18,21 +18,28 @@ import * as Helpers from '../helpers';
 
 const TEST_PIPELINE_NAME = '__UI_test_pipeline';
 const TEST_PATH = '__UI_test_path';
-
+let headers = {};
 describe('Creating a pipeline', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
-    Helpers.loginIfRequired();
+    Helpers.loginIfRequired().then(() => {
+      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
+        if (!cookie) {
+          return;
+        }
+        headers = {
+          Authorization: 'Bearer ' + cookie.value,
+        };
+      });
+    });
   });
 
   beforeEach(() => {
-    const headers = Helpers.getAuthHeaders();
     Helpers.getArtifactsPoll(headers);
   });
 
   afterEach(() => {
     // Delete the pipeline to clean up
-    const headers = Helpers.getAuthHeaders();
     cy.cleanup_pipelines(headers, TEST_PIPELINE_NAME);
   });
 
@@ -44,7 +51,9 @@ describe('Creating a pipeline', () => {
     cy.url().should('include', '/studio');
 
     // Add an action node, to create minimal working pipeline
-    cy.get('.item')
+    cy.get('.item', {
+      timeout: 10000,
+    })
       .contains('Conditions and Actions')
       .click();
     cy.get('.item-body-wrapper')
