@@ -18,8 +18,10 @@
 package io.cdap.cdap.graphql.store.artifact.datafetchers;
 
 import com.google.inject.Inject;
+import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.artifact.RemoteArtifactClient;
+import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 
 /**
  * Fetchers to get artifacts
@@ -34,6 +36,12 @@ public class ArtifactDataFetcher {
   }
 
   public DataFetcher getArtifactsDataFetcher() {
-    throw new UnsupportedOperationException("implement");
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+
+        return remoteArtifactClient.getArtifacts(namespace);
+      }
+    );
   }
 }

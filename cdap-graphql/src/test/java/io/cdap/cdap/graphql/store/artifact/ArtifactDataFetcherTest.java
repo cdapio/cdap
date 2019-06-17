@@ -28,14 +28,18 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Map;
 
 public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
-  public void testGetArtifacts() {
+  public void testGetArtifacts() throws Exception {
+    deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
+
     String query = "{ "
-      + "  artifacts(namespace: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
+      // + "  artifacts(namespace: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
+      + "  artifacts {"
       + "    name"
       + "    version"
       + "    scope"
@@ -45,7 +49,17 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
     ExecutionResult executionResult = graphQL.execute(executionInput);
 
-    Assert.assertFalse(executionResult.getErrors().isEmpty());
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+    List<Map> artifacts = (List<Map>) data.get(ArtifactFields.ARTIFACTS);
+
+    Map<String, String> artifact = (Map<String, String>) artifacts.get(0);
+    Assert.assertNotNull(artifact.get(GraphQLFields.NAME));
+    Assert.assertNotNull(artifact.get(ArtifactFields.VERSION));
+    Assert.assertNotNull(artifact.get(ArtifactFields.SCOPE));
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
   }
 
   @Test

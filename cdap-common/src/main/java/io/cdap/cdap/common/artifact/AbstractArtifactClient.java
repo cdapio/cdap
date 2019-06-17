@@ -17,13 +17,22 @@
 
 package io.cdap.cdap.common.artifact;
 
+import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
@@ -40,5 +49,33 @@ public abstract class AbstractArtifactClient {
    * Resolved the specified URL
    */
   protected abstract URL resolve(String resource) throws IOException;
+
+  public List<ArtifactSummary> getArtifacts(String namespace)
+    throws NotFoundException, BadRequestException, IOException, UnauthenticatedException {
+    String path = String.format("/namespaces/%s/artifacts", namespace);
+    HttpResponse response = makeRequest(path, HttpMethod.GET, null);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(namespace);
+    }
+
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ArtifactSummary>>() {
+    }).getResponseObject();
+  }
+
+  private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
+    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
+    URL url = resolve(path);
+    HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
+    if (body != null) {
+      builder.withBody(body);
+    }
+    HttpResponse response = execute(builder.build(),
+                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+    return response;
+  }
 
 }
