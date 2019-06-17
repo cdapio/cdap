@@ -41,6 +41,7 @@ const styles = (theme) => {
 class LineageSummary extends React.Component<{ classes }> {
   private activeLinks;
 
+  // TO DO: Get colors from theme once we've created a separate theme colors file
   private drawLineFromLink({ source, destination }) {
     // get source and destination elements and their coordinates
     const sourceEl = d3.select(`#${source}`);
@@ -102,7 +103,7 @@ class LineageSummary extends React.Component<{ classes }> {
       .style('fill', '#bbbbbb');
   }
 
-  public drawLinks() {
+  private drawLinks() {
     // clear any existing links and anchors
     d3.select('#links-container')
       .selectAll('path,rect')
@@ -148,7 +149,7 @@ class LineageSummary extends React.Component<{ classes }> {
               <div>
                 <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
                 {Object.keys(causeSets).map((key) => {
-                  return <FllTable key={key} tableName={key} fields={causeSets[key]} />;
+                  return <FllTable key={key} tableId={key} fields={causeSets[key]} />;
                 })}
               </div>
               <div>
@@ -157,7 +158,7 @@ class LineageSummary extends React.Component<{ classes }> {
                   first={firstField}
                   total={Object.keys(targetFields).length}
                 />
-                <FllTable key={target} isTarget={true} tableName={target} fields={targetFields} />
+                <FllTable isTarget={true} tableId={target} fields={targetFields} />
               </div>
               <div>
                 <FllHeader
@@ -166,7 +167,7 @@ class LineageSummary extends React.Component<{ classes }> {
                   total={Object.keys(impactSets).length}
                 />
                 {Object.keys(impactSets).map((key) => {
-                  return <FllTable key={key} tableName={key} fields={impactSets[key]} />;
+                  return <FllTable key={key} tableId={key} fields={impactSets[key]} />;
                 })}
               </div>
             </div>

@@ -59,13 +59,14 @@ const styles = (theme) => {
 };
 
 interface ITableProps extends WithStyles<typeof styles> {
-  tableName: string;
+  tableId: string;
   fields: INode[];
   isTarget?: boolean;
 }
 
-function renderGridHeader(fields, tableName, classes) {
+function renderGridHeader(fields, tableId, classes) {
   const count: number = fields.length;
+  const tableName = fields[0].group;
   return (
     <div className={classes.tableHeader}>
       {tableName}
@@ -78,16 +79,10 @@ function renderGridHeader(fields, tableName, classes) {
 
 function renderGridBody(fields, tableName, classes) {
   return (
-    <div className={classes.gridBody} id={`${tableName}`}>
+    <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
         return (
-          <div
-            className={classnames('grid-row', {
-              'grid-link': true,
-            })}
-            key={field.id}
-            id={field.id}
-          >
+          <div className={classnames('grid-row', 'grid-link')} key={field.id} id={field.id}>
             {field.name}
           </div>
         );
@@ -96,16 +91,16 @@ function renderGridBody(fields, tableName, classes) {
   );
 }
 
-function FllTable({ tableName, fields, classes, isTarget = false }: ITableProps) {
-  const GRID_HEADERS = [{ property: 'name', label: tableName }];
+function FllTable({ tableId, fields, classes, isTarget = false }: ITableProps) {
+  const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
     <SortableStickyGrid
-      key={`cause ${tableName}`}
+      key={`cause ${tableId}`}
       entities={fields}
       gridHeaders={GRID_HEADERS}
       className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-      renderGridHeader={renderGridHeader.bind(null, fields, tableName, classes)}
-      renderGridBody={renderGridBody.bind(this, fields, tableName, classes)}
+      renderGridHeader={renderGridHeader.bind(null, fields, tableId, classes)}
+      renderGridBody={renderGridBody.bind(this, fields, tableId, classes)}
     />
   );
 }
