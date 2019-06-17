@@ -44,4 +44,17 @@ public class ArtifactDataFetcher {
       }
     );
   }
+
+  public DataFetcher getArtifactDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(ArtifactFields.NAMESPACE);
+        String name = dataFetchingEnvironment.getArgument(ArtifactFields.NAME);
+        String version = dataFetchingEnvironment.getArgument(ArtifactFields.VERSION);
+
+        return remoteArtifactClient.getArtifact(namespace, name, version);
+      }
+    );
+  }
+
 }

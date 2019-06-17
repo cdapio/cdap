@@ -18,7 +18,9 @@
 package io.cdap.cdap.common.artifact;
 
 import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
@@ -60,6 +62,19 @@ public abstract class AbstractArtifactClient {
     }
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ArtifactSummary>>() {
+    }).getResponseObject();
+  }
+
+  public ArtifactInfo getArtifact(String namespace, String name, String version)
+    throws ArtifactNotFoundException, BadRequestException, IOException, UnauthenticatedException {
+    String path = String.format("/namespaces/%s/artifacts/%s/versions/%s", namespace, name, version);
+    HttpResponse response = makeRequest(path, HttpMethod.GET, null);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(namespace, name);
+    }
+
+    return ObjectResponse.fromJsonBody(response, new TypeToken<ArtifactInfo>() {
     }).getResponseObject();
   }
 

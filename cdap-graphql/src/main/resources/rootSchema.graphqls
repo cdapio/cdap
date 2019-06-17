@@ -36,4 +36,6 @@ extend type CDAPQuery {
 extend type CDAPQuery {
 
   artifacts(namespace: String = "default"): [ArtifactSummary]!
+
+  artifact(namespace: String = "default", name: String!, version: String): ArtifactInfo
 }

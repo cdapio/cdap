@@ -22,3 +22,51 @@ type ArtifactSummary {
 
   scope: String!
 }
+
+type ArtifactInfo {
+
+  name: String!
+
+  version: String!
+
+  scope: String!
+
+  classes: ArtifactClasses
+
+  # Map<String, String> properties;
+
+  # Set<ArtifactRange> parents;
+}
+
+type ArtifactClasses {
+
+  apps: [ApplicationClass]
+
+  plugins: [PluginClass]
+}
+
+type ApplicationClass {
+
+  className: String!
+
+  description: String!
+
+  # Schema configSchema;
+}
+
+type PluginClass {
+
+  type: String!
+
+  name: String!
+
+  description: String!
+
+  className: String!
+
+  configFieldName: String!
+
+  # properties: Map<String, PluginPropertyField>
+
+  # requirements: Requirements
+}

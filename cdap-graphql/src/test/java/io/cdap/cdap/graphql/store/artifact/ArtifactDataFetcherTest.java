@@ -34,6 +34,40 @@ import java.util.Map;
 public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
+  public void testTODO() throws Exception {
+    String version = "1.0.1";
+    deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace(), version, null, null);
+
+    String query = "{ "
+      // + "  artifact(namespace: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
+      + "  artifact(name: \"" + AppWithServices.NAME + "\", version: \"" + version + "\") {"
+      + "    classes {"
+      + "      apps {"
+      + "        className"
+      + "        description"
+      + "      }"
+      + "    }"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+
+    Map<String, Map> artifact = data.get(ArtifactFields.ARTIFACT);
+    Map<String, Object> classes = artifact.get(ArtifactFields.CLASSES);
+    List<Map> apps = (List<Map>) classes.get(ArtifactFields.APPS);
+    Map<String, String> app = apps.get(0);
+    Assert.assertNotNull(app.get(ArtifactFields.CLASS_NAME));
+    Assert.assertNotNull(app.get(ArtifactFields.DESCRIPTION));
+
+    deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
+  }
+
+  @Test
   public void testGetArtifacts() throws Exception {
     deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
 
