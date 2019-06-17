@@ -33,6 +33,22 @@ import java.util.Map;
 public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
+  public void testGetArtifacts() {
+    String query = "{ "
+      + "  artifacts(namespace: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
+      + "    name"
+      + "    version"
+      + "    scope"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertFalse(executionResult.getErrors().isEmpty());
+  }
+
+  @Test
   public void testGetArtifactSummary() throws Exception {
     deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
 

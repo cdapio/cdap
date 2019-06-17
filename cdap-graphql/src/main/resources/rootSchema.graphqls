@@ -31,3 +31,9 @@ extend type CDAPQuery {
 
   application(namespace: String = "default", name: String!): ApplicationDetail!
 }
+
+# Queries specific to fetch artifacts
+extend type CDAPQuery {
+
+  artifacts(namespace: String = "default"): [ArtifactSummary]!
+}

@@ -15,22 +15,25 @@
  * the License.
  */
 
-package io.cdap.cdap.graphql.store.artifact.schema;
+package io.cdap.cdap.graphql.store.artifact.datafetchers;
 
-import io.cdap.cdap.graphql.schema.Fields;
+import com.google.inject.Inject;
+import graphql.schema.DataFetcher;
+import io.cdap.cdap.artifact.RemoteArtifactClient;
 
 /**
- * Helper class with a collection of fields relevant to artifacts that are used in the server
+ * Fetchers to get artifacts
  */
-public class ArtifactFields implements Fields {
+public class ArtifactDataFetcher {
 
-  public static final String ARTIFACT = "artifact";
-  public static final String VERSION = "version";
-  public static final String SCOPE = "scope";
-  public static final String ARTIFACTS = "artifacts";
+  private final RemoteArtifactClient remoteArtifactClient;
 
-  private ArtifactFields() {
-    throw new UnsupportedOperationException("Helper class should not be instantiated");
+  @Inject
+  public ArtifactDataFetcher(RemoteArtifactClient remoteArtifactClient) {
+    this.remoteArtifactClient = remoteArtifactClient;
   }
 
+  public DataFetcher getArtifactsDataFetcher() {
+    throw new UnsupportedOperationException("implement");
+  }
 }

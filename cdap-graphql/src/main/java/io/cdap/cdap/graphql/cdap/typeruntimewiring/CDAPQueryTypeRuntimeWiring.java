@@ -23,6 +23,8 @@ import io.cdap.cdap.graphql.cdap.schema.GraphQLFields;
 import io.cdap.cdap.graphql.cdap.schema.GraphQLTypes;
 import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationDataFetcher;
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
+import io.cdap.cdap.graphql.store.artifact.datafetchers.ArtifactDataFetcher;
+import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 import java.sql.Timestamp;
@@ -33,10 +35,13 @@ import java.sql.Timestamp;
 public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final ApplicationDataFetcher applicationDataFetcher;
+  private final ArtifactDataFetcher artifactDataFetcher;
 
   @Inject
-  public CDAPQueryTypeRuntimeWiring(ApplicationDataFetcher applicationDataFetcher) {
+  public CDAPQueryTypeRuntimeWiring(ApplicationDataFetcher applicationDataFetcher,
+                                    ArtifactDataFetcher artifactDataFetcher) {
     this.applicationDataFetcher = applicationDataFetcher;
+    this.artifactDataFetcher = artifactDataFetcher;
   }
 
   @Override
@@ -45,6 +50,7 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(GraphQLFields.TIMESTAMP, dataFetchingEnvironment -> new Timestamp(System.currentTimeMillis()))
       .dataFetcher(ApplicationFields.APPLICATIONS, applicationDataFetcher.getApplicationRecordsDataFetcher())
       .dataFetcher(ApplicationFields.APPLICATION, applicationDataFetcher.getApplicationDetailFromQueryDataFetcher())
+      .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsDataFetcher())
       .build();
   }
 
