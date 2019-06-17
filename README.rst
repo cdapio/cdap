@@ -8,7 +8,7 @@
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :target: https://opensource.org/licenses/Apache-2.0
 
-.. image:: https://travis-ci.org/caskdata/cdap.svg?branch=release/4.1
+.. image:: https://travis-ci.org/cdapio/cdap.svg
     :target: https://travis-ci.org/caskdata/cdap
 
 
