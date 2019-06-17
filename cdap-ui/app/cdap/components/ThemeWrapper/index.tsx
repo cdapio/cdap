@@ -17,6 +17,16 @@
 import * as React from 'react';
 import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
 import createMuiTheme, { ThemeOptions, Theme } from '@material-ui/core/styles/createMuiTheme';
+import {
+  blue,
+  grey,
+  green,
+  red,
+  bluegrey,
+  orange,
+  yellow,
+  white,
+} from 'components/ThemeWrapper/colors';
 
 interface IThemeWraperProps {
   render?: () => React.ReactNode;
@@ -30,24 +40,14 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
       primary: {
         main: '#1a73e8',
       },
-      blue: {
-        50: '#045599',
-        100: '#0076dc',
-        200: '#0099ff',
-        300: '#58b7f6',
-        400: '#7cd2eb',
-        500: '#cae7ef',
-      },
-      grey: {
-        50: '#333333',
-        100: '#666666',
-        200: '#999999',
-        300: '#bbbbbb',
-        400: '#cccccc',
-        500: '#dbdbdb',
-        600: '#eeeeee',
-        700: '#f5f5f5',
-      },
+      blue,
+      grey,
+      green,
+      red,
+      bluegrey,
+      orange,
+      yellow,
+      white,
     },
     navbarBgColor: 'var(--navbar-color)',
     buttonLink: {
