@@ -21,12 +21,14 @@ import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme) => {
   return createStyles({
     table: {
       width: '170px',
       border: `1px solid ${theme.palette.grey[300]}`,
+      fontSize: '0.92rem',
       marginBottom: '10px',
       '& .grid.grid-container': {
         maxHeight: 'none',
@@ -40,7 +42,15 @@ const styles = (theme) => {
       '& .grid-row': {
         paddingLeft: '10px',
         paddingRight: '10px',
-        borderBottom: `1px solid ${theme.palette.grey[500]}`,
+        borderTop: `1px solid ${theme.palette.grey[500]}`,
+      },
+      ' & .grid-row:hover': {
+        backgroundColor: theme.palette.grey[700],
+      },
+      ' & .grid-row.selected': {
+        backgroundColor: theme.palette.yellow[200],
+        color: theme.palette.orange[50],
+        fontWeight: 'bold',
       },
     },
     tableHeader: {
@@ -48,12 +58,16 @@ const styles = (theme) => {
       height: '40px',
       paddingLeft: '10px',
       fontWeight: 'bold',
+      fontSize: '1rem',
     },
     tableSubheader: {
       fontWeight: 'normal',
       color: theme.palette.grey[200],
-      paddingBottom: 5,
-      paddingTop: 3,
+      fontSize: '0.92rem',
+    },
+    viewLineage: {
+      visibility: 'hidden',
+      color: theme.palette.blue[300],
     },
   });
 };
@@ -65,12 +79,12 @@ interface ITableProps extends WithStyles<typeof styles> {
   clickFieldHandler: (fieldId: string) => void;
 }
 
-function renderGridHeader(fields, tableId, classes) {
+function renderGridHeader(fields, classes) {
   const count: number = fields.length;
   const tableName = fields[0].group;
   return (
     <div className={classes.tableHeader}>
-      {tableName}
+      <div>{tableName}</div>
       <div className={classes.tableSubheader}>
         {T.translate('features.FieldLevelLineage.v2.TableSubheader', { count })}
       </div>
@@ -78,22 +92,31 @@ function renderGridHeader(fields, tableId, classes) {
   );
 }
 
-function renderGridBody(fields, tableName, clickFieldHandler, classes) {
+function renderGridBody(fields, tableName, isTarget, clickFieldHandler, classes) {
   return (
-    <div className={classes.gridBody} id={tableName}>
-      {fields.map((field) => {
+    <Consumer>
+      {({ activeField }) => {
+        console.log(activeField, 'active field')
+        )
         return (
-          <div
-            onClick={clickFieldHandler}
-            className={classnames('grid-row', 'grid-link')}
-            key={field.id}
-            id={field.id}
-          >
-            {field.name}
+          <div className={classes.gridBody} id={tableName}>
+            {fields.map((field) => {
+              return (
+                <div
+                  onClick={isTarget ? clickFieldHandler : undefined}
+                  className={classnames('grid-row', 'grid-link')}
+                  key={field.id}
+                  id={field.id}
+                >
+                  {field.name}
+                  {/* <span className={classes.viewLineage}>View lineage</span> */}
+                </div>
+              );
+            })}
           </div>
         );
-      })}
-    </div>
+      }}
+    </Consumer>
   );
 }
 
@@ -105,8 +128,15 @@ function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandle
       entities={fields}
       gridHeaders={GRID_HEADERS}
       className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-      renderGridHeader={renderGridHeader.bind(null, fields, tableId, classes)}
-      renderGridBody={renderGridBody.bind(this, fields, tableId, clickFieldHandler, classes)}
+      renderGridHeader={renderGridHeader.bind(null, fields, classes)}
+      renderGridBody={renderGridBody.bind(
+        this,
+        fields,
+        tableId,
+        isTarget,
+        clickFieldHandler,
+        classes
+      )}
     />
   );
 }

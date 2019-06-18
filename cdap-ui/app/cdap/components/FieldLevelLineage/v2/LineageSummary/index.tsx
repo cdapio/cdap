@@ -21,7 +21,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
-import { grey, orange, yellow } from 'components/ThemeWrapper/colors';
+import { grey, orange } from 'components/ThemeWrapper/colors';
 
 const styles = (theme) => {
   return {
@@ -30,27 +30,31 @@ const styles = (theme) => {
       paddingRight: '100px',
       display: 'flex',
       justifyContent: 'space-between',
+      position: 'relative',
     },
     container: {
       position: 'absolute' as 'absolute',
-      height: '100%',
+      height: '110%', // this seems like cheating
       width: '100%',
-      pointerEvents: 'none',
+      pointerEvents: 'none' as 'none',
+      overflow: 'visible',
     },
   };
 };
 
 class LineageSummary extends React.Component<{ classes }> {
-  private activeLinks;
+  private activeField;
+  private allLinks;
+  private activeLinks = [];
 
-  // TO DO: Get colors from theme once we've created a separate theme colors file
+  // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
     const sourceEl = d3.select(`#${source}`);
     const destEl = d3.select(`#${destination}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -50; // From the FllHeader
+    const offsetY = -50 + window.pageYOffset; // From the FllHeader
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
@@ -61,7 +65,9 @@ class LineageSummary extends React.Component<{ classes }> {
     const sourceY2 = destXY.top + offsetY + 0.5 * sourceXY.height;
 
     // draw an edge from line start to line end
-    const linkContainer = d3.select(`#${source}_${destination}`);
+    const linkContainer = isSelected
+      ? d3.select('#selected-links')
+      : d3.select(`#${source}_${destination}`);
 
     const third = (sourceX2 - sourceX1) / 3;
 
@@ -115,19 +121,32 @@ class LineageSummary extends React.Component<{ classes }> {
       .selectAll('path,rect')
       .remove();
 
-    this.activeLinks.forEach((link) => {
+    const activeLinks = [];
+    this.allLinks.forEach((link) => {
       const isSelected = link.source === activeFieldId || link.destination === activeFieldId;
+      if (isSelected) {
+        activeLinks.push(link);
+      }
       this.drawLineFromLink(link, isSelected);
     });
+    this.activeLinks = activeLinks;
   }
 
   private handleFieldClick(e) {
+    d3.select(`#${this.activeField}`).classed('selected', false);
     const fieldId = (e.target as HTMLAreaElement).id;
-    d3.selectAll('.grid-row').style('background-color', 'white');
+    this.activeField = fieldId;
+    d3.select(`#${fieldId}`).classed('selected', true);
 
-    d3.select(`#${fieldId}`).style('background-color', yellow[200]); // change background
-    // highlight active fields
     this.drawLinks(fieldId);
+  }
+
+  private drawRootAndImpact() {
+    // Go through active links
+    // find the name(s) of the cause and impact tables that are in active links
+    // need to somehow temporarily rendor a subset of the tables and fields, and re-render when user clicks "reset"
+    // Do I need a separate render function? i.e. renderSelectedFields or something like that?
+    // Could potentially also use it for filtering
   }
 
   public componentWillUnmount() {
@@ -149,9 +168,11 @@ class LineageSummary extends React.Component<{ classes }> {
           firstCause,
           firstImpact,
           firstField,
+          activeField,
           links,
         }) => {
-          this.activeLinks = links;
+          this.allLinks = links;
+          this.activeField = activeField;
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
@@ -161,6 +182,7 @@ class LineageSummary extends React.Component<{ classes }> {
                     return <svg id={id} key={id} className="fll-link" />;
                   })}
                 </g>
+                <g id="selected-links" />
               </svg>
               <div>
                 <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
