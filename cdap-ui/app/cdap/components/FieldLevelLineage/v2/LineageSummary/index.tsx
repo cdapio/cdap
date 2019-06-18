@@ -21,6 +21,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
+import { grey } from 'components/ThemeWrapper/colors';
 
 const styles = (theme) => {
   return {
@@ -75,7 +76,7 @@ class LineageSummary extends React.Component<{ classes }> {
 
     linkContainer
       .append('path')
-      .style('stroke', '#bbbbbb')
+      .style('stroke', grey[300])
       .style('stroke-width', '1')
       .style('fill', 'none')
       .attr('d', lineGenerator(points));
@@ -90,7 +91,7 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('width', anchorHeight)
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
-      .style('fill', '#bbbbbb');
+      .style('fill', grey[300]);
 
     // draw right anchor
     linkContainer
@@ -100,7 +101,7 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('width', anchorHeight)
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
-      .style('fill', '#bbbbbb');
+      .style('fill', grey[300]);
   }
 
   private drawLinks() {
