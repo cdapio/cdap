@@ -41,10 +41,14 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
     String query = "{ "
       // + "  artifact(namespace: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
       + "  artifact(name: \"" + AppWithServices.NAME + "\", version: \"" + version + "\") {"
+      + "    name"
       + "    classes {"
       + "      apps {"
       + "        className"
       + "        description"
+      + "      }"
+      + "      plugins {"
+      + "        type"
       + "      }"
       + "    }"
       + "  }"
@@ -59,10 +63,13 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
     Map<String, Map> artifact = data.get(ArtifactFields.ARTIFACT);
     Map<String, Object> classes = artifact.get(ArtifactFields.CLASSES);
+
     List<Map> apps = (List<Map>) classes.get(ArtifactFields.APPS);
     Map<String, String> app = apps.get(0);
     Assert.assertNotNull(app.get(ArtifactFields.CLASS_NAME));
     Assert.assertNotNull(app.get(ArtifactFields.DESCRIPTION));
+
+    Assert.assertTrue(classes.containsKey(ArtifactFields.PLUGINS));
 
     deleteAppAndData(NamespaceId.DEFAULT.app(AppWithServices.NAME));
   }
