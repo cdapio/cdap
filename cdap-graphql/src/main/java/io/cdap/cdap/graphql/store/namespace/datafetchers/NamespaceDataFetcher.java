@@ -21,6 +21,8 @@ import com.google.inject.Inject;
 import graphql.schema.AsyncDataFetcher;
 import graphql.schema.DataFetcher;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
  * Fetchers to get namespaces
@@ -37,6 +39,16 @@ public class NamespaceDataFetcher {
   public DataFetcher getNamespacesDataFetcher() {
     return AsyncDataFetcher.async(
       dataFetchingEnvironment -> remoteNamespaceQueryClient.list()
+    );
+  }
+
+  public DataFetcher getNamespaceDataFetcher() {
+    return AsyncDataFetcher.async(
+      dataFetchingEnvironment -> {
+        String namespace = dataFetchingEnvironment.getArgument(NamespaceFields.NAME);
+
+        return remoteNamespaceQueryClient.get(new NamespaceId(namespace));
+      }
     );
   }
 }

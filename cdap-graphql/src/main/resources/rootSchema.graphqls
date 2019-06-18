@@ -44,4 +44,6 @@ extend type CDAPQuery {
 extend type CDAPQuery {
 
   namespaces: [NamespaceMeta]!
+
+  namespace(name: String): NamespaceMeta
 }

@@ -26,6 +26,7 @@ public class NamespaceFields {
   public static final String NAME = "name";
   public static final String DESCRIPTION = "description";
   public static final String GENERATION = "generation";
+  public static final String NAMESPACE = "namespace";
 
   private NamespaceFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");

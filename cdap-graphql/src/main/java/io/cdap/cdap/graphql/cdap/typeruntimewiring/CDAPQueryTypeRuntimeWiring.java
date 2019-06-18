@@ -58,6 +58,7 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsDataFetcher())
       .dataFetcher(ArtifactFields.ARTIFACT, artifactDataFetcher.getArtifactDataFetcher())
       .dataFetcher(NamespaceFields.NAMESPACES, namespaceDataFetcher.getNamespacesDataFetcher())
+      .dataFetcher(NamespaceFields.NAMESPACE, namespaceDataFetcher.getNamespaceDataFetcher())
       .build();
   }
 

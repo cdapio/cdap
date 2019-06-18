@@ -21,6 +21,7 @@ import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import io.cdap.cdap.graphql.CDAPGraphQLTest;
 import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
+import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,8 +31,7 @@ import java.util.Map;
 public class NamespaceDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
-  public void testGetMetadataRecord() {
-
+  public void testGetNamespaces() {
     String query = "{ "
       + "  namespaces {"
       + "    name"
@@ -49,6 +49,29 @@ public class NamespaceDataFetcherTest extends CDAPGraphQLTest {
     List<Map> namespaces = data.get(NamespaceFields.NAMESPACES);
 
     Map<String, String> namespace = namespaces.get(0);
+    Assert.assertNotNull(namespace.get(NamespaceFields.NAME));
+    Assert.assertNotNull(namespace.get(NamespaceFields.DESCRIPTION));
+    Assert.assertNotNull(namespace.get(NamespaceFields.GENERATION));
+  }
+
+  @Test
+  public void testGetNamespace() {
+    String query = "{ "
+      + "  namespace(name: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
+      + "    name"
+      + "    description"
+      + "    generation"
+      + "  }"
+      + "}";
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build();
+    ExecutionResult executionResult = graphQL.execute(executionInput);
+
+    Assert.assertTrue(executionResult.getErrors().isEmpty());
+
+    Map<String, Map> data = executionResult.getData();
+
+    Map<String, String> namespace = data.get(NamespaceFields.NAMESPACE);
     Assert.assertNotNull(namespace.get(NamespaceFields.NAME));
     Assert.assertNotNull(namespace.get(NamespaceFields.DESCRIPTION));
     Assert.assertNotNull(namespace.get(NamespaceFields.GENERATION));
