@@ -61,6 +61,16 @@ public class NamespaceDataFetcherTest extends CDAPGraphQLTest {
       + "    name"
       + "    description"
       + "    generation"
+      + "    config {"
+      + "      schedulerQueueName"
+      + "      rootDirectory"
+      + "      hbaseNamespace"
+      + "      hiveDatabase"
+      + "      principal"
+      + "      groupName"
+      + "      keytabURI"
+      + "      exploreAsPrincipal"
+      + "    }"
       + "  }"
       + "}";
 
@@ -71,10 +81,21 @@ public class NamespaceDataFetcherTest extends CDAPGraphQLTest {
 
     Map<String, Map> data = executionResult.getData();
 
-    Map<String, String> namespace = data.get(NamespaceFields.NAMESPACE);
+    Map<String, Object> namespace = data.get(NamespaceFields.NAMESPACE);
     Assert.assertNotNull(namespace.get(NamespaceFields.NAME));
     Assert.assertNotNull(namespace.get(NamespaceFields.DESCRIPTION));
     Assert.assertNotNull(namespace.get(NamespaceFields.GENERATION));
+
+    Map<String, String> config = (Map<String, String>) namespace.get(NamespaceFields.CONFIG);
+    Assert.assertNotNull(config.get(NamespaceFields.EXPLORE_AS_PRINCIPAL));
+
+    Assert.assertTrue(config.containsKey(NamespaceFields.SCHEDULER_QUEUE_NAME));
+    Assert.assertTrue(config.containsKey(NamespaceFields.ROOT_DIRECTORY));
+    Assert.assertTrue(config.containsKey(NamespaceFields.HBASE_NAMESPACE));
+    Assert.assertTrue(config.containsKey(NamespaceFields.HIVE_DATABASE));
+    Assert.assertTrue(config.containsKey(NamespaceFields.PRINCIPAL));
+    Assert.assertTrue(config.containsKey(NamespaceFields.GROUP_NAME));
+    Assert.assertTrue(config.containsKey(NamespaceFields.KEYTAB_URI));
   }
 
 }

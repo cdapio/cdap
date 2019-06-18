@@ -22,5 +22,24 @@ type NamespaceMeta {
 
   generation: String
 
-  # NamespaceConfig config;
+  config: NamespaceConfig
+}
+
+type NamespaceConfig {
+
+  schedulerQueueName: String
+
+  rootDirectory: String
+
+  hbaseNamespace: String
+
+  hiveDatabase: String
+
+  principal: String
+
+  groupName: String
+
+  keytabURI: String
+
+  exploreAsPrincipal: Boolean!
 }

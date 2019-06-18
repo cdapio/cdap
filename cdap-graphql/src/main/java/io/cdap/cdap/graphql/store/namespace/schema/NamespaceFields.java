@@ -27,6 +27,15 @@ public class NamespaceFields {
   public static final String DESCRIPTION = "description";
   public static final String GENERATION = "generation";
   public static final String NAMESPACE = "namespace";
+  public static final String CONFIG = "config";
+  public static final String SCHEDULER_QUEUE_NAME = "schedulerQueueName";
+  public static final String ROOT_DIRECTORY = "rootDirectory";
+  public static final String HBASE_NAMESPACE = "hbaseNamespace";
+  public static final String HIVE_DATABASE = "hiveDatabase";
+  public static final String PRINCIPAL = "principal";
+  public static final String GROUP_NAME = "groupName";
+  public static final String KEYTAB_URI = "keytabURI";
+  public static final String EXPLORE_AS_PRINCIPAL = "exploreAsPrincipal";
 
   private NamespaceFields() {
     throw new UnsupportedOperationException("Helper class should not be instantiated");
