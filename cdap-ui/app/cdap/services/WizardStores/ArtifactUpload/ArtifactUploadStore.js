@@ -34,6 +34,7 @@ const defaultConfigureState = Object.assign(
     type: '',
     description: '',
     classname: '',
+    version: '1.0.0',
     parentArtifact: [
       'system:cdap-data-pipeline[3.0.0,10.0.0]',
       'system:cdap-data-streams[3.0.0,10.0.0]',
@@ -104,6 +105,11 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
     case ArtifactUploadActions.setType:
       stateCopy = Object.assign({}, state, {
         type: action.payload.type,
+      });
+      break;
+    case ArtifactUploadActions.setVersion:
+      stateCopy = Object.assign({}, state, {
+        version: action.payload.version,
       });
       break;
     case ArtifactUploadActions.setNameAndClass:

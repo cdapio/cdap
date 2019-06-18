@@ -29,7 +29,7 @@ const uploadArtifact = (includeParents = true) => {
   if (state.upload.file.name && state.upload.file.name.length !== 0) {
     filename = state.upload.file.name.split('.jar')[0];
   }
-  let { name, version } = getArtifactNameAndVersion(filename);
+  let { name } = getArtifactNameAndVersion(filename);
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = `/namespaces/${namespace}/artifacts/${name}`;
@@ -37,7 +37,7 @@ const uploadArtifact = (includeParents = true) => {
   let headers = {
     'Content-Type': 'application/octet-stream',
     'X-Archive-Name': name,
-    'Artifact-Version': version,
+    'Artifact-Version': state.configure.version,
     'Artifact-Plugins': JSON.stringify([
       {
         name: state.configure.name,
