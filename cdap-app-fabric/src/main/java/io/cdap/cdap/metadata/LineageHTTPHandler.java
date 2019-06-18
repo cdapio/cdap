@@ -72,6 +72,17 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     this.fieldLineageAdmin = fieldLineageAdmin;
   }
 
+  /**
+   * Get the lineage information about a dataset. This method does not give any information on field level lineage.
+   *
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
+   *                 using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
+   *               using now and times added to it.
+   * @param levels the level to compute the lineage
+   * @param collapse indicate how to collapse the lineage result
+   * @param rollup indicates whether to aggregate programs, currently supports rolling up programs into workflows
+   */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage")
   public void datasetLineage(HttpRequest request, HttpResponder responder,
@@ -96,6 +107,17 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
                          lineage, getCollapseTypes(collapse)), LineageRecord.class));
   }
 
+  /**
+   * Get the fields in the dataset. This method can be used to get fields that have lineage or all the fields in the
+   * dataset.
+   *
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
+   *                 using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
+   *               using now and times added to it.
+   * @param prefix the prefix of the field, if not provided, all fields will get return
+   * @param includeCurrent a boolean to indicate whether to include fields that do not have field level lineage
+   */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields")
   public void datasetFields(HttpRequest request, HttpResponder responder,
@@ -121,6 +143,41 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Get all the field level lineage about all fields in one dataset.
+   *
+   * @param directionStr the direction to compute the field level lineage, can be INCOMING, OUTGOING or BOTH
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
+   *                 using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
+   *               using now and times added to it.
+   */
+  @GET
+  @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/allfieldlineage")
+  public void datasetFieldLineage(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("dataset-id") String datasetId,
+                                  @QueryParam("direction") String directionStr,
+                                  @QueryParam("start") String startStr,
+                                  @QueryParam("end") String endStr) throws BadRequestException, IOException {
+    TimeRange range = parseRange(startStr, endStr);
+    Constants.FieldLineage.Direction direction = parseDirection(directionStr);
+    DatasetFieldLineageSummary summary = fieldLineageAdmin.getDatasetFieldLineage(direction,
+                                                                                  EndPoint.of(namespaceId, datasetId),
+                                                                                  range.getStart(), range.getEnd());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
+  }
+
+  /**
+   * Get the field level lineage about the specified field in one dataset.
+   *
+   * @param field the field name to compute field level lineage
+   * @param directionStr the direction to compute the field level lineage, can be INCOMING, OUTGOING or BOTH
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
+   *                 using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
+   *               using now and times added to it.
+   */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}")
   public void datasetFieldLineageSummary(HttpRequest request, HttpResponder responder,
@@ -133,11 +190,21 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);
-    FieldLineageSummary summary = fieldLineageAdmin.getSummary(direction, endPointField, range.getStart(),
-                                                               range.getEnd());
+    FieldLineageSummary summary = fieldLineageAdmin.getFieldLineage(direction, endPointField, range.getStart(),
+                                                                    range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
   }
 
+  /**
+   * Get the operation details about the specified field in one dataset.
+   *
+   * @param field the field name to compute field operation details
+   * @param directionStr the direction to compute the field level lineage, can be INCOMING, OUTGOING or BOTH
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
+   *                 using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
+   *               using now and times added to it.
+   */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}/operations")
   public void datasetFieldLineageDetails(HttpRequest request, HttpResponder responder,

@@ -23,8 +23,10 @@ import io.cdap.cdap.proto.metadata.lineage.ProgramRunOperations;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,19 +35,26 @@ import java.util.Set;
 public class FakeFieldLineageReader implements FieldLineageReader {
 
   private final Set<String> fields;
+  // this is the default summary if a field is not in the map of the incoming/outgoing summary
   private final Set<EndPointField> summary;
+  private final Map<String, Set<EndPointField>> incomingSummary;
+  private final Map<String, Set<EndPointField>> outgoingSummary;
   private final List<ProgramRunOperations> programRunOperations;
 
-  public FakeFieldLineageReader(Set<String> fields, Set<EndPointField> summary,
-                                Set<ProgramRunOperations> programRunOperations) {
-    this.fields = Collections.unmodifiableSet(new HashSet<>(fields));
-    this.summary = Collections.unmodifiableSet(new HashSet<>(summary));
-    this.programRunOperations = Collections.unmodifiableList(new ArrayList<>(programRunOperations));
+  FakeFieldLineageReader(Set<String> fields, Set<EndPointField> summary,
+                         Set<ProgramRunOperations> programRunOperations) {
+    this(fields, summary, Collections.emptyMap(), Collections.emptyMap(), programRunOperations);
   }
 
-  public FakeFieldLineageReader() {
-    // create empty
-    this(Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+  FakeFieldLineageReader(Set<String> fields, Set<EndPointField> summary,
+                         Map<String, Set<EndPointField>> incomingSummary,
+                         Map<String, Set<EndPointField>> outgoingSummary,
+                         Set<ProgramRunOperations> programRunOperations) {
+    this.fields = Collections.unmodifiableSet(new HashSet<>(fields));
+    this.summary = Collections.unmodifiableSet(new HashSet<>(summary));
+    this.incomingSummary = Collections.unmodifiableMap(new HashMap<>(incomingSummary));
+    this.outgoingSummary = Collections.unmodifiableMap(new HashMap<>(outgoingSummary));
+    this.programRunOperations = Collections.unmodifiableList(new ArrayList<>(programRunOperations));
   }
 
   @Override
@@ -55,12 +64,12 @@ public class FakeFieldLineageReader implements FieldLineageReader {
 
   @Override
   public Set<EndPointField> getIncomingSummary(EndPointField endPointField, long start, long end) {
-    return summary;
+    return incomingSummary.getOrDefault(endPointField.getField(), summary);
   }
 
   @Override
   public Set<EndPointField> getOutgoingSummary(EndPointField endPointField, long start, long end) {
-    return summary;
+    return outgoingSummary.getOrDefault(endPointField.getField(), summary);
   }
 
   @Override

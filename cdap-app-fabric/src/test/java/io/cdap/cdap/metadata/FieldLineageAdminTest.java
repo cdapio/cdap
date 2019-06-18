@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.api.lineage.field.EndPoint;
@@ -56,6 +58,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -179,25 +182,117 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
     expected.add(datasetField);
     expected.add(anotherDatasetField);
 
-    // input args to the getSummary below does not matter since data returned is mocked
-    FieldLineageSummary summary = fieldLineageAdmin.getSummary(Constants.FieldLineage.Direction.INCOMING,
-                                                               new EndPointField(endPoint, "somefield"), 0,
-                                                               Long.MAX_VALUE);
+    // input args to the getFieldLineage below does not matter since data returned is mocked
+    FieldLineageSummary summary = fieldLineageAdmin.getFieldLineage(Constants.FieldLineage.Direction.INCOMING,
+                                                                    new EndPointField(endPoint, "somefield"), 0,
+                                                                    Long.MAX_VALUE);
 
     Assert.assertEquals(expected, summary.getIncoming());
     Assert.assertNull(summary.getOutgoing());
 
-    summary = fieldLineageAdmin.getSummary(Constants.FieldLineage.Direction.OUTGOING,
-                                           new EndPointField(endPoint, "somefield"), 0, Long.MAX_VALUE);
+    summary = fieldLineageAdmin.getFieldLineage(Constants.FieldLineage.Direction.OUTGOING,
+                                                new EndPointField(endPoint, "somefield"), 0, Long.MAX_VALUE);
 
     Assert.assertEquals(expected, summary.getOutgoing());
     Assert.assertNull(summary.getIncoming());
 
-    summary = fieldLineageAdmin.getSummary(Constants.FieldLineage.Direction.BOTH,
-                                           new EndPointField(endPoint, "somefield"), 0, Long.MAX_VALUE);
+    summary = fieldLineageAdmin.getFieldLineage(Constants.FieldLineage.Direction.BOTH,
+                                                new EndPointField(endPoint, "somefield"), 0, Long.MAX_VALUE);
 
     Assert.assertEquals(expected, summary.getOutgoing());
     Assert.assertEquals(expected, summary.getIncoming());
+  }
+
+  @Test
+  public void testDatasetFieldLineageSummary() throws Exception {
+    // the dataset fields
+    Set<String> fields = ImmutableSet.of("field1", "field2", "field3");
+
+    /*
+      Incoming fields
+      src1: src1f1 -> field1
+            src1f2 -> field1
+      src2: src2f1 -> field1
+
+      src2: src2f2 -> field2
+      src3: src3f1 -> field2
+
+      src3: src3f2 -> field3
+     */
+    EndPoint src1 = EndPoint.of("ns1", "src1");
+    EndPoint src2 = EndPoint.of("ns1", "src2");
+    EndPoint src3 = EndPoint.of("ns1", "src3");
+    Map<String, Set<EndPointField>> incomings =
+      ImmutableMap.of("field1",
+                      ImmutableSet.of(new EndPointField(src1, "src1f1"),
+                                      new EndPointField(src1, "src1f2"),
+                                      new EndPointField(src2, "src2f1")),
+                      "field2",
+                      ImmutableSet.of(new EndPointField(src2, "src2f2"),
+                                      new EndPointField(src3, "src3f1")),
+                      "field3",
+                      ImmutableSet.of(new EndPointField(src3, "src3f2")));
+
+    /*
+      Outgoing fields
+      dest1: field1 -> dest1f1
+      dest2: field1 -> dest2f1
+
+      dest1: field2 -> dest1f2
+      dest2: field2 -> dest2f1
+
+      dest2: field3 -> dest2f2
+     */
+    EndPoint dest1 = EndPoint.of("ns1", "dest1");
+    EndPoint dest2 = EndPoint.of("ns1", "dest2");
+    Map<String, Set<EndPointField>> outgoings =
+      ImmutableMap.of("field1",
+                      ImmutableSet.of(new EndPointField(dest1, "dest1f1"),
+                                      new EndPointField(dest2, "dest2f1")),
+                      "field2",
+                      ImmutableSet.of(new EndPointField(dest1, "dest1f2"),
+                                      new EndPointField(dest2, "dest2f1")),
+                      "field3",
+                      ImmutableSet.of(new EndPointField(dest2, "dest2f2")));
+
+
+    FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(fields,
+                                                                                           Collections.emptySet(),
+                                                                                           incomings, outgoings,
+                                                                                           Collections.emptySet()),
+                                                                metadataAdmin);
+    // input dataset name does not matter since we use a mocked reader
+    DatasetFieldLineageSummary summary =
+      fieldLineageAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("ns1", "ds1"),
+                                               0L, Long.MAX_VALUE);
+
+    Assert.assertEquals(Constants.FieldLineage.Direction.BOTH, summary.getDirection());
+    Assert.assertEquals(0L, summary.getStartTs());
+    Assert.assertEquals(Long.MAX_VALUE, summary.getEndTs());
+    Assert.assertEquals(fields, summary.getFields());
+    Assert.assertEquals(new DatasetId("ns1", "ds1"), summary.getDatasetId());
+
+    Set<DatasetFieldLineageSummary.FieldLineageRelations> expectedIncomings = ImmutableSet.of(
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src1"),
+                                                           ImmutableSet.of(new FieldRelation("src1f1", "field1"),
+                                                                           new FieldRelation("src1f2", "field1"))),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src2"),
+                                                           ImmutableSet.of(new FieldRelation("src2f1", "field1"),
+                                                new FieldRelation("src2f2", "field2"))),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src3"),
+                                                           ImmutableSet.of(new FieldRelation("src3f1", "field2"),
+                                                new FieldRelation("src3f2", "field3"))));
+    Assert.assertEquals(expectedIncomings, summary.getIncoming());
+
+    Set<DatasetFieldLineageSummary.FieldLineageRelations> expectedOutgoings = ImmutableSet.of(
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "dest1"),
+                                                           ImmutableSet.of(new FieldRelation("field1", "dest1f1"),
+                                                new FieldRelation("field2", "dest1f2"))),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "dest2"),
+                                                           ImmutableSet.of(new FieldRelation("field1", "dest2f1"),
+                                                                           new FieldRelation("field2", "dest2f1"),
+                                                                           new FieldRelation("field3", "dest2f2"))));
+    Assert.assertEquals(expectedOutgoings, summary.getOutgoing());
   }
 
   @Test
