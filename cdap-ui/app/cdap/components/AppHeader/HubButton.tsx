@@ -23,13 +23,14 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import Button from '@material-ui/core/Button';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+const colors = require('styles/colors.scss');
 
 const styles = (theme) => {
   return {
     buttonLink: {
       ...theme.buttonLink,
       fontWeight: 300,
-      color: theme.palette.grey[700],
+      color: colors.grey08,
     },
   };
 };

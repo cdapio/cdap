@@ -19,6 +19,8 @@ import { Theme } from 'services/ThemeHelper';
 import Typography from '@material-ui/core/Typography';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 
+const colors = require('styles/colors.scss');
+
 const styles = (theme) => {
   return {
     productEdition: {
@@ -27,7 +29,7 @@ const styles = (theme) => {
       'border-left': `2px solid ${theme.palette.grey[400]}`,
     },
     caption: {
-      color: theme.palette.grey[700],
+      color: colors.grey08,
       'line-height': 1.3,
     },
   };
