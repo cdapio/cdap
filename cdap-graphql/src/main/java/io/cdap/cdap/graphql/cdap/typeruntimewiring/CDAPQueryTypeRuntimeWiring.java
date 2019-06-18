@@ -25,6 +25,8 @@ import io.cdap.cdap.graphql.store.application.datafetchers.ApplicationDataFetche
 import io.cdap.cdap.graphql.store.application.schema.ApplicationFields;
 import io.cdap.cdap.graphql.store.artifact.datafetchers.ArtifactDataFetcher;
 import io.cdap.cdap.graphql.store.artifact.schema.ArtifactFields;
+import io.cdap.cdap.graphql.store.namespace.datafetchers.NamespaceDataFetcher;
+import io.cdap.cdap.graphql.store.namespace.schema.NamespaceFields;
 import io.cdap.cdap.graphql.typeruntimewiring.CDAPTypeRuntimeWiring;
 
 import java.sql.Timestamp;
@@ -36,12 +38,15 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
 
   private final ApplicationDataFetcher applicationDataFetcher;
   private final ArtifactDataFetcher artifactDataFetcher;
+  private final NamespaceDataFetcher namespaceDataFetcher;
 
   @Inject
   public CDAPQueryTypeRuntimeWiring(ApplicationDataFetcher applicationDataFetcher,
-                                    ArtifactDataFetcher artifactDataFetcher) {
+                                    ArtifactDataFetcher artifactDataFetcher,
+                                    NamespaceDataFetcher namespaceDataFetcher) {
     this.applicationDataFetcher = applicationDataFetcher;
     this.artifactDataFetcher = artifactDataFetcher;
+    this.namespaceDataFetcher = namespaceDataFetcher;
   }
 
   @Override
@@ -52,6 +57,7 @@ public class CDAPQueryTypeRuntimeWiring implements CDAPTypeRuntimeWiring {
       .dataFetcher(ApplicationFields.APPLICATION, applicationDataFetcher.getApplicationDetailFromQueryDataFetcher())
       .dataFetcher(ArtifactFields.ARTIFACTS, artifactDataFetcher.getArtifactsDataFetcher())
       .dataFetcher(ArtifactFields.ARTIFACT, artifactDataFetcher.getArtifactDataFetcher())
+      .dataFetcher(NamespaceFields.NAMESPACES, namespaceDataFetcher.getNamespacesDataFetcher())
       .build();
   }
 

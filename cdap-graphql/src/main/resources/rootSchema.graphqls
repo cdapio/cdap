@@ -39,3 +39,9 @@ extend type CDAPQuery {
 
   artifact(namespace: String = "default", name: String!, version: String): ArtifactInfo
 }
+
+# Queries specific to fetch namespaces
+extend type CDAPQuery {
+
+  namespaces: [NamespaceMeta]!
+}
