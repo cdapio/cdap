@@ -29,6 +29,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
+import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.discovery.Discoverable;
@@ -49,6 +50,10 @@ public class MetricsServiceMainTest extends MasterServiceMainTestBase {
   @Test
   public void testMetricsService() throws Exception {
     Injector injector = getServiceMainInstance(MetricsServiceMain.class).getInjector();
+
+    // make sure the metrics clean up service is running
+    MetricsCleanUpService service = injector.getInstance(MetricsCleanUpService.class);
+    Assert.assertTrue(service.isRunning());
 
     // Publish some metrics via the MetricsCollectionService
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
