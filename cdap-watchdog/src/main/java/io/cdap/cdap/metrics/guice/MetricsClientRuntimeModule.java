@@ -30,6 +30,7 @@ import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
 import io.cdap.cdap.metrics.process.DirectMetricsSystemClient;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 
 /**
  * A {@link RuntimeModule} that defines Guice modules for metrics collection in different runtime mode.
@@ -80,6 +81,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     // Both LocalMetricsCollectionService and the AppFabricService needs it
     binder.install(new MetricsStoreModule());
     binder.expose(MetricStore.class);
+    binder.expose(MetricsCleanUpService.class);
 
     binder.bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
     binder.expose(MetricsCollectionService.class);

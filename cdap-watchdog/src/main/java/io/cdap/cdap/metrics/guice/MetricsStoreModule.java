@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.metrics.store.DefaultMetricDatasetFactory;
 import io.cdap.cdap.metrics.store.DefaultMetricStore;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
+import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 
 /**
  * Guice module for providing bindings for {@link MetricStore} and {@link MetricDatasetFactory}.
@@ -32,5 +33,6 @@ public final class MetricsStoreModule extends AbstractModule {
   protected void configure() {
     bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
     bind(MetricStore.class).to(DefaultMetricStore.class);
+    bind(MetricsCleanUpService.class).in(Scopes.SINGLETON);
   }
 }
