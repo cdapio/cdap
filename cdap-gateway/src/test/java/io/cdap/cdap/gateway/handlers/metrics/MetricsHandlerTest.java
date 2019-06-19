@@ -46,6 +46,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Search available contexts and metrics tests
@@ -780,6 +781,69 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
         + (start + 3600), 2, 3);
   }
 
+  @Test
+  public void testDetermineResolution() throws Exception {
+    // if resolution is specified, no matter what the start and end time, it should be that resolution
+    verifyResolution("1s", 0L, 3600L, null, 200, "1s");
+    verifyResolution("1s", 10000L, 13600L, null, 200, "1s");
+    verifyResolution("1s", 0L, 72000L, null, 200, "1s");
+    verifyResolution("1m", 0L, 100L, null, 200, "60s");
+    verifyResolution("1h", 0L, 100L, null, 200, "3600s");
+
+    // test invalid resolution
+    verifyResolution("6s", 0L, 100L, null, 400, null);
+
+    // if resolution is auto, the resolution should be based on timestamp, and both timestamp should be provided
+    verifyResolution("auto", null, 300L, Integer.MAX_VALUE, 400, null);
+    // if 0 < ts diff <= 600, second resolution will be used
+    verifyResolution("auto", 0L, 300L, null, 200, "1s");
+    verifyResolution("auto", 10000L, 10300L, null, 200, "1s");
+    verifyResolution("auto", 0L, 600L, null, 200, "1s");
+    verifyResolution("auto", 50000L, 50600L, null, 200, "1s");
+    // if 600 < ts diff <= 36000, minute resolution will be used
+    verifyResolution("auto", 0L, 601L, null, 200, "60s");
+    verifyResolution("auto", 10000L, 10601L, null, 200, "60s");
+    verifyResolution("auto", 0L, 36000L, null, 200, "60s");
+    verifyResolution("auto", 50000L, 86000L, null, 200, "60s");
+    // if ts diff > 36000, hour resolution will be used
+    verifyResolution("auto", 0L, 36001L, null, 200, "3600s");
+    verifyResolution("auto", 15000L, 10000000L, null, 200, "3600s");
+
+    // if resolution is null, the resolution should be same if as resolution is auto if both timestamp are provided
+    verifyResolution(null, 0L, 300L, null, 200, "1s");
+    verifyResolution(null, 10000L, 10300L, null, 200, "1s");
+    verifyResolution(null, 0L, 600L, null, 200, "1s");
+    verifyResolution(null, 50000L, 50600L, null, 200, "1s");
+    verifyResolution(null, 0L, 601L, null, 200, "60s");
+    verifyResolution(null, 10000L, 10601L, null, 200, "60s");
+    verifyResolution(null, 0L, 36000L, null, 200, "60s");
+    verifyResolution(null, 50000L, 86000L, null, 200, "60s");
+    verifyResolution(null, 0L, 36001L, null, 200, "3600s");
+    verifyResolution(null, 15000L, 10000000L, null, 200, "3600s");
+    // if resolution is null, and either timestamp is not specified, minimum resolution will be used
+    verifyResolution(null, null, 360000L, 10, 200, "1s");
+    verifyResolution(null, 100L, null, 10, 200, "1s");
+
+    // test if start time > end time
+    verifyResolution(null, 10000L, 100L, null, 400, null);
+  }
+
+  private void verifyResolution(@Nullable String resolution, @Nullable Long start, @Nullable Long end,
+                                @Nullable Integer count, int expectedCode,
+                                @Nullable String expectedResolution) throws Exception {
+    StringBuilder url =
+      new StringBuilder("/v3/metrics/query?tag=namespace:default&tag=app:nonexist&metric=system.read");
+    url.append(resolution == null ? "" : "&resolution=" + resolution);
+    url.append(start == null ? "" : "&start=" + start);
+    url.append(end == null ? "" : "&end=" + end);
+    url.append(count == null ? "" : "&count=" + count);
+
+    MetricQueryResult result = post(url.toString(), null, MetricQueryResult.class, expectedCode);
+    if (result != null) {
+      Assert.assertEquals(expectedResolution, result.getResolution());
+    }
+  }
+
   private void verifyAggregateQueryResult(String url, long expectedValue) throws Exception {
     // todo : can refactor this to test only the new tag name queries once we deprecate queryParam using context.
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
@@ -808,9 +872,17 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     return post(url, null, type);
   }
 
-  private <T> T post(String url, String body, Type type) throws Exception {
+  private <T> T post(String url, @Nullable String body, Type type) throws Exception {
+    return post(url, body, type, 200);
+  }
+
+  @Nullable
+  private <T> T post(String url, @Nullable String body, Type type, int expectedCode) throws Exception {
     HttpResponse response = doPost(url, body);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedCode, response.getStatusLine().getStatusCode());
+    if (expectedCode != 200) {
+      return null;
+    }
     return GSON.fromJson(EntityUtils.toString(response.getEntity(), Charsets.UTF_8), type);
   }
 
