@@ -44,6 +44,7 @@ export default class KafkaBrowser extends Component {
     toggle: PropTypes.func,
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   };
 
   static defaultProps = {
@@ -109,6 +110,9 @@ export default class KafkaBrowser extends Component {
       topic,
       lines: 100,
     };
+    if (this.props.scope) {
+      params.scope = this.props.scope;
+    }
 
     MyDataPrepApi.readTopic(params).subscribe(
       (res) => {

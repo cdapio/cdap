@@ -72,6 +72,8 @@ export default class DataPrepConnections extends Component {
     sidePanelExpanded: PropTypes.bool,
     allowSidePanelToggle: PropTypes.bool,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    defaultConnectionId: PropTypes.string,
+    defaultConnectionType: PropTypes.string,
     browserTitle: PropTypes.string,
   };
 
@@ -84,8 +86,10 @@ export default class DataPrepConnections extends Component {
     super(props);
 
     let { workspaceInfo } = DataPrepStore.getState().dataprep;
-    let activeConnectionType = objectQuery(workspaceInfo, 'properties', 'connection');
-    let activeConnectionid = objectQuery(workspaceInfo, 'properties', 'connectionid');
+    let activeConnectionType =
+      this.props.defaultConnectionType || objectQuery(workspaceInfo, 'properties', 'connection');
+    let activeConnectionid =
+      this.props.defaultConnectionId || objectQuery(workspaceInfo, 'properties', 'connectionid');
     if (activeConnectionType) {
       activeConnectionType = ConnectionType[activeConnectionType.toUpperCase()];
     }
@@ -157,6 +161,17 @@ export default class DataPrepConnections extends Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (
+      nextProps.defaultConnectionType !== this.props.defaultConnectionType ||
+      nextProps.defaultConnectionId !== this.props.defaultConnectionId
+    ) {
+      this.setState({
+        activeConnectionType: nextProps.defaultConnectionType || this.props.defaultConnectionType,
+        activeConnectionid: nextProps.defaultConnectionId || this.props.defaultConnectionId,
+      });
+    }
+  }
   componentWillUnmount() {
     if (typeof this.dataprepSubscription === 'function') {
       resetDataPrepBrowserStore();

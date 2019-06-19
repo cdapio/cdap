@@ -20,9 +20,9 @@ import DatasetList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/Dat
 import TableList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/TableList';
 import { connect } from 'react-redux';
 
-const DisplaySwitchView = ({ datasetId, onWorkspaceCreate }) => {
+const DisplaySwitchView = ({ datasetId, onWorkspaceCreate, scope }) => {
   return datasetId ? (
-    <TableList enableRouting={false} onWorkspaceCreate={onWorkspaceCreate} />
+    <TableList enableRouting={false} onWorkspaceCreate={onWorkspaceCreate} scope={scope} />
   ) : (
     <DatasetList enableRouting={false} />
   );
@@ -30,6 +30,7 @@ const DisplaySwitchView = ({ datasetId, onWorkspaceCreate }) => {
 
 DisplaySwitchView.propTypes = {
   datasetId: PropTypes.string,
+  scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   onWorkspaceCreate: PropTypes.func,
 };
 

@@ -49,10 +49,20 @@ interface ISpannerTableListViewProps {
   loading: boolean;
   match: match<IMatchParams>;
   onWorkspaceCreate: (workspaceId: string) => void;
+  scope: boolean | string;
 }
 
 interface ISpannerTableObject {
   name: string;
+}
+
+interface ISpannerRequestParams {
+  context: string;
+  connectionId: string;
+  instanceId: string;
+  databaseId: string;
+  tableId: string;
+  scope?: boolean | string;
 }
 
 class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProps> {
@@ -80,13 +90,17 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
       this.props.instanceId || objectQuery(this.props, 'match', 'params', 'instanceId');
     const databaseId =
       this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
-    const params = {
+    const params: ISpannerRequestParams = {
       context: namespace,
       connectionId,
       instanceId,
       databaseId,
       tableId,
     };
+
+    if (this.props.scope) {
+      params.scope = this.props.scope;
+    }
 
     MyDataPrepApi.readSpannerTable(params).subscribe(
       (res) => {

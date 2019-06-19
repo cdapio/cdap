@@ -90,6 +90,7 @@ class TableListView extends Component {
     match: PropTypes.object,
     loading: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   };
 
   static defaultProps = {
@@ -117,6 +118,9 @@ class TableListView extends Component {
       datasetId: this.props.datasetId,
       tableId,
     };
+    if (this.props.scope) {
+      params.scope = this.props.scope;
+    }
 
     MyDataPrepApi.readBigQueryTable(params).subscribe(
       (res) => {
