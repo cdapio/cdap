@@ -34,14 +34,13 @@ import java.util.Map;
 public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
 
   @Test
-  public void testTODO() throws Exception {
+  public void testGetArtifact() throws Exception {
     String version = "1.0.1";
     deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace(), version, null, null);
 
     String query = "{ "
       // + "  artifact(namespace: \"" + NamespaceId.DEFAULT.getNamespace() + "\") {"
       + "  artifact(name: \"" + AppWithServices.NAME + "\", version: \"" + version + "\") {"
-      + "    name"
       + "    classes {"
       + "      apps {"
       + "        className"
@@ -104,7 +103,7 @@ public class ArtifactDataFetcherTest extends CDAPGraphQLTest {
   }
 
   @Test
-  public void testGetArtifactSummary() throws Exception {
+  public void testGetApplication() throws Exception {
     deploy(AppWithServices.class, 200, null, NamespaceId.DEFAULT.getNamespace());
 
     String query = "{ "
