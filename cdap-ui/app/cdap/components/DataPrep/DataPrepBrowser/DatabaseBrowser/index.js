@@ -44,6 +44,7 @@ export default class DatabaseBrowser extends Component {
   static propTypes = {
     toggle: PropTypes.func,
     onWorkspaceCreate: PropTypes.func,
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   };
 
   state = {
@@ -104,6 +105,9 @@ export default class DatabaseBrowser extends Component {
       tableId,
       lines: 100,
     };
+    if (this.props.scope) {
+      params.scope = this.props.scope;
+    }
 
     DataPrepApi.readTable(params).subscribe(
       (res) => {

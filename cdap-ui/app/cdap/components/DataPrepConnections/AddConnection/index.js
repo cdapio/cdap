@@ -29,6 +29,7 @@ import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
 import T from 'i18n-react';
 import find from 'lodash/find';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import ee from 'event-emitter';
 require('./AddConnection.scss');
 
 const PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -86,6 +87,11 @@ export default class AddConnection extends Component {
         component: ADLSConnection,
       },
     ];
+    this.ee = ee(ee);
+  }
+
+  componentDidMount() {
+    this.ee.on('CREATE_WRANGLER_CONNECTION', this.createWranglerConnectionEvenHandler);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -95,6 +101,22 @@ export default class AddConnection extends Component {
       });
     }
   }
+
+  componentWillUnmount() {
+    if (this.ee) {
+      this.ee.off('CREATE_WRANGLER_CONNECTION', this.createWranglerConnectionEvenHandler);
+    }
+  }
+
+  createWranglerConnectionEvenHandler = (connectionType) => {
+    const connection = this.CONNECTIONS_TYPE.find((conn) => conn.type === connectionType);
+    if (connection) {
+      this.setState({
+        activeModal: connection.component,
+      });
+    }
+  };
+
   connectionClickHandler(component) {
     this.setState({
       activeModal: component,

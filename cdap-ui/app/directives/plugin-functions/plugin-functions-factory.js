@@ -41,6 +41,14 @@ angular.module(PKG.name + '.commons')
           'fn-config': 'fnConfig',
           'class': 'pull-right'
         },
+      },
+      'connection-browser': {
+        element: '<connection-browser></connection-browser>',
+        attributes: {
+          'node': 'node',
+          'on-browse-complete': 'onComplete',
+          'fn-config': 'fnConfig',
+        }
       }
     };
 

@@ -36,6 +36,7 @@ export default class BiqQueryBrowser extends Component {
     toggle: PropTypes.func,
     onWorkspaceCreate: PropTypes.func,
     enableRouting: PropTypes.bool,
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   };
 
   static defaultProps = {
@@ -69,12 +70,15 @@ export default class BiqQueryBrowser extends Component {
               <Route
                 exact
                 path="/ns/:namespace/connections/bigquery/:connectionId/datasets/:datasetId"
-                component={TableList}
+                render={(routeProps) => <TableList {...routeProps} scope={this.props.scope} />}
               />
               <Route render={Page404} />
             </Switch>
           ) : (
-            <DisplaySwitch onWorkspaceCreate={this.props.onWorkspaceCreate} />
+            <DisplaySwitch
+              onWorkspaceCreate={this.props.onWorkspaceCreate}
+              scope={this.props.scope}
+            />
           )}
         </div>
       </Provider>

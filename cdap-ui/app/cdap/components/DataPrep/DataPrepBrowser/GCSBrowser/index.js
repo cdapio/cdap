@@ -47,6 +47,7 @@ export default class GCSBrowser extends Component {
     match: PropTypes.object,
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   };
 
   static defaultProps = {
@@ -70,6 +71,9 @@ export default class GCSBrowser extends Component {
       lines: 10000,
       sampler: 'first',
     };
+    if (this.props.scope) {
+      params.scope = this.props.scope;
+    }
 
     MyDataPrepApi.readGCSFile(params, null, headers).subscribe(
       (res) => {
