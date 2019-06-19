@@ -250,7 +250,7 @@ public class MetricsQueryHelper {
         ((start == null) && (end == null));
 
     Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION) ?
-      getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : minResolution;
+      getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : getResolution(null, start, end);
 
     Interpolator interpolator = null;
     if (queryTimeParams.containsKey(PARAM_INTERPOLATE)) {
@@ -280,14 +280,38 @@ public class MetricsQueryHelper {
     }
   }
 
-  private Integer getResolution(String resolution, Long start, Long end) {
-    if (resolution.equals(PARAM_AUTO_RESOLUTION)) {
+  /**
+   * Get the integer resolution based on the resolution string, start and end ts. The logic of determining resolution
+   * is:
+   * 1. If the resolution string is a specific time interval, for example, 1s, 1m, 60s, and if this interval exists in
+   * the available resolution, that resolution will get returned.
+   * 2. If the resolution "auto", then start and end timestamp must be specified to determine the correct resolution.
+   * If end - start > 10 hours, hour resolution will be used. If end - start > 10 mins, min resolution will be used.
+   * If end -start < 10 mins, minimum resolution will be used.
+   * 3. If the resolution is null, i.e, not specified in the query, then if start and end timestamp are not null,
+   * the logic will be same as the resolution is "auto". If any of the start or end timestamp is not specified,
+   * minimum resolution will be used.
+   *
+   * @param resolution the resolution string, can be specific resolution like 1s, 1m, etc, or can be auto or null.
+   * @param start the start timestamp, null if not specified in the query
+   * @param end the end timestamp, null if not specified in the query
+   * @return the integer resolution for the query
+   */
+  @VisibleForTesting
+  Integer getResolution(@Nullable String resolution, @Nullable Long start, @Nullable Long end) {
+    if (resolution == null || resolution.equals(PARAM_AUTO_RESOLUTION)) {
       if (start != null && end != null) {
         long difference = end - start;
+        if (difference < 0) {
+          throw new IllegalArgumentException(String.format("The start time %d should not be " +
+                                                             "larger than the end time %d", start, end));
+        }
         return getResolution(difference);
-      } else {
+      } else if (resolution != null) {
         throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
                                              "should be provided to determine resolution");
+      } else {
+        return minResolution;
       }
     } else {
       // if not auto, check if the given resolution matches available resolutions that we support.
