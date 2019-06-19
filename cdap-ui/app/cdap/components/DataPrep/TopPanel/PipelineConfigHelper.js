@@ -414,10 +414,6 @@ function constructAdlsSource(artifactsList, adlsInfo) {
   batchArtifact.version = '[0.9.2, 9.0.0)';
   let plugin = objectQuery(adlsInfo, 'values', 0);
 
-  let pluginName = Object.keys(plugin)[0];
-
-  plugin = plugin[pluginName];
-
   let batchPluginInfo = {
     name: plugin.name,
     label: plugin.name,
