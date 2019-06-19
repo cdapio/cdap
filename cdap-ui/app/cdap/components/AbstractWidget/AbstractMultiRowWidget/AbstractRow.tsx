@@ -33,9 +33,9 @@ export const AbstractRowStyles = (theme) => {
       height: '44px',
       display: 'grid',
       gridTemplateColumns: '1fr auto auto',
+      alignItems: 'end',
       '& > *:first-child': {
         marginRight: '10px',
-        alignSelf: 'end',
       },
     },
   };

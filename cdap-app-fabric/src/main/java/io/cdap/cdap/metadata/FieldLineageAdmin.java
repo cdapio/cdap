@@ -106,25 +106,7 @@ public class FieldLineageAdmin {
 
     Set<Field> result = createFields(lineageFields, true);
     if (includeCurrent) {
-      // get the system properties of this dataset
-      Map<String, String> properties = metadataAdmin
-        .getProperties(MetadataScope.SYSTEM, MetadataEntity.ofDataset(endPoint.getNamespace(), endPoint.getName()));
-      // the system metadata contains the schema of the dataset which is written by the DatasetSystemMetadataWriter
-      if (properties.containsKey(MetadataConstants.SCHEMA_KEY)) {
-        String schema = properties.get(MetadataConstants.SCHEMA_KEY);
-        Schema sc = Schema.parseJson(schema);
-        if (sc.getFields() != null) {
-          Set<String> schemaFields = sc.getFields().stream().map(Schema.Field::getName).collect(Collectors.toSet());
-          // Sets.difference will return all the fields which are present in schemaFields and not present in lineage
-          // fields. If there are common fields then they will not be present in the difference and will be treated
-          // as lineage fields containing lineage information.
-          ImmutableSet<String> dsOnlyFields = Sets.difference(schemaFields, lineageFields).immutableCopy();
-          result.addAll(createFields(dsOnlyFields, false));
-        }
-      } else {
-        LOG.trace("Received request to include schema fields for {} but no schema was found. Only fields present in " +
-                    "the lineage store will be returned.", endPoint);
-      }
+      result.addAll(createFields(getFieldsWithNoFieldLineage(endPoint, lineageFields), false));
     }
     return Strings.isNullOrEmpty(prefix) ? Collections.unmodifiableSet(result) :
       Collections.unmodifiableSet(filter(prefix, result));
@@ -143,8 +125,8 @@ public class FieldLineageAdmin {
    * @param end end time (exclusive) in milliseconds
    * @return the FieldLineageSummary
    */
-  FieldLineageSummary getSummary(Constants.FieldLineage.Direction direction, EndPointField endPointField, long start,
-                                 long end) {
+  FieldLineageSummary getFieldLineage(Constants.FieldLineage.Direction direction, EndPointField endPointField,
+                                      long start, long end) {
     Set<DatasetField> incoming = null;
     Set<DatasetField> outgoing = null;
     if (direction == Constants.FieldLineage.Direction.INCOMING || direction == Constants.FieldLineage.Direction.BOTH) {
@@ -158,21 +140,85 @@ public class FieldLineageAdmin {
     return new FieldLineageSummary(incoming, outgoing);
   }
 
-  private Set<DatasetField> convertSummaryToDatasetField(Set<EndPointField> summary) {
-    Map<EndPoint, Set<String>> endPointFields = new HashMap<>();
-    for (EndPointField endPointField : summary) {
-      EndPoint endPoint = endPointField.getEndPoint();
-      Set<String> fields = endPointFields.computeIfAbsent(endPoint, k -> new HashSet<>());
-      fields.add(endPointField.getField());
+  /**
+   * Get the summary for the specified dataset over a given time range depending on the direction specified.
+   * The summary will contain all the field level lineage relations about all the fields in a dataset.
+   *
+   * @param direction the direction in which summary need to be computed
+   * @param endPoint the EndPoint whicn represents the dataset that field level lineage needs to get computed
+   * @param start start time (inclusive) in milliseconds
+   * @param end end time (exclusive) in milliseconds
+   * @return the summary which contains all the field level lineage information about all the fields in a dataset
+   * @throws IOException if fails to get teh schema of the dataset
+   */
+  DatasetFieldLineageSummary getDatasetFieldLineage(Constants.FieldLineage.Direction direction, EndPoint endPoint,
+                                                    long start, long end) throws IOException {
+    Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
+    Map<DatasetId, Set<FieldRelation>> incomingRelations = new HashMap<>();
+    Map<DatasetId, Set<FieldRelation>> outgoingRelations = new HashMap<>();
+    for (String field : lineageFields) {
+      EndPointField endPointField = new EndPointField(endPoint, field);
+
+      // compute the incoming field level lineage
+      if (direction == Constants.FieldLineage.Direction.INCOMING ||
+        direction == Constants.FieldLineage.Direction.BOTH) {
+        Map<DatasetId, Set<String>> incomingSummary =
+          convertSummaryToDatasetMap(fieldLineageReader.getIncomingSummary(endPointField, start, end));
+        // here the field itself will be the destination
+        computeAndAddRelations(incomingRelations, field, true, incomingSummary);
+      }
+
+      // compute the outgoing field level lineage
+      if (direction == Constants.FieldLineage.Direction.OUTGOING ||
+        direction == Constants.FieldLineage.Direction.BOTH) {
+        Map<DatasetId, Set<String>> outgoingSummary =
+          convertSummaryToDatasetMap(fieldLineageReader.getOutgoingSummary(endPointField, start, end));
+        // here the field itself will be the source
+        computeAndAddRelations(outgoingRelations, field, false, outgoingSummary);
+      }
     }
 
+    Set<String> noLineageFields = getFieldsWithNoFieldLineage(endPoint, lineageFields);
+    Set<String> allFields = ImmutableSet.<String>builder().addAll(lineageFields).addAll(noLineageFields).build();
+    return new DatasetFieldLineageSummary(direction, start, end,
+                                          new DatasetId(endPoint.getNamespace(), endPoint.getName()),
+                                          allFields, incomingRelations, outgoingRelations);
+  }
+
+  /**
+   * Compute the relations from the given summary and add the field relation to the map of relations. The field is
+   * either the source or the destination in the relation.
+   */
+  private void computeAndAddRelations(Map<DatasetId, Set<FieldRelation>> relations, String field, boolean isDestination,
+                                      Map<DatasetId, Set<String>> summary) {
+    for (Map.Entry<DatasetId, Set<String>> entry : summary.entrySet()) {
+      DatasetId outgoing = entry.getKey();
+      relations.computeIfAbsent(outgoing, k -> new HashSet<>());
+      entry.getValue().forEach(otherField -> relations.get(outgoing).add(
+        isDestination ? new FieldRelation(otherField, field) : new FieldRelation(field, otherField)));
+    }
+  }
+
+  private Set<DatasetField> convertSummaryToDatasetField(Set<EndPointField> summary) {
+    Map<DatasetId, Set<String>> endPointFields = convertSummaryToDatasetMap(summary);
+
     Set<DatasetField> result = new HashSet<>();
-    for (Map.Entry<EndPoint, Set<String>> entry : endPointFields.entrySet()) {
-      DatasetId datasetId = new DatasetId(entry.getKey().getNamespace(), entry.getKey().getName());
-      result.add(new DatasetField(datasetId, entry.getValue()));
+    for (Map.Entry<DatasetId, Set<String>> entry : endPointFields.entrySet()) {
+      result.add(new DatasetField(entry.getKey(), entry.getValue()));
     }
 
     return result;
+  }
+
+  private Map<DatasetId, Set<String>> convertSummaryToDatasetMap(Set<EndPointField> summary) {
+    Map<DatasetId, Set<String>> endPointFields = new HashMap<>();
+    for (EndPointField endPointField : summary) {
+      EndPoint endPoint = endPointField.getEndPoint();
+      DatasetId datasetId = new DatasetId(endPoint.getNamespace(), endPoint.getName());
+      Set<String> fields = endPointFields.computeIfAbsent(datasetId, k -> new HashSet<>());
+      fields.add(endPointField.getField());
+    }
+    return endPointFields;
   }
 
   /**
@@ -205,6 +251,31 @@ public class FieldLineageAdmin {
       outgoing = processOperations(outgoingOperations);
     }
     return new FieldLineageDetails(incoming, outgoing);
+  }
+
+  private Set<String> getFieldsWithNoFieldLineage(EndPoint dataset,
+                                                  Set<String> lineageFields) throws IOException {
+    // get the system properties of this dataset
+    Map<String, String> properties = metadataAdmin.getProperties(MetadataScope.SYSTEM,
+                                                                 MetadataEntity.ofDataset(dataset.getNamespace(),
+                                                                                          dataset.getName()));
+    // the system metadata contains the schema of the dataset which is written by the DatasetSystemMetadataWriter
+    if (properties.containsKey(MetadataConstants.SCHEMA_KEY)) {
+      String schema = properties.get(MetadataConstants.SCHEMA_KEY);
+      Schema sc = Schema.parseJson(schema);
+      if (sc.getFields() != null) {
+        Set<String> schemaFields = sc.getFields().stream().map(Schema.Field::getName).collect(Collectors.toSet());
+        // filter out the fields that are part of the lineageFields
+        return sc.getFields().stream()
+          .map(Schema.Field::getName)
+          .filter(name -> !lineageFields.contains(name))
+          .collect(Collectors.toSet());
+      }
+    } else {
+      LOG.trace("Received request to include schema fields for {} but no schema was found. Only fields present in " +
+                  "the lineage store will be returned.", dataset);
+    }
+    return Collections.emptySet();
   }
 
   private List<ProgramFieldOperationInfo> processOperations(List<ProgramRunOperations> programRunOperations) {

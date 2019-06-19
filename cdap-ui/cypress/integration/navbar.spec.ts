@@ -14,14 +14,27 @@
  * the License.
 */
 
-import { Theme } from 'services/ThemeHelper';
+import { Theme } from '../../app/cdap/services/ThemeHelper';
+import * as Helpers from '../helpers';
 
 const NAVBAR_MENU_HIGHLIGHT_COLOR = 'rgb(220, 224, 234)';
 const NAVBAR_MENU_FONT_COLOR = 'rgb(0, 118, 220)';
 const NAVBAR_BG_COLOR = 'rgb(51, 51, 51)';
 const NAVBAR_BG_COLOR_LIGHT = 'rgb(59, 120, 231)';
-
+let headers = {};
 describe('Navbar tests', () => {
+  before(() => {
+    Helpers.loginIfRequired().then(() => {
+      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
+        if (!cookie) {
+          return;
+        }
+        headers = {
+          Authorization: 'Bearer ' + cookie.value,
+        };
+      });
+    });
+  });
   after(() => {
     cy.request({
       url: '/updateTheme',
@@ -29,6 +42,7 @@ describe('Navbar tests', () => {
       body: {
         uiThemePath: 'config/themes/default.json',
       },
+      headers,
     });
   });
   it('Should have right bgcolor for default theme', () => {
@@ -65,6 +79,7 @@ describe('Navbar tests', () => {
       body: {
         uiThemePath: 'config/themes/light.json',
       },
+      headers,
     }).then(() => {
       cy.visit('/cdap');
       cy.get('[data-cy="app-navbar"]').then((navbar) => {
@@ -111,7 +126,7 @@ describe('Navbar tests', () => {
     assetFeatureHighlight('navbar-metadata-link');
     assetFeatureHighlight('navbar-project-admin-link');
   });
-  it.only('Should close when hub is opened', () => {
+  it('Should close when hub is opened', () => {
     cy.visit('/cdap');
     cy.get('[data-cy="navbar-hamburger-icon"]').click();
     cy.get('#navbar-hub').click();

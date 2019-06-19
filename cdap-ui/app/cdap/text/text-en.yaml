@@ -1232,10 +1232,13 @@ features:
         serviceAccountKeyfile: Service account key file location
         testConnection: Test Connection
       ADLS:
+        accountFQDN: Account FQDN
         Buttons:
           ADD: Add Connection
           DUPLICATE: Duplicate Connection
           EDIT: Save Changes
+        clientID: Client ID
+        clientSecret: Client Key
         defaultTestErrorMessage: Cannot connect to ADLS Handler
         ErrorMessages:
           ADD: Failed to add connection
@@ -1245,16 +1248,13 @@ features:
           ADD: "Add connection: ADLS Handler"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
+        name: Connection name
         Placeholders:
-          name: Specify a name to identify this connection
           accountFQDN: Specify Account FQDN
           clientID: Specify Client ID
           clientSecret: Specify Client Key
+          name: Specify a name to identify this connection
           refreshURL: Specify End Point Refresh URL
-        accountFQDN: Account FQDN
-        name: Connection name
-        clientID: Client ID
-        clientSecret: Client Key
         refreshURL: End Point Refresh URL
         testConnection: Test Connection
       TestConnectionLabels:
@@ -1453,7 +1453,7 @@ features:
       Title:
         incoming: "Cause for:"
         outgoing: "Impact for:"
-      viewOperations: View operations
+      viewOperations: View operations 
     TimeRangeOptions:
       CUSTOM: Custom
       last14d: Last 14 days
@@ -1466,6 +1466,13 @@ features:
       subtitle: Explore root cause and impact for each of the fields of the dataset
       timePickerCaption: View field level info in the
       title: Field level lineage
+    v2:
+      FllHeader:
+        RelatedHeader: "Datasets used as {type} by {target}"
+        RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
+        TargetHeader: 'Select a field to view lineage and operations' 
+        TargetSubheader: "Viewing {first} to {last} of {total} fields"
+      TableSubheader: "{count} fields"
   ADLSBrowser:
     directory: Directory
     EmptyMessage:
