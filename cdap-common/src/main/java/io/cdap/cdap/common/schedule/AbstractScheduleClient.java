@@ -24,6 +24,7 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.client.AbstractClient;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
 import io.cdap.cdap.proto.ProtoTrigger;
@@ -36,6 +37,7 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -47,7 +49,7 @@ import javax.annotation.Nullable;
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
  */
-public abstract class AbstractScheduleClient {
+public abstract class AbstractScheduleClient extends AbstractClient {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
@@ -58,16 +60,9 @@ public abstract class AbstractScheduleClient {
   private static final Type LIST_SCHEDULE_DETAIL_TYPE = new TypeToken<List<ScheduleDetail>>() {
   }.getType();
 
-  /**
-   * Executes an HTTP request.
-   */
-  protected abstract HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
-
-  /**
-   * Resolved the specified URL
-   */
-  protected abstract URL resolve(String resource) throws IOException;
+  public AbstractScheduleClient(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient);
+  }
 
   /**
    * List all schedules for an existing workflow.
@@ -104,7 +99,7 @@ public abstract class AbstractScheduleClient {
    * @return list of Scheduled runtimes for the Workflow. Empty list if there are no schedules.
    */
   public List<ScheduledRuntime> nextRuntimes(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException, BadRequestException {
+    throws IOException, NotFoundException, UnauthorizedException, BadRequestException {
 
     String path = String.format("namespaces/%s/apps/%s/workflows/%s/nextruntime",
                                 workflow.getNamespace(), workflow.getApplication(), workflow.getProgram());
@@ -122,7 +117,7 @@ public abstract class AbstractScheduleClient {
   }
 
   private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
+    throws IOException, BadRequestException, UnauthorizedException {
     URL url = resolve(path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {

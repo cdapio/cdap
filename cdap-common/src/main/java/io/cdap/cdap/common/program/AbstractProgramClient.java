@@ -21,6 +21,7 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.client.AbstractClient;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
@@ -30,6 +31,7 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -40,18 +42,11 @@ import javax.annotation.Nullable;
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
  */
-public abstract class AbstractProgramClient {
+public abstract class AbstractProgramClient extends AbstractClient {
 
-  /**
-   * Executes an HTTP request.
-   */
-  protected abstract HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
-
-  /**
-   * Resolved the specified URL
-   */
-  protected abstract URL resolve(String resource) throws IOException;
+  public AbstractProgramClient(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient);
+  }
 
   /**
    * Gets the run records of a program.
@@ -60,10 +55,9 @@ public abstract class AbstractProgramClient {
    * @return the run records of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<RunRecord> getAllProgramRuns(ProgramId program, long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    throws IOException, NotFoundException, UnauthorizedException, BadRequestException {
     return getProgramRuns(program, ProgramRunStatus.ALL.name(), startTime, endTime, limit);
   }
 
@@ -75,11 +69,10 @@ public abstract class AbstractProgramClient {
    * @return the run records of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public List<RunRecord> getProgramRuns(ProgramId program, String state,
                                         long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    throws IOException, NotFoundException, UnauthorizedException, BadRequestException {
 
     String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d",
                                        Constants.AppFabric.QUERY_PARAM_STATUS, state,
@@ -100,7 +93,7 @@ public abstract class AbstractProgramClient {
   }
 
   private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
+    throws IOException, BadRequestException, UnauthorizedException {
     URL url = resolve(path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {

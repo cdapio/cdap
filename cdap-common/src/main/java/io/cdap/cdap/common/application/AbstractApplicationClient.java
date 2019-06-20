@@ -21,6 +21,7 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.client.AbstractClient;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -30,6 +31,7 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -40,18 +42,11 @@ import javax.annotation.Nullable;
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
  */
-public abstract class AbstractApplicationClient {
+public abstract class AbstractApplicationClient extends AbstractClient {
 
-  /**
-   * Executes an HTTP request.
-   */
-  protected abstract HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
-
-  /**
-   * Resolved the specified URL
-   */
-  protected abstract URL resolve(String resource) throws IOException;
+  public AbstractApplicationClient(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient);
+  }
 
   /**
    * Lists all applications currently deployed.
@@ -95,7 +90,7 @@ public abstract class AbstractApplicationClient {
   }
 
   private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
+    throws IOException, BadRequestException, UnauthorizedException {
     URL url = resolve(path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
     if (body != null) {
