@@ -52,7 +52,7 @@
     </dependency>
   </dependencies>
   
-  <build>
+  <!--<build>
     <pluginManagement>
       <plugins>
         <plugin>
@@ -65,6 +65,6 @@
       </plugin>
       </plugins>
     </pluginManagement>
-  </build>  
+  </build>-->  
 
 </project>
