@@ -2451,7 +2451,7 @@
                   <phase>prepare-package</phase>
                   <configuration>
                     <target>
-                      <chmod file="${stage.dir}/etc/logrotate.d/cdap" perm="644"/>
+                      <chmod file="${stage.dir}/etc/logrotate.d/**" perm="644"/>
                     </target>
                   </configuration>
                   <goals>
@@ -2566,7 +2566,7 @@
                   <phase>prepare-package</phase>
                   <configuration>
                     <target>
-                      <chmod file="${stage.dir}-deb/etc/logrotate.d/cdap" perm="644"/>
+                      <chmod file="${stage.dir}-deb/etc/logrotate.d/**" perm="644"/>
                     </target>
                   </configuration>
                   <goals>
