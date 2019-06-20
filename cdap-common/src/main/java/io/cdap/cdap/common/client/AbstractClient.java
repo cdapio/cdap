@@ -49,7 +49,7 @@ public abstract class AbstractClient {
   /**
    * Executes an HTTP request.
    */
-  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
+  protected HttpResponse execute(HttpRequest request)
     throws IOException, UnauthorizedException {
     return remoteClient.execute(request);
   }
@@ -76,14 +76,17 @@ public abstract class AbstractClient {
     throws IOException, BadRequestException, UnauthorizedException {
     URL url = resolve(path);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
+
     if (body != null) {
       builder.withBody(body);
     }
-    HttpResponse response = execute(builder.build(),
-                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+
+    HttpResponse response = execute(builder.build());
+
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
+
     return response;
   }
 

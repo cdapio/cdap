@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteScheduleClient extends AbstractScheduleClient {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteScheduleClient.class);
-
   @Inject
   public RemoteScheduleClient(DiscoveryServiceClient discoveryClient) {
     super(discoveryClient);

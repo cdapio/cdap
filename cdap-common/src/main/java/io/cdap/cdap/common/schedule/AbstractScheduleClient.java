@@ -63,12 +63,12 @@ public abstract class AbstractScheduleClient extends AbstractClient {
    * @param workflow the ID of the workflow
    */
   public List<ScheduleDetail> listSchedules(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException, BadRequestException {
+    throws IOException, NotFoundException, UnauthorizedException, BadRequestException {
     return doList(workflow);
   }
 
   private List<ScheduleDetail> doList(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException, BadRequestException {
+    throws IOException, NotFoundException, UnauthorizedException, BadRequestException {
     String path = String.format("namespaces/%s/apps/%s/workflows/%s/schedules",
                                 workflow.getNamespace(), workflow.getApplication(), workflow.getProgram());
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
