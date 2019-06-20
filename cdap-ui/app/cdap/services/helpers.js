@@ -228,9 +228,9 @@ function getArtifactNameAndVersion(nameWithVersion) {
   let name = version
     ? nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1)
     : nameWithVersion;
-  // if version is not present, default it to 1.0.0-SNAPSHOT
+  // if version is not present, default it to 1.0.0
   if (!version) {
-    version = '1.0.0-SNAPSHOT';
+    version = '1.0.0';
   }
   return { version, name };
 }

@@ -34,7 +34,7 @@ const defaultConfigureState = Object.assign(
     type: '',
     description: '',
     classname: '',
-    version: '1.0.0',
+    version: '',
     parentArtifact: [
       'system:cdap-data-pipeline[3.0.0,10.0.0]',
       'system:cdap-data-streams[3.0.0,10.0.0]',
