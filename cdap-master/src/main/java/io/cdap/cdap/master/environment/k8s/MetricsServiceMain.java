@@ -39,6 +39,7 @@ import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import io.cdap.cdap.metrics.process.MetricsAdminSubscriberService;
 import io.cdap.cdap.metrics.process.MetricsProcessorStatusService;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
+import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -96,6 +97,7 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
     services.add(injector.getInstance(MetricsQueryService.class));
     services.add(injector.getInstance(MetricsAdminSubscriberService.class));
+    services.add(injector.getInstance(MetricsCleanUpService.class));
   }
 
   @Nullable
