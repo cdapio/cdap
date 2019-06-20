@@ -17,8 +17,11 @@ import * as React from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import BrandImage from 'components/AppHeader/BrandImage';
+<<<<<<< HEAD
 import MenuItem from '@material-ui/core/MenuItem';
 import IconSVG from 'components/IconSVG';
+=======
+>>>>>>> release/6.0
 import MenuIcon from '@material-ui/icons/Menu';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
@@ -26,16 +29,16 @@ import { withContext, INamespaceLinkContext } from 'components/AppHeader/Namespa
 import ToolBarFeatureLink from 'components/AppHeader/AppToolBar/ToolBarFeatureLink';
 import HubButton from 'components/AppHeader/HubButton';
 import { Theme } from 'services/ThemeHelper';
-import VersionStore from 'services/VersionStore';
-import T from 'i18n-react';
-import If from 'components/If';
-import AboutPageModal from 'components/AppHeader/AboutPageModal';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
+<<<<<<< HEAD
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import Grow from '@material-ui/core/Grow';
 import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
+=======
+import AppToolbarMenu from 'components/AppHeader/AppToolBar/AppToolbarMenu';
+>>>>>>> release/6.0
 
 const styles = (theme) => {
   return {
@@ -49,19 +52,6 @@ const styles = (theme) => {
     customToolbar: {
       height: '48px',
       minHeight: '48px',
-    },
-    buttonLink: theme.buttonLink,
-    cogWheelFontSize: {
-      // This is because the icon is not the same size as it should be.
-      // So beside a normal text this looks small. Hence the bump in font size
-      fontSize: '1.3rem',
-    },
-    anchorMenuItem: {
-      '&:focus': {
-        outline: 'none',
-      },
-      textDecoration: 'none !important',
-      color: 'inherit',
     },
   };
 };
@@ -82,6 +72,7 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     aboutPageOpen: false,
   };
 
+<<<<<<< HEAD
   public toggleSettings = (event: React.MouseEvent<HTMLElement>) => {
     if (this.state.anchorEl) {
       this.setState({
@@ -118,11 +109,11 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     return Theme.productDocumentationLink;
   };
 
+=======
+>>>>>>> release/6.0
   public render() {
     const { onMenuIconClick, classes } = this.props;
-    const { anchorEl } = this.state;
     const { namespace } = this.props.context;
-    const cdapVersion = VersionStore.getState().version;
     return (
       <Toolbar className={classes.customToolbar} data-cy="navbar-toolbar">
         <IconButton
@@ -156,12 +147,9 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             featureUrl={`/administration`}
           />
         </div>
-        <div onClick={this.toggleSettings}>
-          <IconButton className={classnames(classes.buttonLink, classes.iconButtonFocus)}>
-            <IconSVG name="icon-cogs" className={classes.cogWheelFontSize} />
-          </IconButton>
-        </div>
+        <AppToolbarMenu />
         <ProductEdition />
+<<<<<<< HEAD
         <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} transition disablePortal>
           {({ TransitionProps, placement }) => (
             <Grow
@@ -203,6 +191,8 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             toggle={this.toggleAboutPage}
           />
         </If>
+=======
+>>>>>>> release/6.0
       </Toolbar>
     );
   }

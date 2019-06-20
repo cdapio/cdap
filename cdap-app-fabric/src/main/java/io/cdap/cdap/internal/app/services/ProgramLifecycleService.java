@@ -326,7 +326,8 @@ public class ProgramLifecycleService {
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
    *
    * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
-   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}, or {@code null} if it does
+   *         not exist
    */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
@@ -339,8 +340,10 @@ public class ProgramLifecycleService {
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
    * @param appSpec the {@link ApplicationSpecification} of the existing application
    * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification} is requested
-   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}, or {@code null} if it does
+   *         not exist
    */
+  @Nullable
   private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
                                                                   ProgramId programId) {
     String programName = programId.getProgram();
