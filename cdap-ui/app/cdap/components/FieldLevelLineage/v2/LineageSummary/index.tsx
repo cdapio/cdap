@@ -17,6 +17,7 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
+import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
@@ -30,7 +31,7 @@ const styles = (theme) => {
       paddingRight: '100px',
       display: 'flex',
       justifyContent: 'space-between',
-      position: 'relative',
+      position: 'relative' as 'relative',
     },
     container: {
       position: 'absolute' as 'absolute',
@@ -42,19 +43,35 @@ const styles = (theme) => {
   };
 };
 
-class LineageSummary extends React.Component<{ classes }> {
-  private activeField;
-  private allLinks;
-  private activeLinks = [];
+interface ILineageState {
+  activeField: string;
+  activeCauseSets: ITableFields;
+  activeImpactSets: ITableFields;
+  activeLinks: ILink[];
+  showingOneField: boolean;
+}
+
+class LineageSummary extends React.Component<{ classes }, ILineageState> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeField: null,
+      activeCauseSets: null,
+      activeImpactSets: null,
+      activeLinks: null,
+      showingOneField: false,
+    };
+  }
+  private allLinks = [];
 
   // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
-    const sourceEl = d3.select(`#${source}`);
-    const destEl = d3.select(`#${destination}`);
+    const sourceEl = d3.select(`#${source.id}`);
+    const destEl = d3.select(`#${destination.id}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -50 + window.pageYOffset; // From the FllHeader
+    const offsetY = -48 + window.pageYOffset; // From the FllHeader
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
@@ -67,7 +84,7 @@ class LineageSummary extends React.Component<{ classes }> {
     // draw an edge from line start to line end
     const linkContainer = isSelected
       ? d3.select('#selected-links')
-      : d3.select(`#${source}_${destination}`);
+      : d3.select(`#${source.id}_${destination.id}`);
 
     const third = (sourceX2 - sourceX1) / 3;
 
@@ -115,38 +132,122 @@ class LineageSummary extends React.Component<{ classes }> {
       .style('fill', edgeColor);
   }
 
-  private drawLinks(activeFieldId = null) {
+  private clearCanvas() {
     // clear any existing links and anchors
     d3.select('#links-container')
       .selectAll('path,rect')
       .remove();
+  }
+
+  private drawActiveLinks() {
+    this.clearCanvas();
+
+    this.state.activeLinks.forEach((link) => {
+      this.drawLineFromLink(link, true);
+    });
+  }
+
+  private drawLinks(activeFieldId = null) {
+    this.clearCanvas();
 
     const activeLinks = [];
     this.allLinks.forEach((link) => {
-      const isSelected = link.source === activeFieldId || link.destination === activeFieldId;
+      const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
       if (isSelected) {
         activeLinks.push(link);
       }
       this.drawLineFromLink(link, isSelected);
     });
-    this.activeLinks = activeLinks;
+    this.setState(() => ({
+      ...this.state,
+      activeLinks,
+    }));
   }
 
   private handleFieldClick(e) {
-    d3.select(`#${this.activeField}`).classed('selected', false);
-    const fieldId = (e.target as HTMLAreaElement).id;
-    this.activeField = fieldId;
-    d3.select(`#${fieldId}`).classed('selected', true);
-
-    this.drawLinks(fieldId);
+    const activeField = (e.target as HTMLAreaElement).id;
+    if (!activeField) {
+      return;
+    }
+    d3.select(`#${this.state.activeField}`).classed('selected', false);
+    this.setState(
+      {
+        ...this.state,
+        activeField,
+      },
+      () => {
+        d3.select(`#${activeField}`).classed('selected', true);
+        this.drawLinks(activeField);
+      }
+    );
   }
 
-  private drawRootAndImpact() {
-    // Go through active links
-    // find the name(s) of the cause and impact tables that are in active links
-    // need to somehow temporarily rendor a subset of the tables and fields, and re-render when user clicks "reset"
-    // Do I need a separate render function? i.e. renderSelectedFields or something like that?
-    // Could potentially also use it for filtering
+  // example: "target_ns-default_ds-Employee_Data_fd-id"
+  private parseFieldId(fieldId) {
+    let truncId;
+    const pref = fieldId.slice(0, 5);
+    const type = pref === 'cause' ? pref : pref + 't';
+    // chop off the "target_" or "cause_" delimiter
+    truncId = type === 'cause' ? fieldId.slice(6) : fieldId.slice(7);
+    // Look for "_fd-" delimiter - everything before that is the tableId, and everything after is the fieldname
+    const fdIndex = truncId.indexOf('_fd-');
+    const tableId = truncId.slice(0, fdIndex);
+    // also need to get the dataset name out of datasetId
+    const dsName = tableId.slice(tableId.indexOf('_ds-') + 4);
+    const fieldName = truncId.slice(fdIndex + 4);
+    const field = {
+      id: fieldId,
+      name: fieldName,
+      group: dsName,
+    };
+
+    return { field, tableId, type };
+  }
+
+  private getActiveSets() {
+    const activeCauseSets = {};
+    const activeImpactSets = {};
+
+    this.state.activeLinks.forEach((link) => {
+      // for each link, look at id prefix to find the field that is not the target and add to the activeCauseSets or activeImpactSets
+      const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
+      const tableToUpdate = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
+      const tableId = `ns-${nonTargetFd.namespace}_ds-${nonTargetFd.dataset}`; // used as unique key to make sure we don't duplicate fields
+      if (!(tableId in tableToUpdate)) {
+        tableToUpdate[tableId] = [];
+      }
+      tableToUpdate[tableId].push(nonTargetFd);
+    });
+    this.setState(
+      {
+        ...this.state,
+        activeCauseSets,
+        activeImpactSets,
+      },
+      () => {
+        this.setState({
+          ...this.state,
+          showingOneField: true,
+        });
+      }
+    );
+  }
+
+  public componentDidUpdate() {
+    if (this.state.showingOneField) {
+      this.drawActiveLinks();
+    }
+  }
+
+  private handleViewCauseImpact() {
+    this.getActiveSets();
+  }
+
+  private handleReset() {
+    this.setState(() => ({
+      ...this.state,
+      showingOneField: false,
+    }));
   }
 
   public componentWillUnmount() {
@@ -168,31 +269,45 @@ class LineageSummary extends React.Component<{ classes }> {
           firstCause,
           firstImpact,
           firstField,
-          activeField,
           links,
         }) => {
           this.allLinks = links;
-          this.activeField = activeField;
+          let visibleLinks = this.allLinks;
+          let visibleCauseSets = causeSets;
+          let visibleImpactSets = impactSets;
+
+          if (this.state.showingOneField) {
+            visibleLinks = this.state.activeLinks;
+            visibleCauseSets = this.state.activeCauseSets;
+            visibleImpactSets = this.state.activeImpactSets;
+          }
+
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
                 <g>
-                  {links.map((link) => {
-                    const id = `${link.source}_${link.destination}`;
+                  {visibleLinks.map((link) => {
+                    const id = `${link.source.id}_${link.destination.id}`;
                     return <svg id={id} key={id} className="fll-link" />;
                   })}
                 </g>
                 <g id="selected-links" />
               </svg>
               <div>
-                <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
-                {Object.keys(causeSets).map((key) => {
+                <FllHeader
+                  type="cause"
+                  first={firstCause}
+                  total={Object.keys(visibleCauseSets).length}
+                />
+                {Object.keys(visibleCauseSets).map((key) => {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
                       key={key}
                       tableId={key}
-                      fields={causeSets[key]}
+                      fields={visibleCauseSets[key]}
+                      activeField={this.state.activeField}
+                      showingOneField={this.state.showingOneField}
                     />
                   );
                 })}
@@ -208,21 +323,27 @@ class LineageSummary extends React.Component<{ classes }> {
                   isTarget={true}
                   tableId={target}
                   fields={targetFields}
+                  activeField={this.state.activeField}
+                  viewCauseImpactHandler={this.handleViewCauseImpact.bind(this)}
+                  showingOneField={this.state.showingOneField}
+                  resetHandler={this.handleReset.bind(this)}
                 />
               </div>
               <div>
                 <FllHeader
                   type="impact"
                   first={firstImpact}
-                  total={Object.keys(impactSets).length}
+                  total={Object.keys(visibleImpactSets).length}
                 />
-                {Object.keys(impactSets).map((key) => {
+                {Object.keys(visibleImpactSets).map((key) => {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
                       key={key}
                       tableId={key}
-                      fields={impactSets[key]}
+                      fields={visibleImpactSets[key]}
+                      activeField={this.state.activeField}
+                      showingOneField={this.state.showingOneField}
                     />
                   );
                 })}

@@ -1,3 +1,5 @@
+import { string } from 'prop-types';
+
 /*
  * Copyright © 2019 Cask Data, Inc.
  *
@@ -14,15 +16,31 @@
  * the License.
 */
 
-// Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
+export interface IField {
+  id: string;
+  type: string;
+  name: string;
+  dataset: string;
+  namespace: string;
+}
 
+export interface ILink {
+  source: IField;
+  destination: IField;
+}
+
+export interface ITableFields {
+  [tablename: string]: IField[];
+}
+
+// Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
+// namespace and target are the target namespace and dataset name
 export function parseRelations(namespace, target, ents, isCause = true) {
-  const tables = {};
+  const tables: ITableFields = {};
   const relNodes = [];
   const relLinks = [];
   ents.map((ent) => {
     // Assumes that all tableNames are unique (since all datasets in a namespace should have unique names)
-    // tableName is later used to display the table name in the header
 
     const tableId = `${isCause ? 'cause' : 'impact'}_ns-${ent.entityId.namespace}_ds-${
       ent.entityId.dataset
@@ -35,10 +53,12 @@ export function parseRelations(namespace, target, ents, isCause = true) {
       // backend response assumes connection goes from left to right, i.e. an incoming connection's source = incoming field and destination = target field, and outgoing connection's source = target field.
       const fieldName = isCause ? rel.source : rel.destination;
       let id = fieldIds.get(fieldName);
-      const field = {
+      const field: IField = {
         id,
+        type: isCause ? 'cause' : 'impact',
         name: fieldName,
-        group: ent.entityId.dataset,
+        dataset: ent.entityId.dataset,
+        namespace: ent.entityId.namespace,
       };
       if (!fieldIds.has(fieldName)) {
         id = `${tableId}_fd-${fieldName}`;
@@ -47,28 +67,34 @@ export function parseRelations(namespace, target, ents, isCause = true) {
         tables[tableId].push(field);
         relNodes.push(field);
       }
-      relLinks.push({
-        // if connection goes from cause to target
-        source: isCause
-          ? fieldIds.get(fieldName)
-          : `target_ns-${namespace}_ds-${target}_fd-${rel.source}`,
-        destination: isCause
-          ? `target_ns-${namespace}_ds-${target}_fd-${rel.destination}`
-          : fieldIds.get(fieldName),
-      });
+      const targetField: IField = {
+        id: `target_ns-${namespace}_ds-${target}_fd-${isCause ? rel.destination : rel.source}`,
+        type: 'target',
+        dataset: target,
+        namespace,
+        name: isCause ? rel.destination : rel.source,
+      };
+      const link: ILink = {
+        source: isCause ? field : targetField,
+        destination: isCause ? targetField : field,
+      };
+      relLinks.push(link);
     });
   });
   return { tables, relNodes, relLinks };
 }
 
 export function makeTargetNodes(entityId, fields) {
-  const targetNodes = fields.map((field) => {
-    const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${field}`;
-    return {
+  const targetNodes = fields.map((fieldname) => {
+    const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${fieldname}`;
+    const field: IField = {
       id,
-      name: field,
-      group: entityId.dataset,
+      type: 'target',
+      name: fieldname,
+      dataset: entityId.dataset,
+      namespace: entityId.namespace,
     };
+    return field;
   });
   return targetNodes;
 }

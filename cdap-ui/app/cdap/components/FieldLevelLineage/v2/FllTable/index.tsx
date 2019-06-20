@@ -21,7 +21,6 @@ import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
-import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 
 const styles = (theme) => {
@@ -78,22 +77,40 @@ interface ITableProps extends WithStyles<typeof styles> {
   fields: INode[];
   isTarget?: boolean;
   clickFieldHandler: (fieldId: string) => void;
+  activeField: string;
+  viewCauseImpactHandler?: () => void;
+  showingOneField: boolean;
+  resetHandler?: () => void;
 }
 
-function renderGridHeader(fields, classes) {
+function renderGridHeader(fields, showingOneField, classes) {
   const count: number = fields.length;
-  const tableName = fields[0].group;
+  const tableName = fields[0].dataset;
   return (
     <div className={classes.tableHeader}>
       <div>{tableName}</div>
       <div className={classes.tableSubheader}>
-        {T.translate('features.FieldLevelLineage.v2.TableSubheader', { count })}
+        {showingOneField
+          ? T.translate('features.FieldLevelLineage.v2.FllTable.relatedFieldsCount', {
+              context: count,
+            })
+          : T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', { context: count })}
       </div>
     </div>
   );
 }
 
-function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeField, classes) {
+function renderGridBody(
+  fields,
+  tableName,
+  isTarget,
+  clickFieldHandler,
+  activeField,
+  viewCauseImpactHandler,
+  showingOneField,
+  resetHandler,
+  classes
+) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
@@ -104,6 +121,9 @@ function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeFi
             isTarget={isTarget}
             activeField={activeField}
             field={field}
+            viewCauseImpactHandler={viewCauseImpactHandler}
+            showingOneField={showingOneField}
+            resetHandler={resetHandler}
           />
         );
       })}
@@ -111,31 +131,38 @@ function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeFi
   );
 }
 
-function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandler }: ITableProps) {
+function FllTable({
+  tableId,
+  fields,
+  classes,
+  isTarget = false,
+  clickFieldHandler,
+  activeField,
+  viewCauseImpactHandler,
+  showingOneField,
+  resetHandler,
+}: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
-    <Consumer>
-      {({ activeField }) => {
-        return (
-          <SortableStickyGrid
-            key={`cause ${tableId}`}
-            entities={fields}
-            gridHeaders={GRID_HEADERS}
-            className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-            renderGridHeader={renderGridHeader.bind(null, fields, classes)}
-            renderGridBody={renderGridBody.bind(
-              this,
-              fields,
-              tableId,
-              isTarget,
-              clickFieldHandler,
-              activeField,
-              classes
-            )}
-          />
-        );
-      }}
-    </Consumer>
+    <SortableStickyGrid
+      key={`cause ${tableId}`}
+      entities={fields}
+      gridHeaders={GRID_HEADERS}
+      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
+      renderGridHeader={renderGridHeader.bind(null, fields, showingOneField, classes)}
+      renderGridBody={renderGridBody.bind(
+        this,
+        fields,
+        tableId,
+        isTarget,
+        clickFieldHandler,
+        activeField,
+        viewCauseImpactHandler,
+        showingOneField,
+        resetHandler,
+        classes
+      )}
+    />
   );
 }
 
