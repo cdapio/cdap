@@ -67,6 +67,17 @@
                <url>http://artifacts.ggn.in.guavus.com:8081/artifactory/libs-snapshot-local</url>
            </snapshotRepository>
   </distributionManagement>
+  
+  <repositories>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/groups/public</url>
+    </repository>
+    <repository>
+      <id>sonatype-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
 
   <properties>
     <jee.version>7</jee.version>
