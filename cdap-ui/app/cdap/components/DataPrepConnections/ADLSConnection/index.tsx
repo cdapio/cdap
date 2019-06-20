@@ -253,8 +253,21 @@ export default class ADLSConnection extends React.PureComponent<
     });
   };
 
+  private isButtonDisabled = () => {
+    const disabled =
+      !(
+        this.state.name &&
+        this.state.accountFQDN &&
+        this.state.clientID &&
+        this.state.clientSecret &&
+        this.state.refreshURL
+      ) || this.state.testConnectionLoading;
+
+    return disabled;
+  };
+
   private renderTestButton = () => {
-    const disabled = !this.state.name;
+    const disabled = this.isButtonDisabled();
 
     return (
       <span className="test-connection-button">
@@ -271,14 +284,7 @@ export default class ADLSConnection extends React.PureComponent<
   };
 
   private renderAddConnectionButton = () => {
-    const disabled =
-      !(
-        this.state.name &&
-        this.state.accountFQDN &&
-        this.state.clientID &&
-        this.state.clientSecret &&
-        this.state.refreshURL
-      ) || this.state.testConnectionLoading;
+    const disabled = this.isButtonDisabled();
 
     let onClickFn = this.addConnection;
 
