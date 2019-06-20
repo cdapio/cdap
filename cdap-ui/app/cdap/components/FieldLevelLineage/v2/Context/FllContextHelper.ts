@@ -16,14 +16,19 @@
 
 // Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
 
-export function parseRelations(namespace, ents, isCause = true) {
+export function parseRelations(namespace, target, ents, isCause = true) {
   const tables = {};
   const relNodes = [];
   const relLinks = [];
   ents.map((ent) => {
-    const tableName = ent.entityId.dataset;
-    // tables keeps track of fields for each incoming or outgoing dataset
-    tables[tableName] = [];
+    // Assumes that all tableNames are unique (since all datasets in a namespace should have unique names)
+    // tableName is later used to display the table name in the header
+
+    const tableId = `${isCause ? 'cause' : 'impact'}_ns-${ent.entityId.namespace}_ds-${
+      ent.entityId.dataset
+    }`;
+    // tables keeps track of fields for each incoming or outgoing dataset.
+    tables[tableId] = [];
     // fieldIds keeps track of fields we've seen already, since a single field can have multiple connections
     const fieldIds = new Map();
     ent.relations.map((rel) => {
@@ -33,18 +38,23 @@ export function parseRelations(namespace, ents, isCause = true) {
       const field = {
         id,
         name: fieldName,
-        group: tableName,
+        group: ent.entityId.dataset,
       };
       if (!fieldIds.has(fieldName)) {
-        id = `${namespace}_${tableName}_${fieldName}`;
+        id = `${tableId}_fd-${fieldName}`;
         field.id = id;
         fieldIds.set(fieldName, id);
-        tables[tableName].push(field);
+        tables[tableId].push(field);
         relNodes.push(field);
       }
       relLinks.push({
-        source: isCause ? fieldIds.get(fieldName) : rel.source,
-        destination: isCause ? rel.destination : fieldIds.get(fieldName),
+        // if connection goes from cause to target
+        source: isCause
+          ? fieldIds.get(fieldName)
+          : `target_ns-${namespace}_ds-${target}_fd-${rel.source}`,
+        destination: isCause
+          ? `target_ns-${namespace}_ds-${target}_fd-${rel.destination}`
+          : fieldIds.get(fieldName),
       });
     });
   });
@@ -53,7 +63,7 @@ export function parseRelations(namespace, ents, isCause = true) {
 
 export function makeTargetNodes(entityId, fields) {
   const targetNodes = fields.map((field) => {
-    const id = `${entityId.namespace}_${entityId.dataset}_${field}`;
+    const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${field}`;
     return {
       id,
       name: field,
