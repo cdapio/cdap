@@ -32,18 +32,15 @@ public class DefaultCubeTest extends AbstractCubeTest {
 
   @Override
   protected Cube getCube(final String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
-    FactTableSupplier supplier = new FactTableSupplier() {
-      @Override
-      public FactTable get(int resolution, int rollTime) {
-        String entityTableName = "EntityTable-" + name;
-        InMemoryTableService.create(entityTableName);
-        String dataTableName = "DataTable-" + name + "-" + resolution;
-        InMemoryTableService.create(dataTableName);
-        return new FactTable(new InMemoryMetricsTable(dataTableName),
-                             new EntityTable(new InMemoryMetricsTable(entityTableName)),
-                             resolution, rollTime);
+    FactTableSupplier supplier = (resolution, rollTime) -> {
+      String entityTableName = "EntityTable-" + name;
+      InMemoryTableService.create(entityTableName);
+      String dataTableName = "DataTable-" + name + "-" + resolution;
+      InMemoryTableService.create(dataTableName);
+      return new FactTable(new InMemoryMetricsTable(dataTableName),
+                           new EntityTable(new InMemoryMetricsTable(entityTableName)),
+                           resolution, rollTime);
 
-      }
     };
 
     return new DefaultCube(resolutions, supplier, aggregations, ImmutableMap.<String, AggregationAlias>of());
