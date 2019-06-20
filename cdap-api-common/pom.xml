@@ -30,7 +30,7 @@
   <name>CDAP API Common</name>
   <packaging>jar</packaging>
   
-  <!--<distributionManagement>
+  <distributionManagement>
            <repository>
                <id>central</id>
                <url>http://artifacts.ggn.in.guavus.com:80/libs-release-local</url>
@@ -39,7 +39,7 @@
                <id>snapshots</id>
                <url>http://artifacts.ggn.in.guavus.com:8081/artifactory/libs-snapshot-local</url>
            </snapshotRepository>
-  </distributionManagement>-->
+  </distributionManagement>
 
   <dependencies>
     <dependency>
