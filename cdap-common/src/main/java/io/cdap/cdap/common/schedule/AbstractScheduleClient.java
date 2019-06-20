@@ -39,7 +39,6 @@ import io.cdap.common.http.ObjectResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.List;
 
@@ -53,9 +52,6 @@ public abstract class AbstractScheduleClient extends AbstractClient {
     .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
-
-  private static final Type LIST_SCHEDULE_DETAIL_TYPE = new TypeToken<List<ScheduleDetail>>() {
-  }.getType();
 
   public AbstractScheduleClient(DiscoveryServiceClient discoveryClient) {
     super(discoveryClient);
@@ -82,7 +78,8 @@ public abstract class AbstractScheduleClient extends AbstractClient {
     }
 
     ObjectResponse<List<ScheduleDetail>> objectResponse =
-      ObjectResponse.fromJsonBody(response, LIST_SCHEDULE_DETAIL_TYPE, GSON);
+      ObjectResponse.fromJsonBody(response, new TypeToken<List<ScheduleDetail>>() {
+      }.getType(), GSON);
 
     return objectResponse.getResponseObject();
   }
