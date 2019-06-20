@@ -173,6 +173,7 @@
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.3.1</version>
       </plugin>
+
       <!-- copy the source from cdap-data-pipeline in order to compile everything as scala 2.11 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
