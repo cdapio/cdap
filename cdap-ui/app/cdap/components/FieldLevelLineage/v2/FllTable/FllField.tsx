@@ -21,7 +21,7 @@ import classnames from 'classnames';
 import { createStyles } from '@material-ui/styles';
 
 const styles = (theme) => {
-  return createStyles({
+  return {
     root: {
       paddingLeft: '10px',
       paddingRight: '10px',
@@ -32,15 +32,16 @@ const styles = (theme) => {
       ' & .grid-row:selected': {
         backgroundColor: theme.palette.yellow[200],
         color: theme.palette.orange[50],
-        fontWeight: 'bold',
+        fontWeight: 'bold' as 'bold',
       },
     },
-  });
+  };
 };
 
 interface IFieldProps extends WithStyles<typeof styles> {
   field: INode;
   isTarget: boolean;
+  activeField: string;
   clickFieldHandler: (event: React.MouseEvent<HTMLInputElement>) => void;
 }
 

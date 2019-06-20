@@ -22,6 +22,7 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 
 const styles = (theme) => {
   return createStyles({
@@ -92,52 +93,49 @@ function renderGridHeader(fields, classes) {
   );
 }
 
-function renderGridBody(fields, tableName, isTarget, clickFieldHandler, classes) {
+function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeField, classes) {
   return (
-    <Consumer>
-      {({ activeField }) => {
-        console.log(activeField, 'active field')
-        )
+    <div className={classes.gridBody} id={tableName}>
+      {fields.map((field) => {
         return (
-          <div className={classes.gridBody} id={tableName}>
-            {fields.map((field) => {
-              return (
-                <div
-                  onClick={isTarget ? clickFieldHandler : undefined}
-                  className={classnames('grid-row', 'grid-link')}
-                  key={field.id}
-                  id={field.id}
-                >
-                  {field.name}
-                  {/* <span className={classes.viewLineage}>View lineage</span> */}
-                </div>
-              );
-            })}
-          </div>
+          <FllField
+            key={field.id}
+            clickFieldHandler={clickFieldHandler}
+            isTarget={isTarget}
+            activeField={activeField}
+            field={field}
+          />
         );
-      }}
-    </Consumer>
+      })}
+    </div>
   );
 }
 
 function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandler }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
-    <SortableStickyGrid
-      key={`cause ${tableId}`}
-      entities={fields}
-      gridHeaders={GRID_HEADERS}
-      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-      renderGridHeader={renderGridHeader.bind(null, fields, classes)}
-      renderGridBody={renderGridBody.bind(
-        this,
-        fields,
-        tableId,
-        isTarget,
-        clickFieldHandler,
-        classes
-      )}
-    />
+    <Consumer>
+      {({ activeField }) => {
+        return (
+          <SortableStickyGrid
+            key={`cause ${tableId}`}
+            entities={fields}
+            gridHeaders={GRID_HEADERS}
+            className={classnames(classes.table, { [classes.targetTable]: isTarget })}
+            renderGridHeader={renderGridHeader.bind(null, fields, classes)}
+            renderGridBody={renderGridBody.bind(
+              this,
+              fields,
+              tableId,
+              isTarget,
+              clickFieldHandler,
+              activeField,
+              classes
+            )}
+          />
+        );
+      }}
+    </Consumer>
   );
 }
 
