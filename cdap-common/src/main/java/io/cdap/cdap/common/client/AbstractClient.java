@@ -17,17 +17,21 @@
 
 package io.cdap.cdap.common.client;
 
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * Abstract client to interact with app fabric service over HTTP.
@@ -55,6 +59,32 @@ public abstract class AbstractClient {
    */
   protected URL resolve(String resource) {
     return remoteClient.resolve(resource);
+  }
+
+  /**
+   * Makes the HTTP request
+   *
+   * @param path the endpoint path
+   * @param httpMethod the http method
+   * @param body the body of the request
+   * @return the http response from the request
+   * @throws IOException if there was an IOException while performing the request
+   * @throws BadRequestException if the request is invalid
+   * @throws UnauthorizedException if the current user is not authenticated
+   */
+  protected HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
+    throws IOException, BadRequestException, UnauthorizedException {
+    URL url = resolve(path);
+    HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
+    if (body != null) {
+      builder.withBody(body);
+    }
+    HttpResponse response = execute(builder.build(),
+                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+    return response;
   }
 
 }

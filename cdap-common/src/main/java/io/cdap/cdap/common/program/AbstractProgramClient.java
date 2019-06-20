@@ -92,19 +92,4 @@ public abstract class AbstractProgramClient extends AbstractClient {
     }).getResponseObject();
   }
 
-  private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, BadRequestException, UnauthorizedException {
-    URL url = resolve(path);
-    HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
-    if (body != null) {
-      builder.withBody(body);
-    }
-    HttpResponse response = execute(builder.build(),
-                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    return response;
-  }
-
 }

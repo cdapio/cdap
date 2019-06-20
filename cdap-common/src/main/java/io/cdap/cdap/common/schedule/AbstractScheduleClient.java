@@ -34,7 +34,6 @@ import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -42,9 +41,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Common implementation of methods to interact with app fabric service over HTTP.
@@ -114,21 +111,6 @@ public abstract class AbstractScheduleClient extends AbstractClient {
       }.getType(), GSON);
 
     return objectResponse.getResponseObject();
-  }
-
-  private HttpResponse makeRequest(String path, HttpMethod httpMethod, @Nullable String body)
-    throws IOException, BadRequestException, UnauthorizedException {
-    URL url = resolve(path);
-    HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
-    if (body != null) {
-      builder.withBody(body);
-    }
-    HttpResponse response = execute(builder.build(),
-                                    HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    return response;
   }
 
 }
