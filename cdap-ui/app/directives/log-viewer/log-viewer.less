@@ -36,6 +36,8 @@
 @application-secondary-color: #d15668;
 @application-completed-color: #5a84e4;
 @application-default-color: #969696;
+@log-level-check-selected-color: #0076dc;
+@log-level-check-transition-color: #bbbbbb;
 
 body.theme-cdap {
   .modal.hydrator-modal {
@@ -591,10 +593,28 @@ my-log-viewer-preview {
           border-left: 0;
           border-right: 0;
 
-          ul.dropdown-menu { width: 30px; }
+          ul.dropdown-menu {
+            width: 30px;
+            padding: 0px;
 
-          li {
-            input { margin: 5px 5px 5px 8px; }
+            .fa-check {
+              margin: 0px 5px;
+              visibility: hidden;
+            }
+
+            .log-level-label-regular {
+              font-weight: initial;
+            }
+
+            .log-level-check-selected {
+              visibility: visible;
+              color: @log-level-check-selected-color;
+            }
+
+            .log-level-check-transition {
+              visibility: visible;
+              color: @log-level-check-transition-color;
+            }
           }
         }
         td {
