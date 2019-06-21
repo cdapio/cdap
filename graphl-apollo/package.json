@@ -13,6 +13,8 @@
     "apollo-server": "^2.6.4",
     "graphql": "^14.3.1",
     "graphql-tools": "^4.0.5",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.11",
+    "log4js": "^4.3.2",
+    "request": "^2.88.0"
   }
 }
