@@ -112,11 +112,11 @@
                 </span>
                 <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
                   <li ng-repeat="option in LogViewer.logEvents"
-                      ng-click="LogViewer.includeEvent($event, option)">
-                    <input
-                      type="checkbox"
-                      ng-model="LogViewer.activeLogLevels[option]"/>
-                      <span>{{option}}</span>
+                    ng-click="LogViewer.includeEvent($event, option)"
+                    ng-mouseenter="LogViewer.setHoverLogLevels(option)"
+                    ng-mouseleave="LogViewer.resetHoverLogLevels()">
+                    <span class="fa fa-check" ng-class="{'log-level-check-selected': LogViewer.activeLogLevels[option], 'log-level-check-transition': LogViewer.activeTransitionChecks[option]}"></span>
+                    <span ng-class="{'log-level-label-regular': LogViewer.activeTransitionChecks[option] || !LogViewer.activeLogLevels[option]}">{{option}}</span>
                   </li>
                 </ul>
               </span>
