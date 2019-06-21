@@ -5,8 +5,10 @@ const variantMocks = [{ id: 1, name: 'Variant A', shortDescription: 'First varia
 
 const productResolver = {
   Query: {
-    products(root, { id }, context) {
+    products(root, args, context, info) {
+      const id = args.id
       const results = id ? productMocks.filter(p => p.id == id) : productMocks
+
       if (results.length > 0)
         return results
       else
@@ -17,8 +19,10 @@ const productResolver = {
 
 const variantResolver = {
   Query: {
-    variants(root, { id }, context) {
+    variants(root, args, context, info) {
+      const id = args.id
       const results = id ? variantMocks.filter(p => p.id == id) : variantMocks
+
       if (results.length > 0)
         return results
       else

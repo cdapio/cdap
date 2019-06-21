@@ -2728,7 +2728,6 @@
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
         <module>cdap-ui</module>
-        <module>cdap-graphql-apollo</module>
       </modules>
     </profile>
     <profile>
