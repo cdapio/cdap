@@ -18,11 +18,23 @@ type Variant {
   shortDescription: String
 }
 
+type Namespace {
+
+  name: String
+
+#  description: String
+
+#  generation: String
+
+}
+
 type Query {
 
   products(id: Int): [Product]
 
   variants(id: Int): [Variant]
+
+  namespaces: [Namespace]!
 }
 `
 
