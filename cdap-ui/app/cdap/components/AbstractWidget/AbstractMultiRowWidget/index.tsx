@@ -46,14 +46,43 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
   public values = {};
 
   public componentDidMount() {
-    if (!this.props.value || this.props.value.length === 0) {
-      this.addRow();
+    this.init(this.props);
+  }
+
+  /**
+   * TODO: componentWillReceiveProps is already considered UNSAFE operation in React. Will have
+   * to come up with a different approach to update the component based on an async changes.
+   */
+  public componentWillReceiveProps(nextProps) {
+    const currentValue = this.constructValues();
+
+    if (currentValue === nextProps.value) {
       return;
     }
 
-    const delimiter = this.props.delimiter;
+    this.init(nextProps);
+  }
 
-    const splitValues = this.props.value.split(delimiter);
+  private init = (props) => {
+    if (!props.value || props.value.length === 0) {
+      // reset state before adding a new empty row
+      this.values = {};
+      this.setState(
+        {
+          rows: [],
+          autofocus: null,
+        },
+        () => {
+          this.addRow(-1, false);
+        }
+      );
+
+      return;
+    }
+
+    const delimiter = props.delimiter;
+
+    const splitValues = props.value.split(delimiter);
     const rows = [];
 
     splitValues.forEach((value) => {
@@ -67,9 +96,9 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
     });
 
     this.setState({ rows });
-  }
+  };
 
-  public addRow = (index = -1) => {
+  public addRow = (index = -1, shouldFocus: boolean = true) => {
     const rows = this.state.rows.slice();
     const id = uuidV4();
     rows.splice(index + 1, 0, id);
@@ -79,12 +108,15 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
       value: '',
     };
 
-    this.setState({
-      rows,
-      autofocus: id,
-    });
-
-    this.onChange();
+    this.setState(
+      {
+        rows,
+        autofocus: shouldFocus ? id : null,
+      },
+      () => {
+        this.onChange();
+      }
+    );
   };
 
   public removeRow = (index) => {
@@ -113,14 +145,18 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
     this.onChange();
   };
 
-  public onChange = () => {
+  private constructValues = () => {
     const values = this.state.rows
-      .filter((id) => this.values[id].value)
+      .filter((id) => this.values[id] && this.values[id].value)
       .map((id) => this.values[id].value)
       .join(this.props.delimiter);
 
+    return values;
+  };
+
+  public onChange = () => {
     if (this.props.onChange) {
-      this.props.onChange(values);
+      this.props.onChange(this.constructValues());
     }
   };
 
@@ -143,6 +179,9 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
     return (
       <MultiRowContainer>
         {this.state.rows.map((id, index) => {
+          if (!this.values[id]) {
+            return null;
+          }
           return this.renderRow(id, index);
         })}
       </MultiRowContainer>
