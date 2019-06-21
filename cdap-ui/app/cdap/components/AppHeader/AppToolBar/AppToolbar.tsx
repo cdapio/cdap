@@ -17,11 +17,6 @@ import * as React from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import BrandImage from 'components/AppHeader/BrandImage';
-<<<<<<< HEAD
-import MenuItem from '@material-ui/core/MenuItem';
-import IconSVG from 'components/IconSVG';
-=======
->>>>>>> release/6.0
 import MenuIcon from '@material-ui/icons/Menu';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
@@ -31,14 +26,7 @@ import HubButton from 'components/AppHeader/HubButton';
 import { Theme } from 'services/ThemeHelper';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
-<<<<<<< HEAD
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
-=======
 import AppToolbarMenu from 'components/AppHeader/AppToolBar/AppToolbarMenu';
->>>>>>> release/6.0
 
 const styles = (theme) => {
   return {
@@ -72,45 +60,6 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     aboutPageOpen: false,
   };
 
-<<<<<<< HEAD
-  public toggleSettings = (event: React.MouseEvent<HTMLElement>) => {
-    if (this.state.anchorEl) {
-      this.setState({
-        anchorEl: null,
-      });
-    } else {
-      this.setState({
-        anchorEl: event.currentTarget,
-      });
-    }
-  };
-
-  public closeSettings = (e) => {
-    if (this.state.anchorEl && this.state.anchorEl.contains(e.target)) {
-      return;
-    }
-    this.setState({
-      anchorEl: null,
-    });
-  };
-
-  private toggleAboutPage = () => {
-    this.setState({
-      aboutPageOpen: !this.state.aboutPageOpen,
-      anchorEl: null,
-    });
-  };
-  private getDocsUrl = () => {
-    if (Theme.productDocumentationLink === null) {
-      const cdapVersion = VersionStore.getState().version;
-      return `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
-    }
-
-    return Theme.productDocumentationLink;
-  };
-
-=======
->>>>>>> release/6.0
   public render() {
     const { onMenuIconClick, classes } = this.props;
     const { namespace } = this.props.context;
@@ -149,50 +98,6 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
         </div>
         <AppToolbarMenu />
         <ProductEdition />
-<<<<<<< HEAD
-        <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} transition disablePortal>
-          {({ TransitionProps, placement }) => (
-            <Grow
-              {...TransitionProps}
-              style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-            >
-              <Paper>
-                <ClickAwayListener onClickAway={this.closeSettings}>
-                  <div>
-                    <a
-                      className={classes.anchorMenuItem}
-                      href={this.getDocsUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <MenuItem onClick={this.closeSettings}>
-                        {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-                      </MenuItem>
-                    </a>
-                    <If condition={Theme.showAboutProductModal === true}>
-                      <MenuItem onClick={this.toggleAboutPage}>
-                        <a>
-                          {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                            productName: Theme.productName,
-                          })}
-                        </a>
-                      </MenuItem>
-                    </If>
-                  </div>
-                </ClickAwayListener>
-              </Paper>
-            </Grow>
-          )}
-        </Popper>
-        <If condition={Theme.showAboutProductModal === true}>
-          <AboutPageModal
-            cdapVersion={cdapVersion}
-            isOpen={this.state.aboutPageOpen}
-            toggle={this.toggleAboutPage}
-          />
-        </If>
-=======
->>>>>>> release/6.0
       </Toolbar>
     );
   }

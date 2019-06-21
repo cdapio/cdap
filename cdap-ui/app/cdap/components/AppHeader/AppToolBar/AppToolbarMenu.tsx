@@ -42,7 +42,7 @@ interface IAppToolbarState {
 }
 const styles = (theme) => ({
   root: {
-    width: '200px',
+    maxWidth: '200px',
   },
   buttonLink: theme.buttonLink,
   cogWheelFontSize: {
@@ -56,6 +56,10 @@ const styles = (theme) => ({
       outline: 'none',
     },
     textDecoration: 'none !important',
+  },
+  loginUserMenuItem: {
+    display: 'grid',
+    gridTemplateColumns: '13px 1fr',
   },
   iconButtonFocus: theme.iconButtonFocus,
   usernameStyles: {
@@ -145,49 +149,63 @@ class AppToolbarMenu extends React.Component<IAppToolbarMenuProps, IAppToolbarSt
             >
               <Paper>
                 <ClickAwayListener onClickAway={this.closeSettings}>
-                  <a
-                    className={classes.linkStyles}
-                    href={this.getDocsUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MenuItem onClick={this.closeSettings} className={classes.anchorMenuItem}>
-                      {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-                    </MenuItem>
-                  </a>
-                  <If condition={Theme.showAboutProductModal === true}>
-                    <MenuItem onClick={this.toggleAboutPage} className={classes.anchorMenuItem}>
-                      <a className={classes.linkStyles}>
-                        {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
-                          productName: Theme.productName,
-                        })}
-                      </a>
-                    </MenuItem>
-                  </If>
-                  <If condition={this.state.username && window.CDAP_CONFIG.securityEnabled}>
-                    <React.Fragment>
-                      <Divider />
-                      <MenuItem className={classes.anchorMenuItem}>
-                        <IconSVG name="icon-user" />
-                        <a className={`${classes.usernameStyles} ${classes.linkStyles}`}>
-                          {this.state.username}
-                        </a>
+                  <div>
+                    <a
+                      className={classes.linkStyles}
+                      href={this.getDocsUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MenuItem onClick={this.closeSettings} className={classes.anchorMenuItem}>
+                        {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
                       </MenuItem>
+                    </a>
+                    <If condition={Theme.showAboutProductModal === true}>
                       <MenuItem
-                        onClick={this.toggleAccessTokenModal}
+                        onClick={(e) => {
+                          this.toggleAboutPage();
+                          this.closeSettings(e);
+                        }}
                         className={classes.anchorMenuItem}
                       >
                         <a className={classes.linkStyles}>
-                          {T.translate('features.Navbar.ProductDropdown.accessToken')}{' '}
+                          {T.translate('features.Navbar.ProductDropdown.aboutLabel', {
+                            productName: Theme.productName,
+                          })}
                         </a>
                       </MenuItem>
-                      <MenuItem onClick={this.onLogout} className={classes.anchorMenuItem}>
-                        <a className={classes.linkStyles}>
-                          {T.translate('features.Navbar.ProductDropdown.logout')}
-                        </a>
-                      </MenuItem>
-                    </React.Fragment>
-                  </If>
+                    </If>
+                    <If condition={this.state.username && window.CDAP_CONFIG.securityEnabled}>
+                      <React.Fragment>
+                        <Divider />
+                        <MenuItem
+                          className={`${classes.anchorMenuItem} ${classes.loginUserMenuItem}`}
+                        >
+                          <IconSVG name="icon-user" />
+                          <a className={`${classes.usernameStyles} ${classes.linkStyles} truncate`}>
+                            {/* {this.state.username} */}
+                            asfjkbsdkljfbsldkjbglkjsdfbgkljsnlkjsnlkjsdnfkjsdngljksf
+                          </a>
+                        </MenuItem>
+                        <MenuItem
+                          onClick={(e) => {
+                            this.toggleAccessTokenModal();
+                            this.closeSettings(e);
+                          }}
+                          className={classes.anchorMenuItem}
+                        >
+                          <a className={classes.linkStyles}>
+                            {T.translate('features.Navbar.ProductDropdown.accessToken')}{' '}
+                          </a>
+                        </MenuItem>
+                        <MenuItem onClick={this.onLogout} className={classes.anchorMenuItem}>
+                          <a className={classes.linkStyles}>
+                            {T.translate('features.Navbar.ProductDropdown.logout')}
+                          </a>
+                        </MenuItem>
+                      </React.Fragment>
+                    </If>
+                  </div>
                 </ClickAwayListener>
               </Paper>
             </Grow>
