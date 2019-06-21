@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.common.utils;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.common.conf.CConfiguration;
 
 import java.io.IOException;
@@ -159,7 +160,7 @@ public final class Networks {
     String value = cConf.get(key);
 
     // If not found, return null
-    if (value == null) {
+    if (Strings.isNullOrEmpty(value)) {
       return null;
     }
     return parseAddress(value);
