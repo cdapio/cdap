@@ -293,6 +293,13 @@ angular.module(PKG.name + '.commons')
           'disabled': 'disabled',
         }
       },
+      'configuration-filter': {
+        element: '<my-configuration-filter></my-configuration-filter>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig'
+        }
+      },
     };
     this.registry['__default__'] = this.registry['textbox'];
   });

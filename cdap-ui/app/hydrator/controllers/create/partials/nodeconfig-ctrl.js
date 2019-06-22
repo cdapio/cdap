@@ -41,6 +41,8 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.LogViewerStore = LogViewerStore;
     this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
+    // This tracks the events emitted by `configuration-filter` widget.
+    this.configurationFilterWidgetEvents = {};
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -141,7 +143,59 @@ class HydratorPlusPlusNodeConfigCtrl {
       }
     });
 
+    // Event whenever any configuration-filter widget value changes.
+    this.EventPipe.on('configuration-filter.changed', (widgetName, widgetValue) => {
+      this.configurationFilterWidgetEvents[widgetName] = widgetValue;
+    });
+
+    // Event whenever a configuration-filter widget gets destroyed.
+    this.EventPipe.on('configuration-filter.destroyed', (widgetName) => {
+      if(this.configurationFilterWidgetEvents.hasOwnProperty(widgetName)) {
+        delete(this.configurationFilterWidgetEvents[widgetName]);
+      }
+    });
+
   }
+
+  // Check whether an input configuration widget needed to be hidden from ui or not.
+  shouldHideWidgetBasedOnFilter(widget) {
+    if(widget.hasOwnProperty('widget-attributes') && widget['widget-attributes'].hasOwnProperty('filters')) {
+      try {
+        let filters = widget['widget-attributes']['filters'];
+        for(let index = 0; index < filters.length; index++) {
+          let filter = filters[index];
+
+          if(filter.hasOwnProperty('widget-name') && filter.hasOwnProperty('filter-values')) {
+            let filterWidgetName = filter['widget-name'];
+            let filterValues = filter['filter-values'];
+
+            // If the configuration-filter widget is just created and no event has beed emitted yet
+            // then keep the widget hidden(Initial state of the widget).
+            if(!this.configurationFilterWidgetEvents.hasOwnProperty(filterWidgetName)) {
+              return true;
+            }
+
+            // If emitted value of a configuration-filter widget is present in current widget's filter array
+            // then show it.
+            if(filterValues.indexOf(this.configurationFilterWidgetEvents[filterWidgetName]) !== -1) {
+              return false;
+            }
+          }
+        }
+        // If a widget has `filters` property then by default do not show this widget.
+        // Basically hide this widget if nothing has returned till now.
+        return true;
+      } catch(e) {
+        console.log('Error', e);
+        // If any mismatch/error happens due to invalid widget-attributes/configuration then by default do
+        // not hide the widget.
+        return true;
+      }
+    }
+    // By default no need to hide a widget
+    return false;
+  }
+
   showContents() {
     if (angular.isArray(this.state.watchers)) {
       this.state.watchers.forEach(watcher => watcher());
