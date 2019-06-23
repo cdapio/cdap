@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
-import LoadingSVG from 'components/LoadingSVG';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 require('./DataPrepLoading.scss');
 
@@ -48,7 +48,7 @@ export default class DataPrepLoading extends Component {
 
     return (
       <div className="dataprep-loading text-center">
-        <LoadingSVG />
+        <LoadingSVGCentered />
       </div>
     );
   }

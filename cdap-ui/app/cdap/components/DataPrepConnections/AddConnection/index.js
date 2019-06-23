@@ -148,7 +148,7 @@ export default class AddConnection extends Component {
 
   renderPopover() {
     const target = () => (
-      <button className="btn btn-secondary">
+      <button className="btn btn-secondary" data-cy="wrangler-add-connection-button">
         <span className="fa fa-fw">
           <IconSVG name="icon-plus" />
         </span>
@@ -177,6 +177,7 @@ export default class AddConnection extends Component {
                 key={connection.label}
                 className="connection-type-option"
                 onClick={this.connectionClickHandler.bind(this, connection.component)}
+                data-cy={`wrangler-connection-${connection.type}`}
               >
                 <span className="fa fa-fw">
                   <IconSVG name={connection.icon} />
