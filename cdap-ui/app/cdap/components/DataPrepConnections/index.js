@@ -32,7 +32,6 @@ import {
 import { Route, Switch, Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import T from 'i18n-react';
-import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
@@ -537,7 +536,6 @@ export default class DataPrepConnections extends Component {
             <div key={gcs.id} title={gcs.name} className="clearfix">
               <NavLinkWrapper
                 to={`${baseLinkPath}/gcs/${gcs.id}`}
-                activeClassName="active"
                 isActive={(match) => {
                   return (
                     (this.state.activeConnectionType === ConnectionType.GCS &&
@@ -552,6 +550,7 @@ export default class DataPrepConnections extends Component {
                 })}
                 onClick={this.handlePropagation.bind(this, { ...gcs, name: ConnectionType.GCS })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.GCS}-connection-${gcs.name}`}
               >
                 {gcs.name}
               </NavLinkWrapper>
@@ -596,6 +595,7 @@ export default class DataPrepConnections extends Component {
                   name: ConnectionType.BIGQUERY,
                 })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-${bq.id}`}
               >
                 {bq.name}
               </NavLinkWrapper>
@@ -640,6 +640,7 @@ export default class DataPrepConnections extends Component {
                   name: ConnectionType.SPANNER,
                 })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.SPANNER}-connection-${spanner.id}`}
               >
                 {spanner.name}
               </NavLinkWrapper>
@@ -1133,7 +1134,7 @@ export default class DataPrepConnections extends Component {
       return (
         <div className="text-center">
           {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
-          <LoadingSVG />
+          <LoadingSVGCentered />;
         </div>
       );
     }

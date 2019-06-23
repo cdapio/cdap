@@ -33,6 +33,7 @@ import { objectQuery } from 'services/helpers';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import CardActionFeedback from 'components/CardActionFeedback';
 import If from 'components/If';
+import Mousetrap from 'mousetrap';
 require('./ConnectionPopover.scss');
 
 const PREFIX = 'features.DataPrepConnections.ConnectionManagement';
@@ -66,7 +67,13 @@ export default class ConnectionPopover extends Component {
   }
 
   toggleDeleteConfirmation() {
-    this.setState({ deleteConfirmation: !this.state.deleteConfirmation });
+    this.setState({ deleteConfirmation: !this.state.deleteConfirmation }, () => {
+      if (this.state.deleteConfirmation) {
+        Mousetrap.bind('enter', this.delete);
+      } else {
+        Mousetrap.unbind('enter');
+      }
+    });
   }
 
   toggleEdit() {
@@ -77,7 +84,7 @@ export default class ConnectionPopover extends Component {
     this.setState({ duplicate: !this.state.duplicate });
   }
 
-  delete() {
+  delete = () => {
     this.setState({ loading: true });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
@@ -92,8 +99,8 @@ export default class ConnectionPopover extends Component {
       () => {
         this.setState({
           loading: false,
-          deleteConfirmation: false,
         });
+        this.toggleDeleteConfirmation();
 
         this.props.onAction('delete', connectionId);
       },
@@ -111,7 +118,7 @@ export default class ConnectionPopover extends Component {
         });
       }
     );
-  }
+  };
 
   renderDeleteConfirmationModal() {
     if (!this.state.deleteConfirmation) {
@@ -144,6 +151,7 @@ export default class ConnectionPopover extends Component {
       );
     }
 
+    const { type } = this.props.connectionInfo;
     return (
       <Modal
         backdrop="static"
@@ -160,7 +168,11 @@ export default class ConnectionPopover extends Component {
 
         {content}
         <ModalFooter>
-          <button className="btn btn-primary" onClick={this.delete}>
+          <button
+            className="btn btn-primary"
+            onClick={this.delete}
+            data-cy={`wrangler-${type}-delete-confirmation-btn`}
+          >
             {T.translate(`${PREFIX}.Confirmations.DatabaseDelete.deleteButton`)}
           </button>
           <button className="btn btn-secondary" onClick={this.toggleDeleteConfirmation}>
@@ -213,19 +225,36 @@ export default class ConnectionPopover extends Component {
   }
 
   render() {
+    const { type, id } = this.props.connectionInfo;
     return (
       <span className="expanded-menu-popover-icon text-center float-right">
         <If condition={!this.props.connectionInfo.preconfigured}>
-          <UncontrolledPopover icon="fa-ellipsis-v" popoverClassName="connection-action-popover">
-            <div className="connection-action-item" onClick={this.toggleEdit}>
+          <UncontrolledPopover
+            icon="fa-ellipsis-v"
+            popoverClassName="connection-action-popover"
+            data-cy={`connection-action-popover-toggle-${type}-${id}`}
+          >
+            <div
+              className="connection-action-item"
+              onClick={this.toggleEdit}
+              data-cy={`wrangler-${this.props.connectionInfo.type}-connection-edit`}
+            >
               <span>{T.translate(`${PREFIX}.edit`)}</span>
             </div>
 
-            <div className="connection-action-item" onClick={this.toggleDuplicate}>
+            <div
+              className="connection-action-item"
+              onClick={this.toggleDuplicate}
+              data-cy={`wrangler-${this.props.connectionInfo.type}-connection-duplicate`}
+            >
               <span>{T.translate(`${PREFIX}.duplicate`)}</span>
             </div>
 
-            <div className="connection-action-item" onClick={this.toggleDeleteConfirmation}>
+            <div
+              className="connection-action-item"
+              onClick={this.toggleDeleteConfirmation}
+              data-cy={`wrangler-${this.props.connectionInfo.type}-connection-delete`}
+            >
               <span>{T.translate(`${PREFIX}.delete`)}</span>
             </div>
           </UncontrolledPopover>
