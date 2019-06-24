@@ -25,11 +25,11 @@ describe('Unit Tests for Helpers: "getArtifactNameAndVersion"', () => {
     expect(version).toBe('1.3.0-SNAPSHOT');
   });
 
-  it('Usecase 2 - Invalid: Should return 1.0.0-SNAPSHOT for version if it could not find', () => {
+  it('Usecase 2 - Invalid: Should return 1.0.0 for version if it could not find', () => {
     var jarfileName = 'invalid-file-name-without-a-version';
     let {name, version} = getArtifactNameAndVersion(jarfileName);
     expect(name).toBe(jarfileName);
-    expect(version).toBe('1.0.0-SNAPSHOT');
+    expect(version).toBe('1.0.0');
   });
 
   it('Usecase 3: Should ignore unnecessary patterns & return correct name, version', () => {
