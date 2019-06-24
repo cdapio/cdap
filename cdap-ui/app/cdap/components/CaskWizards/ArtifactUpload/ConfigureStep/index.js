@@ -44,6 +44,13 @@ const mapStateToArtifactClassnameProps = (state) => {
     placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.classnamePlaceholder'),
   };
 };
+const mapStateToArtifactVersionProps = (state) => {
+  return {
+    value: state.configure.version,
+    type: 'text',
+    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.versionPlaceholder'),
+  };
+};
 const mapDispatchToArtifactNameProps = (dispatch) => {
   return {
     onChange: (e) => {
@@ -72,6 +79,15 @@ const mapDispatchToArtifactClassnameProps = (dispatch) => {
       }),
   };
 };
+const mapDispatchToArtifactVersionProps = (dispatch) => {
+  return {
+    onChange: (e) =>
+      dispatch({
+        type: ArtifactUploadActions.setVersion,
+        payload: { version: e.target.value },
+      }),
+  };
+};
 
 const InputArtifactName = connect(
   mapStateToArtifactNameProps,
@@ -84,6 +100,10 @@ const InputArtifactDescription = connect(
 const InputArtifactClassname = connect(
   mapStateToArtifactClassnameProps,
   mapDispatchToArtifactClassnameProps
+)(InputWithValidations);
+const InputArtifactVersion = connect(
+  mapStateToArtifactVersionProps,
+  mapDispatchToArtifactVersionProps
 )(InputWithValidations);
 
 export default function ConfigureStep() {
@@ -116,6 +136,18 @@ export default function ConfigureStep() {
           </Col>
           <Col xs="7">
             <InputArtifactClassname />
+          </Col>
+          <i className="fa fa-asterisk text-danger float-left" />
+        </FormGroup>
+
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">
+              {T.translate('features.Wizard.ArtifactUpload.Step2.versionLabel')}
+            </Label>
+          </Col>
+          <Col xs="7">
+            <InputArtifactVersion />
           </Col>
           <i className="fa fa-asterisk text-danger float-left" />
         </FormGroup>

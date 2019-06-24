@@ -18,6 +18,7 @@ import React from 'react';
 import { connect, Provider } from 'react-redux';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
+import { getArtifactNameAndVersion } from 'services/helpers';
 import FileDnD from 'components/FileDnD';
 require('components/CaskWizards/ArtifactUpload/UploadStep/UploadStep.scss');
 
@@ -29,6 +30,11 @@ const mapStateWithDNDFileProps = (state) => {
 const mapDispatchWithDNDFileProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
+      let { version } = getArtifactNameAndVersion(e[0].name.split('.jar')[0]);
+      dispatch({
+        type: ArtifactUploadActions.setVersion,
+        payload: { version },
+      });
       dispatch({
         type: ArtifactUploadActions.setFilePath,
         payload: {

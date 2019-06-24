@@ -1411,7 +1411,7 @@ features:
       Title:
         incoming: "Cause for:"
         outgoing: "Impact for:"
-      viewOperations: View operations 
+      viewOperations: View operations
     TimeRangeOptions:
       CUSTOM: Custom
       last14d: Last 14 days
@@ -1428,7 +1428,7 @@ features:
       FllHeader:
         RelatedHeader: "Datasets used as {type} by {target}"
         RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
-        TargetHeader: 'Select a field to view lineage and operations' 
+        TargetHeader: 'Select a field to view lineage and operations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       TableSubheader: "{count} fields"
 
@@ -2571,6 +2571,8 @@ features:
         parentArtifactLabel: Parent artifact
         shorttitle: Driver configuration
         title: Configure driver
+        versionLabel: Version
+        versionPlaceholder: Driver version
       success: You have successfully uploaded the driver "{artifactName}".
       subtitle: You can now create a pipeline to extract data from database using the driver.
     DirectiveUpload:
@@ -2621,6 +2623,8 @@ features:
         title: Configure library
         typeLabel: Type
         typePlaceholder: Library type. E.g. sparkprogram
+        versionLabel: Version
+        versionPlaceholder: Library version
       success: You have successfully uploaded the library "{artifactName}".
       subtitle: You can now create a pipeline using the library.
     licenseStep:

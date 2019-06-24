@@ -25,11 +25,11 @@ describe('Unit Tests for Helpers: "getArtifactNameAndVersion"', () => {
     expect(version).toBe('1.3.0-SNAPSHOT');
   });
 
-  it('Usecase 2 - Invalid: Should return undefined for version if it could not find', () => {
+  it('Usecase 2 - Invalid: Should return 1.0.0-SNAPSHOT for version if it could not find', () => {
     var jarfileName = 'invalid-file-name-without-a-version';
     let {name, version} = getArtifactNameAndVersion(jarfileName);
     expect(name).toBe(jarfileName);
-    expect(version).toBe(undefined);
+    expect(version).toBe('1.0.0-SNAPSHOT');
   });
 
   it('Usecase 3: Should ignore unnecessary patterns & return correct name, version', () => {
@@ -55,6 +55,12 @@ describe('Unit Tests for Helpers: "getArtifactNameAndVersion"', () => {
     let {name, version} = getArtifactNameAndVersion(null);
     expect(name).toBe(null);
     expect(version).toBe(undefined);
+  });
+
+  it('Usecase 7: Should return filename for name and version when filename is the version i.e 1.2.3.jar', () => {
+    let {name, version} = getArtifactNameAndVersion('1.2.3');
+    expect(name).toBe('1.2.3');
+    expect(version).toBe('1.2.3');
   });
 
 });
