@@ -123,7 +123,7 @@ metadataResolver = {
       name = parent.name
 
       const options = {
-        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6 `,
+        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`,
         method: 'GET',
         json: true
       };
@@ -185,7 +185,37 @@ programsResolver = {
   }
 }
 
-const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver)
+runRecordsResolver = {
+  Workflow: {
+    async runs(parent, args, context, info) {
+    const runs = await(new Promise((resolve, reject) => {
+      namespace = context.namespace
+      name = parent.app
+      workflow = parent.name
+
+      const options = {
+//        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs?%s`,
+        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`,
+        method: 'GET',
+        json: true
+      };
+
+      request(options, (err, response, body) => {
+        if(err) {
+          reject(err)
+        }
+        else {
+         resolve(body);
+        }
+      })
+    }));
+
+    return runs;
+    }
+  }
+}
+
+const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver, runRecordsResolver)
 
 module.exports = {
 	resolvers

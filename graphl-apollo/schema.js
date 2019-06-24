@@ -125,10 +125,29 @@ type Workflow implements ProgramRecord {
 
   description: String!
 
-  # runs: [RunRecord]!
+  runs: [RunRecord]!
 
   # Field added for composition
   # schedules: [ScheduleDetail]!
+}
+
+type RunRecord {
+
+  runid: String!
+
+  starting: String!
+
+  start: String!
+
+  end: String!
+
+  status: String!
+
+  # properties
+
+  # ProgramRunCluster cluster;
+
+  # profileId: String
 }
 `
 
