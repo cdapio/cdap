@@ -462,9 +462,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
                                             ArtifactVersionRange.parse(summary.getVersion()));
+    long currentTime = System.currentTimeMillis();
     // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
     // collection returned.
     List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
+    LOG.error("Yaojie - taking {} ms to get the artifact details.", System.currentTimeMillis() - currentTime);
     if (artifactDetail.isEmpty()) {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }

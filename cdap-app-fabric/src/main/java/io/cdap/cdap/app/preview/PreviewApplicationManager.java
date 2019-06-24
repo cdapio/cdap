@@ -38,6 +38,8 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys a Preview Application.
@@ -46,6 +48,7 @@ import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
  * @param <O> Output type.
  */
 public class PreviewApplicationManager<I, O> implements Manager<I, O> {
+  private static final Logger LOG = LoggerFactory.getLogger(PreviewApplicationManager.class);
 
   private final PipelineFactory pipelineFactory;
   private final CConfiguration cConf;
@@ -82,15 +85,29 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
+    long currentTime = System.currentTimeMillis();
     pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
                                                   authorizationEnforcer, authenticationContext));
+    LOG.error("Yaojie - took {} ms to in LocalArtifactLoaderStage.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
+    LOG.error("Yaojie - took {} ms to in ApplicationVerificationStage.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
                                                    ownerAdmin, authenticationContext));
+    LOG.error("Yaojie - took {} ms to in DeployDatasetModulesStage.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin, authenticationContext));
+    LOG.error("Yaojie - took {} ms to in CreateDatasetInstancesStage.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     pipeline.addLast(new ProgramGenerationStage());
+    LOG.error("Yaojie - took {} ms to in ProgramGenerationStage.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
+    LOG.error("Yaojie - took {} ms to in ApplicationRegistrationStage.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     pipeline.setFinally(new DeploymentCleanupStage());
+    LOG.error("Yaojie - took {} ms to in DeploymentCleanupStage.", System.currentTimeMillis() - currentTime);
     return pipeline.execute(input);
   }
 }
