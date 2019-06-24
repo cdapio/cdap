@@ -29,7 +29,7 @@ type ApplicationRecord {
 
   description: String!
 
-  # artifact: ArtifactSummary!
+  artifact: ArtifactSummary!
 
   ownerPrincipal: String
 
@@ -37,6 +37,15 @@ type ApplicationRecord {
   # Field added for composition
   # """
   # applicationDetail: ApplicationDetail!
+}
+
+type ArtifactSummary {
+
+  name: String!
+
+  version: String!
+
+  scope: String!
 }
 `
 
