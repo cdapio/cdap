@@ -1,12 +1,10 @@
 const typeDefs = `
 
-type Product {
+type Query {
 
-  id: ID!
+  namespaces: [Namespace]
 
-  name: String!
-
-  shortDescription: String
+  applications(namespace: String = "default"): [ApplicationRecord]!
 }
 
 type Namespace {
@@ -21,11 +19,24 @@ type Namespace {
 
 }
 
-type Query {
+type ApplicationRecord {
 
-  products(id: Int): [Product]
-  
-  namespaces: [Namespace]
+  type: String!
+
+  name: String!
+
+  version: String!
+
+  description: String!
+
+  # artifact: ArtifactSummary!
+
+  ownerPrincipal: String
+
+  # """
+  # Field added for composition
+  # """
+  # applicationDetail: ApplicationDetail!
 }
 `
 
