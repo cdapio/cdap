@@ -4,6 +4,7 @@ type Query {
 
   namespaces: [Namespace]
 
+  # TODO want to limit the number of apps returned
   applications(namespace: String = "default"): [ApplicationRecord]!
 
   application(namespace: String = "default", name: String!): ApplicationDetail!
@@ -36,7 +37,7 @@ type ApplicationRecord {
   ownerPrincipal: String
 
   # Field added for composition
-  # applicationDetail: ApplicationDetail!
+  applicationDetail: ApplicationDetail!
 }
 
 type ArtifactSummary {
