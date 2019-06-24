@@ -387,9 +387,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
 
           try {
+            long currentTime = System.currentTimeMillis();
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
                                                   artifactSummary, configString, createProgramTerminator(),
                                                   ownerPrincipalId, appRequest.canUpdateSchedules());
+            LOG.error("Yaojie - took {} ms to deploy the app.", System.currentTimeMillis() - currentTime);
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();
