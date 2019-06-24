@@ -25,6 +25,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -134,6 +136,18 @@ public class StructuredRecordStringConverterTest {
     StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
 
     assertRecordsEqual(record, recordOfJson);
+  }
+
+  @Test
+  public void testDecimalLogicalTypeConversion() throws Exception {
+    Schema dateSchema = Schema.recordOf("decimal", Schema.Field.of("d", Schema.nullableOf(Schema.decimalOf(3, 2))));
+    StructuredRecord record = StructuredRecord.builder(dateSchema)
+      .setDecimal("d", new BigDecimal(new BigInteger("111"), 2)).build();
+
+    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(record);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
+
+    Assert.assertEquals(record.getDecimal("d"), recordOfJson.getDecimal("d"));
   }
 
   @Test
