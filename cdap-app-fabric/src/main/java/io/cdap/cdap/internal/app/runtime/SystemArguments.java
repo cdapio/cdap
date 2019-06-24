@@ -87,6 +87,12 @@ public final class SystemArguments {
   public static final String PROFILE_PROPERTIES_PREFIX = "system.profile.properties.";
 
   /**
+   * Runtime arguments for program impersonation
+   */
+  public static final String RUNTIME_KEYTAB_PATH = "system.runtime.keytab.path";
+  public static final String RUNTIME_PRINCIPAL_NAME = "system.runtime.principal.name";
+
+  /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
    * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the argument value
    * as the log level. Also, the key {@link #LOG_LEVEL} will be used to setup the log level of the root logger.

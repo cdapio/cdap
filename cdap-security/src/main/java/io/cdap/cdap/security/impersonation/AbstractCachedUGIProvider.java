@@ -23,6 +23,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +72,12 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
         return ugi;
       }
       boolean isCache = checkExploreAndDetermineCache(impersonationRequest);
-      ImpersonationInfo info = getPrincipalForEntity(impersonationRequest);
+      ImpersonationRequest tmpRequest = impersonationRequest;
+      if (impersonationRequest.getEntityId() instanceof ProgramRunId) {
+        ProgramId progId = ((ProgramRunId) impersonationRequest.getEntityId()).getParent();
+        tmpRequest = new ImpersonationRequest(progId, impersonationRequest.getImpersonatedOpType());
+      }
+      ImpersonationInfo info = getPrincipalForEntity(tmpRequest);
       ImpersonationRequest newRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
                                                                  impersonationRequest.getImpersonatedOpType(),
                                                                  info.getPrincipal(), info.getKeytabURI());
