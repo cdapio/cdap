@@ -143,7 +143,49 @@ metadataResolver = {
   }
 }
 
-const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver)
+programsTypeResolver = {
+  ProgramRecord: {
+    async __resolveType(parent, args, context, info) {
+    const programs = await(new Promise((resolve, reject) => {
+      console.log('parent type', parent.type)
+
+      switch(parent.type) {
+        case 'Mapreduce': resolve('MapReduce')
+        case 'Workflow': resolve('Workflow')
+        // TODO throw an error
+        default: resolve(null)
+      }
+    }));
+
+    return programs;
+    }
+  },
+  ApplicationDetail: {
+    async programs(parent, args, context, info) {
+    const program = await(new Promise((resolve, reject) => {
+      programs = parent.programs
+      type = args.type
+
+      if(type == null) {
+        resolve(programs)
+      }
+      else {
+      typePrograms = programs.filter(
+        function(program) {
+          return program.type == type
+        }
+      )
+
+      resolve(typePrograms)
+      }
+    }));
+
+    return program;
+    }
+  }
+}
+
+const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver)
 
 module.exports = {
 	resolvers

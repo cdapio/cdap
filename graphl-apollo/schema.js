@@ -61,7 +61,7 @@ type ApplicationDetail {
 
   # List<DatasetDetail> datasets;
 
-  # programs(type: String): [ProgramRecord]!
+  programs(type: String): [ProgramRecord]!
 
   # List<PluginDetail> plugins;
 
@@ -91,6 +91,44 @@ type Tag {
   name: String!
 
   scope: String!
+}
+
+interface ProgramRecord {
+
+  type: String!
+
+  app: String!
+
+  name: String!
+
+  description: String!
+}
+
+type MapReduce implements ProgramRecord {
+
+  type: String!
+
+  app: String!
+
+  name: String!
+
+  description: String!
+}
+
+type Workflow implements ProgramRecord {
+
+  type: String!
+
+  app: String!
+
+  name: String!
+
+  description: String!
+
+  # runs: [RunRecord]!
+
+  # Field added for composition
+  # schedules: [ScheduleDetail]!
 }
 `
 
