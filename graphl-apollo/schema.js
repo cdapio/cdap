@@ -128,7 +128,7 @@ type Workflow implements ProgramRecord {
   runs: [RunRecord]!
 
   # Field added for composition
-  # schedules: [ScheduleDetail]!
+  schedules: [ScheduleDetail]!
 }
 
 type RunRecord {
@@ -148,6 +148,34 @@ type RunRecord {
   # ProgramRunCluster cluster;
 
   # profileId: String
+}
+
+type ScheduleDetail {
+
+  namespace: String!
+
+  application: String!
+
+  applicationVersion: String!
+
+  name: String!
+
+  description: String!
+
+  # ScheduleProgramInfo program;
+
+  # Map<String, String> properties;
+
+  # Trigger trigger;
+
+  # List<? extends Constraint> constraints;
+
+  # Long timeoutMillis;
+
+  status: String!
+
+  # Field added for composition
+  # time: [String]!
 }
 `
 

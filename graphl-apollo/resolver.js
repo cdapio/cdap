@@ -185,7 +185,7 @@ programsResolver = {
   }
 }
 
-runRecordsResolver = {
+runsResolver = {
   Workflow: {
     async runs(parent, args, context, info) {
     const runs = await(new Promise((resolve, reject) => {
@@ -194,7 +194,6 @@ runRecordsResolver = {
       workflow = parent.name
 
       const options = {
-//        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs?%s`,
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`,
         method: 'GET',
         json: true
@@ -215,7 +214,36 @@ runRecordsResolver = {
   }
 }
 
-const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver, runRecordsResolver)
+schedulesResolver = {
+  Workflow: {
+    async schedules(parent, args, context, info) {
+    const schedules = await(new Promise((resolve, reject) => {
+      namespace = context.namespace
+      name = parent.app
+      workflow = parent.name
+
+      const options = {
+        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`,
+        method: 'GET',
+        json: true
+      };
+
+      request(options, (err, response, body) => {
+        if(err) {
+          reject(err)
+        }
+        else {
+         resolve(body);
+        }
+      })
+    }));
+
+    return schedules;
+    }
+  }
+}
+
+const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver, runsResolver, schedulesResolver)
 
 module.exports = {
 	resolvers
