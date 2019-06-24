@@ -147,19 +147,19 @@ programsTypeResolver = {
   ProgramRecord: {
     async __resolveType(parent, args, context, info) {
     const programs = await(new Promise((resolve, reject) => {
-      console.log('parent type', parent.type)
-
       switch(parent.type) {
         case 'Mapreduce': resolve('MapReduce')
         case 'Workflow': resolve('Workflow')
-        // TODO throw an error
         default: resolve(null)
       }
     }));
 
     return programs;
     }
-  },
+  }
+}
+
+programsResolver = {
   ApplicationDetail: {
     async programs(parent, args, context, info) {
     const program = await(new Promise((resolve, reject) => {
@@ -185,7 +185,7 @@ programsTypeResolver = {
   }
 }
 
-const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver)
+const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver)
 
 module.exports = {
 	resolvers
