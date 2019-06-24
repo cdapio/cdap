@@ -1,3 +1,4 @@
+//    TODO how to get the url and not hardcode it
 const merge = require('lodash/merge')
 
 var request = require('request'),
@@ -16,10 +17,8 @@ applicationsResolver = {
         json: true
       };
 
-//    TODO how to get the url and not hardcode it
       request(options, (err, response, body) => {
         if(err) {
-          // TODO this is crashing the node server
           reject(err)
         }
         else {
@@ -45,10 +44,8 @@ namespacesResolver = {
     };
 
     const namespaces = await(new Promise((resolve, reject) => {
-//    TODO how to get the url and not hardcode it
       request(options, (err, response, body) => {
         if(err) {
-          // TODO this is crashing the node server
           reject(err)
         }
         else {
@@ -75,10 +72,8 @@ applicationResolver = {
         json: true
       };
 
-//    TODO how to get the url and not hardcode it
       request(options, (err, response, body) => {
         if(err) {
-          // TODO this is crashing the node server
           reject(err)
         }
         else {
@@ -105,10 +100,8 @@ applicationDetailResolver = {
         json: true
       };
 
-//    TODO how to get the url and not hardcode it
       request(options, (err, response, body) => {
         if(err) {
-          // TODO this is crashing the node server
           reject(err)
         }
         else {
@@ -122,7 +115,35 @@ applicationDetailResolver = {
   }
 }
 
-const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver)
+metadataResolver = {
+  ApplicationDetail: {
+    async metadata(parent, args, context, info) {
+    const metadata = await(new Promise((resolve, reject) => {
+      namespace = context.namespace
+      name = parent.name
+
+      const options = {
+        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6 `,
+        method: 'GET',
+        json: true
+      };
+
+      request(options, (err, response, body) => {
+        if(err) {
+          reject(err)
+        }
+        else {
+         resolve(body);
+        }
+      })
+    }));
+
+    return metadata;
+    }
+  }
+}
+
+const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver)
 
 module.exports = {
 	resolvers

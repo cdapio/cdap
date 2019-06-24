@@ -69,10 +69,28 @@ type ApplicationDetail {
 
   ownerPrincipal: String
 
-  # """
   # Field added for composition
-  # """
-  # metadata: Metadata
+  metadata: Metadata
+}
+
+type Metadata {
+
+  # MetadataEntity metadataEntity;
+
+  # MetadataScope scope;
+
+  # Map<String, String> properties;
+
+  tags: [Tag]!
+
+  # properties: [Properties]
+}
+
+type Tag {
+
+  name: String!
+
+  scope: String!
 }
 `
 
