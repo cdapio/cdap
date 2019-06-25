@@ -20,7 +20,7 @@ import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 
 const styles = (theme) => {
@@ -74,7 +74,7 @@ const styles = (theme) => {
 
 interface ITableProps extends WithStyles<typeof styles> {
   tableId: string;
-  fields: INode[];
+  fields: IField[];
   isTarget?: boolean;
   clickFieldHandler: (fieldId: string) => void;
   activeField: string;

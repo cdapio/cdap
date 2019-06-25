@@ -15,7 +15,7 @@
 */
 
 import React, { useState } from 'react';
-import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
@@ -49,7 +49,7 @@ const styles = (theme) => {
 };
 
 interface IFieldProps extends WithStyles<typeof styles> {
-  field: INode;
+  field: IField;
   isTarget: boolean;
   activeField: string;
   clickFieldHandler: (event: React.MouseEvent<HTMLDivElement>) => void;

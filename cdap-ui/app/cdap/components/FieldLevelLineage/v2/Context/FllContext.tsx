@@ -18,14 +18,9 @@ import React from 'react';
 import data from './sample_response';
 import {
   parseRelations,
-  makeTargetNodes,
+  makeTargetFields,
+  IField,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
-
-export interface INode {
-  id: string;
-  name: string;
-  group: number;
-}
 
 const FllContext = React.createContext({});
 
@@ -34,9 +29,8 @@ function getFieldsAndLinks(d) {
   const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
   const causeTables = incoming.tables;
   const impactTables = outgoing.tables;
-  const nodes = incoming.relNodes.concat(outgoing.relNodes);
   const links = incoming.relLinks.concat(outgoing.relLinks);
-  return { causeTables, impactTables, nodes, links };
+  return { causeTables, impactTables, links };
 }
 
 export function Provider({ children }) {
@@ -44,8 +38,7 @@ export function Provider({ children }) {
 
   const defaultState = {
     target: data.entityId.dataset,
-    targetFields: makeTargetNodes(data.entityId, data.fields) as INode[],
-    nodes: parsedRes.nodes,
+    targetFields: makeTargetFields(data.entityId, data.fields) as IField[],
     links: parsedRes.links,
     causeSets: parsedRes.causeTables,
     impactSets: parsedRes.impactTables,

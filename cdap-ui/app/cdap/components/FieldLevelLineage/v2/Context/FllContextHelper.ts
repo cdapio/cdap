@@ -37,7 +37,6 @@ export interface ITableFields {
 // namespace and target are the target namespace and dataset name
 export function parseRelations(namespace, target, ents, isCause = true) {
   const tables: ITableFields = {};
-  const relNodes = [];
   const relLinks = [];
   ents.map((ent) => {
     // Assumes that all tableNames are unique (since all datasets in a namespace should have unique names)
@@ -65,7 +64,6 @@ export function parseRelations(namespace, target, ents, isCause = true) {
         field.id = id;
         fieldIds.set(fieldName, id);
         tables[tableId].push(field);
-        relNodes.push(field);
       }
       const targetField: IField = {
         id: `target_ns-${namespace}_ds-${target}_fd-${isCause ? rel.destination : rel.source}`,
@@ -81,11 +79,11 @@ export function parseRelations(namespace, target, ents, isCause = true) {
       relLinks.push(link);
     });
   });
-  return { tables, relNodes, relLinks };
+  return { tables, relLinks };
 }
 
-export function makeTargetNodes(entityId, fields) {
-  const targetNodes = fields.map((fieldname) => {
+export function makeTargetFields(entityId, fields) {
+  const targetFields = fields.map((fieldname) => {
     const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${fieldname}`;
     const field: IField = {
       id,
@@ -96,5 +94,5 @@ export function makeTargetNodes(entityId, fields) {
     };
     return field;
   });
-  return targetNodes;
+  return targetFields;
 }
