@@ -238,12 +238,49 @@ schedulesResolver = {
       })
     }));
 
+    context.workflow = workflow
+
     return schedules;
     }
   }
 }
 
-const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver, runsResolver, schedulesResolver)
+nextRuntimesResolver = {
+  ScheduleDetail: {
+    async nextRuntimes(parent, args, context, info) {
+    const times = await(new Promise((resolve, reject) => {
+      namespace = context.namespace
+      name = parent.application
+      workflow = context.workflow
+
+      const options = {
+        url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`,
+        method: 'GET',
+        json: true
+      };
+
+      request(options, (err, response, body) => {
+        if(err) {
+          reject(err)
+        }
+        else {
+         resolve(body);
+        }
+      })
+    }));
+
+    var nextRuntimes = []
+
+    for(var i = 0; i < times.length; i++) {
+      nextRuntimes.push(times[i].time)
+    }
+
+    return nextRuntimes
+    }
+  }
+}
+
+const resolvers = merge(applicationsResolver, namespacesResolver, applicationResolver, applicationDetailResolver, metadataResolver, programsTypeResolver, programsResolver, runsResolver, schedulesResolver, nextRuntimesResolver)
 
 module.exports = {
 	resolvers

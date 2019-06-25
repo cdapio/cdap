@@ -147,7 +147,7 @@ type RunRecord {
 
   # ProgramRunCluster cluster;
 
-  # profileId: String
+  profileId: String
 }
 
 type ScheduleDetail {
@@ -170,15 +170,14 @@ type ScheduleDetail {
 
   # List<? extends Constraint> constraints;
 
-  # Long timeoutMillis;
+  timeoutMillis: String!
 
   status: String!
 
   # Field added for composition
-  # time: [String]!
+  nextRuntimes: [String]!
 }
 `
-
 module.exports = {
 	typeDefs
 }
