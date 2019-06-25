@@ -97,10 +97,12 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     String appVersion = deploymentInfo.getApplicationVersion();
     String configString = deploymentInfo.getConfigString();
 
+    LOG.error("Yaojie - artifact location is {}", artifactLocation.toURI());
     EntityImpersonator classLoaderImpersonator =
       new EntityImpersonator(artifactId, impersonator);
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
+    LOG.error("Yaojie - took {} ms to create artifact class loader.", System.currentTimeMillis() - currentTime);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
 
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(
@@ -113,6 +115,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
+    LOG.error("Yaojie - took {} ms to config the artifact.", System.currentTimeMillis() - currentTime);
+
     if (response.getExitCode() != 0) {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
