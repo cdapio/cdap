@@ -56,7 +56,6 @@ const SchemaData = [{ "schemaName": "accounts", "schemaColumns": [{ "columnName"
 const PropertyData = [{ "paramName": "Indexes", "description": "" }, { "paramName": "Relationships", "description": "" }, { "paramName": "TimestampColumns", "description": "" }, { "paramName": "TimeIndexColumns", "description": "" }, { "paramName": "CategoricalColumns", "description": "" }, { "paramName": "IgnoreColumns", "description": "" }, { "paramName": "multiFieldTransFunctionInputColumns", "description": "" }, { "paramName": "multiFieldAggFunctionInputColumns", "description": "" }, { "paramName": "TargetEntity", "description": "" }, { "paramName": "TargetEntityPrimaryField", "description": "" }];
 const ConfigurationData = [{ "paramName": "DFSDepth", "description": "", "isCollection": false, "dataType": "int" }, { "paramName": "TrainingWindows", "description": "", "isCollection": true, "dataType": "int" }, { "paramName": "WindowEndTime", "description": "", "isCollection": false, "dataType": "string" }];
 
-
 class LandingPage extends React.Component {
 
   featureTypes = [{ id: 1, name: FEATURE_GENERATED, selected: false }, { id: 2, name: FEATURE_SELECTED, selected: false }]
@@ -285,7 +284,7 @@ class LandingPage extends React.Component {
           }
             break;
           default:
-            if (!isEmpty(pipelineData[property])) {
+            if (!isNil(pipelineData[property])) {
               let propertyData = find(this.props.availableProperties, { paramName: property });
               if (!isNil(propertyData)) {
                 if (isEmpty(propertyData.subParams)) {
@@ -538,7 +537,7 @@ class LandingPage extends React.Component {
     }
     if (!isEmpty(props.configurationList)) {
       props.configurationList.forEach((configuration) => {
-        if (!isEmpty(configuration.value)) {
+        if (!isNil(configuration.value)) {
           switch (configuration.dataType) {
             case 'int':
               if (configuration.isCollection) {
