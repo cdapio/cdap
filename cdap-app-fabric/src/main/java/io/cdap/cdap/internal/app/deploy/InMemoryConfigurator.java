@@ -106,7 +106,9 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
 
     try {
+      long currentTime = System.currentTimeMillis();
       Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
+      LOG.error("Yaojie - took {} ms to load app main", System.currentTimeMillis() - currentTime);
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
           appMain.getClass().getName()));
@@ -123,6 +125,7 @@ public final class InMemoryConfigurator implements Configurator {
   }
 
   private <T extends Config> ConfigResponse createResponse(Application<T> app) throws Exception {
+    long currentTime = System.currentTimeMillis();
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
     Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
@@ -140,6 +143,7 @@ public final class InMemoryConfigurator implements Configurator {
       if (configString.isEmpty()) {
         //noinspection unchecked
         appConfig = ((Class<T>) configType).newInstance();
+        LOG.error("Yaojie - took {} ms to new the app config", System.currentTimeMillis() - currentTime);
       } else {
         try {
           appConfig = gson.fromJson(configString, configType);
@@ -148,11 +152,13 @@ public final class InMemoryConfigurator implements Configurator {
         }
       }
 
+      currentTime = System.currentTimeMillis();
       try {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
           new CombineClassLoader(null, app.getClass().getClassLoader(), getClass().getClassLoader()));
         try {
           app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+          LOG.error("Yaojie - took {} ms to configure app", System.currentTimeMillis() - currentTime);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }

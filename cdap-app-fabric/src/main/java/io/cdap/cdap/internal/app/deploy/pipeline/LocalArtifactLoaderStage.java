@@ -103,6 +103,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     LOG.error("Yaojie - took {} ms to create artifact class loader.", System.currentTimeMillis() - currentTime);
+    currentTime = System.currentTimeMillis();
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
 
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(

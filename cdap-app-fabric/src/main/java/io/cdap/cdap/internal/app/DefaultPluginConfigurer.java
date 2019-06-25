@@ -33,6 +33,8 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -46,6 +48,8 @@ import javax.annotation.Nullable;
  * Abstract base implementation of {@link PluginConfigurer}.
  */
 public class DefaultPluginConfigurer implements PluginConfigurer {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPluginConfigurer.class);
+
 
   private final ArtifactId artifactId;
   private final NamespaceId pluginNamespaceId;
@@ -75,8 +79,17 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
   public final <T> T usePlugin(String pluginType, String pluginName, String pluginId,
                                PluginProperties properties, PluginSelector selector) {
     try {
+      long currentTime = System.currentTimeMillis();
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
-      return pluginInstantiator.newInstance(plugin);
+      LOG.error("Yaojie - took {} ms to add the plugin {} with type {} and id {}",
+                System.currentTimeMillis() - currentTime,
+                pluginName, pluginType, pluginId);
+      currentTime = System.currentTimeMillis();
+      T t = pluginInstantiator.newInstance(plugin);
+      LOG.error("Yaojie - took {} ms to new the plugin class {} with type {} and id {}",
+                System.currentTimeMillis() - currentTime,
+                pluginName, pluginType, pluginId);
+      return t;
     } catch (PluginNotExistsException | IOException e) {
       return null;
     } catch (ClassNotFoundException e) {
@@ -90,8 +103,17 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
   public final <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                            PluginProperties properties, PluginSelector selector) {
     try {
+      long currentTime = System.currentTimeMillis();
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
-      return pluginInstantiator.loadClass(plugin);
+      LOG.error("Yaojie - took {} ms to add the plugin {} with type {} and id {}",
+                System.currentTimeMillis() - currentTime,
+                pluginName, pluginType, pluginId);
+      currentTime = System.currentTimeMillis();
+      Class<T> tClass = pluginInstantiator.loadClass(plugin);
+      LOG.error("Yaojie - took {} ms to load the plugin class {} with type {} and id {}",
+                System.currentTimeMillis() - currentTime,
+                pluginName, pluginType, pluginId);
+      return tClass;
     } catch (PluginNotExistsException | IOException e) {
       return null;
     } catch (ClassNotFoundException e) {
@@ -133,11 +155,14 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     PluginNotExistsException exception = null;
     for (ArtifactId parentId : Iterables.concat(parents, Collections.singleton(artifactId))) {
       try {
+        long currentTime = System.currentTimeMillis();
         Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = pluginFinder.findPlugin(pluginNamespaceId, parentId,
                                                                                          pluginType, pluginName,
                                                                                          selector);
         Plugin plugin = FindPluginHelper.getPlugin(Iterables.transform(parents, ArtifactId::toApiArtifactId),
                                                    pluginEntry, properties, pluginType, pluginName, pluginInstantiator);
+        LOG.error("Yaojie - took {} ms to add and get the plugin from {}", System.currentTimeMillis() - currentTime,
+                  pluginEntry.getKey());
         plugins.put(pluginId, new PluginWithLocation(plugin, pluginEntry.getKey().getLocation()));
         return plugin;
       } catch (PluginNotExistsException e) {
