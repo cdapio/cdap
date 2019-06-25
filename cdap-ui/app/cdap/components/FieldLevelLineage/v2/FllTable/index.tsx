@@ -22,6 +22,7 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
+import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme) => {
   return createStyles({
@@ -75,11 +76,7 @@ const styles = (theme) => {
 interface ITableProps extends WithStyles<typeof styles> {
   tableId: string;
   fields: IField[];
-  isTarget?: boolean;
-  clickFieldHandler: (fieldId: string) => void;
-  activeField: string;
-  viewCauseImpactHandler?: () => void;
-  showingOneField: boolean;
+  // TO DO: Move these to Context
   resetHandler?: () => void;
 }
 
@@ -100,69 +97,34 @@ function renderGridHeader(fields, showingOneField, classes) {
   );
 }
 
-function renderGridBody(
-  fields,
-  tableName,
-  isTarget,
-  clickFieldHandler,
-  activeField,
-  viewCauseImpactHandler,
-  showingOneField,
-  resetHandler,
-  classes
-) {
+function renderGridBody(fields, tableName, resetHandler, classes) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
-        return (
-          <FllField
-            key={field.id}
-            clickFieldHandler={clickFieldHandler}
-            isTarget={isTarget}
-            activeField={activeField}
-            field={field}
-            viewCauseImpactHandler={viewCauseImpactHandler}
-            showingOneField={showingOneField}
-            resetHandler={resetHandler}
-          />
-        );
+        return <FllField key={field.id} field={field} resetHandler={resetHandler} />;
       })}
     </div>
   );
 }
 
-function FllTable({
-  tableId,
-  fields,
-  classes,
-  isTarget = false,
-  clickFieldHandler,
-  activeField,
-  viewCauseImpactHandler,
-  showingOneField,
-  resetHandler,
-}: ITableProps) {
+function FllTable({ tableId, fields, classes, resetHandler }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
-    <SortableStickyGrid
-      key={`cause ${tableId}`}
-      entities={fields}
-      gridHeaders={GRID_HEADERS}
-      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-      renderGridHeader={renderGridHeader.bind(null, fields, showingOneField, classes)}
-      renderGridBody={renderGridBody.bind(
-        this,
-        fields,
-        tableId,
-        isTarget,
-        clickFieldHandler,
-        activeField,
-        viewCauseImpactHandler,
-        showingOneField,
-        resetHandler,
-        classes
-      )}
-    />
+    <Consumer>
+      {({ showingOneField }) => {
+        const isTarget = fields[0].type === 'target';
+        return (
+          <SortableStickyGrid
+            key={`cause ${tableId}`}
+            entities={fields}
+            gridHeaders={GRID_HEADERS}
+            className={classnames(classes.table, { [classes.targetTable]: isTarget })}
+            renderGridHeader={renderGridHeader.bind(null, fields, showingOneField, classes)}
+            renderGridBody={renderGridBody.bind(this, fields, tableId, resetHandler, classes)}
+          />
+        );
+      }}
+    </Consumer>
   );
 }
 

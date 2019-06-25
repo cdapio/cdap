@@ -18,26 +18,27 @@ import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
 import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
-import withStyles from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
+import { FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
-const styles = (theme) => {
+const styles = (theme): StyleRules => {
   return {
     root: {
       paddingLeft: '100px',
       paddingRight: '100px',
       display: 'flex',
       justifyContent: 'space-between',
-      position: 'relative' as 'relative',
+      position: 'relative',
     },
     container: {
-      position: 'absolute' as 'absolute',
-      height: '110%', // this seems like cheating
+      position: 'absolute',
+      height: '110%',
       width: '100%',
-      pointerEvents: 'none' as 'none',
+      pointerEvents: 'none',
       overflow: 'visible',
     },
   };
@@ -48,8 +49,9 @@ interface ILineageState {
   activeCauseSets: ITableFields;
   activeImpactSets: ITableFields;
   activeLinks: ILink[];
-  showingOneField: boolean;
 }
+
+// I don't think LineageSummary needs state?
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
   constructor(props) {
@@ -59,7 +61,6 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       activeCauseSets: null,
       activeImpactSets: null,
       activeLinks: null,
-      showingOneField: false,
     };
   }
   private allLinks = [];
@@ -139,115 +140,46 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       .remove();
   }
 
-  private drawActiveLinks() {
+  // Draws only active links
+  private drawActiveLinks(activeLinks) {
     this.clearCanvas();
 
-    this.state.activeLinks.forEach((link) => {
+    activeLinks.forEach((link) => {
       this.drawLineFromLink(link, true);
     });
   }
 
-  private drawLinks(activeFieldId = null) {
+  private drawLinks(links, activeFieldId = null) {
     this.clearCanvas();
 
-    const activeLinks = [];
-    this.allLinks.forEach((link) => {
+    links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
-      if (isSelected) {
-        activeLinks.push(link);
-      }
       this.drawLineFromLink(link, isSelected);
     });
-    this.setState(() => ({
-      ...this.state,
-      activeLinks,
-    }));
-  }
-
-  private handleFieldClick(e) {
-    const activeField = (e.target as HTMLAreaElement).id;
-    if (!activeField) {
-      return;
-    }
-    d3.select(`#${this.state.activeField}`).classed('selected', false);
-    this.setState(
-      {
-        ...this.state,
-        activeField,
-      },
-      () => {
-        d3.select(`#${activeField}`).classed('selected', true);
-        this.drawLinks(activeField);
-      }
-    );
-  }
-
-  // example: "target_ns-default_ds-Employee_Data_fd-id"
-  private parseFieldId(fieldId) {
-    let truncId;
-    const pref = fieldId.slice(0, 5);
-    const type = pref === 'cause' ? pref : pref + 't';
-    // chop off the "target_" or "cause_" delimiter
-    truncId = type === 'cause' ? fieldId.slice(6) : fieldId.slice(7);
-    // Look for "_fd-" delimiter - everything before that is the tableId, and everything after is the fieldname
-    const fdIndex = truncId.indexOf('_fd-');
-    const tableId = truncId.slice(0, fdIndex);
-    // also need to get the dataset name out of datasetId
-    const dsName = tableId.slice(tableId.indexOf('_ds-') + 4);
-    const fieldName = truncId.slice(fdIndex + 4);
-    const field = {
-      id: fieldId,
-      name: fieldName,
-      group: dsName,
-    };
-
-    return { field, tableId, type };
-  }
-
-  private getActiveSets() {
-    const activeCauseSets = {};
-    const activeImpactSets = {};
-
-    this.state.activeLinks.forEach((link) => {
-      // for each link, look at id prefix to find the field that is not the target and add to the activeCauseSets or activeImpactSets
-      const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
-      const tableToUpdate = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
-      const tableId = `ns-${nonTargetFd.namespace}_ds-${nonTargetFd.dataset}`; // used as unique key to make sure we don't duplicate fields
-      if (!(tableId in tableToUpdate)) {
-        tableToUpdate[tableId] = [];
-      }
-      tableToUpdate[tableId].push(nonTargetFd);
-    });
-    this.setState(
-      {
-        ...this.state,
-        activeCauseSets,
-        activeImpactSets,
-      },
-      () => {
-        this.setState({
-          ...this.state,
-          showingOneField: true,
-        });
-      }
-    );
   }
 
   public componentDidUpdate() {
-    if (this.state.showingOneField) {
-      this.drawActiveLinks();
+    const { showingOneField, links, activeLinks, activeField } = this.context;
+    // if user has just clicked "View Cause and Impact"
+    if (showingOneField) {
+      this.clearCanvas();
+      this.drawActiveLinks(activeLinks);
+    } else {
+      this.drawLinks(links, activeField);
     }
   }
 
-  private handleViewCauseImpact() {
-    this.getActiveSets();
-  }
-
+  // TO DO: Move this to context
   private handleReset() {
-    this.setState(() => ({
-      ...this.state,
-      showingOneField: false,
-    }));
+    this.setState(
+      {
+        ...this.state,
+        // showingOneField: false,
+      },
+      () => {
+        // this.drawLinks(this.state.activeField);
+      }
+    );
   }
 
   public componentWillUnmount() {
@@ -255,8 +187,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   }
 
   public componentDidMount() {
-    this.drawLinks();
-    window.addEventListener('resize', debounce(this.drawLinks.bind(this), 1));
+    const { links, activeLinks, activeField } = this.context;
+    this.drawLinks(links, activeField);
+    window.addEventListener('resize', debounce(this.drawLinks.bind(this, links, activeField), 1));
   }
   public render() {
     return (
@@ -266,20 +199,22 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
           target,
           targetFields,
           impactSets,
-          firstCause,
-          firstImpact,
-          firstField,
+          activeField,
           links,
+          activeLinks,
+          activeCauseSets,
+          activeImpactSets,
+          showingOneField,
         }) => {
           this.allLinks = links;
           let visibleLinks = this.allLinks;
           let visibleCauseSets = causeSets;
           let visibleImpactSets = impactSets;
 
-          if (this.state.showingOneField) {
-            visibleLinks = this.state.activeLinks;
-            visibleCauseSets = this.state.activeCauseSets;
-            visibleImpactSets = this.state.activeImpactSets;
+          if (showingOneField) {
+            visibleLinks = activeLinks;
+            visibleCauseSets = activeCauseSets;
+            visibleImpactSets = activeImpactSets;
           }
 
           return (
@@ -294,58 +229,23 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                 <g id="selected-links" />
               </svg>
               <div>
-                <FllHeader
-                  type="cause"
-                  first={firstCause}
-                  total={Object.keys(visibleCauseSets).length}
-                />
+                <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
                 {Object.keys(visibleCauseSets).map((key) => {
-                  return (
-                    <FllTable
-                      clickFieldHandler={this.handleFieldClick.bind(this)}
-                      key={key}
-                      tableId={key}
-                      fields={visibleCauseSets[key]}
-                      activeField={this.state.activeField}
-                      showingOneField={this.state.showingOneField}
-                    />
-                  );
+                  return <FllTable key={key} tableId={key} fields={visibleCauseSets[key]} />;
                 })}
               </div>
               <div>
-                <FllHeader
-                  type="target"
-                  first={firstField}
-                  total={Object.keys(targetFields).length}
-                />
+                <FllHeader type="target" total={Object.keys(targetFields).length} />
                 <FllTable
-                  clickFieldHandler={this.handleFieldClick.bind(this)}
-                  isTarget={true}
                   tableId={target}
                   fields={targetFields}
-                  activeField={this.state.activeField}
-                  viewCauseImpactHandler={this.handleViewCauseImpact.bind(this)}
-                  showingOneField={this.state.showingOneField}
                   resetHandler={this.handleReset.bind(this)}
                 />
               </div>
               <div>
-                <FllHeader
-                  type="impact"
-                  first={firstImpact}
-                  total={Object.keys(visibleImpactSets).length}
-                />
+                <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
                 {Object.keys(visibleImpactSets).map((key) => {
-                  return (
-                    <FllTable
-                      clickFieldHandler={this.handleFieldClick.bind(this)}
-                      key={key}
-                      tableId={key}
-                      fields={visibleImpactSets[key]}
-                      activeField={this.state.activeField}
-                      showingOneField={this.state.showingOneField}
-                    />
-                  );
+                  return <FllTable key={key} tableId={key} fields={visibleImpactSets[key]} />;
                 })}
               </div>
             </div>
@@ -355,6 +255,8 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     );
   }
 }
+
+LineageSummary.contextType = FllContext;
 
 const StyledLineageSummary = withStyles(styles)(LineageSummary);
 

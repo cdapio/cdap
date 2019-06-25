@@ -16,11 +16,12 @@
 
 import React, { useState } from 'react';
 import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
-const styles = (theme) => {
+const styles = (theme): StyleRules => {
   return {
     root: {
       paddingLeft: '10px',
@@ -32,7 +33,7 @@ const styles = (theme) => {
       ' & .grid-row:selected': {
         backgroundColor: theme.palette.yellow[200],
         color: theme.palette.orange[50],
-        fontWeight: 'bold' as 'bold',
+        fontWeight: 'bold',
       },
     },
     hoverText: {
@@ -40,7 +41,7 @@ const styles = (theme) => {
     },
     targetView: {
       color: theme.palette.blue[200],
-      textAlign: 'right' as 'right',
+      textAlign: 'right',
     },
     viewDropdown: {
       paddingLeft: '3px',
@@ -50,60 +51,53 @@ const styles = (theme) => {
 
 interface IFieldProps extends WithStyles<typeof styles> {
   field: IField;
-  isTarget: boolean;
-  activeField: string;
-  clickFieldHandler: (event: React.MouseEvent<HTMLDivElement>) => void;
-  viewCauseImpactHandler?: (event: React.MouseEvent<HTMLDivElement>) => void;
-  showingOneField?: boolean;
+  // to do: move these to Context
   resetHandler?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-function FllField({
-  field,
-  isTarget = false,
-  clickFieldHandler,
-  activeField,
-  viewCauseImpactHandler,
-  showingOneField,
-  resetHandler,
-  classes,
-}: IFieldProps) {
+function FllField({ field, resetHandler, classes }: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
   const toggleHoverState = () => {
     setHoverState(!isHovering);
   };
-
   return (
-    <div
-      onClick={isTarget ? clickFieldHandler : undefined}
-      onMouseEnter={toggleHoverState}
-      onMouseLeave={toggleHoverState}
-      className={classnames('grid-row', 'grid-link', classes.root)}
-      id={field.id}
-    >
-      {field.name}
-      {isHovering &&
-        !isTarget && (
-          <span className={classes.hoverText}>
-            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
-          </span>
-        )}
-      {field.id === activeField &&
-        isTarget &&
-        !showingOneField && (
-          <span className={classes.targetView} onClick={viewCauseImpactHandler}>
-            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-            <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
-          </span>
-        )}
-      {field.id === activeField &&
-        isTarget &&
-        showingOneField && (
-          <span className={classes.targetView} onClick={resetHandler}>
-            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
-          </span>
-        )}
-    </div>
+    <Consumer>
+      {({ activeField, showingOneField, handleFieldClick, handleViewCauseImpact }) => {
+        const isTarget = field.type === 'target';
+        return (
+          <div
+            onClick={isTarget && !showingOneField ? handleFieldClick : undefined}
+            onMouseEnter={toggleHoverState}
+            onMouseLeave={toggleHoverState}
+            className={classnames('grid-row', 'grid-link', classes.root)}
+            id={field.id}
+          >
+            {field.name}
+            {isHovering &&
+              !isTarget && (
+                <span className={classes.hoverText}>
+                  {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
+                </span>
+              )}
+            {field.id === activeField &&
+              isTarget &&
+              !showingOneField && (
+                <span className={classes.targetView} onClick={handleViewCauseImpact}>
+                  {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
+                  <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
+                </span>
+              )}
+            {field.id === activeField &&
+              isTarget &&
+              showingOneField && (
+                <span className={classes.targetView} onClick={resetHandler}>
+                  {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
+                </span>
+              )}
+          </div>
+        );
+      }}
+    </Consumer>
   );
 }
 

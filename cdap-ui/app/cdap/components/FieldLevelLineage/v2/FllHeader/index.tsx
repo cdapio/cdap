@@ -17,11 +17,10 @@
 import React from 'react';
 import T from 'i18n-react';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import { Consumer } from '../Context/FllContext';
+import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 interface IHeaderProps extends WithStyles<typeof styles> {
   type: string;
-  first: number;
   total: number;
 }
 
@@ -40,14 +39,22 @@ const styles = (theme) => {
   };
 };
 
-function FllHeader({ type, first, total, classes }: IHeaderProps) {
+function FllHeader({ type, total, classes }: IHeaderProps) {
   return (
     <Consumer>
-      {({ numTables, target }) => {
+      {({ firstCause, firstImpact, firstField, target, numTables }) => {
         let last;
-        if (type === ('impact' || 'cause')) {
-          last = first + numTables - 1 <= total ? first + numTables - 1 : total;
+        let first;
+
+        if (type === 'impact') {
+          first = firstImpact;
         } else {
+          first = firstCause;
+        }
+
+        last = first + numTables - 1 <= total ? first + numTables - 1 : total;
+
+        if (type === 'target') {
           last = total;
         }
 

@@ -33,7 +33,7 @@ export interface ITableFields {
   [tablename: string]: IField[];
 }
 
-// Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
+// Parses an incoming or outgoing entity object from backend response to get array of edges and an object with fields keyed by dataset
 // namespace and target are the target namespace and dataset name
 export function parseRelations(namespace, target, ents, isCause = true) {
   const tables: ITableFields = {};
