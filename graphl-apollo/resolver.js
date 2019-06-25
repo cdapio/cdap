@@ -5,11 +5,11 @@ var request = require('request'),
   fs = require('fs'),
   log4js = require('log4js');
 
-applicationsResolver = {
+const applicationsResolver = {
   Query: {
     async applications(parent, args, context, info) {
     const applications = await(new Promise((resolve, reject) => {
-      namespace = args.namespace
+      const namespace = args.namespace
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps`,
@@ -34,16 +34,16 @@ applicationsResolver = {
   }
 }
 
-namespacesResolver = {
+const namespacesResolver = {
   Query: {
     async namespaces(parent, args, context, info) {
-    const options = {
+    const namespaces = await(new Promise((resolve, reject) => {
+      const options = {
         url: 'http://127.0.0.1:11015/v3/namespaces',
         method: 'GET',
         json: true
-    };
+      };
 
-    const namespaces = await(new Promise((resolve, reject) => {
       request(options, (err, response, body) => {
         if(err) {
           reject(err)
@@ -59,12 +59,12 @@ namespacesResolver = {
   }
 }
 
-applicationResolver = {
+const applicationResolver = {
   Query: {
     async application(parent, args, context, info) {
     const application = await(new Promise((resolve, reject) => {
-      namespace = args.namespace
-      name = args.name
+      const namespace = args.namespace
+      const name = args.name
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}`,
@@ -87,12 +87,12 @@ applicationResolver = {
   }
 }
 
-applicationDetailResolver = {
+const applicationDetailResolver = {
   ApplicationRecord: {
     async applicationDetail(parent, args, context, info) {
     const application = await(new Promise((resolve, reject) => {
-      namespace = context.namespace
-      name = parent.name
+      const namespace = context.namespace
+      const name = parent.name
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}`,
@@ -115,12 +115,12 @@ applicationDetailResolver = {
   }
 }
 
-metadataResolver = {
+const metadataResolver = {
   ApplicationDetail: {
     async metadata(parent, args, context, info) {
     const metadata = await(new Promise((resolve, reject) => {
-      namespace = context.namespace
-      name = parent.name
+      const namespace = context.namespace
+      const name = parent.name
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`,
@@ -143,7 +143,7 @@ metadataResolver = {
   }
 }
 
-programsTypeResolver = {
+const programsTypeResolver = {
   ProgramRecord: {
     async __resolveType(parent, args, context, info) {
     const programs = await(new Promise((resolve, reject) => {
@@ -159,21 +159,21 @@ programsTypeResolver = {
   }
 }
 
-programsResolver = {
+const programsResolver = {
   ApplicationDetail: {
     async programs(parent, args, context, info) {
     const program = await(new Promise((resolve, reject) => {
-      programs = parent.programs
-      type = args.type
+      const programs = parent.programs
+      const type = args.type
 
       if(type == null) {
         resolve(programs)
       }
       else {
-      typePrograms = programs.filter(
-        function(program) {
-          return program.type == type
-        }
+        typePrograms = programs.filter(
+          function(program) {
+            return program.type == type
+          }
       )
 
       resolve(typePrograms)
@@ -185,13 +185,13 @@ programsResolver = {
   }
 }
 
-runsResolver = {
+const runsResolver = {
   Workflow: {
     async runs(parent, args, context, info) {
     const runs = await(new Promise((resolve, reject) => {
-      namespace = context.namespace
-      name = parent.app
-      workflow = parent.name
+      const namespace = context.namespace
+      const name = parent.app
+      const workflow = parent.name
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`,
@@ -214,13 +214,13 @@ runsResolver = {
   }
 }
 
-schedulesResolver = {
+const schedulesResolver = {
   Workflow: {
     async schedules(parent, args, context, info) {
     const schedules = await(new Promise((resolve, reject) => {
-      namespace = context.namespace
-      name = parent.app
-      workflow = parent.name
+      const namespace = context.namespace
+      const name = parent.app
+      const workflow = parent.name
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`,
@@ -245,13 +245,13 @@ schedulesResolver = {
   }
 }
 
-nextRuntimesResolver = {
+const nextRuntimesResolver = {
   ScheduleDetail: {
     async nextRuntimes(parent, args, context, info) {
     const times = await(new Promise((resolve, reject) => {
-      namespace = context.namespace
-      name = parent.application
-      workflow = context.workflow
+      const namespace = context.namespace
+      const name = parent.application
+      const workflow = context.workflow
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`,
@@ -269,9 +269,9 @@ nextRuntimesResolver = {
       })
     }));
 
-    var nextRuntimes = []
+    const nextRuntimes = []
 
-    for(var i = 0; i < times.length; i++) {
+    for(let i = 0; i < times.length; i++) {
       nextRuntimes.push(times[i].time)
     }
 
