@@ -17,7 +17,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
@@ -26,9 +25,8 @@ import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
 
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = (state) => {
   return {
-    isBatch: ownProps.isBatch,
     virtualCores: state.driverResources.virtualCores,
     memoryMB: state.driverResources.memoryMB,
   };
@@ -50,20 +48,9 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-const DriverResources = ({
-  isBatch,
-  virtualCores,
-  onVirtualCoresChange,
-  memoryMB,
-  onMemoryMBChange,
-}) => {
+const DriverResources = ({ virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange }) => {
   return (
-    <div
-      className={classnames('driver', {
-        'col-6': isBatch,
-        'col-4': !isBatch,
-      })}
-    >
+    <div className="driver">
       <div className="resource-title-icon">
         <span className="resource-title">{T.translate(`${PREFIX}.driver`)}</span>
         <Popover
@@ -85,7 +72,6 @@ const DriverResources = ({
 };
 
 DriverResources.propTypes = {
-  isBatch: PropTypes.bool,
   virtualCores: PropTypes.number,
   onVirtualCoresChange: PropTypes.func,
   memoryMB: PropTypes.number,

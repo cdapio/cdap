@@ -125,6 +125,8 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
     services.add(injector.getInstance(LogBufferService.class));
     // log handler
     services.add(injector.getInstance(LogQueryService.class));
+    // log saver status service
+    services.add(injector.getInstance(LogSaverStatusService.class));
   }
 
   @Nullable
