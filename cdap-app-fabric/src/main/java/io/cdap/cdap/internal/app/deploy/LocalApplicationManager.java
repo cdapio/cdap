@@ -117,43 +117,21 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    long currentTime = System.currentTimeMillis();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
                                                   authorizationEnforcer, authenticationContext));
-    LOG.error("Yaojie - took {} ms to in LocalArtifactLoaderStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
-    LOG.error("Yaojie - took {} ms to in ApplicationVerificationStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
-    LOG.error("Yaojie - took {} ms to in CreateSystemTablesStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,
                                                    ownerAdmin, authenticationContext));
-    LOG.error("Yaojie - took {} ms to in DeployDatasetModulesStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
                                                      authenticationContext));
-    LOG.error("Yaojie - took {} ms to in CreateDatasetInstancesStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
                                                     metricsSystemClient, metadataServiceClient, programScheduler));
-    LOG.error("Yaojie - took {} ms to in DeletedProgramHandlerStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new ProgramGenerationStage());
-    LOG.error("Yaojie - took {} ms to in ProgramGenerationStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
-    LOG.error("Yaojie - took {} ms to in ApplicationRegistrationStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
-    LOG.error("Yaojie - took {} ms to in DeleteAndCreateSchedulesStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.addLast(new SystemMetadataWriterStage(metadataServiceClient));
-    LOG.error("Yaojie - took {} ms to in SystemMetadataWriterStage.", System.currentTimeMillis() - currentTime);
-    currentTime = System.currentTimeMillis();
     pipeline.setFinally(new DeploymentCleanupStage());
-    LOG.error("Yaojie - took {} ms to in DeploymentCleanupStage.", System.currentTimeMillis() - currentTime);
     return pipeline.execute(input);
   }
 }

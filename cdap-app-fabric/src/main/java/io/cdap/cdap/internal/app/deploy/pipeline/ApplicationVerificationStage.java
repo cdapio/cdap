@@ -94,6 +94,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
+    long currentTime = System.currentTimeMillis();
     Preconditions.checkNotNull(input);
 
     ApplicationSpecification specification = input.getSpecification();
@@ -120,6 +121,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
     // Emit the input to next stage.
     emit(input);
+    LOG.error("Yaojie - took {} ms to in ApplicationVerificationStage.", System.currentTimeMillis() - currentTime);
   }
 
   private void verifySpec(ApplicationId appId,

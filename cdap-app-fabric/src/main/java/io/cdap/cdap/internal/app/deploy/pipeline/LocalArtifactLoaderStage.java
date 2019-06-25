@@ -41,6 +41,8 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeUnit;
  * It is expected a {@link Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
+  private static final Logger LOG = LoggerFactory.getLogger(LocalArtifactLoaderStage.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final CConfiguration cConf;
   private final Store store;
@@ -86,6 +89,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
    */
   @Override
   public void process(AppDeploymentInfo deploymentInfo) throws Exception {
+    long currentTime = System.currentTimeMillis();
 
     ArtifactId artifactId = deploymentInfo.getArtifactId();
     Location artifactLocation = deploymentInfo.getArtifactLocation();
@@ -125,5 +129,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getOwnerPrincipal(),
                                    deploymentInfo.canUpdateSchedules(), appSpecInfo.getSystemTables()));
+    LOG.error("Yaojie - took {} ms to in LocalArtifactLoaderStage.", System.currentTimeMillis() - currentTime);
   }
 }

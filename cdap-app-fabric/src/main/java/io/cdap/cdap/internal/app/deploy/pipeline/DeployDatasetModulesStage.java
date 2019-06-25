@@ -26,12 +26,16 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link DatasetModule}s specified by application.
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployable> {
+  private static final Logger LOG = LoggerFactory.getLogger(DeployDatasetModulesStage.class);
+
   private final DatasetModulesDeployer datasetModulesDeployer;
   private final OwnerAdmin ownerAdmin;
   private final AuthenticationContext authenticationContext;
@@ -52,6 +56,7 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
+    long current = System.currentTimeMillis();
     KerberosPrincipalId ownerPrincipal = input.getOwnerPrincipal();
     // get the authorizing user
     String authorizingUser =
@@ -62,6 +67,8 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
                                          input.getSpecification().getDatasetModules(),
                                          input.getArtifactLocation(),
                                          classLoader, authorizingUser);
+
+    LOG.error("Yaojie - took {} ms to in DeployDatasetModulesStage.", System.currentTimeMillis() - current);
 
     // Emit the input to next stage.
     emit(input);

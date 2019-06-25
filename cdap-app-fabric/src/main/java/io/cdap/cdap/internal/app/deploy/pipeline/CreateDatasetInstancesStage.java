@@ -26,12 +26,16 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link io.cdap.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
 public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
+  private static final Logger LOG = LoggerFactory.getLogger(CreateSystemTablesStage.class);
+
   private final DatasetInstanceCreator datasetInstanceCreator;
   private final OwnerAdmin ownerAdmin;
   private final AuthenticationContext authenticationContext;
@@ -52,6 +56,7 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
+    long currentTime = System.currentTimeMillis();
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
     NamespaceId namespaceId = input.getApplicationId().getParent();
@@ -61,6 +66,8 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
       AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, input.getApplicationId(),
                                               ownerPrincipal);
     datasetInstanceCreator.createInstances(namespaceId, specification.getDatasets(), ownerPrincipal, authorizingUser);
+
+    LOG.error("Yaojie - took {} ms to in CreateDatasetInstancesStage.", System.currentTimeMillis() - currentTime);
 
     // Emit the input to next stage.
     emit(input);

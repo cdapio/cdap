@@ -70,6 +70,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   @Override
   public void process(ApplicationDeployable appSpec) throws Exception {
+    long currentTime = System.currentTimeMillis();
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId(),
                                                                                     appSpec.getSpecification());
 
@@ -91,6 +92,8 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     }
 
     deleteMetrics(deletedPrograms);
+
+    LOG.error("Yaojie - took {} ms to in DeletedProgramHandlerStage.", System.currentTimeMillis() - currentTime);
 
     emit(appSpec);
   }

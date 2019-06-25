@@ -26,11 +26,15 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stage to write system metadata for an application.
  */
 public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
+  private static final Logger LOG = LoggerFactory.getLogger(SystemMetadataWriterStage.class);
+
 
   private final MetadataServiceClient metadataServiceClient;
   private String creationTime;
@@ -42,6 +46,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
 
   @Override
   public void process(ApplicationWithPrograms input) {
+    long currentTime = System.currentTimeMillis();
     // use current time as creation time for app and all programs
     creationTime = String.valueOf(System.currentTimeMillis());
 
@@ -59,6 +64,8 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     writeProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values());
 
     // Emit input to the next stage
+    LOG.error("Yaojie - took {} ms to in SystemMetadataWriterStage.", System.currentTimeMillis() - currentTime);
+
     emit(input);
   }
 

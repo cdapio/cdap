@@ -21,6 +21,8 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -28,6 +30,8 @@ import java.io.IOException;
  * This {@link io.cdap.cdap.pipeline.Stage} is responsible for creating system tables
  */
 public class CreateSystemTablesStage extends AbstractStage<ApplicationDeployable> {
+  private static final Logger LOG = LoggerFactory.getLogger(CreateSystemTablesStage.class);
+
   private final StructuredTableAdmin structuredTableAdmin;
 
   public CreateSystemTablesStage(StructuredTableAdmin structuredTableAdmin) {
@@ -42,6 +46,7 @@ public class CreateSystemTablesStage extends AbstractStage<ApplicationDeployable
    */
   @Override
   public void process(ApplicationDeployable input) throws IOException, TableAlreadyExistsException {
+    long currentTime = System.currentTimeMillis();
     for (StructuredTableSpecification spec : input.getSystemTables()) {
       StructuredTableSpecification existing = structuredTableAdmin.getSpecification(spec.getTableId());
       if (existing == null) {
@@ -57,6 +62,7 @@ public class CreateSystemTablesStage extends AbstractStage<ApplicationDeployable
       }
     }
 
+    LOG.error("Yaojie - took {} ms to in CreateSystemTablesStage.", System.currentTimeMillis() - currentTime);
     // Emit the input to next stage.
     emit(input);
   }

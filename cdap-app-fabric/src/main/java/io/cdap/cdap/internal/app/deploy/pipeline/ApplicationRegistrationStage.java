@@ -30,6 +30,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,6 +40,8 @@ import java.util.Collection;
  *
  */
 public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithPrograms> {
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationRegistrationStage.class);
+
 
   private final Store store;
   private final UsageRegistry usageRegistry;
@@ -52,6 +56,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
+    long currentTime = System.currentTimeMillis();
     ApplicationSpecification applicationSpecification = input.getSpecification();
     Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
@@ -66,6 +71,8 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
       throw e;
     }
     registerDatasets(input);
+    LOG.error("Yaojie - took {} ms to in ApplicationRegistrationStage.", System.currentTimeMillis() - currentTime);
+
     emit(input);
   }
 

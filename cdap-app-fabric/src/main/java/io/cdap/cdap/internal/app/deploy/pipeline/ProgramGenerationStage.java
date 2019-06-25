@@ -25,6 +25,8 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProgramTypes;
 import io.cdap.cdap.proto.id.ProgramId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,8 @@ import java.util.List;
  *
  */
 public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable> {
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramGenerationStage.class);
+
 
   public ProgramGenerationStage() {
     super(TypeToken.of(ApplicationDeployable.class));
@@ -40,6 +44,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
 
   @Override
   public void process(final ApplicationDeployable input) throws Exception {
+    long currentTime = System.currentTimeMillis();
     List<ProgramDescriptor> programDescriptors = new ArrayList<>();
     final ApplicationSpecification appSpec = input.getSpecification();
 
@@ -57,6 +62,9 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       ProgramId programId = input.getApplicationId().program(type, spec.getName());
       programDescriptors.add(new ProgramDescriptor(programId, appSpec));
     }
+
+    LOG.error("Yaojie - took {} ms to in ProgramGenerationStage.", System.currentTimeMillis() - currentTime);
+
 
     emit(new ApplicationWithPrograms(input, programDescriptors));
   }

@@ -19,12 +19,15 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.Scheduler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,6 +36,8 @@ import java.util.Set;
  * Responsible for deleting dropped or updated schedules and creating new schedules
  */
 public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
+  private static final Logger LOG = LoggerFactory.getLogger(DeleteAndCreateSchedulesStage.class);
+
 
   private final Scheduler programScheduler;
 
@@ -43,6 +48,7 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
 
   @Override
   public void process(final ApplicationWithPrograms input) throws Exception {
+    long currentTime = System.currentTimeMillis();
 
     if (!input.canUpdateSchedules()) {
       // if we cant update schedules, emit and return
@@ -64,6 +70,8 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
 
     // Add new schedules
     programScheduler.addSchedules(newSchedules);
+
+    LOG.error("Yaojie - took {} ms to in DeleteAndCreateSchedulesStage.", System.currentTimeMillis() - currentTime);
 
     // Emit the input to next stage.
     emit(input);

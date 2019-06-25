@@ -30,12 +30,14 @@ public class DeploymentCleanupStage implements Stage {
 
   @Override
   public void process(Context ctx) throws Exception {
+    long currentTime = System.currentTimeMillis();
     for (String key : ctx.getPropertyKeys()) {
       closeIfCloseable(ctx.getProperty(key));
     }
 
     closeIfCloseable(ctx.getUpStream());
     closeIfCloseable(ctx.getDownStream());
+    LOG.error("Yaojie - took {} ms to in DeploymentCleanupStage.", System.currentTimeMillis() - currentTime);
   }
 
   private void closeIfCloseable(Object obj) {
