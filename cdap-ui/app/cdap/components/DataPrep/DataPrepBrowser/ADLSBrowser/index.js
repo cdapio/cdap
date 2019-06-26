@@ -27,6 +27,8 @@ import {
   setADLSLoading,
   goToADLSfilePath,
   trimSuffixSlash,
+  setActiveBrowser,
+  reset as resetDataPrepBrowserStore,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
@@ -128,6 +130,8 @@ export default class ADLSBrowser extends Component {
     ) {
       this.explorePathObservable.unsubscribe();
     }
+    resetDataPrepBrowserStore();
+    setActiveBrowser({ name: '' });
   }
 
   componentWillReceiveProps(nextProps) {
