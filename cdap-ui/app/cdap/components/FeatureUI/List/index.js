@@ -40,8 +40,9 @@ class List extends React.Component {
           listData.map((item, index) => {
             return (
               <div className="schema-list-item" key={item.parent+'_'+item.child+'_'+index}>
-                <div className="parent-item">{item.parent+ ": "} </div>
-                <div className="child-item">{item.child}</div>
+                <div className="parent-item" title = {item.parent}>{item.parent}</div>
+                <div>:</div>
+                <div className="child-item" title = {item.child}>{item.child}</div>
               </div>);
           })
         }

@@ -24,8 +24,14 @@
   .parent-item {
     font-weight: 600;
     color: #333333;
+    width: 45%;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   .child-item {
     padding-left: 5px;
+    width: 50%;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 }
