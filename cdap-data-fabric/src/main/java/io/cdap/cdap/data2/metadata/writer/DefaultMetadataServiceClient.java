@@ -62,10 +62,13 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
 
   @Override
   public void create(MetadataMutation.Create createMutation) {
+    long currentTime = System.currentTimeMillis();
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "metadata-internals/create")
       .withBody(GSON.toJson(createMutation)).build();
     HttpResponse response = execute(request);
 
+    LOG.error("Yaojie - took {} ms for metadata http requset for {}", System.currentTimeMillis() - currentTime,
+              createMutation);
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       LOG.trace("Failed to create metadata for entity %s: %s", createMutation.getEntity(), response);
     }
