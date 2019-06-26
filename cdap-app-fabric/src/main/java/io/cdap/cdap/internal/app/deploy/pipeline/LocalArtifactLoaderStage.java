@@ -89,6 +89,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
    */
   @Override
   public void process(AppDeploymentInfo deploymentInfo) throws Exception {
+    long initial = System.currentTimeMillis();
     long currentTime = System.currentTimeMillis();
 
     ArtifactId artifactId = deploymentInfo.getArtifactId();
@@ -134,6 +135,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getOwnerPrincipal(),
                                    deploymentInfo.canUpdateSchedules(), appSpecInfo.getSystemTables()));
-    LOG.error("Yaojie - took {} ms to in LocalArtifactLoaderStage.", System.currentTimeMillis() - currentTime);
+    LOG.error("Yaojie - took {} ms to in LocalArtifactLoaderStage.", System.currentTimeMillis() - initial);
   }
 }
