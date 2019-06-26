@@ -18,6 +18,8 @@ package io.cdap.cdap.data2.metadata.writer;
 
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 
+import java.util.List;
+
 /**
  * This interface exposes functionality for making Metadata HTTP calls to the Metadata Service.
  */
@@ -50,4 +52,11 @@ public interface MetadataServiceClient {
    * @param removeMutation Metadata's remove mutation to apply
    */
   void remove(MetadataMutation.Remove removeMutation);
+
+  /**
+   * Performs a batch of metadata mutation via Metadata Service.
+   *
+   * @param mutations a list of metadata mutations to apply
+   */
+  void batch(List<MetadataMutation> mutations);
 }

@@ -41,6 +41,7 @@ import io.cdap.cdap.spi.metadata.MetadataCodec;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataMutationCodec;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
@@ -98,9 +99,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(Metadata.class, new MetadataCodec())
     .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
     .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+    .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec())
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final Type LIST_MUTATION_TYPE = new TypeToken<List<MetadataMutation>>() { }.getType();
   private static final MutationOptions SYNC = MutationOptions.builder().setAsynchronous(false).build();
   private static final MutationOptions ASYNC = MutationOptions.builder().setAsynchronous(true).build();
 
@@ -272,6 +275,15 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Remove.class);
     metadataAdmin.applyMutation(removeMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, "Remove Metadata mutation applied successfully.");
+  }
+
+  @POST
+  @Path("/metadata-internals/batch")
+  public void batch(FullHttpRequest request, HttpResponder responder) throws IOException {
+    List<MetadataMutation> mutations =
+      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), LIST_MUTATION_TYPE);
+    metadataAdmin.applyMutations(mutations, SYNC);
+    responder.sendString(HttpResponseStatus.OK, "List of Metadata mutations applied successfully.");
   }
 
   @GET
