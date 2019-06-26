@@ -1,5 +1,3 @@
-const typeDefs = `
-
 type Query {
 
   namespaces: [Namespace]
@@ -12,7 +10,7 @@ type Query {
 
 type Namespace {
 
-  name: String
+  name: String!
 
   description: String
 
@@ -176,8 +174,4 @@ type ScheduleDetail {
 
   # Field added for composition
   nextRuntimes: [String]!
-}
-`
-module.exports = {
-	typeDefs
 }

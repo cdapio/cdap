@@ -1,6 +1,8 @@
 const { ApolloServer } = require('apollo-server');
-const { typeDefs } = require('./schema')
+const { importSchema } = require('graphql-import');
 const { resolvers } = require('./resolver')
+
+const typeDefs  = importSchema('schema/test.graphql')
 
 if(typeof typeDefs === 'undefined') {
   throw "The type definitions is undefined"

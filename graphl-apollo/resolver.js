@@ -1,4 +1,5 @@
 //    TODO how to get the url and not hardcode it
+// VScode for running and debuging?
 const merge = require('lodash/merge')
 
 var request = require('request'),
@@ -9,7 +10,7 @@ const applicationsResolver = {
   Query: {
     async applications(parent, args, context, info) {
     const applications = await(new Promise((resolve, reject) => {
-      const namespace = args.namespace
+      namespace = args.namespace
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps`,
@@ -220,7 +221,7 @@ const schedulesResolver = {
     const schedules = await(new Promise((resolve, reject) => {
       const namespace = context.namespace
       const name = parent.app
-      const workflow = parent.name
+      workflow = parent.name
 
       const options = {
         url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`,
