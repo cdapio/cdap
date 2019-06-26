@@ -41,7 +41,9 @@ import javax.annotation.Nullable;
  */
 public class DataprocConf {
   static final String PROJECT_ID_KEY = "projectId";
+  static final String NETWORK = "network";
   static final String AUTO_DETECT = "auto-detect";
+  static final String PEERED_NETWORK = "peeredNetwork";
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
@@ -71,6 +73,8 @@ public class DataprocConf {
   private final long pollInterval;
 
   private final boolean preferExternalIP;
+  private final boolean peeredNetwork;
+
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final SSHPublicKey publicKey;
@@ -81,7 +85,8 @@ public class DataprocConf {
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
          conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
-         conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled, conf.publicKey,
+         conf.preferExternalIP, conf.peeredNetwork, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
+         conf.publicKey,
          conf.dataprocProperties);
   }
 
@@ -90,7 +95,7 @@ public class DataprocConf {
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
                        int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
-                       boolean preferExternalIP, boolean stackdriverLoggingEnabled,
+                       boolean preferExternalIP, boolean peeredNetwork, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
@@ -112,6 +117,7 @@ public class DataprocConf {
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
     this.preferExternalIP = preferExternalIP;
+    this.peeredNetwork = peeredNetwork;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
@@ -201,6 +207,10 @@ public class DataprocConf {
     return dataprocProperties;
   }
 
+  public boolean isPeeredNetwork() {
+    return peeredNetwork;
+  }
+
   /**
    * @return GoogleCredential for use with Compute
    * @throws IOException if there was an error reading the account key
@@ -274,7 +284,7 @@ public class DataprocConf {
     if (zone == null || AUTO_DETECT.equals(zone)) {
       zone = getSystemZone();
     }
-    String network = getString(properties, "network");
+    String network = getString(properties, NETWORK);
     if (network == null || AUTO_DETECT.equals(network)) {
       network = null;
     }
@@ -308,6 +318,7 @@ public class DataprocConf {
     long pollInterval = getLong(properties, "pollInterval", 2);
 
     boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
+    boolean peeredNetwork = Boolean.parseBoolean(properties.getOrDefault(PEERED_NETWORK, "false"));
     // By default stackdriver is enabled. This is for backward compatibility
     boolean stackdriverLoggingEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_LOGGING_ENABLED,
                                                                                      "true"));
@@ -325,7 +336,7 @@ public class DataprocConf {
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            preferExternalIP, stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
+                            preferExternalIP, peeredNetwork, stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
                             publicKey, dataprocProps);
   }
 

@@ -46,6 +46,8 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -104,7 +106,13 @@ public class DataprocClient implements AutoCloseable {
     }
     boolean useInternalIP = false;
 
-    if (network == null && projectId.equals(systemProjectId)) {
+    if (conf.isPeeredNetwork()) {
+      useInternalIP = true;
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(network), "The network to which the instance is peered to " +
+        "must be specified when in network option is selected. Please specify the peered network as the network or " +
+                                    "uncheck in network option.");
+      // TODO(CDAP-15588): If isPeeredNetwork is set to true check if the specified network is peered
+    } else if (network == null && projectId.equals(systemProjectId)) {
       // If the CDAP instance is running on a GCE/GKE VM from a project that matches the provisioner project,
       // use the network of that VM.
       network = systemNetwork;
@@ -115,6 +123,7 @@ public class DataprocClient implements AutoCloseable {
       // Otherwise, pick a network from the configured project using the Compute API
       network = findNetwork(projectId, compute);
     }
+
     if (network == null) {
       throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
     }
