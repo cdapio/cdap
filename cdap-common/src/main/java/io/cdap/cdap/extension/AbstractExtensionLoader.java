@@ -191,12 +191,16 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     return CacheBuilder.newBuilder().build(new CacheLoader<EXTENSION_TYPE, AtomicReference<EXTENSION>>() {
       @Override
       public AtomicReference<EXTENSION> load(EXTENSION_TYPE extensionType) throws Exception {
+        long currentTime = System.currentTimeMillis();
         EXTENSION extension = null;
         try {
           extension = findExtension(extensionType);
         } catch (Throwable t) {
           LOG.warn("Failed to load extension for type {}.", extensionType);
         }
+        LOG.error("Yaojie - took {} ms to get the extension {}", System.currentTimeMillis() - currentTime,
+                  extensionType);
+
         return new AtomicReference<>(extension);
       }
     });
