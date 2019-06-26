@@ -71,17 +71,20 @@ final class ArtifactClassLoaderFactory {
    * @throws IOException if there was an error copying or unpacking the artifact
    */
   CloseableClassLoader createClassLoader(File unpackDir) throws IOException {
+    long currentTime = System.currentTimeMillis();
     ProgramRunner programRunner = null;
     try {
       // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
       // It is needed because we don't know what program types that an artifact might have.
       // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
       programRunner = programRunnerFactory.create(ProgramType.SPARK);
+      LOG.error("Yaojie - took {} ms to create the spark program runner", System.currentTimeMillis() - currentTime);
     } catch (Exception e) {
       // If Spark is not supported, exception is expected. We'll use the default filter.
       LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);
     }
 
+    currentTime = System.currentTimeMillis();
     ProgramClassLoader programClassLoader = null;
     if (programRunner instanceof ProgramClassLoaderProvider) {
       programClassLoader = new ProgramClassLoader(
@@ -91,6 +94,7 @@ final class ArtifactClassLoaderFactory {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir,
                                                   FilterClassLoader.create(getClass().getClassLoader()));
     }
+    LOG.error("Yaojie - took {} ms to create program class loader", System.currentTimeMillis() - currentTime);
 
     final ClassLoader finalProgramClassLoader = programClassLoader;
     final ProgramRunner finalProgramRunner = programRunner;
