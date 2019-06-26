@@ -26,6 +26,10 @@ import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Stage to write system metadata for an application.
@@ -48,25 +52,32 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     // add system metadata for apps
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
+    List<MetadataMutation> mutations = new ArrayList<>();
 
-    new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, creationTime).write();
+    mutations.add(
+      new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, creationTime).getMetadataMutation());
 
-    // add system metadata for programs
-    writeProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values());
-    writeProgramSystemMetadata(appId, ProgramType.SERVICE, appSpec.getServices().values());
-    writeProgramSystemMetadata(appId, ProgramType.SPARK, appSpec.getSpark().values());
-    writeProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values());
-    writeProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values());
+    // collect system metadata for programs
+    collectProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values(), mutations);
+    collectProgramSystemMetadata(appId, ProgramType.SERVICE, appSpec.getServices().values(), mutations);
+    collectProgramSystemMetadata(appId, ProgramType.SPARK, appSpec.getSpark().values(), mutations);
+    collectProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values(), mutations);
+    collectProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values(), mutations);
+
+    // write all metadata
+    metadataServiceClient.batch(mutations);
 
     // Emit input to the next stage
     emit(input);
   }
 
-  private void writeProgramSystemMetadata(ApplicationId appId, ProgramType programType,
-                                          Iterable<? extends ProgramSpecification> specs) {
+  private void collectProgramSystemMetadata(ApplicationId appId, ProgramType programType,
+                                            Iterable<? extends ProgramSpecification> specs,
+                                            List<MetadataMutation> mutations) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
-      new ProgramSystemMetadataWriter(metadataServiceClient, programId, spec, creationTime).write();
+      mutations.add(
+        new ProgramSystemMetadataWriter(metadataServiceClient, programId, spec, creationTime).getMetadataMutation());
     }
   }
 }
