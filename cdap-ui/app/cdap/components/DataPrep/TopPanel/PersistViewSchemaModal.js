@@ -199,7 +199,7 @@ export default class PersistViewSchemaModal extends Component {
     } else {
       if (this.state.loading) {
         content = (
-          <div className="text-xs-center">
+          <div className="text-xs-center text-wrap">
             <h4>
               <span className="fa fa-spin fa-spinner" />
             </h4>
@@ -208,13 +208,13 @@ export default class PersistViewSchemaModal extends Component {
       } else if (this.state.error) {
         content = (
           <div>
-            <div className="text-danger">
+            <div className="text-danger text-wrap">
               <span className="fa fa-exclamation-triangle"></span>
               <span>
                 {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
               </span>
             </div>
-            <div className="remedy-message">
+            <div className="remedy-message text-wrap">
               {
                 objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
               }
@@ -224,7 +224,7 @@ export default class PersistViewSchemaModal extends Component {
         );
       } else {
         content = (
-          <div className="success-message" title={this.state.response}>
+          <div className="success-message text-wrap" title={this.state.response}>
             {this.state.response}
           </div>
         );
@@ -253,13 +253,17 @@ export default class PersistViewSchemaModal extends Component {
           <fieldset className='buttons-container' disabled={this.state.loading}>
             {
               this.state.navigateFE ?
-              <Button className="btn-margin" color="primary" onClick={this.navigateToFeature}>Continue in FeatureEngineering</Button>
-              :null
+              <div>
+                <Button className="btn-margin" color="primary" onClick={this.navigateToFeature}>Continue in FeatureEngineering</Button>
+                <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Close</Button>
+              </div>
+              :
+              <div>
+                <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Close</Button>
+                <Button className="btn-margin" color="primary" onClick={this.handleSubmit}
+                  disabled={this.state.datasetName.trim().length < 1} >OK</Button>
+            </div>
             }
-
-            <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Cancel</Button>
-            <Button className="btn-margin" color="primary" onClick={this.handleSubmit}
-              disabled={this.state.datasetName.trim().length < 1} >OK</Button>
           </fieldset>
 
         </ModalFooter>
