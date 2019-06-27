@@ -98,14 +98,19 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
         boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
                                             .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
         try {
+          long currentTime = System.currentTimeMillis();
           SparkRunnerClassLoader classLoader = createClassLoader(filterScalaClasses, rewriteYarnClient);
+          LOG.error("Yaojie - took {} ms to create spark class loader", System.currentTimeMillis() - currentTime);
           try {
             // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution
             // finished.
             // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
             // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
-            return createSparkProgramRunner(createRunnerInjector(injector, classLoader),
-                                            SparkProgramRunner.class.getName(), classLoader);
+            currentTime = System.currentTimeMillis();
+            ProgramRunner programRunner = createSparkProgramRunner(createRunnerInjector(injector, classLoader),
+                                                                   SparkProgramRunner.class.getName(), classLoader);
+            LOG.error("Yaojie - took {} ms to create spark program runner", System.currentTimeMillis() - currentTime);
+            return programRunner;
           } catch (Throwable t) {
             // If there is any exception, close the classloader
             Closeables.closeQuietly(classLoader);
