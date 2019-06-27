@@ -202,6 +202,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       return new HttpHost(host, port);
     }).toArray(HttpHost[]::new);
     client = new RestHighLevelClient(RestClient.builder(hosts));
+
+
   }
 
   @Override
