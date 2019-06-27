@@ -95,6 +95,7 @@ export default class Popover extends PureComponent {
 
   componentWillUnmount() {
     this.eventEmitter.off('POPOVER_OPEN', this.hidePopoverEventHandler);
+    this.cleanUpDocumentClickEventHandler();
   }
 
   updateParentOnToggle = () => {
