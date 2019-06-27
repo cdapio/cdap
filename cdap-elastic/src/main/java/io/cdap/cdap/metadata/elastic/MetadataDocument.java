@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
  *
  * Note that the mapping for creating the ElasticSearch index corresponds directly
  * to the fields of this document class. Any changes made here need to be reflected
- * there, too: index.mapping.json. See {@link ElasticsearchMetadataStorage#getMapping())
+ * there, too: index.mapping.json. See {@link ElasticsearchMetadataStorage#createMappings()}
  * for how it is obtained.
  */
 public class MetadataDocument {

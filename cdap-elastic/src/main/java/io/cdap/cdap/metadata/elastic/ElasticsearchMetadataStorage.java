@@ -766,9 +766,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   /**
-   * Sets the refresh policy for a write request. Depending on configuration
-   * {@link Config#CONF_ELASTIC_WAIT_FOR_MUTATIONS}, write requests will only return after they are
-   * confirmed to be applied to the index, or return immediately after the request is acknowledged.
+   * Sets the refresh policy for a write request.
+   * If {@link MutationOptions#isAsynchronous()} is true, write requests will return
+   * immediately after the request is acknowledged; otherwise,
+   * they will only return after they are confirmed to be applied to the index.
    */
   private void setRefreshPolicy(WriteRequest<?> request, MutationOptions options) {
     request.setRefreshPolicy(
