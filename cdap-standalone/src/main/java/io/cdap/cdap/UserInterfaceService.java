@@ -83,11 +83,11 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
     generateConfigFile(cConfJsonFile, cConf);
     generateConfigFile(sConfJsonFile, sConf);
 
-    File uiPath = new File("cdap-ui", "index.js");
+    File uiPath = new File("cdap-ui", "server.js");
     if (!uiPath.exists()) {
       uiPath = new File("ui", "index.js");
     }
-    Preconditions.checkState(uiPath.exists(), "Missing server.js at " + uiPath.getAbsolutePath());
+    Preconditions.checkState(uiPath.exists(), "Missing server/index.js at " + uiPath.getAbsolutePath());
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE,
                                                 uiPath.getAbsolutePath(),
                                                 "cConf=\"" + cConfJsonFile.getAbsolutePath() + "\"",
