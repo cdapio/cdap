@@ -35,6 +35,7 @@ interface IJsonFeatureNames {
   pipelineStudio?: string;
   reports?: string;
   'rules-engine'?: string;
+  transfers: string;
 }
 
 interface IOnePoint0SpecJSON extends IThemeJSON {
@@ -95,6 +96,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'namespace-security'?: boolean;
     'create-profile'?: boolean;
     'reload-system-artifacts'?: boolean;
+    transfers?: boolean;
   };
 }
 
@@ -170,6 +172,7 @@ interface IFeatureNames {
   rulesEngine: string;
   projectAdmin: string;
   systemAdmin: string;
+  transfers: string;
 }
 
 interface IThemeObj {
@@ -206,6 +209,7 @@ interface IThemeObj {
   showNamespaceSecurity?: boolean;
   showCreateProfile?: boolean;
   showReloadSystemArtifacts?: boolean;
+  showTransfers?: boolean;
   featureNames?: IFeatureNames;
 }
 
@@ -262,6 +266,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         rulesEngine: 'Rules',
         projectAdmin: 'Namespace Admin',
         systemAdmin: 'System Admin',
+        transfers: 'Transfers',
       },
     };
     if (isNilOrEmpty(contentJson)) {
@@ -351,6 +356,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       if ('rules-engine' in contentJson['feature-names']) {
         featureNames.rulesEngine = objectQuery(contentJson, 'feature-names', 'rules-engine');
       }
+      if ('transfers' in contentJson['feature-names']) {
+        featureNames.transfers = objectQuery(contentJson, 'feature-names', 'transfers');
+      }
 
       content.featureNames = featureNames;
     }
@@ -384,6 +392,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showNamespaceSecurity: true,
       showCreateProfile: true,
       showReloadSystemArtifacts: true,
+      showTransfers: false,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -465,6 +474,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       isBoolean(featuresJson['reload-system-artifacts'])
     ) {
       features.showReloadSystemArtifacts = featuresJson['reload-system-artifacts'];
+    }
+    if ('transfers' in featuresJson && isBoolean(featuresJson.transfers)) {
+      features.showTransfers = featuresJson.transfers;
     }
     return features;
   }

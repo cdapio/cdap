@@ -91,6 +91,10 @@ const SecureKeys = Loadable({
   loader: () => import(/* webpackChunkName: "SecureKeys" */ 'components/SecureKeys'),
   loading: LoadingSVGCentered,
 });
+const Transfers = Loadable({
+  loader: () => import(/* webpackChunkName: "Transfers" */ 'components/Transfers'),
+  loading: LoadingSVGCentered,
+});
 
 export default class Home extends Component {
   componentWillMount() {
@@ -138,6 +142,7 @@ export default class Home extends Component {
           />
           <Route path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
+          <Route path="/ns/:namespace/transfers" component={Transfers} />
           <Route component={Page404} />
         </Switch>
       </div>

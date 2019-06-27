@@ -183,6 +183,14 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             }
           />
           <DrawerFeatureLink
+            featureUrl={`/${nsurl}/transfers`}
+            featureSVGIconName="icon-spinner"
+            featureFlag={Theme.showTransfers}
+            featureName={Theme.featureNames.transfers}
+            componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-transfers-link"
+          />
+          <DrawerFeatureLink
             featureUrl={`/${nsurl}/experiments`}
             featureSVGIconName="icon-analytics"
             featureFlag={Theme.showAnalytics}

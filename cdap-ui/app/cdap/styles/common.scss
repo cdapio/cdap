@@ -163,6 +163,12 @@ body {
         &.header-light {
           color: $header-light-color;
         }
+
+        &.header-bg-grey {
+          background: $grey-08;
+          color: $grey-02;
+          font-weight: 600;
+        }
       }
       .grid-body {
         display: grid;
