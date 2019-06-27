@@ -25,6 +25,7 @@ import S3Connection from 'components/DataPrepConnections/S3Connection';
 import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
+import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
 import T from 'i18n-react';
 import find from 'lodash/find';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
@@ -77,6 +78,12 @@ export default class AddConnection extends Component {
         label: 'Google Cloud Spanner',
         icon: 'icon-spanner',
         component: SpannerConnection,
+      },
+      {
+        type: ConnectionType.ADLS,
+        label: 'ADLS Handler',
+        icon: 'icon-adls',
+        component: ADLSConnection,
       },
     ];
   }
