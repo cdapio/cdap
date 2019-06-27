@@ -375,13 +375,13 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       builder.setLimit(limit);
       if (cursorRequested || (numCursors != null && numCursors > 0)) {
         if (sort == null) {
-          throw new IllegalArgumentException("Cursors may only be requested in conjunction with sorting");
+          throw new IllegalArgumentException("Specify a sort order when requesting a cursor");
         }
         builder.setCursorRequested(true);
       }
       if (cursor != null) {
         if (sort == null) {
-          throw new IllegalArgumentException("Cursors are only allowed in conjunction with sorting");
+          throw new IllegalArgumentException("Specify a sort order when passing in a cursor");
         }
         builder.setCursor(cursor);
       }
