@@ -2,12 +2,12 @@ var request = require('request'),
   fs = require('fs'),
   log4js = require('log4js'),
   urlHelper = require('../../server/url-helper');
-cdapConfigurator = require('../../cdapConfigurator.js');
+cdapConfigurator = require('../../cdap-config.js');
 
 var log = log4js.getLogger('namespaceResolver');
 
 var cdapConfig;
-cdapConfigurator.cdapConfig
+cdapConfigurator.getCDAPConfig()
   .then(function (c) {
     cdapConfig = c;
   });

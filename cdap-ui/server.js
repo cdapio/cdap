@@ -20,7 +20,7 @@
 var express = require('./server/express.js'),
     Aggregator = require('./server/aggregator.js'),
     parser = require('./server/config/parser.js'),
-    cdapConfigurator = require('./cdapConfigurator.js'),
+    cdapConfigurator = require('./cdap-config.js'),
     sockjs = require('sockjs'),
     http = require('http'),
     fs = require('fs'),
@@ -49,7 +49,7 @@ if(process.env.LOG4JS_CONFIG) {
 var log = log4js.getLogger('default');
 
 log.info("Starting CDAP UI ...");
-cdapConfigurator.cdapConfig
+cdapConfigurator.getCDAPConfig()
   .then(function (c) {
     cdapConfig = c;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
