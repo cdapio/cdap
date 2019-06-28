@@ -35,4 +35,10 @@ const server = new ApolloServer({ typeDefs, resolvers,
     playground: env === 'production' ? false : true,
 });
 
-module.exports = server;
+function applyMiddleware(app) {
+    server.applyMiddleware({ app });
+}
+
+module.exports = {
+    applyMiddleware
+};

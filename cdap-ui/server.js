@@ -20,6 +20,7 @@
 var express = require('./server/express.js'),
     Aggregator = require('./server/aggregator.js'),
     parser = require('./server/config/parser.js'),
+    cdapConfigurator = require('./cdapConfigurator.js'),
     sockjs = require('sockjs'),
     http = require('http'),
     fs = require('fs'),
@@ -48,7 +49,7 @@ if(process.env.LOG4JS_CONFIG) {
 var log = log4js.getLogger('default');
 
 log.info("Starting CDAP UI ...");
-parser.extractConfig('cdap')
+cdapConfigurator.cdapConfig
   .then(function (c) {
     cdapConfig = c;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
@@ -63,7 +64,7 @@ parser.extractConfig('cdap')
   })
 
   .then(function (app) {
-    graphql.applyMiddleware({ app });
+    graphql.applyMiddleware(app);
     
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
