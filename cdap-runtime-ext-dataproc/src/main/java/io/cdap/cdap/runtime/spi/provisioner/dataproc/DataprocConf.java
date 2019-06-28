@@ -81,8 +81,8 @@ public class DataprocConf {
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
          conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
-         conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled, conf.publicKey,
-         conf.dataprocProperties);
+         conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
+         conf.publicKey, conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -325,8 +325,8 @@ public class DataprocConf {
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            preferExternalIP, stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
-                            publicKey, dataprocProps);
+                            preferExternalIP, stackdriverLoggingEnabled,
+                            stackdriverMonitoringEnabled, publicKey, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
