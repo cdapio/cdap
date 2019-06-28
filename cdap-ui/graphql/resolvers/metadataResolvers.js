@@ -1,26 +1,32 @@
 var request = require('request'),
-  fs = require('fs'),
-  log4js = require('log4js');
+  urlHelper = require('../../server/url-helper'),
+  cdapConfigurator = require('../../cdap-config.js');
+
+var cdapConfig;
+cdapConfigurator.getCDAPConfig()
+  .then(function (c) {
+    cdapConfig = c;
+  });
 
 const metadataResolver = {
   ApplicationDetail: {
     async metadata(parent, args, context, info) {
-      return await(new Promise((resolve, reject) => {
+      return await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.name
 
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`,
+          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`),
           method: 'GET',
           json: true
         };
 
         request(options, (err, response, body) => {
-          if(err) {
+          if (err) {
             reject(err);
           }
           else {
-           resolve(body);
+            resolve(body);
           }
         });
       }));
@@ -31,5 +37,5 @@ const metadataResolver = {
 const metadataResolvers = metadataResolver;
 
 module.exports = {
-	metadataResolvers
+  metadataResolvers
 }

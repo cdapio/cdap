@@ -1,26 +1,32 @@
 const merge = require('lodash/merge');
 
 var request = require('request'),
-  fs = require('fs'),
-  log4js = require('log4js');
+  urlHelper = require('../../server/url-helper'),
+  cdapConfigurator = require('../../cdap-config.js');
+
+var cdapConfig;
+cdapConfigurator.getCDAPConfig()
+  .then(function (c) {
+    cdapConfig = c;
+  });
 
 const applicationsResolver = {
   Query: {
     async applications(parent, args, context, info) {
       const namespace = args.namespace
-      const applications = await(new Promise((resolve, reject) => {
+      const applications = await (new Promise((resolve, reject) => {
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps`,
+          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`),
           method: 'GET',
           json: true
         };
 
         request(options, (err, response, body) => {
-          if(err) {
+          if (err) {
             reject(err);
           }
           else {
-           resolve(body);
+            resolve(body);
           }
         });
       }));
@@ -35,22 +41,22 @@ const applicationsResolver = {
 const applicationResolver = {
   Query: {
     async application(parent, args, context, info) {
-      return await(new Promise((resolve, reject) => {
+      return await (new Promise((resolve, reject) => {
         const namespace = args.namespace
         const name = args.name
 
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}`,
+          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`),
           method: 'GET',
           json: true
         };
 
         request(options, (err, response, body) => {
-          if(err) {
+          if (err) {
             reject(err);
           }
           else {
-           resolve(body);
+            resolve(body);
           }
         });
       }));
@@ -61,22 +67,22 @@ const applicationResolver = {
 const applicationDetailResolver = {
   ApplicationRecord: {
     async applicationDetail(parent, args, context, info) {
-      return await(new Promise((resolve, reject) => {
+      return await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.name
 
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}`,
+          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`),
           method: 'GET',
           json: true
         };
 
         request(options, (err, response, body) => {
-          if(err) {
+          if (err) {
             reject(err);
           }
           else {
-           resolve(body);
+            resolve(body);
           }
         });
       }));
@@ -85,9 +91,9 @@ const applicationDetailResolver = {
 }
 
 const applicationResolvers = merge(applicationsResolver,
-                                   applicationResolver,
-                                   applicationDetailResolver);
+  applicationResolver,
+  applicationDetailResolver);
 
 module.exports = {
-	applicationResolvers
+  applicationResolvers
 }

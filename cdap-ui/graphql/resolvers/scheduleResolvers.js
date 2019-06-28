@@ -1,8 +1,14 @@
 const merge = require('lodash/merge')
 
 var request = require('request'),
-  fs = require('fs'),
-  log4js = require('log4js');
+  urlHelper = require('../../server/url-helper'),
+  cdapConfigurator = require('../../cdap-config.js');
+
+var cdapConfig;
+cdapConfigurator.getCDAPConfig()
+  .then(function (c) {
+    cdapConfig = c;
+  });
 
 const runsResolver = {
   Workflow: {
@@ -13,7 +19,7 @@ const runsResolver = {
         const workflow = parent.name
 
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`,
+          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`),
           method: 'GET',
           json: true
         };
@@ -40,7 +46,7 @@ const schedulesResolver = {
         workflow = parent.name
 
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`,
+          url: urlHelper.constructUrl(cdapConfig, '/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules'),
           method: 'GET',
           json: true
         };
@@ -71,7 +77,7 @@ const nextRuntimesResolver = {
         const workflow = context.workflow
 
         const options = {
-          url: `http://127.0.0.1:11015/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`,
+          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`),
           method: 'GET',
           json: true
         };
@@ -98,8 +104,8 @@ const nextRuntimesResolver = {
 }
 
 const scheduleResolvers = merge(runsResolver,
-                                schedulesResolver,
-                                nextRuntimesResolver);
+  schedulesResolver,
+  nextRuntimesResolver);
 
 module.exports = {
   scheduleResolvers

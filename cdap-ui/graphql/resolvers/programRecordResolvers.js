@@ -1,7 +1,3 @@
-var request = require('request'),
-  fs = require('fs'),
-  log4js = require('log4js');
-
 const programsResolver = {
   ApplicationDetail: {
     async programs(parent, args, context, info) {

@@ -1,10 +1,6 @@
 var request = require('request'),
-  fs = require('fs'),
-  log4js = require('log4js'),
-  urlHelper = require('../../server/url-helper');
-cdapConfigurator = require('../../cdap-config.js');
-
-var log = log4js.getLogger('namespaceResolver');
+  urlHelper = require('../../server/url-helper'),
+  cdapConfigurator = require('../../cdap-config.js');
 
 var cdapConfig;
 cdapConfigurator.getCDAPConfig()
