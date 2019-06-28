@@ -15,28 +15,31 @@
  */
 
 import * as React from 'react';
-import { transfersListConnect } from 'components/Transfers/List/context';
-import Heading, { HeadingTypes } from 'components/Heading';
-import T from 'i18n-react';
+import EntityTopPanel from 'components/EntityTopPanel';
+import Content from 'components/Transfers/Create/Content';
 import { Theme } from 'services/ThemeHelper';
+import { objectQuery } from 'services/helpers';
 
-const PREFIX = 'features.Transfers.List';
-
-interface ICountProps {
-  list: any[];
+interface ICreateProps {
+  match?: {
+    params?: {
+      id: string;
+    };
+  };
 }
 
-const CountView: React.SFC<ICountProps> = ({ list }) => {
+const Create: React.SFC<ICreateProps> = ({ match }) => {
+  const id = objectQuery(match, 'params', 'id');
+
   return (
-    <Heading
-      type={HeadingTypes.h5}
-      label={T.translate(`${PREFIX}.count`, {
-        context: list.length,
-        featureName: Theme.featureNames.transfers,
-      })}
-    />
+    <React.Fragment>
+      <EntityTopPanel
+        title={`Create a new ${Theme.featureNames.transfers.toLowerCase()}`}
+        closeBtnAnchorLink={() => history.back()}
+      />
+      <Content id={id} />
+    </React.Fragment>
   );
 };
 
-const Count = transfersListConnect(CountView);
-export default Count;
+export default Create;

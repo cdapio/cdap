@@ -27,7 +27,7 @@ const styles = () => {
     table: {
       marginTop: '20px',
       '& .grid.grid-container .grid-row': {
-        gridTemplateColumns: '2fr 200px 1fr 1fr 50px',
+        gridTemplateColumns: '2fr 200px 1fr 1fr 250px 50px',
       },
       '& .grid.grid-container': {
         maxHeight: 'calc(100vh - 350px)', // needs to be modified
@@ -38,7 +38,6 @@ const styles = () => {
 
 interface ITableProps extends WithStyles<typeof styles> {
   list: any[];
-  statuses: any;
   getList: () => void;
 }
 
@@ -47,38 +46,32 @@ const renderHeader = () => {
     <div className="grid-header header-bg-grey">
       <div className="grid-row">
         <div>{T.translate(`${PREFIX}.Headers.name`)}</div>
-        <div>{T.translate(`${PREFIX}.Headers.status`)}</div>
+        <div>{T.translate(`${PREFIX}.Headers.stage`)}</div>
         <div>{T.translate(`${PREFIX}.Headers.from`)}</div>
         <div>{T.translate(`${PREFIX}.Headers.to`)}</div>
+        <div>{T.translate(`${PREFIX}.Headers.lastUpdated`)}</div>
         <div />
       </div>
     </div>
   );
 };
 
-const renderBody = (list, statuses, getList) => {
+const renderBody = (list, getList) => {
   return (
     <div className="grid-body">
-      {list.map((transfer, i) => {
-        return (
-          <TableRow
-            key={transfer.name + i}
-            transfer={transfer}
-            getList={getList}
-            status={statuses[transfer.name]}
-          />
-        );
+      {list.map((transfer) => {
+        return <TableRow key={transfer.id} transfer={transfer} getList={getList} />;
       })}
     </div>
   );
 };
 
-const TableView: React.SFC<ITableProps> = ({ list, classes, getList, statuses }) => {
+const TableView: React.SFC<ITableProps> = ({ list, classes, getList }) => {
   return (
     <div className={`grid-wrapper ${classes.table}`}>
       <div className="grid grid-container">
         {renderHeader()}
-        {renderBody(list, statuses, getList)}
+        {renderBody(list, getList)}
       </div>
     </div>
   );

@@ -27,6 +27,7 @@ export interface IAction {
   disabled?: boolean;
   className?: string;
   title?: string;
+  link?: string;
 }
 
 interface IActionsPopoverProps {
@@ -48,7 +49,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
       target={(props) => <IconSVG name="icon-cog-empty" {...props} />}
       className="actions-popover"
       placement="bottom"
-      bubbleEvent={false}
+      bubbleEvent={true}
       enableInteractionInPopover={true}
       modifiers={POPPER_MODIFIERS}
     >
@@ -64,6 +65,16 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
             }
             action.actionFn();
           };
+
+          if (action.link) {
+            return (
+              <li key={i} className={action.className} title={action.label.toString()}>
+                <a href={action.link} target="_blank">
+                  {action.label}
+                </a>
+              </li>
+            );
+          }
 
           return (
             <li

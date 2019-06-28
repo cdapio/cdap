@@ -20,12 +20,14 @@ import Helmet from 'react-helmet';
 import List from 'components/Transfers/List';
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
+import Create from 'components/Transfers/Create';
+import Detail from './Detail';
 
 const basepath = '/ns/:namespace/transfers';
 
 const Transfers: React.SFC = () => {
   return (
-    <div>
+    <div style={{ height: '100%' }}>
       <Helmet
         title={T.translate('features.Transfers.pageTitle', {
           productName: Theme.productName,
@@ -34,6 +36,10 @@ const Transfers: React.SFC = () => {
       />
       <Switch>
         <Route exact path={basepath} component={List} />
+        <Route exact path={`${basepath}/create`} component={Create} />
+        <Route exact path={`${basepath}/create/:id`} component={Create} />
+        <Route exact path={`${basepath}/details/:id`} component={Detail} />
+        <Route exact path={`${basepath}/edit/:id`} component={Create} />
       </Switch>
     </div>
   );

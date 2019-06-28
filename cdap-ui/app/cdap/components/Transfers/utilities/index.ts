@@ -17,11 +17,17 @@
 import { MyProgramApi } from 'api/program';
 import { MyAppApi } from 'api/app';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Observable } from 'rxjs/Observable';
+import { MyPipelineApi } from 'api/pipeline';
+import { MyDeltaApi } from 'api/delta';
 
 // TODO: modify constants to the correct one once backend app is ready
-const programType = 'workflows';
-const programId = 'DataPipelineWorkflow';
-const batchProgramType = 'Workflow';
+const programType = 'workers';
+const programId = 'DeltaWorker';
+const batchProgramType = 'Worker';
+const parentArtifact = 'delta-app';
+const version = '0.1.0-SNAPSHOT';
+const scope = 'SYSTEM';
 
 export function start(transfer, successCb, errorCb) {
   const params = {
@@ -50,10 +56,17 @@ export function stop(transfer, successCb, errorCb) {
 export function deleteApp(transfer, successCb, errorCb) {
   const params = {
     namespace: getCurrentNamespace(),
-    appId: transfer.name,
+    appId: `CDC-${transfer.id}`,
   };
 
-  MyAppApi.delete(params).subscribe(successCb, errorCb);
+  const deltaParams = {
+    context: getCurrentNamespace(),
+    id: transfer.id,
+  };
+
+  MyAppApi.delete(params)
+    .combineLatest(MyDeltaApi.delete(deltaParams))
+    .subscribe(successCb, errorCb);
 }
 
 export function getStatuses(list) {
@@ -70,4 +83,98 @@ export function getStatuses(list) {
   });
 
   return MyAppApi.batchStatus(params, body);
+}
+
+export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType) {
+  const observable$ = Observable.create((observer) => {
+    const namespace = getCurrentNamespace();
+    const pluginParams = {
+      namespace,
+      parentArtifact,
+      version,
+      extension: pluginType,
+      pluginName,
+      scope,
+      artifactName,
+      artifactScope,
+      limit: 1,
+      order: 'DESC',
+    };
+
+    MyPipelineApi.getPluginProperties(pluginParams).subscribe(
+      ([plugin]) => {
+        const widgetKey = `widgets.${pluginName}-${pluginType}`;
+        const widgetParams = {
+          namespace,
+          artifactName,
+          scope: artifactScope,
+          artifactVersion: plugin.artifact.version,
+          keys: widgetKey,
+        };
+
+        MyPipelineApi.fetchWidgetJson(widgetParams).subscribe(
+          (widgetInfo) => {
+            if (!widgetInfo || !widgetInfo[widgetKey]) {
+              observer.next({
+                pluginInfo: plugin,
+                widgetInfo: {},
+              });
+              observer.complete();
+              return;
+            }
+
+            try {
+              const widgetContent = JSON.parse(widgetInfo[widgetKey]);
+
+              observer.next({
+                pluginInfo: plugin,
+                widgetInfo: widgetContent,
+              });
+
+              observer.complete();
+            } catch (parseError) {
+              observer.error(parseError);
+            }
+          },
+          (widgetError) => {
+            observer.error(widgetError);
+          }
+        );
+      },
+      (pluginError) => {
+        observer.error(pluginError);
+      }
+    );
+  });
+
+  return observable$;
+}
+
+export function createTransfer(name, description, source, target) {
+  const transferSpec = {
+    artifact: {
+      name: parentArtifact,
+      version,
+      scope,
+    },
+    name,
+    description,
+    config: {
+      connections: [
+        {
+          from: source.name,
+          to: target.name,
+        },
+      ],
+      stages: [source, target],
+      offsetBasePath: '/tmp/delta',
+    },
+  };
+
+  const params = {
+    namespace: getCurrentNamespace(),
+    appId: name,
+  };
+
+  return MyPipelineApi.publish(params, transferSpec);
 }

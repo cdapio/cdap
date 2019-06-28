@@ -2646,15 +2646,14 @@ features:
       stop: Stop
     pageTitle: '{productName} | {featureName}'
     List:
-      addNewTransfer: Create a new data transfer
-      count:
-        1: "{context} Data transfer"
-        _: "{context} Data transfers"
+      addNewTransfer: Create a new {featureName}
+      count: "{context} {featureName}"
       Table:
         Headers:
           from: From
-          name: Transfer name
-          status: Status
+          lastUpdated: Last updated
+          name: Name
+          stage: Stage
           to: To
 
   TriggeredPipelines:

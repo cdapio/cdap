@@ -18,16 +18,31 @@ import * as React from 'react';
 import ActionsPopover from 'components/ActionsPopover';
 import { start, stop, deleteApp } from 'components/Transfers/utilities';
 import T from 'i18n-react';
+import { Link } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import moment from 'moment';
+import { objectQuery } from 'services/helpers';
+import { Stages } from 'components/Transfers/Create/context';
 
 const PREFIX = 'features.Transfers.Actions';
 
 interface ITableRowProps {
   transfer: any;
   getList: () => void;
-  status: string;
 }
 
-const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
+const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList }) => {
+  const startTime = moment()
+    .subtract(7, 'days')
+    .format('X');
+
+  let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${
+    transfer.name
+  }/workers/DeltaWorker/logs`;
+
+  logUrl = `${logUrl}?start=${startTime}`;
+  logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
+
   const actions = [
     {
       label: T.translate(`${PREFIX}.start`),
@@ -41,7 +56,8 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
       label: 'separator',
     },
     {
-      label: T.translate(`${PREFIX}.logs`),
+      label: T.translate(`${PREFIX}.logs`).toString(),
+      link: logUrl,
     },
     {
       label: 'separator',
@@ -53,16 +69,29 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
     },
   ];
 
+  let linkPath = `/ns/${getCurrentNamespace()}/transfers/create/${transfer.id}`;
+  if (objectQuery(transfer, 'properties', 'stage') === Stages.PUBLISHED) {
+    linkPath = `/ns/${getCurrentNamespace()}/transfers/details/${transfer.id}`;
+  }
+
   return (
-    <div className="grid-row" key={transfer.name}>
+    <Link
+      to={linkPath}
+      className="grid-row"
+      style={{
+        color: 'inherit',
+      }}
+      key={transfer.id}
+    >
       <div>{transfer.name}</div>
-      <div>{status}</div>
-      <div>Oracle</div>
+      <div>{objectQuery(transfer, 'properties', 'stage')}</div>
+      <div>MySQL</div>
       <div>BigQuery</div>
+      <div>{moment(transfer.updated * 1000).format('MMM D, YYYY hh:mm A')}</div>
       <div>
         <ActionsPopover actions={actions} />
       </div>
-    </div>
+    </Link>
   );
 };
 

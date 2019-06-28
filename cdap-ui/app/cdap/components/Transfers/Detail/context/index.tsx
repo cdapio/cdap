@@ -15,28 +15,21 @@
  */
 
 import * as React from 'react';
-import { transfersListConnect } from 'components/Transfers/List/context';
-import Heading, { HeadingTypes } from 'components/Heading';
-import T from 'i18n-react';
-import { Theme } from 'services/ThemeHelper';
 
-const PREFIX = 'features.Transfers.List';
+export const TransfersDetailContext = React.createContext({});
+export const transfersDetailConnect = (Comp) => {
+  return (extraProps) => {
+    return (
+      <TransfersDetailContext.Consumer>
+        {(props) => {
+          const finalProps = {
+            ...props,
+            ...extraProps,
+          };
 
-interface ICountProps {
-  list: any[];
-}
-
-const CountView: React.SFC<ICountProps> = ({ list }) => {
-  return (
-    <Heading
-      type={HeadingTypes.h5}
-      label={T.translate(`${PREFIX}.count`, {
-        context: list.length,
-        featureName: Theme.featureNames.transfers,
-      })}
-    />
-  );
+          return <Comp {...finalProps} />;
+        }}
+      </TransfersDetailContext.Consumer>
+    );
+  };
 };
-
-const Count = transfersListConnect(CountView);
-export default Count;

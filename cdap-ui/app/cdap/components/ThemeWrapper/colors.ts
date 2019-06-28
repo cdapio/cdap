@@ -33,6 +33,7 @@ export const red = {
   50: colors.red01,
   100: colors.red02,
   200: colors.red03,
+  300: colors.red04,
 };
 
 export const bluegrey = {
