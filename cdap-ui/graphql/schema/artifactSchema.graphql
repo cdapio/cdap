@@ -1,0 +1,8 @@
+type ArtifactSummary {
+
+  name: String!
+
+  version: String!
+
+  scope: String!
+}

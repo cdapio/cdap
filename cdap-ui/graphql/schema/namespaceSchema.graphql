@@ -1,0 +1,11 @@
+type Namespace {
+
+  name: String!
+
+  description: String
+
+  generation: String
+
+  config: String
+
+}

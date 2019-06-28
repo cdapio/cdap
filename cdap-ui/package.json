@@ -157,6 +157,7 @@
     "font-awesome": "4.6.3",
     "fuse.js": "2.5.0",
     "graphql": "^14.4.0",
+    "graphql-import": "^0.7.1",
     "helmet-csp": "2.7.1",
     "history": "4.9.0",
     "i18n-react": "0.3.0",
