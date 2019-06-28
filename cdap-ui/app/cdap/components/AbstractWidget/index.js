@@ -33,13 +33,13 @@ export const DEFAULT_WIDGET_PROPS = {
 };
 export default class AbstractWidget extends Component {
   static propTypes = {
-    type: PropTypes.oneOf(Object.keys(AbstractWidgetFactory)),
+    type: PropTypes.string, // allow other types that does not exist in the factory and render them as default
     ...WIDGET_PROPTYPES,
   };
 
   render() {
     let Comp = AbstractWidgetFactory[this.props.type];
-    let { size = 'large' } = this.props.widgetProps;
+    let { size = 'large' } = this.props.widgetProps || {};
     return (
       <div className={`abstract-widget-wrapper ${size}`}>
         <StateWrapper

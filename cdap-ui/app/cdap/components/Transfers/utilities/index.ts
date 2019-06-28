@@ -17,11 +17,14 @@
 import { MyProgramApi } from 'api/program';
 import { MyAppApi } from 'api/app';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Observable } from 'rxjs/Observable';
+import { MyPipelineApi } from 'api/pipeline';
 
 // TODO: modify constants to the correct one once backend app is ready
 const programType = 'workflows';
 const programId = 'DataPipelineWorkflow';
 const batchProgramType = 'Workflow';
+const parentArtifact = 'cdap-data-pipeline';
 
 export function start(transfer, successCb, errorCb) {
   const params = {
@@ -70,4 +73,102 @@ export function getStatuses(list) {
   });
 
   return MyAppApi.batchStatus(params, body);
+}
+
+export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType) {
+  const observable$ = Observable.create((observer) => {
+    const namespace = getCurrentNamespace();
+    const pluginParams = {
+      namespace,
+      parentArtifact,
+      version: '6.1.0-SNAPSHOT',
+      extension: pluginType,
+      pluginName,
+      scope: 'SYSTEM',
+      artifactName,
+      artifactScope,
+      limit: 1,
+      order: 'DESC',
+    };
+
+    MyPipelineApi.getPluginProperties(pluginParams).subscribe(
+      ([plugin]) => {
+        const widgetKey = `widgets.${pluginName}-${pluginType}`;
+        const widgetParams = {
+          namespace,
+          artifactName,
+          scope: artifactScope,
+          artifactVersion: plugin.artifact.version,
+          keys: widgetKey,
+        };
+
+        MyPipelineApi.fetchWidgetJson(widgetParams).subscribe(
+          (widgetInfo) => {
+            try {
+              const widgetContent = JSON.parse(widgetInfo[widgetKey]);
+
+              observer.next({
+                pluginInfo: plugin,
+                widgetInfo: widgetContent,
+              });
+            } catch (parseError) {
+              observer.error(parseError);
+            }
+          },
+          (widgetError) => {
+            observer.error(widgetError);
+          }
+        );
+      },
+      (pluginError) => {
+        observer.error(pluginError);
+      }
+    );
+  });
+
+  return observable$;
+}
+
+export function createTransfer(name, description, source, target) {
+  const transferSpec = {
+    artifact: {
+      name: parentArtifact,
+      version: '6.1.0-SNAPSHOT',
+      scope: 'SYSTEM',
+    },
+    name,
+    description,
+    config: {
+      resources: {
+        memoryMB: 2048,
+        virtualCore: 1,
+      },
+      driverResources: {
+        memoryMB: 2048,
+        virtualCore: 1,
+      },
+      connections: [
+        {
+          from: 'Database',
+          to: 'BigQueryTable',
+        },
+      ],
+      comments: [],
+      postActions: [],
+      processTimingEnabled: true,
+      stageLoggingEnabled: true,
+      stages: [source, target],
+      schedule: '0 * * * *',
+      engine: 'mapreduce',
+      numOfRecordsPreview: 100,
+      maxConcurrentRuns: 1,
+    },
+  };
+
+  const params = {
+    namespace: getCurrentNamespace(),
+    appId: name,
+  };
+
+  return MyPipelineApi.publish(params, transferSpec);
 }

@@ -19,6 +19,8 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import IconSVG from 'components/IconSVG';
 import ArrowRight from '@material-ui/icons/ArrowRightAlt';
 import T from 'i18n-react';
+import { Link } from 'react-router-dom';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 const PREFIX = 'features.Transfers.List';
 
@@ -56,14 +58,14 @@ const styles = (theme): StyleRules => {
 const AddNewTransferView: React.SFC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.container}>
-      <a className={classes.addLink}>
+      <Link to={`/ns/${getCurrentNamespace()}/transfers/create`} className={classes.addLink}>
         <div className={classes.iconsContainer}>
           <IconSVG name="icon-database" />
           <ArrowRight className={classes.arrow} />
           <IconSVG name="icon-bigquery" />
         </div>
         <div>{T.translate(`${PREFIX}.addNewTransfer`)}</div>
-      </a>
+      </Link>
     </div>
   );
 };

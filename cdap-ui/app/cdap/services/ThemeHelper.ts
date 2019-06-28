@@ -392,7 +392,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showNamespaceSecurity: true,
       showCreateProfile: true,
       showReloadSystemArtifacts: true,
-      showTransfers: false,
+      showTransfers: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;

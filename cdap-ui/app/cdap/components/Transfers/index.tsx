@@ -20,6 +20,7 @@ import Helmet from 'react-helmet';
 import List from 'components/Transfers/List';
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
+import Create from 'components/Transfers/Create';
 
 const basepath = '/ns/:namespace/transfers';
 
@@ -34,6 +35,7 @@ const Transfers: React.SFC = () => {
       />
       <Switch>
         <Route exact path={basepath} component={List} />
+        <Route exact path={`${basepath}/create`} component={Create} />
       </Switch>
     </div>
   );
