@@ -24,6 +24,7 @@ var express = require('./server/express.js'),
     http = require('http'),
     fs = require('fs'),
     log4js = require('log4js'),
+    graphql = require('./graphql/index.js'),
     https = require('https');
 
 var cdapConfig, securityConfig;
