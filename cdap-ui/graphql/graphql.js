@@ -1,5 +1,5 @@
 const log4js = require('log4js');
-const { ApolloServer } = require('apollo-server');
+const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const merge = require('lodash/merge')
 
@@ -29,4 +29,6 @@ if (typeof typeDefs === 'undefined') {
     throw "The type definitions is undefined"
 }
 
-log.info('done')
+const server = new ApolloServer({ typeDefs, resolvers });
+
+module.exports = server;

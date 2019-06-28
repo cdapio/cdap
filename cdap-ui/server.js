@@ -24,7 +24,7 @@ var express = require('./server/express.js'),
     http = require('http'),
     fs = require('fs'),
     log4js = require('log4js'),
-    graphql = require('./graphql/index.js'),
+    graphql = require('./graphql/graphql.js'),
     https = require('https');
 
 var cdapConfig, securityConfig;
@@ -47,6 +47,17 @@ if(process.env.LOG4JS_CONFIG) {
 // Get a log handle.
 var log = log4js.getLogger('default');
 
+// log.info(express);
+
+// graphql.applyMiddleware({ express }); // app is from an existing express app
+
+// express.listen({ port: 4000 }, () => {
+//     log.info(`GraphQL server ready at ${url}`);
+// });
+
+
+
+
 log.info("Starting CDAP UI ...");
 parser.extractConfig('cdap')
   .then(function (c) {
@@ -63,6 +74,8 @@ parser.extractConfig('cdap')
   })
 
   .then(function (app) {
+    graphql.applyMiddleware({ app });
+    
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
       if (cdapConfig['dashboard.ssl.disable.cert.check'] === 'true') {
