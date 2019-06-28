@@ -4,6 +4,7 @@ const { importSchema } = require('graphql-import');
 const merge = require('lodash/merge')
 
 const log = log4js.getLogger('graphql');
+const env = process.env.NODE_ENV;
 
 const { applicationResolvers } = require('./resolvers/applicationResolvers')
 const { namespaceResolvers } = require('./resolvers/namespaceResolvers')
@@ -29,6 +30,9 @@ if (typeof typeDefs === 'undefined') {
     throw "The type definitions is undefined"
 }
 
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({ typeDefs, resolvers,
+    introspection: env === 'production' ? false : true,
+    playground: env === 'production' ? false : true,
+});
 
 module.exports = server;

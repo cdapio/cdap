@@ -47,17 +47,6 @@ if(process.env.LOG4JS_CONFIG) {
 // Get a log handle.
 var log = log4js.getLogger('default');
 
-// log.info(express);
-
-// graphql.applyMiddleware({ express }); // app is from an existing express app
-
-// express.listen({ port: 4000 }, () => {
-//     log.info(`GraphQL server ready at ${url}`);
-// });
-
-
-
-
 log.info("Starting CDAP UI ...");
 parser.extractConfig('cdap')
   .then(function (c) {
