@@ -21,10 +21,12 @@ import { Observable } from 'rxjs/Observable';
 import { MyPipelineApi } from 'api/pipeline';
 
 // TODO: modify constants to the correct one once backend app is ready
-const programType = 'workflows';
-const programId = 'DataPipelineWorkflow';
-const batchProgramType = 'Workflow';
-const parentArtifact = 'cdap-data-pipeline';
+const programType = 'workers';
+const programId = 'DeltaWorker';
+const batchProgramType = 'Worker';
+const parentArtifact = 'delta-app';
+const version = '0.1.0-SNAPSHOT';
+const scope = 'SYSTEM';
 
 export function start(transfer, successCb, errorCb) {
   const params = {
@@ -81,10 +83,10 @@ export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginT
     const pluginParams = {
       namespace,
       parentArtifact,
-      version: '6.1.0-SNAPSHOT',
+      version,
       extension: pluginType,
       pluginName,
-      scope: 'SYSTEM',
+      scope,
       artifactName,
       artifactScope,
       limit: 1,
@@ -104,6 +106,15 @@ export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginT
 
         MyPipelineApi.fetchWidgetJson(widgetParams).subscribe(
           (widgetInfo) => {
+            if (!widgetInfo || !widgetInfo[widgetKey]) {
+              observer.next({
+                pluginInfo: plugin,
+                widgetInfo: {},
+              });
+              observer.complete();
+              return;
+            }
+
             try {
               const widgetContent = JSON.parse(widgetInfo[widgetKey]);
 
@@ -111,6 +122,8 @@ export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginT
                 pluginInfo: plugin,
                 widgetInfo: widgetContent,
               });
+
+              observer.complete();
             } catch (parseError) {
               observer.error(parseError);
             }
@@ -133,35 +146,20 @@ export function createTransfer(name, description, source, target) {
   const transferSpec = {
     artifact: {
       name: parentArtifact,
-      version: '6.1.0-SNAPSHOT',
-      scope: 'SYSTEM',
+      version,
+      scope,
     },
     name,
     description,
     config: {
-      resources: {
-        memoryMB: 2048,
-        virtualCore: 1,
-      },
-      driverResources: {
-        memoryMB: 2048,
-        virtualCore: 1,
-      },
       connections: [
         {
-          from: 'Database',
-          to: 'BigQueryTable',
+          from: source.name,
+          to: target.name,
         },
       ],
-      comments: [],
-      postActions: [],
-      processTimingEnabled: true,
-      stageLoggingEnabled: true,
       stages: [source, target],
-      schedule: '0 * * * *',
-      engine: 'mapreduce',
-      numOfRecordsPreview: 100,
-      maxConcurrentRuns: 1,
+      offsetBasePath: '/tmp/delta',
     },
   };
 

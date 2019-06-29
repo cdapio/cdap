@@ -25,10 +25,10 @@ interface ITargetConfigProps {
 }
 
 const TargetConfigView: React.SFC<ITargetConfigProps> = ({ setTarget, target }) => {
-  const artifactName = 'google-cloud';
+  const artifactName = 'delta-bigquery-plugins';
   const artifactScope = 'SYSTEM';
-  const pluginName = 'BigQueryTable';
-  const pluginType = 'batchsink';
+  const pluginName = 'bigquery';
+  const pluginType = 'cdcTarget';
 
   const initValues = objectQuery(target, 'plugin', 'properties') || {};
 

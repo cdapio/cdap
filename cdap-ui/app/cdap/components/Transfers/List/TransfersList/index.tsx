@@ -22,7 +22,7 @@ import Count from 'components/Transfers/List/Count';
 import Table from 'components/Transfers/List/Table';
 import { getStatuses } from 'components/Transfers/utilities';
 
-const parentArtifact = 'cdap-data-pipeline';
+const parentArtifact = 'delta-app';
 
 interface IState {
   list: any[];

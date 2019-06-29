@@ -67,8 +67,10 @@ const SummaryView: React.SFC<ISummaryProps> = ({
   classes,
 }) => {
   const [redirect, setRedirect] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   function onComplete() {
+    setLoading(true);
     createTransfer(name, description, source, target).subscribe(
       () => {
         setRedirect(true);
@@ -76,6 +78,9 @@ const SummaryView: React.SFC<ISummaryProps> = ({
       (err) => {
         // tslint:disable-next-line:no-console
         console.log('error', err);
+      },
+      () => {
+        setLoading(false);
       }
     );
   }
@@ -91,10 +96,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
       <div className={classes.headingContainer}>
         <div>
           <h3 className={classes.heading}>
-            <span>
-              {name}
-              Hello
-            </span>
+            <span>{name}</span>
           </h3>
           <span onClick={setActiveStep.bind(null, 0)} className={classes.edit}>
             Edit
@@ -125,7 +127,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
         </div>
       </div>
 
-      <StepButtons onComplete={onComplete} />
+      <StepButtons onComplete={onComplete} loading={loading} />
     </div>
   );
 };

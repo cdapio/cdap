@@ -19,6 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
+import LoadingSVG from 'components/LoadingSVG';
 
 const styles = (): StyleRules => {
   return {
@@ -32,6 +33,7 @@ const styles = (): StyleRules => {
 
 interface IStepButtonsProps extends WithStyles<typeof styles> {
   activeStep: number;
+  loading: boolean;
   onNext?: () => void;
   next: () => void;
   previous: () => void;
@@ -44,6 +46,7 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
   next,
   previous,
   onComplete,
+  loading,
   classes,
 }) => {
   function handleNextClick() {
@@ -64,7 +67,10 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
         </Button>
       </If>
       <If condition={typeof onComplete === 'function'}>
-        <Button variant="contained" color="primary" onClick={onComplete}>
+        <Button variant="contained" color="primary" onClick={onComplete} disabled={loading}>
+          <If condition={loading}>
+            <LoadingSVG />
+          </If>
           Create transfer
         </Button>
       </If>

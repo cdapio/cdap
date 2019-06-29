@@ -29,15 +29,15 @@ export const CreateTransferSteps = [
     component: NameDescription,
   },
   {
-    label: 'Set configs for Oracle database',
+    label: 'Set configs for MySQL database',
     component: SourceConfig,
   },
   {
-    label: 'Set configs fro Google BigQuery',
+    label: 'Set configs for Google BigQuery',
     component: TargetConfig,
   },
   {
-    label: 'Review and initiate data transfer',
+    label: 'Review and create data transfer',
     component: Summary,
   },
 ];

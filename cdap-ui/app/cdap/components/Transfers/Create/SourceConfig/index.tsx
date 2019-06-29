@@ -25,10 +25,10 @@ interface ISourceConfigView {
 }
 
 const SourceConfigView: React.SFC<ISourceConfigView> = ({ setSource, source }) => {
-  const artifactName = 'database-plugins';
+  const artifactName = 'delta-mysql-plugins';
   const artifactScope = 'SYSTEM';
-  const pluginName = 'Database';
-  const pluginType = 'batchsource';
+  const pluginName = 'mysql';
+  const pluginType = 'cdcSource';
 
   const initValues = objectQuery(source, 'plugin', 'properties') || {};
 

@@ -57,7 +57,7 @@ interface IConfigurationFormProps extends WithStyles<typeof styles> {
 
 function processConfigurationGroups(
   pluginProperties: PluginProperties,
-  configurationGroups: IConfigurationGroup[]
+  configurationGroups: IConfigurationGroup[] = []
 ) {
   // filter out properties that are not listed by pluginProperties
   const filteredConfigurationGroups = configurationGroups.map((group) => {

@@ -57,7 +57,7 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
     <div className="grid-row" key={transfer.name}>
       <div>{transfer.name}</div>
       <div>{status}</div>
-      <div>Oracle</div>
+      <div>MySQL</div>
       <div>BigQuery</div>
       <div>
         <ActionsPopover actions={actions} />
