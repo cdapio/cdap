@@ -209,6 +209,25 @@ class CDAP extends Component {
                 />
                 <Route
                   exact
+                  path="/dag-experiment"
+                  render={(props) => {
+                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                      return <Page404 {...props} />;
+                    }
+                    const DAGExperiment = Loadable({
+                      loader: () =>
+                        import(/* webpackChunkName: "DAGExperiment" */ 'components/DAG'),
+                      loading: LoadingSVGCentered,
+                    });
+                    return (
+                      <ErrorBoundary>
+                        <DAGExperiment />
+                      </ErrorBoundary>
+                    );
+                  }}
+                />
+                <Route
+                  exact
                   path="/fll-experiment"
                   render={(props) => {
                     if (window.CDAP_CONFIG.cdap.mode !== 'development') {
