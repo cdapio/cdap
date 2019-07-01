@@ -4,6 +4,8 @@
 
 type Query {
 
+  status: String!
+
   namespaces: [Namespace]
 
   # TODO want to limit the number of apps returned

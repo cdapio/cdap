@@ -12,13 +12,15 @@ const { metadataResolvers } = require('./resolvers/metadataResolvers')
 const { programRecordResolvers } = require('./resolvers/programRecordResolvers')
 const { programRecordTypeResolvers } = require('./resolvers/type/programRecordTypeResolver')
 const { scheduleResolvers } = require('./resolvers/scheduleResolvers')
+const { statusResolvers } = require('./resolvers/statusResolvers')
 
 const resolvers = merge(applicationResolvers,
     namespaceResolvers,
     metadataResolvers,
     programRecordTypeResolvers,
     programRecordResolvers,
-    scheduleResolvers);
+    scheduleResolvers,
+    statusResolvers);
 
 const typeDefs = importSchema('graphql/schema/rootSchema.graphql');
 
@@ -30,7 +32,8 @@ if (typeof typeDefs === 'undefined') {
     throw "The type definitions is undefined"
 }
 
-const server = new ApolloServer({ typeDefs, resolvers,
+const server = new ApolloServer({
+    typeDefs, resolvers,
     introspection: env === 'production' ? false : true,
     playground: env === 'production' ? false : true,
 });
