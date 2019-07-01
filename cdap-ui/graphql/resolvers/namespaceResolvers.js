@@ -10,7 +10,7 @@ cdapConfigurator.getCDAPConfig()
 
 const namespacesResolver = {
   Query: {
-    async namespaces(parent, args, context, info) {
+    namespaces: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
         const options = {
           url: urlHelper.constructUrl(cdapConfig, '/v3/namespaces'),

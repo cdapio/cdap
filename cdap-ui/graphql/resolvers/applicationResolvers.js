@@ -12,7 +12,7 @@ cdapConfigurator.getCDAPConfig()
 
 const applicationsResolver = {
   Query: {
-    async applications(parent, args, context, info) {
+    applications: async (parent, args, context, info) => {
       const namespace = args.namespace
       const applications = await (new Promise((resolve, reject) => {
         const options = {
@@ -40,7 +40,7 @@ const applicationsResolver = {
 
 const applicationResolver = {
   Query: {
-    async application(parent, args, context, info) {
+    application: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
         const namespace = args.namespace
         const name = args.name

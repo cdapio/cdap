@@ -12,7 +12,7 @@ cdapConfigurator.getCDAPConfig()
 
 const runsResolver = {
   Workflow: {
-    async runs(parent, args, context, info) {
+    runs: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.app
@@ -39,7 +39,7 @@ const runsResolver = {
 
 const schedulesResolver = {
   Workflow: {
-    async schedules(parent, args, context, info) {
+    schedules: async (parent, args, context, info) => {
       const schedules = await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.app
@@ -70,7 +70,7 @@ const schedulesResolver = {
 
 const nextRuntimesResolver = {
   ScheduleDetail: {
-    async nextRuntimes(parent, args, context, info) {
+    nextRuntimes: async (parent, args, context, info) => {
       const times = await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.application

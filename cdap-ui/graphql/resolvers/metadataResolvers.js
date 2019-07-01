@@ -10,7 +10,7 @@ cdapConfigurator.getCDAPConfig()
 
 const metadataResolver = {
   ApplicationDetail: {
-    async metadata(parent, args, context, info) {
+    metadata: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.name

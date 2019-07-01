@@ -1,6 +1,6 @@
 const programsResolver = {
   ApplicationDetail: {
-    async programs(parent, args, context, info) {
+    programs: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
         const programs = parent.programs
         const type = args.type
