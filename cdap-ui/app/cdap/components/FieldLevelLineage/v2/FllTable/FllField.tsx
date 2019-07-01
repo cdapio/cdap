@@ -19,6 +19,7 @@ import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import If from 'components/If';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme): StyleRules => {
@@ -76,27 +77,22 @@ function FllField({ field, classes }: IFieldProps) {
       id={field.id}
     >
       {field.name}
-      {isHovering &&
-        !isTarget && (
-          <span className={classes.hoverText}>
-            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
-          </span>
-        )}
-      {field.id === activeField &&
-        isTarget &&
-        !showingOneField && (
-          <span className={classes.targetView} onClick={handleViewCauseImpact}>
-            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-            <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
-          </span>
-        )}
-      {field.id === activeField &&
-        isTarget &&
-        showingOneField && (
-          <span className={classes.targetView} onClick={handleReset}>
-            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
-          </span>
-        )}
+      <If condition={isHovering && !isTarget}>
+        <span className={classes.hoverText}>
+          {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
+        </span>
+      </If>
+      <If condition={field.id === activeField && isTarget && !showingOneField}>
+        <span className={classes.targetView} onClick={handleViewCauseImpact}>
+          {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
+          <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
+        </span>
+      </If>
+      <If condition={field.id === activeField && isTarget && showingOneField}>
+        <span className={classes.targetView} onClick={handleReset}>
+          {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
+        </span>
+      </If>
     </div>
   );
 }

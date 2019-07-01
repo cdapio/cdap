@@ -23,7 +23,6 @@ import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/Fl
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
-import {} from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme): StyleRules => {
   return {
