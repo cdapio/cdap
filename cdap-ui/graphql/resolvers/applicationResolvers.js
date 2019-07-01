@@ -15,23 +15,11 @@ const applicationsResolver = {
   Query: {
     applications: async (parent, args, context, info) => {
       const namespace = args.namespace
-      const applications = await (new Promise((resolve, reject) => {
-        const options = resolversCommon.getGETRequestOptions();
-        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
-
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
-
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
       context.namespace = namespace
 
-      return applications;
+      return await resolversCommon.requestPromiseWrapper(options);
     }
   }
 }
@@ -39,25 +27,12 @@ const applicationsResolver = {
 const applicationResolver = {
   Query: {
     application: async (parent, args, context, info) => {
-      return await (new Promise((resolve, reject) => {
-        const namespace = args.namespace
-        const name = args.name
+      const namespace = args.namespace
+      const name = args.name
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
 
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`),
-          method: 'GET',
-          json: true
-        };
-
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
+      return await resolversCommon.requestPromiseWrapper(options);
     }
   }
 }
@@ -65,25 +40,12 @@ const applicationResolver = {
 const applicationDetailResolver = {
   ApplicationRecord: {
     async applicationDetail(parent, args, context, info) {
-      return await (new Promise((resolve, reject) => {
-        const namespace = context.namespace
-        const name = parent.name
+      const namespace = context.namespace
+      const name = parent.name
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
 
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`),
-          method: 'GET',
-          json: true
-        };
-
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
+      return await resolversCommon.requestPromiseWrapper(options);
     }
   }
 }

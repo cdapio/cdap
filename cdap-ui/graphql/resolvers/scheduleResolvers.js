@@ -14,22 +14,13 @@ cdapConfigurator.getCDAPConfig()
 const runsResolver = {
   Workflow: {
     runs: async (parent, args, context, info) => {
-      return await (new Promise((resolve, reject) => {
-        const namespace = context.namespace
-        const name = parent.app
-        const workflow = parent.name
-        const options = resolversCommon.getGETRequestOptions();
-        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`);
+      const namespace = context.namespace
+      const name = parent.app
+      const workflow = parent.name
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`);
 
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
+      return await resolversCommon.requestPromiseWrapper(options);
     }
   }
 }
@@ -37,26 +28,15 @@ const runsResolver = {
 const schedulesResolver = {
   Workflow: {
     schedules: async (parent, args, context, info) => {
-      const schedules = await (new Promise((resolve, reject) => {
-        const namespace = context.namespace
-        const name = parent.app
-        const workflow = parent.name
-        const options = resolversCommon.getGETRequestOptions();
-        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`);
-
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
+      const namespace = context.namespace
+      const name = parent.app
+      const workflow = parent.name
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`);
 
       context.workflow = workflow
 
-      return schedules;
+      return await resolversCommon.requestPromiseWrapper(options);
     }
   }
 }
@@ -64,22 +44,13 @@ const schedulesResolver = {
 const nextRuntimesResolver = {
   ScheduleDetail: {
     nextRuntimes: async (parent, args, context, info) => {
-      const times = await (new Promise((resolve, reject) => {
-        const namespace = context.namespace
-        const name = parent.application
-        const workflow = context.workflow
-        const options = resolversCommon.getGETRequestOptions();
-        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`);
+      const namespace = context.namespace
+      const name = parent.application
+      const workflow = context.workflow
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`);
 
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
+      const times = await resolversCommon.getGETRequestOptions(options);
 
       const nextRuntimes = []
 

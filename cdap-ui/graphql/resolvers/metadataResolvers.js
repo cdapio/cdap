@@ -12,21 +12,12 @@ cdapConfigurator.getCDAPConfig()
 const metadataResolver = {
   ApplicationDetail: {
     metadata: async (parent, args, context, info) => {
-      return await (new Promise((resolve, reject) => {
-        const namespace = context.namespace
-        const name = parent.name
-        const options = resolversCommon.getGETRequestOptions();
-        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`);
+      const namespace = context.namespace
+      const name = parent.name
+      const options = resolversCommon.getGETRequestOptions();
+      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`);
 
-        request(options, (err, response, body) => {
-          if (err) {
-            reject(err);
-          }
-          else {
-            resolve(body);
-          }
-        });
-      }));
+      return await resolversCommon.requestPromiseWrapper(options);
     }
   }
 }
