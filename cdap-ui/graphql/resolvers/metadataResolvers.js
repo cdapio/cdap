@@ -1,11 +1,12 @@
 var request = require('request'),
   urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js');
+  cdapConfigurator = require('../../cdap-config.js'),
+  resolversCommon = require('./resolvers-common.js');
 
 var cdapConfig;
 cdapConfigurator.getCDAPConfig()
-  .then(function (c) {
-    cdapConfig = c;
+  .then(function (value) {
+    cdapConfig = value;
   });
 
 const metadataResolver = {
@@ -14,12 +15,8 @@ const metadataResolver = {
       return await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.name
-
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`),
-          method: 'GET',
-          json: true
-        };
+        const options = resolversCommon.getGETRequestOptions();
+        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`);
 
         request(options, (err, response, body) => {
           if (err) {

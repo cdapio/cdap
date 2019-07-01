@@ -1,22 +1,20 @@
 var request = require('request'),
   urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js');
+  cdapConfigurator = require('../../cdap-config.js'),
+  resolversCommon = require('./resolvers-common.js');
 
 var cdapConfig;
 cdapConfigurator.getCDAPConfig()
-  .then(function (c) {
-    cdapConfig = c;
+  .then(function (value) {
+    cdapConfig = value;
   });
 
 const namespacesResolver = {
   Query: {
     namespaces: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, '/v3/namespaces'),
-          method: 'GET',
-          json: true
-        };
+        const options = resolversCommon.getGETRequestOptions();
+        options['url'] = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
 
         request(options, (err, response, body) => {
           if (err) {

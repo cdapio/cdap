@@ -2,12 +2,13 @@ const merge = require('lodash/merge');
 
 var request = require('request'),
   urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js');
+  cdapConfigurator = require('../../cdap-config.js'),
+  resolversCommon = require('./resolvers-common.js');
 
 var cdapConfig;
 cdapConfigurator.getCDAPConfig()
-  .then(function (c) {
-    cdapConfig = c;
+  .then(function (value) {
+    cdapConfig = value;
   });
 
 const applicationsResolver = {
@@ -15,11 +16,8 @@ const applicationsResolver = {
     applications: async (parent, args, context, info) => {
       const namespace = args.namespace
       const applications = await (new Promise((resolve, reject) => {
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`),
-          method: 'GET',
-          json: true
-        };
+        const options = resolversCommon.getGETRequestOptions();
+        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
 
         request(options, (err, response, body) => {
           if (err) {

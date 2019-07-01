@@ -2,12 +2,13 @@ const merge = require('lodash/merge')
 
 var request = require('request'),
   urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js');
+  cdapConfigurator = require('../../cdap-config.js'),
+  resolversCommon = require('./resolvers-common.js');
 
 var cdapConfig;
 cdapConfigurator.getCDAPConfig()
-  .then(function (c) {
-    cdapConfig = c;
+  .then(function (value) {
+    cdapConfig = value;
   });
 
 const runsResolver = {
@@ -17,12 +18,8 @@ const runsResolver = {
         const namespace = context.namespace
         const name = parent.app
         const workflow = parent.name
-
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`),
-          method: 'GET',
-          json: true
-        };
+        const options = resolversCommon.getGETRequestOptions();
+        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`);
 
         request(options, (err, response, body) => {
           if (err) {
@@ -43,13 +40,9 @@ const schedulesResolver = {
       const schedules = await (new Promise((resolve, reject) => {
         const namespace = context.namespace
         const name = parent.app
-        workflow = parent.name
-
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, '/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules'),
-          method: 'GET',
-          json: true
-        };
+        const workflow = parent.name
+        const options = resolversCommon.getGETRequestOptions();
+        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`);
 
         request(options, (err, response, body) => {
           if (err) {
@@ -75,12 +68,8 @@ const nextRuntimesResolver = {
         const namespace = context.namespace
         const name = parent.application
         const workflow = context.workflow
-
-        const options = {
-          url: urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`),
-          method: 'GET',
-          json: true
-        };
+        const options = resolversCommon.getGETRequestOptions();
+        options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`);
 
         request(options, (err, response, body) => {
           if (err) {
