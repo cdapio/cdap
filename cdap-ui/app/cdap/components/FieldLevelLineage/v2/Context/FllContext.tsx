@@ -25,7 +25,7 @@ import {
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 
-export const FllContext = React.createContext({});
+export const FllContext = React.createContext<IContextState>({} as IContextState);
 
 function getFieldsAndLinks(d) {
   const incoming = parseRelations(d.entityId.namespace, d.entityId.dataset, d.incoming);
@@ -36,7 +36,7 @@ function getFieldsAndLinks(d) {
   return { causeTables, impactTables, links };
 }
 
-interface IProviderState {
+export interface IContextState {
   target: string;
   targetFields: IField[];
   links: ILink[];
@@ -51,17 +51,13 @@ interface IProviderState {
   firstCause: number;
   firstImpact: number;
   firstField: number;
+  handleFieldClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  handleViewCauseImpact: (event: React.MouseEvent<HTMLDivElement>) => void;
+  handleReset: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-export class Provider extends React.Component<{ children }, IProviderState> {
+export class Provider extends React.Component<{ children }, IContextState> {
   private parsedRes = getFieldsAndLinks(data);
-
-  private updateState(key, value) {
-    this.setState({
-      ...this.state,
-      [key]: value,
-    });
-  }
 
   private handleFieldClick(e) {
     const activeField = (e.target as HTMLAreaElement).id;
@@ -90,7 +86,7 @@ export class Provider extends React.Component<{ children }, IProviderState> {
         activeLinks.push(link);
       }
     });
-    this.updateState('activeLinks', activeLinks);
+    this.setState({ ...this.state, activeLinks });
   }
 
   private getActiveSets() {
@@ -126,6 +122,13 @@ export class Provider extends React.Component<{ children }, IProviderState> {
     this.getActiveSets();
   }
 
+  private handleReset() {
+    this.setState({
+      ...this.state,
+      showingOneField: false,
+    });
+  }
+
   constructor(props) {
     super(props);
     this.state = {
@@ -144,6 +147,9 @@ export class Provider extends React.Component<{ children }, IProviderState> {
       firstCause: 1,
       firstImpact: 1,
       firstField: 1,
+      handleFieldClick: this.handleFieldClick.bind(this),
+      handleViewCauseImpact: this.handleViewCauseImpact.bind(this),
+      handleReset: this.handleReset.bind(this),
     };
   }
 
@@ -152,9 +158,6 @@ export class Provider extends React.Component<{ children }, IProviderState> {
       <FllContext.Provider
         value={{
           ...this.state,
-          update: this.updateState.bind(this),
-          handleFieldClick: this.handleFieldClick.bind(this),
-          handleViewCauseImpact: this.handleViewCauseImpact.bind(this),
         }}
       >
         {this.props.children}

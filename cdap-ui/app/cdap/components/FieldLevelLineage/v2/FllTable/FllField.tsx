@@ -14,12 +14,12 @@
  * the License.
 */
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme): StyleRules => {
   return {
@@ -51,53 +51,53 @@ const styles = (theme): StyleRules => {
 
 interface IFieldProps extends WithStyles<typeof styles> {
   field: IField;
-  // to do: move these to Context
-  resetHandler?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
-function FllField({ field, resetHandler, classes }: IFieldProps) {
+function FllField({ field, classes }: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
+  const {
+    activeField,
+    showingOneField,
+    handleFieldClick,
+    handleViewCauseImpact,
+    handleReset,
+  } = useContext<IContextState>(FllContext);
+
   const toggleHoverState = () => {
     setHoverState(!isHovering);
   };
+  const isTarget = field.type === 'target';
   return (
-    <Consumer>
-      {({ activeField, showingOneField, handleFieldClick, handleViewCauseImpact }) => {
-        const isTarget = field.type === 'target';
-        return (
-          <div
-            onClick={isTarget && !showingOneField ? handleFieldClick : undefined}
-            onMouseEnter={toggleHoverState}
-            onMouseLeave={toggleHoverState}
-            className={classnames('grid-row', 'grid-link', classes.root)}
-            id={field.id}
-          >
-            {field.name}
-            {isHovering &&
-              !isTarget && (
-                <span className={classes.hoverText}>
-                  {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
-                </span>
-              )}
-            {field.id === activeField &&
-              isTarget &&
-              !showingOneField && (
-                <span className={classes.targetView} onClick={handleViewCauseImpact}>
-                  {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-                  <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
-                </span>
-              )}
-            {field.id === activeField &&
-              isTarget &&
-              showingOneField && (
-                <span className={classes.targetView} onClick={resetHandler}>
-                  {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
-                </span>
-              )}
-          </div>
-        );
-      }}
-    </Consumer>
+    <div
+      onClick={isTarget && !showingOneField ? handleFieldClick : undefined}
+      onMouseEnter={toggleHoverState}
+      onMouseLeave={toggleHoverState}
+      className={classnames('grid-row', 'grid-link', classes.root)}
+      id={field.id}
+    >
+      {field.name}
+      {isHovering &&
+        !isTarget && (
+          <span className={classes.hoverText}>
+            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
+          </span>
+        )}
+      {field.id === activeField &&
+        isTarget &&
+        !showingOneField && (
+          <span className={classes.targetView} onClick={handleViewCauseImpact}>
+            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
+            <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
+          </span>
+        )}
+      {field.id === activeField &&
+        isTarget &&
+        showingOneField && (
+          <span className={classes.targetView} onClick={handleReset}>
+            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
+          </span>
+        )}
+    </div>
   );
 }
 

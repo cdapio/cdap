@@ -19,11 +19,11 @@ import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
 import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
-import { FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import {} from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme): StyleRules => {
   return {
@@ -50,8 +50,6 @@ interface ILineageState {
   activeImpactSets: ITableFields;
   activeLinks: ILink[];
 }
-
-// I don't think LineageSummary needs state?
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
   constructor(props) {
@@ -169,25 +167,12 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     }
   }
 
-  // TO DO: Move this to context
-  private handleReset() {
-    this.setState(
-      {
-        ...this.state,
-        // showingOneField: false,
-      },
-      () => {
-        // this.drawLinks(this.state.activeField);
-      }
-    );
-  }
-
   public componentWillUnmount() {
     window.removeEventListener('resize', debounce(this.drawLinks.bind(this), 1));
   }
 
   public componentDidMount() {
-    const { links, activeLinks, activeField } = this.context;
+    const { links, activeField } = this.context;
     this.drawLinks(links, activeField);
     window.addEventListener('resize', debounce(this.drawLinks.bind(this, links, activeField), 1));
   }
@@ -199,7 +184,6 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
           target,
           targetFields,
           impactSets,
-          activeField,
           links,
           activeLinks,
           activeCauseSets,
@@ -236,11 +220,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </div>
               <div>
                 <FllHeader type="target" total={Object.keys(targetFields).length} />
-                <FllTable
-                  tableId={target}
-                  fields={targetFields}
-                  resetHandler={this.handleReset.bind(this)}
-                />
+                <FllTable tableId={target} fields={targetFields} />
               </div>
               <div>
                 <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />

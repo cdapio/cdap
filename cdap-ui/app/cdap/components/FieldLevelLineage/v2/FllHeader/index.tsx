@@ -14,10 +14,10 @@
  * the License.
 */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import T from 'i18n-react';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 interface IHeaderProps extends WithStyles<typeof styles> {
   type: string;
@@ -40,45 +40,42 @@ const styles = (theme) => {
 };
 
 function FllHeader({ type, total, classes }: IHeaderProps) {
+  const { firstCause, firstImpact, firstField, target, numTables } = useContext<IContextState>(
+    FllContext
+  );
+  let last;
+  let first;
+
+  if (type === 'impact') {
+    first = firstImpact;
+  } else {
+    first = firstCause;
+  }
+
+  last = first + numTables - 1 <= total ? first + numTables - 1 : total;
+
+  if (type === 'target') {
+    last = total;
+  }
+
+  const header =
+    type === 'target'
+      ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetHeader')
+      : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedHeader', {
+          type,
+          target,
+        });
+  const options = { first, last, total };
+  const subHeader =
+    type === 'target'
+      ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetSubheader', options)
+      : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedSubheader', options);
+
   return (
-    <Consumer>
-      {({ firstCause, firstImpact, firstField, target, numTables }) => {
-        let last;
-        let first;
-
-        if (type === 'impact') {
-          first = firstImpact;
-        } else {
-          first = firstCause;
-        }
-
-        last = first + numTables - 1 <= total ? first + numTables - 1 : total;
-
-        if (type === 'target') {
-          last = total;
-        }
-
-        const header =
-          type === 'target'
-            ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetHeader')
-            : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedHeader', {
-                type,
-                target,
-              });
-        const options = { first, last, total };
-        const subHeader =
-          type === 'target'
-            ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetSubheader', options)
-            : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedSubheader', options);
-
-        return (
-          <div className={classes.root}>
-            <div className={type}>{header}</div>
-            <div className={classes.subHeader}>{subHeader}</div>
-          </div>
-        );
-      }}
-    </Consumer>
+    <div className={classes.root}>
+      <div className={type}>{header}</div>
+      <div className={classes.subHeader}>{subHeader}</div>
+    </div>
   );
 }
 const StyledFllHeader = withStyles(styles)(FllHeader);
