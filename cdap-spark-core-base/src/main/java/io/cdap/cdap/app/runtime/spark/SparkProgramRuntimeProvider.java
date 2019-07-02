@@ -310,8 +310,11 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       LOG.error("Yaojie - took {} ms to get spark class loader url.", System.currentTimeMillis() - currentTime);
     }
 
+    currentTime = System.currentTimeMillis();
     SparkRunnerClassLoader runnerClassLoader = new SparkRunnerClassLoader(classLoaderUrls,
                                                                           runnerParentClassLoader, rewriteYarnClient);
+    LOG.error("Yaojie - took {} ms to create spark runner class loader.", System.currentTimeMillis() - currentTime);
+
 
     // CDAP-8087: Due to Scala 2.10 bug in not able to support runtime reflection from multiple threads,
     // we create the runtime mirror from this synchronized method
@@ -326,9 +329,15 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       // The scala.reflect.runtime.package$ is the class, which has a public MODULE$ field, which is scala way of
       // doing singleton object.
       // We use reflection to avoid code dependency  on the scala version.
+      currentTime = System.currentTimeMillis();
       Object scalaReflect = runnerClassLoader.loadClass("scala.reflect.runtime.package$").getField("MODULE$").get(null);
+      LOG.error("Yaojie - took {} ms to load scala class", System.currentTimeMillis() - currentTime);
+      currentTime = System.currentTimeMillis();
       Object javaMirrors = scalaReflect.getClass().getMethod("universe").invoke(scalaReflect);
+      LOG.error("Yaojie - took {} ms to create java mirrors", System.currentTimeMillis() - currentTime);
+      currentTime = System.currentTimeMillis();
       javaMirrors.getClass().getMethod("runtimeMirror", ClassLoader.class).invoke(javaMirrors, runnerClassLoader);
+      LOG.error("Yaojie - took {} ms to invoke method", System.currentTimeMillis() - currentTime);
     } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
       // The SI-6240 is fixed in Scala 2.11 anyway and older Scala version should have the classes and methods
       // that we try to invoke above.
