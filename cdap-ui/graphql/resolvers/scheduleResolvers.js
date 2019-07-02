@@ -16,8 +16,7 @@
 
 const merge = require('lodash/merge')
 
-var request = require('request'),
-  urlHelper = require('../../server/url-helper'),
+var urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
