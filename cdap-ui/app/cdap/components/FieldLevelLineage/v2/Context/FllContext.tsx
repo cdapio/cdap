@@ -15,8 +15,8 @@
 */
 
 import React from 'react';
-import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery, parseQueryString } from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import {
   IField,
   ILink,
