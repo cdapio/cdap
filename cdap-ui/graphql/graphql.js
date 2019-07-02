@@ -24,12 +24,12 @@ const resolvers = merge(applicationResolvers,
 
 const typeDefs = importSchema('graphql/schema/rootSchema.graphql');
 
-if (typeof resolvers === 'undefined') {
-    throw "The resolvers are undefined"
+if (typeof resolvers !== 'undefined') {
+    log.error("The resolvers are undefined");
 }
 
 if (typeof typeDefs === 'undefined') {
-    throw "The type definitions is undefined"
+    log.error("The type definitions is undefined");
 }
 
 const server = new ApolloServer({
@@ -43,5 +43,7 @@ function applyMiddleware(app) {
 }
 
 module.exports = {
-    applyMiddleware
+    applyMiddleware,
+    resolvers,
+    typeDefs
 };
