@@ -14,16 +14,28 @@
  * the License.
 */
 
-import React from 'react';
-import LineageSummary from 'components/FieldLevelLineage/v2/LineageSummary';
-import TopPanel from 'components/FieldLevelLineage/v2/TopPanel';
-import { Provider } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import * as React from 'react';
+import withStyles from '@material-ui/core/styles/withStyles';
+import TimeRangePicker from 'components/FieldLevelLineage/v2/TimeRangePicker';
 
-export default function FllExpt(props) {
+const styles = () => {
+  return {
+    root: {
+      height: 60,
+      marginTop: 10,
+    },
+  };
+};
+
+const FllTopPanel = ({ classes }) => {
   return (
-    <Provider {...props}>
-      <TopPanel />
-      <LineageSummary />
-    </Provider>
+    <div className={classes.root}>
+      <div>
+        <TimeRangePicker />
+      </div>
+    </div>
   );
-}
+};
+
+const StyledTopPanel = withStyles(styles)(FllTopPanel);
+export default StyledTopPanel;
