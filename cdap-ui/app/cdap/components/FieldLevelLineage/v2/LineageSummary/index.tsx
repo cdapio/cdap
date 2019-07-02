@@ -58,8 +58,11 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
-    const sourceEl = d3.select(`#${source.id}`);
-    const destEl = d3.select(`#${destination.id}`);
+    const sourceId = source.id.replace(/\./g, '\\.');
+    const destId = destination.id.replace(/\./g, '\\.');
+
+    const sourceEl = d3.select(`#${sourceId}`);
+    const destEl = d3.select(`#${destId}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
     const offsetY = -48 + window.pageYOffset; // From the FllHeader
@@ -75,7 +78,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     // draw an edge from line start to line end
     const linkContainer = isSelected
       ? d3.select('#selected-links')
-      : d3.select(`#${source.id}_${destination.id}`);
+      : d3.select(`#${sourceId}_${destId}`);
 
     const third = (sourceX2 - sourceX1) / 3;
 
@@ -141,6 +144,10 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
   private drawLinks(links: ILink[], activeFieldId: string = null) {
     this.clearCanvas();
+
+    if (links.length === 0) {
+      return;
+    }
 
     links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
@@ -211,7 +218,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </div>
               <div>
                 <FllHeader type="target" total={Object.keys(targetFields).length} />
-                <FllTable tableId={target} fields={targetFields} />
+                <FllTable tableId={target} fields={targetFields} type="target" />
               </div>
               <div>
                 <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />

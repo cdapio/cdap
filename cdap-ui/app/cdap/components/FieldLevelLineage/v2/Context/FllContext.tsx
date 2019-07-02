@@ -15,7 +15,9 @@
 */
 
 import React from 'react';
-import data from './sample_response';
+import { MyMetadataApi } from 'api/metadata';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 import {
   makeTargetFields,
   IField,
@@ -57,7 +59,7 @@ export interface IContextState {
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
-  private parsedRes = getFieldsAndLinks(data);
+  // private parsedRes = getFieldsAndLinks(data);
 
   private handleFieldClick = (e) => {
     const activeField = e.target.id;
@@ -147,6 +149,36 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
   };
+
+  public fetchFieldLineage(namespace, entityId) {
+    const params = {
+      namespace,
+      entityId,
+      direction: 'both',
+      start: 0,
+      end: 'now',
+    };
+    MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
+      const parsedRes = getFieldsAndLinks(res);
+      const targetInfo = {
+        target: res.entityId.dataset,
+        targetFields: makeTargetFields(res.entityId, res.fields),
+        links: parsedRes.links,
+        causeSets: parsedRes.causeTables,
+        impactSets: parsedRes.impactTables,
+      };
+
+      this.setState({
+        ...targetInfo,
+      });
+    });
+  }
+  public componentDidMount() {
+    const namespace = getCurrentNamespace();
+    const datasetId = objectQuery(this.props, 'match', 'params', 'datasetId');
+
+    this.fetchFieldLineage(namespace, datasetId);
+  }
 
   public render() {
     return <FllContext.Provider value={this.state}>{this.props.children}</FllContext.Provider>;
