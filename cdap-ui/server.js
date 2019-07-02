@@ -113,3 +113,5 @@ cdapConfigurator.getCDAPConfig()
 
     sockServer.installHandlers(server, { prefix: '/_sock' });
   });
+
+  // graphqlClient.calling();
