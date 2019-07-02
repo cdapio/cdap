@@ -38,7 +38,7 @@ const resolvers = merge(applicationResolvers,
     scheduleResolvers,
     statusResolvers);
 
-const typeDefs = importSchema('graphql/schema/rootSchema.graphql');
+const typeDefs = importSchema('graphql/server/schema/rootSchema.graphql');
 
 if (typeof resolvers === 'undefined') {
     log.error("The resolvers are undefined");
