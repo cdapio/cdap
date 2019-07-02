@@ -14,8 +14,8 @@
  * the License.
  */
 
-var urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js'),
+var urlHelper = require('../../../server/url-helper'),
+  cdapConfigurator = require('../../../cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
 var cdapConfig;
