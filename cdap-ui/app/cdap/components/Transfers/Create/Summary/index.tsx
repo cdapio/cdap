@@ -127,7 +127,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
       <div className={classes.summaryContent}>
         <div className="source">
           <div>
-            <h4 className={classes.heading}>Oracle Database</h4>
+            <h4 className={classes.heading}>MySQL Database</h4>
             <span onClick={setActiveStep.bind(null, 1)} className={classes.edit}>
               Edit
             </span>

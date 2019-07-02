@@ -19,6 +19,8 @@ import ActionsPopover from 'components/ActionsPopover';
 import { start, stop, deleteApp } from 'components/Transfers/utilities';
 import T from 'i18n-react';
 import StatusIndicator from 'components/StatusIndicator';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import moment from 'moment';
 
 const PREFIX = 'features.Transfers.Actions';
 
@@ -29,6 +31,17 @@ interface ITableRowProps {
 }
 
 const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
+  const startTime = moment()
+    .subtract(7, 'days')
+    .format('X');
+
+  let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${
+    transfer.name
+  }/workers/DeltaWorker/logs`;
+
+  logUrl = `${logUrl}?start=${startTime}`;
+  logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
+
   const actions = [
     {
       label: T.translate(`${PREFIX}.start`),
@@ -42,7 +55,8 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
       label: 'separator',
     },
     {
-      label: T.translate(`${PREFIX}.logs`),
+      label: T.translate(`${PREFIX}.logs`).toString(),
+      link: logUrl,
     },
     {
       label: 'separator',
