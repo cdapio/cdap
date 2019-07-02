@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.proto;
 
+import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
 
 import java.util.List;
@@ -29,10 +30,10 @@ public class MetricQueryRequest {
   /**
    * Format for metrics query in batched queries
    */
-  Map<String, String> tags;
-  List<String> metrics;
-  List<String> groupBy;
-  TimeRange timeRange;
+  private final Map<String, String> tags;
+  private final List<String> metrics;
+  private final List<String> groupBy;
+  private TimeRange timeRange;
 
   public MetricQueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy) {
     this.tags = tags;
@@ -57,26 +58,34 @@ public class MetricQueryRequest {
   }
 
   public void setTimeRange(@Nullable Long start, @Nullable Long end, @Nullable Integer count,
-                           @Nullable Integer resolution,  @Nullable Interpolator interpolator) {
-    timeRange = new TimeRange(start, end, count, resolution, interpolator);
+                           @Nullable Integer resolution,  @Nullable Interpolator interpolator,
+                           AggregationOption aggregation) {
+    timeRange = new TimeRange(start, end, count, resolution, interpolator, aggregation);
   }
 
   /**
    * Represents the time range of the query request
    */
   public class TimeRange {
-    private Long startTs;
-    private Long endTs;
-    private Integer count;
-    private Integer resolutionInSeconds;
-    private Interpolator interpolator;
+    private final Long startTs;
+    private final Long endTs;
+    private final Integer count;
+    private final Integer resolutionInSeconds;
+    private final Interpolator interpolator;
+    private final AggregationOption aggregation;
 
-    public TimeRange(Long start, Long end, Integer count, Integer resolutionInSeconds, Interpolator interpolator) {
+    public TimeRange(Long start, Long end, Integer count, Integer resolutionInSeconds, Interpolator interpolator,
+                     AggregationOption aggregation) {
       this.startTs = start;
       this.endTs = end;
       this.count = count;
       this.resolutionInSeconds = resolutionInSeconds;
       this.interpolator = interpolator;
+      this.aggregation = aggregation;
+    }
+
+    public AggregationOption getAggregation() {
+      return aggregation;
     }
 
     public Interpolator getInterpolate() {

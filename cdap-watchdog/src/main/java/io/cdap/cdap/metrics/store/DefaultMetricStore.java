@@ -281,7 +281,8 @@ public class DefaultMetricStore implements MetricStore {
   private CubeQuery buildCubeQuery(MetricDataQuery query) {
     return new CubeQuery(null, query.getStartTs(), query.getEndTs(),
                          query.getResolution(), query.getLimit(), query.getMetrics(),
-                         query.getSliceByTags(), query.getGroupByTags(), query.getInterpolator());
+                         query.getSliceByTags(), query.getGroupByTags(), query.getAggregationOption(),
+                         query.getInterpolator());
   }
 
   @Override

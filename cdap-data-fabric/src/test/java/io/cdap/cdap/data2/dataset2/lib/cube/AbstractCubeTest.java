@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
 import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
@@ -398,6 +399,173 @@ public abstract class AbstractCubeTest {
                      agg1Dims, ImmutableList.of(), ImmutableList.of());
   }
 
+  @Test
+  public void testMetricsAggregationOptionSum() throws Exception {
+    // two aggregation groups
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
+                                              ImmutableList.of("dim1"));
+    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("dim1", "dim2"),
+                                              ImmutableList.of("dim1"));
+
+    int resolution = 1;
+    Cube cube = getCube("testAggOptionSum", new int[] {resolution},
+                        ImmutableMap.of("agg1", agg1, "agg2", agg2));
+
+    Map<String, String> agg1Dims = new LinkedHashMap<>();
+    agg1Dims.put("dim1", "tag1");
+    agg1Dims.put("dim2", "tag2");
+    agg1Dims.put("dim3", "tag3");
+
+    Map<String, String> agg2Dims = new LinkedHashMap<>();
+    agg2Dims.put("dim1", "tag1");
+    agg2Dims.put("dim2", "tag4");
+
+    // write 100 data points to agg1
+    for (int i = 1; i <= 100; i++) {
+      writeInc(cube, "metric1",  i,  1,  agg1Dims);
+      writeInc(cube, "metric2",  i,  2,  agg1Dims);
+    }
+
+    // write 50 data points to agg2
+    for (int i = 1; i <= 50; i++) {
+      writeInc(cube, "metric1",  i,  3,  agg2Dims);
+    }
+
+    // test limit must be greater than 0
+    CubeQuery query = new CubeQuery(null, 0, 200, 1, 0,
+                                    ImmutableMap.of("metric1", AggregationFunction.SUM),
+                                    agg1Dims, Collections.emptyList(),
+                                    AggregationOption.SUM,
+                                    null);
+    try {
+      cube.query(query);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
+
+    query = new CubeQuery(null, 0, 200, 1, -10,
+                                    ImmutableMap.of("metric1", AggregationFunction.SUM),
+                                    agg1Dims, Collections.emptyList(),
+                                    AggregationOption.SUM,
+                                    null);
+    try {
+      cube.query(query);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
+
+    // test a limit greater than the number data points, all the data points should be returned
+    query = new CubeQuery(null, 0, 200, 1, 200,
+                          ImmutableMap.of("metric1", AggregationFunction.SUM,
+                                          "metric2", AggregationFunction.SUM),
+                          agg1Dims, Collections.emptyList(),
+                          AggregationOption.SUM,
+                          null);
+    List<TimeSeries> result = new ArrayList<>(cube.query(query));
+    Assert.assertEquals(2, result.size());
+    verifySumAggregation(result.get(0), "metric1", 100, 1, 1, 0, 0);
+    verifySumAggregation(result.get(1), "metric2", 100, 2, 1, 0, 0);
+
+    // test aggregation option with sum for metric1 and metric2 for agg1, 5 data points for agg1 should get returned
+    // for both metric1 and metric2
+    query = new CubeQuery(null, 0, 200, 1, 5,
+                                    ImmutableMap.of("metric1", AggregationFunction.SUM,
+                                                    "metric2", AggregationFunction.SUM),
+                                    agg1Dims, Collections.emptyList(),
+                                   AggregationOption.SUM,
+                                    null);
+    result = new ArrayList<>(cube.query(query));
+    Assert.assertEquals(2, result.size());
+    // metric1 increment by 1 per second, so sum will be 100/5=20, metric2 increment by 2 per second, so sum will be
+    // 200/5=40
+    verifySumAggregation(result.get(0), "metric1", 5, 20, 20, 0, 0);
+    verifySumAggregation(result.get(1), "metric2", 5, 40, 20, 0, 0);
+
+    // test aggregation option with sum for metric1 with tag name dim1, it should return two time series for agg1 and
+    // agg2 for metric1, each with 5 data points
+    query = new CubeQuery(null, 0, 200, 1, 5,
+                          ImmutableMap.of("metric1", AggregationFunction.SUM),
+                          ImmutableMap.of("dim1", "tag1"), ImmutableList.of("dim2"),
+                          AggregationOption.SUM,
+                          null);
+    result = new ArrayList<>(cube.query(query));
+    Assert.assertEquals(2, result.size());
+    // agg1 gets increment by 1 for 100 seconds, so sum will be 100/5=20, agg2 gets increment by 3 for 50 seconds, so
+    // sum will be 3*50/5=30
+    verifySumAggregation(result.get(0), "metric1", 5, 30, 10, 0, 0);
+    verifySumAggregation(result.get(1), "metric1", 5, 20, 20, 0, 0);
+
+    // test metric1 with count 9, this will have a remainder 100%9=1, so there will be 9 aggregated data points, each
+    // with partition size 11
+    query = new CubeQuery(null, 0, 200, 1, 9,
+                          ImmutableMap.of("metric1", AggregationFunction.SUM),
+                          agg1Dims, Collections.emptyList(),
+                          AggregationOption.SUM,
+                          null);
+    result = new ArrayList<>(cube.query(query));
+    Assert.assertEquals(1, result.size());
+
+    // the rest data points have sum 11
+    verifySumAggregation(result.get(0), "metric1", 9, 11, 11, 1, 1);
+
+    // test metric1 with count 70, this will have a remainder 100%70=30, so the result will have last 70 data points,
+    // the first 30 data points will be ignored
+    query = new CubeQuery(null, 0, 200, 1, 70,
+                          ImmutableMap.of("metric1", AggregationFunction.SUM),
+                          agg1Dims, Collections.emptyList(),
+                          AggregationOption.SUM,
+                          null);
+
+    result = new ArrayList<>(cube.query(query));
+    Assert.assertEquals(1, result.size());
+    // the rest data points have sum 11
+    verifySumAggregation(result.get(0), "metric1", 70, 1, 1, 30, 30);
+  }
+
+  @Test
+  public void testMetricsAggregationOptionLatest() throws Exception {
+    Aggregation agg = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
+                                             ImmutableList.of("dim1"));
+
+    int resolution = 1;
+    Cube cube = getCube("testAggOptionLatest", new int[] {resolution}, ImmutableMap.of("agg", agg));
+
+    Map<String, String> aggDims = new LinkedHashMap<>();
+    aggDims.put("dim1", "tag1");
+    aggDims.put("dim2", "tag2");
+    aggDims.put("dim3", "tag3");
+
+    // write 100 data points to agg
+    for (int i = 1; i <= 100; i++) {
+      writeGauge(cube, "metric1",  i,  i,  aggDims);
+    }
+
+    // query for latest, should have the latest value for each interval, 20, 40, 60, 80, 100
+    CubeQuery query = new CubeQuery(null, 0, 200, 1, 5,
+                                    ImmutableMap.of("metric1", AggregationFunction.SUM),
+                                    aggDims, Collections.emptyList(),
+                                    AggregationOption.LATEST,
+                                    null);
+    List<TimeSeries> result = new ArrayList<>(cube.query(query));
+    Assert.assertEquals(1, result.size());
+    List<TimeValue> timeValues = result.get(0).getTimeValues();
+    for (int i = 0; i < timeValues.size(); i++) {
+      Assert.assertEquals(20 * (i + 1), timeValues.get(i).getValue());
+    }
+  }
+
+  private void verifySumAggregation(TimeSeries timeSeries, String metricName, int numPoints, int sum,
+                                    int timeInterval, int startIndex, int remainder) {
+    List<TimeValue> timeValues = timeSeries.getTimeValues();
+    Assert.assertEquals(numPoints, timeValues.size());
+    Assert.assertEquals(metricName, timeSeries.getMeasureName());
+    for (int i = startIndex; i < timeValues.size(); i++) {
+      Assert.assertEquals(remainder + timeInterval * (i + 1), timeValues.get(i).getTimestamp());
+      Assert.assertEquals(sum, timeValues.get(i).getValue());
+    }
+  }
 
   protected void writeInc(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
     cube.add(getFact(measureName, ts, value, MeasureType.COUNTER, dims));
@@ -410,6 +578,11 @@ public abstract class AbstractCubeTest {
 
   protected void writeGauge(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
     cube.add(getFact(measureName, ts, value, MeasureType.GAUGE, dims));
+  }
+
+  protected void writeGauge(Cube cube, String mearsureName, long ts, long value,
+                            Map<String, String> dims) throws Exception {
+    cube.add(getFact(mearsureName, ts, value, MeasureType.GAUGE, dims));
   }
 
   private void writeIncViaBatchWritable(Cube cube, String measureName, long ts,
