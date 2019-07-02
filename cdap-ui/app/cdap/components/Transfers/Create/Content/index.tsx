@@ -68,15 +68,17 @@ export default class Content extends React.PureComponent<{}, typeof defaultConte
     });
   };
 
-  public setSource = (source) => {
+  public setSource = (source, sourceConfig) => {
     this.setState({
       source,
+      sourceConfig,
     });
   };
 
-  public setTarget = (target) => {
+  public setTarget = (target, targetConfig) => {
     this.setState({
       target,
+      targetConfig,
     });
   };
 

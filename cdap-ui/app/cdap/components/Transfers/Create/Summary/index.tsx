@@ -21,6 +21,7 @@ import StepButtons from 'components/Transfers/Create/StepButtons';
 import { createTransfer } from 'components/Transfers/utilities';
 import { Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 
 const styles = (theme): StyleRules => {
   return {
@@ -47,6 +48,17 @@ const styles = (theme): StyleRules => {
       gridTemplateColumns: '50% 50%',
       gridColumnGap: '50px',
     },
+    table: {
+      marginBottom: '25px',
+      '& td': {
+        width: '50%',
+        whiteSpace: 'pre',
+      },
+      '& th': {
+        borderTop: '0',
+        color: theme.palette.grey[200],
+      },
+    },
   };
 };
 
@@ -54,7 +66,9 @@ interface ISummaryProps extends WithStyles<typeof styles> {
   name: string;
   description: string;
   source: any;
+  sourceConfig: any;
   target: any;
+  targetConfig: any;
   setActiveStep: (step) => void;
 }
 
@@ -62,7 +76,9 @@ const SummaryView: React.SFC<ISummaryProps> = ({
   name,
   description,
   source,
+  sourceConfig,
   target,
+  targetConfig,
   setActiveStep,
   classes,
 }) => {
@@ -89,6 +105,9 @@ const SummaryView: React.SFC<ISummaryProps> = ({
     return <Redirect to={`/ns/${getCurrentNamespace()}/transfers`} />;
   }
 
+  const sourceGroups = objectQuery(sourceConfig, 'configuration-groups');
+  const targetGroups = objectQuery(targetConfig, 'configuration-groups');
+
   return (
     <div className={classes.root}>
       <div>Review information and create transfer</div>
@@ -113,7 +132,35 @@ const SummaryView: React.SFC<ISummaryProps> = ({
               Edit
             </span>
           </div>
-          <pre>{JSON.stringify(source, null, 2)}</pre>
+
+          <div>
+            {sourceGroups.map((group, i) => {
+              return (
+                <div key={i}>
+                  <table className={`table ${classes.table}`}>
+                    <thead>
+                      <th>{group.label}</th>
+                      <th />
+                    </thead>
+                    <tbody>
+                      {group.properties.map((property) => {
+                        const propertyValue =
+                          objectQuery(source, 'plugin', 'properties', property.name) || '--';
+                        return (
+                          <tr key={property.name}>
+                            <td>
+                              <strong>{property.label}</strong>
+                            </td>
+                            <td>{propertyValue}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="target">
@@ -123,7 +170,35 @@ const SummaryView: React.SFC<ISummaryProps> = ({
               Edit
             </span>
           </div>
-          <pre>{JSON.stringify(target, null, 2)}</pre>
+          <div>
+            {targetGroups.map((group, i) => {
+              return (
+                <div key={i}>
+                  <table className={`table ${classes.table}`}>
+                    <thead>
+                      <th>{group.label}</th>
+                      <th />
+                    </thead>
+                    <tbody>
+                      {group.properties.map((property) => {
+                        const propertyValue =
+                          objectQuery(target, 'plugin', 'properties', property.name) || '--';
+
+                        return (
+                          <tr key={property.name}>
+                            <td>
+                              <strong>{property.label}</strong>
+                            </td>
+                            <td>{propertyValue}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 

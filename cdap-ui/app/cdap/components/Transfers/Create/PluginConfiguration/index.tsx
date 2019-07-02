@@ -86,7 +86,7 @@ const PluginConfigurationView: React.SFC<IPluginConfigurationView> = ({
         values={values}
         onChange={setValues}
       />
-      <StepButtons onNext={onNext.bind(null, generateStageConfig())} />
+      <StepButtons onNext={onNext.bind(null, generateStageConfig(), widgetJson)} />
     </div>
   );
 };

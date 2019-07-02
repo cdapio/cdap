@@ -21,13 +21,15 @@ export const defaultContext = {
   name: '',
   description: '',
   source: {},
+  sourceConfig: {},
   target: {},
+  targetConfig: {},
   // tslint:disable:no-empty
   next: () => {},
   previous: () => {},
   setNameDescription: (name, description) => {},
-  setSource: (source) => {},
-  setTarget: (target) => {},
+  setSource: (source, sourceConfig) => {},
+  setTarget: (target, targetConfig) => {},
   setActiveStep: (step) => {},
   // tslint:enable:no-empty
 };

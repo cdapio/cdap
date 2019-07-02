@@ -18,6 +18,7 @@ import * as React from 'react';
 import ActionsPopover from 'components/ActionsPopover';
 import { start, stop, deleteApp } from 'components/Transfers/utilities';
 import T from 'i18n-react';
+import StatusIndicator from 'components/StatusIndicator';
 
 const PREFIX = 'features.Transfers.Actions';
 
@@ -56,7 +57,9 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList, status }) => {
   return (
     <div className="grid-row" key={transfer.name}>
       <div>{transfer.name}</div>
-      <div>{status}</div>
+      <div>
+        <StatusIndicator status={status} />
+      </div>
       <div>MySQL</div>
       <div>BigQuery</div>
       <div>

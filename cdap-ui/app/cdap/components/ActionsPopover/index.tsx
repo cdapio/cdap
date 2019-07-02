@@ -48,7 +48,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
       target={(props) => <IconSVG name="icon-cog-empty" {...props} />}
       className="actions-popover"
       placement="bottom"
-      bubbleEvent={false}
+      bubbleEvent={true}
       enableInteractionInPopover={true}
       modifiers={POPPER_MODIFIERS}
     >

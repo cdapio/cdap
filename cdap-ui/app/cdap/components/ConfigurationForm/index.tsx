@@ -175,7 +175,7 @@ class ConfigurationFormView extends React.PureComponent<IConfigurationFormProps>
                   return (
                     <div key={property.name} className={classes.row}>
                       <div>
-                        <strong>
+                        <strong title={this.props.pluginProperties[property.name].description}>
                           {property.label}
                           <If condition={this.props.pluginProperties[property.name].required}>
                             <span className={classes.required}>*</span>
