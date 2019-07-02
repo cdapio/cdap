@@ -32,6 +32,21 @@ angular.module(PKG.name + '.commons')
 
         var fnElem = angular.element(fn.element);
 
+        /**
+         * This function is used when we "browse" connections from within
+         * the plugin and update the plugin based on response from
+         * wrangler. Ideally we shouldn't overwrite the reference
+         * but since its 2-way binding in angular we do it for now.
+         * When we migrate to react this should be a proper API call or a context
+         * update function.
+         */
+        scope.onComplete = (nodeProperties) => {
+          if (typeof scope.node.plugin.properties === 'object' && Object.keys(scope.node.plugin.properties).length > 1) {
+            scope.node.plugin.properties = Object.assign({}, scope.node.plugin.properties, nodeProperties);
+            return;
+          }
+          scope.node.plugin.properties = nodeProperties;
+        };
         angular.forEach(fn.attributes, function(value, key) {
           fnElem.attr(key, value);
         });

@@ -1,6 +1,7 @@
 const colors = require('styles/colors.scss');
 
 export const blue = {
+  40: colors.blue07,
   50: colors.blue01,
   100: colors.blue02,
   200: colors.blue03,

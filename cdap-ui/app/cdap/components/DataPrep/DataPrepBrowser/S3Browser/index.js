@@ -46,6 +46,7 @@ export default class S3Browser extends Component {
     match: PropTypes.object,
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
+    scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
   };
 
   static defaultProps = {
@@ -68,18 +69,18 @@ export default class S3Browser extends Component {
     let headers = {
       'Content-Type': file.type,
     };
-    MyDataPrepApi.readS3File(
-      {
-        context: namespace,
-        connectionId,
-        activeBucket,
-        key: file.path,
-        lines: 10000,
-        sampler: 'first',
-      },
-      null,
-      headers
-    ).subscribe(
+    let params = {
+      context: namespace,
+      connectionId,
+      activeBucket,
+      key: file.path,
+      lines: 10000,
+      sampler: 'first',
+    };
+    if (this.props.scope) {
+      params.scope = this.props.scope;
+    }
+    MyDataPrepApi.readS3File(params, null, headers).subscribe(
       (res) => {
         let { id: workspaceId } = res.values[0];
         if (this.props.enableRouting) {

@@ -33,7 +33,6 @@ import {
 import { Route, Switch, Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import T from 'i18n-react';
-import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
@@ -72,6 +71,8 @@ export default class DataPrepConnections extends Component {
     sidePanelExpanded: PropTypes.bool,
     allowSidePanelToggle: PropTypes.bool,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    defaultConnectionId: PropTypes.string,
+    defaultConnectionType: PropTypes.string,
     browserTitle: PropTypes.string,
   };
 
@@ -84,8 +85,10 @@ export default class DataPrepConnections extends Component {
     super(props);
 
     let { workspaceInfo } = DataPrepStore.getState().dataprep;
-    let activeConnectionType = objectQuery(workspaceInfo, 'properties', 'connection');
-    let activeConnectionid = objectQuery(workspaceInfo, 'properties', 'connectionid');
+    let activeConnectionType =
+      this.props.defaultConnectionType || objectQuery(workspaceInfo, 'properties', 'connection');
+    let activeConnectionid =
+      this.props.defaultConnectionId || objectQuery(workspaceInfo, 'properties', 'connectionid');
     if (activeConnectionType) {
       activeConnectionType = ConnectionType[activeConnectionType.toUpperCase()];
     }
@@ -157,6 +160,17 @@ export default class DataPrepConnections extends Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (
+      nextProps.defaultConnectionType !== this.props.defaultConnectionType ||
+      nextProps.defaultConnectionId !== this.props.defaultConnectionId
+    ) {
+      this.setState({
+        activeConnectionType: nextProps.defaultConnectionType || this.props.defaultConnectionType,
+        activeConnectionid: nextProps.defaultConnectionId || this.props.defaultConnectionId,
+      });
+    }
+  }
   componentWillUnmount() {
     if (typeof this.dataprepSubscription === 'function') {
       resetDataPrepBrowserStore();
@@ -547,7 +561,6 @@ export default class DataPrepConnections extends Component {
             <div key={gcs.id} title={gcs.name} className="clearfix">
               <NavLinkWrapper
                 to={`${baseLinkPath}/gcs/${gcs.id}`}
-                activeClassName="active"
                 isActive={(match) => {
                   return (
                     (this.state.activeConnectionType === ConnectionType.GCS &&
@@ -562,6 +575,7 @@ export default class DataPrepConnections extends Component {
                 })}
                 onClick={this.handlePropagation.bind(this, { ...gcs, name: ConnectionType.GCS })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.GCS}-connection-${gcs.name}`}
               >
                 {gcs.name}
               </NavLinkWrapper>
@@ -606,6 +620,7 @@ export default class DataPrepConnections extends Component {
                   name: ConnectionType.BIGQUERY,
                 })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-${bq.id}`}
               >
                 {bq.name}
               </NavLinkWrapper>
@@ -650,6 +665,7 @@ export default class DataPrepConnections extends Component {
                   name: ConnectionType.SPANNER,
                 })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.SPANNER}-connection-${spanner.id}`}
               >
                 {spanner.name}
               </NavLinkWrapper>
@@ -1209,7 +1225,7 @@ export default class DataPrepConnections extends Component {
       return (
         <div className="text-center">
           {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
-          <LoadingSVG />
+          <LoadingSVGCentered />;
         </div>
       );
     }

@@ -25,6 +25,7 @@ import CardActionFeedback, { CARD_ACTION_TYPES } from 'components/CardActionFeed
 import { objectQuery } from 'services/helpers';
 import ee from 'event-emitter';
 import BtnWithLoading from 'components/BtnWithLoading';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.BigQuery';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -234,6 +235,7 @@ export default class BigQueryConnection extends Component {
           loading={this.state.testConnectionLoading}
           label={T.translate(`${PREFIX}.testConnection`)}
           darker={true}
+          data-cy={`wrangler-${ConnectionType.BIGQUERY}-test-connection-button`}
         />
       </span>
     );
@@ -250,7 +252,12 @@ export default class BigQueryConnection extends Component {
 
     return (
       <ModalFooter>
-        <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
+        <button
+          className="btn btn-primary"
+          onClick={onClickFn}
+          disabled={disabled}
+          data-cy={`wrangler-${ConnectionType.BIGQUERY}-add-connection-button`}
+        >
           {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
         </button>
 
@@ -286,6 +293,7 @@ export default class BigQueryConnection extends Component {
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === 'EDIT'}
                   placeholder={T.translate(`${PREFIX}.Placeholders.name`)}
+                  data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-name`}
                 />
               </div>
             </div>
@@ -301,6 +309,7 @@ export default class BigQueryConnection extends Component {
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
                   placeholder={T.translate(`${PREFIX}.Placeholders.projectId`)}
+                  data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-projectid`}
                 />
               </div>
             </div>
@@ -318,6 +327,7 @@ export default class BigQueryConnection extends Component {
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
                   placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`)}
+                  data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-serviceaccount-filepath`}
                 />
               </div>
             </div>
@@ -333,6 +343,7 @@ export default class BigQueryConnection extends Component {
                   value={this.state.bucket}
                   onChange={this.handleChange.bind(this, 'bucket')}
                   placeholder={T.translate(`${PREFIX}.Placeholders.bucket`)}
+                  data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-temp-bucket`}
                 />
               </div>
             </div>
