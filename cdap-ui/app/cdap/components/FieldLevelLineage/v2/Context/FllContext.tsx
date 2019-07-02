@@ -15,13 +15,15 @@
 */
 
 import React from 'react';
-import data from './sample_response';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery, parseQueryString } from 'services/helpers';
 import {
-  makeTargetFields,
   IField,
   ILink,
   ITableFields,
-  getFieldsAndLinks,
+  getTableId,
+  getTimeRange,
+  fetchFieldLineage,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 
@@ -57,8 +59,6 @@ export interface IContextState {
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
-  private parsedRes = getFieldsAndLinks(data);
-
   private handleFieldClick = (e) => {
     const activeField = e.target.id;
     if (!activeField) {
@@ -69,15 +69,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
     this.setState(
       {
         activeField,
+        activeLinks: this.getActiveLinks(),
       },
       () => {
         d3.select(`#${activeField}`).classed('selected', true);
-        this.getActiveLinks();
       }
     );
   };
 
-  private getActiveLinks() {
+  private getActiveLinks = () => {
     const activeFieldId = this.state.activeField;
     const activeLinks = [];
     this.state.links.forEach((link) => {
@@ -86,26 +86,39 @@ export class Provider extends React.Component<{ children }, IContextState> {
         activeLinks.push(link);
       }
     });
-    this.setState({ activeLinks });
-  }
+    return activeLinks;
+  };
 
-  private getActiveSets() {
+  private getActiveSets = () => {
     const activeCauseSets = {};
     const activeImpactSets = {};
+    let activeLinks = this.state.activeLinks;
 
-    this.state.activeLinks.forEach((link) => {
+    if (!this.state.activeLinks) {
+      activeLinks = this.getActiveLinks();
+    }
+
+    activeLinks.forEach((link) => {
       // for each link, look at id prefix to find the field that is not the target and add to the activeCauseSets or activeImpactSets
       const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
-      const tableToUpdate = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
-      const tableId = `ns-${nonTargetFd.namespace}_ds-${nonTargetFd.dataset}`; // used as unique key to make sure we don't duplicate fields
-      if (!(tableId in tableToUpdate)) {
-        tableToUpdate[tableId] = [];
+      const tableId = getTableId(nonTargetFd.dataset, nonTargetFd.namespace, nonTargetFd.type);
+
+      if (nonTargetFd.type === 'cause') {
+        if (!(tableId in activeCauseSets)) {
+          activeCauseSets[tableId] = [];
+        }
+        activeCauseSets[tableId].push(nonTargetFd);
+      } else {
+        if (!(tableId in activeImpactSets)) {
+          activeImpactSets[tableId] = [];
+        }
+        activeImpactSets[tableId].push(nonTargetFd);
       }
-      tableToUpdate[tableId].push(nonTargetFd);
     });
 
     this.setState(
       {
+        activeLinks,
         activeCauseSets,
         activeImpactSets,
       },
@@ -115,7 +128,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
         });
       }
     );
-  }
+  };
 
   private handleViewCauseImpact = () => {
     this.getActiveSets();
@@ -128,11 +141,11 @@ export class Provider extends React.Component<{ children }, IContextState> {
   };
 
   public state = {
-    target: data.entityId.dataset,
-    targetFields: makeTargetFields(data.entityId, data.fields) as IField[],
-    links: this.parsedRes.links,
-    causeSets: this.parsedRes.causeTables,
-    impactSets: this.parsedRes.impactTables,
+    target: '',
+    targetFields: [],
+    links: [],
+    causeSets: {},
+    impactSets: {},
     activeField: null,
     showingOneField: false,
     activeCauseSets: null,
@@ -147,6 +160,18 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
   };
+
+  public initialize() {
+    const namespace = getCurrentNamespace();
+    const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
+    const queryParams = parseQueryString();
+    const timeRange = getTimeRange();
+    fetchFieldLineage(this, namespace, dataset, queryParams, timeRange);
+  }
+
+  public componentDidMount() {
+    this.initialize();
+  }
 
   public render() {
     return <FllContext.Provider value={this.state}>{this.props.children}</FllContext.Provider>;

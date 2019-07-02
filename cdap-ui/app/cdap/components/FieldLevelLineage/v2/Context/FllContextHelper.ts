@@ -14,6 +14,11 @@
  * the License.
 */
 
+import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
+import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
+import { parseQueryString } from 'services/helpers';
+import { MyMetadataApi } from 'api/metadata';
+
 // types for backend response
 interface IFllEntity {
   entityId?: IEntityId;
@@ -65,9 +70,8 @@ export function parseRelations(
   ents.map((ent) => {
     // Assumes that all tableNames are unique within a namespace
 
-    const tableId = `${isCause ? 'cause' : 'impact'}_ns-${ent.entityId.namespace}_ds-${
-      ent.entityId.dataset
-    }`;
+    const type = isCause ? 'cause' : 'impact';
+    const tableId = getTableId(ent.entityId.dataset, ent.entityId.namespace, type);
     // tables keeps track of fields for each incoming or outgoing dataset.
     tables[tableId] = [];
     // fieldIds keeps track of fields, since a single field can have multiple connections
@@ -88,13 +92,15 @@ export function parseRelations(
         namespace: ent.entityId.namespace,
       };
       if (!fieldIds.has(fieldName)) {
-        id = `${tableId}_fd-${fieldName}`;
+        id = getFieldId(fieldName, ent.entityId.dataset, ent.entityId.namespace, type);
         field.id = id;
         fieldIds.set(fieldName, id);
         tables[tableId].push(field);
       }
+
+      const targetName = isCause ? rel.destination : rel.source;
       const targetField: IField = {
-        id: `target_ns-${namespace}_ds-${target}_fd-${isCause ? rel.destination : rel.source}`,
+        id: getFieldId(targetName, target, namespace, 'target'),
         type: 'target',
         dataset: target,
         namespace,
@@ -132,4 +138,63 @@ export function makeTargetFields({ namespace, dataset }: IEntityId, fields: stri
     return field;
   });
   return targetFields;
+}
+
+export function getFieldId(fieldname, dataset, namespace, type) {
+  return `${type}_ns-${namespace}_ds-${dataset}_fd-${fieldname}`;
+}
+
+export function getTableId(dataset, namespace, type) {
+  return `${type}_ns-${namespace}_ds-${dataset}`;
+}
+
+export function getTimeRange() {
+  const queryString = parseQueryString();
+  const selection = queryString ? queryString.time : TIME_OPTIONS[1]; // default is last 7 days
+
+  if (selection === TIME_OPTIONS[0]) {
+    return {
+      start: selection.start || 'now-7d',
+      end: selection.end || 'now',
+    };
+  }
+  return TIME_OPTIONS_MAP[selection];
+}
+
+export function fetchFieldLineage(context, namespace, dataset, qParams, timeRange) {
+  let fieldname;
+  let activeField;
+
+  if (!qParams) {
+    fieldname = null;
+    activeField = null;
+  } else {
+    fieldname = qParams.field;
+    activeField = getFieldId(fieldname, dataset, namespace, 'target');
+  }
+
+  const start = timeRange.start;
+  const end = timeRange.end;
+
+  const params = {
+    namespace,
+    entityId: dataset,
+    direction: 'both',
+    start,
+    end,
+  };
+
+  MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
+    const parsedRes = getFieldsAndLinks(res);
+    const targetInfo = {
+      target: res.entityId.dataset,
+      targetFields: makeTargetFields(res.entityId, res.fields),
+      links: parsedRes.links,
+      causeSets: parsedRes.causeTables,
+      impactSets: parsedRes.impactTables,
+      activeField,
+    };
+
+    context.setState(targetInfo);
+  });
 }

@@ -17,16 +17,13 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
-import {
-  ITableFields,
-  ILink,
-  IField,
-} from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
+import If from 'components/If';
 
 const styles = (): StyleRules => {
   return {
@@ -58,8 +55,11 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
-    const sourceEl = d3.select(`#${source.id}`);
-    const destEl = d3.select(`#${destination.id}`);
+    const sourceId = source.id.replace(/\./g, '\\.');
+    const destId = destination.id.replace(/\./g, '\\.');
+
+    const sourceEl = d3.select(`#${sourceId}`);
+    const destEl = d3.select(`#${destId}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
     const offsetY = -48 + window.pageYOffset; // From the FllHeader
@@ -75,7 +75,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     // draw an edge from line start to line end
     const linkContainer = isSelected
       ? d3.select('#selected-links')
-      : d3.select(`#${source.id}_${destination.id}`);
+      : d3.select(`#${sourceId}_${destId}`);
 
     const third = (sourceX2 - sourceX1) / 3;
 
@@ -140,6 +140,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   }
 
   private drawLinks(links: ILink[], activeFieldId: string = null) {
+    if (links.length === 0) {
+      return;
+    }
     this.clearCanvas();
 
     links.forEach((link) => {
@@ -154,9 +157,14 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     if (showingOneField) {
       this.clearCanvas();
       this.drawActiveLinks(activeLinks);
-    } else {
-      this.drawLinks(links, activeField);
+      return;
     }
+
+    if (activeField) {
+      d3.select(`#${activeField}`).classed('selected', true);
+    }
+
+    this.drawLinks(links, activeField);
   }
 
   public componentWillUnmount() {
@@ -165,6 +173,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
   public componentDidMount() {
     const { links, activeField } = this.context;
+
     this.drawLinks(links, activeField);
     window.addEventListener('resize', debounce(this.drawLinks.bind(this, links, activeField), 1));
   }
@@ -205,18 +214,24 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </svg>
               <div>
                 <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
+                <If condition={Object.keys(visibleCauseSets).length === 0}>
+                  <FllTable type="cause" />
+                </If>
                 {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
-                  return <FllTable key={tableId} tableId={tableId} fields={fields} />;
+                  return <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />;
                 })}
               </div>
               <div>
                 <FllHeader type="target" total={Object.keys(targetFields).length} />
-                <FllTable tableId={target} fields={targetFields} />
+                <FllTable tableId={target} fields={targetFields} type="target" />
               </div>
               <div>
                 <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
+                <If condition={Object.keys(visibleImpactSets).length === 0}>
+                  <FllTable type="impact" />
+                </If>
                 {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
-                  return <FllTable key={tableId} tableId={tableId} fields={fields} />;
+                  return <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />;
                 })}
               </div>
             </div>
