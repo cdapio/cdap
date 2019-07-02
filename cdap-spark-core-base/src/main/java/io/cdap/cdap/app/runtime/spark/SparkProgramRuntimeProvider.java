@@ -316,6 +316,10 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     LOG.error("Yaojie - took {} ms to create spark runner class loader.", System.currentTimeMillis() - currentTime);
 
 
+    if (providerSparkCompat != SparkCompat.SPARK1_2_10) {
+      return runnerClassLoader;
+    }
+
     // CDAP-8087: Due to Scala 2.10 bug in not able to support runtime reflection from multiple threads,
     // we create the runtime mirror from this synchronized method
     // (there is only one instance of SparkProgramRuntimeProvider), and the mirror will be cached by Scala in a
