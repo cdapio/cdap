@@ -68,7 +68,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
 
           if (action.link) {
             return (
-              <li key={action.className} title={action.label.toString()}>
+              <li key={i} className={action.className} title={action.label.toString()}>
                 <a href={action.link} target="_blank">
                   {action.label}
                 </a>

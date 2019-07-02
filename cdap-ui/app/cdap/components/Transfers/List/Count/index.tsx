@@ -18,6 +18,7 @@ import * as React from 'react';
 import { transfersListConnect } from 'components/Transfers/List/context';
 import Heading, { HeadingTypes } from 'components/Heading';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Transfers.List';
 
@@ -29,7 +30,10 @@ const CountView: React.SFC<ICountProps> = ({ list }) => {
   return (
     <Heading
       type={HeadingTypes.h5}
-      label={T.translate(`${PREFIX}.count`, { context: list.length })}
+      label={T.translate(`${PREFIX}.count`, {
+        context: list.length,
+        featureName: Theme.featureNames.transfers,
+      })}
     />
   );
 };

@@ -17,12 +17,13 @@
 import * as React from 'react';
 import EntityTopPanel from 'components/EntityTopPanel';
 import Content from 'components/Transfers/Create/Content';
+import { Theme } from 'services/ThemeHelper';
 
 const Create: React.SFC = () => {
   return (
     <div>
       <EntityTopPanel
-        title="Create a new data transfer"
+        title={`Create a new ${Theme.featureNames.transfers.toLowerCase()}`}
         closeBtnAnchorLink={() => history.back()}
       />
       <Content />

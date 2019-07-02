@@ -21,6 +21,7 @@ import ArrowRight from '@material-ui/icons/ArrowRightAlt';
 import T from 'i18n-react';
 import { Link } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Transfers.List';
 
@@ -64,7 +65,11 @@ const AddNewTransferView: React.SFC<WithStyles<typeof styles>> = ({ classes }) =
           <ArrowRight className={classes.arrow} />
           <IconSVG name="icon-bigquery" />
         </div>
-        <div>{T.translate(`${PREFIX}.addNewTransfer`)}</div>
+        <div>
+          {T.translate(`${PREFIX}.addNewTransfer`, {
+            featureName: Theme.featureNames.transfers.toLowerCase(),
+          })}
+        </div>
       </Link>
     </div>
   );

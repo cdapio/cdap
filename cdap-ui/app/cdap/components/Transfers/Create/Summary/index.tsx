@@ -22,6 +22,7 @@ import { createTransfer } from 'components/Transfers/utilities';
 import { Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
+import { Theme } from 'services/ThemeHelper';
 
 const styles = (theme): StyleRules => {
   return {
@@ -110,7 +111,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
 
   return (
     <div className={classes.root}>
-      <div>Review information and create transfer</div>
+      <div>Review information and create {Theme.featureNames.transfers.toLowerCase()}</div>
 
       <div className={classes.headingContainer}>
         <div>
@@ -121,7 +122,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
             Edit
           </span>
         </div>
-        <div>{description} description</div>
+        <div>{description}</div>
       </div>
 
       <div className={classes.summaryContent}>

@@ -22,6 +22,7 @@ import NameDescription from 'components/Transfers/Create/NameDescription';
 import SourceConfig from 'components/Transfers/Create/SourceConfig';
 import TargetConfig from 'components/Transfers/Create/TargetConfig';
 import Summary from 'components/Transfers/Create/Summary';
+import { Theme } from 'services/ThemeHelper';
 
 export const CreateTransferSteps = [
   {
@@ -37,7 +38,7 @@ export const CreateTransferSteps = [
     component: TargetConfig,
   },
   {
-    label: 'Review and create data transfer',
+    label: `Review and create ${Theme.featureNames.transfers.toLowerCase()}`,
     component: Summary,
   },
 ];
