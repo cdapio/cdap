@@ -1259,7 +1259,7 @@ features:
         testConnection: Test Connection
       TestConnectionLabels:
         danger: Test connection failed
-        success: Test connection succcessful
+        success: Test connection successful
     bigquery: Google BigQuery ({count})
 
     ConnectionManagement:
@@ -1270,7 +1270,7 @@ features:
           header: "Delete connection: {connection}"
           helper1: You will no longer able to access data from this source.
           helper2: "You can reconnect to this source at any time by clicking \"Add Connection\""
-          mainMessage: "Are you sure you want to delete connection to {connection}?"
+          mainMessage: "Are you sure you want to delete connection {connection}?"
         failedDeleteMessage: Deleting connection failed
       delete: Delete
       duplicate: Duplicate

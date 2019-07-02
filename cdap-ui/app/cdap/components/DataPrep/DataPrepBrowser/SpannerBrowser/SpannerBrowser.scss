@@ -63,7 +63,10 @@ $instance-fill-color: $blue-02;
       height: calc(100% - 38px);
       overflow-y: auto;
 
-      a:hover { text-decoration: none; }
+      a {
+        display: block;
+        &:hover { text-decoration: none; }
+      }
 
       .content-row {
         border-bottom: 1px solid $header-border;

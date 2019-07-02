@@ -22,22 +22,45 @@
  */
 var fs = require('fs');
 var path = require('path');
-let files;
-const fixturepath = path.join(__dirname, '/fixtures');
 const tmpPath = '/tmp/cdap-ui-integration-fixtures';
-try {
-  files = fs.readdirSync(fixturepath);
-} catch (e) {
-  console.log('Error: Unable to read cypress fixtures directory. ', e);
-}
-files.filter((file) => file.indexOf('.csv') !== -1).forEach((file) => {
-  if (!fs.existsSync(tmpPath)) {
-    fs.mkdirSync(tmpPath);
+
+function copyFilesToTempDirectory() {
+  let files;
+  const fixturepath = path.join(__dirname, '/fixtures');
+  try {
+    files = fs.readdirSync(fixturepath);
+  } catch (e) {
+    console.log('Error: Unable to read cypress fixtures directory. ', e);
   }
-  fs.copyFile(`${fixturepath}/${file}`, `${tmpPath}/${file}`, (err) => {
-    if (err) {
-      console.log(`Copying ${file} failed. `, err);
-      return;
+  files.filter((file) => file.indexOf('.csv') !== -1).forEach((file) => {
+    if (!fs.existsSync(tmpPath)) {
+      fs.mkdirSync(tmpPath);
     }
+    fs.copyFile(`${fixturepath}/${file}`, `${tmpPath}/${file}`, (err) => {
+      if (err) {
+        console.log(`Copying ${file} failed. `, err);
+        return;
+      }
+    });
   });
-});
+}
+
+function updateGCPEnvironmentVariables() {
+  var serviceAccountFileContents = process.env.gcp_service_account_contents;
+  if (!serviceAccountFileContents) {
+    return;
+  }
+  if (serviceAccountFileContents) {
+    if (!fs.existsSync(tmpPath)) {
+      fs.mkdirSync(tmpPath);
+    }
+    try {
+      fs.writeFileSync(`${tmpPath}/gcp_service_account.json`, serviceAccountFileContents, {});
+    } catch (e) {
+      console.log('Unable to write GCP service account file: ', e);
+    }
+  }
+}
+
+copyFilesToTempDirectory();
+updateGCPEnvironmentVariables();
