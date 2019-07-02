@@ -120,14 +120,15 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
         HBaseTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       }
 
-      /*if (secureExplore) {
-        HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
-        JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
-      }*/
-      if (User.isSecurityEnabled()) {
+      if (secureExplore) {
         HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
         JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       } 
+      /*
+      if (User.isSecurityEnabled()) {
+        HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
+        JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
+      }*/ 
 
       if (secureStore instanceof DelegationTokensUpdater) {
         String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
