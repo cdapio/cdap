@@ -53,3 +53,18 @@ export TEMP_DIR="/tmp"
 # export KAFKA_JAVA_OPTS=""
 # export MASTER_JAVA_OPTS=""
 # export ROUTER_JAVA_OPTS=""
+
+export JAVA_LIBRARY_PATH=${JAVA_LIBRARY_PATH}:/usr/hdp/3.1.0.0-78/hadoop/lib/native/Linux-amd64-64:/usr/hdp/3.1.0.0-78/hadoop/lib/native
+export OPTS="${OPTS} -Dhdp.version=${HDP_VERSION:-3.1.0.0-78}"
+export CDAP_HOME=/opt/cdap
+export CDAP_CONF=/etc/cdap/conf
+export LOG_DIR=/var/log/cdap
+export PID_DIR=/var/run/cdap
+export AUTH_JAVA_HEAPMAX="-Xmx1024m"
+export KAFKA_JAVA_HEAPMAX="-Xmx1024m"
+export MASTER_JAVA_HEAPMAX="-Xmx1024m"
+export ROUTER_JAVA_HEAPMAX="-Xmx1024m"
+export SPARK_MAJOR_VERSION=2 
+export SPARK_HOME="/usr/hdp/3.1.0.0-78/spark2"
+export TEZ_HOME="/usr/hdp/3.1.0.0-78/tez"
+export TEZ_CONF_DIR="/etc/tez/conf"
