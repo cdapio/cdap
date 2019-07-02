@@ -296,13 +296,18 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
    */
   private synchronized SparkRunnerClassLoader createClassLoader(boolean filterScalaClasses,
                                                                 boolean rewriteYarnClient) throws IOException {
+
+    long currentTime = System.currentTimeMillis();
     // Determine if needs to filter Scala classes or not.
     FilterClassLoader filteredBaseParent = new FilterClassLoader(getClass().getClassLoader(), createClassFilter());
+    LOG.error("Yaojie - took {} ms to create the FilterClassLoader.", System.currentTimeMillis() - currentTime);
     ClassLoader runnerParentClassLoader = filterScalaClasses
       ? new ScalaFilterClassLoader(filteredBaseParent) : filteredBaseParent;
 
     if (classLoaderUrls == null) {
+      currentTime = System.currentTimeMillis();
       classLoaderUrls = getSparkClassloaderURLs(getClass().getClassLoader());
+      LOG.error("Yaojie - took {} ms to get spark class loader url.", System.currentTimeMillis() - currentTime);
     }
 
     SparkRunnerClassLoader runnerClassLoader = new SparkRunnerClassLoader(classLoaderUrls,
@@ -343,7 +348,9 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
    * given {@link ClassLoader}.
    */
   private URL[] getSparkClassloaderURLs(ClassLoader classLoader) throws IOException {
+    long currentTime = System.currentTimeMillis();
     List<URL> urls = ClassLoaders.getClassLoaderURLs(classLoader, new LinkedList<URL>());
+    LOG.error("Yaojie - took {} ms to get all the urls.", System.currentTimeMillis() - currentTime);
 
     // If Spark classes are not available in the given ClassLoader, try to locate the Spark framework
     // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
@@ -353,6 +360,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       // CDH also packages spark-yarn-shuffle.jar linked to spark-<version>-yarn-shuffle.jar in yarn's lib dir
       // Also filter out all jackson libraries that comes from the parent
       Iterator<URL> itor = urls.iterator();
+      currentTime = System.currentTimeMillis();
       while (itor.hasNext()) {
         URL url = itor.next();
         String filename = Paths.get(url.getPath()).getFileName().toString();
@@ -360,10 +368,14 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
           itor.remove();
         }
       }
+      LOG.error("Yaojie - took {} ms to iterate all the urls.", System.currentTimeMillis() - currentTime);
 
+      currentTime = System.currentTimeMillis();
       for (File file : SparkPackageUtils.getLocalSparkLibrary(providerSparkCompat)) {
         urls.add(file.toURI().toURL());
       }
+      LOG.error("Yaojie - took {} ms to iterate all the spark library jars.",
+                System.currentTimeMillis() - currentTime);
     }
 
     return urls.toArray(new URL[urls.size()]);
