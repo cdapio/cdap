@@ -233,8 +233,8 @@ class CDAP extends Component {
                     }}
                   />
                   {/*
-                  Eventually handling 404 should move to the error boundary and all container components will have the error object.
-                */}
+                    Eventually handling 404 should move to the error boundary and all container components will have the error object.
+                  */}
                   <Route
                     render={(props) => (
                       <ErrorBoundary>
