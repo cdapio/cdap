@@ -51,6 +51,9 @@ const DeployedPipelinesView = () => (
       {
         applications {
           name
+          artifact {
+            name
+          }
         }
       }
     `}
@@ -79,7 +82,7 @@ const DeployedPipelinesView = () => (
               <Pagination />
             </div>
 
-            <PipelineTable />
+            <PipelineTable pipelines={pipelines} />
           </div>
         </Provider>
       );

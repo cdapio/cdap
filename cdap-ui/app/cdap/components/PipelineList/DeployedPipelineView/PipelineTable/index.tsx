@@ -130,7 +130,6 @@ const PipelineTableView: React.SFC<IProps> = ({
 
 const mapStateToProps = (state) => {
   return {
-    pipelines: state.deployed.pipelines,
     pipelinesLoading: state.deployed.pipelinesLoading,
     search: state.deployed.search,
     statusMap: state.deployed.statusMap,
