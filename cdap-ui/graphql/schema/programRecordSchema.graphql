@@ -36,6 +36,17 @@ type MapReduce implements ProgramRecord {
   description: String!
 }
 
+type Spark implements ProgramRecord {
+
+  type: String!
+
+  app: String!
+
+  name: String!
+
+  description: String!
+}
+
 type Workflow implements ProgramRecord {
 
   type: String!

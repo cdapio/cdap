@@ -21,6 +21,7 @@ const programsTypeResolver = {
         switch (parent.type) {
           case 'Mapreduce': resolve('MapReduce')
           case 'Workflow': resolve('Workflow')
+          case 'Spark': resolve('Spark')
           default: resolve(null)
         }
       }));
