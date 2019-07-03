@@ -54,6 +54,28 @@ const DeployedPipelinesView = () => (
           artifact {
             name
           }
+          applicationDetail {
+            programs(type: "Workflow") {
+              name
+              ... on Workflow {
+                runs {
+                  status
+                  starting
+                }
+                schedules {
+                  name
+                  nextRuntimes
+                  status
+                }
+              }
+            }
+            metadata {
+              tags {
+                name
+                scope
+              }
+            }
+          }
         }
       }
     `}
