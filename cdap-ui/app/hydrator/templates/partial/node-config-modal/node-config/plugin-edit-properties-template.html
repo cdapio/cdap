@@ -15,20 +15,31 @@
 -->
 
 <form plugin-property-edit-view class="form-horizontal">
+  <div ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors" class="form-group">
+    <label class="col-xs-3 control-label">Error(s)</label>
+    <ul ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length > 0" class="col-xs-9 validation-errors-list">
+      <li class="col-xs-9 text-danger" ng-repeat="error in HydratorPlusPlusNodeConfigCtrl.validationErrors">{{error}}
+      </li>
+    </ul>
+    <span class="col-xs-9 text-success" ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length === 0">No
+      Validation Errors.</span>
+  </div>
   <div class="form-group">
     <label class="col-xs-3 control-label">
       <span class="required">Label</span>
-      <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
+      <small class="text-danger"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
     </label>
     <div class="col-xs-8 label-input-container">
-      <input type="text" class="form-control"
-           ng-disabled="isDisabled"
-           ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+      <input type="text" class="form-control" ng-disabled="isDisabled"
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
     </div>
   </div>
 
-  <div class="text-danger empty-hidden-properties-message" ng-if="HydratorPlusPlusNodeConfigCtrl.emptyHiddenFields.length">
-    Plugin contains hidden propertie(s) {{HydratorPlusPlusNodeConfigCtrl.emptyHiddenFields.join(', ')}} that do not have default values.
+  <div class="text-danger empty-hidden-properties-message"
+    ng-if="HydratorPlusPlusNodeConfigCtrl.emptyHiddenFields.length">
+    Plugin contains hidden propertie(s) {{HydratorPlusPlusNodeConfigCtrl.emptyHiddenFields.join(', ')}} that do not have
+    default values.
     Please provide a default value in the 'widget-attributes' section of the widget JSON.
   </div>
   <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
@@ -39,35 +50,31 @@
       <small class="plugin-group-description">{{group.description}}</small>
       <div ng-repeat="field in group.fields">
         <div
-          ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty && field['widget-type'] !== 'hidden'"
-        >
+          ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty && field['widget-type'] !== 'hidden'">
 
-          <div class="plugin-functions-container">
-            <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
-              <plugin-functions
-                fn-config="field['plugin-function']"
-                node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                node-config="field"
-              >
-              </plugin-functions>
-            </span>
+          <div class="form-group">
+            <div class="col-xs-offset-8 col-xs-4">
+              <span
+                ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
+                <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node"
+                  node-config="field">
+                </plugin-functions>
+              </span>
+            </div>
           </div>
 
-          <macro-widget-toggle
-            node="HydratorPlusPlusNodeConfigCtrl.state.node"
-            field="field"
-            disabled="isDisabled"></macro-widget-toggle>
+          <macro-widget-toggle node="HydratorPlusPlusNodeConfigCtrl.state.node" field="field" disabled="isDisabled">
+          </macro-widget-toggle>
 
-          <div class="plugin-functions-container">
-            <span class="plugin-function-bottom"
-              ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
-              <plugin-functions
-                fn-config="field['plugin-function']"
-                node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                node-config="field"
-              >
-              </plugin-functions>
-            </span>
+          <div class="form-group">
+            <div class="col-xs-offset-8 col-xs-4">
+              <span class="plugin-function-bottom"
+                ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
+                <plugin-functions fn-config="field['plugin-function']" node="HydratorPlusPlusNodeConfigCtrl.state.node"
+                  node-config="field">
+                </plugin-functions>
+              </span>
+            </div>
           </div>
 
         </div>
@@ -78,16 +85,13 @@
   <br>
 
   <div class="form-group" ng-if="HydratorPlusPlusNodeConfigCtrl.state.showErrorDataset">
-    <label class="col-xs-3 control-label"
-           uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}"
-           tooltip-placement="right">
+    <label class="col-xs-3 control-label" uib-tooltip="{{HydratorPlusPlusNodeConfigCtrl.state.errorDatasetTooltip}}"
+      tooltip-placement="right">
       Error Dataset
     </label>
     <div class="col-xs-8">
-      <input type="text"
-             class="form-control"
-             ng-disabled="isDisabled"
-             ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName">
+      <input type="text" class="form-control" ng-disabled="isDisabled"
+        ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.errorDatasetName">
     </div>
   </div>
 </form>

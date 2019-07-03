@@ -27,6 +27,9 @@
     </p>
   </h5>
   <div class="btn-group pull-right">
+    <button class="btn btn-primary validate-btn" type="button"
+            ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.validating}"
+            ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()">Validate</button>
     <my-link-button
       class="btn"
       ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length"
