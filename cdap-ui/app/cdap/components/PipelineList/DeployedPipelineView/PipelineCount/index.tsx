@@ -16,19 +16,19 @@
 
 import * as React from 'react';
 import T from 'i18n-react';
-import { connect } from 'react-redux';
-import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 import './PipelineCount.scss';
 
 interface IProps {
-  pipelines: IPipeline[];
+  // TODO create a new IPipeline type?
+  pipelines: object[];
   pipelinesLoading: boolean;
 }
 
 const PREFIX = 'features.PipelineList';
 
 const PipelineCountView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) => {
+  // TODO would it ever be loading now that we are using the GraphQL query implementation?
   if (pipelinesLoading) {
     return null;
   }
@@ -43,13 +43,6 @@ const PipelineCountView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) =
   );
 };
 
-const mapStateToProps = (state) => {
-  return {
-    pipelines: state.deployed.pipelines,
-    pipelinesLoading: state.deployed.pipelinesLoading,
-  };
-};
-
-const PipelineCount = connect(mapStateToProps)(PipelineCountView);
+const PipelineCount = PipelineCountView;
 
 export default PipelineCount;

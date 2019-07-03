@@ -49,7 +49,9 @@ const DeployedPipelinesView = () => (
   <Query
     query={gql`
       {
-        status
+        applications {
+          name
+        }
       }
     `}
   >
@@ -58,16 +60,21 @@ const DeployedPipelinesView = () => (
         return <p>Loading...</p>;
       }
       if (error) {
-        return <p>`Error! ${error.message}`</p>;
+        return (
+          <p>
+            Error! `$
+            {error.message}`
+          </p>
+        );
       }
 
-      console.log(data);
+      const pipelines = data.applications;
 
       return (
         <Provider store={Store}>
           <div className="pipeline-deployed-view pipeline-list-content">
             <div className="deployed-header">
-              <PipelineCount />
+              <PipelineCount pipelines={pipelines} pipelinesLoading={false} />
               <SearchBox />
               <Pagination />
             </div>
