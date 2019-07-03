@@ -44,6 +44,7 @@
 
   .row {
     display: flex;
+    flex-wrap: wrap;
   }
 
   // col-xs-NUM is now col-NUM :sigh:

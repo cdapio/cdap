@@ -229,6 +229,7 @@ export default class GCSConnection extends Component {
         onClick={this.testConnection}
         disabled={disabled}
         darker={true}
+        data-cy={`wrangler-${ConnectionType.GCS}-test-connection-button`}
       />
     );
   }
@@ -244,7 +245,12 @@ export default class GCSConnection extends Component {
 
     return (
       <ModalFooter>
-        <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
+        <button
+          className="btn btn-primary"
+          onClick={onClickFn}
+          disabled={disabled}
+          data-cy={`wrangler-${ConnectionType.GCS}-add-connection-button`}
+        >
           {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
         </button>
 
@@ -280,6 +286,7 @@ export default class GCSConnection extends Component {
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === 'EDIT'}
                   placeholder={T.translate(`${PREFIX}.Placeholders.name`)}
+                  data-cy={`wrangler-${ConnectionType.GCS}-connection-name`}
                 />
               </div>
             </div>
@@ -295,6 +302,7 @@ export default class GCSConnection extends Component {
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
                   placeholder={T.translate(`${PREFIX}.Placeholders.projectId`)}
+                  data-cy={`wrangler-${ConnectionType.GCS}-connection-projectid`}
                 />
               </div>
             </div>
@@ -312,6 +320,7 @@ export default class GCSConnection extends Component {
                   value={this.state.serviceAccountKeyfile}
                   onChange={this.handleChange.bind(this, 'serviceAccountKeyfile')}
                   placeholder={T.translate(`${PREFIX}.Placeholders.serviceAccountKeyfile`)}
+                  data-cy={`wrangler-${ConnectionType.GCS}-connection-serviceaccount-filepath`}
                 />
               </div>
             </div>

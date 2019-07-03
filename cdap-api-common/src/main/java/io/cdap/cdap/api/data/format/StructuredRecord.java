@@ -24,6 +24,7 @@ import io.cdap.cdap.api.data.schema.Schema.LogicalType;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -185,6 +186,10 @@ public class StructuredRecord implements Serializable {
     }
 
     int scale = logicalTypeSchema.getScale();
+    if (value instanceof ByteBuffer) {
+      return new BigDecimal(new BigInteger(Bytes.toBytes((ByteBuffer) value)), scale);
+    }
+
     return new BigDecimal(new BigInteger((byte[]) value), scale);
   }
 

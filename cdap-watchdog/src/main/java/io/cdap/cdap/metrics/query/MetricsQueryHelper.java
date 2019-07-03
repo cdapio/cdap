@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolators;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
@@ -45,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -245,9 +247,11 @@ public class MetricsQueryHelper {
         TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
     Integer count = null;
 
-    boolean aggregate =
-      queryTimeParams.containsKey(PARAM_AGGREGATE) && queryTimeParams.get(PARAM_AGGREGATE).get(0).equals("true") ||
-        ((start == null) && (end == null));
+    AggregationOption aggregationOption =
+      queryTimeParams.containsKey(PARAM_AGGREGATE)
+        ? AggregationOption.valueOf(queryTimeParams.get(PARAM_AGGREGATE).get(0).toUpperCase())
+        : AggregationOption.FALSE;
+    boolean aggregate = aggregationOption.equals(AggregationOption.TRUE) || ((start == null) && (end == null));
 
     Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION) ?
       getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : getResolution(null, start, end);
@@ -274,9 +278,9 @@ public class MetricsQueryHelper {
     }
 
     if (aggregate) {
-      request.setTimeRange(0L, 0L, 1, Integer.MAX_VALUE, null);
+      request.setTimeRange(0L, 0L, 1, Integer.MAX_VALUE, null, aggregationOption);
     } else {
-      request.setTimeRange(start, end, count, resolution, interpolator);
+      request.setTimeRange(start, end, count, resolution, interpolator, aggregationOption);
     }
   }
 
@@ -350,15 +354,19 @@ public class MetricsQueryHelper {
       throw new IllegalArgumentException("Missing metrics parameter in the query");
     }
 
-    Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
-
     MetricQueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
+    AggregationOption aggregation = timeRange.getAggregation();
+    if (timeRange.getCount() <= 0) {
+      throw new IllegalArgumentException("Invalid metrics aggregation request, the limit must be greater than 0");
+    }
+
+    Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
     MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
                                                 timeRange.getResolutionInSeconds(),
                                                 timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
                                                 tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
-                                                timeRange.getInterpolate());
+                                                aggregation, timeRange.getInterpolate());
     Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
     long endTime = timeRange.getEnd();
@@ -455,22 +463,23 @@ public class MetricsQueryHelper {
    * {@link MetricQueryRequest} will be constructed
    */
   public class QueryRequestFormat {
-    Map<String, String> tags;
-    List<String> metrics;
-    List<String> groupBy;
-    Map<String, String> timeRange;
+    private Map<String, String> tags;
+    private List<String> metrics;
+    private List<String> groupBy;
+    private Map<String, String> timeRange;
 
     public Map<String, String> getTags() {
-      tags = (tags == null) ? Maps.<String, String>newHashMap() : tags;
+      tags = tags == null ? Collections.emptyMap() : tags;
       return tags;
     }
 
     public List<String> getMetrics() {
+      metrics = metrics == null ? Collections.emptyList() : metrics;
       return metrics;
     }
 
     public List<String> getGroupBy() {
-      groupBy = (groupBy == null) ? Lists.<String>newArrayList() : groupBy;
+      groupBy = groupBy == null ? Collections.emptyList() : groupBy;
       return groupBy;
     }
 

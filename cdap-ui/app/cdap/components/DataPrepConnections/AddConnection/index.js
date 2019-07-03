@@ -25,9 +25,11 @@ import S3Connection from 'components/DataPrepConnections/S3Connection';
 import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
+import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
 import T from 'i18n-react';
 import find from 'lodash/find';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import ee from 'event-emitter';
 require('./AddConnection.scss');
 
 const PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -78,7 +80,18 @@ export default class AddConnection extends Component {
         icon: 'icon-spanner',
         component: SpannerConnection,
       },
+      {
+        type: ConnectionType.ADLS,
+        label: 'ADLS Handler',
+        icon: 'icon-adls',
+        component: ADLSConnection,
+      },
     ];
+    this.ee = ee(ee);
+  }
+
+  componentDidMount() {
+    this.ee.on('CREATE_WRANGLER_CONNECTION', this.createWranglerConnectionEvenHandler);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -88,6 +101,22 @@ export default class AddConnection extends Component {
       });
     }
   }
+
+  componentWillUnmount() {
+    if (this.ee) {
+      this.ee.off('CREATE_WRANGLER_CONNECTION', this.createWranglerConnectionEvenHandler);
+    }
+  }
+
+  createWranglerConnectionEvenHandler = (connectionType) => {
+    const connection = this.CONNECTIONS_TYPE.find((conn) => conn.type === connectionType);
+    if (connection) {
+      this.setState({
+        activeModal: connection.component,
+      });
+    }
+  };
+
   connectionClickHandler(component) {
     this.setState({
       activeModal: component,
@@ -119,7 +148,7 @@ export default class AddConnection extends Component {
 
   renderPopover() {
     const target = () => (
-      <button className="btn btn-secondary">
+      <button className="btn btn-secondary" data-cy="wrangler-add-connection-button">
         <span className="fa fa-fw">
           <IconSVG name="icon-plus" />
         </span>
@@ -148,6 +177,7 @@ export default class AddConnection extends Component {
                 key={connection.label}
                 className="connection-type-option"
                 onClick={this.connectionClickHandler.bind(this, connection.component)}
+                data-cy={`wrangler-connection-${connection.type}`}
               >
                 <span className="fa fa-fw">
                   <IconSVG name={connection.icon} />

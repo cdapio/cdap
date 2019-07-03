@@ -41,6 +41,7 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
@@ -283,7 +284,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
       saveKeyStores(serverKeyStore, clientKeyStore, keysDir);
 
-      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(programOptions, locationFactory);
+      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOptions, locationFactory);
       return new RemoteExecutionTwillPreparer(cConf, config, clusterKeyInfo.getSSHConfig(),
                                               serverKeyStore, clientKeyStore,
                                               application.configure(), programRunId, programOptions, null,
@@ -427,7 +428,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
               continue;
             }
 
-            ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(programOptions, locationFactory);
+            ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOptions, locationFactory);
             // Creates a controller via the controller factory.
             // Since there is no startup start needed, the timeout is arbitrarily short
             new ControllerFactory(programRunId, programOptions, clusterKeyInfo).create(null, 5, TimeUnit.SECONDS);
@@ -716,17 +717,20 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
    * A private class to hold secure key information for a program runtime.
    */
   private static final class ClusterKeyInfo {
+
+    private final CConfiguration cConf;
     private final Cluster cluster;
     private final SSHConfig sshConfig;
     private final KeyStore serverKeyStore;
     private final KeyStore clientKeyStore;
     private final String serverKeyStoreHash;
 
-    ClusterKeyInfo(ProgramOptions programOptions,
+    ClusterKeyInfo(CConfiguration cConf, ProgramOptions programOptions,
                    LocationFactory locationFactory) throws IOException, GeneralSecurityException {
       Arguments systemArgs = programOptions.getArguments();
       Location keysDir = getKeysDirLocation(programOptions, locationFactory);
 
+      this.cConf = cConf;
       this.cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
       this.sshConfig = createSSHConfig(cluster, keysDir);
       this.serverKeyStore = KeyStores.load(keysDir.append(Constants.RuntimeMonitor.SERVER_KEYSTORE), () -> "");
@@ -787,6 +791,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
       // Creates and return the twill preparer
       return SSHConfig.builder(masterNode.getIpAddress())
+        .setProxyAddress(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS))
         .setUser(sshKeyPair.getPublicKey().getUser())
         .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
         .build();

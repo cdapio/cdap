@@ -50,7 +50,7 @@ const mapDispatchToProps = (dispatch) => {
 
 const ClientResources = ({ virtualCores, onVirtualCoresChange, memoryMB, onMemoryMBChange }) => {
   return (
-    <div className="col-4 client">
+    <div className="client">
       <div className="resource-title-icon">
         <span className="resource-title">{T.translate(`${PREFIX}.client`)}</span>
         <Popover

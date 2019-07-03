@@ -215,11 +215,23 @@ function getArtifactNameAndVersion(nameWithVersion) {
   }
   let regExpRule = new RegExp('\\-(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
   let version = regExpRule.exec(nameWithVersion);
-  if (!version) {
-    return { name: nameWithVersion, version: undefined };
+  if (version && Array.isArray(version)) {
+    version = version[0].slice(1);
+  } else {
+    // when version is the filename i.e 1.2.3.jar
+    let nameIsVersionRegEx = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
+    let validVersion = nameIsVersionRegEx.exec(nameWithVersion);
+    if (validVersion && Array.isArray(validVersion)) {
+      return { name: nameWithVersion, version: nameWithVersion };
+    }
   }
-  version = version[0].slice(1);
-  let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1);
+  let name = version
+    ? nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1)
+    : nameWithVersion;
+  // if version is not present, default it to 1.0.0
+  if (!version) {
+    version = '1.0.0';
+  }
   return { version, name };
 }
 

@@ -83,12 +83,19 @@ public class MetricsHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * REST endpoint for metrics query
+   *
+   * @param metrics the list metrics name
+   * @param groupBy the list of tag names to group the results
+   * @param tags the tags of the metric names
+   */
   @POST
   @Path("/query")
   public void query(FullHttpRequest request, HttpResponder responder,
                     @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
-                    @QueryParam("tag") List<String> tags) throws Exception {
+                    @QueryParam("tag") List<String> tags) {
     try {
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.uri()).parameters();
       if (queryParams.isEmpty()) {

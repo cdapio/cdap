@@ -95,4 +95,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('multipleValuesWidget', function (reactDirective) {
     return reactDirective(window.CaskCommon.MultipleValuesWidget);
+  })
+  .directive('connectionBrowser', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PluginConnectionBrowser);
   });

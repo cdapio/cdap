@@ -580,7 +580,26 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
     checkForScrollbar();
   };
 
-  vm.includeEvent = function(event, eventType) {
+  function logLevelsFallThrough(levelObj, eventType) {
+    switch (eventType) {
+      case 'TRACE':
+        levelObj['TRACE'] = true;
+      /* falls through */
+      case 'DEBUG':
+        levelObj['DEBUG'] = true;
+      /* falls through */
+      case 'INFO':
+        levelObj['INFO'] = true;
+      /* falls through */
+      case 'WARN':
+        levelObj['WARN'] = true;
+      /* falls through */
+      case 'ERROR':
+        levelObj['ERROR'] = true;
+    }
+  }
+
+  vm.includeEvent = function (event, eventType) {
     if (eventType === vm.selectedLogLevel) {
       event.preventDefault();
       return;
@@ -590,30 +609,15 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
 
     // reset log levels
     vm.activeLogLevels = {
-      'ERROR' : false,
-      'WARN' : false,
-      'INFO' : false,
-      'DEBUG' : false,
-      'TRACE' : false
+      'ERROR': false,
+      'WARN': false,
+      'INFO': false,
+      'DEBUG': false,
+      'TRACE': false
     };
 
-    switch (eventType) {
-      case 'TRACE':
-        vm.activeLogLevels['TRACE'] = true;
-        /* falls through */
-      case 'DEBUG':
-        vm.activeLogLevels['DEBUG'] = true;
-        /* falls through */
-      case 'INFO':
-        vm.activeLogLevels['INFO'] = true;
-        /* falls through */
-      case 'WARN':
-        vm.activeLogLevels['WARN'] = true;
-        /* falls through */
-      case 'ERROR':
-        vm.activeLogLevels['ERROR'] = true;
-    }
-
+    logLevelsFallThrough(vm.activeLogLevels, eventType);
+    vm.setActiveTransitionChecks();
     // Whenever we change the log level filter, the data needs
     // to start from scratch
     vm.data = [];
@@ -624,6 +628,60 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
     vm.fromOffset = -10000 + '.' + vm.startTimeMs;
     vm.selectedLogLevel = eventType;
     startTimeRequest();
+  };
+
+  vm.setHoverLogLevels = function (eventType) {
+    vm.resetHoverLogLevels();
+    logLevelsFallThrough(vm.activeHoverLogLevels, eventType);
+    vm.setActiveTransitionChecks();
+  };
+
+  vm.resetHoverLogLevels = function () {
+    //Identifies what log levels should be in hovered state
+    vm.activeHoverLogLevels = {
+      'ERROR': false,
+      'WARN': false,
+      'INFO': false,
+      'DEBUG': false,
+      'TRACE': false
+    };
+    // Transition state - levels that would be added to active log levels or
+    // levels that would be removed from active log levels i.e greyed out levels
+    vm.activeTransitionChecks = {
+      'ERROR': false,
+      'WARN': false,
+      'INFO': false,
+      'DEBUG': false,
+      'TRACE': false
+    };
+  };
+
+  vm.setActiveTransitionChecks = function () {
+    //This function identifies which log levels are in transition state.
+    const noLevelHovered = !Object.values(vm.activeHoverLogLevels).some(el => el === true);
+    //Iterate over all log levels
+    Object.keys(vm.activeLogLevels).forEach(option => {
+      if (vm.activeLogLevels[option]) {
+        if (vm.activeHoverLogLevels[option]) {
+          //If current level is active and hovered on, it shoud be in active
+          // state i.e hovered on selected level => not in transition state.
+          vm.activeTransitionChecks[option] = false;
+        }
+        else {
+          // current level is active but not in hovered state, if none of the
+          // levels are hovered, current level should not be hovered
+          // i.e focus not on levels, don't grey out level
+          if (noLevelHovered) { vm.activeTransitionChecks[option] = false; }
+          // current level is active but not hovered, there is atleast one level
+          // that is in hovered state, current level is in transition state
+          // i.e removing log levels.
+          else { vm.activeTransitionChecks[option] = true; }
+        }
+      }
+      // current level is not active, transition state depends on hover state
+      // i.e adding new levels.
+      else { vm.activeTransitionChecks[option] = vm.activeHoverLogLevels[option]; }
+    });
   };
 
   vm.renderData = () => {

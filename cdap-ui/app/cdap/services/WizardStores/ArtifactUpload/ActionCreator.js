@@ -19,39 +19,17 @@ import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import isNil from 'lodash/isNil';
-import { Observable } from 'rxjs/Observable';
+import { getArtifactNameAndVersion } from 'services/helpers';
 
 // FIXME: Extract it out???
 const uploadArtifact = (includeParents = true) => {
   const state = ArtifactUploadStore.getState();
 
-  let getArtifactNameAndVersion = (nameWithVersion) => {
-    if (!nameWithVersion) {
-      return {
-        version: null,
-        name: null,
-      };
-    }
-
-    // core-plugins-3.4.0-SNAPSHOT.jar
-    // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning up to version beginning)
-    let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
-    let version = regExpRule.exec(nameWithVersion);
-    if (version && Array.isArray(version)) {
-      version = version[0];
-    }
-    let name = version ? nameWithVersion.substr(0, nameWithVersion.indexOf(version) - 1) : null;
-    return { version, name };
-  };
-
   let filename;
   if (state.upload.file.name && state.upload.file.name.length !== 0) {
     filename = state.upload.file.name.split('.jar')[0];
   }
-  let { name, version } = getArtifactNameAndVersion(filename);
-  if (!name || !version) {
-    return Observable.throw('Invalid driver JAR file name. The driver JAR file name must conform to the format <name>-<version>.jar (eg: mysql-connector-java-5.1.39-bin.jar)');
-  }
+  let { name } = getArtifactNameAndVersion(filename);
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let url = `/namespaces/${namespace}/artifacts/${name}`;
@@ -59,7 +37,7 @@ const uploadArtifact = (includeParents = true) => {
   let headers = {
     'Content-Type': 'application/octet-stream',
     'X-Archive-Name': name,
-    'Artifact-Version': version,
+    'Artifact-Version': state.configure.version,
     'Artifact-Plugins': JSON.stringify([
       {
         name: state.configure.name,

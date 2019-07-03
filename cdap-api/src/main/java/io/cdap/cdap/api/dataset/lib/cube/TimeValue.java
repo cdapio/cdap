@@ -61,7 +61,7 @@ public final class TimeValue implements Comparable<TimeValue> {
 
   @Override
   public int compareTo(TimeValue o) {
-    return timestamp > o.timestamp ? 1 : (timestamp < o.timestamp ? -1 : 0);
+    return Long.compare(timestamp, o.timestamp);
   }
 
   @Override

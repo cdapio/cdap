@@ -27,12 +27,12 @@ import {
   setGCSAsActiveBrowser,
   setBigQueryAsActiveBrowser,
   setSpannerAsActiveBrowser,
+  setAdlsAsActiveBrowser,
   reset as resetDataPrepBrowserStore,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import { Route, Switch, Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import T from 'i18n-react';
-import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
@@ -71,6 +71,8 @@ export default class DataPrepConnections extends Component {
     sidePanelExpanded: PropTypes.bool,
     allowSidePanelToggle: PropTypes.bool,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    defaultConnectionId: PropTypes.string,
+    defaultConnectionType: PropTypes.string,
     browserTitle: PropTypes.string,
   };
 
@@ -83,8 +85,10 @@ export default class DataPrepConnections extends Component {
     super(props);
 
     let { workspaceInfo } = DataPrepStore.getState().dataprep;
-    let activeConnectionType = objectQuery(workspaceInfo, 'properties', 'connection');
-    let activeConnectionid = objectQuery(workspaceInfo, 'properties', 'connectionid');
+    let activeConnectionType =
+      this.props.defaultConnectionType || objectQuery(workspaceInfo, 'properties', 'connection');
+    let activeConnectionid =
+      this.props.defaultConnectionId || objectQuery(workspaceInfo, 'properties', 'connectionid');
     if (activeConnectionType) {
       activeConnectionType = ConnectionType[activeConnectionType.toUpperCase()];
     }
@@ -101,6 +105,7 @@ export default class DataPrepConnections extends Component {
       gcsList: [],
       bigQueryList: [],
       spannerList: [],
+      adlsList: [],
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
@@ -155,6 +160,17 @@ export default class DataPrepConnections extends Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (
+      nextProps.defaultConnectionType !== this.props.defaultConnectionType ||
+      nextProps.defaultConnectionId !== this.props.defaultConnectionId
+    ) {
+      this.setState({
+        activeConnectionType: nextProps.defaultConnectionType || this.props.defaultConnectionType,
+        activeConnectionid: nextProps.defaultConnectionId || this.props.defaultConnectionId,
+      });
+    }
+  }
   componentWillUnmount() {
     if (typeof this.dataprepSubscription === 'function') {
       resetDataPrepBrowserStore();
@@ -243,6 +259,10 @@ export default class DataPrepConnections extends Component {
       setSpannerAsActiveBrowser({ name: ConnectionType.SPANNER, id: browserName.id }, true);
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.SPANNER;
+    } else if (typeof browserName === 'object' && browserName.type === ConnectionType.ADLS) {
+      setAdlsAsActiveBrowser({ name: ConnectionType.ADLS, id: browserName.id, path: '/' });
+      activeConnectionid = browserName.id;
+      activeConnectionType = ConnectionType.ADLS;
     }
 
     this.setState({
@@ -320,7 +340,8 @@ export default class DataPrepConnections extends Component {
         s3List = [],
         gcsList = [],
         bigQueryList = [],
-        spannerList = [];
+        spannerList = [],
+        adlsList = [];
 
       if (!state.activeConnectionId && !state.activeConnectionType && state.defaultConnection) {
         let defaultConnectionObj = find(res.values, { id: state.defaultConnection });
@@ -343,6 +364,8 @@ export default class DataPrepConnections extends Component {
           bigQueryList.push(connection);
         } else if (connection.type === ConnectionType.SPANNER) {
           spannerList.push(connection);
+        } else if (connection.type === ConnectionType.ADLS) {
+          adlsList.push(connection);
         }
       });
 
@@ -355,6 +378,7 @@ export default class DataPrepConnections extends Component {
         gcsList,
         bigQueryList,
         spannerList,
+        adlsList,
         loading: false,
       };
 
@@ -537,7 +561,6 @@ export default class DataPrepConnections extends Component {
             <div key={gcs.id} title={gcs.name} className="clearfix">
               <NavLinkWrapper
                 to={`${baseLinkPath}/gcs/${gcs.id}`}
-                activeClassName="active"
                 isActive={(match) => {
                   return (
                     (this.state.activeConnectionType === ConnectionType.GCS &&
@@ -552,6 +575,7 @@ export default class DataPrepConnections extends Component {
                 })}
                 onClick={this.handlePropagation.bind(this, { ...gcs, name: ConnectionType.GCS })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.GCS}-connection-${gcs.name}`}
               >
                 {gcs.name}
               </NavLinkWrapper>
@@ -596,6 +620,7 @@ export default class DataPrepConnections extends Component {
                   name: ConnectionType.BIGQUERY,
                 })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.BIGQUERY}-connection-${bq.id}`}
               >
                 {bq.name}
               </NavLinkWrapper>
@@ -640,12 +665,43 @@ export default class DataPrepConnections extends Component {
                   name: ConnectionType.SPANNER,
                 })}
                 isNativeLink={this.props.singleWorkspaceMode}
+                data-cy={`wrangler-${ConnectionType.SPANNER}-connection-${spanner.id}`}
               >
                 {spanner.name}
               </NavLinkWrapper>
 
               <ConnectionPopover
                 connectionInfo={spanner}
+                onAction={this.onActionFromConnectionsPopover}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderADLSDetail() {
+    let namespace = getCurrentNamespace();
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.adlsList.map((adls) => {
+          return (
+            <div key={adls.id} title={adls.name} className="clearfix">
+              <NavLinkWrapper
+                to={`${baseLinkPath}/adls/${adls.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, { ...adls, name: ConnectionType.ADLS })}
+                isNativeLink={this.props.singleWorkspaceMode}
+              >
+                {adls.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={adls}
                 onAction={this.onActionFromConnectionsPopover}
               />
             </div>
@@ -792,6 +848,18 @@ export default class DataPrepConnections extends Component {
                 </span>
               </div>
               {this.renderSpannerDetail()}
+            </ExpandableMenu>
+          </If>
+
+          <If condition={find(this.state.connectionTypes, { type: ConnectionType.ADLS })}>
+            <ExpandableMenu>
+              <div>
+                <span className="fa fa-fw">
+                  <IconSVG name="icon-adls" />
+                </span>
+                <span>{T.translate(`${PREFIX}.adls`, { count: this.state.adlsList.length })}</span>
+              </div>
+              {this.renderADLSDetail()}
             </ExpandableMenu>
           </If>
         </div>
@@ -951,6 +1019,24 @@ export default class DataPrepConnections extends Component {
           }}
         />
         <Route
+          path={`${BASEPATH}/adls/:adlsId`}
+          render={({ match }) => {
+            const id = match.params.adlsId;
+            const setActiveConnection = setAdlsAsActiveBrowser.bind(null, {
+              name: ConnectionType.ADLS,
+              id,
+            });
+            return (
+              <DataPrepBrowser
+                match={match}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+                setActiveConnection={setActiveConnection}
+              />
+            );
+          }}
+        />
+        <Route
           render={() => {
             let doesFileExists = find(this.state.connectionTypes, { type: ConnectionType.FILE });
             if (!this.state.defaultConnection && doesFileExists) {
@@ -1082,6 +1168,12 @@ export default class DataPrepConnections extends Component {
         { name: ConnectionType.SPANNER, id: this.state.activeConnectionid },
         true
       );
+    } else if (this.state.activeConnectionType === ConnectionType.ADLS) {
+      setActiveConnection = setAdlsAsActiveBrowser.bind(null, {
+        name: ConnectionType.ADLS,
+        id: this.state.activeConnectionid,
+        path: '/',
+      });
     }
 
     const isFileConnectionValid = find(connectionTypes, { type: ConnectionType.FILE });
@@ -1133,7 +1225,7 @@ export default class DataPrepConnections extends Component {
       return (
         <div className="text-center">
           {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
-          <LoadingSVG />
+          <LoadingSVGCentered />;
         </div>
       );
     }

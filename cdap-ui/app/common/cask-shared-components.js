@@ -81,6 +81,8 @@ var KeyValueDropdownWidget = require('../cdap/components/AbstractWidget/KeyValue
   .default;
 var MultipleValuesWidget = require('../cdap/components/AbstractWidget/MultipleValuesWidget')
   .default;
+var PluginConnectionBrowser = require('../cdap/components/DataPrepConnections/PluginConnectionBrowser')
+  .default;
 
 export {
   Store,
@@ -141,4 +143,5 @@ export {
   Select,
   KeyValueDropdownWidget,
   MultipleValuesWidget,
+  PluginConnectionBrowser,
 };

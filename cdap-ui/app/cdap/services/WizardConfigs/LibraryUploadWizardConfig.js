@@ -34,7 +34,7 @@ let commonSteps = [
     title: T.translate('features.Wizard.LibraryUpload.Step2.title'),
     description: T.translate('features.Wizard.LibraryUpload.Step2.description'),
     content: <ConfigureStep />,
-    requiredFields: ['name', 'type', 'parentArtifact', 'classname'],
+    requiredFields: ['name', 'type', 'parentArtifact', 'classname', 'version'],
   },
 ];
 

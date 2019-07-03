@@ -36,7 +36,7 @@
           "widget-type": "textbox",
           "label": "Network",
           "name": "network",
-          "description": "Select a VPC network in the specified project to use for creating clusters with this profile. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's network will be used.",
+          "description": "Select a VPC network in the specified project to use when creating clusters with this profile. If this is left blank or set to 'auto-detect', a network from the project will be chosen.",
           "widget-attributes": {
             "default": "default",
             "size": "medium"
@@ -97,6 +97,15 @@
               "us-west1-c"
             ],
             "default": "us-east1-c",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Subnet",
+          "name": "subnet",
+          "description": "Subnet to use when creating clusters. The subnet must be within the given network, and it must be for the same region that the zone is in. If this is left blank, a subnet will automatically be chosen based on the network and zone.",
+          "widget-attributes": {
             "size": "medium"
           }
         },

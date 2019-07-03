@@ -35,6 +35,7 @@ interface ISpannerBrowserProps {
   toggle: (e: React.MouseEvent<HTMLElement>) => void;
   onWorkspaceCreate: () => void;
   enableRouting: boolean;
+  scope: boolean | string;
 }
 
 export default class SpannerBrowser extends React.PureComponent<ISpannerBrowserProps> {
@@ -67,11 +68,20 @@ export default class SpannerBrowser extends React.PureComponent<ISpannerBrowserP
             <Switch>
               <Route exact path={instancesPath} component={SpannerInstanceList} />
               <Route exact path={databasesPath} component={SpannerDatabaseList} />
-              <Route exact path={tablesPath} component={SpannerTableList} />
+              <Route
+                exact
+                path={tablesPath}
+                render={(routeParams) => (
+                  <SpannerTableList {...routeParams} scope={this.props.scope} />
+                )}
+              />
               <Route render={Page404} />
             </Switch>
           ) : (
-            <SpannerDisplaySwitch onWorkspaceCreate={this.props.onWorkspaceCreate} />
+            <SpannerDisplaySwitch
+              onWorkspaceCreate={this.props.onWorkspaceCreate}
+              scope={this.props.scope}
+            />
           )}
         </div>
       </Provider>

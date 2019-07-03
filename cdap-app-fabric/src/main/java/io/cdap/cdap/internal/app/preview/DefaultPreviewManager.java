@@ -56,6 +56,7 @@ import io.cdap.cdap.data.runtime.preview.PreviewDataModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
@@ -116,6 +117,7 @@ public class DefaultPreviewManager implements PreviewManager {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final Cache<ApplicationId, Injector> appInjectors;
   private final Path previewDataDir;
+  private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
 
   @Inject
   DefaultPreviewManager(final CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
@@ -123,7 +125,8 @@ public class DefaultPreviewManager implements PreviewManager {
                         PreferencesService preferencesService, SecureStore secureStore,
                         TransactionSystemClient transactionSystemClient, ArtifactRepository artifactRepository,
                         ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
-                        PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
+                        PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer,
+                        ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
@@ -137,6 +140,7 @@ public class DefaultPreviewManager implements PreviewManager {
     this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
+    this.programRuntimeProviderLoader = programRuntimeProviderLoader;
 
     this.appInjectors = CacheBuilder.newBuilder()
       .maximumSize(cConf.getInt(Constants.Preview.PREVIEW_CACHE_SIZE, 10))
@@ -239,7 +243,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new LocalLocationModule(),
       new ConfigStoreModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-                              privilegesManager, preferencesService),
+                              privilegesManager, preferencesService, programRuntimeProviderLoader),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient),
       new PreviewDataModules().getDataSetsModule(datasetFramework),

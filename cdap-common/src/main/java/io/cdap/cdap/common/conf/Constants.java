@@ -75,6 +75,10 @@ public final class Constants {
   public static final String REQUIREMENTS_DATASET_TYPE_EXCLUDE = "requirements.datasetTypes.exclude.list";
 
 
+  // Configurations for external proxy support for out going connections.
+  // Configuration key for the monitor proxy in the format of "host:port"
+  public static final String NETWORK_PROXY_ADDRESS = "network.proxy.address";
+
   /**
    * Configuration for Master startup.
    */
@@ -858,11 +862,6 @@ public final class Constants {
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
 
-    // Configuration key for the service proxy in the format of "host:port"
-    public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
-    // Configuration key for the service proxy password. It is only used within a runtime cluster.
-    public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
-
     // Constants for secure connections
     public static final String SSH_USER = "ssh.user";
     public static final String PUBLIC_KEY = "id_rsa.pub";
@@ -870,8 +869,14 @@ public final class Constants {
     public static final String SERVER_KEYSTORE = "server.jks";
     public static final String CLIENT_KEYSTORE = "client.jks";
 
+    // Configurations related to the Service Proxy that runs in the remote runtime for proxying traffic from
+    // remote cluster back into calling CDAP services.
     // File name that stores the service proxy information
     public static final String SERVICE_PROXY_FILE = "service.proxy.json";
+    // Configuration key for the service proxy in the format of "host:port"
+    public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
+    // Configuration key for the service proxy password. It is only used within a runtime cluster.
+    public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
   }
 
   /**
