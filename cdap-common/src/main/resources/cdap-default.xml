@@ -69,6 +69,15 @@
   </property>
 
   <property>
+    <name>network.proxy.address</name>
+    <value></value>
+    <description>
+      A SOCKS 5 proxy address for CDAP to proxy outgoing connections.
+      The address must be in the format of "host:port".
+    </description>
+  </property>
+
+  <property>
     <name>local.data.dir</name>
     <value>data</value>
     <description>

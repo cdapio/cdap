@@ -54,6 +54,7 @@ public final class CubeQuery {
   private final Map<String, AggregationFunction> measurements;
   private final Map<String, String> dimensionValues;
   private final List<String> groupByDimensions;
+  private final AggregationOption aggregationOption;
   private final Interpolator interpolator;
 
   /**
@@ -67,12 +68,14 @@ public final class CubeQuery {
    * @param measurements map of measure name, measure type to query for, empty map means "all measures"
    * @param dimensionValues dimension values to filter by
    * @param groupByDimensions dimensions to group by
+   * @param aggregationOption the aggregation option for the
    * @param interpolator {@link Interpolator} to use
    */
   public CubeQuery(@Nullable String aggregation,
                    long startTs, long endTs, int resolution, int limit,
                    Map<String, AggregationFunction> measurements,
                    Map<String, String> dimensionValues, List<String> groupByDimensions,
+                   AggregationOption aggregationOption,
                    @Nullable Interpolator interpolator) {
     this.aggregation = aggregation;
     this.startTs = startTs;
@@ -82,6 +85,7 @@ public final class CubeQuery {
     this.measurements = measurements;
     this.dimensionValues = Collections.unmodifiableMap(new HashMap<>(dimensionValues));
     this.groupByDimensions = Collections.unmodifiableList(new ArrayList<>(groupByDimensions));
+    this.aggregationOption = aggregationOption;
     this.interpolator = interpolator;
   }
 
@@ -117,6 +121,10 @@ public final class CubeQuery {
   // todo: push down limit support to Cube
   public int getLimit() {
     return limit;
+  }
+
+  public AggregationOption getAggregationOption() {
+    return aggregationOption;
   }
 
   public Interpolator getInterpolator() {
@@ -173,7 +181,7 @@ public final class CubeQuery {
      */
     private CubeQuery build() {
       return new CubeQuery(aggregation, startTs, endTs, resolution, limit,
-                           measurements, dimensionValues, groupByDimensions, interpolator);
+                           measurements, dimensionValues, groupByDimensions, null, interpolator);
     }
 
     /**

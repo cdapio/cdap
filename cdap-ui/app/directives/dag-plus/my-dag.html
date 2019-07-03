@@ -151,24 +151,9 @@
                   data-nodetype="condition-false">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
-            <div ng-if="node.error">
-              <div class="error-node-notification"
-                   ng-if="node.errorCount > 0"
-                   uib-tooltip="{{node.errorMessage || 'Please check the node properties'}}"
-                   tooltip-append-to-body="true"
-                   tooltip-class="tooltip-error">
-                <span class="badge badge-danger">
-                  <span>{{node.errorCount}}</span>
-                </span>
-              </div>
-            </div>
-            <div ng-if="!node.error">
-              <div class="error-node-notification"
-                   ng-if="node.errorCount > 0"
-                   uib-tooltip="Please check the node properties"
-                   tooltip-append-to-body="true"
-                   tooltip-class="tooltip-warning">
-                <span class="badge badge-warning">
+            <div ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
+              <div class="error-node-notification" ng-if="node.errorCount > 0">
+                <span class="badge" ng-class="{'badge-warning': !node.error, 'badge-danger': node.error}">
                   <span>{{node.errorCount}}</span>
                 </span>
               </div>

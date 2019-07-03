@@ -27,7 +27,6 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Redirect } from 'react-router-dom';
 import orderBy from 'lodash/orderBy';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
-import LoadingSVG from 'components/LoadingSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
 import { objectQuery } from 'services/helpers';
 import isNil from 'lodash/isNil';
@@ -35,6 +34,7 @@ import ee from 'event-emitter';
 import Version from 'services/VersionRange/Version';
 import { Theme } from 'services/ThemeHelper';
 import { setWorkspace } from 'components/DataPrep/store/DataPrepActionCreator';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 require('./DataPrepHome.scss');
 /**
@@ -317,7 +317,7 @@ export default class DataPrepHome extends Component {
       return (
         <div className="text-center">
           {renderPageTitle()}
-          <LoadingSVG />
+          <LoadingSVGCentered />
         </div>
       );
     }

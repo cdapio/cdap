@@ -31,6 +31,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyException;
 import java.util.Map;
@@ -43,12 +44,16 @@ import javax.annotation.Nullable;
  */
 public class DefaultSSHContext implements SSHContext {
 
+  private final InetSocketAddress proxyAddress;
+
   @Nullable
   private final Location keysDir;
   @Nullable
   private SSHKeyPair sshKeyPair;
 
-  DefaultSSHContext(@Nullable Location keysDir, @Nullable SSHKeyPair keyPair) {
+  DefaultSSHContext(@Nullable InetSocketAddress proxyAddress,
+                    @Nullable Location keysDir, @Nullable SSHKeyPair keyPair) {
+    this.proxyAddress = proxyAddress;
     this.keysDir = keysDir;
     this.sshKeyPair = keyPair;
   }
@@ -107,6 +112,7 @@ public class DefaultSSHContext implements SSHContext {
                                      String host, int port, Map<String, String> configs) throws IOException {
     SSHConfig config = SSHConfig.builder(host)
       .setPort(port)
+      .setProxyAddress(proxyAddress)
       .setUser(user)
       .setPrivateKeySupplier(privateKeySupplier)
       .build();

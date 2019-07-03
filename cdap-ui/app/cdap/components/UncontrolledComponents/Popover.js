@@ -103,6 +103,7 @@ export default class UncontrolledPopover extends Component {
         id={this.state.id}
         onClick={this.togglePopover}
         ref={(ref) => (this.popover = ref)}
+        data-cy={this.props['data-cy']}
       >
         {this.renderPopover()}
       </span>
@@ -119,4 +120,5 @@ UncontrolledPopover.propTypes = {
   icon: PropTypes.string,
   className: PropTypes.string,
   popoverClassName: PropTypes.string,
+  'data-cy': PropTypes.string,
 };

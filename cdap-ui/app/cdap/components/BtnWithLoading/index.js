@@ -27,6 +27,7 @@ export default function BtnWithLoading({
   loading,
   disabled,
   onClick,
+  ...restProps
 }) {
   return (
     <button
@@ -35,6 +36,7 @@ export default function BtnWithLoading({
       })}
       onClick={onClick}
       disabled={disabled || loading}
+      {...restProps}
     >
       {!loading ? (
         label

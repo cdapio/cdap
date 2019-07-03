@@ -91,7 +91,7 @@ angular.module(PKG.name + '.commons')
       // x, y - position of the anchor.
       // dx, dy - orientation of the curve incident on the anchor
       // offsetx, offsety - offset for the anchor
-      anchor: [0.9, 0.65, 0, 1, 2, 0],
+      anchor: [0.9, 0.65, 1, 0, 2, 0],
     };
 
     var alertEndpointStyle = {
@@ -286,7 +286,7 @@ angular.module(PKG.name + '.commons')
         'conditional': 'fa-question-circle-o'
       };
 
-      var pluginName = plugin.toLowerCase();
+      var pluginName = plugin ? plugin.toLowerCase() : '';
       var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
       return icon;
     }

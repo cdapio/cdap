@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
+import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
@@ -73,16 +74,19 @@ public class PreviewRunnerModule extends PrivateModule {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
+  private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
 
   public PreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
                              AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
-                             PrivilegesManager privilegesManager, PreferencesService preferencesService) {
+                             PrivilegesManager privilegesManager, PreferencesService preferencesService,
+                             ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
+    this.programRuntimeProviderLoader = programRuntimeProviderLoader;
   }
 
   @Override
@@ -101,6 +105,8 @@ public class PreviewRunnerModule extends PrivateModule {
     // bind explore client to mock.
     bind(ExploreClient.class).to(MockExploreClient.class);
     expose(ExploreClient.class);
+    bind(ProgramRuntimeProviderLoader.class).toInstance(programRuntimeProviderLoader);
+    expose(ProgramRuntimeProviderLoader.class);
     bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
 
     bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);

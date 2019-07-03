@@ -26,6 +26,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
 }
 
 .database-options {
+  padding: 10px;
+
   .db-image-container,
   .db-info {
     display: inline-block;

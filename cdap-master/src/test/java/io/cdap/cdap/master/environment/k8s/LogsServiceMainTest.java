@@ -88,18 +88,24 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     // Query the appended logs, we can not query logs for a given run because run record does not exist
     String url = "/v3/namespaces/default/apps/app1/workflows/myworkflow/logs?format=json";
     Tasks.waitFor(true, () -> {
-      HttpResponse response = doGet(url, client);
+      HttpResponse response = doGet(url, client, Constants.Service.LOG_QUERY);
       if (response.getResponseCode() == 200) {
         List<LogDataOffset> list = GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGDATA_OFFSET_TYPE);
         return list.size() == 6 && list.get(5).log.getMessage().equals("5");
       }
       return false;
     }, 5, TimeUnit.MINUTES, 500, TimeUnit.MILLISECONDS);
+
+    // make sure log saver status service has started
+    String statusUrl = "/v3/system/services/log.saver/status";
+    HttpResponse response = doGet(statusUrl, client, Constants.Service.LOGSAVER);
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private HttpResponse doGet(String path, DiscoveryServiceClient discoveryServiceClient) throws IOException {
+  private HttpResponse doGet(String path, DiscoveryServiceClient discoveryServiceClient,
+                             String serviceName) throws IOException {
     Discoverable discoverable = new RandomEndpointStrategy(
-      () -> discoveryServiceClient.discover(Constants.Service.LOG_QUERY)).pick(10, TimeUnit.SECONDS);
+      () -> discoveryServiceClient.discover(serviceName)).pick(10, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 
     InetSocketAddress addr = discoverable.getSocketAddress();

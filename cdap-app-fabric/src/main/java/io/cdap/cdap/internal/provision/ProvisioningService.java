@@ -39,6 +39,7 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
@@ -193,7 +194,9 @@ public class ProvisioningService extends AbstractIdleService {
     // Create the ProvisionerContext and query the cluster status using the provisioner
     ProvisionerContext context;
     try {
-      context = createContext(programRunId, userId, properties, new DefaultSSHContext(null, null));
+      context = createContext(programRunId, userId, properties,
+                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    null, null));
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -534,7 +537,8 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerContext context;
     try {
       context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
-                              new DefaultSSHContext(locationFactory.create(taskInfo.getSecureKeysDir()),
+                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    locationFactory.create(taskInfo.getSecureKeysDir()),
                                                     createSSHKeyPair(taskInfo)));
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
@@ -586,7 +590,9 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
-      context = createContext(programRunId, taskInfo.getUser(), properties, new DefaultSSHContext(null, sshKeyPair));
+      context = createContext(programRunId, taskInfo.getUser(), properties,
+                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    null, sshKeyPair));
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "

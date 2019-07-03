@@ -16,15 +16,16 @@
 
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
+@import "../../styles/variables.less";
 
-@border-color: #cccccc;
+@border-color: @grey-05;
 @headerbar-background-color: #525252;
 @headerbar-stat-color: #000000;
 @headerbar-stat-name-color: #ffffff;
 @headerbar-font-size: 12px;
 @table-background-color: white;
 @stack-trace-background-color: lighten(black, 35%);
-@stack-trace-font-color: #cccccc;
+@stack-trace-font-color: @grey-05;
 @message-expanded-color: #dedede;
 @searchbar-placeholder-color: #787878;
 @searchbar-input-color: #9cbcfc;
@@ -33,9 +34,11 @@
 @warning-color: #ffa726;
 @selected-row-color: #e4e4e4;
 @application-primary-color: #43b82f;
-@application-secondary-color: #d15668;
+@application-secondary-color: @red-03;
 @application-completed-color: #5a84e4;
 @application-default-color: #969696;
+@log-level-check-selected-color: @blue-02;
+@log-level-check-transition-color: @grey-04;
 
 body.theme-cdap {
   .modal.hydrator-modal {
@@ -591,10 +594,28 @@ my-log-viewer-preview {
           border-left: 0;
           border-right: 0;
 
-          ul.dropdown-menu { width: 30px; }
+          ul.dropdown-menu {
+            width: 30px;
+            padding: 0px;
 
-          li {
-            input { margin: 5px 5px 5px 8px; }
+            .fa-check {
+              margin: 0px 5px;
+              visibility: hidden;
+            }
+
+            .log-level-label-regular {
+              font-weight: initial;
+            }
+
+            .log-level-check-selected {
+              visibility: visible;
+              color: @log-level-check-selected-color;
+            }
+
+            .log-level-check-transition {
+              visibility: visible;
+              color: @log-level-check-transition-color;
+            }
           }
         }
         td {

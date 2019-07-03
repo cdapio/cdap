@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.dataset2.lib.cube;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -26,6 +27,7 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
+import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
 import io.cdap.cdap.api.dataset.lib.cube.CubeDeleteQuery;
 import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
@@ -47,9 +49,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,6 +76,8 @@ public class DefaultCube implements Cube, MeteredDataset {
   private static final DimensionValueComparator DIMENSION_VALUE_COMPARATOR = new DimensionValueComparator();
   // hard-limit on max records to scan
   private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
+  private static final EnumSet<AggregationOption> PARTITION_AGG_OPTIONS = EnumSet.of(AggregationOption.LATEST,
+                                                                                     AggregationOption.SUM);
 
   private final Map<Integer, FactTable> resolutionToFactTable;
   private final Map<String, ? extends Aggregation> aggregations;
@@ -439,30 +445,56 @@ public class DefaultCube implements Cube, MeteredDataset {
     return result;
   }
 
-  private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
-                                                      Table<Map<String, String>, String,
-                                                        Map<Long, Long>> resultTable) {
-
-    List<TimeSeries> result = Lists.newArrayList();
+  private Collection<TimeSeries> convertToQueryResult(
+    CubeQuery query, Table<Map<String, String>, String, Map<Long, Long>> resultTable) {
+    List<TimeSeries> result = new ArrayList<>();
     // iterating each groupValue dimensions
     for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
       // iterating each measure
       for (Map.Entry<String, Map<Long, Long>> measureEntry : row.getValue().entrySet()) {
         // generating time series for a grouping and a measure
         int count = 0;
-        List<TimeValue> timeValues = Lists.newArrayList();
+        List<TimeValue> timeValues = new ArrayList<>();
         for (Map.Entry<Long, Long> timeValue : measureEntry.getValue().entrySet()) {
           timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
         }
         Collections.sort(timeValues);
-        PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
-          new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
-        List<TimeValue> resultTimeValues = Lists.newArrayList();
-        while (timeValueItor.hasNext()) {
-          TimeValue timeValue = timeValueItor.next();
-          resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
-          if (++count >= query.getLimit()) {
-            break;
+        List<TimeValue> resultTimeValues = new ArrayList<>();
+
+        AggregationOption aggregationOption = query.getAggregationOption();
+        // this should not happen in production, since the check has been made in the handler
+        if (query.getLimit() <= 0) {
+          throw new IllegalArgumentException("The query limit cannot be less than 0");
+        }
+        // only partition the data points if the data points are larger than the required limit and only do it for
+        // option LATEST and SUM.
+        if (query.getLimit() < timeValues.size() && PARTITION_AGG_OPTIONS.contains(aggregationOption)) {
+          int partitionSize = timeValues.size() / query.getLimit();
+          int remainder = timeValues.size() % query.getLimit();
+          // ignore the first reminderth data points
+          for (List<TimeValue> interval : Iterables.partition(timeValues.subList(remainder,
+                                                                                 timeValues.size()), partitionSize)) {
+            // for LATEST we only need to get the last data point in the interval
+            if (aggregationOption.equals(AggregationOption.LATEST)) {
+              resultTimeValues.add(interval.get(interval.size() - 1));
+              continue;
+            }
+            // for SUM we want to sum up all the values in the interval
+            if (aggregationOption.equals(AggregationOption.SUM)) {
+              long sum = interval.stream().mapToLong(TimeValue::getValue).sum();
+              resultTimeValues.add(new TimeValue(interval.get(interval.size() - 1).getTimestamp(), sum));
+            }
+          }
+        } else {
+          // TODO: CDAP-15565 remove the interpolation logic since it is never maintained and adds huge complexity
+          PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
+            new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
+          while (timeValueItor.hasNext()) {
+            TimeValue timeValue = timeValueItor.next();
+            resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+            if (++count >= query.getLimit()) {
+              break;
+            }
           }
         }
         result.add(new TimeSeries(measureEntry.getKey(), row.getKey(), resultTimeValues));

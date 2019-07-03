@@ -36,6 +36,7 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import { setGCSPrefix } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 const PREFIX = 'features.DataPrep.DataPrepBrowser.GCSBrowser.BrowserData';
+require('./TableContents.scss');
 
 // Lazy load polyfill in safari as InteresectionObservers are not implemented there yet.
 (async () => {
@@ -164,7 +165,9 @@ export default class TableContents extends React.PureComponent<
             return (
               <ContainerElement
                 key={file.name}
-                className={classnames({ disabled: !file.directory && !file.wrangle })}
+                className={classnames('content-row', {
+                  disabled: !file.directory && !file.wrangle,
+                })}
                 to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
                 onClick={this.onClickHandler.bind(
                   null,
@@ -195,7 +198,7 @@ export default class TableContents extends React.PureComponent<
         {data.slice(0, this.state.windowSize).map((file, i) => (
           <ContainerElement
             key={file.name}
-            className={classnames({ disabled: !file.directory && !file.wrangle })}
+            className={classnames('content-row', { disabled: !file.directory && !file.wrangle })}
             to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
             onClick={this.onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
           >

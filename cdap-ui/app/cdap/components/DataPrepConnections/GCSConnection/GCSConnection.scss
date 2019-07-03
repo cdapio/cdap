@@ -22,6 +22,14 @@ $success-color: $green-02;
 .modal-dialog.gcs-connection-modal {
 
   .gcs-detail {
+    /**
+      Right now we use 'row' for individual form fields and that
+      adds margin of -15px on left and right.
+      Modal has a padding 10px which causes the rows to overflow and cause
+      horizontal scroll for no reason.
+      Hence this 5px to offset it.
+    */
+    padding: 5px;
     .col-form-label {
       font-weight: 500;
       font-size: 14px;

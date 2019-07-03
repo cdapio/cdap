@@ -17,7 +17,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import Popover from 'components/Popover';
 import PipelineResources from 'components/PipelineResources';
@@ -62,12 +61,7 @@ const ExecutorResources = ({
 }) => {
   let isMapReduce = engine === ENGINE_OPTIONS.MAPREDUCE && isBatch;
   return (
-    <div
-      className={classnames('executor', {
-        'col-6': isBatch,
-        'col-4': !isBatch,
-      })}
-    >
+    <div className="executor">
       <div className="resource-title-icon">
         <span className="resource-title">
           {isMapReduce

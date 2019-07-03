@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.common.ssh;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * Configurations for creating a {@link DefaultSSHSession}.
@@ -28,15 +30,17 @@ public final class SSHConfig {
 
   private final String host;
   private final int port;
+  private final InetSocketAddress proxyAddress;
 
   private final String user;
   private final Supplier<byte[]> privateKeySupplier;
   private final Map<String, String> configs;
 
-  private SSHConfig(String host, int port, String user,
+  private SSHConfig(String host, int port, @Nullable InetSocketAddress proxyAddress, String user,
                     Supplier<byte[]> privateKeySupplier, Map<String, String> configs) {
     this.host = host;
     this.user = user;
+    this.proxyAddress = proxyAddress;
     this.privateKeySupplier = privateKeySupplier;
     this.port = port;
     this.configs = Collections.unmodifiableMap(new HashMap<>(configs));
@@ -54,6 +58,14 @@ public final class SSHConfig {
    */
   public int getPort() {
     return port;
+  }
+
+  /**
+   * Returns the proxy address for ssh connection, or {@code null} if no proxy was set.
+   */
+  @Nullable
+  public InetSocketAddress getProxyAddress() {
+    return proxyAddress;
   }
 
   /**
@@ -100,7 +112,8 @@ public final class SSHConfig {
     private final String host;
     private final Map<String, String> configs = new HashMap<>();
     private int port = 22;
-    private String user;
+    private InetSocketAddress proxyAddress;
+    private String user = System.getProperty("user.name");
     private Supplier<byte[]> privateKeySupplier;
 
     private Builder(String host) {
@@ -109,6 +122,11 @@ public final class SSHConfig {
 
     public Builder setPort(int port) {
       this.port = port;
+      return this;
+    }
+
+    public Builder setProxyAddress(InetSocketAddress proxyAddress) {
+      this.proxyAddress = proxyAddress;
       return this;
     }
 
@@ -133,7 +151,10 @@ public final class SSHConfig {
     }
 
     public SSHConfig build() {
-      return new SSHConfig(host, port, user, privateKeySupplier, configs);
+      if (privateKeySupplier == null) {
+        throw new IllegalArgumentException("Missing private key for SSH to " + user + "@" + host);
+      }
+      return new SSHConfig(host, port, proxyAddress, user, privateKeySupplier, configs);
     }
   }
 }

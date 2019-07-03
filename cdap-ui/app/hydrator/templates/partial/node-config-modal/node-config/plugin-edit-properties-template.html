@@ -42,17 +42,15 @@
           ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty && field['widget-type'] !== 'hidden'"
         >
 
-          <div class="form-group">
-            <div class="col-xs-offset-8 col-xs-4">
-                <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
-                  <plugin-functions
-                    fn-config="field['plugin-function']"
-                    node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                    node-config="field"
-                  >
-                  </plugin-functions>
-                </span>
-              </div>
+          <div class="plugin-functions-container">
+            <span ng-if="field['plugin-function'] && (!field['plugin-function']['position'] || field['plugin-function']['position'] === 'top') && !isDisabled">
+              <plugin-functions
+                fn-config="field['plugin-function']"
+                node="HydratorPlusPlusNodeConfigCtrl.state.node"
+                node-config="field"
+              >
+              </plugin-functions>
+            </span>
           </div>
 
           <macro-widget-toggle
@@ -60,18 +58,16 @@
             field="field"
             disabled="isDisabled"></macro-widget-toggle>
 
-          <div class="form-group">
-            <div class="col-xs-offset-8 col-xs-4">
-              <span class="plugin-function-bottom"
-                ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
-                <plugin-functions
-                  fn-config="field['plugin-function']"
-                  node="HydratorPlusPlusNodeConfigCtrl.state.node"
-                  node-config="field"
-                >
-                </plugin-functions>
-              </span>
-            </div>
+          <div class="plugin-functions-container">
+            <span class="plugin-function-bottom"
+              ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">
+              <plugin-functions
+                fn-config="field['plugin-function']"
+                node="HydratorPlusPlusNodeConfigCtrl.state.node"
+                node-config="field"
+              >
+              </plugin-functions>
+            </span>
           </div>
 
         </div>

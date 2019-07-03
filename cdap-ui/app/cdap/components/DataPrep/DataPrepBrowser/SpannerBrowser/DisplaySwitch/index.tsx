@@ -23,14 +23,17 @@ import { connect } from 'react-redux';
 interface ISpannerDisplaySwitchProps {
   instanceId: string;
   databaseId: string;
+  scope: boolean | string;
   onWorkspaceCreate: () => void;
 }
 
 const SpannerDisplaySwitchView: React.SFC<ISpannerDisplaySwitchProps> = (props) => {
-  const { instanceId, databaseId, onWorkspaceCreate } = props;
+  const { instanceId, databaseId, onWorkspaceCreate, scope } = props;
 
   if (databaseId) {
-    return <SpannerTableList enableRouting={false} onWorkspaceCreate={onWorkspaceCreate} />;
+    return (
+      <SpannerTableList enableRouting={false} onWorkspaceCreate={onWorkspaceCreate} scope={scope} />
+    );
   } else if (instanceId) {
     return <SpannerDatabaseList enableRouting={false} />;
   }

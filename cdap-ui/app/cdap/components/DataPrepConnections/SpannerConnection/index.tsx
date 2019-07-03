@@ -250,6 +250,7 @@ export default class SpannerConnection extends React.PureComponent<
           loading={this.state.testConnectionLoading}
           label={T.translate(`${PREFIX}.testConnection`)}
           darker={true}
+          data-cy={`wrangler-${ConnectionType.SPANNER}-test-connection-button`}
         />
       </span>
     );
@@ -266,7 +267,12 @@ export default class SpannerConnection extends React.PureComponent<
 
     return (
       <ModalFooter>
-        <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
+        <button
+          className="btn btn-primary"
+          onClick={onClickFn}
+          disabled={disabled}
+          data-cy={`wrangler-${ConnectionType.SPANNER}-add-connection-button`}
+        >
           {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
         </button>
 
@@ -302,6 +308,7 @@ export default class SpannerConnection extends React.PureComponent<
                   onChange={this.handleChange.bind(this, 'name')}
                   disabled={this.props.mode === ConnectionMode.Edit}
                   placeholder={T.translate(`${PREFIX}.Placeholders.name`).toString()}
+                  data-cy={`wrangler-${ConnectionType.SPANNER}-connection-name`}
                 />
               </div>
             </div>
@@ -317,6 +324,7 @@ export default class SpannerConnection extends React.PureComponent<
                   value={this.state.projectId}
                   onChange={this.handleChange.bind(this, 'projectId')}
                   placeholder={T.translate(`${PREFIX}.Placeholders.projectId`).toString()}
+                  data-cy={`wrangler-${ConnectionType.SPANNER}-connection-projectid`}
                 />
               </div>
             </div>
@@ -336,6 +344,7 @@ export default class SpannerConnection extends React.PureComponent<
                   placeholder={T.translate(
                     `${PREFIX}.Placeholders.serviceAccountKeyfile`
                   ).toString()}
+                  data-cy={`wrangler-${ConnectionType.SPANNER}-connection-serviceaccount-filepath`}
                 />
               </div>
             </div>

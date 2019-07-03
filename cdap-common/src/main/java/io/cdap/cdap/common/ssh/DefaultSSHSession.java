@@ -23,6 +23,7 @@ import com.jcraft.jsch.ChannelDirectTCPIP;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.ProxySOCKS5;
 import com.jcraft.jsch.Session;
 import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
@@ -71,6 +72,11 @@ public class DefaultSSHSession implements SSHSession {
       Session session = jsch.getSession(config.getUser(), config.getHost(), config.getPort());
       session.setDaemonThread(true);
       session.setConfig("StrictHostKeyChecking", "no");
+
+      InetSocketAddress proxyAddr = config.getProxyAddress();
+      if (proxyAddr != null) {
+        session.setProxy(new ProxySOCKS5(proxyAddr.getHostString(), proxyAddr.getPort()));
+      }
 
       for (Map.Entry<String, String> entry : config.getConfigs().entrySet()) {
         session.setConfig(entry.getKey(), entry.getValue());
