@@ -30,6 +30,9 @@ angular.module(PKG.name + '.commons')
         if (!scope.fnConfig) { return; }
         var fn = PluginsFunctionsFactory.registry[scope.fnConfig.widget];
 
+        if (!fn) {
+          return;
+        }
         var fnElem = angular.element(fn.element);
 
         angular.forEach(fn.attributes, function(value, key) {
