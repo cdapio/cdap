@@ -303,6 +303,10 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     SparkRunnerClassLoader runnerClassLoader = new SparkRunnerClassLoader(classLoaderUrls,
                                                                           runnerParentClassLoader, rewriteYarnClient);
 
+    if (providerSparkCompat != SparkCompat.SPARK1_2_10) {
+      return runnerClassLoader;
+    }
+
     // CDAP-8087: Due to Scala 2.10 bug in not able to support runtime reflection from multiple threads,
     // we create the runtime mirror from this synchronized method
     // (there is only one instance of SparkProgramRuntimeProvider), and the mirror will be cached by Scala in a
