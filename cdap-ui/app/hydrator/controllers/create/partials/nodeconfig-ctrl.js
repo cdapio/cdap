@@ -446,6 +446,86 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
     return true;
   }
+  validatePluginPreferences() {
+    const nodeInfo = this.state.node;
+    let schemaParseError = null;
+    let vm = this;
+    vm.validating = true;
+    const pluginInfo = angular.copy(nodeInfo.plugin);
+    pluginInfo.type = nodeInfo.type;
+
+    const requestBody = {
+      stage: {
+        name: nodeInfo.name,
+        plugin: pluginInfo,
+      },
+      inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map((input) => {
+        let schema;
+        try {
+          schema = JSON.parse(input.schema);
+        } catch (e) {
+          schemaParseError = e;
+        }
+        return {
+          stage: input.name,
+          schema
+        };
+      })
+    };
+
+    if (schemaParseError) {
+      vm.validationErrors = [schemaParseError];
+      return;
+    }
+
+    const parseResSchema = (res) => {
+      if (res.name && res.type && res.fields) {
+        return [this.HydratorPlusPlusNodeService.getOutputSchemaObj(res)];
+      }
+      let schemaArr = [];
+      angular.forEach(res, (value, key) => {
+        if (value.name && value.type && value.fields) {
+          schemaArr.push(this.HydratorPlusPlusNodeService.getOutputSchemaObj(value, key));
+        }
+      });
+      let recordSchemas = schemaArr.filter(schema => schema.name.substring(0, 6) === 'record');
+      let schemaArrWithoutRecordSchemas = _.difference(schemaArr, recordSchemas);
+      let schemaArrWithSortedRecordSchemas = schemaArrWithoutRecordSchemas.concat(_.sortBy(recordSchemas, 'name'));
+      return schemaArrWithSortedRecordSchemas;
+    };
+
+    const params = {
+      context: this.$state.params.namespace
+    };
+
+    this.myPipelineApi.validateStage(params, requestBody)
+      .$promise
+      .then((res) => {
+        vm.validating = false;
+        if (res.errors.length > 0) {
+          let errors = res.errors.map(err => err.message);
+          vm.validationErrors = errors;
+        } else {
+          const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
+          const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
+          if (!outputSchema && !portSchemas) {
+            vm.validationErrors = ['There is no output schema.'];
+            return;
+          }
+          const schemas = parseResSchema(outputSchema || portSchemas).map(schema => {
+            return {
+              name: schema.name,
+              schema: JSON.stringify(schema.schema)
+            };
+          });
+          vm.EventPipe.emit('schema.import', schemas);
+          vm.validationErrors = [];
+        }
+      }, (err) => {
+        vm.validating = false;
+        vm.validationErrors = [err];
+      });
+  }
   hasUniqueFields(schema, error) {
     if (!schema) { return true; }
 
