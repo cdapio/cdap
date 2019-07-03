@@ -54,11 +54,16 @@ import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 import ThemeWrapper from 'components/ThemeWrapper';
 import './globals';
+import { ApolloProvider } from 'react-apollo';
+import ApolloClient from 'apollo-boost';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
   loading: LoadingSVGCentered,
 });
+
+// TODO how to get the url
+const client = new ApolloClient({ uri: 'http://localhost:11011/graphql' });
 
 class CDAP extends Component {
   constructor(props) {
@@ -105,143 +110,145 @@ class CDAP extends Component {
   render() {
     return (
       <Router history={history}>
-        <div className="cdap-container">
-          <Helmet title={Theme.productName} />
-          <AppHeader />
-          <LoadingIndicator />
-          <StatusAlertMessage />
-          {this.state.authorizationFailed ? (
-            <AuthorizationErrorMessage />
-          ) : (
-            <div className="container-fluid">
-              <Switch>
-                <Route
-                  exact
-                  path="/"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <RouteToNamespace {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route
-                  exact
-                  path="/notfound"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <Page404 {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route
-                  path="/administration"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <Administration {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route
-                  exact
-                  path="/ns"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <RouteToNamespace {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route
-                  path="/ns/:namespace"
-                  history={history}
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <Home {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route
-                  exact
-                  path="/httpexecutor"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <HttpExecutor {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
+        <ApolloProvider client={client}>
+          <div className="cdap-container">
+            <Helmet title={Theme.productName} />
+            <AppHeader />
+            <LoadingIndicator />
+            <StatusAlertMessage />
+            {this.state.authorizationFailed ? (
+              <AuthorizationErrorMessage />
+            ) : (
+              <div className="container-fluid">
+                <Switch>
+                  <Route
+                    exact
+                    path="/"
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <RouteToNamespace {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
+                  <Route
+                    exact
+                    path="/notfound"
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <Page404 {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
+                  <Route
+                    path="/administration"
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <Administration {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
+                  <Route
+                    exact
+                    path="/ns"
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <RouteToNamespace {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
+                  <Route
+                    path="/ns/:namespace"
+                    history={history}
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <Home {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
+                  <Route
+                    exact
+                    path="/httpexecutor"
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <HttpExecutor {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
 
-                <Route
-                  exact
-                  path="/ts-example"
-                  render={(props) => {
-                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
-                      return <Page404 {...props} />;
-                    }
-                    const SampleTSXComponent = Loadable({
-                      loader: () =>
-                        import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
-                      loading: LoadingSVGCentered,
-                    });
-                    return (
-                      <ErrorBoundary>
-                        <SampleTSXComponent {...props} />
-                      </ErrorBoundary>
-                    );
-                  }}
-                />
-                <Route
-                  exact
-                  path="/markdownexperiment"
-                  render={(props) => {
-                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
-                      return <Page404 {...props} />;
-                    }
-                    const MarkdownImpl = Loadable({
-                      loader: () =>
-                        import(/* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'),
-                      loading: LoadingSVGCentered,
-                    });
-                    return (
-                      <ErrorBoundary>
-                        <MarkdownImpl {...props} />
-                      </ErrorBoundary>
-                    );
-                  }}
-                />
-                <Route
-                  exact
-                  path="/fll-experiment"
-                  render={(props) => {
-                    if (window.CDAP_CONFIG.cdap.mode !== 'development') {
-                      return <Page404 {...props} />;
-                    }
-                    const FllExperiment = Loadable({
-                      loader: () =>
-                        import(/* webpackChunkName: "FLLExperiment" */ 'components/Experiments/FieldLevelLineage'),
-                      loading: LoadingSVGCentered,
-                    });
-                    return (
-                      <ErrorBoundary>
-                        <FllExperiment {...props} />
-                      </ErrorBoundary>
-                    );
-                  }}
-                />
-                {/*
+                  <Route
+                    exact
+                    path="/ts-example"
+                    render={(props) => {
+                      if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                        return <Page404 {...props} />;
+                      }
+                      const SampleTSXComponent = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <SampleTSXComponent {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
+                  <Route
+                    exact
+                    path="/markdownexperiment"
+                    render={(props) => {
+                      if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                        return <Page404 {...props} />;
+                      }
+                      const MarkdownImpl = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <MarkdownImpl {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
+                  <Route
+                    exact
+                    path="/fll-experiment"
+                    render={(props) => {
+                      if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                        return <Page404 {...props} />;
+                      }
+                      const FllExperiment = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "FLLExperiment" */ 'components/Experiments/FieldLevelLineage'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <FllExperiment {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
+                  {/*
                   Eventually handling 404 should move to the error boundary and all container components will have the error object.
                 */}
-                <Route
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <Page404 {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-              </Switch>
-            </div>
-          )}
-          <Footer />
-          <AuthRefresher />
-        </div>
+                  <Route
+                    render={(props) => (
+                      <ErrorBoundary>
+                        <Page404 {...props} />
+                      </ErrorBoundary>
+                    )}
+                  />
+                </Switch>
+              </div>
+            )}
+            <Footer />
+            <AuthRefresher />
+          </div>
+        </ApolloProvider>
       </Router>
     );
   }

@@ -28,6 +28,9 @@ import Store from 'components/PipelineList/DeployedPipelineView/store';
 
 import './DeployedPipelineView.scss';
 
+import { Query } from 'react-apollo';
+import { gql } from 'apollo-boost';
+
 export default class DeployedPipelineView extends React.PureComponent {
   public componentDidMount() {
     fetchPipelineList();
@@ -38,18 +41,41 @@ export default class DeployedPipelineView extends React.PureComponent {
   }
 
   public render() {
-    return (
-      <Provider store={Store}>
-        <div className="pipeline-deployed-view pipeline-list-content">
-          <div className="deployed-header">
-            <PipelineCount />
-            <SearchBox />
-            <Pagination />
-          </div>
-
-          <PipelineTable />
-        </div>
-      </Provider>
-    );
+    return <DeployedPipelinesView />;
   }
 }
+
+const DeployedPipelinesView = () => (
+  <Query
+    query={gql`
+      {
+        status
+      }
+    `}
+  >
+    {({ loading, error, data }) => {
+      if (loading) {
+        return <p>Loading...</p>;
+      }
+      if (error) {
+        return <p>`Error! ${error.message}`</p>;
+      }
+
+      console.log(data);
+
+      return (
+        <Provider store={Store}>
+          <div className="pipeline-deployed-view pipeline-list-content">
+            <div className="deployed-header">
+              <PipelineCount />
+              <SearchBox />
+              <Pagination />
+            </div>
+
+            <PipelineTable />
+          </div>
+        </Provider>
+      );
+    }}
+  </Query>
+);
