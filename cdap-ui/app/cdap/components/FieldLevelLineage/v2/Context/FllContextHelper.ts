@@ -14,6 +14,24 @@
  * the License.
 */
 
+// types for backend response
+interface IFllEntity {
+  entityId?: IEntityId;
+  relations?: IRelation[];
+}
+
+interface IEntityId {
+  namespace?: string;
+  dataset?: string;
+  entity?: string;
+}
+
+export interface IRelation {
+  source?: string;
+  destination?: string;
+}
+
+// These types are used by the frontend
 export interface IField {
   id: string;
   type: string;
@@ -31,23 +49,32 @@ export interface ITableFields {
   [tablename: string]: IField[];
 }
 
-// Parses an incoming or outgoing entity object from backend response to get array of edges and an object with fields keyed by dataset
+// Parses an incoming or outgoing entity object from backend response
+// to get array of edges and an object with fields keyed by dataset.
 // namespace and target are the target namespace and dataset name
-export function parseRelations(namespace, target, ents, isCause = true) {
+export function parseRelations(
+  namespace: string,
+  target: string,
+  ents: IFllEntity[],
+  isCause: boolean = true
+) {
   const tables: ITableFields = {};
   const relLinks = [];
   ents.map((ent) => {
-    // Assumes that all tableNames are unique (since all datasets in a namespace should have unique names)
+    // Assumes that all tableNames are unique
+    // since all datasets in a namespace should have unique names
 
     const tableId = `${isCause ? 'cause' : 'impact'}_ns-${ent.entityId.namespace}_ds-${
       ent.entityId.dataset
     }`;
     // tables keeps track of fields for each incoming or outgoing dataset.
     tables[tableId] = [];
-    // fieldIds keeps track of fields we've seen already, since a single field can have multiple connections
+    // fieldIds keeps track of fields, since a single field can have multiple connections
     const fieldIds = new Map();
     ent.relations.map((rel) => {
-      // backend response assumes connection goes from left to right, i.e. an incoming connection's source = incoming field and destination = target field, and outgoing connection's source = target field.
+      // backend response assumes connection goes from left to right
+      // i.e. an incoming connection's destination = target field,
+      // and outgoing connection's source = target field.
       const fieldName = isCause ? rel.source : rel.destination;
       let id = fieldIds.get(fieldName);
       const field: IField = {
@@ -80,15 +107,24 @@ export function parseRelations(namespace, target, ents, isCause = true) {
   return { tables, relLinks };
 }
 
-export function makeTargetFields(entityId, fields) {
+export function getFieldsAndLinks(d) {
+  const incoming = parseRelations(d.entityId.namespace, d.entityId.dataset, d.incoming);
+  const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
+  const causeTables = incoming.tables;
+  const impactTables = outgoing.tables;
+  const links = incoming.relLinks.concat(outgoing.relLinks);
+  return { causeTables, impactTables, links };
+}
+
+export function makeTargetFields({ namespace, dataset }: IEntityId, fields: string[]) {
   const targetFields = fields.map((fieldname) => {
-    const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${fieldname}`;
+    const id = `target_ns-${namespace}_ds-${dataset}_fd-${fieldname}`;
     const field: IField = {
       id,
       type: 'target',
       name: fieldname,
-      dataset: entityId.dataset,
-      namespace: entityId.namespace,
+      dataset,
+      namespace,
     };
     return field;
   });

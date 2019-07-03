@@ -73,7 +73,7 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
 
   return (
     <div className={classes.root}>
-      <div className={type}>{header}</div>
+      <div>{header}</div>
       <div className={classes.subHeader}>{subHeader}</div>
     </div>
   );

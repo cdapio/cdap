@@ -24,7 +24,7 @@ import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
 
-const styles = (theme): StyleRules => {
+const styles = (): StyleRules => {
   return {
     root: {
       paddingLeft: '100px',
@@ -51,17 +51,6 @@ interface ILineageState {
 }
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
-  constructor(props) {
-    super(props);
-    this.state = {
-      activeField: null,
-      activeCauseSets: null,
-      activeImpactSets: null,
-      activeLinks: null,
-    };
-  }
-  private allLinks = [];
-
   // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
@@ -146,7 +135,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     });
   }
 
-  private drawLinks(links, activeFieldId = null) {
+  private drawLinks(links: ILink[], activeFieldId: string = null) {
     this.clearCanvas();
 
     links.forEach((link) => {
@@ -189,8 +178,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
           activeImpactSets,
           showingOneField,
         }) => {
-          this.allLinks = links;
-          let visibleLinks = this.allLinks;
+          let visibleLinks = links;
           let visibleCauseSets = causeSets;
           let visibleImpactSets = impactSets;
 

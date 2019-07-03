@@ -78,7 +78,7 @@ interface ITableProps extends WithStyles<typeof styles> {
   fields: IField[];
 }
 
-function renderGridHeader(fields, showingOneField, classes) {
+function renderGridHeader(fields: IField[], showingOneField: boolean, classes) {
   const count: number = fields.length;
   const tableName = fields[0].dataset;
   return (
@@ -95,7 +95,7 @@ function renderGridHeader(fields, showingOneField, classes) {
   );
 }
 
-function renderGridBody(fields, tableName, classes) {
+function renderGridBody(fields: IField[], tableName: string, classes) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {

@@ -20,6 +20,8 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import classnames from 'classnames';
 import T from 'i18n-react';
 import If from 'components/If';
+import IconButton from '@material-ui/core/IconButton';
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme): StyleRules => {
@@ -45,7 +47,8 @@ const styles = (theme): StyleRules => {
       textAlign: 'right',
     },
     viewDropdown: {
-      paddingLeft: '3px',
+      padding: 0,
+      color: theme.palette.blue[200],
     },
   };
 };
@@ -85,7 +88,9 @@ function FllField({ field, classes }: IFieldProps) {
       <If condition={field.id === activeField && isTarget && !showingOneField}>
         <span className={classes.targetView} onClick={handleViewCauseImpact}>
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-          <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
+          <IconButton className={classes.viewDropdown}>
+            <KeyboardArrowDownIcon />
+          </IconButton>
         </span>
       </If>
       <If condition={field.id === activeField && isTarget && showingOneField}>

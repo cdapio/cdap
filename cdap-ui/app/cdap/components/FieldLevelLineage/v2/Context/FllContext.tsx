@@ -52,15 +52,15 @@ export interface IContextState {
   firstImpact: number;
   firstField: number;
   handleFieldClick: (event: React.MouseEvent<HTMLDivElement>) => void;
-  handleViewCauseImpact: (event: React.MouseEvent<HTMLDivElement>) => void;
-  handleReset: (event: React.MouseEvent<HTMLDivElement>) => void;
+  handleViewCauseImpact: () => void;
+  handleReset: () => void;
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
   private parsedRes = getFieldsAndLinks(data);
 
   private handleFieldClick(e) {
-    const activeField = (e.target as HTMLAreaElement).id;
+    const activeField = e.target.id;
     if (!activeField) {
       return;
     }
