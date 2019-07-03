@@ -33,10 +33,10 @@ const namespacesResolver = {
       return await resolversCommon.requestPromiseWrapper(options);
     }
   }
-}
+};
 
 const namespaceResolvers = namespacesResolver;
 
 module.exports = {
   namespaceResolvers
-}
+};

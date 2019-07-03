@@ -26,10 +26,10 @@ const programsTypeResolver = {
       }));
     }
   }
-}
+};
 
-const programRecordTypeResolvers = programsTypeResolver
+const programRecordTypeResolvers = programsTypeResolver;
 
 module.exports = {
   programRecordTypeResolvers
-}
+};

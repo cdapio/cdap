@@ -35,10 +35,10 @@ const statusResolver = {
       return status.trim();
     }
   }
-}
+};
 
 const statusResolvers = statusResolver;
 
 module.exports = {
   statusResolvers
-}
+};

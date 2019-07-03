@@ -27,18 +27,18 @@ cdapConfigurator.getCDAPConfig()
 const metadataResolver = {
   ApplicationDetail: {
     metadata: async (parent, args, context, info) => {
-      const namespace = context.namespace
-      const name = parent.name
+      const namespace = context.namespace;
+      const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
       options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`);
 
       return await resolversCommon.requestPromiseWrapper(options);
     }
   }
-}
+};
 
 const metadataResolvers = metadataResolver;
 
 module.exports = {
   metadataResolvers
-}
+};

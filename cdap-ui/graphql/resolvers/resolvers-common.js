@@ -38,4 +38,4 @@ function requestPromiseWrapper(options) {
 module.exports = {
   getGETRequestOptions,
   requestPromiseWrapper
-}
+};
