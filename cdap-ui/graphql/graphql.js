@@ -31,35 +31,35 @@ const { scheduleResolvers } = require('./resolvers/scheduleResolvers')
 const { statusResolvers } = require('./resolvers/statusResolvers')
 
 const resolvers = merge(applicationResolvers,
-    namespaceResolvers,
-    metadataResolvers,
-    programRecordTypeResolvers,
-    programRecordResolvers,
-    scheduleResolvers,
-    statusResolvers);
+  namespaceResolvers,
+  metadataResolvers,
+  programRecordTypeResolvers,
+  programRecordResolvers,
+  scheduleResolvers,
+  statusResolvers);
 
 const typeDefs = importSchema('graphql/schema/rootSchema.graphql');
 
 if (typeof resolvers === 'undefined') {
-    log.error("The resolvers are undefined");
+  log.error("The resolvers are undefined");
 }
 
 if (typeof typeDefs === 'undefined') {
-    log.error("The type definitions is undefined");
+  log.error("The type definitions is undefined");
 }
 
 const server = new ApolloServer({
-    typeDefs, resolvers,
-    introspection: env === 'production' ? false : true,
-    playground: env === 'production' ? false : true,
+  typeDefs, resolvers,
+  introspection: env === 'production' ? false : true,
+  playground: env === 'production' ? false : true,
 });
 
 function applyMiddleware(app) {
-    server.applyMiddleware({ app });
+  server.applyMiddleware({ app });
 }
 
 module.exports = {
-    applyMiddleware,
-    resolvers,
-    typeDefs
+  applyMiddleware,
+  resolvers,
+  typeDefs
 };
