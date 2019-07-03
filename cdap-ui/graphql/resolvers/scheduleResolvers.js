@@ -15,7 +15,7 @@
  */
 
 const merge = require('lodash/merge'),
-urlHelper = require('../../server/url-helper'),
+  urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
@@ -64,15 +64,11 @@ const nextRuntimesResolver = {
       const options = resolversCommon.getGETRequestOptions();
       options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`);
 
-      const times = await resolversCommon.getGETRequestOptions(options);
+      const times = await resolversCommon.requestPromiseWrapper(options);
 
-      const nextRuntimes = [];
-
-      for (let i = 0; i < times.length; i++) {
-        nextRuntimes.push(times[i].time)
-      }
-
-      return nextRuntimes;
+      return times.map((time) => {
+        return time.time;
+      });
     }
   }
 };
