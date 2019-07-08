@@ -14,7 +14,6 @@
  * the License.
  */
 
-const log4js = require('log4js');
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const merge = require('lodash/merge');
@@ -26,8 +25,7 @@ const { programRecordTypeResolvers } = require('./resolvers/type/programRecordTy
 const { scheduleResolvers } = require('./resolvers/scheduleResolvers');
 const { statusResolvers } = require('./resolvers/statusResolvers');
 
-const log = log4js.getLogger('graphql');
-const env = process.env.NODE_ENV;
+const env = process.env.NODE_ENV || 'production';
 
 const resolvers = merge(applicationResolvers,
   namespaceResolvers,
@@ -37,7 +35,14 @@ const resolvers = merge(applicationResolvers,
   scheduleResolvers,
   statusResolvers);
 
-const typeDefs = importSchema('graphql/schema/rootSchema.graphql');
+let typeDefs;
+
+if (env === 'production') {
+  typeDefs = importSchema('./ui/graphql/schema/rootSchema.graphql');
+}
+else if (env === 'development') {
+  typeDefs = importSchema('./graphql/schema/rootSchema.graphql');
+}
 
 if (typeof resolvers === 'undefined') {
   log.error("The resolvers are undefined");
@@ -48,7 +53,8 @@ if (typeof typeDefs === 'undefined') {
 }
 
 const server = new ApolloServer({
-  typeDefs, resolvers,
+  typeDefs,
+  resolvers,
   introspection: env === 'production' ? false : true,
   playground: env === 'production' ? false : true,
 });
