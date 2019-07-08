@@ -24,6 +24,7 @@ import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
+// TO DO: Consolidate different fontsizes in ThemeWrapper
 const styles = (theme) => {
   return createStyles({
     table: {

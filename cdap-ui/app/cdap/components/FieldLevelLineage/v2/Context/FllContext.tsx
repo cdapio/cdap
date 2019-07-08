@@ -17,24 +17,15 @@
 import React from 'react';
 import data from './sample_response';
 import {
-  parseRelations,
   makeTargetFields,
   IField,
   ILink,
   ITableFields,
+  getFieldsAndLinks,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 
 export const FllContext = React.createContext<IContextState>({} as IContextState);
-
-function getFieldsAndLinks(d) {
-  const incoming = parseRelations(d.entityId.namespace, d.entityId.dataset, d.incoming);
-  const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
-  const causeTables = incoming.tables;
-  const impactTables = outgoing.tables;
-  const links = incoming.relLinks.concat(outgoing.relLinks);
-  return { causeTables, impactTables, links };
-}
 
 export interface IContextState {
   target: string;
@@ -59,15 +50,15 @@ export interface IContextState {
 export class Provider extends React.Component<{ children }, IContextState> {
   private parsedRes = getFieldsAndLinks(data);
 
-  private handleFieldClick(e) {
+  private handleFieldClick = (e) => {
     const activeField = e.target.id;
     if (!activeField) {
       return;
     }
     d3.select(`#${this.state.activeField}`).classed('selected', false);
+
     this.setState(
       {
-        ...this.state,
         activeField,
       },
       () => {
@@ -75,7 +66,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
         this.getActiveLinks();
       }
     );
-  }
+  };
 
   private getActiveLinks() {
     const activeFieldId = this.state.activeField;
@@ -86,7 +77,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
         activeLinks.push(link);
       }
     });
-    this.setState({ ...this.state, activeLinks });
+    this.setState({ activeLinks });
   }
 
   private getActiveSets() {
@@ -103,31 +94,29 @@ export class Provider extends React.Component<{ children }, IContextState> {
       }
       tableToUpdate[tableId].push(nonTargetFd);
     });
+
     this.setState(
       {
-        ...this.state,
         activeCauseSets,
         activeImpactSets,
       },
       () => {
         this.setState({
-          ...this.state,
           showingOneField: true,
         });
       }
     );
   }
 
-  private handleViewCauseImpact() {
+  private handleViewCauseImpact = () => {
     this.getActiveSets();
-  }
+  };
 
-  private handleReset() {
+  private handleReset = () => {
     this.setState({
-      ...this.state,
       showingOneField: false,
     });
-  }
+  };
 
   constructor(props) {
     super(props);
@@ -147,22 +136,14 @@ export class Provider extends React.Component<{ children }, IContextState> {
       firstCause: 1,
       firstImpact: 1,
       firstField: 1,
-      handleFieldClick: this.handleFieldClick.bind(this),
-      handleViewCauseImpact: this.handleViewCauseImpact.bind(this),
-      handleReset: this.handleReset.bind(this),
+      handleFieldClick: this.handleFieldClick,
+      handleViewCauseImpact: this.handleViewCauseImpact,
+      handleReset: this.handleReset,
     };
   }
 
   public render() {
-    return (
-      <FllContext.Provider
-        value={{
-          ...this.state,
-        }}
-      >
-        {this.props.children}
-      </FllContext.Provider>
-    );
+    return <FllContext.Provider value={this.state}>{this.props.children}</FllContext.Provider>;
   }
 }
 
