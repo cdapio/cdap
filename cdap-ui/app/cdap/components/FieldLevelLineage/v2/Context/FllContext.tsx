@@ -118,29 +118,26 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      target: data.entityId.dataset,
-      targetFields: makeTargetFields(data.entityId, data.fields) as IField[],
-      links: this.parsedRes.links,
-      causeSets: this.parsedRes.causeTables,
-      impactSets: this.parsedRes.impactTables,
-      activeField: null,
-      showingOneField: false,
-      activeCauseSets: null,
-      activeImpactSets: null,
-      activeLinks: null,
-      // for handling pagination
-      numTables: 4,
-      firstCause: 1,
-      firstImpact: 1,
-      firstField: 1,
-      handleFieldClick: this.handleFieldClick,
-      handleViewCauseImpact: this.handleViewCauseImpact,
-      handleReset: this.handleReset,
-    };
-  }
+  public state = {
+    target: data.entityId.dataset,
+    targetFields: makeTargetFields(data.entityId, data.fields) as IField[],
+    links: this.parsedRes.links,
+    causeSets: this.parsedRes.causeTables,
+    impactSets: this.parsedRes.impactTables,
+    activeField: null,
+    showingOneField: false,
+    activeCauseSets: null,
+    activeImpactSets: null,
+    activeLinks: null,
+    // for handling pagination
+    numTables: 4,
+    firstCause: 1,
+    firstImpact: 1,
+    firstField: 1,
+    handleFieldClick: this.handleFieldClick,
+    handleViewCauseImpact: this.handleViewCauseImpact,
+    handleReset: this.handleReset,
+  };
 
   public render() {
     return <FllContext.Provider value={this.state}>{this.props.children}</FllContext.Provider>;
