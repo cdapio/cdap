@@ -2258,10 +2258,15 @@
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-2.0.1.tgz#dc488842312a7f075149312905b5e3c0b054c79d"
   integrity sha512-FwI9gX75FgVBJ7ywgnq/P7tw+/o1GUbtP0KzbtusLigAOgIgNISRK0ZPl4qertvXSIE8YbsVJueQ90cDt9YYyw==
 
-"@types/node@*", "@types/node@>=6":
+"@types/node@*":
   version "12.0.10"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.10.tgz#51babf9c7deadd5343620055fc8aff7995c8b031"
   integrity sha512-LcsGbPomWsad6wmMNv7nBLw7YYYyfdYcz6xryKYQhx89c3XXan+8Q6AJ43G5XDIaklaVkK3mE4fCb0SBvMiPSQ==
+
+"@types/node@>=6":
+  version "12.6.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.6.1.tgz#d5544f6de0aae03eefbb63d5120f6c8be0691946"
+  integrity sha512-rp7La3m845mSESCgsJePNL/JQyhkOJA6G4vcwvVgkDAwHhGdq5GCumxmPjEk1MZf+8p5ZQAUE7tqgQRQTXN7uQ==
 
 "@types/node@^10.1.0":
   version "10.14.10"
@@ -2757,7 +2762,7 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-apollo-boost@^0.4.3:
+apollo-boost@0.4.3:
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/apollo-boost/-/apollo-boost-0.4.3.tgz#107bd1dd0d349d8e363174ded69612a4aa823c8a"
   integrity sha512-XE7hx4aXRnyZ4OGM8I7DjYq9SYLYWrVBoYpEFsv0GBtfIl6tipyks2Yo2/TEWKw7mhGmi1eFB2F3pbhIZbzKuQ==
@@ -2940,7 +2945,7 @@ apollo-server-errors@2.3.0:
   resolved "https://registry.yarnpkg.com/apollo-server-errors/-/apollo-server-errors-2.3.0.tgz#700622b66a16dffcad3b017e4796749814edc061"
   integrity sha512-rUvzwMo2ZQgzzPh2kcJyfbRSfVKRMhfIlhY7BzUfM4x6ZT0aijlgsf714Ll3Mbf5Fxii32kD0A/DmKsTecpccw==
 
-apollo-server-express@2.6.7, apollo-server-express@^2.6.7:
+apollo-server-express@2.6.7:
   version "2.6.7"
   resolved "https://registry.yarnpkg.com/apollo-server-express/-/apollo-server-express-2.6.7.tgz#22307e08b75be1553f4099d00028abe52597767d"
   integrity sha512-qbCQM+8LxXpwPNN5Sdvcb+Sne8zuCORFt25HJtPJRkHlyBUzOd7JA7SEnUn5e2geTiiGoVIU5leh+++C51udTw==
@@ -2963,7 +2968,7 @@ apollo-server-plugin-base@0.5.6:
   resolved "https://registry.yarnpkg.com/apollo-server-plugin-base/-/apollo-server-plugin-base-0.5.6.tgz#3a7128437a0f845e7d873fa43ef091ff7bf27975"
   integrity sha512-wJvcPqfm/kiBwY5JZT85t2A4pcHv24xdQIpWMNt1zsnx77lIZqJmhsc22eSUSrlnYqUMXC4XMVgSUfAO4oI9wg==
 
-apollo-server@^2.6.7:
+apollo-server@2.6.7:
   version "2.6.7"
   resolved "https://registry.yarnpkg.com/apollo-server/-/apollo-server-2.6.7.tgz#b707ede529b4d45f2f00a74f3b457658b0e62e83"
   integrity sha512-4wk9JykURLed6CnNIj9jhU6ueeTVmGBTyAnnvnlhRrOf50JAFszUErZIKg6lw5vVr5riaByrGFIkMBTySCHgPQ==
@@ -7768,7 +7773,7 @@ graphql-extensions@0.7.6:
   dependencies:
     "@apollographql/apollo-tools" "^0.3.6"
 
-graphql-import@^0.7.1:
+graphql-import@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/graphql-import/-/graphql-import-0.7.1.tgz#4add8d91a5f752d764b0a4a7a461fcd93136f223"
   integrity sha512-YpwpaPjRUVlw2SN3OPljpWbVRWAhMAyfSba5U47qGMOSsPLi2gYeJtngGpymjm9nk57RFWEpjqwh4+dpYuFAPw==
@@ -7809,10 +7814,10 @@ graphql-upload@^8.0.2:
     http-errors "^1.7.2"
     object-path "^0.11.4"
 
-graphql@^14.4.1:
-  version "14.4.1"
-  resolved "https://registry.yarnpkg.com/graphql/-/graphql-14.4.1.tgz#7a7818d3f63f66b9528ba5416b6c88460db62280"
-  integrity sha512-g4HUH26CohlMjaHneXMAtvG3QtO6peJIUTFxrPW4g5LNnXkUuFoBI6Bk1c14Q5kW8+FyjM/tTbePTgpiVB/2hQ==
+graphql@14.4.0:
+  version "14.4.0"
+  resolved "https://registry.yarnpkg.com/graphql/-/graphql-14.4.0.tgz#e97086acfc0338e4fdc8f7dba519c6b8a6badfd9"
+  integrity sha512-E55z1oK6e4cGxCqlSsRWytYDPcIUxky3XkbuQUf6TIjCmn6C7CuBJpmkMF1066q95yPAGOZVPTVT7jABKbRFSA==
   dependencies:
     iterall "^1.2.2"
 

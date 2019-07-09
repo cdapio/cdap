@@ -32,5 +32,5 @@ async function getCDAPConfig() {
 }
 
 module.exports = {
-    getCDAPConfig
-}
+  getCDAPConfig
+};

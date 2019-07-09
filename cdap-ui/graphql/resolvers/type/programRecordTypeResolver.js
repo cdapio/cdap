@@ -14,28 +14,23 @@
  * the License.
  */
 
-const request = require('request');
-
-function getGETRequestOptions() {
-    return {
-        method: 'GET',
-        json: true
+const programsTypeResolver = {
+  ProgramRecord: {
+    async __resolveType(parent, args, context, info) {
+      return await (new Promise((resolve, reject) => {
+        switch (parent.type) {
+          case 'Mapreduce': resolve('MapReduce')
+          case 'Workflow': resolve('Workflow')
+          case 'Spark': resolve('Spark')
+          default: resolve(null)
+        }
+      }));
     }
-}
-
-function requestPromiseWrapper(options) {
-    return new Promise((resolve, reject) => {
-        request(options, (err, response, body) => {
-            if (err) {
-                return reject(err);
-            }
-
-            return resolve(body);
-        });
-    });
+  }
 };
 
+const programRecordTypeResolvers = programsTypeResolver;
+
 module.exports = {
-    getGETRequestOptions,
-    requestPromiseWrapper
-}
+  programRecordTypeResolvers
+};

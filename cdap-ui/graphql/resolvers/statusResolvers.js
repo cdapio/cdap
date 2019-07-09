@@ -14,11 +14,11 @@
  * the License.
  */
 
-var urlHelper = require('../../../server/url-helper'),
-  cdapConfigurator = require('../../../cdap-config.js'),
+const urlHelper = require('../../server/url-helper'),
+  cdapConfigurator = require('../../cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
-var cdapConfig;
+let cdapConfig;
 cdapConfigurator.getCDAPConfig()
   .then(function (value) {
     cdapConfig = value;
@@ -35,10 +35,10 @@ const statusResolver = {
       return status.trim();
     }
   }
-}
+};
 
 const statusResolvers = statusResolver;
 
 module.exports = {
   statusResolvers
-}
+};

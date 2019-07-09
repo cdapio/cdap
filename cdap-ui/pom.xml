@@ -313,6 +313,9 @@
                     <copy todir = "${stage.opt.dir}/server/config/themes">
                       <fileset dir = "server/config/themes" />
                     </copy>
+                    <copy todir = "${stage.opt.dir}/graphql">
+                      <fileset dir = "graphql" />
+                    </copy>
                   </target>
                 </configuration>
               </execution>

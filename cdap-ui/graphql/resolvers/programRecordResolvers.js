@@ -18,8 +18,8 @@ const programsResolver = {
   ApplicationDetail: {
     programs: async (parent, args, context, info) => {
       return await (new Promise((resolve, reject) => {
-        const programs = parent.programs
-        const type = args.type
+        const programs = parent.programs;
+        const type = args.type;
 
         if (type == null) {
           resolve(programs)
@@ -35,10 +35,10 @@ const programsResolver = {
       }));
     }
   }
-}
+};
 
-const programRecordResolvers = programsResolver
+const programRecordResolvers = programsResolver;
 
 module.exports = {
   programRecordResolvers
-}
+};

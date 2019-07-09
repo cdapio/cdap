@@ -14,22 +14,28 @@
  * the License.
  */
 
-const programsTypeResolver = {
-  ProgramRecord: {
-    async __resolveType(parent, args, context, info) {
-      return await(new Promise((resolve, reject) => {
-        switch(parent.type) {
-          case 'Mapreduce': resolve('MapReduce')
-          case 'Workflow': resolve('Workflow')
-          default: resolve(null)
-        }
-      }));
-    }
+const request = require('request');
+
+function getGETRequestOptions() {
+  return {
+    method: 'GET',
+    json: true
   }
 }
 
-const programRecordTypeResolvers = programsTypeResolver
+function requestPromiseWrapper(options) {
+  return new Promise((resolve, reject) => {
+    request(options, (err, response, body) => {
+      if (err) {
+        return reject(err);
+      }
+
+      return resolve(body);
+    });
+  });
+};
 
 module.exports = {
-	programRecordTypeResolvers
-}
+  getGETRequestOptions,
+  requestPromiseWrapper
+};
