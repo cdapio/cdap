@@ -134,7 +134,7 @@ describe('Unit tests for EntityListView', () => {
     });
     MySearchApi.__setSearchResults({
       statusCode: 500,
-      response: 'Data Playbook services are down.'
+      response: 'CDAP services are down.'
     }, true);
     let listview = mount(
       <MemoryRouter initialEntries={['/ns/NS1']}>

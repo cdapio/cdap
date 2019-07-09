@@ -87,7 +87,7 @@ var plugins = [
     files: ['**/*.scss']
   }),
   new HtmlWebpackPlugin({
-    title: 'Data Playbook',
+    title: 'CDAP',
     template: './cdap.html',
     filename: 'cdap.html',
     hash: true,
