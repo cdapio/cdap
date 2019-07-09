@@ -984,6 +984,7 @@
     </profile>
 
   </profiles>
+
   <build>
     <!-- Resource filtering for non xml files only -->
     <resources>
