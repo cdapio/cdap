@@ -17,7 +17,7 @@ import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import PropTypes from 'prop-types';
 import { Input } from 'reactstrap';
-import { isNil, isEmpty } from 'lodash';
+import { isNil, isEmpty, remove } from 'lodash';
 import InfoTip from '../InfoTip';
 
 require('./SinkSelector.scss');
@@ -31,7 +31,7 @@ class SinkSelector extends React.Component {
     this.configPropList = [];
     this.configMap = {};
     this.state = {
-      sink: ''
+      sinks: []
     };
     this.onSinkChange = this.onSinkChange.bind(this);
     this.onValueUpdated = this.onValueUpdated.bind(this);
@@ -53,40 +53,56 @@ class SinkSelector extends React.Component {
         }
       });
     }
+
     this.sinkConfigurations = cloneDeep(this.props.sinkConfigurations);
     if (!isNil(this.sinkConfigurations)) {
+      let sinkList = [];
       for (let property in this.sinkConfigurations) {
         if (property) {
           if (isNil(this.configMap[property])) {
             this.configMap[property] = {};
           }
           this.configMap[property] = this.sinkConfigurations[property];
-          this.setState({
-            sink: property
-          });
+          sinkList.push(property);
         }
       }
+
+      this.setState({
+        sinks: sinkList
+      });
     }
   }
 
 
   updateConfiguration() {
-    if (!isEmpty(this.state.sink)) {
-      const sinkConfigurations = {};
-      sinkConfigurations[this.state.sink] = {};
-      if (!isNil(this.configMap[this.state.sink])) {
-        sinkConfigurations[this.state.sink] = this.configMap[this.state.sink];
-      }
-      this.sinkConfigurations = sinkConfigurations;
-      console.log("Update store with Sink -> ", this.sinkConfigurations);
-      this.props.setSinkConfigurations(this.sinkConfigurations);
+    const sinkConfigurations = {};
+    if (!isEmpty(this.state.sinks) && this.state.sinks.length>0) {
+      this.state.sinks.forEach(element => {
+        sinkConfigurations[element] = {};
+        if (!isNil(this.configMap[element])) {
+          sinkConfigurations[element] = this.configMap[element];
+        }
+      });
     }
-
+    this.sinkConfigurations = sinkConfigurations;
+    console.log("Update store with Sink -> ", this.sinkConfigurations);
+    this.props.setSinkConfigurations(this.sinkConfigurations);
   }
 
   onSinkChange(evt) {
+    let sinkList = [...this.state.sinks];
+    if (evt.target.checked) {
+      sinkList.push(evt.target.value);
+    } else {
+      sinkList = remove(sinkList, function (item) {
+        return item !== evt.target.value;
+      });
+    }
     this.setState({
-      sink: evt.target.value
+      sinks: sinkList
+    });
+    setTimeout(()=>{
+      this.updateConfiguration();
     });
   }
 
@@ -108,17 +124,16 @@ class SinkSelector extends React.Component {
               <div className="config-container" key={item.paramName}>
                 <div className="config-header-label">
                   <Input
-                    type="radio"
+                    type="checkbox"
                     value={item.paramName}
-                    min="0"
                     onChange={this.onSinkChange}
-                    checked={this.state.sink === item.paramName}
+                    checked={this.state.sinks.includes(item.paramName)}
                   />
                   <span>{item.displayName}</span>
                 </div>
 
                 {
-                  this.state.sink === item.paramName &&
+                  this.state.sinks.includes(item.paramName) &&
                   <div className="config-item-container">
                     {
                       (item.subParams).map(param => {
