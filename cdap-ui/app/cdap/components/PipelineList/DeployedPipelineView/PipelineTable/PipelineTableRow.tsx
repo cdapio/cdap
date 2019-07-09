@@ -26,6 +26,7 @@ import DeployedActions from 'components/PipelineList/DeployedPipelineView/Deploy
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 interface IProps {
+  // TODO update the type to IApplicationRecord
   pipeline: IPipeline;
 }
 

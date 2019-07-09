@@ -57,11 +57,11 @@ const DeployedPipelinesView = () => (
           applicationDetail {
             programs(type: "Workflow") {
               name
+              runs {
+                status
+                starting
+              }
               ... on Workflow {
-                runs {
-                  status
-                  starting
-                }
                 schedules {
                   name
                   nextRuntimes

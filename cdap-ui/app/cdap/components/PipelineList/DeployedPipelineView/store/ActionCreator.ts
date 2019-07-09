@@ -104,7 +104,6 @@ function fetchRunsInfo() {
   });
 
   fetchRuns(namespace, pipelines);
-  fetchRunsCount(namespace, pipelines);
 }
 
 /**
@@ -143,37 +142,6 @@ function fetchRuns(namespace: string, pipelines: IPipelineParams[]) {
       type: Actions.setStatusMap,
       payload: {
         statusMap,
-      },
-    });
-  });
-}
-
-/**
- *
- * @param namespace
- * @param pipelines array of pipeline objects with appId, programType, programId
- *
- * Will dispatch an event with the runsCount as the payload
- *
- * e.g:
- * {
- *    'Pipeline1': 27,
- *    'Pipeline2': 35,
- *    ...
- * }
- */
-function fetchRunsCount(namespace: string, pipelines: IPipelineParams[]) {
-  MyPipelineApi.getRunsCount({ namespace }, pipelines).subscribe((res) => {
-    const runsCountMap: IRunsCountMap = {};
-
-    res.forEach((pipeline) => {
-      runsCountMap[pipeline.appId] = pipeline.runCount || 0;
-    });
-
-    Store.dispatch({
-      type: Actions.setRunsCountMap,
-      payload: {
-        runsCountMap,
       },
     });
   });

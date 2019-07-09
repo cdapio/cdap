@@ -36,3 +36,49 @@ export interface IStatusMap {
 export interface IRunsCountMap {
   [key: string]: number;
 }
+
+export interface IApplicationRecord {
+  type: string;
+  name: string;
+  version: string;
+  description: string;
+  // artifact: artifactSummary;
+  ownerPrincipal?: string;
+  applicationDetail: IApplicationDetail;
+}
+
+export interface IApplicationDetail {
+  name: string;
+  appVersion: string;
+  description: string;
+  configuration: string;
+  programs: IProgramRecord[];
+  // artifact: ArtifactSummary!
+  ownerPrincipal?: string;
+  // metadata?: Metadata
+}
+
+export interface IProgramRecord {
+  type: string;
+  app: string;
+  name: string;
+  description: string;
+  runs: IRunRecord[];
+}
+
+// export interface IMapReduce extends IProgramRecord {}
+
+// export interface ISpark extends IProgramRecord {}
+
+// export interface IWorkflow extends IProgramRecord {
+//   schedules: [ScheduleDetail]!
+// }
+
+export interface IRunRecord {
+  runid: string;
+  starting: string;
+  start: string;
+  end: string;
+  status: string;
+  profileId?: string;
+}

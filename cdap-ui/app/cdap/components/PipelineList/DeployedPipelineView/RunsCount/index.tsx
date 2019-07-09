@@ -15,27 +15,21 @@
  */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { IRunsCountMap, IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
 
 interface IProps {
-  runsCountMap: IRunsCountMap;
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
-const RunsCountView: React.SFC<IProps> = ({ runsCountMap, pipeline }) => {
-  const runsCount = runsCountMap[pipeline.name] || 0;
+const RunsCountView: React.SFC<IProps> = ({ pipeline }) => {
+  // TODO do we need to do safe traversal?
+  const programs = pipeline.applicationDetail.programs;
+  const dataPipelineWorkflow = programs.find((program) => program.name === 'DataPipelineWorkflow');
+  const runsCount = dataPipelineWorkflow.runs.length;
 
   return <div className="runs">{runsCount}</div>;
 };
 
-const mapStateToProps = (state, ownProp) => {
-  return {
-    runsCountMap: state.deployed.runsCountMap,
-    pipeline: ownProp.pipeline,
-  };
-};
-
-const RunsCount = connect(mapStateToProps)(RunsCountView);
+const RunsCount = RunsCountView;
 
 export default RunsCount;
