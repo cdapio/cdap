@@ -18,7 +18,7 @@
 
 # This script is a wrapper for "cdap ui" and will be removed in 5.0
 echo
-echo "[WARN] ${0} is deprecated and will be removed in CDAP 5.0. Please use 'cdap ui' to manage Distributed CDAP."
+echo "[WARN] ${0} is deprecated and will be removed in Data Playbook 3.5.0. Please use 'data playbook ui' to manage Distributed Data Playbook."
 echo
 echo "  cdap ui ${@}"
 echo

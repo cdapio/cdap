@@ -68,7 +68,7 @@ var plugins = [
     }
   ]),
   new HtmlWebpackPlugin({
-    title: 'CDAP',
+    title: 'Data Playbook',
     template: './login.html',
     filename: 'login.html',
     hash: true,
