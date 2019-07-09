@@ -14,6 +14,28 @@
  * the License.
  */
 
+var urlHelper = require('../../../server/url-helper'),
+  cdapConfigurator = require('../../../cdap-config.js'),
+  resolversCommon = require('../resolvers-common.js');
+
+let cdapConfig;
+cdapConfigurator.getCDAPConfig()
+  .then(function (value) {
+    cdapConfig = value;
+  });
+
+const runsResolver = async (parent, args, context, info) => {
+  const namespace = context.namespace;
+  const name = parent.app;
+  const artifactName = context.artifact.name;
+  const programType = resolversCommon.getProgramType(parent.type, artifactName);
+  const programId = parent.name;
+  const options = resolversCommon.getGETRequestOptions();
+  options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/${programType}/${programId}/runs`);
+
+  return await resolversCommon.requestPromiseWrapper(options);
+};
+
 const programsTypeResolver = {
   ProgramRecord: {
     async __resolveType(parent, args, context, info) {
@@ -26,6 +48,15 @@ const programsTypeResolver = {
         }
       }));
     }
+  },
+  MapReduce: {
+    runs: runsResolver
+  },
+  Workflow: {
+    runs: runsResolver
+  },
+  Spark: {
+    runs: runsResolver
   }
 };
 

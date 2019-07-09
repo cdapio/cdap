@@ -16,19 +16,43 @@
 
 import * as React from 'react';
 import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { objectQuery } from 'services/helpers';
+import { GLOBALS } from 'services/global-constants';
 
 interface IProps {
   pipeline: IApplicationRecord;
 }
 
 const RunsCountView: React.SFC<IProps> = ({ pipeline }) => {
-  // TODO do we need to do safe traversal?
-  const programs = pipeline.applicationDetail.programs;
-  const dataPipelineWorkflow = programs.find((program) => program.name === 'DataPipelineWorkflow');
-  const runsCount = dataPipelineWorkflow.runs.length;
+  const runsCount = getRunsCount(pipeline);
 
   return <div className="runs">{runsCount}</div>;
 };
+
+function getRunsCount(pipeline) {
+  const applicationDetail = objectQuery(pipeline, 'applicationDetail');
+
+  if (applicationDetail === null || applicationDetail === undefined) {
+    return 0;
+  }
+
+  const programs = objectQuery(applicationDetail, 'programs');
+
+  if (programs === null || programs === undefined) {
+    return 0;
+  }
+
+  const artifact = objectQuery(pipeline, 'artifact');
+
+  if (artifact === null || artifact === undefined) {
+    return 0;
+  }
+
+  const programName = GLOBALS.programInfo[artifact.name].programName;
+  const runProgram = programs.find((program) => program.name === programName);
+
+  return runProgram.runs.length;
+}
 
 const RunsCount = RunsCountView;
 

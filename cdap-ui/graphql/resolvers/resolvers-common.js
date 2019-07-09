@@ -35,7 +35,25 @@ function requestPromiseWrapper(options) {
   });
 };
 
+
+function getProgramType(parentType, artifactName) {
+  if (parentType === 'Mapreduce') {
+    return 'mapreduce';
+  }
+
+  if (artifactName === 'cdap-data-pipeline') {
+    return 'workflows';
+  }
+
+  if (artifactName === 'cdap-data-streamts') {
+    return 'spark';
+  }
+
+  return undefined;
+}
+
 module.exports = {
   getGETRequestOptions,
-  requestPromiseWrapper
+  requestPromiseWrapper,
+  getProgramType
 };

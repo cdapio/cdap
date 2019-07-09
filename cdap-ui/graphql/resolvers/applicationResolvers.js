@@ -31,7 +31,7 @@ const applicationsResolver = {
       const namespace = args.namespace
       const options = resolversCommon.getGETRequestOptions();
       options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
-      context.namespace = namespace
+      context.namespace = namespace;
 
       return await resolversCommon.requestPromiseWrapper(options);
     }
@@ -54,6 +54,8 @@ const applicationResolver = {
 const applicationDetailResolver = {
   ApplicationRecord: {
     async applicationDetail(parent, args, context, info) {
+      context.artifact = parent.artifact;
+
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
