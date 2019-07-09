@@ -144,7 +144,7 @@ public class DataprocClient implements AutoCloseable {
       // state. Dataproc cluster cannot be launched on the internal IP unless the peering setup is fixed.
       throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
                                                       "in project '%s' does not exists or is in the INACTIVE state. " +
-                                                      "Please fix the peering setup to be in the ACTIVE state.",
+                                                      "Please fix the peering setup and ensure it is in ACTIVE state.",
                                                     systemNetwork, systemProjectId, network, projectId));
     }
 
@@ -319,8 +319,12 @@ public class DataprocClient implements AutoCloseable {
       } else {
         clusterConfig.setNetworkUri(network);
       }
-      for (String targetTag : getFirewallTargetTags()) {
-        clusterConfig.addTags(targetTag);
+
+      // if internal ip is being used firewall rules might not exists and is not needed
+      if (!useInternalIP) {
+        for (String targetTag : getFirewallTargetTags()) {
+          clusterConfig.addTags(targetTag);
+        }
       }
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security

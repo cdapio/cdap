@@ -42,6 +42,7 @@ import javax.annotation.Nullable;
 public class DataprocConf {
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
+  static final String NETWORK = "network";
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
@@ -274,7 +275,7 @@ public class DataprocConf {
     if (zone == null || AUTO_DETECT.equals(zone)) {
       zone = getSystemZone();
     }
-    String network = getString(properties, "network");
+    String network = getString(properties, NETWORK);
     if (network == null || AUTO_DETECT.equals(network)) {
       network = null;
     }
