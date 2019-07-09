@@ -65,9 +65,8 @@ export function parseRelations(
   ents.map((ent) => {
     // Assumes that all tableNames are unique within a namespace
 
-    const tableId = `${isCause ? 'cause' : 'impact'}_ns-${ent.entityId.namespace}_ds-${
-      ent.entityId.dataset
-    }`;
+    const type = isCause ? 'cause' : 'impact';
+    const tableId = getTableId(ent.entityId.dataset, ent.entityId.namespace, type);
     // tables keeps track of fields for each incoming or outgoing dataset.
     tables[tableId] = [];
     // fieldIds keeps track of fields, since a single field can have multiple connections
@@ -88,13 +87,15 @@ export function parseRelations(
         namespace: ent.entityId.namespace,
       };
       if (!fieldIds.has(fieldName)) {
-        id = `${tableId}_fd-${fieldName}`;
+        id = getFieldId(fieldName, ent.entityId.dataset, ent.entityId.namespace, type);
         field.id = id;
         fieldIds.set(fieldName, id);
         tables[tableId].push(field);
       }
+
+      const targetName = isCause ? rel.destination : rel.source;
       const targetField: IField = {
-        id: `target_ns-${namespace}_ds-${target}_fd-${isCause ? rel.destination : rel.source}`,
+        id: getFieldId(targetName, target, namespace, 'target'),
         type: 'target',
         dataset: target,
         namespace,
@@ -132,4 +133,12 @@ export function makeTargetFields({ namespace, dataset }: IEntityId, fields: stri
     return field;
   });
   return targetFields;
+}
+
+export function getFieldId(fieldname, dataset, namespace, type) {
+  return `${type}_ns-${namespace}_ds-${dataset}_fd-${fieldname}`;
+}
+
+export function getTableId(dataset, namespace, type) {
+  return `${type}_ns-${namespace}_ds-${dataset}`;
 }

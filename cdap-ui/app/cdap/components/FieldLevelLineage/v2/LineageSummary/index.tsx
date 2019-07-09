@@ -143,11 +143,10 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   }
 
   private drawLinks(links: ILink[], activeFieldId: string = null) {
-    this.clearCanvas();
-
     if (links.length === 0) {
       return;
     }
+    this.clearCanvas();
 
     links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
@@ -161,9 +160,14 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     if (showingOneField) {
       this.clearCanvas();
       this.drawActiveLinks(activeLinks);
-    } else {
-      this.drawLinks(links, activeField);
+      return;
     }
+
+    if (activeField) {
+      d3.select(`#${activeField}`).classed('selected', true);
+    }
+
+    this.drawLinks(links, activeField);
   }
 
   public componentWillUnmount() {
@@ -172,6 +176,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
   public componentDidMount() {
     const { links, activeField } = this.context;
+
     this.drawLinks(links, activeField);
     window.addEventListener('resize', debounce(this.drawLinks.bind(this, links, activeField), 1));
   }
@@ -213,7 +218,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               <div>
                 <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
                 {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
-                  return <FllTable key={tableId} tableId={tableId} fields={fields} />;
+                  return <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />;
                 })}
               </div>
               <div>
@@ -223,7 +228,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               <div>
                 <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
                 {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
-                  return <FllTable key={tableId} tableId={tableId} fields={fields} />;
+                  return <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />;
                 })}
               </div>
             </div>

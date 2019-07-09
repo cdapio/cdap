@@ -17,14 +17,18 @@
 import React from 'react';
 import { MyMetadataApi } from 'api/metadata';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { objectQuery } from 'services/helpers';
+import { objectQuery, parseQueryString } from 'services/helpers';
 import {
   makeTargetFields,
   IField,
   ILink,
   ITableFields,
   getFieldsAndLinks,
+  getFieldId,
+  getTableId,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
+import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
 import * as d3 from 'd3';
 
 const defaultContext: IContextState = {
@@ -59,8 +63,6 @@ export interface IContextState {
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
-  // private parsedRes = getFieldsAndLinks(data);
-
   private handleFieldClick = (e) => {
     const activeField = e.target.id;
     if (!activeField) {
@@ -71,15 +73,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
     this.setState(
       {
         activeField,
+        activeLinks: this.getActiveLinks(),
       },
       () => {
         d3.select(`#${activeField}`).classed('selected', true);
-        this.getActiveLinks();
       }
     );
   };
 
-  private getActiveLinks() {
+  private getActiveLinks = () => {
     const activeFieldId = this.state.activeField;
     const activeLinks = [];
     this.state.links.forEach((link) => {
@@ -88,26 +90,39 @@ export class Provider extends React.Component<{ children }, IContextState> {
         activeLinks.push(link);
       }
     });
-    this.setState({ activeLinks });
-  }
+    return activeLinks;
+  };
 
-  private getActiveSets() {
+  private getActiveSets = () => {
     const activeCauseSets = {};
     const activeImpactSets = {};
+    let activeLinks = this.state.activeLinks;
 
-    this.state.activeLinks.forEach((link) => {
+    if (!this.state.activeLinks) {
+      activeLinks = this.getActiveLinks();
+    }
+
+    activeLinks.forEach((link) => {
       // for each link, look at id prefix to find the field that is not the target and add to the activeCauseSets or activeImpactSets
       const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
-      const tableToUpdate = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
-      const tableId = `ns-${nonTargetFd.namespace}_ds-${nonTargetFd.dataset}`; // used as unique key to make sure we don't duplicate fields
-      if (!(tableId in tableToUpdate)) {
-        tableToUpdate[tableId] = [];
+      const tableId = getTableId(nonTargetFd.dataset, nonTargetFd.namespace, nonTargetFd.type);
+
+      if (nonTargetFd.type === 'cause') {
+        if (!(tableId in activeCauseSets)) {
+          activeCauseSets[tableId] = [];
+        }
+        activeCauseSets[tableId].push(nonTargetFd);
+      } else {
+        if (!(tableId in activeImpactSets)) {
+          activeImpactSets[tableId] = [];
+        }
+        activeImpactSets[tableId].push(nonTargetFd);
       }
-      tableToUpdate[tableId].push(nonTargetFd);
     });
 
     this.setState(
       {
+        activeLinks,
         activeCauseSets,
         activeImpactSets,
       },
@@ -117,7 +132,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
         });
       }
     );
-  }
+  };
 
   private handleViewCauseImpact = () => {
     this.getActiveSets();
@@ -130,11 +145,11 @@ export class Provider extends React.Component<{ children }, IContextState> {
   };
 
   public state = {
-    target: data.entityId.dataset,
-    targetFields: makeTargetFields(data.entityId, data.fields) as IField[],
-    links: this.parsedRes.links,
-    causeSets: this.parsedRes.causeTables,
-    impactSets: this.parsedRes.impactTables,
+    target: '',
+    targetFields: [],
+    links: [],
+    causeSets: {},
+    impactSets: {},
     activeField: null,
     showingOneField: false,
     activeCauseSets: null,
@@ -150,13 +165,35 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleReset: this.handleReset,
   };
 
-  public fetchFieldLineage(namespace, entityId) {
+  private getTimeRange() {
+    const selection = parseQueryString().time;
+
+    if (selection === TIME_OPTIONS[0]) {
+      return {
+        start: selection.start || 'now-7d',
+        end: selection.end || 'now',
+      };
+    }
+    return TIME_OPTIONS_MAP[selection];
+  }
+
+  public fetchFieldLineage() {
+    const namespace = getCurrentNamespace();
+    const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
+    const queryParams = parseQueryString(); // get time selection and field
+    const fieldname = queryParams.field;
+    const activeField = fieldname
+      ? getFieldId(queryParams.field, dataset, namespace, 'target')
+      : null;
+    const start = this.getTimeRange().start;
+    const end = this.getTimeRange().end;
+
     const params = {
       namespace,
-      entityId,
+      entityId: dataset,
       direction: 'both',
-      start: 0,
-      end: 'now',
+      start,
+      end,
     };
     MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
       const parsedRes = getFieldsAndLinks(res);
@@ -166,6 +203,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
         links: parsedRes.links,
         causeSets: parsedRes.causeTables,
         impactSets: parsedRes.impactTables,
+        activeField,
       };
 
       this.setState({
@@ -174,10 +212,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   }
   public componentDidMount() {
-    const namespace = getCurrentNamespace();
-    const datasetId = objectQuery(this.props, 'match', 'params', 'datasetId');
-
-    this.fetchFieldLineage(namespace, datasetId);
+    this.fetchFieldLineage();
   }
 
   public render() {

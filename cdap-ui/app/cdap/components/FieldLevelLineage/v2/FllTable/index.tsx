@@ -77,7 +77,7 @@ const styles = (theme) => {
 interface ITableProps extends WithStyles<typeof styles> {
   tableId: string;
   fields: IField[];
-  type: string;
+  type?: string;
 }
 
 function renderGridHeader(fields: IField[], showingOneField: boolean, classes) {
