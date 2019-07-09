@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.metrics.collect;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -26,13 +25,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import org.apache.twill.common.Threads;
+import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -50,15 +47,17 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   private final CConfiguration cConf;
   private final MetricStore metricStore;
-  private ScheduledExecutorService scheduler;
+  private final MetricsCleanUpService metricsCleanUpService;
   private MessagingMetricsProcessorServiceFactory messagingMetricsProcessorFactory;
   private MessagingMetricsProcessorService messagingMetricsProcessor;
 
   @Inject
-  LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
+  LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore,
+                                MetricsCleanUpService metricsCleanUpService) {
     super(TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
     this.cConf = cConf;
     this.metricStore = metricStore;
+    this.metricsCleanUpService = metricsCleanUpService;
     metricStore.setMetricsContext(this.getContext(METRICS_PROCESSOR_CONTEXT));
   }
 
@@ -91,19 +90,12 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       messagingMetricsProcessor.startAndWait();
     }
 
-    // It will only do cleanup if the underlying table doesn't supports TTL.
-    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-    long minimumRetentionSecs = cConf.getLong(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS);
-    // Try right away if there's anything to cleanup, we will then schedule based on the min retention interval
-    scheduler.schedule(createCleanupTask(minimumRetentionSecs), 1, TimeUnit.SECONDS);
+    // The local metrics store do not have ttl, so start the clean up service
+    metricsCleanUpService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    if (scheduler != null) {
-      scheduler.shutdownNow();
-    }
-
     // Shutdown the TMS metrics processor if present. This will flush all buffered metrics that were read from TMS
     Exception failure = null;
     try {
@@ -125,31 +117,19 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       }
     }
 
+    // Shutdown the clean up service
+    try {
+      metricsCleanUpService.stopAndWait();
+    } catch (Exception e) {
+      if (failure != null) {
+        failure.addSuppressed(e);
+      } else {
+        failure = e;
+      }
+    }
+
     if (failure != null) {
       throw failure;
     }
-  }
-
-  /**
-   * Creates a task for cleanup.
-   *
-   * @param nextScheduleDelaySecs The next schedule delay in seconds for the clean up task.
-   */
-  private Runnable createCleanupTask(long nextScheduleDelaySecs) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        // We perform CleanUp only in LocalMetricsCollectionService , where TTL is NOT supported
-        // by underlying data store.
-        try {
-          // delete metrics from metrics resolution table
-          metricStore.deleteTTLExpired();
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-        // delete based on the min retention interval
-        scheduler.schedule(this, nextScheduleDelaySecs, TimeUnit.SECONDS);
-      }
-    };
   }
 }
