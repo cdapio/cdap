@@ -47,6 +47,7 @@ class SaveFeatureModal extends React.Component {
   }
 
   onCancel() {
+    this.setState({name:"",hasError:false, errorMessage:"",loading:false});
     this.props.onClose(T.translate(`${PREFIX}.cancelButton`));
   }
 

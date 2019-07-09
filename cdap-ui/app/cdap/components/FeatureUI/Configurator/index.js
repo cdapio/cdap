@@ -39,9 +39,9 @@ class Configurator extends React.Component {
   }
 
   updateConfiguration(nameValue) {
-    if(!isNil(nameValue)) {
-      const index = findIndex(this.configPropList, {name : nameValue.name});
-      if(index >= 0) {
+    if (!isNil(nameValue)) {
+      const index = findIndex(this.configPropList, { name: nameValue.name });
+      if (index >= 0) {
         this.configPropList[index] = nameValue;
         this.props.updateConfigurationList(this.configPropList);
       }
@@ -51,10 +51,10 @@ class Configurator extends React.Component {
 
   render() {
     return (
-      <div className = 'configuration-step-container'>
-        <NameValueList dataProvider = {this.props.configurationList}
-         updateNameValue = {this.updateConfiguration.bind(this)}
-         addNameValue = {this.addConfiguration.bind(this)}/>
+      <div className='configuration-step-container'>
+        <NameValueList dataProvider={this.props.configurationList}
+          updateNameValue={this.updateConfiguration.bind(this)}
+          addNameValue={this.addConfiguration.bind(this)} />
       </div>
     );
   }

@@ -370,5 +370,9 @@ $success_alert_bg_color: $brand-success;
     .buttons-container {
       float: right;
     }
+
+    .text-wrap {
+      word-wrap: break-word;
+    }
   }
 }

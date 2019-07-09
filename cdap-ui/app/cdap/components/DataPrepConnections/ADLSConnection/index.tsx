@@ -280,7 +280,7 @@ export default class ADLSConnection extends React.PureComponent<IADLSConnectionP
   }
 
   private renderTestButton = () => {
-    const disabled = !this.state.name;
+    const disabled = this.isButtonDisabled();
 
     return (
       <span className="test-connection-button">
@@ -296,7 +296,7 @@ export default class ADLSConnection extends React.PureComponent<IADLSConnectionP
     );
   }
 
-  private renderAddConnectionButton = () => {
+  private isButtonDisabled = () => {
     let check;
     if (this.state.isUsingJCEKfile) {
       check = this.state.kvURL && this.state.clientIDKey && this.state.clientSecretKey && this.state.endPointURLKey;
@@ -304,6 +304,11 @@ export default class ADLSConnection extends React.PureComponent<IADLSConnectionP
       check = this.state.clientID && this.state.clientSecret && this.state.refreshURL;
     }
     const disabled = !(this.state.name && check && this.state.accountFQDN) || this.state.testConnectionLoading;
+    return disabled;
+  }
+
+  private renderAddConnectionButton = () => {
+    const disabled = this.isButtonDisabled();
 
     let onClickFn = this.addConnection;
 

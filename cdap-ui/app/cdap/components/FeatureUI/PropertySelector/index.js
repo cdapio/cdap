@@ -346,7 +346,7 @@ class PropertySelector extends React.Component {
                     }
                     return (
                       <AccordionItem key={property} uuid = {property} expanded={index == 0 ? true : false}>
-                        <AccordionItemTitle className = { property == this.currentProperty.paramName ? "accordion__title selected" : "accordion__title"}>
+                        <AccordionItemTitle className = { (this.currentProperty && property == this.currentProperty.paramName) ? "accordion__title selected" : "accordion__title"}>
                           <div className="title-items">
                             {
                               description && <InfoTip id={property + '_InfoTip'} description={description} />
@@ -431,8 +431,8 @@ class PropertySelector extends React.Component {
           </div>
         </div>
         <div className="schema-container">
-          <div className="config-selector-header">{"Select dataset columns for : " + propertyDisplayNameMap.get(this.currentProperty.paramName)
-            + (isEmpty(this.currentProperty.subParams) ? "" : (" (" + toCamelCase(this.currentSubProperty) + ")"))}</div>
+          <div className="config-selector-header">{"Select dataset columns for : "  + ( this.currentProperty ? (propertyDisplayNameMap.get(this.currentProperty.paramName))
+            + (isEmpty(this.currentProperty.subParams) ? "" : (" (" + toCamelCase(this.currentSubProperty) + ")")) : "")}</div>
           <div className="schema-filter-container">
             <label>Column Type</label>
             <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
