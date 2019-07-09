@@ -139,14 +139,13 @@ public class DataprocClient implements AutoCloseable {
                                "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false to " +
                                "launch Dataproc clusters with internal IP only.", systemNetwork,
                              systemProjectId, network, projectId));
-    } else if (state == PeeringState.INACTIVE && !conf.isPreferExternalIP()) {
-      // Peering is setup between the system network and customer network. However it is not in ACTIVE state.
-      // User has also intended to use the internal IP. Dataproc cluster cannot be launched on the internal IP unless
-      // the peering is fixed.
+    } else if (!conf.isPreferExternalIP() && state != PeeringState.ACTIVE) {
+      // User has intended to use the internal IP but the peering is either not established or is in inactive
+      // state. Dataproc cluster cannot be launched on the internal IP unless the peering setup is fixed.
       throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
-                                                      "in project '%s' is in the INACTIVE state. Please fix the " +
-                                                      "peering setup to be in the ACTIVE state.", systemNetwork,
-                                                    systemProjectId, network, projectId));
+                                                      "in project '%s' does not exists or is in the INACTIVE state. " +
+                                                      "Please fix the peering setup to be in the ACTIVE state.",
+                                                    systemNetwork, systemProjectId, network, projectId));
     }
 
     // Use internal IP for the Dataproc cluster if user has not preferred external IP and
@@ -195,14 +194,17 @@ public class DataprocClient implements AutoCloseable {
 
     LOG.info(String.format("Self link for the system network is %s", systemNetworkSelfLink));
     List<NetworkPeering> peerings = networkInfo.getPeerings();
-    for (NetworkPeering peering : peerings) {
-      if (!systemNetworkSelfLink.equals(peering.getNetwork())) {
-        continue;
+    // if the customer does not has a peering established at all the peering list is null
+    if (peerings != null) {
+      for (NetworkPeering peering : peerings) {
+        if (!systemNetworkSelfLink.equals(peering.getNetwork())) {
+          continue;
+        }
+        if (peering.getState().equals("ACTIVE")) {
+          return PeeringState.ACTIVE;
+        }
+        return PeeringState.INACTIVE;
       }
-      if (peering.getState().equals("ACTIVE")) {
-        return PeeringState.ACTIVE;
-      }
-      return PeeringState.INACTIVE;
     }
     return PeeringState.NONE;
   }
