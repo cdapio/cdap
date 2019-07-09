@@ -145,10 +145,6 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     }
     this.clearCanvas();
 
-    if (links.length === 0) {
-      return;
-    }
-
     links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
       this.drawLineFromLink(link, isSelected);

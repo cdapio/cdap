@@ -21,9 +21,9 @@ import {
   IField,
   ILink,
   ITableFields,
+  fetchFieldLineage,
   getTableId,
   getTimeRange,
-  fetchFieldLineage,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 
