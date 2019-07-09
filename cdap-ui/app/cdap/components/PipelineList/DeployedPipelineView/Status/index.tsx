@@ -15,19 +15,20 @@
  */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
-import StatusMapper from 'services/StatusMapper';
 import IconSVG from 'components/IconSVG';
-import { IStatusMap, IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import StatusMapper from 'services/StatusMapper';
+import { objectQuery } from 'services/helpers';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { GLOBALS } from 'services/global-constants';
 
 interface IProps {
-  statusMap: IStatusMap;
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
-const StatusView: React.SFC<IProps> = ({ statusMap, pipeline }) => {
-  const pipelineStatus = statusMap[pipeline.name] || {};
-  const displayStatus = pipelineStatus.displayStatus;
+const StatusView: React.SFC<IProps> = ({ pipeline }) => {
+  const run = getLatestRun(pipeline);
+  const pipelineStatus = run.status;
+  const displayStatus = StatusMapper.statusMap[pipelineStatus];
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
   return (
@@ -40,13 +41,31 @@ const StatusView: React.SFC<IProps> = ({ statusMap, pipeline }) => {
   );
 };
 
-const mapStateToProps = (state, ownProp) => {
-  return {
-    statusMap: state.deployed.statusMap,
-    pipeline: ownProp.pipeline,
-  };
-};
+function getLatestRun(pipeline) {
+  const applicationDetail = objectQuery(pipeline, 'applicationDetail');
 
-const Status = connect(mapStateToProps)(StatusView);
+  if (applicationDetail === null || applicationDetail === undefined) {
+    return [];
+  }
+
+  const programs = objectQuery(applicationDetail, 'programs');
+
+  if (programs === null || programs === undefined) {
+    return [];
+  }
+
+  const artifact = objectQuery(pipeline, 'artifact');
+
+  if (artifact === null || artifact === undefined) {
+    return [];
+  }
+
+  const programName = GLOBALS.programInfo[artifact.name].programName;
+  const runProgram = programs.find((program) => program.name === programName);
+
+  return runProgram.runs[0];
+}
+
+const Status = StatusView;
 
 export default Status;
