@@ -66,7 +66,8 @@ const applicationDetailResolver = {
 
 const applicationResolvers = merge(applicationsResolver,
   applicationResolver,
-  applicationDetailResolver);
+  applicationDetailResolver
+);
 
 module.exports = {
   applicationResolvers

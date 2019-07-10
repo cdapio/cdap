@@ -75,8 +75,9 @@ const nextRuntimesResolver = {
 
 const scheduleResolvers = merge(runsResolver,
   schedulesResolver,
-  nextRuntimesResolver);
+  nextRuntimesResolver
+);
 
 module.exports = {
   scheduleResolvers
-}
+};

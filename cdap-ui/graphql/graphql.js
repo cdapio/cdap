@@ -33,14 +33,14 @@ const resolvers = merge(applicationResolvers,
   programRecordTypeResolvers,
   programRecordResolvers,
   scheduleResolvers,
-  statusResolvers);
+  statusResolvers
+);
 
 let typeDefs;
 
 if (env === 'production') {
   typeDefs = importSchema('./ui/graphql/schema/rootSchema.graphql');
-}
-else if (env === 'development') {
+} else if (env === 'development') {
   typeDefs = importSchema('./graphql/schema/rootSchema.graphql');
 }
 
