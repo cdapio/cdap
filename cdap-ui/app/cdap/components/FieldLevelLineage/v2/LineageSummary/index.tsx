@@ -17,39 +17,52 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
-import withStyles from '@material-ui/core/styles/withStyles';
-import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import {
+  ITableFields,
+  ILink,
+  IField,
+} from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
-import { grey } from 'components/ThemeWrapper/colors';
+import { grey, orange } from 'components/ThemeWrapper/colors';
 
-const styles = (theme) => {
+const styles = (): StyleRules => {
   return {
     root: {
       paddingLeft: '100px',
       paddingRight: '100px',
       display: 'flex',
       justifyContent: 'space-between',
+      position: 'relative',
     },
     container: {
-      position: 'absolute' as 'absolute',
-      height: '100%',
+      position: 'absolute',
+      height: '110%',
       width: '100%',
+      pointerEvents: 'none',
+      overflow: 'visible',
     },
   };
 };
 
-class LineageSummary extends React.Component<{ classes }> {
-  private activeLinks;
+interface ILineageState {
+  activeField: string;
+  activeCauseSets: ITableFields;
+  activeImpactSets: ITableFields;
+  activeLinks: ILink[];
+}
 
-  // TO DO: Get colors from theme once we've created a separate theme colors file
-  private drawLineFromLink({ source, destination }) {
+class LineageSummary extends React.Component<{ classes }, ILineageState> {
+  // TO DO: This currently breaks when the window is scrolled before drawing
+  private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
-    const sourceEl = d3.select(`#${source}`);
-    const destEl = d3.select(`#${destination}`);
+    const sourceEl = d3.select(`#${source.id}`);
+    const destEl = d3.select(`#${destination.id}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -50; // From the FllHeader
+    const offsetY = -48 + window.pageYOffset; // From the FllHeader
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
@@ -60,7 +73,9 @@ class LineageSummary extends React.Component<{ classes }> {
     const sourceY2 = destXY.top + offsetY + 0.5 * sourceXY.height;
 
     // draw an edge from line start to line end
-    const linkContainer = d3.select(`#${source}_${destination}`);
+    const linkContainer = isSelected
+      ? d3.select('#selected-links')
+      : d3.select(`#${source.id}_${destination.id}`);
 
     const third = (sourceX2 - sourceX1) / 3;
 
@@ -74,9 +89,11 @@ class LineageSummary extends React.Component<{ classes }> {
       [sourceX2, sourceY2],
     ];
 
+    const edgeColor = isSelected ? orange[50] : grey[300];
+
     linkContainer
       .append('path')
-      .style('stroke', grey[300])
+      .style('stroke', edgeColor)
       .style('stroke-width', '1')
       .style('fill', 'none')
       .attr('d', lineGenerator(points));
@@ -91,7 +108,8 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('width', anchorHeight)
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
-      .style('fill', grey[300]);
+      .attr('pointer-events', 'fill') // To make rect clickable
+      .style('fill', edgeColor);
 
     // draw right anchor
     linkContainer
@@ -101,18 +119,44 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('width', anchorHeight)
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
-      .style('fill', grey[300]);
+      .attr('pointer-events', 'fill') // To make rect clickable
+      .style('fill', edgeColor);
   }
 
-  private drawLinks() {
+  private clearCanvas() {
     // clear any existing links and anchors
     d3.select('#links-container')
       .selectAll('path,rect')
       .remove();
+  }
 
-    this.activeLinks.forEach((link) => {
-      this.drawLineFromLink(link);
+  // Draws only active links
+  private drawActiveLinks(activeLinks) {
+    this.clearCanvas();
+
+    activeLinks.forEach((link) => {
+      this.drawLineFromLink(link, true);
     });
+  }
+
+  private drawLinks(links: ILink[], activeFieldId: string = null) {
+    this.clearCanvas();
+
+    links.forEach((link) => {
+      const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
+      this.drawLineFromLink(link, isSelected);
+    });
+  }
+
+  public componentDidUpdate() {
+    const { showingOneField, links, activeLinks, activeField } = this.context;
+    // if user has just clicked "View Cause and Impact"
+    if (showingOneField) {
+      this.clearCanvas();
+      this.drawActiveLinks(activeLinks);
+    } else {
+      this.drawLinks(links, activeField);
+    }
   }
 
   public componentWillUnmount() {
@@ -120,8 +164,9 @@ class LineageSummary extends React.Component<{ classes }> {
   }
 
   public componentDidMount() {
-    this.drawLinks();
-    window.addEventListener('resize', debounce(this.drawLinks.bind(this), 1));
+    const { links, activeField } = this.context;
+    this.drawLinks(links, activeField);
+    window.addEventListener('resize', debounce(this.drawLinks.bind(this, links, activeField), 1));
   }
   public render() {
     return (
@@ -131,44 +176,47 @@ class LineageSummary extends React.Component<{ classes }> {
           target,
           targetFields,
           impactSets,
-          firstCause,
-          firstImpact,
-          firstField,
           links,
+          activeLinks,
+          activeCauseSets,
+          activeImpactSets,
+          showingOneField,
         }) => {
-          this.activeLinks = links;
+          let visibleLinks = links;
+          let visibleCauseSets = causeSets;
+          let visibleImpactSets = impactSets;
+
+          if (showingOneField) {
+            visibleLinks = activeLinks;
+            visibleCauseSets = activeCauseSets;
+            visibleImpactSets = activeImpactSets;
+          }
+
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
                 <g>
-                  {links.map((link) => {
-                    const id = `${link.source}_${link.destination}`;
+                  {visibleLinks.map((link) => {
+                    const id = `${link.source.id}_${link.destination.id}`;
                     return <svg id={id} key={id} className="fll-link" />;
                   })}
                 </g>
+                <g id="selected-links" />
               </svg>
               <div>
-                <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
-                {Object.keys(causeSets).map((key) => {
-                  return <FllTable key={key} tableId={key} fields={causeSets[key]} />;
+                <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
+                {Object.entries(visibleCauseSets).forEach(([tableId, fields]) => {
+                  return <FllTable key={tableId} tableId={tableId} fields={fields} />;
                 })}
               </div>
               <div>
-                <FllHeader
-                  type="target"
-                  first={firstField}
-                  total={Object.keys(targetFields).length}
-                />
-                <FllTable isTarget={true} tableId={target} fields={targetFields} />
+                <FllHeader type="target" total={Object.keys(targetFields).length} />
+                <FllTable tableId={target} fields={targetFields} />
               </div>
               <div>
-                <FllHeader
-                  type="impact"
-                  first={firstImpact}
-                  total={Object.keys(impactSets).length}
-                />
-                {Object.keys(impactSets).map((key) => {
-                  return <FllTable key={key} tableId={key} fields={impactSets[key]} />;
+                <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
+                {Object.entries(visibleImpactSets).forEach(([tableId, fields]) => {
+                  return <FllTable key={tableId} tableId={tableId} fields={fields} />;
                 })}
               </div>
             </div>
@@ -178,6 +226,8 @@ class LineageSummary extends React.Component<{ classes }> {
     );
   }
 }
+
+LineageSummary.contextType = FllContext;
 
 const StyledLineageSummary = withStyles(styles)(LineageSummary);
 
