@@ -42,7 +42,7 @@ export interface IApplicationRecord {
   name: string;
   version: string;
   description: string;
-  // artifact: artifactSummary;
+  artifact: IArtifactSummary;
   ownerPrincipal?: string;
   applicationDetail: IApplicationDetail;
 }
@@ -81,4 +81,10 @@ export interface IRunRecord {
   end: string;
   status: string;
   profileId?: string;
+}
+
+export interface IArtifactSummary {
+  name: string;
+  version: string;
+  scope: string;
 }
