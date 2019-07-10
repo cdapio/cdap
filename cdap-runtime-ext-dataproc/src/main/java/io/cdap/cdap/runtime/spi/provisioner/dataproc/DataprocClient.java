@@ -135,13 +135,6 @@ public class DataprocClient implements AutoCloseable {
     if (privateInstance) {
       // private instance must have a peering established
       verifyPeering(conf, network, systemNetwork, projectId, systemProjectId, state);
-      if (conf.isPreferExternalIP()) {
-        // When prefer external IP is set to true it means only Dataproc external ip can be used to for communication
-        // the instance being private instance is incapable of using external ip for communication
-        throw new IllegalArgumentException("The instance is incapable of using external ip for communication " +
-                                             "with Dataproc cluster. Please correct profile configuration by " +
-                                             "deselecting preferExternalIP.");
-      }
     } else if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
       // Peering is setup between the system network and customer network and is in ACTIVE state.
       // However user has selected to preferred external IP the instance. This is not a private instance and is
@@ -153,17 +146,12 @@ public class DataprocClient implements AutoCloseable {
                              systemProjectId, network, projectId));
     }
 
-    boolean useInternalIP;
-    if (privateInstance) {
-      // if instance is private then it is only capable of using private ip to communicate with Dataproc
-      useInternalIP = true;
-    } else {
-      // Use internal IP for the Dataproc cluster if user has not preferred external IP and
-      // (CDAP is running in the same customer project as Dataproc is going to be launched or
-      // Network peering is done between customer network and system network and is in ACTIVE mode).
-      useInternalIP = !conf.isPreferExternalIP()
-        && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
-    }
+    // Use internal IP for the Dataproc cluster if user has not preferred external IP and
+    // (CDAP is running in the same customer project as Dataproc is going to be launched or
+    // Network peering is done between customer network and system network and is in ACTIVE mode).
+    boolean useInternalIP = !conf.isPreferExternalIP()
+      && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
+
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
@@ -197,13 +185,13 @@ public class DataprocClient implements AutoCloseable {
     switch (state) {
       case NONE:
         throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network '" +
-                                                        "%s' in project '%s' does not exists. Please establish a " +
+                                                        "%s' in project '%s' does not exist. Please establish a " +
                                                         "peering.",
                                                       systemNetwork, systemProjectId, network, projectId));
       case INACTIVE:
         throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network " +
-                                                        "'%s' in project '%s' is in INACTIVE state. Please fix the " +
-                                                        "peering setup and ensure it is in ACTIVE state.",
+                                                        "'%s' in project '%s' is in the INACTIVE state. Please fix " +
+                                                        "the peering setup and ensure it is in the ACTIVE state.",
                                                       systemNetwork, systemProjectId, network, projectId));
     }
   }

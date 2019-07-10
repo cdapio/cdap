@@ -132,7 +132,17 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
-    DataprocConf.fromProperties(properties);
+    systemContext.reloadProperties();
+    DataprocConf conf = DataprocConf.fromProperties(properties);
+    boolean privateInstance = Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
+                                                                                              "false"));
+    if (privateInstance && conf.isPreferExternalIP()) {
+      // When prefer external IP is set to true it means only Dataproc external ip can be used to for communication
+      // the instance being private instance is incapable of using external ip for communication
+      throw new IllegalArgumentException("The instance is incapable of using external ip for communication " +
+                                           "with Dataproc cluster. Please correct profile configuration by " +
+                                           "deselecting preferExternalIP.");
+    }
   }
 
   @Override
