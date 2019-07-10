@@ -69,12 +69,6 @@ const DeployedPipelinesView = () => (
                 }
               }
             }
-            metadata {
-              tags {
-                name
-                scope
-              }
-            }
           }
         }
       }
@@ -99,6 +93,7 @@ const DeployedPipelinesView = () => (
         <Provider store={Store}>
           <div className="pipeline-deployed-view pipeline-list-content">
             <div className="deployed-header">
+              {/* TODO pipelinesLoading is true by default and changed when setting a pipeline in the store */}
               <PipelineCount pipelines={pipelines} pipelinesLoading={false} />
               <SearchBox />
               <Pagination />
