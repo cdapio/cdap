@@ -203,18 +203,19 @@ public class DataprocClient implements AutoCloseable {
       return PeeringState.NONE;
     }
 
-    Network systemNetworkInfo = getNetworkInfo(systemProjectId, systemNetwork, compute);
-    // Get self link for the network.
-    String systemNetworkSelfLink = systemNetworkInfo.getSelfLink();
+    // note: vpc network is a global resource.
+    // https://cloud.google.com/compute/docs/regions-zones/global-regional-zonal-resources#globalresources
+    String systemNetworkPath = String.format("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
+                                             systemProjectId, systemNetwork);
 
-    LOG.info(String.format("Self link for the system network is %s", systemNetworkSelfLink));
+    LOG.info(String.format("Self link for the system network is %s", systemNetworkPath));
     List<NetworkPeering> peerings = networkInfo.getPeerings();
     // if the customer does not has a peering established at all the peering list is null
     if (peerings == null) {
       return PeeringState.NONE;
     }
     for (NetworkPeering peering : peerings) {
-      if (!systemNetworkSelfLink.equals(peering.getNetwork())) {
+      if (!systemNetworkPath.equals(peering.getNetwork())) {
         continue;
       }
       return peering.getState().equals("ACTIVE") ? PeeringState.ACTIVE : PeeringState.INACTIVE;
