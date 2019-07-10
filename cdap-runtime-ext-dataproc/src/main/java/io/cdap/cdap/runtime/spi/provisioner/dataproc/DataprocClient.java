@@ -130,7 +130,7 @@ public class DataprocClient implements AutoCloseable {
     String subnet = conf.getSubnet();
     Network networkInfo = getNetworkInfo(projectId, network, compute);
 
-    PeeringState state = peeringState(systemNetwork, systemProjectId, networkInfo, compute);
+    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo, compute);
 
     if (privateInstance) {
       // private instance must have a peering established
@@ -147,7 +147,7 @@ public class DataprocClient implements AutoCloseable {
       // However user has selected to preferred external IP the instance. This is not a private instance and is
       // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
       // internal IP can be used.
-      LOG.warn(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
+      LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
                                "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
                                "to launch Dataproc clusters with internal IP only.", systemNetwork,
                              systemProjectId, network, projectId));
@@ -208,8 +208,8 @@ public class DataprocClient implements AutoCloseable {
     }
   }
 
-  private static PeeringState peeringState(@Nullable String systemNetwork, String systemProjectId,
-                                           Network networkInfo, Compute compute) throws IOException {
+  private static PeeringState getPeeringState(@Nullable String systemNetwork, String systemProjectId,
+                                              Network networkInfo, Compute compute) throws IOException {
     // systemNetwork can be null when CDAP is not running on GCP for example CDAP running in sandbox environment
     if (systemNetwork == null) {
       return PeeringState.NONE;
@@ -222,16 +222,14 @@ public class DataprocClient implements AutoCloseable {
     LOG.info(String.format("Self link for the system network is %s", systemNetworkSelfLink));
     List<NetworkPeering> peerings = networkInfo.getPeerings();
     // if the customer does not has a peering established at all the peering list is null
-    if (peerings != null) {
-      for (NetworkPeering peering : peerings) {
-        if (!systemNetworkSelfLink.equals(peering.getNetwork())) {
-          continue;
-        }
-        if (peering.getState().equals("ACTIVE")) {
-          return PeeringState.ACTIVE;
-        }
-        return PeeringState.INACTIVE;
+    if (peerings == null) {
+      return PeeringState.NONE;
+    }
+    for (NetworkPeering peering : peerings) {
+      if (!systemNetworkSelfLink.equals(peering.getNetwork())) {
+        continue;
       }
+      return peering.getState().equals("ACTIVE") ? PeeringState.ACTIVE : PeeringState.INACTIVE;
     }
     return PeeringState.NONE;
   }
@@ -347,11 +345,8 @@ public class DataprocClient implements AutoCloseable {
         clusterConfig.setNetworkUri(network);
       }
 
-      // if internal ip is being used firewall rules might not exists and is not needed
-      if (!useInternalIP) {
-        for (String targetTag : getFirewallTargetTags()) {
-          clusterConfig.addTags(targetTag);
-        }
+      for (String targetTag : getFirewallTargetTags()) {
+        clusterConfig.addTags(targetTag);
       }
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security
