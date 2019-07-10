@@ -95,7 +95,8 @@ public class DataprocClient implements AutoCloseable {
     NONE
   }
 
-  public static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
+  public static DataprocClient fromConf(DataprocConf conf,
+                                        boolean privateInstance) throws IOException, GeneralSecurityException {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
 
@@ -131,28 +132,38 @@ public class DataprocClient implements AutoCloseable {
 
     PeeringState state = peeringState(systemNetwork, systemProjectId, networkInfo, compute);
 
-    if (state == PeeringState.ACTIVE && conf.isPreferExternalIP()) {
+    if (privateInstance) {
+      // private instance must have a peering established
+      verifyPeering(conf, network, systemNetwork, projectId, systemProjectId, state);
+      if (conf.isPreferExternalIP()) {
+        // When prefer external IP is set to true it means only Dataproc external ip can be used to for communication
+        // the instance being private instance is incapable of using external ip for communication
+        throw new IllegalArgumentException("The instance is incapable of using external ip for communication " +
+                                             "with Dataproc cluster. Please correct profile configuration by " +
+                                             "deselecting preferExternalIP.");
+      }
+    } else if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
       // Peering is setup between the system network and customer network and is in ACTIVE state.
-      // However user has selected to preferred external IP. Add warning message indicating that internal IP
-      // can be used.
+      // However user has selected to preferred external IP the instance. This is not a private instance and is
+      // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
+      // internal IP can be used.
       LOG.warn(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
-                               "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false to " +
-                               "launch Dataproc clusters with internal IP only.", systemNetwork,
+                               "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
+                               "to launch Dataproc clusters with internal IP only.", systemNetwork,
                              systemProjectId, network, projectId));
-    } else if (!conf.isPreferExternalIP() && state != PeeringState.ACTIVE) {
-      // User has intended to use the internal IP but the peering is either not established or is in inactive
-      // state. Dataproc cluster cannot be launched on the internal IP unless the peering setup is fixed.
-      throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
-                                                      "in project '%s' does not exists or is in the INACTIVE state. " +
-                                                      "Please fix the peering setup and ensure it is in ACTIVE state.",
-                                                    systemNetwork, systemProjectId, network, projectId));
     }
 
-    // Use internal IP for the Dataproc cluster if user has not preferred external IP and
-    // (CDAP is running in the same customer project as Dataproc is going to be launched or
-    // Network peering is done between customer network and system network and is in ACTIVE mode).
-    boolean useInternalIP = !conf.isPreferExternalIP()
-      && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
+    boolean useInternalIP;
+    if (privateInstance) {
+      // if instance is private then it is only capable of using private ip to communicate with Dataproc
+      useInternalIP = true;
+    } else {
+      // Use internal IP for the Dataproc cluster if user has not preferred external IP and
+      // (CDAP is running in the same customer project as Dataproc is going to be launched or
+      // Network peering is done between customer network and system network and is in ACTIVE mode).
+      useInternalIP = !conf.isPreferExternalIP()
+        && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
+    }
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
@@ -179,6 +190,22 @@ public class DataprocClient implements AutoCloseable {
     }
 
     return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
+  }
+
+  private static void verifyPeering(DataprocConf conf, String network, String systemNetwork,
+                                    String projectId, String systemProjectId, PeeringState state) {
+    switch (state) {
+      case NONE:
+        throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network '" +
+                                                        "%s' in project '%s' does not exists. Please establish a " +
+                                                        "peering.",
+                                                      systemNetwork, systemProjectId, network, projectId));
+      case INACTIVE:
+        throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network " +
+                                                        "'%s' in project '%s' is in INACTIVE state. Please fix the " +
+                                                        "peering setup and ensure it is in ACTIVE state.",
+                                                      systemNetwork, systemProjectId, network, projectId));
+    }
   }
 
   private static PeeringState peeringState(@Nullable String systemNetwork, String systemProjectId,

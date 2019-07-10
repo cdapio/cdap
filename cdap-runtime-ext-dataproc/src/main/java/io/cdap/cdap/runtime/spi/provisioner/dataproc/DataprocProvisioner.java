@@ -60,6 +60,9 @@ public class DataprocProvisioner implements Provisioner {
   // Keys for looking up system properties
   private static final String LABELS_PROPERTY = "labels";
 
+  // Key which is set to true if the instance only have private ip assigned to it else false
+  private static final String PRIVATE_INSTANCE = "privateInstance";
+
   // keys and values cannot be longer than 63 characters
   // keys and values can only contain lowercase letters, numbers, underscores, and dashes
   // keys must start with a lowercase letter
@@ -150,7 +153,10 @@ public class DataprocProvisioner implements Provisioner {
     DataprocConf conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    try (DataprocClient client =
+           DataprocClient.fromConf(conf,
+                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
+                                                                                                   "false")))) {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
       if (existing.isPresent()) {
@@ -178,8 +184,12 @@ public class DataprocProvisioner implements Provisioner {
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
-
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    // Reload system context properties
+    systemContext.reloadProperties();
+    try (DataprocClient client =
+           DataprocClient.fromConf(conf,
+                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
+                                                                                                   "false")))) {
       return client.getClusterStatus(clusterName);
     }
   }
@@ -188,8 +198,12 @@ public class DataprocProvisioner implements Provisioner {
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
-
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    // Reload system context properties
+    systemContext.reloadProperties();
+    try (DataprocClient client =
+           DataprocClient.fromConf(conf,
+                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
+                                                                                                   "false")))) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
     }
@@ -200,7 +214,12 @@ public class DataprocProvisioner implements Provisioner {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
 
-    try (DataprocClient client = DataprocClient.fromConf(conf)) {
+    // Reload system context properties
+    systemContext.reloadProperties();
+    try (DataprocClient client =
+           DataprocClient.fromConf(conf,
+                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
+                                                                                                   "false")))) {
       client.deleteCluster(clusterName);
     }
   }
