@@ -20,9 +20,8 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import classnames from 'classnames';
 import T from 'i18n-react';
 import If from 'components/If';
-import IconButton from '@material-ui/core/IconButton';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import FllMenu from 'components/FieldLevelLineage/v2/FllTable/FllMenu';
 
 const styles = (theme): StyleRules => {
   return {
@@ -86,11 +85,12 @@ function FllField({ field, classes }: IFieldProps) {
         </span>
       </If>
       <If condition={field.id === activeField && isTarget && !showingOneField}>
-        <span className={classes.targetView} onClick={handleViewCauseImpact}>
+        <span className={classes.targetView}>
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-          <IconButton className={classes.viewDropdown}>
+          {/* <IconButton className={classes.viewDropdown}>
             <KeyboardArrowDownIcon />
-          </IconButton>
+          </IconButton> */}
+          <FllMenu />
         </span>
       </If>
       <If condition={field.id === activeField && isTarget && showingOneField}>

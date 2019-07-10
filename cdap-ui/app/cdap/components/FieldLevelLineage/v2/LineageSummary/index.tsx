@@ -17,11 +17,7 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
-import {
-  ITableFields,
-  ILink,
-  IField,
-} from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
