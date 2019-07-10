@@ -1546,7 +1546,9 @@ features:
         relatedFieldsCount:
           1: "{context} related field"
           _: "{context} related fields"
-
+      TopPanel:
+        timePickerCaption: "View"
+          
   ADLSBrowser:
     directory: Directory
     EmptyMessage:

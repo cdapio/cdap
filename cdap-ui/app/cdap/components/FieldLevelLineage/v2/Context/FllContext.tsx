@@ -26,6 +26,7 @@ import {
   getTimeRange,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
+import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 
 const defaultContext: IContextState = {
   target: '',
@@ -34,6 +35,9 @@ const defaultContext: IContextState = {
   causeSets: {},
   impactSets: {},
   showingOneField: false,
+  start: null,
+  end: null,
+  selection: TIME_OPTIONS[1],
 };
 
 export const FllContext = React.createContext<IContextState>(defaultContext);
@@ -45,6 +49,9 @@ export interface IContextState {
   causeSets: ITableFields;
   impactSets: ITableFields;
   showingOneField: boolean;
+  start: number;
+  end: number;
+  selection: string;
   handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleViewCauseImpact?: () => void;
   handleReset?: () => void;
@@ -140,6 +147,13 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
+  private onDone = ({ start, end }) => {
+    this.setState({
+      start,
+      end,
+    });
+  };
+
   public state = {
     target: '',
     targetFields: [],
@@ -148,6 +162,9 @@ export class Provider extends React.Component<{ children }, IContextState> {
     impactSets: {},
     activeField: null,
     showingOneField: false,
+    start: null,
+    end: null,
+    selection: TIME_OPTIONS[1],
     activeCauseSets: null,
     activeImpactSets: null,
     activeLinks: null,

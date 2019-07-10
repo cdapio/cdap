@@ -16,11 +16,14 @@
 
 import React from 'react';
 import LineageSummary from 'components/FieldLevelLineage/v2/LineageSummary';
+import EntityTopPanel from 'components/EntityTopPanel';
+import TopPanel from 'components/FieldLevelLineage/v2/TopPanel';
 import { Provider } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 export default function FllExpt(props) {
   return (
     <Provider {...props}>
+      <TopPanel />
       <LineageSummary />
     </Provider>
   );

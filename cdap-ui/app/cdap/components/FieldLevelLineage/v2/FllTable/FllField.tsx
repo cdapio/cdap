@@ -42,11 +42,7 @@ const styles = (theme): StyleRules => {
       color: theme.palette.blue[200],
     },
     targetView: {
-      color: theme.palette.blue[200],
-      textAlign: 'right',
-    },
-    viewDropdown: {
-      padding: 0,
+      paddingLeft: '35px',
       color: theme.palette.blue[200],
     },
   };
@@ -81,10 +77,7 @@ function FllField({ field, classes }: IFieldProps) {
         </span>
       </If>
       <If condition={field.id === activeField && isTarget && !showingOneField}>
-        <span className={classes.targetView}>
-          {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-          <FllMenu />
-        </span>
+        <FllMenu />
       </If>
       <If condition={field.id === activeField && isTarget && showingOneField}>
         <span className={classes.targetView} onClick={handleReset}>
