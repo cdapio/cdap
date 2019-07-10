@@ -24,7 +24,6 @@ import {
   IPipeline,
   IPipelineStatus,
   IStatusMap,
-  IRunsCountMap,
 } from 'components/PipelineList/DeployedPipelineView/types';
 import orderBy from 'lodash/orderBy';
 import StatusMapper from 'services/StatusMapper';
