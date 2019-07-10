@@ -21,7 +21,7 @@ const programsResolver = {
         const programs = parent.programs;
         const type = args.type;
 
-        if (type == null) {
+        if (type === null) {
           resolve(programs)
         }
         else {
