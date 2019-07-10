@@ -83,6 +83,7 @@ var MultipleValuesWidget = require('../cdap/components/AbstractWidget/MultipleVa
   .default;
 var PluginConnectionBrowser = require('../cdap/components/DataPrepConnections/PluginConnectionBrowser')
   .default;
+var JoinTypeWidget = require('../cdap/components/AbstractWidget/JoinTypeWidget').default;
 
 export {
   Store,
@@ -144,4 +145,5 @@ export {
   KeyValueDropdownWidget,
   MultipleValuesWidget,
   PluginConnectionBrowser,
+  JoinTypeWidget,
 };
