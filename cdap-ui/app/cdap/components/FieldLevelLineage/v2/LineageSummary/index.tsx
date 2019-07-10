@@ -205,7 +205,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </svg>
               <div>
                 <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
-                {Object.entries(visibleCauseSets).forEach(([tableId, fields]) => {
+                {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
                   return <FllTable key={tableId} tableId={tableId} fields={fields} />;
                 })}
               </div>
@@ -215,7 +215,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </div>
               <div>
                 <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
-                {Object.entries(visibleImpactSets).forEach(([tableId, fields]) => {
+                {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
                   return <FllTable key={tableId} tableId={tableId} fields={fields} />;
                 })}
               </div>
