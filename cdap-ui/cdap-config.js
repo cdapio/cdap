@@ -15,13 +15,11 @@
  */
 
 const parser = require('./server/config/parser.js');
-let cdapConfig;
+const memoize = require('lodash/memoize');
 
-async function getCDAPConfig() {
-  if (cdapConfig) {
-    return cdapConfig;
-  }
-
+async function extractCDAPConfig() {
+  let cdapConfig;
+  
   try {
     cdapConfig = await parser.extractConfig('cdap');
   } catch (e) {
@@ -30,6 +28,8 @@ async function getCDAPConfig() {
 
   return cdapConfig;
 }
+
+const getCDAPConfig = memoize(extractCDAPConfig);
 
 module.exports = {
   getCDAPConfig
