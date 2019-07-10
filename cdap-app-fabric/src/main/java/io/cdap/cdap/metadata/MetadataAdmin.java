@@ -27,6 +27,7 @@ import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -152,6 +153,11 @@ public interface MetadataAdmin {
    * @param mutation the MetadataMutation to apply
    */
   void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException;
+
+  /**
+   * Applies a batch of metadata mutations
+   */
+  void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException;
 
   /**
    * Executes a search for CDAP entities.

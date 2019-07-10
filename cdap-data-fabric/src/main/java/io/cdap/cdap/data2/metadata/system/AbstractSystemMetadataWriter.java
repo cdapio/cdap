@@ -60,6 +60,10 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
    */
   @Override
   public void write() {
+    metadataServiceClient.create(getMetadataMutation());
+  }
+
+  public MetadataMutation.Create getMetadataMutation() {
     String schema = getSchemaToAdd();
     Set<String> tags = getSystemTagsToAdd();
     Map<String, String> properties = getSystemPropertiesToAdd();
@@ -67,8 +71,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
       properties = new HashMap<>(properties);
       properties.put(MetadataConstants.SCHEMA_KEY, schema);
     }
-    metadataServiceClient.create(new MetadataMutation.Create(metadataEntity,
-                                                             new Metadata(MetadataScope.SYSTEM, tags, properties),
-                                                             CREATE_DIRECTIVES));
+    return new MetadataMutation.Create(metadataEntity, new Metadata(MetadataScope.SYSTEM, tags, properties),
+                                       CREATE_DIRECTIVES);
   }
 }
