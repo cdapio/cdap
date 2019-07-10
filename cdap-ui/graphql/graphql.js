@@ -17,6 +17,7 @@
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const merge = require('lodash/merge');
+const log4js = require('log4js');
 const { applicationResolvers } = require('./resolvers/applicationResolvers');
 const { namespaceResolvers } = require('./resolvers/namespaceResolvers');
 const { metadataResolvers } = require('./resolvers/metadataResolvers');
@@ -25,6 +26,7 @@ const { programRecordTypeResolvers } = require('./resolvers/type/programRecordTy
 const { scheduleResolvers } = require('./resolvers/scheduleResolvers');
 const { statusResolvers } = require('./resolvers/statusResolvers');
 
+const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
 
 const resolvers = merge(applicationResolvers,
