@@ -19,6 +19,7 @@
 var urlhelper = require('./url-helper');
 const url = require('url');
 const csp = require('helmet-csp');
+var proxy = require('express-http-proxy');
 
 module.exports = {
   getApp: function() {
@@ -178,6 +179,13 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   }
 
   app.use(compression());
+  app.use(
+    '/api',
+    proxy(urlhelper.constructUrl.bind(null, cdapConfig), {
+      parseReqBody: false,
+      limit: '500gb',
+    })
+  );
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
@@ -381,36 +389,14 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     For now it handles file upload POST /namespaces/:namespace/apps API
   */
   app.post('/namespaces/:namespace/:path(*)', function(req, res) {
-    var protocol, port;
-    if (cdapConfig['ssl.external.enabled'] === 'true') {
-      protocol = 'https://';
-    } else {
-      protocol = 'http://';
-    }
-    if (cdapConfig['ssl.external.enabled'] === 'true') {
-      port = cdapConfig['router.ssl.server.port'];
-    } else {
-      port = cdapConfig['router.server.port'];
-    }
     var headers = {};
     if (req.headers) {
       headers = req.headers;
     }
-
-    var url = [
-      protocol,
-      cdapConfig['router.server.address'],
-      ':',
-      port,
-      '/v3/namespaces/',
-      req.param('namespace'),
-      '/',
-      req.param('path'),
-    ].join('');
-
+    const constructedPath = `/v3/namespaces/${req.param('namespace')}/${req.param('path')}`;
     var opts = {
       method: 'POST',
-      url: url,
+      url: urlhelper.constructUrl(cdapConfig, constructedPath),
       headers: {
         'Content-Type': headers['content-type'],
       },
