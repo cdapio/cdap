@@ -19,10 +19,17 @@ const programsTypeResolver = {
     async __resolveType(parent, args, context, info) {
       return await (new Promise((resolve, reject) => {
         switch (parent.type) {
-          case 'Mapreduce': resolve('MapReduce')
-          case 'Workflow': resolve('Workflow')
-          case 'Spark': resolve('Spark')
-          default: resolve(null)
+          case 'Mapreduce':
+            resolve('MapReduce');
+            break;
+          case 'Workflow':
+            resolve('Workflow');
+            break;
+          case 'Spark':
+            resolve('Spark');
+            break;
+          default:
+            resolve(null);
         }
       }));
     }
