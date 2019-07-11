@@ -25,11 +25,16 @@ import java.util.regex.Pattern;
 /**
  * A thread-safe class that provides helper methods for metadata search string interpretation,
  * and defines search syntax for qualifying information (e.g. required terms) {@link QueryTerm.Qualifier}.
+<<<<<<< HEAD
+=======
+ * By default, search items without an operator are considered optional.
+>>>>>>> Added basic QueryParser functionality and test cases
  */
 public class QueryParser {
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
   private static final char REQUIRED_OPERATOR = '+';
 
+<<<<<<< HEAD
   // private constructor to prevent instantiation
   private QueryParser() {}
 
@@ -46,6 +51,13 @@ public class QueryParser {
    * The {@link QueryParser#REQUIRED_OPERATOR} character signifies a search term that must receive a match.
    * By default, this method considers search items without an operator to be optional.
    *
+=======
+  /**
+   * Organizes and separates a raw, space-separated search string
+   * into multiple {@link QueryTerm} objects.
+   * e.g. "tag1 tag2 tag3" is converted to a list of optional QueryTerms containing the strings
+   * "tag1", "tag2", and "tag3" respectively.
+>>>>>>> Added basic QueryParser functionality and test cases
    * @param query the raw search string
    * @return a list of QueryTerms
    */
@@ -59,9 +71,17 @@ public class QueryParser {
   }
 
   private static QueryTerm singleParse(String term) {
+<<<<<<< HEAD
     if (term.charAt(0) == REQUIRED_OPERATOR && term.length() > 1) {
       return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
     }
       return new QueryTerm(term, Qualifier.OPTIONAL);
+=======
+    if (term.charAt(0) == REQUIRED_OPERATOR) {
+      if (term.length() == 1) return new QueryTerm("", Qualifier.REQUIRED);
+        else return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
+    }
+    else return new QueryTerm(term, Qualifier.OPTIONAL);
+>>>>>>> Added basic QueryParser functionality and test cases
   }
 }

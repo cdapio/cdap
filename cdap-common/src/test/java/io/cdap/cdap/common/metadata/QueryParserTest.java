@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.metadata;
 
+<<<<<<< HEAD
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
 import org.junit.Assert;
@@ -44,11 +45,45 @@ public class QueryParserTest {
     Assert.assertEquals(4, outputQueryTerms.size());
     for (QueryTerm q : outputQueryTerms) {
       Assert.assertEquals(4, q.getTerm().length());
+=======
+import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
+
+public class QueryParserTest {
+  @Test
+  public void testBasicParse() {
+    String inputQuery = "tag1 tag2 +tag3 tag4+";
+    List<QueryTerm> targetOutputQueryTerms = new ArrayList<>();
+    targetOutputQueryTerms.add(new QueryTerm("tag1", Qualifier.OPTIONAL));
+    targetOutputQueryTerms.add(new QueryTerm("tag2", Qualifier.OPTIONAL));
+    targetOutputQueryTerms.add(new QueryTerm("tag3", Qualifier.REQUIRED));
+    targetOutputQueryTerms.add(new QueryTerm("tag4+", Qualifier.OPTIONAL));
+    List<QueryTerm> actualOutputQueryTerms = QueryParser.parse(inputQuery);
+
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(targetOutputQueryTerms.get(i).equals(actualOutputQueryTerms.get(i)));
+    }
+    Assert.assertFalse(targetOutputQueryTerms.get(1).equals(actualOutputQueryTerms.get(2)));
+  }
+
+  @Test
+  public void testFormatting() {
+    String inputQuery = "tag1       tag2      tag3    tag4";
+    List<QueryTerm> outputQueryTerms = QueryParser.parse(inputQuery);
+
+    Assert.assertEquals(outputQueryTerms.size(), 4);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(QueryParser.parse(inputQuery).get(i).getTerm().length(), 4);
+>>>>>>> Added basic QueryParser functionality and test cases
     }
   }
 
   @Test
   public void testUnusualQueries() {
+<<<<<<< HEAD
     String emptyQuery = "";
     String whitespacePlusValidTerm = "        space";
     String operatorAsSearchTerm = "+";
@@ -73,3 +108,15 @@ public class QueryParserTest {
     Assert.assertEquals(2, QueryParser.parse(carriageReturnSeparatedString).size());
   }
 }
+=======
+    String inputQuery1 = "";
+    String inputQuery2 = "        space";
+    String inputQuery3 = "+ plus";
+
+    Assert.assertTrue(QueryParser.parse(inputQuery1).isEmpty());
+    Assert.assertTrue(QueryParser.parse(inputQuery2).get(0).equals(new QueryTerm("space", Qualifier.OPTIONAL)));
+    Assert.assertTrue(QueryParser.parse(inputQuery3).get(0).equals(new QueryTerm("", Qualifier.REQUIRED)));
+    Assert.assertTrue(QueryParser.parse(inputQuery3).get(1).equals(new QueryTerm("plus", Qualifier.OPTIONAL)));
+  }
+}
+>>>>>>> Added basic QueryParser functionality and test cases

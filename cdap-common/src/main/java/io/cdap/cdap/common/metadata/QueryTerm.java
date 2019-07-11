@@ -16,8 +16,11 @@
 
 package io.cdap.cdap.common.metadata;
 
+<<<<<<< HEAD
 import java.util.Objects;
 
+=======
+>>>>>>> Added basic QueryParser functionality and test cases
 /**
  * Represents a single item in a search query in terms of its content (i.e. the value being searched for)
  * and its qualifying information (e.g. whether a match for it is optional or required).
@@ -25,28 +28,35 @@ import java.util.Objects;
  */
 public class QueryTerm {
   private String term;
+<<<<<<< HEAD
 
   /**
    * Defines the different types of search terms that can be input.
    * A qualifier determines how the search implementation should handle the given term, e.g.
    * prioritizing required terms over optional ones.
    */
+=======
+>>>>>>> Added basic QueryParser functionality and test cases
   public enum Qualifier {
     OPTIONAL, REQUIRED
   }
   private Qualifier qualifier;
 
+<<<<<<< HEAD
   /**
    * Constructs a QueryTerm using the search term and its qualifying information.
    *
    * @param term the search term
    * @param qualifier the qualifying information {@link Qualifier}
    */
+=======
+>>>>>>> Added basic QueryParser functionality and test cases
   public QueryTerm(String term, Qualifier qualifier) {
     this.term = term;
     this.qualifier = qualifier;
   }
 
+<<<<<<< HEAD
   /**
    * @return the search term, without its preceding operator
    */
@@ -77,5 +87,11 @@ public class QueryTerm {
   @Override
   public int hashCode() {
     return Objects.hash(term, qualifier);
+=======
+  public String getTerm() { return term; }
+  public Qualifier getQualifier() { return qualifier; }
+  public boolean equals(QueryTerm q) {
+    return term.equals(q.getTerm()) && qualifier.equals(q.getQualifier());
+>>>>>>> Added basic QueryParser functionality and test cases
   }
 }
