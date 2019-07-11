@@ -182,7 +182,7 @@
     "q": "1.4.1",
     "query-string": "4.3.2",
     "react": "16.8.6",
-    "react-apollo": "^2.5.8",
+    "react-apollo": "2.5.8",
     "react-calendar": "2.15.0",
     "react-cookie": "0.4.8",
     "react-css-modules": "4.1.0",
