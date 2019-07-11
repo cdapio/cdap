@@ -15,26 +15,21 @@
  */
 
 import * as React from 'react';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { MyPipelineApi } from 'api/pipeline';
 import IconSVG from 'components/IconSVG';
 import { Observable } from 'rxjs/Observable';
 import Duration from 'components/Duration';
 import { GLOBALS } from 'services/global-constants';
-import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { objectQuery } from 'services/helpers';
 
 interface IProps {
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
 interface IState {
   loading: boolean;
   nextRun: null | number;
 }
-
-const DataPipelineProgram = {
-  ...GLOBALS.programInfo[GLOBALS.etlDataPipeline],
-};
 
 export default class NextRun extends React.PureComponent<IProps, IState> {
   private interval = null;
@@ -62,21 +57,37 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   }
 
   private getNextRun() {
-    const namespace = getCurrentNamespace();
-    const pipeline = this.props.pipeline;
+    const latestRun = this.getLatestRun(this.props.pipeline);
 
-    const params = {
-      ...DataPipelineProgram,
-      namespace,
-      appId: pipeline.name,
-    };
-
-    MyPipelineApi.getNextRun(params).subscribe((res) => {
-      this.setState({
-        loading: false,
-        nextRun: res.length ? res[0].time : null,
-      });
+    this.setState({
+      loading: false,
+      nextRun: latestRun.nextRuntimes.length ? parseInt(latestRun.nextRuntimes[0], 10) : null,
     });
+  }
+
+  private getLatestRun(pipeline) {
+    const applicationDetail = objectQuery(pipeline, 'applicationDetail');
+
+    if (applicationDetail === null || applicationDetail === undefined) {
+      return [];
+    }
+
+    const programs = objectQuery(applicationDetail, 'programs');
+
+    if (programs === null || programs === undefined) {
+      return [];
+    }
+
+    const artifact = objectQuery(pipeline, 'artifact');
+
+    if (artifact === null || artifact === undefined) {
+      return [];
+    }
+
+    const programName = GLOBALS.programInfo[artifact.name].programName;
+    const runProgram = programs.find((program) => program.name === programName);
+
+    return runProgram.schedules[0];
   }
 
   private renderContent() {

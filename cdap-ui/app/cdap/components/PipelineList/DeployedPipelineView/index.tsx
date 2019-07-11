@@ -65,6 +65,7 @@ const DeployedPipelinesView = () => (
                 schedules {
                   name
                   status
+                  nextRuntimes
                 }
               }
             }
