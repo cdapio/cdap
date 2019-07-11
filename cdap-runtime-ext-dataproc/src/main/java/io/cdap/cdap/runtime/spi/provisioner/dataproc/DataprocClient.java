@@ -132,10 +132,7 @@ public class DataprocClient implements AutoCloseable {
 
     PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo, compute);
 
-    if (privateInstance) {
-      // private instance must have a peering established
-      verifyPeering(conf, network, systemNetwork, projectId, systemProjectId, state);
-    } else if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
+    if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
       // Peering is setup between the system network and customer network and is in ACTIVE state.
       // However user has selected to preferred external IP the instance. This is not a private instance and is
       // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
@@ -146,12 +143,11 @@ public class DataprocClient implements AutoCloseable {
                              systemProjectId, network, projectId));
     }
 
-    // Use internal IP for the Dataproc cluster if user has not preferred external IP and
+    // Use internal IP for the Dataproc cluster if instance is private or user has not preferred external IP and
     // (CDAP is running in the same customer project as Dataproc is going to be launched or
     // Network peering is done between customer network and system network and is in ACTIVE mode).
-    boolean useInternalIP = !conf.isPreferExternalIP()
+    boolean useInternalIP = privateInstance || !conf.isPreferExternalIP()
       && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
-
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
@@ -178,22 +174,6 @@ public class DataprocClient implements AutoCloseable {
     }
 
     return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
-  }
-
-  private static void verifyPeering(DataprocConf conf, String network, String systemNetwork,
-                                    String projectId, String systemProjectId, PeeringState state) {
-    switch (state) {
-      case NONE:
-        throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network '" +
-                                                        "%s' in project '%s' does not exist. Please establish a " +
-                                                        "peering.",
-                                                      systemNetwork, systemProjectId, network, projectId));
-      case INACTIVE:
-        throw new IllegalStateException(String.format("VPC Peering from network '%s' in project '%s' to network " +
-                                                        "'%s' in project '%s' is in the INACTIVE state. Please fix " +
-                                                        "the peering setup and ensure it is in the ACTIVE state.",
-                                                      systemNetwork, systemProjectId, network, projectId));
-    }
   }
 
   private static PeeringState getPeeringState(@Nullable String systemNetwork, String systemProjectId,
