@@ -11,7 +11,7 @@ The following pages describe the above problem and how to fix it:
 - [Apollo Client documentation - Fragments on unions and interfaces](https://www.apollographql.com/docs/react/advanced/fragments/#fragments-on-unions-and-interfaces).
 - [Heuristic Fragment matcher warning! How to fix it?](https://medium.com/commutatus/whats-going-on-with-the-heuristic-fragment-matcher-in-graphql-apollo-client-e721075e92be).
 
-The script `./graphql/schemaQuery.js` fetches the fragments from the GraphQL schema and saves them in `./graphql/fragments/fragmentTypes.json`. This file is then imported and passed to the Apollo Client.
+The script `./graphql/schemaQuery.js` fetches the fragments from the GraphQL schema and saves them in `./graphql/fragments/fragmentTypes.json`. This file is then imported and passed to the Apollo Client. **Do not modify the json file yourself**. The following command will generate the file for you.
 
 ### Command
 
