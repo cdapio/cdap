@@ -485,6 +485,10 @@
         <version>${kafka.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>net.jpountz.lz4</groupId>
+            <artifactId>lz4</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
           </exclusion>
