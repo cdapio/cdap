@@ -14,6 +14,8 @@
  * the License.
  */
 
+ // See ./graphql/fragements/README.md
+
 const fetch = require('node-fetch');
 const fs = require('fs');
 
@@ -44,7 +46,7 @@ fetch(`http://localhost:11011/graphql`, {
       type => type.possibleTypes !== null,
     );
     result.data.__schema.types = filteredData;
-    fs.writeFileSync('./graphql/fragmentTypes.json', JSON.stringify(result.data), err => {
+    fs.writeFileSync('./graphql/fragments/fragmentTypes.json', JSON.stringify(result.data), err => {
       if (err) {
         console.error('Error writing fragmentTypes file', err);
       } else {

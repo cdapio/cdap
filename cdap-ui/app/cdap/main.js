@@ -57,7 +57,8 @@ import './globals';
 import { ApolloProvider } from 'react-apollo';
 import ApolloClient from 'apollo-boost';
 import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemory';
-import introspectionQueryResultData from '../../graphql/fragmentTypes.json';
+// See ./graphql/fragements/README.md
+import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -68,9 +69,8 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
   introspectionQueryResultData,
 });
 
-// TODO how to get the url
 const client = new ApolloClient({
-  uri: 'http://localhost:11011/graphql',
+  uri: '/graphql',
   cache: new InMemoryCache({ fragmentMatcher }),
 });
 
