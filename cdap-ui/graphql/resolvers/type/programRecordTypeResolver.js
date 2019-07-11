@@ -28,11 +28,19 @@ const runsResolver = async (programType, parent, args, context, info) => {
   const namespace = context.namespace;
   const name = parent.app;
   const programId = parent.name;
-  const options = resolversCommon.getGETRequestOptions();
-  // TODO update to post request with the batch endpoint since this url only returns 100 runs at most
-  options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/${programType}/${programId}/runs`);
+  const options = resolversCommon.getPOSTRequestOptions();
+  options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
+  options['body'] = [
+    {
+      appId: name,
+      programType: programType,
+      programId: programId
+    }
+  ];
 
-  return await resolversCommon.requestPromiseWrapper(options);
+  const runInfo = await resolversCommon.requestPromiseWrapper(options);
+
+  return runInfo[0].runs;
 };
 
 const programsTypeResolver = {
@@ -59,7 +67,7 @@ const programsTypeResolver = {
     runs: runsResolver.bind(null, 'mapreduce')
   },
   Workflow: {
-    runs: runsResolver.bind(null, 'workflows')
+    runs: runsResolver.bind(null, 'workflow')
   },
   Spark: {
     runs: runsResolver.bind(null, 'spark')

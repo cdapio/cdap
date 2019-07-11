@@ -26,7 +26,7 @@ interface IProps {
 }
 
 const StatusView: React.SFC<IProps> = ({ pipeline }) => {
-  const run = getLatestRun(pipeline);
+  const run = getLatestRun(pipeline) || { status: 'DEPLOYED' };
   const pipelineStatus = run.status;
   const displayStatus = StatusMapper.statusMap[pipelineStatus];
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
