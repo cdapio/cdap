@@ -19,9 +19,9 @@ import PipelineTableRow from 'components/PipelineList/DeployedPipelineView/Pipel
 import { connect } from 'react-redux';
 import T from 'i18n-react';
 import {
-  IPipeline,
   IStatusMap,
   IRunsCountMap,
+  IApplicationRecord,
 } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
@@ -32,7 +32,7 @@ import SortableHeader from 'components/PipelineList/DeployedPipelineView/Pipelin
 import './PipelineTable.scss';
 
 interface IProps {
-  pipelines: IPipeline[];
+  pipelines: IApplicationRecord[];
   pipelinesLoading: boolean;
   search: string;
   onClear: () => void;
