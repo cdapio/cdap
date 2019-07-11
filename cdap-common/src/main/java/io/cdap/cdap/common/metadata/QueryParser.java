@@ -1,0 +1,58 @@
+/*
+ * Copyright © 2019 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.common.metadata;
+
+import com.google.common.base.Splitter;
+import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+/**
+ * A thread-safe class that provides helper methods for metadata search string interpretation,
+ * and defines search syntax for qualifying information (e.g. required terms) {@link QueryTerm.Qualifier}.
+ * By default, search items without an operator are considered optional.
+ */
+public class QueryParser {
+  private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
+  private static final char REQUIRED_OPERATOR = '+';
+
+  /**
+   * Organizes and separates a raw, space-separated search string
+   * into multiple {@link QueryTerm} objects.
+   * e.g. "tag1 tag2 tag3" is converted to a list of optional QueryTerms containing the strings
+   * "tag1", "tag2", and "tag3" respectively.
+   * @param query the raw search string
+   * @return a list of QueryTerms
+   */
+  public static List<QueryTerm> parse(String query) {
+    List<QueryTerm> queryTerms = new ArrayList<>();
+    for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN)
+        .omitEmptyStrings().trimResults().split(query)) {
+      queryTerms.add(singleParse(term));
+    }
+    return queryTerms;
+  }
+
+  private static QueryTerm singleParse(String term) {
+    if (term.charAt(0) == REQUIRED_OPERATOR) {
+      if (term.length() == 1) return new QueryTerm("", Qualifier.REQUIRED);
+        else return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
+    }
+    else return new QueryTerm(term, Qualifier.OPTIONAL);
+  }
+}
