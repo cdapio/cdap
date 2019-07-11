@@ -25,27 +25,17 @@ import java.util.regex.Pattern;
 /**
  * A thread-safe class that provides helper methods for metadata search string interpretation,
  * and defines search syntax for qualifying information (e.g. required terms) {@link QueryTerm.Qualifier}.
+ * By default, search items without an operator are considered optional.
  */
-public final class QueryParser {
+public class QueryParser {
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
   private static final char REQUIRED_OPERATOR = '+';
 
-  // private constructor to prevent instantiation
-  private QueryParser() {}
-
   /**
    * Organizes and separates a raw, space-separated search string
-   * into multiple {@link QueryTerm} objects. Spaces are defined by the {@link QueryParser#SPACE_SEPARATOR_PATTERN}
-   * field, the semantics of which are documented in Java's {@link Pattern} class.
-   * Certain typical separations of terms, such as hyphens and commas, are not considered spaces.
-   * This method preserves the original case of the query.
-   *
-   * This method supports the use of certain search operators that, when placed before a search term,
-   * denote qualifying information about that search term. When translated into a QueryTerm object, search terms
-   * containing an operator have the operator removed from the string representation.
-   * The {@link QueryParser#REQUIRED_OPERATOR} character signifies a search term that must receive a match.
-   * By default, this method considers search items without an operator to be optional.
-   *
+   * into multiple {@link QueryTerm} objects.
+   * e.g. "tag1 tag2 tag3" is converted to a list of optional QueryTerms containing the strings
+   * "tag1", "tag2", and "tag3" respectively.
    * @param query the raw search string
    * @return a list of QueryTerms
    */
@@ -53,15 +43,20 @@ public final class QueryParser {
     List<QueryTerm> queryTerms = new ArrayList<>();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN)
         .omitEmptyStrings().trimResults().split(query)) {
-      queryTerms.add(parseQueryTerm(term));
+      queryTerms.add(singleParse(term));
     }
     return queryTerms;
   }
 
-  private static QueryTerm parseQueryTerm(String term) {
-    if (term.charAt(0) == REQUIRED_OPERATOR && term.length() > 1) {
-      return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
-    }
+  private static QueryTerm singleParse(String term) {
+    if (term.charAt(0) == REQUIRED_OPERATOR) {
+      if (term.length() == 1) {
+        return new QueryTerm("", Qualifier.REQUIRED);
+      } else {
+          return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
+        }
+    } else {
       return new QueryTerm(term, Qualifier.OPTIONAL);
+    }
   }
 }

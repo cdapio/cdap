@@ -16,60 +16,49 @@
 
 package io.cdap.cdap.common.metadata;
 
-import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
 import org.junit.Assert;
 import org.junit.Test;
+import java.util.ArrayList;
 import java.util.List;
 
 public class QueryParserTest {
   @Test
-  public void testRequiredOperatorIsDetected() {
+  public void testBasicParse() {
     String inputQuery = "tag1 tag2 +tag3 tag4+";
-    List<QueryTerm> targetOutputQueryTerms = ImmutableList.of(
-        new QueryTerm("tag1", Qualifier.OPTIONAL),
-        new QueryTerm("tag2", Qualifier.OPTIONAL),
-        new QueryTerm("tag3", Qualifier.REQUIRED),
-        new QueryTerm("tag4+", Qualifier.OPTIONAL));
+    List<QueryTerm> targetOutputQueryTerms = new ArrayList<>();
+    targetOutputQueryTerms.add(new QueryTerm("tag1", Qualifier.OPTIONAL));
+    targetOutputQueryTerms.add(new QueryTerm("tag2", Qualifier.OPTIONAL));
+    targetOutputQueryTerms.add(new QueryTerm("tag3", Qualifier.REQUIRED));
+    targetOutputQueryTerms.add(new QueryTerm("tag4+", Qualifier.OPTIONAL));
     List<QueryTerm> actualOutputQueryTerms = QueryParser.parse(inputQuery);
 
-    Assert.assertEquals(targetOutputQueryTerms, actualOutputQueryTerms);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(targetOutputQueryTerms.get(i).equals(actualOutputQueryTerms.get(i)));
+    }
+    Assert.assertFalse(targetOutputQueryTerms.get(1).equals(actualOutputQueryTerms.get(2)));
   }
 
   @Test
-  public void testWhitespaceIsTrimmed() {
+  public void testFormatting() {
     String inputQuery = "tag1       tag2      tag3    tag4";
     List<QueryTerm> outputQueryTerms = QueryParser.parse(inputQuery);
 
-    Assert.assertEquals(4, outputQueryTerms.size());
-    for (QueryTerm q : outputQueryTerms) {
-      Assert.assertEquals(4, q.getTerm().length());
+    Assert.assertEquals(outputQueryTerms.size(), 4);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(QueryParser.parse(inputQuery).get(i).getTerm().length(), 4);
     }
   }
 
   @Test
   public void testUnusualQueries() {
-    String emptyQuery = "";
-    String whitespacePlusValidTerm = "        space";
-    String operatorAsSearchTerm = "+";
-    String operatorAsRequiredSearchTerm = "++";
+    String inputQuery1 = "";
+    String inputQuery2 = "        space";
+    String inputQuery3 = "+ plus";
 
-    Assert.assertTrue(QueryParser.parse(emptyQuery).isEmpty());
-    Assert.assertEquals(QueryParser.parse(whitespacePlusValidTerm).get(0), new QueryTerm("space", Qualifier.OPTIONAL));
-    Assert.assertEquals(QueryParser.parse(operatorAsSearchTerm).get(0), new QueryTerm("+", Qualifier.OPTIONAL));
-    Assert.assertEquals(QueryParser.parse(operatorAsRequiredSearchTerm).get(0), new QueryTerm("+", Qualifier.REQUIRED));
-  }
-
-  @Test
-  public void testAlternativeWhitespaceCharactersAreValid() {
-    String tabSeparatedString = "tag1\ttag2";
-    String newlineSeparatedString = "tag1\ntag2";
-    String formFeedSeparatedString = "tag1\ftag2";
-    String carriageReturnSeparatedString = "tag\rtag2";
-
-    Assert.assertEquals(2, QueryParser.parse(tabSeparatedString).size());
-    Assert.assertEquals(2, QueryParser.parse(newlineSeparatedString).size());
-    Assert.assertEquals(2, QueryParser.parse(formFeedSeparatedString).size());
-    Assert.assertEquals(2, QueryParser.parse(carriageReturnSeparatedString).size());
+    Assert.assertTrue(QueryParser.parse(inputQuery1).isEmpty());
+    Assert.assertTrue(QueryParser.parse(inputQuery2).get(0).equals(new QueryTerm("space", Qualifier.OPTIONAL)));
+    Assert.assertTrue(QueryParser.parse(inputQuery3).get(0).equals(new QueryTerm("", Qualifier.REQUIRED)));
+    Assert.assertTrue(QueryParser.parse(inputQuery3).get(1).equals(new QueryTerm("plus", Qualifier.OPTIONAL)));
   }
 }

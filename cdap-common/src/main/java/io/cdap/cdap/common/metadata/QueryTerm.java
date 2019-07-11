@@ -16,16 +16,13 @@
 
 package io.cdap.cdap.common.metadata;
 
-import java.util.Objects;
-
 /**
  * Represents a single item in a search query in terms of its content (i.e. the value being searched for)
  * and its qualifying information (e.g. whether a match for it is optional or required).
  * Is typically constructed in a list via {@link QueryParser#parse(String)}
  */
 public class QueryTerm {
-  private final String term;
-  private final Qualifier qualifier;
+  private String term;
 
   /**
    * Defines the different types of search terms that can be input.
@@ -35,48 +32,20 @@ public class QueryTerm {
   public enum Qualifier {
     OPTIONAL, REQUIRED
   }
+  private Qualifier qualifier;
 
-  /**
-   * Constructs a QueryTerm using the search term and its qualifying information.
-   *
-   * @param term the search term
-   * @param qualifier the qualifying information {@link Qualifier}
-   */
   public QueryTerm(String term, Qualifier qualifier) {
     this.term = term;
     this.qualifier = qualifier;
   }
 
-  /**
-   * @return the search term, without its preceding operator
-   */
   public String getTerm() {
     return term;
   }
-
-  /**
-   * @return the search term's qualifying information
-   */
   public Qualifier getQualifier() {
     return qualifier;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    QueryTerm that = (QueryTerm) o;
-
-    return Objects.equals(term, that.getTerm()) && Objects.equals(qualifier, that.getQualifier());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(term, qualifier);
+  public boolean equals(QueryTerm q) {
+    return term.equals(q.getTerm()) && qualifier.equals(q.getQualifier());
   }
 }
