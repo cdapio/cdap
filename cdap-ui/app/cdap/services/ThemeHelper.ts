@@ -207,11 +207,12 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
   function getContent(): IThemeObj {
     const contentJson = themeJSON.content;
     const content: IThemeObj = {
-      productName: 'CDAP',
-      productDescription: `CDAP is an open source framework that simplifies
-      data application development, data integration, and data management.`,
+      productName: 'Data Playbook',
+      productDescription: `Enables SME in Designer Mode to create Analytics use cases
+      by creation of Playbook using re-usable Accelerators.
+      For Production Deployment, Application Developers can optimise Playbooks using Developer Mode..`,
       productLogoNavbar: '/cdap_assets/img/company_logo.png',
-      productLogoAbout: '/cdap_assets/img/CDAP_darkgray.png',
+      productLogoAbout: '/cdap_assets/img/Company_logo_darkgray.png',
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
