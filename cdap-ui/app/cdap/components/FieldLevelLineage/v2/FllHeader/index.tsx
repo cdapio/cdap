@@ -66,10 +66,16 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
           target,
         });
   const options = { first, last, total };
-  const subHeader =
-    type === 'target'
-      ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetSubheader', options)
-      : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedSubheader', options);
+  let subHeader;
+
+  if (total === 0) {
+    subHeader = T.translate('features.FieldLevelLineage.v2.FllHeader.NoRelatedSubheader');
+  } else {
+    subHeader =
+      type === 'target' && total > 0
+        ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetSubheader', options)
+        : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedSubheader', options);
+  }
 
   return (
     <div className={classes.root}>

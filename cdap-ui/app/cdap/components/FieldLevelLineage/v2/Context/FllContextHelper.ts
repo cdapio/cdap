@@ -14,6 +14,10 @@
  * the License.
 */
 
+import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
+import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
+import { parseQueryString } from 'services/helpers';
+
 // types for backend response
 interface IFllEntity {
   entityId?: IEntityId;
@@ -141,4 +145,17 @@ export function getFieldId(fieldname, dataset, namespace, type) {
 
 export function getTableId(dataset, namespace, type) {
   return `${type}_ns-${namespace}_ds-${dataset}`;
+}
+
+export function getTimeRange() {
+  const queryString = parseQueryString();
+  const selection = queryString ? queryString.time : TIME_OPTIONS[1]; // default is last 7 days
+
+  if (selection === TIME_OPTIONS[0]) {
+    return {
+      start: selection.start || 'now-7d',
+      end: selection.end || 'now',
+    };
+  }
+  return TIME_OPTIONS_MAP[selection];
 }

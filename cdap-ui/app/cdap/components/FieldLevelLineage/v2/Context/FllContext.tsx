@@ -26,9 +26,8 @@ import {
   getFieldsAndLinks,
   getFieldId,
   getTableId,
+  getTimeRange,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
-import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
-import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
 import * as d3 from 'd3';
 
 const defaultContext: IContextState = {
@@ -165,28 +164,23 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleReset: this.handleReset,
   };
 
-  private getTimeRange() {
-    const selection = parseQueryString().time;
-
-    if (selection === TIME_OPTIONS[0]) {
-      return {
-        start: selection.start || 'now-7d',
-        end: selection.end || 'now',
-      };
-    }
-    return TIME_OPTIONS_MAP[selection];
-  }
-
   public fetchFieldLineage() {
     const namespace = getCurrentNamespace();
     const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
     const queryParams = parseQueryString(); // get time selection and field
-    const fieldname = queryParams.field;
-    const activeField = fieldname
-      ? getFieldId(queryParams.field, dataset, namespace, 'target')
-      : null;
-    const start = this.getTimeRange().start;
-    const end = this.getTimeRange().end;
+    let fieldname;
+    let activeField;
+
+    if (!queryParams) {
+      fieldname = null;
+      activeField = null;
+    } else {
+      fieldname = queryParams.field;
+      activeField = getFieldId(fieldname, dataset, namespace, 'target');
+    }
+
+    const start = getTimeRange().start;
+    const end = getTimeRange().end;
 
     const params = {
       namespace,

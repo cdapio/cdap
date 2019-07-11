@@ -27,6 +27,7 @@ import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/Fl
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
+import If from 'components/If';
 
 const styles = (): StyleRules => {
   return {
@@ -217,6 +218,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </svg>
               <div>
                 <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
+                <If condition={Object.keys(visibleCauseSets).length === 0}>
+                  <FllTable type="cause" />
+                </If>
                 {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
                   return <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />;
                 })}
@@ -227,6 +231,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </div>
               <div>
                 <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
+                <If condition={Object.keys(visibleImpactSets).length === 0}>
+                  <FllTable type="impact" />
+                </If>
                 {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
                   return <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />;
                 })}

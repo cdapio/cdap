@@ -1468,6 +1468,7 @@ features:
       title: Field level lineage
     v2:
       FllHeader:
+        NoRelatedSubheader: "0 datasets"
         RelatedHeader: "Datasets used as {type} by {target}"
         RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and operations'
@@ -1480,6 +1481,7 @@ features:
           viewLineage: "View lineage"
           viewDropdown: "View"
           resetLineage: "Reset"
+        noRelatedTables: "There is no {type} for {target}"
         relatedFieldsCount:
           1: "{context} related field"
           _: "{context} related fields"
