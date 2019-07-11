@@ -14,7 +14,7 @@
  * the License.
  */
 
- // See ./graphql/fragements/README.md
+// See ./graphql/fragements/README.md
 
 const fetch = require('node-fetch');
 const fs = require('fs');
@@ -54,4 +54,3 @@ fetch(`http://localhost:11011/graphql`, {
       }
     });
   });
-  
