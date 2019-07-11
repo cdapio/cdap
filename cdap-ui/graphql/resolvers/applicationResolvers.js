@@ -28,7 +28,7 @@ cdapConfigurator.getCDAPConfig()
 const applicationsResolver = {
   Query: {
     applications: async (parent, args, context, info) => {
-      const namespace = args.namespace
+      const namespace = args.namespace;
       const options = resolversCommon.getGETRequestOptions();
       options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
       context.namespace = namespace;
@@ -54,8 +54,6 @@ const applicationResolver = {
 const applicationDetailResolver = {
   ApplicationRecord: {
     async applicationDetail(parent, args, context, info) {
-      context.artifact = parent.artifact;
-
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();

@@ -20,7 +20,7 @@ function getGETRequestOptions() {
   return {
     method: 'GET',
     json: true
-  }
+  };
 }
 
 function requestPromiseWrapper(options) {
@@ -33,27 +33,9 @@ function requestPromiseWrapper(options) {
       return resolve(body);
     });
   });
-};
-
-
-function getProgramType(parentType, artifactName) {
-  if (parentType === 'Mapreduce') {
-    return 'mapreduce';
-  }
-
-  if (artifactName === 'cdap-data-pipeline') {
-    return 'workflows';
-  }
-
-  if (artifactName === 'cdap-data-streamts') {
-    return 'spark';
-  }
-
-  return undefined;
 }
 
 module.exports = {
   getGETRequestOptions,
-  requestPromiseWrapper,
-  getProgramType
+  requestPromiseWrapper
 };

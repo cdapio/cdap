@@ -24,13 +24,12 @@ cdapConfigurator.getCDAPConfig()
     cdapConfig = value;
   });
 
-const runsResolver = async (parent, args, context, info) => {
+const runsResolver = async (programType, parent, args, context, info) => {
   const namespace = context.namespace;
   const name = parent.app;
-  const artifactName = context.artifact.name;
-  const programType = resolversCommon.getProgramType(parent.type, artifactName);
   const programId = parent.name;
   const options = resolversCommon.getGETRequestOptions();
+  // TODO update to post request with the batch endpoint since this url only returns 100 runs at most
   options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/${programType}/${programId}/runs`);
 
   return await resolversCommon.requestPromiseWrapper(options);
@@ -41,22 +40,29 @@ const programsTypeResolver = {
     async __resolveType(parent, args, context, info) {
       return await (new Promise((resolve, reject) => {
         switch (parent.type) {
-          case 'Mapreduce': resolve('MapReduce')
-          case 'Workflow': resolve('Workflow')
-          case 'Spark': resolve('Spark')
-          default: resolve(null)
+          case 'Mapreduce':
+            resolve('MapReduce');
+            break;
+          case 'Workflow':
+            resolve('Workflow');
+            break;
+          case 'Spark':
+            resolve('Spark');
+            break;
+          default:
+            resolve(null);
         }
       }));
     }
   },
   MapReduce: {
-    runs: runsResolver
+    runs: runsResolver.bind(null, 'mapreduce')
   },
   Workflow: {
-    runs: runsResolver
+    runs: runsResolver.bind(null, 'workflows')
   },
   Spark: {
-    runs: runsResolver
+    runs: runsResolver.bind(null, 'spark')
   }
 };
 

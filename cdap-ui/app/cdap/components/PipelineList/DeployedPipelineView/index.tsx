@@ -55,7 +55,7 @@ const DeployedPipelinesView = () => (
             name
           }
           applicationDetail {
-            programs(type: "Workflow") {
+            programs {
               name
               runs {
                 status
@@ -64,7 +64,6 @@ const DeployedPipelinesView = () => (
               ... on Workflow {
                 schedules {
                   name
-                  nextRuntimes
                   status
                 }
               }

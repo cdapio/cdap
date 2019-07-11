@@ -21,16 +21,15 @@ const programsResolver = {
         const programs = parent.programs;
         const type = args.type;
 
-        if (type === null) {
+        if (type === null || type === undefined) {
           resolve(programs)
-        }
-        else {
-          typePrograms = programs.filter(
+        } else {
+          const typePrograms = programs.filter(
             function (program) {
-              return program.type == type
-            }
-          );
-          resolve(typePrograms);
+              return program.type == type;
+            });
+
+          resolve(typePrograms)
         }
       }));
     }

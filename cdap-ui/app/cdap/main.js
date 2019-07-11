@@ -56,14 +56,23 @@ import ThemeWrapper from 'components/ThemeWrapper';
 import './globals';
 import { ApolloProvider } from 'react-apollo';
 import ApolloClient from 'apollo-boost';
+import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemory';
+import introspectionQueryResultData from '../../graphql/fragmentTypes.json';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
   loading: LoadingSVGCentered,
 });
 
+const fragmentMatcher = new IntrospectionFragmentMatcher({
+  introspectionQueryResultData,
+});
+
 // TODO how to get the url
-const client = new ApolloClient({ uri: 'http://localhost:11011/graphql' });
+const client = new ApolloClient({
+  uri: 'http://localhost:11011/graphql',
+  cache: new InMemoryCache({ fragmentMatcher }),
+});
 
 class CDAP extends Component {
   constructor(props) {
