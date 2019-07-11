@@ -53,9 +53,8 @@ export interface IApplicationDetail {
   description: string;
   configuration: string;
   programs: IProgramRecord[];
-  // artifact: ArtifactSummary!
+  artifact: IArtifactSummary;
   ownerPrincipal?: string;
-  // metadata?: Metadata
 }
 
 export interface IProgramRecord {
@@ -66,13 +65,9 @@ export interface IProgramRecord {
   runs: IRunRecord[];
 }
 
-// export interface IMapReduce extends IProgramRecord {}
-
-// export interface ISpark extends IProgramRecord {}
-
-// export interface IWorkflow extends IProgramRecord {
-//   schedules: [ScheduleDetail]!
-// }
+export interface IWorkflow extends IProgramRecord {
+  schedules: IScheduleDetail[];
+}
 
 export interface IRunRecord {
   runid: string;
@@ -87,4 +82,15 @@ export interface IArtifactSummary {
   name: string;
   version: string;
   scope: string;
+}
+
+export interface IScheduleDetail {
+  namespace: string;
+  application: string;
+  applicationVersion: string;
+  name: string;
+  description: string;
+  timeoutMillis: string;
+  status: string;
+  nextRuntimes: string[];
 }
