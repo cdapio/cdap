@@ -25,7 +25,7 @@ var express = require('./server/express.js'),
     http = require('http'),
     fs = require('fs'),
     log4js = require('log4js'),
-    graphqlServer = require('./graphql/graphql.js'),
+    graphql = require('./graphql/graphql.js'),
     https = require('https');
 
 var cdapConfig, securityConfig;
@@ -64,7 +64,7 @@ cdapConfigurator.getCDAPConfig()
   })
 
   .then(function (app) {
-    graphqlServer.applyMiddleware(app);
+    graphql.applyMiddleware(app);
     
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
@@ -113,5 +113,3 @@ cdapConfigurator.getCDAPConfig()
 
     sockServer.installHandlers(server, { prefix: '/_sock' });
   });
-
-  // graphqlClient.calling();
