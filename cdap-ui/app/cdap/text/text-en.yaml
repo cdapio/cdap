@@ -1472,7 +1472,18 @@ features:
         RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and operations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
-      TableSubheader: "{count} fields"
+      FllTable:
+        fieldsCount: 
+          1: "{context} field"
+          _: "{context} fields"
+        FllField:
+          viewLineage: "View lineage"
+          viewDropdown: "View"
+          resetLineage: "Reset"
+        relatedFieldsCount:
+          1: "{context} related field"
+          _: "{context} related fields"
+          
   ADLSBrowser:
     directory: Directory
     EmptyMessage:
@@ -1493,6 +1504,7 @@ features:
       directoryMetrics: "{count} files and directories"
       searchPlaceholder: Search this directory
       selectData: "Select file/directory to preview"
+
   FileBrowser:
     directory: Directory
     EmptyMessage:

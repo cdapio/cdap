@@ -17,48 +17,142 @@
 import React from 'react';
 import data from './sample_response';
 import {
-  parseRelations,
-  makeTargetNodes,
+  makeTargetFields,
+  IField,
+  ILink,
+  ITableFields,
+  getFieldsAndLinks,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import * as d3 from 'd3';
 
-export interface INode {
-  id: string;
-  name: string;
-  group: number;
+const defaultContext: IContextState = {
+  target: '',
+  targetFields: [],
+  links: [],
+  causeSets: {},
+  impactSets: {},
+  showingOneField: false,
+};
+
+export const FllContext = React.createContext<IContextState>(defaultContext);
+
+export interface IContextState {
+  target: string;
+  targetFields: IField[];
+  links: ILink[];
+  causeSets: ITableFields;
+  impactSets: ITableFields;
+  showingOneField: boolean;
+  handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  handleViewCauseImpact?: () => void;
+  handleReset?: () => void;
+  activeField?: string;
+  activeCauseSets?: ITableFields;
+  activeImpactSets?: ITableFields;
+  activeLinks?: ILink[];
+  numTables?: number;
+  firstCause?: number;
+  firstImpact?: number;
+  firstField?: number;
 }
 
-const FllContext = React.createContext({});
+export class Provider extends React.Component<{ children }, IContextState> {
+  private parsedRes = getFieldsAndLinks(data);
 
-function getFieldsAndLinks(d) {
-  const incoming = parseRelations(d.entityId.namespace, d.entityId.dataset, d.incoming);
-  const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
-  const causeTables = incoming.tables;
-  const impactTables = outgoing.tables;
-  const nodes = incoming.relNodes.concat(outgoing.relNodes);
-  const links = incoming.relLinks.concat(outgoing.relLinks);
-  return { causeTables, impactTables, nodes, links };
-}
+  private handleFieldClick = (e) => {
+    const activeField = e.target.id;
+    if (!activeField) {
+      return;
+    }
+    d3.select(`#${this.state.activeField}`).classed('selected', false);
 
-export function Provider({ children }) {
-  const parsedRes = getFieldsAndLinks(data);
+    this.setState(
+      {
+        activeField,
+      },
+      () => {
+        d3.select(`#${activeField}`).classed('selected', true);
+        this.getActiveLinks();
+      }
+    );
+  };
 
-  const defaultState = {
+  private getActiveLinks() {
+    const activeFieldId = this.state.activeField;
+    const activeLinks = [];
+    this.state.links.forEach((link) => {
+      const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
+      if (isSelected) {
+        activeLinks.push(link);
+      }
+    });
+    this.setState({ activeLinks });
+  }
+
+  private getActiveSets() {
+    const activeCauseSets = {};
+    const activeImpactSets = {};
+
+    this.state.activeLinks.forEach((link) => {
+      // for each link, look at id prefix to find the field that is not the target and add to the activeCauseSets or activeImpactSets
+      const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
+      const tableToUpdate = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
+      const tableId = `ns-${nonTargetFd.namespace}_ds-${nonTargetFd.dataset}`; // used as unique key to make sure we don't duplicate fields
+      if (!(tableId in tableToUpdate)) {
+        tableToUpdate[tableId] = [];
+      }
+      tableToUpdate[tableId].push(nonTargetFd);
+    });
+
+    this.setState(
+      {
+        activeCauseSets,
+        activeImpactSets,
+      },
+      () => {
+        this.setState({
+          showingOneField: true,
+        });
+      }
+    );
+  }
+
+  private handleViewCauseImpact = () => {
+    this.getActiveSets();
+  };
+
+  private handleReset = () => {
+    this.setState({
+      showingOneField: false,
+    });
+  };
+
+  public state = {
     target: data.entityId.dataset,
-    targetFields: makeTargetNodes(data.entityId, data.fields) as INode[],
-    nodes: parsedRes.nodes,
-    links: parsedRes.links,
-    causeSets: parsedRes.causeTables,
-    impactSets: parsedRes.impactTables,
+    targetFields: makeTargetFields(data.entityId, data.fields) as IField[],
+    links: this.parsedRes.links,
+    causeSets: this.parsedRes.causeTables,
+    impactSets: this.parsedRes.impactTables,
     activeField: null,
+    showingOneField: false,
+    activeCauseSets: null,
+    activeImpactSets: null,
+    activeLinks: null,
+    // for handling pagination
     numTables: 4,
     firstCause: 1,
     firstImpact: 1,
     firstField: 1,
+    handleFieldClick: this.handleFieldClick,
+    handleViewCauseImpact: this.handleViewCauseImpact,
+    handleReset: this.handleReset,
   };
 
-  return <FllContext.Provider value={defaultState}>{children}</FllContext.Provider>;
+  public render() {
+    return <FllContext.Provider value={this.state}>{this.props.children}</FllContext.Provider>;
+  }
 }
 
-export function Consumer({ children }) {
+export function Consumer({ children }: { children: (context: IContextState) => React.ReactChild }) {
   return <FllContext.Consumer>{children}</FllContext.Consumer>;
 }

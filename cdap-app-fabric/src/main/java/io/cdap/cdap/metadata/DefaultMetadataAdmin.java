@@ -39,6 +39,7 @@ import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -161,6 +162,11 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   @Override
   public void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException {
     storage.apply(mutation, options);
+  }
+
+  @Override
+  public void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException {
+    storage.batch(mutations, options);
   }
 
   @Override
