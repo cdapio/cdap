@@ -40,8 +40,6 @@ interface IStore {
 
 const Actions = {
   setPipeline: 'DEPLOYED_PIPELINE_SET_LIST',
-  setStatusMap: 'DEPLOYED_PIPELINE_SET_STATUS_MAP',
-  setRunsCountMap: 'DEPLOYED_PIPELINE_SET_RUNS_COUNT_MAP',
   setSearch: 'DEPLOYED_SET_SEARCH',
   setDeleteError: 'DEPLOYED_PIPELINE_SET_DELETE_ERROR',
   clearDeleteError: 'DEPLOYED_PIPELINE_CLEAR_DELETE_ERROR',
