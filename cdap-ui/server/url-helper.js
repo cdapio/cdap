@@ -23,14 +23,15 @@ function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
   if (!cdapConfig) {
     return null;
   }
-  path = path[0] === '/' ? path.slice(1) : path;
+  path = path && path[0] === '/' ? path.slice(1) : path;
   if (origin === REQUEST_ORIGIN_MARKET) {
     return `${cdapConfig['market.base.url']}/${path}`;
   }
   let routerhost = cdapConfig['router.server.address'],
     routerport = cdapConfig['router.server.port'],
     routerprotocol = cdapConfig['ssl.external.enabled'] === 'true' ? 'https' : 'http';
-  return `${routerprotocol}://${routerhost}:${routerport}/${path}`;
+  const baseUrl = `${routerprotocol}://${routerhost}:${routerport}`;
+  return path ? `${baseUrl}/${path}` : baseUrl;
 }
 
 function deconstructUrl(cdapConfig, url, requestOrigin) {

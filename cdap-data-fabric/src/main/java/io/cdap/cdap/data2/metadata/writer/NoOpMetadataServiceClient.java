@@ -18,6 +18,8 @@ package io.cdap.cdap.data2.metadata.writer;
 
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 
+import java.util.List;
+
 /**
  * NoOp Metadata service client that allows testing.
  */
@@ -40,6 +42,11 @@ public class NoOpMetadataServiceClient implements MetadataServiceClient {
 
   @Override
   public void remove(MetadataMutation.Remove removeMutation) {
+    // No Op
+  }
+
+  @Override
+  public void batch(List<MetadataMutation> mutations) {
     // No Op
   }
 }

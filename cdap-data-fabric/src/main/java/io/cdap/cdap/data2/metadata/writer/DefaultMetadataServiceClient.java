@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataCodec;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataMutationCodec;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.common.http.HttpMethod;
@@ -38,6 +39,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -50,6 +52,7 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
     .registerTypeAdapter(Metadata.class, new MetadataCodec())
     .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
     .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+    .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec())
     .create();
   private final RemoteClient remoteClient;
 
@@ -101,6 +104,16 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       LOG.trace("Failed to remove metadata for entity %s: %s", removeMutation.getEntity(), response);
+    }
+  }
+
+  @Override
+  public void batch(List<MetadataMutation> mutations) {
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "metadata-internals/batch")
+      .withBody(GSON.toJson(mutations)).build();
+    HttpResponse response = execute(request);
+    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
+      LOG.trace("Failed to apply metadata mutations for mutations %s: %s", mutations, response);
     }
   }
 
