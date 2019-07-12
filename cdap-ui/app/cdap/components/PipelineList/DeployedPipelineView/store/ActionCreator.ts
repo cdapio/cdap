@@ -15,33 +15,17 @@
  */
 
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { GLOBALS } from 'services/global-constants';
 import { MyPipelineApi } from 'api/pipeline';
 import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
-import orderBy from 'lodash/orderBy';
 
 export function fetchPipelineList() {
-  const namespace = getCurrentNamespace();
-
-  const params = {
-    namespace,
-    artifactName: GLOBALS.etlPipelineTypes.join(','),
-  };
-
-  // TODO do not get pipelines with the old method
-  MyPipelineApi.list(params).subscribe((res: IPipeline[]) => {
-    const pipelines = orderBy(res, [(pipeline) => pipeline.name.toLowerCase()], ['asc']);
-
-    Store.dispatch({
-      type: Actions.setPipeline,
-      payload: {
-        pipelines,
-      },
-    });
+  Store.dispatch({
+    type: Actions.setPipeline,
   });
 }
 
+// TODO this function is not using the results from graphql
 export function deletePipeline(pipeline: IPipeline) {
   const namespace = getCurrentNamespace();
 
