@@ -18,51 +18,23 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { GLOBALS } from 'services/global-constants';
 import { MyPipelineApi } from 'api/pipeline';
 import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
-import { objectQuery } from 'services/helpers';
-import { PROGRAM_STATUSES } from 'services/global-constants';
-import {
-  IPipeline,
-  IPipelineStatus,
-  IStatusMap,
-} from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import orderBy from 'lodash/orderBy';
-import StatusMapper from 'services/StatusMapper';
-
-const ProgramType = {
-  [GLOBALS.etlDataPipeline]: 'Workflow',
-  [GLOBALS.etlDataStreams]: 'Spark',
-};
-
-interface IPipelineParams {
-  appId: string;
-  programType: string;
-  programId: string;
-}
-
-const DEFAULT_STATUS: IPipelineStatus = {
-  status: PROGRAM_STATUSES.DEPLOYED,
-  lastStarting: null,
-};
 
 export function fetchPipelineList() {
   const namespace = getCurrentNamespace();
-
   const params = {
     namespace,
     artifactName: GLOBALS.etlPipelineTypes.join(','),
   };
-
   MyPipelineApi.list(params).subscribe((res: IPipeline[]) => {
     const pipelines = orderBy(res, [(pipeline) => pipeline.name.toLowerCase()], ['asc']);
-
     Store.dispatch({
       type: Actions.setPipeline,
       payload: {
         pipelines,
       },
     });
-
-    fetchRunsInfo();
   });
 }
 
@@ -87,62 +59,6 @@ export function deletePipeline(pipeline: IPipeline) {
 export function reset() {
   Store.dispatch({
     type: Actions.reset,
-  });
-}
-
-function fetchRunsInfo() {
-  const namespace = getCurrentNamespace();
-  const pipelines: IPipelineParams[] = Store.getState().deployed.pipelines.map((pipeline) => {
-    const programInfo = GLOBALS.programInfo[pipeline.artifact.name];
-
-    return {
-      appId: pipeline.name,
-      programType: ProgramType[pipeline.artifact.name],
-      programId: programInfo.programName,
-    };
-  });
-
-  fetchRuns(namespace, pipelines);
-}
-
-/**
- *
- * @param namespace
- * @param pipelines array of pipeline objects with appId, programType, programId
- *
- * Will dispatch an event with the statusMap as the payload
- *
- * e.g:
- * {
- *    'Pipeline1': {
- *      status: 'RUNNING',
- *      lastStarting: 1542669738
- *    },
- *    'Pipeline2': { ... },
- *    ...
- * }
- */
-function fetchRuns(namespace: string, pipelines: IPipelineParams[]) {
-  MyPipelineApi.getBatchRuns({ namespace }, pipelines).subscribe((res) => {
-    const statusMap: IStatusMap = {};
-
-    res.forEach((pipeline) => {
-      const latestRun = objectQuery(pipeline, 'runs', 0) || DEFAULT_STATUS;
-      const displayStatus = StatusMapper.lookupDisplayStatus(latestRun.status);
-
-      statusMap[pipeline.appId] = {
-        status: latestRun.status,
-        displayStatus,
-        lastStarting: latestRun.starting,
-      };
-    });
-
-    Store.dispatch({
-      type: Actions.setStatusMap,
-      payload: {
-        statusMap,
-      },
-    });
   });
 }
 
