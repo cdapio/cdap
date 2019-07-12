@@ -47,11 +47,15 @@ if (env === 'production') {
 }
 
 if (typeof resolvers === 'undefined') {
-  log.error("The resolvers are undefined");
+  const errorMessage = "The GraphQL resolvers are undefined";
+  log.error(errorMessage);
+  throw new Error(errorMessage);
 }
 
 if (typeof typeDefs === 'undefined') {
-  log.error("The type definitions is undefined");
+  const errorMessage = "The GraphQL type definitions are undefined";
+  log.error(errorMessage);
+  throw new Error(errorMessage);
 }
 
 const server = new ApolloServer({
