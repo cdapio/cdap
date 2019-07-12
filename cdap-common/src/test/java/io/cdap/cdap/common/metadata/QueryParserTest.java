@@ -17,10 +17,10 @@
 package io.cdap.cdap.common.metadata;
 
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
+import java.util.ArrayList;
+import java.util.List;
 
 public class QueryParserTest {
   @Test

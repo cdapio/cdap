@@ -50,9 +50,13 @@ public class QueryParser {
 
   private static QueryTerm singleParse(String term) {
     if (term.charAt(0) == REQUIRED_OPERATOR) {
-      if (term.length() == 1) return new QueryTerm("", Qualifier.REQUIRED);
-        else return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
+      if (term.length() == 1) {
+        return new QueryTerm("", Qualifier.REQUIRED);
+      } else {
+          return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
+        }
+    } else {
+      return new QueryTerm(term, Qualifier.OPTIONAL);
     }
-    else return new QueryTerm(term, Qualifier.OPTIONAL);
   }
 }

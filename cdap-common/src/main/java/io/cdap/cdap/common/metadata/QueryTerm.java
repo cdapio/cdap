@@ -23,6 +23,12 @@ package io.cdap.cdap.common.metadata;
  */
 public class QueryTerm {
   private String term;
+
+  /**
+   * Defines the different types of search terms that can be input.
+   * A qualifier determines how the search implementation should handle the given term, e.g.
+   * prioritizing required terms over optional ones.
+   */
   public enum Qualifier {
     OPTIONAL, REQUIRED
   }
@@ -33,8 +39,12 @@ public class QueryTerm {
     this.qualifier = qualifier;
   }
 
-  public String getTerm() { return term; }
-  public Qualifier getQualifier() { return qualifier; }
+  public String getTerm() {
+    return term;
+  }
+  public Qualifier getQualifier() {
+    return qualifier;
+  }
   public boolean equals(QueryTerm q) {
     return term.equals(q.getTerm()) && qualifier.equals(q.getQualifier());
   }
