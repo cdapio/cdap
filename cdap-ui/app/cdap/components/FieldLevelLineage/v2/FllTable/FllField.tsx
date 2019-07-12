@@ -58,13 +58,9 @@ interface IFieldProps extends WithStyles<typeof styles> {
 
 function FllField({ field, classes }: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
-  const {
-    activeField,
-    showingOneField,
-    handleFieldClick,
-    handleViewCauseImpact,
-    handleReset,
-  } = useContext<IContextState>(FllContext);
+  const { activeField, showingOneField, handleFieldClick, handleReset } = useContext<IContextState>(
+    FllContext
+  );
 
   const toggleHoverState = () => {
     setHoverState(!isHovering);
@@ -87,9 +83,6 @@ function FllField({ field, classes }: IFieldProps) {
       <If condition={field.id === activeField && isTarget && !showingOneField}>
         <span className={classes.targetView}>
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
-          {/* <IconButton className={classes.viewDropdown}>
-            <KeyboardArrowDownIcon />
-          </IconButton> */}
           <FllMenu />
         </span>
       </If>

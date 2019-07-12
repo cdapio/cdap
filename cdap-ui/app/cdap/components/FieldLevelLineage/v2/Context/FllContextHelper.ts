@@ -17,6 +17,7 @@
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
 import { parseQueryString } from 'services/helpers';
+import { MyMetadataApi } from 'api/metadata';
 
 // types for backend response
 interface IFllEntity {
@@ -158,4 +159,42 @@ export function getTimeRange() {
     };
   }
   return TIME_OPTIONS_MAP[selection];
+}
+
+export function fetchFieldLineage(context, namespace, dataset, qParams, timeRange) {
+  let fieldname;
+  let activeField;
+
+  if (!qParams) {
+    fieldname = null;
+    activeField = null;
+  } else {
+    fieldname = qParams.field;
+    activeField = getFieldId(fieldname, dataset, namespace, 'target');
+  }
+
+  const start = timeRange.start;
+  const end = timeRange.end;
+
+  const params = {
+    namespace,
+    entityId: dataset,
+    direction: 'both',
+    start,
+    end,
+  };
+
+  MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
+    const parsedRes = getFieldsAndLinks(res);
+    const targetInfo = {
+      target: res.entityId.dataset,
+      targetFields: makeTargetFields(res.entityId, res.fields),
+      links: parsedRes.links,
+      causeSets: parsedRes.causeTables,
+      impactSets: parsedRes.impactTables,
+      activeField,
+    };
+
+    context.setState(targetInfo);
+  });
 }

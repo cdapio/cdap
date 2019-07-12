@@ -15,18 +15,15 @@
 */
 
 import React from 'react';
-import { MyMetadataApi } from 'api/metadata';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery, parseQueryString } from 'services/helpers';
 import {
-  makeTargetFields,
   IField,
   ILink,
   ITableFields,
-  getFieldsAndLinks,
-  getFieldId,
   getTableId,
   getTimeRange,
+  fetchFieldLineage,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 
@@ -164,49 +161,16 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleReset: this.handleReset,
   };
 
-  public fetchFieldLineage() {
+  public initialize() {
     const namespace = getCurrentNamespace();
     const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
-    const queryParams = parseQueryString(); // get time selection and field
-    let fieldname;
-    let activeField;
-
-    if (!queryParams) {
-      fieldname = null;
-      activeField = null;
-    } else {
-      fieldname = queryParams.field;
-      activeField = getFieldId(fieldname, dataset, namespace, 'target');
-    }
-
-    const start = getTimeRange().start;
-    const end = getTimeRange().end;
-
-    const params = {
-      namespace,
-      entityId: dataset,
-      direction: 'both',
-      start,
-      end,
-    };
-    MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
-      const parsedRes = getFieldsAndLinks(res);
-      const targetInfo = {
-        target: res.entityId.dataset,
-        targetFields: makeTargetFields(res.entityId, res.fields),
-        links: parsedRes.links,
-        causeSets: parsedRes.causeTables,
-        impactSets: parsedRes.impactTables,
-        activeField,
-      };
-
-      this.setState({
-        ...targetInfo,
-      });
-    });
+    const queryParams = parseQueryString();
+    const timeRange = getTimeRange();
+    fetchFieldLineage(this, namespace, dataset, queryParams, timeRange);
   }
+
   public componentDidMount() {
-    this.fetchFieldLineage();
+    this.initialize();
   }
 
   public render() {
