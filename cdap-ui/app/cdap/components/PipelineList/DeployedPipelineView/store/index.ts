@@ -83,16 +83,6 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
         deleteError: null,
         currentPage: 1,
       };
-    case Actions.setStatusMap:
-      return {
-        ...state,
-        statusMap: action.payload.statusMap,
-      };
-    case Actions.setRunsCountMap:
-      return {
-        ...state,
-        runsCountMap: action.payload.runsCountMap,
-      };
     case Actions.setDeleteError:
       return {
         ...state,
