@@ -231,9 +231,9 @@ public class TransactionServiceTest {
     return createTxService(zkConnectionString, txServicePort, hConf, outPath, null);
   }
 
-  static TransactionService createTxService(String zkConnectionString, int txServicePort,
-                                            Configuration hConf, final File outPath,
-                                            @Nullable CConfiguration cConfig) {
+  public static TransactionService createTxService(String zkConnectionString, int txServicePort,
+                                                   Configuration hConf, final File outPath,
+                                                   @Nullable CConfiguration cConfig) {
     final CConfiguration cConf = cConfig == null ? CConfiguration.create() : cConfig;
     // tests should use the current user for HDFS
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));

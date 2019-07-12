@@ -22,6 +22,7 @@ import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.data2.transaction.AsyncInMemoryTxSystemClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
@@ -31,7 +32,6 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
-import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.persist.NoOpTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
@@ -82,7 +82,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     @Override
     protected TransactionSystemClient getTransactionSystemClient() {
-      return injector.getInstance(InMemoryTxSystemClient.class);
+      return injector.getInstance(AsyncInMemoryTxSystemClient.class);
     }
   }
 }
