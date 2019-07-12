@@ -30,7 +30,7 @@
     "cypress": "cypress run",
     "cypress-open": "cypress open",
     "test": "run-p jest cypress",
-    "ncc": "ncc build server.js -o server_dist",
+    "ncc": "rm -rf server_dist && ncc build server.js -o server_dist",
     "build-fragment": "node ./graphql/schemaQuery.js"
   },
   "repository": {

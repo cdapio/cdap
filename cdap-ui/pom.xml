@@ -178,6 +178,7 @@
                   <exclude>**/cdap-ui-upgrade/**</exclude>
                   <exclude>**/storybook-static/**</exclude>
                   <exclude>**/*.snap</exclude>
+                  <exclude>**/*.rst</exclude>
                 </excludes>
               </configuration>
             </execution>
