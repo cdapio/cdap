@@ -21,6 +21,7 @@ import Duration from 'components/Duration';
 import { GLOBALS } from 'services/global-constants';
 import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
 import { objectQuery } from 'services/helpers';
+import { getProgram } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface IProps {
   pipeline: IApplicationRecord;
@@ -57,37 +58,24 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   }
 
   private getNextRun() {
-    const latestRun = this.getLatestRun(this.props.pipeline);
+    const latestSchedule = this.getLatestSchedule(this.props.pipeline);
+    const nextRuntime = latestSchedule.nextRuntimes[0];
 
     this.setState({
       loading: false,
-      nextRun: latestRun.nextRuntimes.length ? parseInt(latestRun.nextRuntimes[0], 10) : null,
+      nextRun: nextRuntime ? parseInt(nextRuntime, 10) : null,
     });
   }
 
-  private getLatestRun(pipeline) {
-    const applicationDetail = objectQuery(pipeline, 'applicationDetail');
+  private getLatestSchedule(pipeline) {
+    const program = getProgram(pipeline);
+    const schedules = objectQuery(program, 'schedules');
 
-    if (applicationDetail === null || applicationDetail === undefined) {
-      return [];
+    if (schedules === null || schedules === undefined || schedules.length === 0) {
+      return {};
     }
 
-    const programs = objectQuery(applicationDetail, 'programs');
-
-    if (programs === null || programs === undefined) {
-      return [];
-    }
-
-    const artifact = objectQuery(pipeline, 'artifact');
-
-    if (artifact === null || artifact === undefined) {
-      return [];
-    }
-
-    const programName = GLOBALS.programInfo[artifact.name].programName;
-    const runProgram = programs.find((program) => program.name === programName);
-
-    return runProgram.schedules[0];
+    return schedules[0];
   }
 
   private renderContent() {

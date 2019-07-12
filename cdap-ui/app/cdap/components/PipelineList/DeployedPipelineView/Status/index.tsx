@@ -17,17 +17,16 @@
 import * as React from 'react';
 import IconSVG from 'components/IconSVG';
 import StatusMapper from 'services/StatusMapper';
-import { objectQuery } from 'services/helpers';
 import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
-import { GLOBALS } from 'services/global-constants';
+import { getLatestRun } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface IProps {
   pipeline: IApplicationRecord;
 }
 
 const StatusView: React.SFC<IProps> = ({ pipeline }) => {
-  const run = getLatestRun(pipeline) || { status: 'DEPLOYED' };
-  const pipelineStatus = run.status;
+  const latestRun = getLatestRun(pipeline) || { status: 'DEPLOYED' };
+  const pipelineStatus = latestRun.status;
   const displayStatus = StatusMapper.statusMap[pipelineStatus];
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
@@ -40,31 +39,6 @@ const StatusView: React.SFC<IProps> = ({ pipeline }) => {
     </div>
   );
 };
-
-function getLatestRun(pipeline) {
-  const applicationDetail = objectQuery(pipeline, 'applicationDetail');
-
-  if (applicationDetail === null || applicationDetail === undefined) {
-    return [];
-  }
-
-  const programs = objectQuery(applicationDetail, 'programs');
-
-  if (programs === null || programs === undefined) {
-    return [];
-  }
-
-  const artifact = objectQuery(pipeline, 'artifact');
-
-  if (artifact === null || artifact === undefined) {
-    return [];
-  }
-
-  const programName = GLOBALS.programInfo[artifact.name].programName;
-  const runProgram = programs.find((program) => program.name === programName);
-
-  return runProgram.runs[0];
-}
 
 const Status = StatusView;
 
