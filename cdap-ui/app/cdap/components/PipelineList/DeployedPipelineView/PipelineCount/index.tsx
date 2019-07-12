@@ -28,8 +28,6 @@ interface IProps {
 const PREFIX = 'features.PipelineList';
 
 const PipelineCountView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) => {
-  // TODO would it ever be loading now that we are using the GraphQL query implementation?
-  // TODO the pipelines loading is set to true by default and changed when setting pipelines in the store
   if (pipelinesLoading) {
     return null;
   }
