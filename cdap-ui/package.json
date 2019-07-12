@@ -151,6 +151,7 @@
     "ejs": "2.6.1",
     "event-emitter": "0.3.4",
     "express": "4.16.2",
+    "express-http-proxy": "1.5.1",
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
     "fuse.js": "2.5.0",
