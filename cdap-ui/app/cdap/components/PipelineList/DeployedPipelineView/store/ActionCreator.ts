@@ -29,6 +29,7 @@ export function fetchPipelineList() {
     artifactName: GLOBALS.etlPipelineTypes.join(','),
   };
 
+  // TODO do not get pipelines with the old method
   MyPipelineApi.list(params).subscribe((res: IPipeline[]) => {
     const pipelines = orderBy(res, [(pipeline) => pipeline.name.toLowerCase()], ['asc']);
 
@@ -69,37 +70,10 @@ export function setSort(columnName: string) {
   const state = Store.getState().deployed;
   const currentColumn = state.sortColumn;
   const currentSortOrder = state.sortOrder;
-  const statusMap = state.statusMap;
-  const runsCountMap = state.runsCountMap;
 
   let sortOrder = SORT_ORDER.asc;
   if (currentColumn === columnName && currentSortOrder === SORT_ORDER.asc) {
     sortOrder = SORT_ORDER.desc;
-  }
-
-  let orderColumnFunction;
-  switch (columnName) {
-    case 'name':
-      orderColumnFunction = (pipeline) => pipeline.name.toLowerCase();
-      break;
-    case 'type':
-      orderColumnFunction = (pipeline) => pipeline.artifact.name;
-      break;
-    case 'status':
-      orderColumnFunction = (pipeline) => statusMap[pipeline.name].displayStatus;
-      break;
-    case 'lastStartTime':
-      orderColumnFunction = (pipeline) => {
-        const lastStarting = statusMap[pipeline.name].lastStarting;
-        if (!lastStarting) {
-          return sortOrder === SORT_ORDER.asc ? Infinity : -1;
-        }
-        return lastStarting;
-      };
-      break;
-    case 'runs':
-      orderColumnFunction = (pipeline) => runsCountMap[pipeline.name] || 0;
-      break;
   }
 
   Store.dispatch({
@@ -107,7 +81,6 @@ export function setSort(columnName: string) {
     payload: {
       sortColumn: columnName,
       sortOrder,
-      orderColumnFunction,
     },
   });
 }

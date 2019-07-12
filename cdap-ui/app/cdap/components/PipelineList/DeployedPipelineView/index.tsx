@@ -25,7 +25,6 @@ import SearchBox from 'components/PipelineList/DeployedPipelineView/SearchBox';
 import Pagination from 'components/PipelineList/DeployedPipelineView/Pagination';
 import { Provider } from 'react-redux';
 import Store from 'components/PipelineList/DeployedPipelineView/store';
-import orderBy from 'lodash/orderBy';
 
 import './DeployedPipelineView.scss';
 
@@ -88,11 +87,7 @@ const DeployedPipelinesView = () => (
         );
       }
 
-      const pipelines = orderBy(
-        data.applications,
-        [(pipeline) => pipeline.name.toLowerCase()],
-        ['asc']
-      );
+      const pipelines = data.applications;
 
       return (
         <Provider store={Store}>
@@ -101,7 +96,7 @@ const DeployedPipelinesView = () => (
               {/* TODO pipelinesLoading is true by default and changed when setting a pipeline in the store */}
               <PipelineCount pipelines={pipelines} pipelinesLoading={false} />
               <SearchBox />
-              <Pagination />
+              <Pagination numPipelines={pipelines.length} />
             </div>
 
             <PipelineTable pipelines={pipelines} />
