@@ -711,7 +711,13 @@ public class MetadataDataset extends AbstractDataset {
         while ((next = scanner.next()) != null) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, column, request.getTypes(),
                                                            request.shouldShowHidden());
+<<<<<<< HEAD
           metadataEntry.ifPresent(results::add);
+=======
+          if (metadataEntry.isPresent()) {
+            results.add(new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm()));
+          }
+>>>>>>> 648bcdbe8b... removed unused/commented out code
         }
       } finally {
         scanner.close();
@@ -833,9 +839,15 @@ public class MetadataDataset extends AbstractDataset {
     Set<EntityScope> entityScopes = searchRequest.getEntityScopes();
     List<SearchTerm> searchTerms = new LinkedList<>();
     Consumer<String> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
+<<<<<<< HEAD
     String searchQuery = searchRequest.getQuery();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
       termAdder.accept(term);
+=======
+
+    for (QueryTerm q : QueryParser.parse(searchRequest.getQuery())) {
+      termAdder.accept(q.getTerm());
+>>>>>>> 648bcdbe8b... removed unused/commented out code
     }
     return searchTerms;
   }

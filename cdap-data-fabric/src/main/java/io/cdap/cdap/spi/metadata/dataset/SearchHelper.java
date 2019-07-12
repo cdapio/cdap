@@ -304,7 +304,62 @@ public class SearchHelper {
       finalResults, cursors, request.shouldShowHidden(), request.getEntityScopes());
   }
 
+<<<<<<< HEAD
   private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
+=======
+  private Map<MetadataEntity, Map<String, Integer>> hashResults(List<MetadataResultEntry> results) {
+    Map<MetadataEntity, Map<String, Integer>> hashedResults = new LinkedHashMap<>();
+    for (MetadataResultEntry m : results) {
+      MetadataEntity entity = m.getMetadataEntity();
+      String label = m.getLabel();
+
+      if(!hashedResults.containsKey(entity)){
+        hashedResults.put(entity, new HashMap<>());
+      }
+
+      if(!hashedResults.get(entity).containsKey(label)){
+        hashedResults.get(entity).put(label, 1);
+      }
+      else{
+        int count = hashedResults.get(entity).get(label);
+        hashedResults.get(entity).put(label, count + 1);
+      }
+    }
+    return hashedResults;
+  }
+
+  private Map<MetadataEntity, Map<String, Integer>> filterEntries(Map<MetadataEntity, Map<String, Integer>> results,
+                                                         SearchRequest request) {
+    // entity -> list<string>()
+    Map<MetadataEntity, Map<String, Integer>> filteredResults = new LinkedHashMap<>();
+
+    List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
+    Set<QueryTerm> requiredTerms = new LinkedHashSet<>();
+    for (QueryTerm qT : queryTerms) {
+      if (qT.getQualifier() == QueryTerm.Qualifier.REQUIRED) {
+        requiredTerms.add(qT);
+      }
+    }
+
+    boolean keep;
+    for (MetadataEntity entity : results.keySet()) {
+      keep = true;
+      for (QueryTerm q : requiredTerms) {
+        if (!results.get(entity).containsKey(q.getTerm())) {
+          keep = false;
+          break;
+        }
+      }
+      if (keep) {
+        filteredResults.put(entity, results.get(entity));
+      }
+    }
+
+    return filteredResults;
+  }
+
+  private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Map<String, Integer>> results, SortInfo sortInfo) {
+>>>>>>> 648bcdbe8b... removed unused/commented out code
     // if sort order is not weighted, return entities in the order received.
     // in this case, the backing storage is expected to return results in the expected order.
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
@@ -317,9 +372,18 @@ public class SearchHelper {
     // if sort order is weighted, score results by weight, and return in descending order of weights
     // Score results
     final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
+<<<<<<< HEAD
     for (MetadataEntry metadataEntry : results) {
       weightedResults.put(metadataEntry.getMetadataEntity(),
                           weightedResults.getOrDefault(metadataEntry.getMetadataEntity(), 0) + 1);
+=======
+    for (MetadataEntity entity : results.keySet()) {
+      int count = 0;
+      for (String label : results.get(entity).keySet()) {
+        count += results.get(entity).get(label);
+      }
+      weightedResults.put(entity, count);
+>>>>>>> 648bcdbe8b... removed unused/commented out code
     }
 
     // Sort the results by score
