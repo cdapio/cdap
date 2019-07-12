@@ -28,6 +28,7 @@ import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
+import orderBy from 'lodash/orderBy';
 
 import './PipelineTable.scss';
 
@@ -40,6 +41,8 @@ interface IProps {
   runsCountMap: IRunsCountMap;
   pageLimit: number;
   currentPage: number;
+  sortOrder: string;
+  orderColumnFunction: (pipeline: IApplicationRecord) => string;
 }
 
 const PREFIX = 'features.PipelineList';
@@ -53,6 +56,8 @@ const PipelineTableView: React.SFC<IProps> = ({
   runsCountMap,
   pageLimit,
   currentPage,
+  sortOrder,
+  orderColumnFunction,
 }) => {
   function renderBody() {
     if (pipelinesLoading) {
@@ -93,6 +98,8 @@ const PipelineTableView: React.SFC<IProps> = ({
         </EmptyMessageContainer>
       );
     }
+
+    filteredList = orderBy(filteredList, [orderColumnFunction], [sortOrder]);
 
     return (
       <div className="grid-body">
@@ -136,6 +143,8 @@ const mapStateToProps = (state) => {
     runsCountMap: state.deployed.runsCountMap,
     pageLimit: state.deployed.pageLimit,
     currentPage: state.deployed.currentPage,
+    sortOrder: state.deployed.sortOrder,
+    orderColumnFunction: state.deployed.orderColumnFunction,
   };
 };
 

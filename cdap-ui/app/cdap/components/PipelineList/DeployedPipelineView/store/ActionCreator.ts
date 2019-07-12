@@ -23,12 +23,15 @@ import orderBy from 'lodash/orderBy';
 
 export function fetchPipelineList() {
   const namespace = getCurrentNamespace();
+
   const params = {
     namespace,
     artifactName: GLOBALS.etlPipelineTypes.join(','),
   };
+
   MyPipelineApi.list(params).subscribe((res: IPipeline[]) => {
     const pipelines = orderBy(res, [(pipeline) => pipeline.name.toLowerCase()], ['asc']);
+
     Store.dispatch({
       type: Actions.setPipeline,
       payload: {
@@ -99,14 +102,12 @@ export function setSort(columnName: string) {
       break;
   }
 
-  const pipelines = orderBy(state.pipelines, [orderColumnFunction], [sortOrder]);
-
   Store.dispatch({
     type: Actions.setSort,
     payload: {
       sortColumn: columnName,
       sortOrder,
-      pipelines,
+      orderColumnFunction,
     },
   });
 }

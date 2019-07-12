@@ -17,9 +17,9 @@
 import { combineReducers, createStore } from 'redux';
 import { composeEnhancers } from 'services/helpers';
 import {
-  IPipeline,
   IStatusMap,
   IRunsCountMap,
+  IApplicationRecord,
 } from 'components/PipelineList/DeployedPipelineView/types';
 import { Reducer, Store as StoreInterface } from 'redux';
 import { IAction } from 'services/redux-helpers';
@@ -30,7 +30,7 @@ enum SORT_ORDER {
 }
 
 interface IState {
-  pipelines: IPipeline[];
+  pipelines: IApplicationRecord[];
   pipelinesLoading: boolean;
   statusMap: IStatusMap;
   runsCountMap: IRunsCountMap;
@@ -40,6 +40,7 @@ interface IState {
   search: string;
   currentPage: number;
   pageLimit: number;
+  orderColumnFunction: (pipeline: IApplicationRecord) => string;
 }
 
 interface IStore {
@@ -69,6 +70,7 @@ const defaultInitialState: IState = {
   search: '',
   currentPage: 1,
   pageLimit: 25,
+  orderColumnFunction: null,
 };
 
 const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction) => {
@@ -82,6 +84,16 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
         pipelinesLoading: false,
         deleteError: null,
         currentPage: 1,
+      };
+    case Actions.setStatusMap:
+      return {
+        ...state,
+        statusMap: action.payload.statusMap,
+      };
+    case Actions.setRunsCountMap:
+      return {
+        ...state,
+        runsCountMap: action.payload.runsCountMap,
       };
     case Actions.setDeleteError:
       return {
@@ -103,7 +115,7 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
         ...state,
         sortColumn: action.payload.sortColumn,
         sortOrder: action.payload.sortOrder,
-        pipelines: action.payload.pipelines,
+        orderColumnFunction: action.payload.orderColumnFunction,
         currentPage: 1,
       };
     case Actions.setPage:
