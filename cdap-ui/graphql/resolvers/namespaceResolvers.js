@@ -15,14 +15,13 @@
  */
 
 const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js'),
+  cdapConfigurator = require('../../server/cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig()
-  .then(function (value) {
-    cdapConfig = value;
-  });
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
 
 const namespacesResolver = {
   Query: {
@@ -31,12 +30,12 @@ const namespacesResolver = {
       options['url'] = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
 
       return await resolversCommon.requestPromiseWrapper(options);
-    }
-  }
+    },
+  },
 };
 
 const namespaceResolvers = namespacesResolver;
 
 module.exports = {
-  namespaceResolvers
+  namespaceResolvers,
 };

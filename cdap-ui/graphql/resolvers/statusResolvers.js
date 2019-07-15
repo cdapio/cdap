@@ -15,14 +15,14 @@
  */
 
 const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js'),
+  cdapConfigurator = require('../../server/cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig()
-  .then(function (value) {
-    cdapConfig = value;
-  });
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
+
 
 const statusResolver = {
   Query: {
@@ -33,12 +33,12 @@ const statusResolver = {
       const status = await resolversCommon.requestPromiseWrapper(options);
 
       return status.trim();
-    }
-  }
+    },
+  },
 };
 
 const statusResolvers = statusResolver;
 
 module.exports = {
-  statusResolvers
+  statusResolvers,
 };

@@ -16,59 +16,62 @@
 
 const merge = require('lodash/merge'),
   urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../cdap-config.js'),
+  cdapConfigurator = require('../../server/cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig()
-  .then(function (value) {
-    cdapConfig = value;
-  });
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
 
 const applicationsResolver = {
   Query: {
-    applications: async (parent, args, context, info) => {
-      const namespace = args.namespace
+    applications: async (parent, args, context) => {
+      const namespace = args.namespace;
       const options = resolversCommon.getGETRequestOptions();
       options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
-      context.namespace = namespace
-
+      context.namespace = namespace;
       return await resolversCommon.requestPromiseWrapper(options);
-    }
-  }
+    },
+  },
 };
 
 const applicationResolver = {
   Query: {
-    application: async (parent, args, context, info) => {
+    application: async (parent, args) => {
       const namespace = args.namespace;
       const name = args.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
-
+      options['url'] = urlHelper.constructUrl(
+        cdapConfig,
+        `/v3/namespaces/${namespace}/apps/${name}`
+      );
       return await resolversCommon.requestPromiseWrapper(options);
-    }
-  }
+    },
+  },
 };
 
 const applicationDetailResolver = {
   ApplicationRecord: {
-    async applicationDetail(parent, args, context, info) {
+    async applicationDetail(parent, args, context) {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
-
+      options['url'] = urlHelper.constructUrl(
+        cdapConfig,
+        `/v3/namespaces/${namespace}/apps/${name}`
+      );
       return await resolversCommon.requestPromiseWrapper(options);
-    }
-  }
+    },
+  },
 };
 
-const applicationResolvers = merge(applicationsResolver,
+const applicationResolvers = merge(
+  applicationsResolver,
   applicationResolver,
   applicationDetailResolver
 );
 
 module.exports = {
-  applicationResolvers
+  applicationResolvers,
 };

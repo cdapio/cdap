@@ -14,12 +14,12 @@
  * the License.
  */
 
-const parser = require('./server/config/parser.js');
+const parser = require('./config/parser.js');
 const memoize = require('lodash/memoize');
 
 async function extractCDAPConfig() {
   let cdapConfig;
-  
+
   try {
     cdapConfig = await parser.extractConfig('cdap');
   } catch (e) {
@@ -32,5 +32,5 @@ async function extractCDAPConfig() {
 const getCDAPConfig = memoize(extractCDAPConfig);
 
 module.exports = {
-  getCDAPConfig
+  getCDAPConfig,
 };

@@ -29,7 +29,8 @@ const { statusResolvers } = require('./resolvers/statusResolvers');
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
 
-const resolvers = merge(applicationResolvers,
+const resolvers = merge(
+  applicationResolvers,
   namespaceResolvers,
   metadataResolvers,
   programRecordTypeResolvers,
@@ -47,13 +48,13 @@ if (env === 'production') {
 }
 
 if (typeof resolvers === 'undefined') {
-  const errorMessage = "The GraphQL resolvers are undefined";
+  const errorMessage = 'The GraphQL resolvers are undefined';
   log.error(errorMessage);
   throw new Error(errorMessage);
 }
 
 if (typeof typeDefs === 'undefined') {
-  const errorMessage = "The GraphQL type definitions are undefined";
+  const errorMessage = 'The GraphQL type definitions are undefined';
   log.error(errorMessage);
   throw new Error(errorMessage);
 }
@@ -72,5 +73,5 @@ function applyMiddleware(app) {
 module.exports = {
   applyMiddleware,
   resolvers,
-  typeDefs
+  typeDefs,
 };

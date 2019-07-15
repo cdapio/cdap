@@ -17,27 +17,26 @@
 const programsResolver = {
   ApplicationDetail: {
     programs: async (parent, args, context, info) => {
-      return await (new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         const programs = parent.programs;
         const type = args.type;
 
         if (type === null || type === undefined) {
-          resolve(programs)
+          resolve(programs);
         } else {
-          const typePrograms = programs.filter(
-            function (program) {
-              return program.type == type;
-            });
+          const typePrograms = programs.filter(function(program) {
+            return program.type == type;
+          });
 
-          resolve(typePrograms)
+          resolve(typePrograms);
         }
-      }));
-    }
-  }
+      });
+    },
+  },
 };
 
 const programRecordResolvers = programsResolver;
 
 module.exports = {
-  programRecordResolvers
+  programRecordResolvers,
 };

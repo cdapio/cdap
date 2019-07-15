@@ -19,8 +19,8 @@ const request = require('request');
 function getGETRequestOptions() {
   return {
     method: 'GET',
-    json: true
-  }
+    json: true,
+  };
 }
 
 function requestPromiseWrapper(options) {
@@ -33,9 +33,9 @@ function requestPromiseWrapper(options) {
       return resolve(body);
     });
   });
-};
+}
 
 module.exports = {
   getGETRequestOptions,
-  requestPromiseWrapper
+  requestPromiseWrapper,
 };

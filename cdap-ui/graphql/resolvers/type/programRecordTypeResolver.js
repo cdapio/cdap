@@ -17,7 +17,7 @@
 const programsTypeResolver = {
   ProgramRecord: {
     async __resolveType(parent, args, context, info) {
-      return await (new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         switch (parent.type) {
           case 'Mapreduce':
             resolve('MapReduce');
@@ -31,13 +31,13 @@ const programsTypeResolver = {
           default:
             resolve(null);
         }
-      }));
-    }
-  }
+      });
+    },
+  },
 };
 
 const programRecordTypeResolvers = programsTypeResolver;
 
 module.exports = {
-  programRecordTypeResolvers
+  programRecordTypeResolvers,
 };
