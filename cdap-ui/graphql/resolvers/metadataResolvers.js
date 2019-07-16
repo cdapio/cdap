@@ -25,7 +25,7 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
 
 const metadataResolver = {
   ApplicationDetail: {
-    metadata: async (parent, args, context, info) => {
+    metadata: async (parent, args, context) => {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();

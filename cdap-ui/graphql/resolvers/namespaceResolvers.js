@@ -25,7 +25,7 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
 
 const namespacesResolver = {
   Query: {
-    namespaces: async (parent, args, context, info) => {
+    namespaces: async () => {
       const options = resolversCommon.getGETRequestOptions();
       options['url'] = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
 
