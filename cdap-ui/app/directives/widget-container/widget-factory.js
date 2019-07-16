@@ -218,10 +218,12 @@ angular.module(PKG.name + '.commons')
         },
       },
       'sql-select-fields': {
-        element: '<my-sql-selector></my-sql-selector>',
+        element: '<sql-selector-widget></sql-selector-widget>',
         attributes: {
-          'ng-model': 'model',
-          'input-schema': 'inputSchema'
+          'value': 'model',
+          'input-schema': 'inputSchema',
+          'on-change': 'onChange',
+          'disabled': 'disabled'
         }
       },
       'join-types': {

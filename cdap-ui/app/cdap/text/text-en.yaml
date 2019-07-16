@@ -119,6 +119,17 @@ features:
       customEntryHelper: Specify a different secure key
       customEntryPlaceholder: Type the name of secure key
       title: Select from the list or specify a different secure key
+    SqlSelectorWidget:
+      collapseAll: Collapse All
+      expandAll: Expand All
+      resetAll: Reset All
+      table:
+        aliasHeader: Alias
+        checkboxHeader: Select
+        selectMenuItems:
+          all: All
+          none: None
+        stageNameHeader: Name
   AccessTokenModal:
     accessToken: "Access token: "
     close: Close
@@ -1524,7 +1535,7 @@ features:
         TargetHeader: 'Select a field to view lineage and operations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       FllTable:
-        fieldsCount: 
+        fieldsCount:
           1: "{context} field"
           _: "{context} fields"
         FllField:
@@ -1535,7 +1546,7 @@ features:
         relatedFieldsCount:
           1: "{context} related field"
           _: "{context} related fields"
-          
+
   ADLSBrowser:
     directory: Directory
     EmptyMessage:

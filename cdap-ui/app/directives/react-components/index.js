@@ -129,4 +129,7 @@ angular
   })
   .directive('functionDropdownAliasWidget', function (reactDirective) {
     return reactDirective(window.CaskCommon.FunctionDropdownAlias);
+  })
+  .directive('sqlSelectorWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.SqlSelectorWidget);
   });
