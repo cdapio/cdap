@@ -16,22 +16,17 @@
 
 const programsTypeResolver = {
   ProgramRecord: {
-    async __resolveType(parent, args, context, info) {
-      return await new Promise((resolve, reject) => {
-        switch (parent.type) {
-          case 'Mapreduce':
-            resolve('MapReduce');
-            break;
-          case 'Workflow':
-            resolve('Workflow');
-            break;
-          case 'Spark':
-            resolve('Spark');
-            break;
-          default:
-            resolve(null);
-        }
-      });
+    async __resolveType(parent) {
+      switch (parent.type) {
+        case 'Mapreduce':
+          return 'MapReduce';
+        case 'Workflow':
+          return 'Workflow';
+        case 'Spark':
+          return 'Spark';
+        default:
+          return null;
+      }
     },
   },
 };
