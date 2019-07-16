@@ -14,6 +14,8 @@
  * the License.
  */
 
+// TODO the graphql server is not setup to handle authenticated environment yet.
+
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const merge = require('lodash/merge');
