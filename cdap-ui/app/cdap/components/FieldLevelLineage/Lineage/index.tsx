@@ -25,15 +25,15 @@ const Lineage: React.SFC = () => {
   return (
     <div className="field-level-lineage-container">
       <div className="row">
-        <div className="col-4">
+        <div className="col-4" data-cy="incoming-fields">
           <IncomingLineage />
         </div>
 
-        <div className="col-4">
+        <div className="col-4" data-cy="target-fields">
           <Fields />
         </div>
 
-        <div className="col-4">
+        <div className="col-4" data-cy="impact-fields">
           <OutgoingLineage />
         </div>
       </div>
