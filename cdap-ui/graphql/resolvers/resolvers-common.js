@@ -30,6 +30,17 @@ function requestPromiseWrapper(options) {
         return reject(err);
       }
 
+      const statusCode = response.statusCode;
+
+      if (typeof statusCode === 'undefined' || statusCode != 200) {
+        const error = {
+          statusCode: statusCode,
+          body: body,
+        };
+
+        return reject(error);
+      }
+
       return resolve(body);
     });
   });
