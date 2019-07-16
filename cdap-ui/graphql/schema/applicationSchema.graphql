@@ -19,43 +19,24 @@
 # import Metadata from "metadataSchema.graphql"
 
 type ApplicationRecord {
-
   type: String!
-
   name: String!
-
   version: String!
-
   description: String!
-
   artifact: ArtifactSummary!
-
   ownerPrincipal: String
-
   # Field added for composition
   applicationDetail: ApplicationDetail!
 }
 
 type ApplicationDetail {
-
   name: String!
-
   appVersion: String!
-
   description: String!
-
   configuration: String!
-
-  # List<DatasetDetail> datasets;
-
   programs(type: String): [ProgramRecord]!
-
-  # List<PluginDetail> plugins;
-
   artifact: ArtifactSummary!
-
   ownerPrincipal: String
-
   # Field added for composition
   metadata: Metadata
 }

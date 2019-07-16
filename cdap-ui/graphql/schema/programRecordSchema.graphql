@@ -15,97 +15,53 @@
 """
 
 interface ProgramRecord {
-
   type: String!
-
   app: String!
-
   name: String!
-
   description: String!
 }
 
 type MapReduce implements ProgramRecord {
-
   type: String!
-
   app: String!
-
   name: String!
-
   description: String!
 }
 
 type Spark implements ProgramRecord {
-
   type: String!
-
   app: String!
-
   name: String!
-
   description: String!
 }
 
 type Workflow implements ProgramRecord {
-
   type: String!
-
   app: String!
-
   name: String!
-
   description: String!
-
   runs: [RunRecord]!
-
   # Field added for composition
   schedules: [ScheduleDetail]!
 }
 
 type RunRecord {
-
   runid: String!
-
   starting: String!
-
   start: String!
-
   end: String!
-
   status: String!
-
-  # properties
-
-  # ProgramRunCluster cluster;
-
   profileId: String
 }
 
 type ScheduleDetail {
-
   namespace: String!
-
   application: String!
-
   applicationVersion: String!
-
   name: String!
-
   description: String!
-
-  # ScheduleProgramInfo program;
-
-  # Map<String, String> properties;
-
-  # Trigger trigger;
-
-  # List<? extends Constraint> constraints;
-
   timeoutMillis: String!
-
   status: String!
-
   # Field added for composition
   nextRuntimes: [String]!
 }
