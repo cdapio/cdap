@@ -179,8 +179,12 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       } finally {
         if (transaction != null) {
           // invalids long running tx. All writes done by MR cannot be undone at this point.
-          LOG.info("Invalidating transaction {}", transaction.getWritePointer());
-          txClient.invalidate(transaction.getWritePointer());
+          LOG.info("Invalidating MapReduce Job transaction {}", transaction.getWritePointer());
+          try {
+            txClient.invalidate(transaction.getWritePointer());
+          } catch (Throwable t) {
+            LOG.warn("Unable to invalidate MapReduce Job transaction", t);
+          }
           transaction = null;
         } else {
           LOG.warn("Did not invalidate transaction; job setup did not complete or invalidate already happened.");
