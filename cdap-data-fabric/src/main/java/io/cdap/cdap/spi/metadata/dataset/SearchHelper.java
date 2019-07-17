@@ -36,9 +36,11 @@ import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metadata.QueryParser;
+import io.cdap.cdap.common.metadata.QueryTerm;
 import io.cdap.cdap.data2.metadata.dataset.MetadataDataset;
 import io.cdap.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
-import io.cdap.cdap.data2.metadata.dataset.MetadataEntry;
+import io.cdap.cdap.data2.metadata.dataset.MetadataResultEntry;
 import io.cdap.cdap.data2.metadata.dataset.SearchRequest;
 import io.cdap.cdap.data2.metadata.dataset.SearchResults;
 import io.cdap.cdap.data2.metadata.dataset.SortInfo;
@@ -261,7 +263,7 @@ public class SearchHelper {
   }
 
   private MetadataSearchResponse search(Set<MetadataScope> scopes, SearchRequest request) {
-    List<MetadataEntry> results = new LinkedList<>();
+    List<MetadataResultEntry> results = new LinkedList<>();
     List<String> cursors = new LinkedList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults = execute(context -> context.getDataset(scope).search(request));
@@ -271,9 +273,14 @@ public class SearchHelper {
 
     int offset = request.getOffset();
     int limit = request.getLimit();
+
+    //filter first
+    Map<MetadataEntity, Set<String>> hashedResults = hashResults(results);
+    hashedResults = filterEntries(hashedResults, request);
+
     SortInfo sortInfo = request.getSortInfo();
     // sort if required
-    Set<MetadataEntity> sortedEntities = getSortedEntities(results, sortInfo);
+    Set<MetadataEntity> sortedEntities = getSortedEntities(hashedResults, sortInfo);
     int total = sortedEntities.size();
 
     // pagination is not performed at the dataset level, because:
@@ -304,34 +311,20 @@ public class SearchHelper {
       finalResults, cursors, request.shouldShowHidden(), request.getEntityScopes());
   }
 
-<<<<<<< HEAD
-  private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
-=======
-  private Map<MetadataEntity, Map<String, Integer>> hashResults(List<MetadataResultEntry> results) {
-    Map<MetadataEntity, Map<String, Integer>> hashedResults = new LinkedHashMap<>();
+  private Map<MetadataEntity, Set<String>> hashResults(List<MetadataResultEntry> results) {
+    Map<MetadataEntity, Set<String>> hashedResults = new HashMap<>();
     for (MetadataResultEntry m : results) {
-      MetadataEntity entity = m.getMetadataEntity();
-      String label = m.getLabel();
-
-      if(!hashedResults.containsKey(entity)){
-        hashedResults.put(entity, new HashMap<>());
-      }
-
-      if(!hashedResults.get(entity).containsKey(label)){
-        hashedResults.get(entity).put(label, 1);
-      }
-      else{
-        int count = hashedResults.get(entity).get(label);
-        hashedResults.get(entity).put(label, count + 1);
-      }
+      Set<String> set = hashedResults.getOrDefault(m.getMetadataEntity(), new LinkedHashSet<>());
+      set.add(m.getLabel());
+      hashedResults.put(m.getMetadataEntity(), set);
     }
     return hashedResults;
   }
 
-  private Map<MetadataEntity, Map<String, Integer>> filterEntries(Map<MetadataEntity, Map<String, Integer>> results,
+  private Map<MetadataEntity, Set<String>> filterEntries(Map<MetadataEntity, Set<String>> results,
                                                          SearchRequest request) {
     // entity -> list<string>()
-    Map<MetadataEntity, Map<String, Integer>> filteredResults = new LinkedHashMap<>();
+    Map<MetadataEntity, Set<String>> filteredResults = new HashMap<>();
 
     List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
     Set<QueryTerm> requiredTerms = new LinkedHashSet<>();
@@ -341,49 +334,35 @@ public class SearchHelper {
       }
     }
 
-    boolean keep;
-    for (MetadataEntity entity : results.keySet()) {
+    boolean keep = true;
+    for (MetadataEntity key : results.keySet()) {
       keep = true;
       for (QueryTerm q : requiredTerms) {
-        if (!results.get(entity).containsKey(q.getTerm())) {
+        if (!results.get(key).contains(q.getTerm())) {
           keep = false;
           break;
         }
       }
       if (keep) {
-        filteredResults.put(entity, results.get(entity));
+        filteredResults.put(key, results.get(key));
       }
     }
 
     return filteredResults;
   }
 
-  private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Map<String, Integer>> results, SortInfo sortInfo) {
->>>>>>> 648bcdbe8b... removed unused/commented out code
-    // if sort order is not weighted, return entities in the order received.
-    // in this case, the backing storage is expected to return results in the expected order.
+  private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Set<String>> results, SortInfo sortInfo) {
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
       Set<MetadataEntity> entities = new LinkedHashSet<>(results.size());
-      for (MetadataEntry metadataEntry : results) {
-        entities.add(metadataEntry.getMetadataEntity());
+      for (MetadataEntity entity : results.keySet()) {
+        entities.add(entity);
       }
       return entities;
     }
-    // if sort order is weighted, score results by weight, and return in descending order of weights
-    // Score results
+
     final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
-<<<<<<< HEAD
-    for (MetadataEntry metadataEntry : results) {
-      weightedResults.put(metadataEntry.getMetadataEntity(),
-                          weightedResults.getOrDefault(metadataEntry.getMetadataEntity(), 0) + 1);
-=======
     for (MetadataEntity entity : results.keySet()) {
-      int count = 0;
-      for (String label : results.get(entity).keySet()) {
-        count += results.get(entity).get(label);
-      }
-      weightedResults.put(entity, count);
->>>>>>> 648bcdbe8b... removed unused/commented out code
+      weightedResults.put(entity, results.get(entity).size());
     }
 
     // Sort the results by score
@@ -395,6 +374,34 @@ public class SearchHelper {
     }
     return result;
   }
+
+//  private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
+//    // if sort order is not weighted, return entities in the order received.
+//    // in this case, the backing storage is expected to return results in the expected order.
+//    if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
+//      Set<MetadataEntity> entities = new LinkedHashSet<>(results.size());
+//      for (MetadataEntry metadataEntry : results) {
+//        entities.add(metadataEntry.getMetadataEntity());
+//      }
+//      return entities;
+//    }
+//    // if sort order is weighted, score results by weight, and return in descending order of weights
+//    // Score results
+//    final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
+//    for (MetadataEntry metadataEntry : results) {
+//      weightedResults.put(metadataEntry.getMetadataEntity(),
+//                          weightedResults.getOrDefault(metadataEntry.getMetadataEntity(), 0) + 1);
+//    }
+//
+//    // Sort the results by score
+//    List<Map.Entry<MetadataEntity, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
+//    resultList.sort(SEARCH_RESULT_DESC_SCORE_COMPARATOR);
+//    Set<MetadataEntity> result = new LinkedHashSet<>(resultList.size());
+//    for (Map.Entry<MetadataEntity, Integer> entry : resultList) {
+//      result.add(entry.getKey());
+//    }
+//    return result;
+//  }
 
   private Map<MetadataEntity, MetadataDataset.Record> fetchMetadata(MetadataDataset mds,
                                                                     final Set<MetadataEntity> metadataEntities) {

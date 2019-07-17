@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.metadata.dataset;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -23,17 +24,25 @@ import java.util.List;
  * list of cursors to start subsequent searches from.
  */
 public class SearchResults {
-  private final List<MetadataEntry> results;
+  private final List<MetadataResultEntry> results;
   private final List<String> cursors;
 
 
-  SearchResults(List<MetadataEntry> results, List<String> cursors) {
+  SearchResults(List<MetadataResultEntry> results, List<String> cursors) {
     this.results = results;
     this.cursors = cursors;
   }
 
-  public List<MetadataEntry> getResults() {
+  public List<MetadataResultEntry> getResults() {
     return results;
+  }
+
+  public List<MetadataEntry> getEntries() {
+    List<MetadataEntry> entries = new LinkedList<>();
+    for (MetadataResultEntry m : this.results) {
+      entries.add(m.getMetadataEntry());
+    }
+    return entries;
   }
 
   public List<String> getCursors() {
