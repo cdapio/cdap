@@ -93,7 +93,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   public static final ExternalResource RESOURCE = new ExternalResource() {
     private final Map<String, String> previousProperties = new HashMap<>();
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
       // store the previous property
       previousProperties.put(TxConstants.Manager.CFG_TX_TIMEOUT,
                              System.getProperty(TxConstants.Manager.CFG_TX_TIMEOUT));

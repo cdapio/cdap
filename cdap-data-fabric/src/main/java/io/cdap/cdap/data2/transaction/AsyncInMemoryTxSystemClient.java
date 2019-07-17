@@ -59,7 +59,7 @@ public class AsyncInMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   private <T, E extends Exception> T call(Callable<T> callable, Class<? extends E> exceptionClass) throws E {
-    final SettableFuture<T> result = SettableFuture.create();
+    SettableFuture<T> result = SettableFuture.create();
     this.executor.execute(() -> {
       try {
         result.set(callable.call());
@@ -105,10 +105,11 @@ public class AsyncInMemoryTxSystemClient implements TransactionSystemClient {
 
   @Override
   public Transaction startLong() {
-    return call(delegate::startShort);
+    return call(delegate::startLong);
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     return call(() -> delegate.canCommit(tx, changeIds), TransactionNotInProgressException.class);
   }
@@ -119,6 +120,7 @@ public class AsyncInMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
     return call(() -> delegate.commit(tx), TransactionNotInProgressException.class);
   }

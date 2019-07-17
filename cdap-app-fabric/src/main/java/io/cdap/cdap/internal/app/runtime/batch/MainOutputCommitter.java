@@ -104,6 +104,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     // We start long-running tx to be used by mapreduce job tasks when running on premise
     if (ProgramRunners.getClusterMode(contextConfig.getProgramOptions()) == ClusterMode.ON_PREMISE) {
       this.transaction = txClient.startLong();
+      LOG.debug("Started MapReduce Job transaction {}", this.transaction.getWritePointer());
 
       // Write the tx somewhere, so that we can re-use it in mapreduce tasks
       Path txFile = getTxFile(configuration, jobContext.getJobID());

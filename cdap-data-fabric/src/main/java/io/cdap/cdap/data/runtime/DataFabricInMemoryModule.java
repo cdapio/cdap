@@ -32,6 +32,7 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.persist.NoOpTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
@@ -62,6 +63,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
     bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+    bind(InMemoryTxSystemClient.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClient.class).toProvider(InMemoryTransactionSystemClientProvider.class).in(Scopes.SINGLETON);
 
     install(new TransactionExecutorModule());
