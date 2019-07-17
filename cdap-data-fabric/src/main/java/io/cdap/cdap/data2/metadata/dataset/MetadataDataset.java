@@ -39,6 +39,8 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.metadata.QueryParser;
+import io.cdap.cdap.common.metadata.QueryTerm;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
@@ -690,7 +692,7 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private SearchResults searchByDefaultIndex(SearchRequest request) {
-    List<MetadataEntry> results = new LinkedList<>();
+    List<MetadataResultEntry> results = new LinkedList<>();
     String column = request.isNamespaced() ?
       DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
 
@@ -711,7 +713,13 @@ public class MetadataDataset extends AbstractDataset {
         while ((next = scanner.next()) != null) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, column, request.getTypes(),
                                                            request.shouldShowHidden());
-          metadataEntry.ifPresent(results::add);
+          //metadataEntry.ifPresent(results::add);
+          if (metadataEntry.isPresent()) {
+            MetadataEntry e = metadataEntry.get();
+            String s = searchTerm.getTerm();
+            MetadataResultEntry m = new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm());
+            results.add(new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm()));
+          }
         }
       } finally {
         scanner.close();
@@ -728,7 +736,7 @@ public class MetadataDataset extends AbstractDataset {
     int limit = request.getLimit();
     int numCursors = request.getNumCursors();
 
-    List<MetadataEntry> results = new LinkedList<>();
+    List<MetadataResultEntry> results = new LinkedList<>();
     IndexColumn indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     String column = request.isNamespaced() ? indexColumn.getColumn() : indexColumn.getCrossNamespaceColumn();
     // we want to return the first chunk of 'limit' elements after offset
@@ -766,10 +774,10 @@ public class MetadataDataset extends AbstractDataset {
         while ((next = scanner.next()) != null && results.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry =
             parseRow(next, column, request.getTypes(), request.shouldShowHidden());
-          if (!metadataEntry.isPresent()) {
+          if (metadataEntry == null) {
             continue;
           }
-          results.add(metadataEntry.get());
+          results.add(new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm()));
 
           if (results.size() > limit + offset && (results.size() - offset) % limit == mod) {
             String cursorVal = Bytes.toString(next.get(column));
@@ -833,10 +841,16 @@ public class MetadataDataset extends AbstractDataset {
     Set<EntityScope> entityScopes = searchRequest.getEntityScopes();
     List<SearchTerm> searchTerms = new LinkedList<>();
     Consumer<String> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
-    String searchQuery = searchRequest.getQuery();
+
+    /**String searchQuery = searchRequest.getQuery();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
       termAdder.accept(term);
+    }**/
+
+    for (QueryTerm q : QueryParser.parse(searchRequest.getQuery())) {
+      termAdder.accept(q.getTerm());
     }
+
     return searchTerms;
   }
 
