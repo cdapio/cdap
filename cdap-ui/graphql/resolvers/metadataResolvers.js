@@ -29,7 +29,7 @@ const metadataResolver = {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(
+      options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`
       );

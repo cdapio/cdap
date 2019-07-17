@@ -27,7 +27,7 @@ const statusResolver = {
   Query: {
     status: async () => {
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, '/ping');
+      options.url = urlHelper.constructUrl(cdapConfig, '/ping');
 
       const status = await resolversCommon.requestPromiseWrapper(options);
 

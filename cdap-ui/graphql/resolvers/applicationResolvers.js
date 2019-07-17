@@ -29,7 +29,7 @@ const applicationsResolver = {
     applications: async (parent, args, context) => {
       const namespace = args.namespace;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
+      options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
       context.namespace = namespace;
       return await resolversCommon.requestPromiseWrapper(options);
     },
@@ -42,10 +42,7 @@ const applicationResolver = {
       const namespace = args.namespace;
       const name = args.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(
-        cdapConfig,
-        `/v3/namespaces/${namespace}/apps/${name}`
-      );
+      options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
       return await resolversCommon.requestPromiseWrapper(options);
     },
   },
@@ -57,10 +54,7 @@ const applicationDetailResolver = {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(
-        cdapConfig,
-        `/v3/namespaces/${namespace}/apps/${name}`
-      );
+      options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
       return await resolversCommon.requestPromiseWrapper(options);
     },
   },

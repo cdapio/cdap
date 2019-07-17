@@ -31,7 +31,7 @@ const runsResolver = {
       const name = parent.app;
       const workflow = parent.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(
+      options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`
       );
@@ -48,7 +48,7 @@ const schedulesResolver = {
       const name = parent.app;
       const workflow = parent.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(
+      options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`
       );
@@ -67,7 +67,7 @@ const nextRuntimesResolver = {
       const name = parent.application;
       const workflow = context.workflow;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(
+      options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`
       );

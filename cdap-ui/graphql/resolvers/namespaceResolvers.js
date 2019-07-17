@@ -27,7 +27,7 @@ const namespacesResolver = {
   Query: {
     namespaces: async () => {
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
+      options.url = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
 
       return await resolversCommon.requestPromiseWrapper(options);
     },
