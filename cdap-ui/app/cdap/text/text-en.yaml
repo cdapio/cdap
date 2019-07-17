@@ -765,6 +765,56 @@ features:
           UPPERCASE:
             label: UPPERCASE
         title: Format
+      Hash:
+        BLAKE2B-160: BLAKE2B-160
+        BLAKE2B-256: BLAKE2B-256
+        BLAKE2B-384: BLAKE2B-384
+        BLAKE2B-512: BLAKE2B-512
+        encode: Encode
+        GOST3411: GOST3411
+        GOST3411-2012-256: GOST3411-2012-256
+        GOST3411-2012-512: GOST3411-2012-512
+        KECCAK-224: KECCAK-224
+        KECCAK-256: KECCAK-256
+        KECCAK-288: KECCAK-288
+        KECCAK-384: KECCAK-384
+        KECCAK-512: KECCAK-512
+        MD2: MD2
+        MD4: MD4
+        MD5: MD5
+        RIPEMD128: RIPEMD128
+        RIPEMD160: RIPEMD160
+        RIPEMD256: RIPEMD256
+        RIPEMD320: RIPEMD320
+        SHA: SHA
+        SHA-1: SHA-1
+        SHA-224: SHA-224
+        SHA-256: SHA-256
+        SHA-384: SHA-384
+        SHA-512: SHA-512
+        SHA-512/224: SHA-512/224
+        SHA-512/256: SHA-512/256
+        SHA3-224: SHA3-224
+        SHA3-256: SHA3-256
+        SHA3-384: SHA3-384
+        SHA3-512: SHA3-512
+        Skein-1024-1024: Skein-1024-1024
+        Skein-1024-384: Skein-1024-384
+        Skein-1024-512: Skein-1024-512
+        Skein-256-128: Skein-256-128
+        Skein-256-160: Skein-256-160
+        Skein-256-224: Skein-256-224
+        Skein-256-256: Skein-256-256
+        Skein-512-128: Skein-512-128
+        Skein-512-160: Skein-512-160
+        Skein-512-224: Skein-512-224
+        Skein-512-256: Skein-512-256
+        Skein-512-384: Skein-512-384
+        Skein-512-512: Skein-512-512
+        SM3: SM3
+        Tiger: Tiger
+        title: Hash
+        WHIRLPOOL: WHIRLPOOL
       Keep:
        title:
           plural: Keep selected columns

@@ -44,6 +44,7 @@ import Explode from 'components/DataPrep/Directives/Explode';
 import MaskData from 'components/DataPrep/Directives/MaskData';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import Decode from 'components/DataPrep/Directives/Decode';
+import Hash from 'components/DataPrep/Directives/Hash';
 import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
 import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
 import CustomTransform from 'components/DataPrep/Directives/CustomTransform';
@@ -202,6 +203,11 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: uuidV4(),
         tag: Decode,
+        requiredColCount: 1,
+      },
+      {
+        id: uuidV4(),
+        tag: Hash,
         requiredColCount: 1,
       },
     ];
