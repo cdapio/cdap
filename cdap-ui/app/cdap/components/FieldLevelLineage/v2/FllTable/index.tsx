@@ -75,8 +75,9 @@ const styles = (theme) => {
 };
 
 interface ITableProps extends WithStyles<typeof styles> {
-  tableId: string;
-  fields: IField[];
+  tableId?: string;
+  fields?: IField[];
+  type?: string;
 }
 
 function renderGridHeader(fields: IField[], showingOneField: boolean, classes) {
@@ -106,10 +107,19 @@ function renderGridBody(fields: IField[], tableName: string, classes) {
   );
 }
 
-function FllTable({ tableId, fields, classes }: ITableProps) {
+function FllTable({ tableId, fields, type, classes }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
-  const { showingOneField } = useContext<IContextState>(FllContext);
-  const isTarget = fields[0].type === 'target';
+  const { showingOneField, target } = useContext<IContextState>(FllContext);
+  const isTarget = type === 'target';
+
+  if (!fields || fields.length === 0) {
+    return (
+      <div>
+        {T.translate('features.FieldLevelLineage.v2.FllTable.noRelatedTables', { type, target })}
+      </div>
+    );
+  }
+
   return (
     <SortableStickyGrid
       key={`cause ${tableId}`}

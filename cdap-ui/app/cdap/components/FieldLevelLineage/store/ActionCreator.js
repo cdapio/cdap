@@ -21,7 +21,7 @@ import debounce from 'lodash/debounce';
 import { parseQueryString } from 'services/helpers';
 import { Theme } from 'services/ThemeHelper';
 
-const TIME_OPTIONS_MAP = {
+export const TIME_OPTIONS_MAP = {
   [TIME_OPTIONS[1]]: {
     start: 'now-7d',
     end: 'now',

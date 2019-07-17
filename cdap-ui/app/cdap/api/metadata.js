@@ -19,6 +19,7 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/:entityType/:entityId/metadata';
 let lineagePath = '/namespaces/:namespace/datasets/:entityId/lineage/fields';
+let fieldLineagePath = '/namespaces/:namespace/datasets/:entityId/lineage/allfieldlineage';
 
 export const MyMetadataApi = {
   getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
@@ -33,4 +34,5 @@ export const MyMetadataApi = {
   getFields: apiCreator(dataSrc, 'GET', 'REQUEST', lineagePath),
   getFieldLineage: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName`),
   getFieldOperations: apiCreator(dataSrc, 'GET', 'REQUEST', `${lineagePath}/:fieldName/operations`),
+  getAllFieldLineage: apiCreator(dataSrc, 'GET', 'REQUEST', fieldLineagePath),
 };

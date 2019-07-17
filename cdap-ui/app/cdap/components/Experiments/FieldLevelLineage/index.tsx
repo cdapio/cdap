@@ -18,9 +18,9 @@ import React from 'react';
 import LineageSummary from 'components/FieldLevelLineage/v2/LineageSummary';
 import { Provider } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
-export default function FllExpt() {
+export default function FllExpt(props) {
   return (
-    <Provider>
+    <Provider {...props}>
       <LineageSummary />
     </Provider>
   );
