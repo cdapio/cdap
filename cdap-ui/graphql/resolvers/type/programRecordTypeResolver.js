@@ -19,23 +19,23 @@ var urlHelper = require('../../../server/url-helper'),
   resolversCommon = require('../resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig()
-  .then(function (value) {
-    cdapConfig = value;
-  });
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
 
 const runsResolver = async (programType, parent, args, context, info) => {
   const namespace = context.namespace;
   const name = parent.app;
   const programId = parent.name;
   const options = resolversCommon.getPOSTRequestOptions();
+  options.headers.Authorization = context.auth;
   options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
   options['body'] = [
     {
       appId: name,
       programType: programType,
-      programId: programId
-    }
+      programId: programId,
+    },
   ];
 
   const runInfo = await resolversCommon.requestPromiseWrapper(options);
@@ -46,7 +46,7 @@ const runsResolver = async (programType, parent, args, context, info) => {
 const programsTypeResolver = {
   ProgramRecord: {
     async __resolveType(parent, args, context, info) {
-      return await (new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         switch (parent.type) {
           case 'Mapreduce':
             resolve('MapReduce');
@@ -60,22 +60,22 @@ const programsTypeResolver = {
           default:
             resolve(null);
         }
-      }));
-    }
+      });
+    },
   },
   MapReduce: {
-    runs: runsResolver.bind(null, 'mapreduce')
+    runs: runsResolver.bind(null, 'mapreduce'),
   },
   Workflow: {
-    runs: runsResolver.bind(null, 'workflow')
+    runs: runsResolver.bind(null, 'workflow'),
   },
   Spark: {
-    runs: runsResolver.bind(null, 'spark')
-  }
+    runs: runsResolver.bind(null, 'spark'),
+  },
 };
 
 const programRecordTypeResolvers = programsTypeResolver;
 
 module.exports = {
-  programRecordTypeResolvers
+  programRecordTypeResolvers,
 };

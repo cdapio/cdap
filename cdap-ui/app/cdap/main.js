@@ -72,6 +72,19 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
 const client = new ApolloClient({
   uri: '/graphql',
   cache: new InMemoryCache({ fragmentMatcher }),
+  request: async (operation) => {
+    let token = '';
+
+    if (cookie.load('CDAP_Auth_Token')) {
+      token = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+    }
+
+    operation.setContext({
+      headers: {
+        authorization: token,
+      },
+    });
+  },
 });
 
 class CDAP extends Component {

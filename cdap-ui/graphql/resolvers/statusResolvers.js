@@ -19,26 +19,27 @@ const urlHelper = require('../../server/url-helper'),
   resolversCommon = require('./resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig()
-  .then(function (value) {
-    cdapConfig = value;
-  });
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
 
 const statusResolver = {
   Query: {
     status: async (parent, args, context, info) => {
+      console.log(context);
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options['url'] = urlHelper.constructUrl(cdapConfig, '/ping');
 
       const status = await resolversCommon.requestPromiseWrapper(options);
 
       return status.trim();
-    }
-  }
+    },
+  },
 };
 
 const statusResolvers = statusResolver;
 
 module.exports = {
-  statusResolvers
+  statusResolvers,
 };

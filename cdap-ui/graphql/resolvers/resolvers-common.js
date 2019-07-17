@@ -19,14 +19,20 @@ const request = require('request');
 function getGETRequestOptions() {
   return {
     method: 'GET',
-    json: true
+    json: true,
+    headers: {
+      Authorization: '',
+    },
   };
 }
 
 function getPOSTRequestOptions() {
   return {
     method: 'POST',
-    json: true
+    json: true,
+    headers: {
+      Authorization: '',
+    },
   };
 }
 
@@ -45,5 +51,5 @@ function requestPromiseWrapper(options) {
 module.exports = {
   getGETRequestOptions,
   getPOSTRequestOptions,
-  requestPromiseWrapper
+  requestPromiseWrapper,
 };

@@ -20,10 +20,9 @@ const merge = require('lodash/merge'),
   resolversCommon = require('./resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig()
-  .then(function (value) {
-    cdapConfig = value;
-  });
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
 
 const schedulesResolver = {
   Workflow: {
@@ -32,13 +31,17 @@ const schedulesResolver = {
       const name = parent.app;
       const workflow = parent.name;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`);
+      options.headers.Authorization = context.auth;
+      options['url'] = urlHelper.constructUrl(
+        cdapConfig,
+        `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`
+      );
 
       context.workflow = workflow;
 
       return await resolversCommon.requestPromiseWrapper(options);
-    }
-  }
+    },
+  },
 };
 
 const nextRuntimesResolver = {
@@ -48,21 +51,23 @@ const nextRuntimesResolver = {
       const name = parent.application;
       const workflow = context.workflow;
       const options = resolversCommon.getGETRequestOptions();
-      options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`);
+      options.headers.Authorization = context.auth;
+      options['url'] = urlHelper.constructUrl(
+        cdapConfig,
+        `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`
+      );
 
       const times = await resolversCommon.requestPromiseWrapper(options);
 
       return times.map((time) => {
         return time.time;
       });
-    }
-  }
+    },
+  },
 };
 
-const scheduleResolvers = merge(schedulesResolver,
-  nextRuntimesResolver
-);
+const scheduleResolvers = merge(schedulesResolver, nextRuntimesResolver);
 
 module.exports = {
-  scheduleResolvers
+  scheduleResolvers,
 };
