@@ -175,7 +175,6 @@ public class SearchRequest {
   public String getCursor() {
     return cursor;
   }
-
   /**
    * @return whether to display hidden entities (entities whose name start with '_').
    *   Hidden entities are system entities like streams, dataset, programs for system applications like tracker.
