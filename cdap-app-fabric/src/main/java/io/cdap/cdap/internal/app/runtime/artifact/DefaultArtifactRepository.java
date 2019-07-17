@@ -375,18 +375,20 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
     }
 
-    ExecutorService executorService =
-      Executors.newFixedThreadPool(remainingArtifacts.size(),
-                                   Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
-    try {
-      // loop until there is no change
-      boolean artifactsAdded = true;
-      while (!remainingArtifacts.isEmpty() && artifactsAdded) {
-        artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts, parentToChildren,
-                                             childToParents);
+    if (!remainingArtifacts.isEmpty()) {
+      ExecutorService executorService =
+        Executors.newFixedThreadPool(remainingArtifacts.size(),
+                                     Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
+      try {
+        // loop until there is no change
+        boolean artifactsAdded = true;
+        while (!remainingArtifacts.isEmpty() && artifactsAdded) {
+          artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts, parentToChildren,
+                                               childToParents);
+        }
+      } finally {
+        executorService.shutdownNow();
       }
-    } finally {
-      executorService.shutdownNow();
     }
 
     if (!remainingArtifacts.isEmpty()) {
