@@ -31,8 +31,6 @@ const programsTypeResolver = {
   },
 };
 
-const programRecordTypeResolvers = programsTypeResolver;
-
 module.exports = {
-  programRecordTypeResolvers,
+  programsTypeResolver,
 };

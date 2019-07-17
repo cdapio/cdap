@@ -36,8 +36,6 @@ const statusResolver = {
   },
 };
 
-const statusResolvers = statusResolver;
-
 module.exports = {
-  statusResolvers,
+  statusResolver,
 };

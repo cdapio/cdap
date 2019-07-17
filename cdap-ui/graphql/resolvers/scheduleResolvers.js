@@ -14,8 +14,7 @@
  * the License.
  */
 
-const merge = require('lodash/merge'),
-  urlHelper = require('../../server/url-helper'),
+const urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../server/cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
@@ -81,8 +80,8 @@ const nextRuntimesResolver = {
   },
 };
 
-const scheduleResolvers = merge(runsResolver, schedulesResolver, nextRuntimesResolver);
-
 module.exports = {
-  scheduleResolvers,
+  runsResolver,
+  schedulesResolver,
+  nextRuntimesResolver,
 };

@@ -34,8 +34,6 @@ const namespacesResolver = {
   },
 };
 
-const namespaceResolvers = namespacesResolver;
-
 module.exports = {
-  namespaceResolvers,
+  namespacesResolver,
 };

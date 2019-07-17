@@ -39,8 +39,6 @@ const metadataResolver = {
   },
 };
 
-const metadataResolvers = metadataResolver;
-
 module.exports = {
-  metadataResolvers,
+  metadataResolver,
 };

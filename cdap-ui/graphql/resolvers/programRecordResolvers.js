@@ -33,8 +33,6 @@ const programsResolver = {
   },
 };
 
-const programRecordResolvers = programsResolver;
-
 module.exports = {
-  programRecordResolvers,
+  programsResolver,
 };

@@ -18,28 +18,25 @@
 
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
-const merge = require('lodash/merge');
 const log4js = require('log4js');
-const { applicationResolvers } = require('./resolvers/applicationResolvers');
-const { namespaceResolvers } = require('./resolvers/namespaceResolvers');
-const { metadataResolvers } = require('./resolvers/metadataResolvers');
-const { programRecordResolvers } = require('./resolvers/programRecordResolvers');
-const { programRecordTypeResolvers } = require('./resolvers/type/programRecordTypeResolver');
-const { scheduleResolvers } = require('./resolvers/scheduleResolvers');
-const { statusResolvers } = require('./resolvers/statusResolvers');
+const {
+  applicationsResolver,
+  applicationResolver,
+  applicationDetailResolver,
+} = require('./resolvers/applicationResolvers');
+const { namespacesResolver } = require('./resolvers/namespaceResolvers');
+const { metadataResolver } = require('./resolvers/metadataResolvers');
+const { programsResolver } = require('./resolvers/programRecordResolvers');
+const { programsTypeResolver } = require('./resolvers/type/programRecordTypeResolver');
+const {
+  runsResolver,
+  schedulesResolver,
+  nextRuntimesResolver,
+} = require('./resolvers/scheduleResolvers');
+const { statusResolver } = require('./resolvers/statusResolvers');
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
-
-const resolvers = merge(
-  applicationResolvers,
-  namespaceResolvers,
-  metadataResolvers,
-  programRecordTypeResolvers,
-  programRecordResolvers,
-  scheduleResolvers,
-  statusResolvers
-);
 
 let typeDefs;
 
@@ -49,17 +46,33 @@ if (env === 'production') {
   typeDefs = importSchema('./graphql/schema/rootSchema.graphql');
 }
 
-if (typeof resolvers === 'undefined') {
-  const errorMessage = 'The GraphQL resolvers are undefined';
-  log.error(errorMessage);
-  throw new Error(errorMessage);
-}
-
 if (typeof typeDefs === 'undefined') {
   const errorMessage = 'The GraphQL type definitions are undefined';
   log.error(errorMessage);
   throw new Error(errorMessage);
 }
+
+const resolvers = {
+  Query: {
+    applications: applicationsResolver.Query.applications,
+    application: applicationResolver.Query.application,
+    namespaces: namespacesResolver.Query.namespaces,
+    status: statusResolver.Query.status,
+  },
+  ApplicationRecord: {
+    applicationDetail: applicationDetailResolver.ApplicationRecord.applicationDetail,
+  },
+  ApplicationDetail: {
+    metadata: metadataResolver.ApplicationDetail.metadata,
+    programs: programsResolver.ApplicationDetail.programs,
+  },
+  ProgramRecord: { __resolveType: programsTypeResolver.ProgramRecord.__resolveType },
+  Workflow: {
+    runs: runsResolver.Workflow.runs,
+    schedules: schedulesResolver.Workflow.schedules,
+  },
+  ScheduleDetail: { nextRuntimes: nextRuntimesResolver.ScheduleDetail.nextRuntimes },
+};
 
 const server = new ApolloServer({
   typeDefs,
