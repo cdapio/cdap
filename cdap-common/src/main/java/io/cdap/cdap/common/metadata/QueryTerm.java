@@ -62,7 +62,12 @@ public class QueryTerm {
 
   @Override
   public boolean equals(Object o) {
-    return this.getClass() == o.getClass() && this.hashCode() == o.hashCode();
+    if (o == this) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    QueryTerm that = (QueryTerm) o;
+
+    return Objects.equals(term, that.getTerm()) && Objects.equals(qualifier, that.getQualifier());
   }
   @Override
   public int hashCode() {
