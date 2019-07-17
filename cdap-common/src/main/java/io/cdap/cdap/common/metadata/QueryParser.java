@@ -25,7 +25,6 @@ import java.util.regex.Pattern;
 /**
  * A thread-safe class that provides helper methods for metadata search string interpretation,
  * and defines search syntax for qualifying information (e.g. required terms) {@link QueryTerm.Qualifier}.
- * By default, search items without an operator are considered optional.
  */
 public class QueryParser {
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
@@ -33,9 +32,17 @@ public class QueryParser {
 
   /**
    * Organizes and separates a raw, space-separated search string
-   * into multiple {@link QueryTerm} objects.
-   * e.g. "tag1 tag2 tag3" is converted to a list of optional QueryTerms containing the strings
-   * "tag1", "tag2", and "tag3" respectively.
+   * into multiple {@link QueryTerm} objects. Spaces are defined by the {@link QueryParser#SPACE_SEPARATOR_PATTERN}
+   * field, the semantics of which are documented in Java's {@link Pattern} class.
+   * Certain typical separations of terms, such as hyphens and commas, are not considered spaces.
+   * This method preserves the original case of the query.
+   *
+   * This method supports the use of certain search operators that, when placed before a search term,
+   * denote qualifying information about that search term. When translated into a QueryTerm object, search terms
+   * containing an operator have the operator removed from the string representation.
+   * The {@link QueryParser#REQUIRED_OPERATOR} character signifies a search term that must receive a match.
+   * By default, this method considers search items without an operator to be optional.
+   *
    * @param query the raw search string
    * @return a list of QueryTerms
    */
@@ -49,14 +56,9 @@ public class QueryParser {
   }
 
   private static QueryTerm singleParse(String term) {
-    if (term.charAt(0) == REQUIRED_OPERATOR) {
-      if (term.length() == 1) {
-        return new QueryTerm("", Qualifier.REQUIRED);
-      } else {
-          return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
-        }
-    } else {
-      return new QueryTerm(term, Qualifier.OPTIONAL);
+    if (term.charAt(0) == REQUIRED_OPERATOR && term.length() > 1) {
+      return new QueryTerm(term.substring(1), Qualifier.REQUIRED);
     }
+      return new QueryTerm(term, Qualifier.OPTIONAL);
   }
 }

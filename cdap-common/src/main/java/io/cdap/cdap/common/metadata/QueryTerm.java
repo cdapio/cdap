@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.metadata;
 
+import java.util.Objects;
+
 /**
  * Represents a single item in a search query in terms of its content (i.e. the value being searched for)
  * and its qualifying information (e.g. whether a match for it is optional or required).
@@ -34,18 +36,36 @@ public class QueryTerm {
   }
   private Qualifier qualifier;
 
+  /**
+   * Constructs a QueryTerm using the search term and its qualifying information.
+   * @param term the search term
+   * @param qualifier the qualifying information {@link Qualifier}
+   */
   public QueryTerm(String term, Qualifier qualifier) {
     this.term = term;
     this.qualifier = qualifier;
   }
 
+  /**
+   * @return the search term, without its preceding operator
+   */
   public String getTerm() {
     return term;
   }
+
+  /**
+   * @return the search term's qualifying information
+   */
   public Qualifier getQualifier() {
     return qualifier;
   }
-  public boolean equals(QueryTerm q) {
-    return term.equals(q.getTerm()) && qualifier.equals(q.getQualifier());
+
+  @Override
+  public boolean equals(Object o) {
+    return this.getClass() == o.getClass() && this.hashCode() == o.hashCode();
+  }
+  @Override
+  public int hashCode() {
+    return Objects.hash(term, qualifier);
   }
 }
