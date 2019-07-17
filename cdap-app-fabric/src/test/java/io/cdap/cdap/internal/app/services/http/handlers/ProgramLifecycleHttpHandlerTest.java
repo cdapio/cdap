@@ -84,8 +84,12 @@ import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,6 +124,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
+
+  @Rule
+  public TestRule watcher = new TestWatcher() {
+    @Override
+    protected void starting(Description description) {
+      LOG.info("Test '{}' starting", description.getMethodName());
+    }
+    @Override
+    protected void succeeded(Description description) {
+      LOG.info("Test '{}' succeeded", description.getMethodName());
+    }
+    @Override
+    protected void failed(Throwable e, Description description) {
+      LOG.info("Test '{}' failed", description.getMethodName());
+    }
+  };
 
   @Category(XSlowTests.class)
   @Test
@@ -1686,25 +1706,39 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private void verifyProgramHistory(ProgramId program) throws Exception {
     // first run
     startProgram(program, 200);
-    waitState(program, RUNNING);
+    try {
+      waitState(program, RUNNING);
 
-    stopProgram(program, null, 200, null);
-    waitState(program, STOPPED);
+      stopProgram(program, null, 200, null);
+      waitState(program, STOPPED);
 
-    // second run
-    startProgram(program, 200);
-    waitState(program, RUNNING);
+      // second run
+      startProgram(program, 200);
+      waitState(program, RUNNING);
 
-    // one run should be active
-    historyStatusWithRetry(program, ProgramRunStatus.RUNNING, 1);
+      // one run should be active
+      historyStatusWithRetry(program, ProgramRunStatus.RUNNING, 1);
+      historyStatusWithRetry(program, ProgramRunStatus.KILLED, 1);
 
-    historyStatusWithRetry(program, ProgramRunStatus.KILLED, 1);
+      // stop the second run.
+      stopProgram(program, null, 200, null);
+      waitState(program, STOPPED);
 
-    // stop the second run
-    stopProgram(program, null, 200, null);
-    waitState(program, STOPPED);
-
-    historyStatusWithRetry(program, ProgramRunStatus.KILLED, 2);
+      historyStatusWithRetry(program, ProgramRunStatus.KILLED, 2);
+    } finally {
+      try {
+        // if program is running, try to stop it so that the app can be deleted
+        if (RUNNING.equals(getProgramStatus(program))) {
+          try {
+            stopProgram(program, null, 200, null);
+          } finally {
+            waitState(program, STOPPED);
+          }
+        }
+      } catch (Exception e) {
+        LOG.warn("Unable to stop running program {}", program, e);
+      }
+    }
   }
 
   private void historyStatusWithRetry(ProgramId program, ProgramRunStatus status, int size) throws Exception {
