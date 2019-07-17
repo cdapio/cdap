@@ -17,23 +17,28 @@
 package io.cdap.cdap.data2.metadata.dataset;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Represents a list of {@link MetadataEntry} that match a search query in the metadata index, along with a
  * list of cursors to start subsequent searches from.
  */
 public class SearchResults {
-  private final List<MetadataEntry> results;
+  private final List<MetadataResultEntry> results;
   private final List<String> cursors;
 
 
-  SearchResults(List<MetadataEntry> results, List<String> cursors) {
+  SearchResults(List<MetadataResultEntry> results, List<String> cursors) {
     this.results = results;
     this.cursors = cursors;
   }
 
-  public List<MetadataEntry> getResults() {
+  public List<MetadataResultEntry> getResults() {
     return results;
+  }
+
+  public List<MetadataEntry> getEntries() {
+    return results.stream().map(MetadataResultEntry::getMetadataEntry).collect(Collectors.toList());
   }
 
   public List<String> getCursors() {
