@@ -28,6 +28,7 @@ const applicationsResolver = {
     applications: async (parent, args, context) => {
       const namespace = args.namespace;
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
       context.namespace = namespace;
       return await resolversCommon.requestPromiseWrapper(options);
@@ -37,10 +38,11 @@ const applicationsResolver = {
 
 const applicationResolver = {
   Query: {
-    application: async (parent, args) => {
+    application: async (parent, args, context) => {
       const namespace = args.namespace;
       const name = args.name;
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
       return await resolversCommon.requestPromiseWrapper(options);
     },
@@ -49,10 +51,11 @@ const applicationResolver = {
 
 const applicationDetailResolver = {
   ApplicationRecord: {
-    async applicationDetail(parent, args, context) {
+    applicationDetail: async (parent, args, context) => {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
       return await resolversCommon.requestPromiseWrapper(options);
     },

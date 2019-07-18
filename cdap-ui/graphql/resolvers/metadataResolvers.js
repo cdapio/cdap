@@ -29,6 +29,7 @@ const metadataResolver = {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`

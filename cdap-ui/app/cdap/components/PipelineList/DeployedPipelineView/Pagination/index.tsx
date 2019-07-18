@@ -21,7 +21,6 @@ import PaginationView from 'components/PipelineList/PaginationView';
 const mapStateToProps = (state) => {
   return {
     currentPage: state.deployed.currentPage,
-    numPipelines: state.deployed.pipelines.length,
     pageLimit: state.deployed.pageLimit,
     shouldDisplay: state.deployed.search.length === 0,
   };

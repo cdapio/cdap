@@ -19,6 +19,7 @@ interface ProgramRecord {
   app: String!
   name: String!
   description: String!
+  runs: [RunRecord]!
 }
 
 type MapReduce implements ProgramRecord {
@@ -26,6 +27,7 @@ type MapReduce implements ProgramRecord {
   app: String!
   name: String!
   description: String!
+  runs: [RunRecord]!
 }
 
 type Spark implements ProgramRecord {
@@ -33,6 +35,7 @@ type Spark implements ProgramRecord {
   app: String!
   name: String!
   description: String!
+  runs: [RunRecord]!
 }
 
 type Workflow implements ProgramRecord {

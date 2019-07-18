@@ -23,23 +23,6 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-const runsResolver = {
-  Workflow: {
-    runs: async (parent, args, context) => {
-      const namespace = context.namespace;
-      const name = parent.app;
-      const workflow = parent.name;
-      const options = resolversCommon.getGETRequestOptions();
-      options.url = urlHelper.constructUrl(
-        cdapConfig,
-        `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/runs`
-      );
-
-      return await resolversCommon.requestPromiseWrapper(options);
-    },
-  },
-};
-
 const schedulesResolver = {
   Workflow: {
     schedules: async (parent, args, context) => {
@@ -47,6 +30,7 @@ const schedulesResolver = {
       const name = parent.app;
       const workflow = parent.name;
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/schedules`
@@ -66,6 +50,7 @@ const nextRuntimesResolver = {
       const name = parent.application;
       const workflow = context.workflow;
       const options = resolversCommon.getGETRequestOptions();
+      options.headers.Authorization = context.auth;
       options.url = urlHelper.constructUrl(
         cdapConfig,
         `/v3/namespaces/${namespace}/apps/${name}/workflows/${workflow}/nextruntime`
@@ -81,7 +66,6 @@ const nextRuntimesResolver = {
 };
 
 module.exports = {
-  runsResolver,
   schedulesResolver,
   nextRuntimesResolver,
 };

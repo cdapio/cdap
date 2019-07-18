@@ -15,19 +15,19 @@
  */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
-import StatusMapper from 'services/StatusMapper';
 import IconSVG from 'components/IconSVG';
-import { IStatusMap, IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import StatusMapper from 'services/StatusMapper';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { getLatestRun } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface IProps {
-  statusMap: IStatusMap;
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
-const StatusView: React.SFC<IProps> = ({ statusMap, pipeline }) => {
-  const pipelineStatus = statusMap[pipeline.name] || {};
-  const displayStatus = pipelineStatus.displayStatus;
+const StatusView: React.SFC<IProps> = ({ pipeline }) => {
+  const latestRun = getLatestRun(pipeline) || { status: 'DEPLOYED' };
+  const pipelineStatus = latestRun.status;
+  const displayStatus = StatusMapper.statusMap[pipelineStatus];
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
   return (
@@ -40,13 +40,6 @@ const StatusView: React.SFC<IProps> = ({ statusMap, pipeline }) => {
   );
 };
 
-const mapStateToProps = (state, ownProp) => {
-  return {
-    statusMap: state.deployed.statusMap,
-    pipeline: ownProp.pipeline,
-  };
-};
-
-const Status = connect(mapStateToProps)(StatusView);
+const Status = StatusView;
 
 export default Status;

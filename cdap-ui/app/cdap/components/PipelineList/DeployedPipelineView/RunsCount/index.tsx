@@ -15,27 +15,28 @@
  */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { IRunsCountMap, IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import {
+  getProgram,
+  getProgramRuns,
+} from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface IProps {
-  runsCountMap: IRunsCountMap;
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
-const RunsCountView: React.SFC<IProps> = ({ runsCountMap, pipeline }) => {
-  const runsCount = runsCountMap[pipeline.name] || 0;
+const RunsCountView: React.SFC<IProps> = ({ pipeline }) => {
+  const runsCount = getRunsCount(pipeline);
 
   return <div className="runs">{runsCount}</div>;
 };
 
-const mapStateToProps = (state, ownProp) => {
-  return {
-    runsCountMap: state.deployed.runsCountMap,
-    pipeline: ownProp.pipeline,
-  };
-};
+function getRunsCount(pipeline) {
+  const program = getProgram(pipeline);
 
-const RunsCount = connect(mapStateToProps)(RunsCountView);
+  return getProgramRuns(program).length;
+}
+
+const RunsCount = RunsCountView;
 
 export default RunsCount;
