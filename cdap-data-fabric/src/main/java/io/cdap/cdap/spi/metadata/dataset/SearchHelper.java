@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -312,7 +313,7 @@ public class SearchHelper {
   }
 
   private Map<MetadataEntity, Map<String, Integer>> hashResults(List<MetadataResultEntry> results) {
-    Map<MetadataEntity, Map<String, Integer>> hashedResults = new HashMap<>();
+    Map<MetadataEntity, Map<String, Integer>> hashedResults = new LinkedHashMap<>();
     for (MetadataResultEntry m : results) {
       MetadataEntity entity = m.getMetadataEntity();
       String label = m.getLabel();
@@ -335,7 +336,7 @@ public class SearchHelper {
   private Map<MetadataEntity, Map<String, Integer>> filterEntries(Map<MetadataEntity, Map<String, Integer>> results,
                                                          SearchRequest request) {
     // entity -> list<string>()
-    Map<MetadataEntity, Map<String, Integer>> filteredResults = new HashMap<>();
+    Map<MetadataEntity, Map<String, Integer>> filteredResults = new LinkedHashMap<>();
 
     List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
     Set<QueryTerm> requiredTerms = new LinkedHashSet<>();
@@ -362,6 +363,8 @@ public class SearchHelper {
     return filteredResults;
   }
 
+  // if sort order is not weighted, return entities in the order received.
+  // in this case, the backing storage is expected to return results in the expected order.
   private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Map<String, Integer>> results, SortInfo sortInfo) {
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
       Set<MetadataEntity> entities = new LinkedHashSet<>(results.size());
