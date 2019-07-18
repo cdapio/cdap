@@ -72,7 +72,7 @@ function getOrderColumnFunction(sortColumn, sortOrder) {
     case 'runs':
       return (pipeline) => {
         const program = getProgram(pipeline);
-        return getProgramRuns(program).length;
+        return objectQuery(program, 'totalRuns') || 0;
       };
   }
 }
