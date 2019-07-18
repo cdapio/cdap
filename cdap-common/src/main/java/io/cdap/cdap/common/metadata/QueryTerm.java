@@ -38,6 +38,7 @@ public class QueryTerm {
 
   /**
    * Constructs a QueryTerm using the search term and its qualifying information.
+   *
    * @param term the search term
    * @param qualifier the qualifying information {@link Qualifier}
    */
@@ -62,8 +63,12 @@ public class QueryTerm {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == this) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     QueryTerm that = (QueryTerm) o;
 
