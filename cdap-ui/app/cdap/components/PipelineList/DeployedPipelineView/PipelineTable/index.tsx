@@ -18,41 +18,75 @@ import * as React from 'react';
 import PipelineTableRow from 'components/PipelineList/DeployedPipelineView/PipelineTable/PipelineTableRow';
 import { connect } from 'react-redux';
 import T from 'i18n-react';
-import {
-  IPipeline,
-  IStatusMap,
-  IRunsCountMap,
-} from 'components/PipelineList/DeployedPipelineView/types';
+import { PROGRAM_STATUSES } from 'services/global-constants';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
-import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
+import { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
-
+import orderBy from 'lodash/orderBy';
+import {
+  getLatestRun,
+  getProgram,
+  getProgramRuns,
+} from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 import './PipelineTable.scss';
+import { objectQuery } from 'services/helpers';
 
 interface IProps {
-  pipelines: IPipeline[];
+  pipelines: IApplicationRecord[];
   pipelinesLoading: boolean;
   search: string;
   onClear: () => void;
-  statusMap: IStatusMap;
-  runsCountMap: IRunsCountMap;
   pageLimit: number;
   currentPage: number;
+  sortOrder: string;
+  sortColumn: string;
+  refetch: () => void;
 }
 
 const PREFIX = 'features.PipelineList';
+
+function getOrderColumnFunction(sortColumn, sortOrder) {
+  switch (sortColumn) {
+    case 'name':
+      return (pipeline) => pipeline.name.toLowerCase();
+    case 'type':
+      return (pipeline) => pipeline.artifact.name;
+    case 'status':
+      return (pipeline) => {
+        const latestRun = getLatestRun(pipeline) || { status: PROGRAM_STATUSES.DEPLOYED };
+        return latestRun.status;
+      };
+    case 'lastStartTime':
+      return (pipeline) => {
+        const latestRun = getLatestRun(pipeline);
+        const lastStarting = objectQuery(latestRun, 'starting');
+
+        if (!lastStarting) {
+          return sortOrder === SORT_ORDER.asc ? Infinity : -1;
+        }
+        return lastStarting;
+      };
+    case 'runs':
+      return (pipeline) => {
+        const program = getProgram(pipeline);
+        return getProgramRuns(program).length;
+      };
+  }
+}
 
 const PipelineTableView: React.SFC<IProps> = ({
   pipelines,
   pipelinesLoading,
   search,
   onClear,
-  statusMap,
-  runsCountMap,
   pageLimit,
   currentPage,
+  sortOrder,
+  sortColumn,
+  refetch,
 }) => {
   function renderBody() {
     if (pipelinesLoading) {
@@ -94,10 +128,16 @@ const PipelineTableView: React.SFC<IProps> = ({
       );
     }
 
+    filteredList = orderBy(
+      filteredList,
+      [getOrderColumnFunction(sortColumn, sortOrder)],
+      [sortOrder]
+    );
+
     return (
       <div className="grid-body">
         {filteredList.map((pipeline) => {
-          return <PipelineTableRow key={pipeline.name} pipeline={pipeline} />;
+          return <PipelineTableRow key={pipeline.name} pipeline={pipeline} refetch={refetch} />;
         })}
       </div>
     );
@@ -110,13 +150,10 @@ const PipelineTableView: React.SFC<IProps> = ({
           <div className="grid-row">
             <SortableHeader columnName="name" />
             <SortableHeader columnName="type" />
-            <SortableHeader columnName="status" disabled={Object.keys(statusMap).length === 0} />
-            <SortableHeader
-              columnName="lastStartTime"
-              disabled={Object.keys(statusMap).length === 0}
-            />
+            <SortableHeader columnName="status" />
+            <SortableHeader columnName="lastStartTime" />
             <strong>{T.translate(`${PREFIX}.nextRun`)}</strong>
-            <SortableHeader columnName="runs" disabled={Object.keys(runsCountMap).length === 0} />
+            <SortableHeader columnName="runs" />
             <strong>{T.translate(`${PREFIX}.tags`)}</strong>
             <strong />
           </div>
@@ -130,13 +167,12 @@ const PipelineTableView: React.SFC<IProps> = ({
 
 const mapStateToProps = (state) => {
   return {
-    pipelines: state.deployed.pipelines,
     pipelinesLoading: state.deployed.pipelinesLoading,
     search: state.deployed.search,
-    statusMap: state.deployed.statusMap,
-    runsCountMap: state.deployed.runsCountMap,
     pageLimit: state.deployed.pageLimit,
     currentPage: state.deployed.currentPage,
+    sortOrder: state.deployed.sortOrder,
+    sortColumn: state.deployed.sortColumn,
   };
 };
 

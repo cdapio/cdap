@@ -25,11 +25,11 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
 
 const namespacesResolver = {
   Query: {
-    namespaces: async () => {
+    namespaces: async (parent, args, context) => {
       const options = resolversCommon.getGETRequestOptions();
       options.url = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
 
-      return await resolversCommon.requestPromiseWrapper(options);
+      return await resolversCommon.requestPromiseWrapper(options, context.auth);
     },
   },
 };

@@ -21,6 +21,6 @@
 type Query {
   status: String!
   namespaces: [Namespace]
-  applications(namespace: String = "default"): [ApplicationRecord]!
+  applications(namespace: String = "default", artifactName: String): [ApplicationRecord]!
   application(namespace: String = "default", name: String!): ApplicationDetail!
 }

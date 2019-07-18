@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { deletePipeline } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
-import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
 import ActionsPopover, { IAction } from 'components/ActionsPopover';
 import { duplicatePipeline, getPipelineConfig } from 'services/PipelineUtils';
 import PipelineExportModal from 'components/PipelineExportModal';
@@ -31,9 +31,10 @@ import T from 'i18n-react';
 const PREFIX = 'features.PipelineList.DeleteConfirmation';
 
 interface IProps {
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
   deleteError?: string;
   clearDeleteError: () => void;
+  refetch: () => void;
 }
 
 interface ITriggeredPipeline {
@@ -123,7 +124,7 @@ class DeployedActionsView extends React.PureComponent<IProps, IState> {
         toggleModal={this.toggleDeleteConfirmation}
         confirmationElem={this.renderConfirmationBody()}
         confirmButtonText={T.translate(`${PREFIX}.confirm`)}
-        confirmFn={deletePipeline.bind(null, this.props.pipeline)}
+        confirmFn={deletePipeline.bind(null, this.props.pipeline, this.props.refetch)}
         cancelFn={this.toggleDeleteConfirmation}
         isOpen={this.state.showDeleteConfirmation}
         errorMessage={!this.props.deleteError ? '' : T.translate(`${PREFIX}.deleteError`)}

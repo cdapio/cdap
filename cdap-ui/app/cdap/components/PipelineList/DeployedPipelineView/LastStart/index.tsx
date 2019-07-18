@@ -15,29 +15,22 @@
  */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { humanReadableDate } from 'services/helpers';
-import { IStatusMap, IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { objectQuery } from 'services/helpers';
+import { getLatestRun } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface ILastStartViewProps {
-  statusMap: IStatusMap;
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
-const LastStartView: React.SFC<ILastStartViewProps> = ({ statusMap, pipeline }) => {
-  const pipelineStatus = statusMap[pipeline.name] || {};
-  const lastStarting = pipelineStatus.lastStarting;
+const LastStartView: React.SFC<ILastStartViewProps> = ({ pipeline }) => {
+  const latestRun = getLatestRun(pipeline);
+  const lastStarting = objectQuery(latestRun, 'starting');
 
   return <div className="last-start">{humanReadableDate(lastStarting)}</div>;
 };
 
-const mapStateToProps = (state, ownProp) => {
-  return {
-    statusMap: state.deployed.statusMap,
-    pipeline: ownProp.pipeline,
-  };
-};
-
-const LastStart = connect(mapStateToProps)(LastStartView);
+const LastStart = LastStartView;
 
 export default LastStart;

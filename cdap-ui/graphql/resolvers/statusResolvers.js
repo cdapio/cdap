@@ -25,11 +25,11 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
 
 const statusResolver = {
   Query: {
-    status: async () => {
+    status: async (parent, args, context) => {
       const options = resolversCommon.getGETRequestOptions();
       options.url = urlHelper.constructUrl(cdapConfig, '/ping');
 
-      const status = await resolversCommon.requestPromiseWrapper(options);
+      const status = await resolversCommon.requestPromiseWrapper(options, context.auth);
 
       return status.trim();
     },

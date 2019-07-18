@@ -23,7 +23,6 @@ const mapStateToProps = (state, ownProp) => {
     sortColumn: state.deployed.sortColumn,
     sortOrder: state.deployed.sortOrder,
     columnName: ownProp.columnName,
-    disabled: ownProp.disabled,
   };
 };
 

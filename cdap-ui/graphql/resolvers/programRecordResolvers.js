@@ -20,7 +20,7 @@ const programsResolver = {
       const programs = parent.programs;
       const type = args.type;
 
-      if (type === null || type === undefined) {
+      if (!type) {
         return programs;
       } else {
         const typePrograms = programs.filter(function(program) {

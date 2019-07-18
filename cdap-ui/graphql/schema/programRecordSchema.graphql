@@ -19,6 +19,8 @@ interface ProgramRecord {
   app: String!
   name: String!
   description: String!
+  runs: [RunRecord]!
+  totalRuns: Int!
 }
 
 type MapReduce implements ProgramRecord {
@@ -26,6 +28,8 @@ type MapReduce implements ProgramRecord {
   app: String!
   name: String!
   description: String!
+  runs: [RunRecord]!
+  totalRuns: Int!
 }
 
 type Spark implements ProgramRecord {
@@ -33,6 +37,8 @@ type Spark implements ProgramRecord {
   app: String!
   name: String!
   description: String!
+  runs: [RunRecord]!
+  totalRuns: Int!
 }
 
 type Workflow implements ProgramRecord {
@@ -41,6 +47,7 @@ type Workflow implements ProgramRecord {
   name: String!
   description: String!
   runs: [RunRecord]!
+  totalRuns: Int!
   # Field added for composition
   schedules: [ScheduleDetail]!
 }
