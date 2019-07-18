@@ -15,64 +15,61 @@
 */
 
 import React, { useContext, useState } from 'react';
-import { ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import { setTimeRange, setCustomTimeRange } from 'components/FieldLevelLineage/store/ActionCreator';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import T from 'i18n-react';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
-import T from 'i18n-react';
 import { IContextState, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
-const PREFIX = 'features.FieldLevelLineage.TimeRangeOptions';
+const PREFIX = 'features.FieldLevelLineage.v2.TimeRangeOptions';
+
+const styles = () => {
+  return {
+    button: {
+      width: '150px',
+    },
+  };
+};
 
 export default function TimeRangePicker() {
-  const { start, end, selection } = useContext<IContextState>(FllContext);
-  const [dropdownOpen, setToggleState] = useState<boolean>(false);
+  const { start, end, selection, setTimeRange } = useContext<IContextState>(FllContext);
 
-  const toggle = () => {
-    setToggleState(!dropdownOpen);
+  const onSelect = (e: React.ChangeEvent<{ value: string }>) => {
+    // update selection
+    const range = e.target.value;
+    setTimeRange(range);
+
+    // render date range picker if selection is custom
+    // if (range === TIME_OPTIONS[0]) {
+    //   renderCustomTimeRange();
+    // }
   };
 
-  // const renderCustomTimeRange = () => {
-  //   if (this.props.selections !== TIME_OPTIONS[0]) {
-  //     return null;
-  //   }
+  const renderCustomTimeRange = () => {
+    if (this.props.selections !== TIME_OPTIONS[0]) {
+      return null;
+    }
 
-  //   return (
-  //     <div className="custom-time-range-container">
-  //       <ExpandableTimeRange
-  //         onDone={this.onDone}
-  //         inSeconds={true}
-  //         start={this.props.start}
-  //         end={this.props.end}
-  //       />
-  //     </div>
-  //   );
-  // };
+    return (
+      <div className="custom-time-range-container">
+        <ExpandableTimeRange onDone={this.onDone} inSeconds={true} start={start} end={end} />
+      </div>
+    );
+  };
 
   return (
-    <span>
-      <ButtonDropdown isOpen={dropdownOpen} toggle={toggle}>
-        <DropdownToggle caret>
-          <h5>{T.translate(`${PREFIX}.${selection}`)}</h5>
-        </DropdownToggle>
-
-        <DropdownMenu>
-          {TIME_OPTIONS.map((option) => {
-            return (
-              <DropdownItem
-                key={option}
-                onClick={(e) => {
-                  console.log('Time range gets set in context here to ', e.target.innerText);
-                }}
-              >
-                {T.translate(`${PREFIX}.${option}`)}
-              </DropdownItem>
-            );
-          })}
-        </DropdownMenu>
-      </ButtonDropdown>
-
-      {/* {this.renderCustomTimeRange()} */}
-    </span>
+    <div>
+      <span>View</span>
+      <Select value={selection} onChange={onSelect}>
+        {TIME_OPTIONS.map((option) => {
+          return (
+            <MenuItem value={option} key={option}>
+              {T.translate(`${PREFIX}.${option}`)}
+            </MenuItem>
+          );
+        })}
+      </Select>
+    </div>
   );
 }

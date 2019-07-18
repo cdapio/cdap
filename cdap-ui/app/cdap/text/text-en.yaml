@@ -1535,7 +1535,11 @@ features:
         TargetHeader: 'Select a field to view lineage and operations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       FllTable:
-        fieldsCount:
+        FllMenu:
+          causeImpact: "Cause and impact"
+          viewIncoming: "Outgoing operations"
+          viewOutgoing: "Incoming operations"
+        fieldsCount: 
           1: "{context} field"
           _: "{context} fields"
         FllField:
@@ -1546,6 +1550,13 @@ features:
         relatedFieldsCount:
           1: "{context} related field"
           _: "{context} related fields"
+      TimeRangeOptions:
+        CUSTOM: Custom
+        last14d: Last 14 days
+        last6M: Last 6 months
+        last7d: Last 7 days
+        lastMonth: Last month
+        lastYear: Last 12 months
       TopPanel:
         timePickerCaption: "View"
           

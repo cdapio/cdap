@@ -24,6 +24,7 @@ import {
   fetchFieldLineage,
   getTableId,
   getTimeRange,
+  replaceHistory,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -63,6 +64,7 @@ export interface IContextState {
   firstCause?: number;
   firstImpact?: number;
   firstField?: number;
+  setTimeRange?: (range: string) => void;
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
@@ -147,11 +149,26 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
-  private onDone = ({ start, end }) => {
-    this.setState({
-      start,
-      end,
-    });
+  // private onDone = ({ start, end }) => {
+  //   this.setState({
+  //     start,
+  //     end,
+  //   });
+  // };
+
+  private setTimeRange = (selection) => {
+    if (TIME_OPTIONS.indexOf(selection) === -1) {
+      return;
+    }
+
+    this.setState({ selection });
+
+    if (selection === TIME_OPTIONS[0]) {
+      return;
+    }
+
+    // if not CUSTOM, update query params
+    replaceHistory(this);
   };
 
   public state = {
@@ -176,14 +193,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleFieldClick: this.handleFieldClick,
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
+    setTimeRange: this.setTimeRange,
   };
 
   public initialize() {
     const namespace = getCurrentNamespace();
     const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
     const queryParams = parseQueryString();
-    const timeRange = getTimeRange();
-    fetchFieldLineage(this, namespace, dataset, queryParams, timeRange);
+    const timeParams = getTimeRange();
+    fetchFieldLineage(this, namespace, dataset, queryParams, timeParams);
   }
 
   public componentDidMount() {

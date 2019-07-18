@@ -34,7 +34,6 @@ const FllTopPanel = ({ classes }) => {
   return (
     <div className={classes.root}>
       <div>
-        <span>View</span>
         <TimeRangePicker />
       </div>
     </div>

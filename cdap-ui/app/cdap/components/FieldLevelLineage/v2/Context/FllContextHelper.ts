@@ -18,6 +18,7 @@ import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
 import { parseQueryString } from 'services/helpers';
 import { MyMetadataApi } from 'api/metadata';
+import { Theme } from 'services/ThemeHelper';
 
 // types for backend response
 interface IFllEntity {
@@ -154,16 +155,20 @@ export function getTimeRange() {
 
   if (selection === TIME_OPTIONS[0]) {
     return {
-      start: selection.start || 'now-7d',
-      end: selection.end || 'now',
+      selection,
+      range: {
+        start: selection.start || 'now-7d',
+        end: selection.end || 'now',
+      },
     };
   }
-  return TIME_OPTIONS_MAP[selection];
+  return { selection, range: TIME_OPTIONS_MAP[selection] };
 }
 
-export function fetchFieldLineage(context, namespace, dataset, qParams, timeRange) {
+export function fetchFieldLineage(context, namespace, dataset, qParams, timeParams) {
   let fieldname;
   let activeField;
+  // let activeField: IField;
 
   if (!qParams) {
     fieldname = null;
@@ -171,10 +176,17 @@ export function fetchFieldLineage(context, namespace, dataset, qParams, timeRang
   } else {
     fieldname = qParams.field;
     activeField = getFieldId(fieldname, dataset, namespace, 'target');
+    // activeField = {
+    //   name: fieldname,
+    //   id: getFieldId(fieldname, dataset, namespace, 'target'),
+    //   type: 'target',
+    //   dataset,
+    //   namespace,
+    // };
   }
 
-  const start = timeRange.start;
-  const end = timeRange.end;
+  const start = timeParams.range.start;
+  const end = timeParams.range.end;
 
   const params = {
     namespace,
@@ -192,9 +204,53 @@ export function fetchFieldLineage(context, namespace, dataset, qParams, timeRang
       links: parsedRes.links,
       causeSets: parsedRes.causeTables,
       impactSets: parsedRes.impactTables,
+      selection: timeParams.selection,
+      start,
+      end,
       activeField,
     };
 
     context.setState(targetInfo);
+  });
+}
+
+function constructQueryParams(context) {
+  let url = location.pathname;
+
+  url += getTimeRangeParams(context);
+
+  if (context.state.activeField) {
+    url += `&field=${context.state.activeField}`;
+  }
+  return url;
+}
+
+function getTimeRangeParams(context) {
+  const range = context.state.selection;
+  let queryParams = `?time=${range}`;
+
+  if (range === TIME_OPTIONS[0]) {
+    queryParams += `&start=${context.start}&end=${context.end}`;
+  }
+  return queryParams;
+}
+
+export function replaceHistory(context) {
+  const url = constructQueryParams(context);
+  const currentLocation = location.pathname + location.search;
+
+  if (url === currentLocation) {
+    return;
+  }
+
+  const stateObj = {
+    title: Theme.productName,
+    url,
+  };
+
+  // This timeout is to make sure rendering by store update is finished before changing the state.
+  // Otherwise, some fonts will not render because it is referencing wrong path.
+  setTimeout(() => {
+    history.replaceState(stateObj, stateObj.title, stateObj.url);
   });
 }

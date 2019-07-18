@@ -25,6 +25,7 @@ import T from 'i18n-react';
 import { grey } from 'components/ThemeWrapper/colors';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
+const PREFIX = 'features.FieldLevelLineage.v2.FllTable';
 const styles = (theme): StyleRules => {
   return {
     root: {
@@ -63,7 +64,7 @@ function FllMenu({ classes }) {
   return (
     <span className={classes.root}>
       <Button onClick={handleViewClick} className={classes.targetView}>
-        {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
+        {T.translate(`${PREFIX}.FllField.viewDropdown`)}
         <KeyboardArrowDownIcon />
       </Button>
       <Menu
@@ -75,10 +76,12 @@ function FllMenu({ classes }) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={handleViewCauseImpact}>Cause and impact</MenuItem>
+        <MenuItem onClick={handleViewCauseImpact}>
+          {T.translate(`${PREFIX}.FllMenu.causeImpact`)}
+        </MenuItem>
         <Divider variant="middle" />
-        <MenuItem onClick={handleClose}>Outgoing operations</MenuItem>
-        <MenuItem onClick={handleClose}>Incoming operations</MenuItem>
+        <MenuItem onClick={handleClose}>{T.translate(`${PREFIX}.FllMenu.viewIncoming`)}</MenuItem>
+        <MenuItem onClick={handleClose}>{T.translate(`${PREFIX}.FllMenu.viewOutgoing`)}</MenuItem>
       </Menu>
     </span>
   );
