@@ -19,6 +19,7 @@ package io.cdap.cdap.data2.transaction;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
@@ -68,13 +69,10 @@ public class AsyncInMemoryTxSystemClient implements TransactionSystemClient {
       }
     });
     try {
-      return result.get();
+      return Uninterruptibles.getUninterruptibly(result);
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), exceptionClass);
       throw Throwables.propagate(e.getCause());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
     }
   }
 
