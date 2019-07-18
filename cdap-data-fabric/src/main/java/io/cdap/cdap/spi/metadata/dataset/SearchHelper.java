@@ -363,9 +363,9 @@ public class SearchHelper {
     return filteredResults;
   }
 
-  // if sort order is not weighted, return entities in the order received.
-  // in this case, the backing storage is expected to return results in the expected order.
   private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Map<String, Integer>> results, SortInfo sortInfo) {
+    // if sort order is not weighted, return entities in the order received.
+    // in this case, the backing storage is expected to return results in the expected order.
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
       Set<MetadataEntity> entities = new LinkedHashSet<>(results.size());
       for (MetadataEntity entity : results.keySet()) {
@@ -373,11 +373,12 @@ public class SearchHelper {
       }
       return entities;
     }
-
+    // if sort order is weighted, score results by weight, and return in descending order of weights
+    // Score results
     final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
     for (MetadataEntity entity : results.keySet()) {
       int count = 0;
-      for(String label : results.get(entity).keySet()){
+      for (String label : results.get(entity).keySet()) {
         count += results.get(entity).get(label);
       }
       weightedResults.put(entity, count);
@@ -392,34 +393,6 @@ public class SearchHelper {
     }
     return result;
   }
-
-//  private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
-//    // if sort order is not weighted, return entities in the order received.
-//    // in this case, the backing storage is expected to return results in the expected order.
-//    if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
-//      Set<MetadataEntity> entities = new LinkedHashSet<>(results.size());
-//      for (MetadataEntry metadataEntry : results) {
-//        entities.add(metadataEntry.getMetadataEntity());
-//      }
-//      return entities;
-//    }
-//    // if sort order is weighted, score results by weight, and return in descending order of weights
-//    // Score results
-//    final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
-//    for (MetadataEntry metadataEntry : results) {
-//      weightedResults.put(metadataEntry.getMetadataEntity(),
-//                          weightedResults.getOrDefault(metadataEntry.getMetadataEntity(), 0) + 1);
-//    }
-//
-//    // Sort the results by score
-//    List<Map.Entry<MetadataEntity, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
-//    resultList.sort(SEARCH_RESULT_DESC_SCORE_COMPARATOR);
-//    Set<MetadataEntity> result = new LinkedHashSet<>(resultList.size());
-//    for (Map.Entry<MetadataEntity, Integer> entry : resultList) {
-//      result.add(entry.getKey());
-//    }
-//    return result;
-//  }
 
   private Map<MetadataEntity, MetadataDataset.Record> fetchMetadata(MetadataDataset mds,
                                                                     final Set<MetadataEntity> metadataEntities) {

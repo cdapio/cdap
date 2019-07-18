@@ -713,11 +713,7 @@ public class MetadataDataset extends AbstractDataset {
         while ((next = scanner.next()) != null) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, column, request.getTypes(),
                                                            request.shouldShowHidden());
-          //metadataEntry.ifPresent(results::add);
           if (metadataEntry.isPresent()) {
-            MetadataEntry e = metadataEntry.get();
-            String s = searchTerm.getTerm();
-            MetadataResultEntry m = new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm());
             results.add(new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm()));
           }
         }
@@ -774,7 +770,7 @@ public class MetadataDataset extends AbstractDataset {
         while ((next = scanner.next()) != null && results.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry =
             parseRow(next, column, request.getTypes(), request.shouldShowHidden());
-          if (metadataEntry == null) {
+          if (!metadataEntry.isPresent()) {
             continue;
           }
           results.add(new MetadataResultEntry(metadataEntry.get(), searchTerm.getTerm()));
@@ -841,11 +837,6 @@ public class MetadataDataset extends AbstractDataset {
     Set<EntityScope> entityScopes = searchRequest.getEntityScopes();
     List<SearchTerm> searchTerms = new LinkedList<>();
     Consumer<String> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
-
-    /**String searchQuery = searchRequest.getQuery();
-    for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
-      termAdder.accept(term);
-    }**/
 
     for (QueryTerm q : QueryParser.parse(searchRequest.getQuery())) {
       termAdder.accept(q.getTerm());
