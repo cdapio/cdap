@@ -30,6 +30,9 @@ public class QueryParser {
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
   private static final char REQUIRED_OPERATOR = '+';
 
+  // private constructor to prevent instantiation
+  private QueryParser() {}
+
   /**
    * Organizes and separates a raw, space-separated search string
    * into multiple {@link QueryTerm} objects. Spaces are defined by the {@link QueryParser#SPACE_SEPARATOR_PATTERN}
