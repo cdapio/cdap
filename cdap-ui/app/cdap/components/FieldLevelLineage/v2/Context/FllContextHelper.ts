@@ -40,10 +40,10 @@ export interface IRelation {
 // These types are used by the frontend
 export interface IField {
   id: string;
-  type: string;
   name: string;
-  dataset: string;
-  namespace: string;
+  type?: string;
+  dataset?: string;
+  namespace?: string;
 }
 
 export interface ILink {
@@ -167,22 +167,17 @@ export function getTimeRange() {
 
 export function fetchFieldLineage(context, namespace, dataset, qParams, timeParams) {
   let fieldname;
-  let activeField;
-  // let activeField: IField;
+  let activeField: IField;
 
   if (!qParams) {
     fieldname = null;
     activeField = null;
   } else {
     fieldname = qParams.field;
-    activeField = getFieldId(fieldname, dataset, namespace, 'target');
-    // activeField = {
-    //   name: fieldname,
-    //   id: getFieldId(fieldname, dataset, namespace, 'target'),
-    //   type: 'target',
-    //   dataset,
-    //   namespace,
-    // };
+    activeField = {
+      name: fieldname,
+      id: getFieldId(fieldname, dataset, namespace, 'target'),
+    };
   }
 
   const start = timeParams.range.start;
@@ -220,7 +215,7 @@ function constructQueryParams(context) {
   url += getTimeRangeParams(context);
 
   if (context.state.activeField) {
-    url += `&field=${context.state.activeField}`;
+    url += `&field=${context.state.activeField.name}`;
   }
   return url;
 }

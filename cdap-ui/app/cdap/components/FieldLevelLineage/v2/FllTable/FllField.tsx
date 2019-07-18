@@ -69,6 +69,7 @@ function FllField({ field, classes }: IFieldProps) {
       onMouseLeave={toggleHoverState}
       className={classnames('grid-row', 'grid-link', classes.root)}
       id={field.id}
+      data-fieldname={field.name}
     >
       {field.name}
       <If condition={isHovering && !isTarget}>
@@ -76,10 +77,10 @@ function FllField({ field, classes }: IFieldProps) {
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
         </span>
       </If>
-      <If condition={field.id === activeField && isTarget && !showingOneField}>
+      <If condition={field.id === activeField.id && isTarget && !showingOneField}>
         <FllMenu />
       </If>
-      <If condition={field.id === activeField && isTarget && showingOneField}>
+      <If condition={field.id === activeField.id && isTarget && showingOneField}>
         <span className={classes.targetView} onClick={handleReset}>
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
         </span>

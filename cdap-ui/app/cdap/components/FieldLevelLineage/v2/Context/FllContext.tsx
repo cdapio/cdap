@@ -56,7 +56,7 @@ export interface IContextState {
   handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleViewCauseImpact?: () => void;
   handleReset?: () => void;
-  activeField?: string;
+  activeField?: IField;
   activeCauseSets?: ITableFields;
   activeImpactSets?: ITableFields;
   activeLinks?: ILink[];
@@ -69,25 +69,30 @@ export interface IContextState {
 
 export class Provider extends React.Component<{ children }, IContextState> {
   private handleFieldClick = (e) => {
-    const activeField = e.target.id;
-    if (!activeField) {
+    const activeFieldId = e.target.id;
+    if (!activeFieldId) {
       return;
     }
-    d3.select(`#${this.state.activeField}`).classed('selected', false);
+    d3.select(`#${this.state.activeField.id}`).classed('selected', false);
 
+    // update id and name of activeField
+    const newField = {
+      id: activeFieldId,
+      name: e.target.dataset.fieldname,
+    };
     this.setState(
       {
-        activeField,
+        activeField: newField,
         activeLinks: this.getActiveLinks(),
       },
       () => {
-        d3.select(`#${activeField}`).classed('selected', true);
+        d3.select(`#${activeFieldId}`).classed('selected', true);
       }
     );
   };
 
   private getActiveLinks = () => {
-    const activeFieldId = this.state.activeField;
+    const activeFieldId = this.state.activeField.id;
     const activeLinks = [];
     this.state.links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
