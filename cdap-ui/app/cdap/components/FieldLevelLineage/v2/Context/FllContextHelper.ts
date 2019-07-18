@@ -149,7 +149,7 @@ export function getTableId(dataset, namespace, type) {
   return `${type}_ns-${namespace}_ds-${dataset}`;
 }
 
-export function getTimeRange() {
+export function getTimeRangeFromUrl() {
   const queryString = parseQueryString();
   const selection = queryString ? queryString.time : TIME_OPTIONS[1]; // default is last 7 days
 
@@ -212,7 +212,7 @@ export function fetchFieldLineage(context, namespace, dataset, qParams, timePara
 function constructQueryParams(context) {
   let url = location.pathname;
 
-  url += getTimeRangeParams(context);
+  url += getTimeParamsFromSelection(context);
 
   if (context.state.activeField) {
     url += `&field=${context.state.activeField.name}`;
@@ -220,7 +220,23 @@ function constructQueryParams(context) {
   return url;
 }
 
-function getTimeRangeParams(context) {
+export function getTimeRange(selection) {
+  if (TIME_OPTIONS.indexOf(selection) === -1) {
+    return;
+  }
+
+  let start = null;
+  let end = null;
+
+  // set start and end times if not CUSTOM
+  if (selection !== TIME_OPTIONS[0]) {
+    ({ start, end } = TIME_OPTIONS_MAP[selection]);
+  }
+
+  return { start, end };
+}
+
+function getTimeParamsFromSelection(context) {
   const range = context.state.selection;
   let queryParams = `?time=${range}`;
 
@@ -243,9 +259,5 @@ export function replaceHistory(context) {
     url,
   };
 
-  // This timeout is to make sure rendering by store update is finished before changing the state.
-  // Otherwise, some fonts will not render because it is referencing wrong path.
-  setTimeout(() => {
-    history.replaceState(stateObj, stateObj.title, stateObj.url);
-  });
+  history.replaceState(stateObj, stateObj.title, stateObj.url);
 }

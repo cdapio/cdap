@@ -24,7 +24,10 @@ import {
   fetchFieldLineage,
   getTableId,
   getTimeRange,
+  getTimeRangeFromUrl,
+  fetchFieldLineage,
   replaceHistory,
+  getTimeRange,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -75,7 +78,6 @@ export class Provider extends React.Component<{ children }, IContextState> {
     }
     d3.select(`#${this.state.activeField.id}`).classed('selected', false);
 
-    // update id and name of activeField
     const newField = {
       id: activeFieldId,
       name: e.target.dataset.fieldname,
@@ -87,6 +89,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
       },
       () => {
         d3.select(`#${activeFieldId}`).classed('selected', true);
+        replaceHistory(this);
       }
     );
   };
@@ -166,14 +169,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
       return;
     }
 
-    this.setState({ selection });
+    const { start, end } = getTimeRange(selection);
 
-    if (selection === TIME_OPTIONS[0]) {
-      return;
-    }
+    this.setState({ selection, start, end }, () => {
+      if (selection === TIME_OPTIONS[0]) {
+        return;
+      }
 
-    // if not CUSTOM, update query params
-    replaceHistory(this);
+      replaceHistory(this);
+    });
   };
 
   public state = {
@@ -205,7 +209,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     const namespace = getCurrentNamespace();
     const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
     const queryParams = parseQueryString();
-    const timeParams = getTimeRange();
+    const timeParams = getTimeRangeFromUrl();
     fetchFieldLineage(this, namespace, dataset, queryParams, timeParams);
   }
 

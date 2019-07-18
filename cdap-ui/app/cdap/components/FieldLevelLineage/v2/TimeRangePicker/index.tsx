@@ -14,7 +14,8 @@
  * the License.
 */
 
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
+import withStyles from '@material-ui/core/styles/withStyles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import T from 'i18n-react';
@@ -22,54 +23,73 @@ import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
 import { IContextState, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
-const PREFIX = 'features.FieldLevelLineage.v2.TimeRangeOptions';
+const PREFIX = 'features.FieldLevelLineage.v2.TimeRangePicker';
 
 const styles = () => {
   return {
-    button: {
-      width: '150px',
+    view: {
+      padding: '10px',
+    },
+    // To do: Style menu (this isn't working)
+    menu: {
+      getContentAnchorEl: 'null',
+      anchorOrigin: {
+        vertical: 'bottom',
+        horizontal: 'center',
+      },
     },
   };
 };
 
-export default function TimeRangePicker() {
+function TimeRangePicker({ classes }) {
   const { start, end, selection, setTimeRange } = useContext<IContextState>(FllContext);
 
   const onSelect = (e: React.ChangeEvent<{ value: string }>) => {
-    // update selection
     const range = e.target.value;
     setTimeRange(range);
 
     // render date range picker if selection is custom
-    // if (range === TIME_OPTIONS[0]) {
-    //   renderCustomTimeRange();
-    // }
+    if (range === TIME_OPTIONS[0]) {
+      renderCustomTimeRange();
+    }
   };
 
   const renderCustomTimeRange = () => {
-    if (this.props.selections !== TIME_OPTIONS[0]) {
+    if (selection !== TIME_OPTIONS[0]) {
       return null;
     }
 
     return (
       <div className="custom-time-range-container">
-        <ExpandableTimeRange onDone={this.onDone} inSeconds={true} start={start} end={end} />
+        <ExpandableTimeRange
+          onDone={() => {
+            'set custom time';
+          }}
+          inSeconds={true}
+          start={start}
+          end={end}
+        />
       </div>
     );
   };
 
   return (
     <div>
-      <span>View</span>
-      <Select value={selection} onChange={onSelect}>
+      <span className={classes.view}>{T.translate(`${PREFIX}.view`)}</span>
+      <Select value={selection} onChange={onSelect} MenuProps={classes.menu}>
         {TIME_OPTIONS.map((option) => {
           return (
             <MenuItem value={option} key={option}>
-              {T.translate(`${PREFIX}.${option}`)}
+              {T.translate(`${PREFIX}.TimeRangeOptions.${option}`)}
             </MenuItem>
           );
         })}
       </Select>
+      {renderCustomTimeRange()}
     </div>
   );
 }
+
+const StyledTimePicker = withStyles(styles)(TimeRangePicker);
+
+export default StyledTimePicker;

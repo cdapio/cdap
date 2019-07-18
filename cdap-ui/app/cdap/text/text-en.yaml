@@ -1550,13 +1550,15 @@ features:
         relatedFieldsCount:
           1: "{context} related field"
           _: "{context} related fields"
-      TimeRangeOptions:
-        CUSTOM: Custom
-        last14d: Last 14 days
-        last6M: Last 6 months
-        last7d: Last 7 days
-        lastMonth: Last month
-        lastYear: Last 12 months
+      TimeRangePicker:
+        TimeRangeOptions:
+          CUSTOM: Custom
+          last14d: Last 14 days
+          last6M: Last 6 months
+          last7d: Last 7 days
+          lastMonth: Last month
+          lastYear: Last 12 months
+        view: "View"
       TopPanel:
         timePickerCaption: "View"
           
