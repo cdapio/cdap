@@ -275,7 +275,7 @@ public class SearchHelper {
     int limit = request.getLimit();
 
     //filter first
-    Map<MetadataEntity, Set<String>> hashedResults = hashResults(results);
+    Map<MetadataEntity, Map<String, Integer>> hashedResults = hashResults(results);
     hashedResults = filterEntries(hashedResults, request);
 
     SortInfo sortInfo = request.getSortInfo();
@@ -311,20 +311,31 @@ public class SearchHelper {
       finalResults, cursors, request.shouldShowHidden(), request.getEntityScopes());
   }
 
-  private Map<MetadataEntity, Set<String>> hashResults(List<MetadataResultEntry> results) {
-    Map<MetadataEntity, Set<String>> hashedResults = new HashMap<>();
+  private Map<MetadataEntity, Map<String, Integer>> hashResults(List<MetadataResultEntry> results) {
+    Map<MetadataEntity, Map<String, Integer>> hashedResults = new HashMap<>();
     for (MetadataResultEntry m : results) {
-      Set<String> set = hashedResults.getOrDefault(m.getMetadataEntity(), new LinkedHashSet<>());
-      set.add(m.getLabel());
-      hashedResults.put(m.getMetadataEntity(), set);
+      MetadataEntity entity = m.getMetadataEntity();
+      String label = m.getLabel();
+
+      if(!hashedResults.containsKey(entity)){
+        hashedResults.put(entity, new HashMap<>());
+      }
+
+      if(!hashedResults.get(entity).containsKey(label)){
+        hashedResults.get(entity).put(label, 1);
+      }
+      else{
+        int count = hashedResults.get(entity).get(label);
+        hashedResults.get(entity).put(label, count + 1);
+      }
     }
     return hashedResults;
   }
 
-  private Map<MetadataEntity, Set<String>> filterEntries(Map<MetadataEntity, Set<String>> results,
+  private Map<MetadataEntity, Map<String, Integer>> filterEntries(Map<MetadataEntity, Map<String, Integer>> results,
                                                          SearchRequest request) {
     // entity -> list<string>()
-    Map<MetadataEntity, Set<String>> filteredResults = new HashMap<>();
+    Map<MetadataEntity, Map<String, Integer>> filteredResults = new HashMap<>();
 
     List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
     Set<QueryTerm> requiredTerms = new LinkedHashSet<>();
@@ -334,24 +345,24 @@ public class SearchHelper {
       }
     }
 
-    boolean keep = true;
-    for (MetadataEntity key : results.keySet()) {
+    boolean keep;
+    for (MetadataEntity entity : results.keySet()) {
       keep = true;
       for (QueryTerm q : requiredTerms) {
-        if (!results.get(key).contains(q.getTerm())) {
+        if (!results.get(entity).containsKey(q.getTerm())) {
           keep = false;
           break;
         }
       }
       if (keep) {
-        filteredResults.put(key, results.get(key));
+        filteredResults.put(entity, results.get(entity));
       }
     }
 
     return filteredResults;
   }
 
-  private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Set<String>> results, SortInfo sortInfo) {
+  private Set<MetadataEntity> getSortedEntities(Map<MetadataEntity, Map<String, Integer>> results, SortInfo sortInfo) {
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
       Set<MetadataEntity> entities = new LinkedHashSet<>(results.size());
       for (MetadataEntity entity : results.keySet()) {
@@ -362,7 +373,11 @@ public class SearchHelper {
 
     final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
     for (MetadataEntity entity : results.keySet()) {
-      weightedResults.put(entity, results.get(entity).size());
+      int count = 0;
+      for(String label : results.get(entity).keySet()){
+        count += results.get(entity).get(label);
+      }
+      weightedResults.put(entity, count);
     }
 
     // Sort the results by score

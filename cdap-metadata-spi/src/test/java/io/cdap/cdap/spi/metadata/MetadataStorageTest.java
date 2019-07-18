@@ -1509,6 +1509,7 @@ public abstract class MetadataStorageTest {
   private void testSortedSearch(MetadataStorage mds, Sorting sorting, List<MetadataRecord> sorted) throws IOException {
     // search once with sort by creation time and validate that records are in order
     SearchResponse response = mds.search(SearchRequest.of("*").setSorting(sorting).build());
+    response.getResults();
     Assert.assertEquals(sorted, response.getResults());
 
     // search for a window of results
