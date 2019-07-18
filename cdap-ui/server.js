@@ -20,7 +20,7 @@
 var express = require('./server/express.js'),
     Aggregator = require('./server/aggregator.js'),
     parser = require('./server/config/parser.js'),
-    cdapConfigurator = require('./server/cdap-config.js'),
+    cdapConfigurator = require('./graphql/cdap-config.js'),
     sockjs = require('sockjs'),
     http = require('http'),
     fs = require('fs'),

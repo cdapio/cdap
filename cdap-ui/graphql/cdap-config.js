@@ -14,7 +14,7 @@
  * the License.
  */
 
-const parser = require('./config/parser.js');
+const parser = require('../server/config/parser.js');
 const memoize = require('lodash/memoize');
 
 async function extractCDAPConfig() {

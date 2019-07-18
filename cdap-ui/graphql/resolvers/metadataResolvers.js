@@ -15,7 +15,7 @@
  */
 
 const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../server/cdap-config.js'),
+  cdapConfigurator = require('../cdap-config.js'),
   resolversCommon = require('./resolvers-common.js');
 
 let cdapConfig;
