@@ -107,7 +107,13 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
   public render() {
     return (
       <If condition={this.state.showModal}>
-        <Modal isOpen={true} size="md" zIndex="1061" className="welcome-modal">
+        <Modal
+          isOpen={true}
+          size="md"
+          zIndex="1061"
+          className="welcome-modal"
+          data-cy="welcome-nux-tour"
+        >
           <ModalHeader>
             <span className="header-text">
               {T.translate(`${PREFIX}.header`, {
@@ -125,7 +131,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
             <p>{T.translate(`${PREFIX}.takeTour`)}</p>
 
             <div className="show-again-selection">
-              <span onClick={this.toggleShowAgain}>
+              <span onClick={this.toggleShowAgain} data-cy="show-again-checkbox">
                 <IconSVG name={this.state.showAgain ? 'icon-check-square' : 'icon-square-o'} />
 
                 <span>{T.translate(`${PREFIX}.showAgainToggle`)}</span>
@@ -133,11 +139,11 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
             </div>
 
             <div className="action-buttons">
-              <button className="btn btn-primary" onClick={this.startTour}>
+              <button className="btn btn-primary" onClick={this.startTour} data-cy="start-tour-btn">
                 {T.translate(`${PREFIX}.startTour`)}
               </button>
 
-              <button className="btn btn-secondary" onClick={this.close}>
+              <button className="btn btn-secondary" onClick={this.close} data-cy="no-tour-btn">
                 {T.translate(`${PREFIX}.close`)}
               </button>
             </div>

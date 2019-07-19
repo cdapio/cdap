@@ -61,7 +61,7 @@ const GuidedTour = function() {
 
       const nextButton = {
         text: 'Next',
-        classes: 'btn btn-primary',
+        classes: 'btn btn-primary next-btn',
         action: () => {
           this.next();
         },
@@ -69,7 +69,7 @@ const GuidedTour = function() {
 
       const completeButton = {
         text: 'Finish',
-        classes: 'btn btn-primary',
+        classes: 'btn btn-primary complete-btn',
         action: () => {
           this.complete();
         },
@@ -77,7 +77,7 @@ const GuidedTour = function() {
 
       const previousButton = {
         text: 'Previous',
-        classes: 'btn btn-secondary float-left',
+        classes: 'btn btn-secondary float-left prev-btn',
         action: () => {
           this.back();
         },
