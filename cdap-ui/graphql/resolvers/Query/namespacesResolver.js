@@ -14,27 +14,19 @@
  * the License.
  */
 
-const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('./resolvers-common.js');
+const urlHelper = require('../../../server/url-helper'),
+  cdapConfigurator = require('../../../server/cdap-config.js'),
+  resolversCommon = require('../resolvers-common.js');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-const namespacesResolver = {
-  Query: {
-    namespaces: async (parent, args, context) => {
-      const options = resolversCommon.getGETRequestOptions();
-      options.headers.Authorization = context.auth;
-      options.url = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
+module.exports = async (parent, args, context) => {
+  const options = resolversCommon.getGETRequestOptions();
+  options.headers.Authorization = context.auth;
+  options.url = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
 
-      return await resolversCommon.requestPromiseWrapper(options);
-    },
-  },
-};
-
-module.exports = {
-  namespacesResolver,
+  return await resolversCommon.requestPromiseWrapper(options);
 };

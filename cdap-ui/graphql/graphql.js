@@ -17,17 +17,12 @@
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const log4js = require('log4js');
-const {
-  applicationsResolver,
-  applicationResolver,
-  applicationDetailResolver,
-} = require('./resolvers/applicationResolvers');
-const { namespacesResolver } = require('./resolvers/namespaceResolvers');
+const { applicationDetailResolver } = require('./resolvers/applicationResolvers');
 const { metadataResolver } = require('./resolvers/metadataResolvers');
 const { programsResolver } = require('./resolvers/programRecordResolvers');
 const { programsTypeResolver } = require('./resolvers/type/programRecordTypeResolver');
 const { schedulesResolver, nextRuntimesResolver } = require('./resolvers/scheduleResolvers');
-const { statusResolver } = require('./resolvers/statusResolvers');
+const queryType = require('./types/query');
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
@@ -48,10 +43,10 @@ if (typeof typeDefs === 'undefined') {
 
 const resolvers = {
   Query: {
-    applications: applicationsResolver.Query.applications,
-    application: applicationResolver.Query.application,
-    namespaces: namespacesResolver.Query.namespaces,
-    status: statusResolver.Query.status,
+    applications: queryType.applicationsResolver,
+    application: queryType.applicationResolver,
+    namespaces: queryType.namespacesResolver,
+    status: queryType.statusResolver,
   },
   ApplicationRecord: {
     applicationDetail: applicationDetailResolver.ApplicationRecord.applicationDetail,

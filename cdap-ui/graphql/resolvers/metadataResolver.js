@@ -23,19 +23,15 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-const applicationDetailResolver = {
-  ApplicationRecord: {
-    applicationDetail: async (parent, args, context) => {
-      const namespace = context.namespace;
-      const name = parent.name;
-      const options = resolversCommon.getGETRequestOptions();
-      options.headers.Authorization = context.auth;
-      options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
-      return await resolversCommon.requestPromiseWrapper(options);
-    },
-  },
-};
+module.exports = async (parent, args, context) => {
+  const namespace = context.namespace;
+  const name = parent.name;
+  const options = resolversCommon.getGETRequestOptions();
+  options.headers.Authorization = context.auth;
+  options.url = urlHelper.constructUrl(
+    cdapConfig,
+    `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`
+  );
 
-module.exports = {
-  applicationDetailResolver,
+  return await resolversCommon.requestPromiseWrapper(options);
 };
