@@ -15,7 +15,7 @@
 */
 
 import React, { useContext } from 'react';
-import withStyles from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import T from 'i18n-react';
@@ -25,10 +25,20 @@ import { IContextState, FllContext } from 'components/FieldLevelLineage/v2/Conte
 
 const PREFIX = 'features.FieldLevelLineage.v2.TimeRangePicker';
 
-const styles = () => {
+// These styles came from components/TimeRangePicker/TimeRangePicker.scss
+const styles = (): StyleRules => {
   return {
     view: {
-      padding: '10px',
+      padding: 10,
+    },
+    timeRangeContainer: {
+      display: 'inline-block',
+      position: 'relative',
+      marginLeft: 10,
+      width: 400,
+    },
+    timePickerContainer: {
+      paddingLeft: 50,
     },
     // To do: Style menu (this isn't working)
     menu: {
@@ -37,12 +47,18 @@ const styles = () => {
         vertical: 'bottom',
         horizontal: 'center',
       },
+      // transformOrigin: {
+      //   vertical: 'top',
+      //   horizontal: 'center',
+      // },
     },
   };
 };
 
 function TimeRangePicker({ classes }) {
-  const { start, end, selection, setTimeRange } = useContext<IContextState>(FllContext);
+  const { start, end, selection, setTimeRange, setCustomTimeRange } = useContext<IContextState>(
+    FllContext
+  );
 
   const onSelect = (e: React.ChangeEvent<{ value: string }>) => {
     const range = e.target.value;
@@ -58,25 +74,17 @@ function TimeRangePicker({ classes }) {
     if (selection !== TIME_OPTIONS[0]) {
       return null;
     }
-
     return (
-      <div className="custom-time-range-container">
-        <ExpandableTimeRange
-          onDone={() => {
-            'set custom time';
-          }}
-          inSeconds={true}
-          start={start}
-          end={end}
-        />
+      <div className={classes.timeRangeContainer}>
+        <ExpandableTimeRange onDone={setCustomTimeRange} inSeconds={true} start={start} end={end} />
       </div>
     );
   };
 
   return (
-    <div>
+    <div className={classes.timePickerContainer}>
       <span className={classes.view}>{T.translate(`${PREFIX}.view`)}</span>
-      <Select value={selection} onChange={onSelect} MenuProps={classes.menu}>
+      <Select value={selection} onChange={onSelect}>
         {TIME_OPTIONS.map((option) => {
           return (
             <MenuItem value={option} key={option}>

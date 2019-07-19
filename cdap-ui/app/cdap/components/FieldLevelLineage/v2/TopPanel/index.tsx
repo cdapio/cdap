@@ -16,16 +16,13 @@
 
 import * as React from 'react';
 import withStyles from '@material-ui/core/styles/withStyles';
-import Typography from '@material-ui/core/Typography';
 import TimeRangePicker from 'components/FieldLevelLineage/v2/TimeRangePicker';
-import T from 'i18n-react';
-
-const PREFIX = 'features.FieldLevelLineage.v2.TopPanel';
 
 const styles = () => {
   return {
     root: {
-      height: '50px',
+      height: 60,
+      marginTop: 10,
     },
   };
 };

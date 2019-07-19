@@ -66,7 +66,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     const destEl = d3.select(`#${destId}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -48 + window.pageYOffset - 50; // From the FllHeader and TopPanel
+    const offsetY = -48 + window.pageYOffset - 70; // From the FllHeader and TopPanel
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
@@ -169,7 +169,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     if (activeField) {
       d3.select(`#${activeField.id}`).classed('selected', true);
     }
-
+    this.clearCanvas(); // Do I need this?
     this.drawLinks(links, activeField);
   }
 

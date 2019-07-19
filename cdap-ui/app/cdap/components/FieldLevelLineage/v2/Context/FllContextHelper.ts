@@ -55,6 +55,18 @@ export interface ITableFields {
   [tablename: string]: IField[];
 }
 
+export interface ITimeParams {
+  selection: string;
+  range: { start: string; end: string };
+}
+
+interface IQueryParams {
+  time?: string;
+  field?: string;
+  start?: string;
+  end?: string;
+}
+
 /** Parses an incoming or outgoing entity object from backend response
  * to get array of edges and an object with fields keyed by dataset.
  * namespace and target are the target namespace and dataset name
@@ -165,7 +177,13 @@ export function getTimeRangeFromUrl() {
   return { selection, range: TIME_OPTIONS_MAP[selection] };
 }
 
-export function fetchFieldLineage(context, namespace, dataset, qParams, timeParams) {
+export function fetchFieldLineage(
+  context: React.Component,
+  namespace: string,
+  dataset: string,
+  qParams: IQueryParams | null,
+  timeParams: ITimeParams
+) {
   let fieldname;
   let activeField: IField;
 
@@ -203,6 +221,7 @@ export function fetchFieldLineage(context, namespace, dataset, qParams, timePara
       start,
       end,
       activeField,
+      showingOneField: false,
     };
 
     context.setState(targetInfo);

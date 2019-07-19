@@ -77,10 +77,10 @@ function FllField({ field, classes }: IFieldProps) {
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
         </span>
       </If>
-      <If condition={field.id === activeField.id && isTarget && !showingOneField}>
+      <If condition={activeField && field.id === activeField.id && isTarget && !showingOneField}>
         <FllMenu />
       </If>
-      <If condition={field.id === activeField.id && isTarget && showingOneField}>
+      <If condition={activeField && field.id === activeField.id && isTarget && showingOneField}>
         <span className={classes.targetView} onClick={handleReset}>
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
         </span>

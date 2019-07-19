@@ -21,7 +21,7 @@ import {
   IField,
   ILink,
   ITableFields,
-  fetchFieldLineage,
+  ITimeParams,
   getTableId,
   getTimeRange,
   getTimeRangeFromUrl,
@@ -68,6 +68,7 @@ export interface IContextState {
   firstImpact?: number;
   firstField?: number;
   setTimeRange?: (range: string) => void;
+  setCustomTimeRange?: ({ start, end }) => void;
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
@@ -157,12 +158,9 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
-  // private onDone = ({ start, end }) => {
-  //   this.setState({
-  //     start,
-  //     end,
-  //   });
-  // };
+  private setCustomTimeRange = ({ start, end }) => {
+    console.log(`range is ${start} to ${end}`);
+  };
 
   private setTimeRange = (selection) => {
     if (TIME_OPTIONS.indexOf(selection) === -1) {
@@ -175,6 +173,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
       if (selection === TIME_OPTIONS[0]) {
         return;
       }
+
+      const qParams = parseQueryString();
+      const timeParams: ITimeParams = {
+        selection,
+        range: { start, end },
+      };
+      const namespace = getCurrentNamespace();
+
+      fetchFieldLineage(this, namespace, this.state.target, qParams, timeParams);
 
       replaceHistory(this);
     });
@@ -203,6 +210,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
     setTimeRange: this.setTimeRange,
+    setCustomTimeRange: this.setCustomTimeRange,
   };
 
   public initialize() {
