@@ -52,6 +52,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
     // Checking for session storage so that the welcome modal is not shown
     // when user is navigating back and forth between react and angular pages.
     const sessionValue = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const tourTesting = window.sessionStorage.getItem('nuxTesting');
     if (sessionValue === SESSION_STORAGE_VALUE) {
       return;
     }
@@ -59,7 +60,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
     MyUserStoreApi.get().subscribe((res) => {
       const storeValue = objectQuery(res, 'property', USER_STORE_KEY);
 
-      if ((!storeValue || storeValue !== USER_STORE_VALUE) && !window.Cypress) {
+      if (tourTesting || ((!storeValue || storeValue !== USER_STORE_VALUE) && !window.Cypress)) {
         this.setState({
           showModal: true,
         });
@@ -107,7 +108,13 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
   public render() {
     return (
       <If condition={this.state.showModal}>
-        <Modal isOpen={true} size="md" zIndex="1061" className="welcome-modal">
+        <Modal
+          isOpen={true}
+          size="md"
+          zIndex="1061"
+          className="welcome-modal"
+          data-cy="welcome-nux-tour"
+        >
           <ModalHeader>
             <span className="header-text">
               {T.translate(`${PREFIX}.header`, {
@@ -125,7 +132,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
             <p>{T.translate(`${PREFIX}.takeTour`)}</p>
 
             <div className="show-again-selection">
-              <span onClick={this.toggleShowAgain}>
+              <span onClick={this.toggleShowAgain} data-cy="show-again-checkbox">
                 <IconSVG name={this.state.showAgain ? 'icon-check-square' : 'icon-square-o'} />
 
                 <span>{T.translate(`${PREFIX}.showAgainToggle`)}</span>
@@ -133,11 +140,11 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
             </div>
 
             <div className="action-buttons">
-              <button className="btn btn-primary" onClick={this.startTour}>
+              <button className="btn btn-primary" onClick={this.startTour} data-cy="start-tour-btn">
                 {T.translate(`${PREFIX}.startTour`)}
               </button>
 
-              <button className="btn btn-secondary" onClick={this.close}>
+              <button className="btn btn-secondary" onClick={this.close} data-cy="no-tour-btn">
                 {T.translate(`${PREFIX}.close`)}
               </button>
             </div>
