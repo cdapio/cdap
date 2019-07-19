@@ -1729,7 +1729,7 @@ features:
       one_step_deploy_plugin:
         name: Deploy
     connectErrorMessage: Cannot connect to Hub
-    search-placeholder: Search
+    search-placeholder: Search by name
     tabs:
       all: All
       artifacts: Drivers
