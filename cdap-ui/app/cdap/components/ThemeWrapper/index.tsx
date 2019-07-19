@@ -73,7 +73,7 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
       useNextVariants: true,
     },
     zIndex: {
-      drawer: 1300,
+      drawer: 1300, // Must be < z-index of NUX in services/GuidedTour/GuidedTour.scss
     },
     overrides: {
       MuiTypography: {
