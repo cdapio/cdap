@@ -93,6 +93,7 @@ var JoinTypeWidget = require('../cdap/components/AbstractWidget/JoinTypeWidget')
 var InputFieldDropdown = require('../cdap/components/AbstractWidget/InputFieldDropdown').default;
 var DatasetSelectorWidget = require('../cdap/components/AbstractWidget/DatasetSelectorWidget')
   .default;
+var SqlConditionsWidget = require('../cdap/components/AbstractWidget/SqlConditionsWidget').default;
 
 export {
   Store,
@@ -162,4 +163,5 @@ export {
   JoinTypeWidget,
   InputFieldDropdown,
   DatasetSelectorWidget,
+  SqlConditionsWidget,
 };

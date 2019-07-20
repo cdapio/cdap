@@ -233,11 +233,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'sql-conditions': {
-        element: '<my-sql-conditions></my-sql-conditions>',
+        element: '<sql-conditions-widget></sql-conditions-widget>',
         attributes: {
-          'ng-model': 'model',
+          'value': 'model',
           'disabled': 'disabled',
-          'input-schema': 'inputSchema'
+          'input-schema': 'inputSchema',
+          'on-change': 'onChange'
         }
       },
       'input-field-selector': {
