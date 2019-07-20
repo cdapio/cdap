@@ -43,21 +43,20 @@ const styles = (theme) => {
     schemaContainer: {
       margin: '5px 0px',
     },
-    schemaTable: {
-      overflow: 'hidden',
-    },
     schemaTableHeader: {
       fontSize: '13px',
       borderBottom: '0px',
+      paddingLeft: '0px',
+      paddingRight: '0px',
     },
     tableHeaderSelectIcon: {
       marginLeft: '5px',
     },
     tableRowTopBorder: {
-      borderTop: `1px solid ${theme.palette.grey['400']}`,
+      borderTop: `1px solid ${theme.palette.grey[400]}`,
     },
     badgeDanger: {
-      backgroundColor: '#ff6666',
+      backgroundColor: theme.palette.red[200],
       color: 'white',
       fontSize: '9px',
       marginLeft: '5px',
@@ -67,7 +66,7 @@ const styles = (theme) => {
         border: '0px',
       },
       backgroundColor: '#fde2e2',
-      border: '1px solid #ff6666',
+      border: `1px solid ${theme.palette.red[200]}`,
     },
   };
 };
@@ -155,7 +154,7 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
           </If>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails>
-          <Table className={classes.schemaTable}>
+          <Table>
             <TableHead>
               <TableRow>
                 <TableCell className={classes.schemaTableHeader} align="center">

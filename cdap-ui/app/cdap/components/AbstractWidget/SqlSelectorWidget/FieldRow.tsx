@@ -43,7 +43,7 @@ function FieldRow({ onFieldChange, field }: IFieldRowProps) {
       <TableCell>
         <Typography variant="body1">{field.name}</Typography>
       </TableCell>
-      <TableCell align="center">
+      <TableCell align="center" padding="checkbox">
         <Checkbox
           checked={field.selected}
           value={field.selected}
