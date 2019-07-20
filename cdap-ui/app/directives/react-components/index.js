@@ -98,4 +98,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('connectionBrowser', function(reactDirective) {
     return reactDirective(window.CaskCommon.PluginConnectionBrowser);
+  })
+  .directive('sqlConditionsWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.SqlConditionsWidget);
   });

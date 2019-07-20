@@ -83,6 +83,7 @@ var MultipleValuesWidget = require('../cdap/components/AbstractWidget/MultipleVa
   .default;
 var PluginConnectionBrowser = require('../cdap/components/DataPrepConnections/PluginConnectionBrowser')
   .default;
+var SqlConditionsWidget = require('../cdap/components/AbstractWidget/SqlConditionsWidget').default;
 
 export {
   Store,
@@ -144,4 +145,5 @@ export {
   KeyValueDropdownWidget,
   MultipleValuesWidget,
   PluginConnectionBrowser,
+  SqlConditionsWidget,
 };
