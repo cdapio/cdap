@@ -29,6 +29,7 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -58,11 +59,14 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import javax.sql.DataSource;
 
 /**
  * The abstract base class for writing various service main classes.
@@ -179,6 +183,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
     addServices(injector, services, closeableResources, masterEnv, masterEnvContext, options);
+    initializeDataSourceConnection(cConf);
 
     LOG.info("Service {} initialized", getClass().getName());
   }
@@ -187,7 +192,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   public final void start() {
     LOG.info("Starting all services for {}", getClass().getName());
     for (Service service : services) {
-      LOG.info("Starting service {}", service, getClass().getName());
+      LOG.info("Starting service {} for {}", service, getClass().getName());
       service.startAndWait();
     }
     LOG.info("All services for {} started", getClass().getName());
@@ -197,12 +202,12 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   public final void stop() {
     LOG.info("Stopping all services for {}", getClass().getName());
     for (Service service : Lists.reverse(services)) {
-      LOG.info("Stopping service {}", service, getClass().getName());
+      LOG.info("Stopping service {} for {}", service, getClass().getName());
       try {
         service.stopAndWait();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure each service has a chance to stop
-        LOG.warn("Exception raised when stopping service {}", service, getClass().getName(), e);
+        LOG.warn("Exception raised when stopping service {} for {}", service, getClass().getName(), e);
       }
     }
 
@@ -211,7 +216,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         closeable.close();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure all closeables are closed
-        LOG.warn("Exception raised when closing resource {}", closeable, getClass().getName(), e);
+        LOG.warn("Exception raised when closing resource {} for {}", closeable, getClass().getName(), e);
       }
     }
     LOG.info("All services for {} stopped", getClass().getName());
@@ -244,6 +249,16 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
       }
     });
+  }
+
+  protected void initializeDataSourceConnection(CConfiguration cConf) throws SQLException {
+    if (cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL)) {
+      // instantiate the data source and create a connection
+      DataSource dataSource = injector.getInstance(DataSource.class);
+      try (Connection connection = dataSource.getConnection()) {
+        // no-op, just to instantiate the connection and close it
+      }
+    }
   }
 
   /**
