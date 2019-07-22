@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.*;
+import java.io.*;
 
 /**
  * Helper class for getting JobHistoryServer security delegation token.
@@ -56,15 +58,15 @@ public final class JobHistoryServerTokenUtils {
     }
 
     String historyServerAddress = configuration.get("mapreduce.jobhistory.address");
-    HostAndPort hostAndPort = HostAndPort.fromString(historyServerAddress);
     try {
+      URL aURL = new URL(historyServerAddress);
       ResourceMgrDelegate resourceMgrDelegate = new ResourceMgrDelegate(new YarnConfiguration(configuration));
       MRClientCache clientCache = new MRClientCache(configuration, resourceMgrDelegate);
       MRClientProtocol hsProxy = clientCache.getInitializedHSProxy();
       GetDelegationTokenRequest request = new GetDelegationTokenRequestPBImpl();
       request.setRenewer(YarnUtils.getYarnTokenRenewer(configuration));
 
-      InetSocketAddress address = new InetSocketAddress(hostAndPort.getHostText(), hostAndPort.getPort());
+      InetSocketAddress address = new InetSocketAddress( aURL.getHost(), aURL.getPort());
       Token<TokenIdentifier> token =
         ConverterUtils.convertFromYarn(hsProxy.getDelegationToken(request).getDelegationToken(), address);
 

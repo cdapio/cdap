@@ -446,8 +446,9 @@ cdap_set_hbase() {
 #   Any changes to this function must be compatible with the CSD's invocation
 #
 cdap_set_hive_classpath() {
-  local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
-  if [[ ${__explore} == true ]]; then
+  echo "inside cdap_set_hive_classpath"
+  #local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
+  #if [[ ${__explore} == true ]]; then
     if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]] || [[ -z ${HIVE_EXEC_ENGINE} ]] || [[ -z ${HIVE_CLASSPATH} ]]; then
       __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
       if [[ ${__secure} == true ]]; then
@@ -499,7 +500,7 @@ cdap_set_hive_classpath() {
       fi
       export EXPLORE_CONF_DIRS EXPLORE_CLASSPATH
     fi
-  fi
+  #fi
 }
 
 #

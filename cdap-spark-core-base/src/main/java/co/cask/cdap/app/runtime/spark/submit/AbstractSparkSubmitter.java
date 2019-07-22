@@ -161,6 +161,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @param args arguments for the {@link SparkSubmit#main(String[])} method.
    */
   private void submit(SparkRuntimeContext runtimeContext, String[] args) {
+    LOG.info("calling spark submit::" + Arrays.toString(args));
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(runtimeContext.getProgramInvocationClassLoader());
     try {
       LOG.debug("Calling SparkSubmit for {} {}: {}",
