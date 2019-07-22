@@ -107,4 +107,9 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.METRICS);
   }
+
+  @Override
+  protected void initializeDataSourceConnection(CConfiguration cConf) {
+    // no-op since we use leveldb for metrics
+  }
 }

@@ -19,6 +19,7 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -79,5 +80,10 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.MESSAGING_SERVICE);
+  }
+
+  @Override
+  protected void initializeDataSourceConnection(CConfiguration cConf) {
+    // no-op since we use leveldb in messaging service
   }
 }
