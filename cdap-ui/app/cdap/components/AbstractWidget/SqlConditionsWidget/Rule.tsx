@@ -185,5 +185,5 @@ function Rule({
   updateRule: PropTypes.func,
   deleteRule: PropTypes.func,
 };
-const MemoedComponent = React.memo(Rule);
-export default withStyles(styles)(MemoedComponent);
+const StyledRule=withStyles(styles)(Rule);
+export default React.memo(StyledRule);
