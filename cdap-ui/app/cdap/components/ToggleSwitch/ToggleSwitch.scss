@@ -23,6 +23,7 @@ $off-color: $grey-04;
 
 .toggle-switch-container {
   display: inline-block;
+  max-width: 100%;
 
   .toggle-switch {
     vertical-align: middle;
@@ -37,7 +38,7 @@ $off-color: $grey-04;
     padding: 2px;
 
     .switch-button {
-      width: $switch-btn-width;
+      min-width: $switch-btn-width;
       height: $widget-height - ($switch-button-margin-top * 2);
       background-color: white;
       border-radius: 5px;
@@ -46,9 +47,6 @@ $off-color: $grey-04;
     .label {
       height: 100%;
       font-size: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       padding: 0 8px;
     }
 

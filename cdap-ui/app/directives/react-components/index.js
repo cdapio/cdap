@@ -14,7 +14,8 @@
  * the License.
 */
 
-angular.module(PKG.name + '.commons')
+angular
+  .module(PKG.name + '.commons')
   .directive('caskHeader', function(reactDirective) {
     return reactDirective(window.CaskCommon.AppHeader);
   })
@@ -84,21 +85,24 @@ angular.module(PKG.name + '.commons')
   .directive('csvWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.CSVWidget);
   })
-  .directive('keyValueWidget', function (reactDirective) {
+  .directive('keyValueWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValueWidget);
   })
   .directive('selectDropdown', function(reactDirective) {
     return reactDirective(window.CaskCommon.Select);
   })
-  .directive('keyValueDropdownWidget', function (reactDirective) {
+  .directive('keyValueDropdownWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValueDropdownWidget);
   })
-  .directive('multipleValuesWidget', function (reactDirective) {
+  .directive('multipleValuesWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.MultipleValuesWidget);
   })
   .directive('connectionBrowser', function(reactDirective) {
     return reactDirective(window.CaskCommon.PluginConnectionBrowser);
   })
-  .directive('functionDropdownAliasWidget', function (reactDirective) {
+  .directive('functionDropdownAliasWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.FunctionDropdownAlias);
+  })
+  .directive('toggleSwitchWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.ToggleSwitchWidget);
   });
