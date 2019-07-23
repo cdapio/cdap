@@ -32,12 +32,6 @@ describe('NUX tour tests', () => {
           Authorization: 'Bearer ' + cookie.value,
         };
       });
-      // cy.request({
-      //   method: 'GET',
-      //   url: `http://${Cypress.env('host')}:11015/v3/configuration/user`,
-      // }).then((res) => {
-      //   expect(res.body).to.not.have.property('showWelcome');
-      // });
     });
   });
   after(() => {
@@ -73,8 +67,7 @@ describe('NUX tour tests', () => {
     });
 
     cy.get('.shepherd-title').then((modal) => {
-      const pipelinesText = 'Pipeline Studio';
-      expect(modal).to.contain(pipelinesText);
+      expect(modal).to.contain('Pipeline Studio');
     });
 
     cy.get('[data-id="pipelines"]').within(() => {
@@ -82,8 +75,7 @@ describe('NUX tour tests', () => {
     });
 
     cy.get('.shepherd-title').then((modal) => {
-      const dataPrepText = 'Wrangler';
-      expect(modal).to.contain(dataPrepText);
+      expect(modal).to.contain('Wrangler');
     });
 
     cy.get('[data-id="preparation"]').within(() => {
@@ -91,8 +83,7 @@ describe('NUX tour tests', () => {
     });
 
     cy.get('.shepherd-title').then((modal) => {
-      const metadataText = 'Metadata';
-      expect(modal).to.contain(metadataText);
+      expect(modal).to.contain('Metadata');
     });
 
     cy.get('[data-id="metadata"]').within(() => {
@@ -100,8 +91,7 @@ describe('NUX tour tests', () => {
     });
 
     cy.get('.shepherd-title').then((modal) => {
-      const hubText = 'Hub';
-      expect(modal).to.contain(hubText);
+      expect(modal).to.contain('Hub');
     });
 
     cy.get('[data-id="hub"]').within(() => {
@@ -114,6 +104,7 @@ describe('NUX tour tests', () => {
   });
 
   it('Should not show Welcome modal when user navigates to Angular page (Pipelines) and back', () => {
+    cy.get('.icon-close').click();
     cy.visit('/cdap/pipelines');
     cy.visit('/cdap');
     cy.get('[data-cy="welcome-nux-tour"]').should('not.exist');
