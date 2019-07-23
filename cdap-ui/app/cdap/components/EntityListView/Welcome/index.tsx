@@ -52,6 +52,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
     // Checking for session storage so that the welcome modal is not shown
     // when user is navigating back and forth between react and angular pages.
     const sessionValue = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const tourTesting = window.sessionStorage.getItem('nuxTesting');
     if (sessionValue === SESSION_STORAGE_VALUE) {
       return;
     }
@@ -59,7 +60,7 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
     MyUserStoreApi.get().subscribe((res) => {
       const storeValue = objectQuery(res, 'property', USER_STORE_KEY);
 
-      if ((!storeValue || storeValue !== USER_STORE_VALUE) && !window.Cypress) {
+      if (tourTesting || ((!storeValue || storeValue !== USER_STORE_VALUE) && !window.Cypress)) {
         this.setState({
           showModal: true,
         });

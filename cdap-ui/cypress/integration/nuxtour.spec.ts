@@ -41,6 +41,9 @@ describe('NUX tour tests', () => {
     });
   });
   after(() => {
+    cy.window().then((win) => {
+      win.sessionStorage.removeItem('nuxTesting');
+    });
     cy.request({
       method: 'PUT',
       url: `http://${Cypress.env('host')}:11015/v3/configuration/user`,
@@ -52,6 +55,7 @@ describe('NUX tour tests', () => {
     cy.visit('/cdap', {
       onBeforeLoad: (win) => {
         win.sessionStorage.clear();
+        win.sessionStorage.setItem('nuxTesting', 'true');
       },
     });
   });
