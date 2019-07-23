@@ -59,6 +59,7 @@ const GuidedTour = function() {
         stepObj.text.push(countText);
       }
 
+      // next-btn class used for selecting button in cypress tests
       const nextButton = {
         text: 'Next',
         classes: 'btn btn-primary next-btn',
@@ -66,7 +67,7 @@ const GuidedTour = function() {
           this.next();
         },
       };
-
+      // complete-btn class used for selecting button in cypress tests
       const completeButton = {
         text: 'Finish',
         classes: 'btn btn-primary complete-btn',
@@ -74,7 +75,7 @@ const GuidedTour = function() {
           this.complete();
         },
       };
-
+      // prev-btn class used for selecting button in cypress tests
       const previousButton = {
         text: 'Previous',
         classes: 'btn btn-secondary float-left prev-btn',
