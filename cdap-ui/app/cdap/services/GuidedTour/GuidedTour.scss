@@ -29,7 +29,7 @@ body:not(.theme-cdap) .guided-tour-tooltip.shepherd-element {
 }
 
 .guided-tour-tooltip.shepherd-element {
-  z-index: 1201;
+  z-index: 1301; // Must be > z-index of navbar(drawer) in components/ThemeWrapper
   max-width: 600px;
   border-radius: 4px;
 
