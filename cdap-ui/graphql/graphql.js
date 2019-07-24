@@ -14,8 +14,6 @@
  * the License.
  */
 
-// TODO the graphql server is not setup to handle authenticated environment yet.
-
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const log4js = require('log4js');
@@ -28,11 +26,7 @@ const { namespacesResolver } = require('./resolvers/namespaceResolvers');
 const { metadataResolver } = require('./resolvers/metadataResolvers');
 const { programsResolver } = require('./resolvers/programRecordResolvers');
 const { programsTypeResolver } = require('./resolvers/type/programRecordTypeResolver');
-const {
-  runsResolver,
-  schedulesResolver,
-  nextRuntimesResolver,
-} = require('./resolvers/scheduleResolvers');
+const { schedulesResolver, nextRuntimesResolver } = require('./resolvers/scheduleResolvers');
 const { statusResolver } = require('./resolvers/statusResolvers');
 
 const log = log4js.getLogger('graphql');
@@ -68,8 +62,17 @@ const resolvers = {
   },
   ProgramRecord: { __resolveType: programsTypeResolver.ProgramRecord.__resolveType },
   Workflow: {
-    runs: runsResolver.Workflow.runs,
+    runs: programsTypeResolver.Workflow.runs,
+    totalRuns: programsTypeResolver.Workflow.totalRuns,
     schedules: schedulesResolver.Workflow.schedules,
+  },
+  Spark: {
+    runs: programsTypeResolver.Spark.runs,
+    totalRuns: programsTypeResolver.Spark.totalRuns,
+  },
+  MapReduce: {
+    runs: programsTypeResolver.MapReduce.runs,
+    totalRuns: programsTypeResolver.MapReduce.totalRuns,
   },
   ScheduleDetail: { nextRuntimes: nextRuntimesResolver.ScheduleDetail.nextRuntimes },
 };
@@ -77,6 +80,15 @@ const resolvers = {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({ req }) => {
+    if (!req || !req.headers || !req.headers.authorization) {
+      return {};
+    }
+
+    const auth = req.headers.authorization;
+
+    return { auth };
+  },
   introspection: env === 'production' ? false : true,
   playground: env === 'production' ? false : true,
 });

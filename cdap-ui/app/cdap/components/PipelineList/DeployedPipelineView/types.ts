@@ -14,25 +14,60 @@
  * the License.
  */
 
-interface IArtifact {
+export interface IApplicationRecord {
+  type: string;
   name: string;
+  version: string;
+  description: string;
+  artifact: IArtifactSummary;
+  ownerPrincipal?: string;
+  applicationDetail: IApplicationDetail;
 }
 
-export interface IPipeline {
+export interface IApplicationDetail {
   name: string;
-  artifact: IArtifact;
+  appVersion: string;
+  description: string;
+  configuration: string;
+  programs: IProgramRecord[];
+  artifact: IArtifactSummary;
+  ownerPrincipal?: string;
 }
 
-export interface IPipelineStatus {
-  status?: string;
-  displayStatus?: string;
-  lastStarting?: number;
+export interface IProgramRecord {
+  type: string;
+  app: string;
+  name: string;
+  description: string;
+  runs: IRunRecord[];
 }
 
-export interface IStatusMap {
-  [key: string]: IPipelineStatus;
+export interface IWorkflow extends IProgramRecord {
+  schedules: IScheduleDetail[];
 }
 
-export interface IRunsCountMap {
-  [key: string]: number;
+export interface IRunRecord {
+  runid: string;
+  starting: string;
+  start: string;
+  end: string;
+  status: string;
+  profileId?: string;
+}
+
+export interface IArtifactSummary {
+  name: string;
+  version: string;
+  scope: string;
+}
+
+export interface IScheduleDetail {
+  namespace: string;
+  application: string;
+  applicationVersion: string;
+  name: string;
+  description: string;
+  timeoutMillis: string;
+  status: string;
+  nextRuntimes: string[];
 }

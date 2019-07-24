@@ -27,34 +27,45 @@ const applicationsResolver = {
   Query: {
     applications: async (parent, args, context) => {
       const namespace = args.namespace;
+      const artifactName = args.artifactName;
       const options = resolversCommon.getGETRequestOptions();
-      options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps`);
+
+      let path = `/v3/namespaces/${namespace}/apps`;
+
+      if (artifactName) {
+        path += `?artifactName=${artifactName}`;
+      }
+
+      options.url = urlHelper.constructUrl(cdapConfig, path);
       context.namespace = namespace;
-      return await resolversCommon.requestPromiseWrapper(options);
+
+      return await resolversCommon.requestPromiseWrapper(options, context.auth);
     },
   },
 };
 
 const applicationResolver = {
   Query: {
-    application: async (parent, args) => {
+    application: async (parent, args, context) => {
       const namespace = args.namespace;
       const name = args.name;
       const options = resolversCommon.getGETRequestOptions();
       options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
-      return await resolversCommon.requestPromiseWrapper(options);
+
+      return await resolversCommon.requestPromiseWrapper(options, context.auth);
     },
   },
 };
 
 const applicationDetailResolver = {
   ApplicationRecord: {
-    async applicationDetail(parent, args, context) {
+    applicationDetail: async (parent, args, context) => {
       const namespace = context.namespace;
       const name = parent.name;
       const options = resolversCommon.getGETRequestOptions();
       options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
-      return await resolversCommon.requestPromiseWrapper(options);
+
+      return await resolversCommon.requestPromiseWrapper(options, context.auth);
     },
   },
 };

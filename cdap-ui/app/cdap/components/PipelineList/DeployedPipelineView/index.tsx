@@ -25,8 +25,13 @@ import SearchBox from 'components/PipelineList/DeployedPipelineView/SearchBox';
 import Pagination from 'components/PipelineList/DeployedPipelineView/Pagination';
 import { Provider } from 'react-redux';
 import Store from 'components/PipelineList/DeployedPipelineView/store';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 import './DeployedPipelineView.scss';
+
+import { Query } from 'react-apollo';
+import { gql } from 'apollo-boost';
 
 export default class DeployedPipelineView extends React.PureComponent {
   public componentDidMount() {
@@ -38,18 +43,65 @@ export default class DeployedPipelineView extends React.PureComponent {
   }
 
   public render() {
-    return (
-      <Provider store={Store}>
-        <div className="pipeline-deployed-view pipeline-list-content">
-          <div className="deployed-header">
-            <PipelineCount />
-            <SearchBox />
-            <Pagination />
-          </div>
-
-          <PipelineTable />
-        </div>
-      </Provider>
-    );
+    return <DeployedPipelinesView />;
   }
 }
+
+const currentNamespace = getCurrentNamespace();
+
+const DeployedPipelinesView = () => (
+  <Query
+    query={gql`
+      {
+        applications(namespace: "${currentNamespace}", artifactName: "cdap-data-pipeline,cdap-data-streams") {
+          name
+          artifact {
+            name
+          }
+          applicationDetail {
+            programs {
+              name
+              runs {
+                status
+                starting
+              }
+              totalRuns
+              ... on Workflow {
+                schedules {
+                  name
+                  status
+                  nextRuntimes
+                }
+              }
+            }
+          }
+        }
+      }
+    `}
+  >
+    {({ loading, error, data, refetch }) => {
+      if (loading) {
+        return <LoadingSVGCentered />;
+      }
+      if (error) {
+        return <p>Error! {error.message}</p>;
+      }
+
+      const pipelines = data.applications;
+
+      return (
+        <Provider store={Store}>
+          <div className="pipeline-deployed-view pipeline-list-content">
+            <div className="deployed-header">
+              <PipelineCount pipelines={pipelines} pipelinesLoading={loading} />
+              <SearchBox />
+              <Pagination numPipelines={pipelines.length} />
+            </div>
+
+            <PipelineTable pipelines={pipelines} refetch={refetch} />
+          </div>
+        </Provider>
+      );
+    }}
+  </Query>
+);

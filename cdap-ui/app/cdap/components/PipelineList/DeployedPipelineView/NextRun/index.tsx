@@ -15,26 +15,22 @@
  */
 
 import * as React from 'react';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { MyPipelineApi } from 'api/pipeline';
 import IconSVG from 'components/IconSVG';
 import { Observable } from 'rxjs/Observable';
 import Duration from 'components/Duration';
 import { GLOBALS } from 'services/global-constants';
-import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { objectQuery } from 'services/helpers';
+import { getProgram } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface IProps {
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
 }
 
 interface IState {
   loading: boolean;
   nextRun: null | number;
 }
-
-const DataPipelineProgram = {
-  ...GLOBALS.programInfo[GLOBALS.etlDataPipeline],
-};
 
 export default class NextRun extends React.PureComponent<IProps, IState> {
   private interval = null;
@@ -62,20 +58,17 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   }
 
   private getNextRun() {
-    const namespace = getCurrentNamespace();
-    const pipeline = this.props.pipeline;
+    const nextRuntime = objectQuery(
+      getProgram(this.props.pipeline),
+      'schedules',
+      0,
+      'nextRuntimes',
+      0
+    );
 
-    const params = {
-      ...DataPipelineProgram,
-      namespace,
-      appId: pipeline.name,
-    };
-
-    MyPipelineApi.getNextRun(params).subscribe((res) => {
-      this.setState({
-        loading: false,
-        nextRun: res.length ? res[0].time : null,
-      });
+    this.setState({
+      loading: false,
+      nextRun: nextRuntime ? parseInt(nextRuntime, 10) : null,
     });
   }
 

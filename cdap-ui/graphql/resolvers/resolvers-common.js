@@ -23,7 +23,20 @@ function getGETRequestOptions() {
   };
 }
 
-function requestPromiseWrapper(options) {
+function getPOSTRequestOptions() {
+  return {
+    method: 'POST',
+    json: true,
+  };
+}
+
+function requestPromiseWrapper(options, token) {
+  if (token) {
+    options.headers = {
+      Authorization: token,
+    };
+  }
+
   return new Promise((resolve, reject) => {
     request(options, (err, response, body) => {
       if (err) {
@@ -48,5 +61,6 @@ function requestPromiseWrapper(options) {
 
 module.exports = {
   getGETRequestOptions,
+  getPOSTRequestOptions,
   requestPromiseWrapper,
 };

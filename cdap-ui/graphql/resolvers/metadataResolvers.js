@@ -34,7 +34,7 @@ const metadataResolver = {
         `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`
       );
 
-      return await resolversCommon.requestPromiseWrapper(options);
+      return await resolversCommon.requestPromiseWrapper(options, context.auth);
     },
   },
 };

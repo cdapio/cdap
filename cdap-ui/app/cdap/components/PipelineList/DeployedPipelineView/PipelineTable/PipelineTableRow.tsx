@@ -23,10 +23,11 @@ import Status from 'components/PipelineList/DeployedPipelineView/Status';
 import LastStart from 'components/PipelineList/DeployedPipelineView/LastStart';
 import RunsCount from 'components/PipelineList/DeployedPipelineView/RunsCount';
 import DeployedActions from 'components/PipelineList/DeployedPipelineView/DeployedActions';
-import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
 
 interface IProps {
-  pipeline: IPipeline;
+  pipeline: IApplicationRecord;
+  refetch: () => void;
 }
 
 const PREFIX = 'features.PipelineList';
@@ -55,7 +56,7 @@ export default class PipelineTableRow extends React.PureComponent<IProps> {
         <NextRun pipeline={pipeline} />
         <RunsCount pipeline={pipeline} />
         <PipelineTags pipeline={pipeline} />
-        <DeployedActions pipeline={pipeline} />
+        <DeployedActions pipeline={pipeline} refetch={this.props.refetch} />
       </a>
     );
   }

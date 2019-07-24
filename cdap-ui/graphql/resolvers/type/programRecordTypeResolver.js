@@ -14,6 +14,61 @@
  * the License.
  */
 
+var urlHelper = require('../../../server/url-helper'),
+  cdapConfigurator = require('../../../server/cdap-config.js'),
+  resolversCommon = require('../resolvers-common.js');
+
+let cdapConfig;
+cdapConfigurator.getCDAPConfig().then(function(value) {
+  cdapConfig = value;
+});
+
+const runsResolver = async (programType, parent, args, context) => {
+  const namespace = context.namespace;
+  const name = parent.app;
+  const programId = parent.name;
+  const options = resolversCommon.getPOSTRequestOptions();
+  options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
+  options['body'] = [
+    {
+      appId: name,
+      programType: programType,
+      programId: programId,
+    },
+  ];
+
+  const runInfo = await resolversCommon.requestPromiseWrapper(options, context.auth);
+
+  if (runInfo.length === 0) {
+    return [];
+  }
+
+  return runInfo[0].runs;
+};
+
+const totalRunsResolver = async (programType, parent, args, context) => {
+  const namespace = context.namespace;
+  const name = parent.app;
+  const programId = parent.name;
+  const options = resolversCommon.getPOSTRequestOptions();
+  options['url'] = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
+  options['body'] = [
+    {
+      appId: name,
+      programType: programType,
+      programId: programId,
+    },
+  ];
+
+  const runCount = await resolversCommon.requestPromiseWrapper(options, context.auth);
+
+  if (runCount.length === 0) {
+    return 0;
+  }
+
+  return runCount[0].runCount;
+};
+
 const programsTypeResolver = {
   ProgramRecord: {
     async __resolveType(parent) {
@@ -28,6 +83,18 @@ const programsTypeResolver = {
           return null;
       }
     },
+  },
+  MapReduce: {
+    runs: runsResolver.bind(null, 'mapreduce'),
+    totalRuns: totalRunsResolver.bind(null, 'mapreduce'),
+  },
+  Workflow: {
+    runs: runsResolver.bind(null, 'workflow'),
+    totalRuns: totalRunsResolver.bind(null, 'workflow'),
+  },
+  Spark: {
+    runs: runsResolver.bind(null, 'spark'),
+    totalRuns: totalRunsResolver.bind(null, 'spark'),
   },
 };
 
