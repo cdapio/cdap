@@ -88,6 +88,7 @@ var FunctionDropdownAlias = require('../cdap/components/AbstractWidget/FunctionD
 var ToggleSwitchWidget = require('../cdap/components/AbstractWidget/ToggleSwitchWidget').default;
 var WranglerEditor = require('../cdap/components/AbstractWidget/WranglerEditor').default;
 var RadioGroupWidget = require('../cdap/components/AbstractWidget/RadioGroupWidget').default;
+var MultiSelect = require('../cdap/components/AbstractWidget/FormInputs/MultiSelect').default;
 
 export {
   Store,
@@ -153,4 +154,5 @@ export {
   ToggleSwitchWidget,
   WranglerEditor,
   RadioGroupWidget,
+  MultiSelect,
 };
