@@ -365,7 +365,6 @@ gulp.task('lint', function() {
       '!./app/lib/**/*.js',
       '!./app/common/**/*.js',
       '!./app/wrangler/**/*.js',
-      './server/*.js',
     ])
     .pipe(plug.plumber())
     .pipe(plug.jshint())
