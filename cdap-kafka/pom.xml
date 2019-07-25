@@ -33,7 +33,7 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
+      <artifactId>kafka_2.11</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>

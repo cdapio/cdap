@@ -15,12 +15,12 @@
  */
 
 package co.cask.cdap.security.server;
-import org.eclipse.jetty.jaas.callback.ObjectCallback;
-import org.eclipse.jetty.jaas.callback.RequestParameterCallback;
+import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.server.HttpConnection;
+import org.eclipse.jetty.server.AbstractHttpConnection;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.Loader;
@@ -46,7 +46,6 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import javax.servlet.ServletRequest;
 
 /* ---------------------------------------------------- */
 /** JAASLoginService
@@ -182,7 +181,7 @@ public class KnoxJAASLoginService extends AbstractLifeCycle implements LoginServ
 
   /* ------------------------------------------------------------ */
   @Override
-  public UserIdentity login(final String username, final Object credentials, final ServletRequest servletRequest) {
+  public UserIdentity login(final String username, final Object credentials) {
     try {
       CallbackHandler callbackHandler = null;
 
@@ -199,8 +198,8 @@ public class KnoxJAASLoginService extends AbstractLifeCycle implements LoginServ
               } else if (callback instanceof ObjectCallback) {
                 ((ObjectCallback) callback).setObject(credentials);
               } else if (callback instanceof RequestParameterCallback) {
-                HttpConnection connection = HttpConnection.getCurrentConnection();
-                Request request = (connection == null ? null : connection.getHttpChannel().getRequest());
+                AbstractHttpConnection connection = AbstractHttpConnection.getCurrentConnection();
+                Request request = (connection == null ? null : connection.getRequest());
 
                 if (request != null) {
                   RequestParameterCallback rpc = (RequestParameterCallback) callback;

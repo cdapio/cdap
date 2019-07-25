@@ -21,7 +21,7 @@ import com.google.common.collect.Maps;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.server.UserIdentity;
-import javax.servlet.ServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +79,7 @@ public class MTLSLoginService implements LoginService {
   }
 
   @Override
-  public UserIdentity login(String username, Object credentials, ServletRequest servletRequest) {
+  public UserIdentity login(String username, Object credentials) {
     UserIdentity identity = new MTLSUserIdentity(username, credentials);
     return identity;
   }

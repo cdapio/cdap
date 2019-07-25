@@ -17,8 +17,7 @@
 package co.cask.cdap.security.server;
 
 import com.google.common.base.Throwables;
-
-import org.eclipse.jetty.jaas.spi.LdapLoginModule;
+import org.eclipse.jetty.plus.jaas.spi.LdapLoginModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
