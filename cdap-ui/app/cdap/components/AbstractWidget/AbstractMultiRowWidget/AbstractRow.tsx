@@ -18,7 +18,7 @@ import * as React from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { WithStyles } from '@material-ui/core/styles/withStyles';
+import { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 
 enum KEY_CODE {
@@ -27,7 +27,7 @@ enum KEY_CODE {
   Down = 40,
 }
 
-export const AbstractRowStyles = (theme) => {
+export const AbstractRowStyles = (theme): StyleRules => {
   return {
     root: {
       height: '44px',

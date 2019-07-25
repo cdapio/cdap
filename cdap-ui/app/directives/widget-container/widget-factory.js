@@ -184,10 +184,13 @@ angular.module(PKG.name + '.commons')
         }
       },
       'function-dropdown-with-alias': {
-        element: '<my-function-dropdown-with-alias></my-function-dropdown-with-alias>',
+        element: '<function-dropdown-alias-widget></function-dropdown-alias-widget>',
         attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
+          'value': 'model',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'placeholders': 'myconfig["widget-attributes"].placeholders',
+          'dropdown-options': 'myconfig["widget-attributes"]["dropdownOptions"]',
         }
       },
       'schedule': {
