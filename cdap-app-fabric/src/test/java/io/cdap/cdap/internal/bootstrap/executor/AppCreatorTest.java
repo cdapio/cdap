@@ -49,14 +49,14 @@ public class AppCreatorTest {
   public void testMissingFieldsThrowsException() {
     ArtifactSummary artifactSummary = new ArtifactSummary("name", "1.0.0");
     AppRequest<JsonObject> appRequest = new AppRequest<>(artifactSummary);
-    AppCreator.Arguments arguments = new AppCreator.Arguments(appRequest, null, "app");
+    AppCreator.Arguments arguments = new AppCreator.Arguments(appRequest, null, "app", false);
     try {
       arguments.validate();
       Assert.fail("arguments should have been invalidated.");
     } catch (IllegalArgumentException e) {
       // expected
     }
-    arguments = new AppCreator.Arguments(appRequest, "namespace", null);
+    arguments = new AppCreator.Arguments(appRequest, "namespace", null, false);
     try {
       arguments.validate();
       Assert.fail("arguments should have been invalidated.");

@@ -50,7 +50,7 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
     ApplicationId appId = arguments.getId();
     ArtifactSummary artifactSummary = arguments.getArtifact();
 
-    if (appExists(appId)) {
+    if (appExists(appId) && !arguments.overwrite) {
       return;
     }
 
@@ -94,12 +94,14 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
   static class Arguments extends AppRequest<JsonObject> implements Validatable {
     private String namespace;
     private String name;
+    private boolean overwrite;
 
-    Arguments(AppRequest<JsonObject> appRequest, String namespace, String name) {
+    Arguments(AppRequest<JsonObject> appRequest, String namespace, String name, boolean overwrite) {
       super(appRequest.getArtifact(), appRequest.getConfig(), appRequest.getPreview(), appRequest.getOwnerPrincipal(),
             appRequest.canUpdateSchedules());
       this.namespace = namespace;
       this.name = name;
+      this.overwrite = overwrite;
     }
 
     private ApplicationId getId() {
