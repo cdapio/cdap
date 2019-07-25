@@ -283,10 +283,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'radio-group': {
-        element: '<my-radio-group></my-radio-group>',
+        element: '<radio-group-widget></radio-group-widget>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig'
+          'value': 'model',
+          'widget-attributes': 'myconfig["widget-attributes"]',
+          'property-name':'myconfig.name',
+          'on-change': 'onChange'
         }
       },
       'toggle': {
