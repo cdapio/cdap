@@ -17,17 +17,32 @@
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const log4js = require('log4js');
+const { queryTypeApplicationsResolver } = require('./Query/applicationsResolver');
+const { queryTypeApplicationResolver } = require('./Query/applicationResolver');
+const { queryTypeNamespacesResolver } = require('./Query/namespacesResolver');
+const { queryTypeStatusResolver } = require('./Query/statusResolver');
 const {
-  applicationsResolver,
-  applicationResolver,
-  applicationDetailResolver,
-} = require('./resolvers/applicationResolvers');
-const { namespacesResolver } = require('./resolvers/namespaceResolvers');
-const { metadataResolver } = require('./resolvers/metadataResolvers');
-const { programsResolver } = require('./resolvers/programRecordResolvers');
-const { programsTypeResolver } = require('./resolvers/type/programRecordTypeResolver');
-const { schedulesResolver, nextRuntimesResolver } = require('./resolvers/scheduleResolvers');
-const { statusResolver } = require('./resolvers/statusResolvers');
+  applicationRecordTypeApplicationDetailResolver,
+} = require('./types/ApplicationRecord/applicationDetailResolver');
+const {
+  applicationDetailTypeMetadataResolver,
+} = require('./types/ApplicationDetail/metadataResolver');
+const {
+  applicationDetailTypeProgramsResolver,
+} = require('./types/ApplicationDetail/programsResolver');
+const {
+  programRecordTypeResolveTypeResolver,
+} = require('./types/ProgramRecord/resolveTypeResolver');
+const { workflowTypeRunsResolver } = require('./types/Workflow/runsResolver');
+const { workflowTypeSchedulesResolver } = require('./types/Workflow/schedulesResolver');
+const { workflowTypeTotalRunsResolver } = require('./types/Workflow/totalRunsResolver');
+const { sparkTypeRunsResolver } = require('./types/Spark/runsResolver');
+const { sparkTypeTotalRunsResolver } = require('./types/Spark/totalRunsResolver');
+const { mapReduceTypeRunsResolver } = require('./types/MapReduce/runsResolver');
+const { mapReduceTypeTotalRunsResolver } = require('./types/MapReduce/totalRunsResolver');
+const {
+  scheduleDetailTypeNextRuntimesResolver,
+} = require('./types/ScheduleDetail/nextRuntimesResolver');
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
@@ -48,33 +63,33 @@ if (typeof typeDefs === 'undefined') {
 
 const resolvers = {
   Query: {
-    applications: applicationsResolver.Query.applications,
-    application: applicationResolver.Query.application,
-    namespaces: namespacesResolver.Query.namespaces,
-    status: statusResolver.Query.status,
+    applications: queryTypeApplicationsResolver,
+    application: queryTypeApplicationResolver,
+    namespaces: queryTypeNamespacesResolver,
+    status: queryTypeStatusResolver,
   },
   ApplicationRecord: {
-    applicationDetail: applicationDetailResolver.ApplicationRecord.applicationDetail,
+    applicationDetail: applicationRecordTypeApplicationDetailResolver,
   },
   ApplicationDetail: {
-    metadata: metadataResolver.ApplicationDetail.metadata,
-    programs: programsResolver.ApplicationDetail.programs,
+    metadata: applicationDetailTypeMetadataResolver,
+    programs: applicationDetailTypeProgramsResolver,
   },
-  ProgramRecord: { __resolveType: programsTypeResolver.ProgramRecord.__resolveType },
+  ProgramRecord: { __resolveType: programRecordTypeResolveTypeResolver },
   Workflow: {
-    runs: programsTypeResolver.Workflow.runs,
-    totalRuns: programsTypeResolver.Workflow.totalRuns,
-    schedules: schedulesResolver.Workflow.schedules,
+    runs: workflowTypeRunsResolver,
+    schedules: workflowTypeSchedulesResolver,
+    totalRuns: workflowTypeTotalRunsResolver,
   },
   Spark: {
-    runs: programsTypeResolver.Spark.runs,
-    totalRuns: programsTypeResolver.Spark.totalRuns,
+    runs: sparkTypeRunsResolver,
+    totalRuns: sparkTypeTotalRunsResolver,
   },
   MapReduce: {
-    runs: programsTypeResolver.MapReduce.runs,
-    totalRuns: programsTypeResolver.MapReduce.totalRuns,
+    runs: mapReduceTypeRunsResolver,
+    totalRuns: mapReduceTypeTotalRunsResolver,
   },
-  ScheduleDetail: { nextRuntimes: nextRuntimesResolver.ScheduleDetail.nextRuntimes },
+  ScheduleDetail: { nextRuntimes: scheduleDetailTypeNextRuntimesResolver },
 };
 
 const server = new ApolloServer({

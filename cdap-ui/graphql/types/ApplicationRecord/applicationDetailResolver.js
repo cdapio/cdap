@@ -14,31 +14,24 @@
  * the License.
  */
 
-const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('./resolvers-common.js');
+const urlHelper = require('../../../server/url-helper'),
+  cdapConfigurator = require('../../../server/cdap-config.js'),
+  resolversCommon = require('../../resolvers-common.js');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-const metadataResolver = {
-  ApplicationDetail: {
-    metadata: async (parent, args, context) => {
-      const namespace = context.namespace;
-      const name = parent.name;
-      const options = resolversCommon.getGETRequestOptions();
-      options.url = urlHelper.constructUrl(
-        cdapConfig,
-        `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`
-      );
+async function applicationRecordTypeApplicationDetailResolver(parent, args, context) {
+  const namespace = context.namespace;
+  const name = parent.name;
+  const options = resolversCommon.getGETRequestOptions();
+  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
 
-      return await resolversCommon.requestPromiseWrapper(options, context.auth);
-    },
-  },
-};
+  return await resolversCommon.requestPromiseWrapper(options, context.auth);
+}
 
 module.exports = {
-  metadataResolver,
+  applicationRecordTypeApplicationDetailResolver,
 };

@@ -14,25 +14,10 @@
  * the License.
  */
 
-const programsResolver = {
-  ApplicationDetail: {
-    programs: async (parent, args) => {
-      const programs = parent.programs;
-      const type = args.type;
+const { programRecordTypeTotalRunsResolver } = require('../ProgramRecord/totalRunsResolver');
 
-      if (!type) {
-        return programs;
-      } else {
-        const typePrograms = programs.filter(function(program) {
-          return program.type == type;
-        });
-
-        return typePrograms;
-      }
-    },
-  },
-};
+const sparkTypeTotalRunsResolver = programRecordTypeTotalRunsResolver.bind(null, 'spark');
 
 module.exports = {
-  programsResolver,
+  sparkTypeTotalRunsResolver,
 };

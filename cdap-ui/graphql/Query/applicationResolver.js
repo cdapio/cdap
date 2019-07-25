@@ -16,24 +16,22 @@
 
 const urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('./resolvers-common.js');
+  resolversCommon = require('../resolvers-common.js');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-const namespacesResolver = {
-  Query: {
-    namespaces: async (parent, args, context) => {
-      const options = resolversCommon.getGETRequestOptions();
-      options.url = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
+async function queryTypeApplicationResolver(parent, args, context) {
+  const namespace = args.namespace;
+  const name = args.name;
+  const options = resolversCommon.getGETRequestOptions();
+  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
 
-      return await resolversCommon.requestPromiseWrapper(options, context.auth);
-    },
-  },
-};
+  return await resolversCommon.requestPromiseWrapper(options, context.auth);
+}
 
 module.exports = {
-  namespacesResolver,
+  queryTypeApplicationResolver,
 };
