@@ -22,6 +22,8 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   let clearDOMTimeoutTick1;
   let clearDOMTimeoutTick2;
 
+  const eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+
   vm.currentIndex = 0;
   vm.clearDOM = false;
   vm.implicitSchemaPresent = false;
@@ -116,7 +118,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     });
   }
 
-  let datasetSelectedEvtListner = EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
+  function handleDatasetSelected(schema, format, isDisabled, datasetId) {
     if (watchProperty && format) {
       vm.pluginProperties[watchProperty] = format;
     }
@@ -145,13 +147,18 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       }
     }
     reRenderComplexSchema();
-  });
+  }
+
+  eventEmitter.on('dataset.selected', handleDatasetSelected);
 
   EventPipe.on('schema.export', exportSchema);
-  EventPipe.on('schema.clear', () => {
+
+  function clearSchema() {
     vm.schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj('')];
     reRenderComplexSchema();
-  });
+  }
+  eventEmitter.on('schema.clear', clearSchema);
+  EventPipe.on('schema.clear', clearSchema);
 
   EventPipe.on('schema.import', (schemas) => {
     vm.clearDOM = true;
@@ -206,7 +213,8 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   });
 
   $scope.$on('$destroy', () => {
-    datasetSelectedEvtListner();
+    eventEmitter.off('dataset.selected', handleDatasetSelected);
+    eventEmitter.off('schema.clear', clearSchema);
     EventPipe.cancelEvent('schema.export');
     EventPipe.cancelEvent('schema.import');
     EventPipe.cancelEvent('schema.clear');

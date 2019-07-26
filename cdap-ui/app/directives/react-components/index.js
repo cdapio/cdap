@@ -120,4 +120,7 @@ angular
   })
   .directive('inputFieldDropdown', function (reactDirective) {
     return reactDirective(window.CaskCommon.InputFieldDropdown);
+  })
+  .directive('datasetSelectorWidget', function (reactDirective) {
+    return reactDirective(window.CaskCommon.DatasetSelectorWidget);
   });
