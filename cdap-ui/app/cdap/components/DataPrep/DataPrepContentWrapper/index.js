@@ -110,6 +110,10 @@ const Switch = () => (
 );
 
 export default class DataPrepContentWrapper extends Component {
+  static propTypes = {
+    disabled: PropTypes.bool,
+  };
+
   componentDidMount() {
     this.viewStoreSubscription = ViewStore.subscribe(() => {
       let { view } = ViewStore.getState();
@@ -141,8 +145,8 @@ export default class DataPrepContentWrapper extends Component {
     const dataPart = (
       <div className="row">
         <div className="dataprep-main col-9">
-          <DataPrepTable />
-          <DataPrepCLI />
+          <DataPrepTable disabled={this.props.disabled} />
+          <DataPrepCLI disabled={this.props.disabled} />
         </div>
         <DataPrepSidePanel />
       </div>

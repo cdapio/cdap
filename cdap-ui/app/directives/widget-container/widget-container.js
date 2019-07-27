@@ -46,8 +46,12 @@ angular.module(PKG.name + '.commons')
         fieldset.attr('ng-disabled', scope.widgetDisabled);
 
         angularElement = angular.element(widget.element);
-        scope.onChange = (value) => {
-          scope.model = value;
+        scope.onChange = (value, isChangingMoreThanOnePluginProperty = false, updatedPluginProperties = {}) => {
+          if (!isChangingMoreThanOnePluginProperty) {
+            scope.model = value;
+          } else {
+            scope.properties = Object.assign({}, scope.properties, updatedPluginProperties);
+          }
         };
         angular.forEach(widget.attributes, function(value, key) {
           if (key.indexOf('data-') !== -1) {

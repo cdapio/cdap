@@ -295,6 +295,7 @@ export default class DataPrepHome extends Component {
             onWorkspaceDelete={this.props.singleWorkspaceMode ? null : this.updateWorkspaceList}
             onSubmit={this.props.onSubmit}
             singleWorkspaceMode={this.props.singleWorkspaceMode}
+            disabled={this.props.disabled}
           />
         )}
       </div>
@@ -373,4 +374,5 @@ DataPrepHome.propTypes = {
   singleWorkspaceMode: PropTypes.bool,
   workspaceId: PropTypes.string,
   onSubmit: PropTypes.func,
+  disabled: PropTypes.bool,
 };

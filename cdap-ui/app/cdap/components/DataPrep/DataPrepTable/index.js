@@ -14,6 +14,7 @@
  * the License.
  */
 
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
@@ -41,6 +42,10 @@ import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
 const PREFIX = 'features.DataPrep.DataPrepTable';
 const DEFAULT_WINDOW_SIZE = 100;
 export default class DataPrepTable extends Component {
+  static propTypes = {
+    disabled: PropTypes.bool,
+  };
+
   constructor(props) {
     super(props);
     let storeState = DataPrepStore.getState();
@@ -264,6 +269,7 @@ export default class DataPrepTable extends Component {
                         <ColumnActionsDropdown
                           column={head.name}
                           dropdownOpened={this.columnDropdownOpened}
+                          disabled={this.props.disabled}
                         />
                       </span>
                       {!head.edit ? (

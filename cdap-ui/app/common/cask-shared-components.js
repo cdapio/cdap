@@ -86,6 +86,7 @@ var PluginConnectionBrowser = require('../cdap/components/DataPrepConnections/Pl
 var FunctionDropdownAlias = require('../cdap/components/AbstractWidget/FunctionDropdownAliasWidget')
   .default;
 var ToggleSwitchWidget = require('../cdap/components/AbstractWidget/ToggleSwitchWidget').default;
+var WranglerEditor = require('../cdap/components/AbstractWidget/WranglerEditor').default;
 
 export {
   Store,
@@ -149,4 +150,5 @@ export {
   PluginConnectionBrowser,
   FunctionDropdownAlias,
   ToggleSwitchWidget,
+  WranglerEditor,
 };

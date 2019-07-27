@@ -397,6 +397,7 @@ export default class ColumnActionsDropdown extends Component {
           })}
           onClick={this.toggleDropdown}
           id={`dataprep-action-${this.dropdownId}`}
+          disabled={this.props.disabled}
         />
         <UncontrolledTooltip
           target={`dataprep-action-${this.dropdownId}`}
@@ -423,4 +424,5 @@ export default class ColumnActionsDropdown extends Component {
 ColumnActionsDropdown.propTypes = {
   column: PropTypes.string,
   dropdownOpened: PropTypes.func,
+  disabled: PropTypes.bool,
 };

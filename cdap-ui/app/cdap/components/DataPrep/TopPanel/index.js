@@ -342,7 +342,9 @@ export default class DataPrepTopPanel extends Component {
         className="btn btn-primary"
         onClick={this.onSubmit}
         disabled={
-          this.state.onSubmitLoading || isNil(this.state.workspaceInfo) ? 'disabled' : false
+          this.props.disabled || this.state.onSubmitLoading || isNil(this.state.workspaceInfo)
+            ? 'disabled'
+            : false
         }
       >
         {this.state.onSubmitLoading ? <IconSVG name="icon-spinner" className="fa-spin" /> : null}
@@ -395,4 +397,5 @@ export default class DataPrepTopPanel extends Component {
 DataPrepTopPanel.propTypes = {
   singleWorkspaceMode: PropTypes.bool,
   onSubmit: PropTypes.func,
+  disabled: PropTypes.bool,
 };
