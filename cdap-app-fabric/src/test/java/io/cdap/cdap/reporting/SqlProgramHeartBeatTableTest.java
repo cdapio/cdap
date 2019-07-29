@@ -19,6 +19,7 @@ package io.cdap.cdap.reporting;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
@@ -40,7 +41,7 @@ public class SqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
 
   @BeforeClass
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
-    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();

@@ -36,8 +36,7 @@ public class SqlStructuredTableRegistryTest extends StructuredTableRegistryTest 
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    EmbeddedPostgres pg = EmbeddedPostgres.builder()
-      .setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    EmbeddedPostgres pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     registry = new SqlStructuredTableRegistry(dataSource);
   }

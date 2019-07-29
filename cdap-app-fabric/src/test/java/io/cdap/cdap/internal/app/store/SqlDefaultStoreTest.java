@@ -28,6 +28,7 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
@@ -53,7 +54,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    pg = PostgresInstantiator.createAndStart(injector.getInstance(CConfiguration.class), TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource);
     structuredTableRegistry.initialize();

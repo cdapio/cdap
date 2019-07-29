@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
@@ -47,7 +48,7 @@ public class SqlUserConfigStoreTest extends UserConfigStoreTest {
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
 
-    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();

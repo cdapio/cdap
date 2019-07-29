@@ -27,6 +27,7 @@ import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
@@ -50,7 +51,7 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     Injector injector = AppFabricTestHelper.getInjector(cConf);
 
-    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    pg = pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();
