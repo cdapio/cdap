@@ -14,6 +14,7 @@
  * the License.
  */
 
+const path = require('path');
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const log4js = require('log4js');
@@ -46,14 +47,19 @@ const {
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
-
-let typeDefs;
-
-if (env === 'production') {
-  typeDefs = importSchema('./ui/graphql/schema/rootSchema.graphql');
-} else if (env === 'development') {
-  typeDefs = importSchema('./graphql/schema/rootSchema.graphql');
+let rootSchemaPath;
+/**
+ * This will happen when we build SDK by running node server through ncc compiler.
+ * This will flatten our directory structure and the __dirname will be cdap-sdk/ui
+ * instead of cdap-sdk/ui/graphql. So when we start from sdk we need to append
+ * graphql to the path for accessing schema.
+ */
+if (!__dirname.endsWith('/graphql')) {
+  rootSchemaPath = path.join(__dirname, '/graphql/schema/rootSchema.graphql');
+} else {
+  rootSchemaPath = path.join(__dirname, '/schema/rootSchema.graphql');
 }
+let typeDefs = importSchema(rootSchemaPath);
 
 if (typeof typeDefs === 'undefined') {
   const errorMessage = 'The GraphQL type definitions are undefined';
