@@ -17,6 +17,7 @@
 package io.cdap.cdap.spi.data.common;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import org.junit.Assert;
@@ -38,8 +39,7 @@ public class SqlCachedStructuredTableRegistryTest extends CachedStructuredTableR
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    EmbeddedPostgres pg = EmbeddedPostgres.builder()
-      .setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    EmbeddedPostgres pg = PostgresInstantiator.createAndStart(TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     // TODO: CDAP-14780 Use injector once JDBC driver is wired up in StorageModule
     sqlRegistry = new SqlStructuredTableRegistry(dataSource);

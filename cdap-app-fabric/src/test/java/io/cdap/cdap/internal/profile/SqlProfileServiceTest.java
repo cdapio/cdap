@@ -28,6 +28,7 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
@@ -62,7 +63,7 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
 
-    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
+    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     DataSource dataSource = pg.getPostgresDatabase();
     SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();

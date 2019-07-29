@@ -33,6 +33,17 @@ public class PostgresInstantiator {
   /**
    * Create and start an embedded postgres instance. The instance has to be closed after usage.
    *
+   * @param tempFolder The temp folder to create the postgres directories
+   * @return Embedded postgres instance that is started
+   * @throws IOException on errors during creation or start
+   */
+  public static EmbeddedPostgres createAndStart(File tempFolder) throws IOException {
+    return createAndStart(CConfiguration.create(), tempFolder);
+  }
+
+  /**
+   * Create and start an embedded postgres instance. The instance has to be closed after usage.
+   *
    * @param cConf Adds sql specific configuration values to cConf
    * @param tempFolder The temp folder to create the postgres directories
    * @return Embedded postgres instance that is started
@@ -42,8 +53,11 @@ public class PostgresInstantiator {
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
     cConf.setBoolean(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_EXTERNAL, false);
 
-    EmbeddedPostgres pg =
-      EmbeddedPostgres.builder().setDataDirectory(tempFolder).setCleanDataDirectory(false).start();
+    EmbeddedPostgres pg = EmbeddedPostgres.builder()
+      .setDataDirectory(new File(tempFolder, "data"))
+      .setCleanDataDirectory(false)
+      .setOverrideWorkingDirectory(new File(tempFolder, "pg"))
+      .start();
     String jdbcUrl = pg.getJdbcUrl("postgres", "postgres");
     cConf.set(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL, jdbcUrl);
     return pg;
