@@ -132,7 +132,7 @@ function extractUITheme(cdapConfig, uiThemePath) {
       // For development since we are starting node from the ui folder we need to drop
       // the 'server' from the beginning of the path (config/themes/default|light.json)
 
-      if (uiThemePath.slice(0, 6) === 'server') {
+      if (uiThemePath.startsWith('server')) {
         uiThemePath = path.join('..', uiThemePath);
       }
 
