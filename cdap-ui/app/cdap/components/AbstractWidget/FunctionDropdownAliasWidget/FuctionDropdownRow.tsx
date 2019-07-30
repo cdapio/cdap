@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import Input from '@material-ui/core/Input';
-import withStyles from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import AbstractRow, {
@@ -24,16 +24,19 @@ import AbstractRow, {
   AbstractRowStyles,
 } from 'components/AbstractWidget/AbstractMultiRowWidget/AbstractRow';
 
-const styles = (theme) => {
+const styles = (theme): StyleRules => {
   return {
     ...AbstractRowStyles(theme),
     inputContainer: {
       display: 'grid',
-      gridTemplateColumns: '50% 50%',
+      gridTemplateColumns: '1fr 1fr 30px 1fr',
       gridGap: '10px',
     },
     disabled: {
       color: `${theme.palette.grey['50']}`,
+    },
+    separator: {
+      textAlign: 'center',
     },
   };
 };
@@ -45,38 +48,69 @@ interface IComplexDropdown {
 
 export type IDropdownOption = string | number | IComplexDropdown;
 
-interface IKeyValueDropdownRowProps extends IAbstractRowProps<typeof styles> {
-  keyPlaceholder?: string;
-  kvDelimiter?: string;
+interface IFunctionDropdownRowProps extends IAbstractRowProps<typeof styles> {
+  placeholders: Record<string, string>;
   dropdownOptions: IDropdownOption[];
 }
 
 interface IKeyValueState {
-  value: string;
-  key: string;
+  field: string;
+  func: string;
+  alias: string;
 }
 
 type StateKeys = keyof IKeyValueState;
 
-class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyValueState> {
+class FunctionDropdownRow extends AbstractRow<IFunctionDropdownRowProps, IKeyValueState> {
   public static defaultProps = {
-    keyPlaceholder: 'Key',
-    kvDelimiter: ':',
+    placeholders: {
+      field: 'field',
+      alias: 'alias',
+    },
     dropdownOptions: [],
   };
 
   public state = {
-    key: '',
-    value: '',
+    field: '',
+    func: '',
+    alias: '',
   };
 
+  /**
+   * Sample input: alias:Avg(fieldName)
+   */
   public componentDidMount() {
-    const [key = '', value = ''] = this.props.value.split(this.props.kvDelimiter);
+    const [alias, fn] = this.props.value.split(':');
+    const { func, field } = this.extractFunctionAndAlias(fn);
 
     this.setState({
-      key,
-      value,
+      field,
+      func,
+      alias,
     });
+  }
+
+  private extractFunctionAndAlias(fn) {
+    const defaultResponse = {
+      func: '',
+      field: '',
+    };
+
+    if (!fn) {
+      return defaultResponse;
+    }
+
+    const openBracketIndex = fn.indexOf('(');
+    const closeBracketIndex = fn.indexOf(')');
+
+    if (openBracketIndex === -1 || closeBracketIndex === -1) {
+      return defaultResponse;
+    }
+
+    return {
+      func: fn.substring(0, openBracketIndex),
+      field: fn.substring(openBracketIndex + 1, closeBracketIndex),
+    };
   }
 
   private handleChange = (type: StateKeys, e) => {
@@ -85,10 +119,14 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
         [type]: e.target.value,
       } as Pick<IKeyValueState, StateKeys>,
       () => {
-        const key = this.state.key;
-        const value = this.state.value;
+        const { field, func, alias } = this.state;
 
-        const updatedValue = key.length > 0 ? [key, value].join(this.props.kvDelimiter) : '';
+        if (field.length === 0 || func.length === 0 || alias.length === 0) {
+          this.onChange('');
+          return;
+        }
+
+        const updatedValue = `${alias}:${func}(${field})`;
         this.onChange(updatedValue);
       }
     );
@@ -110,9 +148,9 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
       <div className={this.props.classes.inputContainer}>
         <Input
           classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.keyPlaceholder}
-          onChange={this.handleChange.bind(this, 'key')}
-          value={this.state.key}
+          placeholder={this.props.placeholders.field}
+          onChange={this.handleChange.bind(this, 'field')}
+          value={this.state.field}
           autoFocus={this.props.autofocus}
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
@@ -122,8 +160,8 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
 
         <Select
           classes={{ disabled: this.props.classes.disabled }}
-          value={this.state.value}
-          onChange={this.handleChange.bind(this, 'value')}
+          value={this.state.func}
+          onChange={this.handleChange.bind(this, 'func')}
           displayEmpty={true}
           disabled={this.props.disabled}
         >
@@ -135,10 +173,22 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
             );
           })}
         </Select>
+
+        <span className={this.props.classes.separator}>as</span>
+
+        <Input
+          classes={{ disabled: this.props.classes.disabled }}
+          placeholder={this.props.placeholders.alias}
+          onChange={this.handleChange.bind(this, 'alias')}
+          value={this.state.alias}
+          onKeyPress={this.handleKeyPress}
+          onKeyDown={this.handleKeyDown}
+          disabled={this.props.disabled}
+        />
       </div>
     );
   };
 }
 
-const StyledKeyValueDropdownRow = withStyles(styles)(KeyValueDropdownRow);
-export default StyledKeyValueDropdownRow;
+const StyledFunctionDropdownRow = withStyles(styles)(FunctionDropdownRow);
+export default StyledFunctionDropdownRow;
