@@ -34,12 +34,18 @@ import scala.runtime.AbstractFunction1;
 import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -125,6 +131,18 @@ public final class DataFrames {
    * @return The corresponding {@link DataType}
    */
   private static DataType schemaToDataType(Schema schema, Function1<Schema, DataType> unionSelector) {
+    Schema.LogicalType logicalType = schema.getLogicalType();
+    if (logicalType != null) {
+      switch (logicalType) {
+        case DATE:
+          return DataTypes.DateType;
+        case TIMESTAMP_MILLIS:
+        case TIMESTAMP_MICROS:
+          return DataTypes.TimestampType;
+        default:
+          break;
+      }
+    }
     switch (schema.getType()) {
       case NULL:
         return DataTypes.NullType;
@@ -177,6 +195,7 @@ public final class DataFrames {
    * @return a new {@link Schema}.
    */
   private static Schema dataTypeToSchema(DataType dataType, int[] recordCounter) {
+
     if (dataType.equals(DataTypes.NullType)) {
       return Schema.of(Schema.Type.NULL);
     }
@@ -236,10 +255,10 @@ public final class DataFrames {
 
     // Some special types in Spark SQL
     if (dataType.equals(DataTypes.TimestampType)) {
-      return Schema.of(Schema.Type.LONG);
+      return Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS);
     }
     if (dataType.equals(DataTypes.DateType)) {
-      return Schema.of(Schema.Type.LONG);
+      return Schema.of(Schema.LogicalType.DATE);
     }
 
     // Not support the CalendarInterval type for now, as there is no equivalent in Schema
@@ -255,6 +274,11 @@ public final class DataFrames {
    * @return an object that is compatible with Spark {@link Row}.
    */
   private static Object toRowValue(@Nullable Object value, DataType dataType, String path) {
+    return toRowValueWithSchema(value, dataType, path, null);
+  }
+
+  private static Object toRowValueWithSchema(@Nullable Object value, DataType dataType,
+                                    String path, Schema fSchema) {
     if (value == null) {
       return null;
     }
@@ -345,7 +369,14 @@ public final class DataFrames {
       for (int i = 0; i < fields.length; i++) {
         String fieldName = fields[i].name();
         String fieldPath = path + "/" + fieldName;
-        Object fieldValue = toRowValue(record.get(fieldName), fields[i].dataType(), fieldPath);
+
+        /*
+         * Extract field schema and pass it to toRowValue() API. This is required for using
+         * logical types during value conversion.
+         */
+        Schema fieldSchema = record.getSchema().getField(fieldName).getSchema();
+        Object fieldValue = toRowValueWithSchema(record.get(fieldName), fields[i].dataType(),
+                                           fieldPath, fieldSchema);
 
         if (fieldValue == null && !fields[i].nullable()) {
           throw new IllegalArgumentException("Null value is not allowed for row field at " + fieldPath);
@@ -357,10 +388,29 @@ public final class DataFrames {
 
     // Some special types in Spark SQL
     if (dataType.equals(DataTypes.TimestampType)) {
+      /* 
+       * Check if field schema has logical type TIMESTAMP_MICROS. If yes,
+       * then value should convert the value to milli seconds as Timestamp class
+       * treats the value as milliseconds by default where as CDAP uses
+       * microseconds as default type
+       */
+      if (fSchema != null) {
+        Schema.LogicalType logicalType = fSchema.getLogicalType();
+        if (fSchema.getType() == Schema.Type.UNION) {
+          // It is observed that field schema is of Type Union
+          Schema unionFieldSchema = fSchema.getUnionSchema(0);
+          logicalType = unionFieldSchema.getLogicalType();
+        }
+        if (logicalType != Schema.LogicalType.TIMESTAMP_MILLIS) {
+          long millis = TimeUnit.MICROSECONDS.toMillis((long) value);
+          return new Timestamp(millis);
+        }
+      }
       return new Timestamp((long) value);
     }
     if (dataType.equals(DataTypes.DateType)) {
-      return new Date((long) value);
+      LocalDate lDate = LocalDate.ofEpochDay(Long.parseLong(value.toString()));
+      return Date.valueOf(lDate);
     }
 
     // Not support the CalendarInterval type for now, as there is no equivalent in Schema
@@ -458,7 +508,8 @@ public final class DataFrames {
 
             // Date and timestamp special return type handling
             if (fieldValue instanceof Date) {
-              fieldValue = ((Date) fieldValue).getTime();
+              LocalDate lDate = ((Date) fieldValue).toLocalDate();
+              fieldValue = Math.toIntExact(lDate.toEpochDay());
             } else if (fieldValue instanceof Timestamp) {
               fieldValue = ((Timestamp) fieldValue).getTime();
             }
