@@ -145,91 +145,6 @@ public class UGIProviderTest {
   }
 
   @Test
-  public void testDefaultUGIProviderWithLocalFiles() throws Exception {
-    System.setProperty("sun.security.krb5.debug", "true");
-
-    // sets the path of local keytabs in cConf to be used by SecurityUtil to fetch owner keytab
-    setKeytabDir(localKeytabDirPath.getAbsolutePath());
-
-    // get the owner admin which has been created from the cConf which got modified above
-    OwnerAdmin ownerAdmin = getOwnerAdmin();
-
-    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient);
-
-    // create a namespace with a principal and keytab so that later we can verify that if a required entity owner does
-    // not exists then the provider gives the UGI for namespace owner
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).setPrincipal(
-      eveKerberosPrincipalId.getPrincipal()).setKeytabURI(eveKeytabFile.getAbsolutePath()).build());
-
-    // add an owner for some entity
-    ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);
-    ownerAdmin.add(bobEntity, bobKerberosPrincipalId);
-
-    // Try with local keytab file
-    ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
-    ImpersonationRequest bobImpRequest = new ImpersonationRequest(bobEntity, ImpersonatedOpType.OTHER);
-    UGIWithPrincipal aliceUGIWithPrincipal = verifyAndGetUGI(provider, aliceKerberosPrincipalId, aliceImpRequest);
-    UGIWithPrincipal bobUGIWithPrincipal = verifyAndGetUGI(provider, bobKerberosPrincipalId, bobImpRequest);
-
-    // delete the local keytab file for bob
-    Assert.assertTrue(bobKeytabFile.delete());
-
-    // verify caching by fetch the bob UGI again, it should still return the valid one but after invalidating the
-    // cache it shouldn't
-    verifyCaching(provider, aliceImpRequest, bobImpRequest, aliceUGIWithPrincipal, bobUGIWithPrincipal);
-
-    // delete the owner info for bob's entity
-    ownerAdmin.delete(bobEntity);
-
-    // now we should get the namespace owner principal if we get try to impersonate bobEntity
-    UGIWithPrincipal eveUGIWithPrincipal = provider.getConfiguredUGI(bobImpRequest);
-    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
-                        eveUGIWithPrincipal.getUGI().getAuthenticationMethod());
-    Assert.assertTrue(eveUGIWithPrincipal.getUGI().hasKerberosCredentials());
-    Assert.assertEquals(eveKerberosPrincipalId.getPrincipal(), eveUGIWithPrincipal.getPrincipal());
-
-    // cleanup
-    ownerAdmin.delete(aliceEntity);
-    ownerAdmin.delete(bobEntity);
-    namespaceClient.delete(namespaceId);
-  }
-
-  @Test
-  public void testDefaultUGIProviderWithHDFSFiles() throws Exception {
-    // create a location on hdfs for keytabs
-    Location hdfsKeytabDir = locationFactory.create("keytabs");
-    // set in the cConf so that later it can be used to fetch the keytabs for the given principal
-    setKeytabDir(hdfsKeytabDir.toURI().toString());
-
-    Location aliceRemoteKeytabFile = copyFileToHDFS(hdfsKeytabDir, aliceKeytabFile);
-    Location bobRemoteKeytabFile = copyFileToHDFS(hdfsKeytabDir, bobKeytabFile);
-
-    OwnerAdmin ownerAdmin = getOwnerAdmin();
-    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient);
-
-    // add some entity owners
-    ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);
-    ownerAdmin.add(bobEntity, bobKerberosPrincipalId);
-
-    // Try with keytab file on hdfs
-    ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
-    ImpersonationRequest bobImpRequest = new ImpersonationRequest(bobEntity, ImpersonatedOpType.OTHER);
-    UGIWithPrincipal aliceUGIWithPrincipal = verifyAndGetUGI(provider, aliceKerberosPrincipalId, aliceImpRequest);
-    UGIWithPrincipal bobUGIWithPrincipal = verifyAndGetUGI(provider, bobKerberosPrincipalId, bobImpRequest);
-
-    // delete bob's keytab file on hdfs
-    Assert.assertTrue(bobRemoteKeytabFile.delete());
-
-    // verify caching by ensuring that we are able to fetch bob's ugi even after delete but not after invalidating the
-    // cache
-    verifyCaching(provider, aliceImpRequest, bobImpRequest, aliceUGIWithPrincipal, bobUGIWithPrincipal);
-
-    // cleanup
-    ownerAdmin.delete(aliceEntity);
-    ownerAdmin.delete(bobEntity);
-  }
-
-  @Test
   public void testRemoteUGIProvider() throws Exception {
     // Starts a mock server to handle remote UGI requests
     final NettyHttpService httpService = NettyHttpService.builder("remoteUGITest")
@@ -285,43 +200,6 @@ public class UGIProviderTest {
 
     // cleanup
     ownerAdmin.delete(aliceEntity);
-  }
-
-  private void verifyCaching(DefaultUGIProvider provider, ImpersonationRequest aliceImpRequest,
-                             ImpersonationRequest bobImpRequest, UGIWithPrincipal aliceUGIWithPrincipal,
-                             UGIWithPrincipal bobUGIWithPrincipal) throws IOException {
-    // Fetch the bob UGI again, it should still return the valid one
-    Assert.assertSame(bobUGIWithPrincipal, provider.getConfiguredUGI(bobImpRequest));
-
-    // Invalid the cache, getting of Alice UGI should pass, while getting of Bob should fails
-    provider.invalidCache();
-    Assert.assertNotSame(aliceUGIWithPrincipal, provider.getConfiguredUGI(aliceImpRequest));
-    try {
-      provider.getConfiguredUGI(bobImpRequest);
-      Assert.fail("Expected IOException when getting UGI for " + bobImpRequest);
-    } catch (IOException e) {
-      // Expected
-    }
-  }
-
-  private Location copyFileToHDFS(Location hdfsKeytabDir, File localFile) throws IOException {
-    Location remoteFile = hdfsKeytabDir.append(localFile.getName());
-    Assert.assertTrue(remoteFile.createNew());
-    Files.copy(localFile, Locations.newOutputSupplier(remoteFile));
-    return remoteFile;
-  }
-
-  private UGIWithPrincipal verifyAndGetUGI(UGIProvider provider, KerberosPrincipalId principalId,
-                                           ImpersonationRequest impersonationRequest) throws IOException {
-    UGIWithPrincipal ugiWithPrincipal = provider.getConfiguredUGI(impersonationRequest);
-    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
-                        ugiWithPrincipal.getUGI().getAuthenticationMethod());
-    Assert.assertEquals(principalId.getPrincipal(), ugiWithPrincipal.getPrincipal());
-    Assert.assertTrue(ugiWithPrincipal.getUGI().hasKerberosCredentials());
-
-    // Fetch it again, it is should return the same UGI since there is caching
-    Assert.assertSame(ugiWithPrincipal.getUGI(), provider.getConfiguredUGI(impersonationRequest).getUGI());
-    return ugiWithPrincipal;
   }
 
   private OwnerAdmin getOwnerAdmin() {

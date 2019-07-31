@@ -360,7 +360,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         }
       };
 
-      return impersonator.doAs(program.getId(), callable);
+      ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
+      return impersonator.doAs(programRunId, callable);
 
     } catch (Exception e) {
       deleteDirectory(tempDir);

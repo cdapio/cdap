@@ -71,6 +71,7 @@ import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -107,6 +108,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.security.auth.kerberos.KerberosPrincipal;
 
 /**
  * Service that manages lifecycle of Programs.
@@ -388,6 +390,9 @@ public class ProgramLifecycleService {
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
+
+    authorizePipelineRuntimeImpersonation(userArgs);
+
     return runInternal(programId, userArgs, sysArgs, debug);
   }
 
@@ -495,6 +500,8 @@ public class ProgramLifecycleService {
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
+
+    authorizePipelineRuntimeImpersonation(userArgs);
 
     BasicArguments systemArguments = new BasicArguments(sysArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -1076,5 +1083,16 @@ public class ProgramLifecycleService {
                                                     plugin.getPluginClass().getType(),
                                                     plugin.getPluginClass().getRequirements()))
       .collect(Collectors.toSet());
+  }
+
+  private void authorizePipelineRuntimeImpersonation(Map<String, String> userArgs) throws Exception {
+    if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME)) &&
+            (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
+      String principal = userArgs.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
+      LOG.debug("Checking authorisation for user: %s, using runtime config principal: %s",
+                authenticationContext.getPrincipal(), principal);
+      KerberosPrincipalId kid = new KerberosPrincipalId(principal);
+      authorizationEnforcer.enforce(kid, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
   }
 }
