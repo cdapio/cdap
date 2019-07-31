@@ -28,7 +28,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
+import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
 
 import org.junit.Assert;
 import org.junit.Test;

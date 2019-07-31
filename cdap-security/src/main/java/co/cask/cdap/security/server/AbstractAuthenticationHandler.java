@@ -55,7 +55,7 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     constraintMapping.setPathSpec("/*");
 
     this.setConstraintMappings(new ConstraintMapping[]{constraintMapping});
-//    this.setStrict(false);
+    this.setStrict(false);
     this.setIdentityService(getHandlerIdentityService());
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());

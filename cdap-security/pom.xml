@@ -36,6 +36,16 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
+	<exclusions>
+		<exclusion>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-util-ajax</artifactId>
+		</exclusion>
+		<exclusion>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty-servlet</artifactId>
+                </exclusion>
+	</exclusions>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -79,26 +89,27 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-jaas</artifactId>
+      <version>${jetty8.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-security</artifactId>
+      <version>${jetty8.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-util</artifactId>
+      <version>${jetty8.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-jaspi</artifactId>
+      <version>${jetty8.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-plus</artifactId>
+      <version>${jetty8.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.components</groupId>

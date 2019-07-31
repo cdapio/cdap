@@ -402,7 +402,7 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
-        <dependency>
+        <!--dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-spark-core</artifactId>
           <version>${project.version}</version>
@@ -413,7 +413,7 @@
               <artifactId>jackson-module-scala_2.10</artifactId>
             </exclusion>
           </exclusions>
-        </dependency>
+        </dependency-->
         <dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-spark-core2_2.11</artifactId>

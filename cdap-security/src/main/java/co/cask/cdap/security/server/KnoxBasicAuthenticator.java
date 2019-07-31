@@ -36,7 +36,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.shiro.authz.UnauthorizedException;
-import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpHeaders;
 import org.eclipse.jetty.security.ServerAuthException;
 import org.eclipse.jetty.security.UserAuthentication;
 import org.eclipse.jetty.server.Authentication;
@@ -46,7 +46,6 @@ import org.eclipse.jetty.util.B64Code;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMultimap;
@@ -65,8 +64,7 @@ import co.cask.common.http.HttpResponse;
  */
 public class KnoxBasicAuthenticator extends BasicAuthenticator 
 {   
-
-     private static final Logger LOG = Log.getLogger(KnoxBasicAuthenticator.class.getName());	
+	
 	private Map<String, String> handlerProps;
 	
     /* ------------------------------------------------------------ */
@@ -95,7 +93,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
         
-        LOG.info("handlerProps : " + handlerProps); 
+        Log.info("handlerProps : " + handlerProps); 
         final String authorizationHeader = request.getHeader("Authorization");
         String wireToken = null;
         String username = null;
@@ -111,7 +109,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
         //Getting from Metaservice
         if (Strings.isNullOrEmpty(wireToken)) {
         	wireToken = request.getHeader("knoxToken");
-        	LOG.info("knox token : " + wireToken);
+        	Log.info("knox token : " + wireToken);
         }
         
         if (!Strings.isNullOrEmpty(wireToken)) {
@@ -129,7 +127,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
 	            throw new UnauthorizedException("Not authorized");
 	
 	        Date expires = token.getExpiresDate();
-	        LOG.debug("token expiry date: " + expires.toString());
+	        Log.debug("token expiry date: " + expires.toString());
 	        if (expires != null && expires.before(new Date()))
 	            throw new UnauthorizedException("Token expired.");
 	        
@@ -141,7 +139,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
         }
         
         
-        String credentials = request.getHeader(HttpHeader.AUTHORIZATION.asString());
+        String credentials = request.getHeader(HttpHeaders.AUTHORIZATION);
         
         try
         {
@@ -168,15 +166,15 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
                             String encryptedCredentials = Base64.getEncoder().encodeToString(username_password.getBytes());
                             
                             String host = handlerProps.get(Constants.Security.KNOX_HOST);
-			    LOG.info("host : " + host);
+			    Log.info("host : " + host);
                             String port = handlerProps.get(Constants.Security.KNOX_PORT);
-			    LOG.info("port : " + port);
+			    Log.info("port : " + port);
                             String strAuthURI = "https://" + host + ":" + port + "/gateway/knoxsso/knoxtoken/api/v1/token";;
                     	    URI authURI = URI.create(strAuthURI);
                     	    
                     	    HttpRequest knoxRequest = HttpRequest.get(authURI.toURL()).addHeaders(getAuthenticationHeaders(encryptedCredentials)).build();
                     	    HttpResponse knoxResponse = HttpRequests.execute(knoxRequest, getHttpRequestConfig());
-                    	    LOG.info("knoxResponse.getResponseCode() : " + knoxResponse.getResponseCode());	
+                    	    Log.info("knoxResponse.getResponseCode() : " + knoxResponse.getResponseCode());	
                     		if (knoxResponse.getResponseCode() == 200) {
 	                            UserIdentity user = login (username, null, request);
 	                            if (user!=null)
@@ -192,7 +190,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
             if (DeferredAuthentication.isDeferred(response))
                 return Authentication.UNAUTHENTICATED;
             
-            response.setHeader(HttpHeader.WWW_AUTHENTICATE.asString(), "basic realm=\"" + _loginService.getName() + '"');
+            response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "basic realm=\"" + _loginService.getName() + '"');
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return Authentication.SEND_CONTINUE;
         }
@@ -215,7 +213,10 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
             JWSVerifier verifier = new RSASSAVerifier(publicKey);
             rc = token.verify(verifier);
         } catch (Exception e) {
-            LOG.warn("Exception in verifying signature : ", e.toString());
+            if (Log.isDebugEnabled()) {
+                e.printStackTrace();
+            }
+            Log.warn("Exception in verifying signature : ", e.toString());
             e.printStackTrace();
             return false;
         }
