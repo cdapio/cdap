@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,12 @@
  * the License.
 */
 
-@import "../../../styles/variables.less";
+@import "~styles/variables.scss";
 
-@tbody-font-color: #373a3c;
-@tag-success-color: #5cb85c;
+$tbody-font-color: #373a3c;
+$tag-success-color: #5cb85c;
 
-body.state-hydrator-create.state-hydrator {
+body.state-hydrator {
   .modal.wrangler-modal {
     .modal-dialog {
       margin-top: 0;
@@ -43,14 +43,7 @@ body.state-hydrator-create.state-hydrator {
           }
         }
       }
-      dataprep {
-        display: block;
-        height: 100%;
-        > div {
-          height: 100%;
-        }
-      }
-      dataprep .dataprep-container {
+      .dataprep-container {
         .dataprep-loading {
           z-index: 1063;
         }
@@ -76,7 +69,7 @@ body.state-hydrator-create.state-hydrator {
               white-space: nowrap;
               border-radius: 4px;
               &.tag-success {
-                background-color: @tag-success-color;
+                background-color: $tag-success-color;
               }
             }
           }
@@ -99,16 +92,17 @@ body.state-hydrator-create.state-hydrator {
             }
             .upgrade-button {
               .btn-info {
-                background-color: @btn-info;
+                background-color: $info;
 
                 &:hover {
-                  background-color: darken(@btn-info, 12%);
+                  background-color: darken($info, 12%);
                 }
               }
             }
             .more-dropdown {
               .popper {
                 margin-right: 30px;
+                padding: 0;
               }
             }
           }
@@ -136,7 +130,7 @@ body.state-hydrator-create.state-hydrator {
             }
           }
           tbody {
-            color: @tbody-font-color;
+            color: $tbody-font-color;
 
             tr {
               background-color: white;
@@ -195,7 +189,7 @@ body.state-hydrator-create.state-hydrator {
 
               &:hover {
                 cursor: pointer;
-                background-color: @cdap-lighter-grey;
+                background-color: $grey-07;
               }
             }
           }

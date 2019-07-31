@@ -14,6 +14,7 @@
  * the License.
  */
 
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import DataPrepAutoComplete from 'components/DataPrep/AutoComplete';
 import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
@@ -22,6 +23,10 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 require('./DataPrepCLI.scss');
 
 export default class DataPrepCLI extends Component {
+  static propTypes = {
+    disabled: PropTypes.bool,
+  };
+
   constructor(props) {
     super(props);
 
@@ -157,6 +162,7 @@ export default class DataPrepCLI extends Component {
               onChange={this.handleDirectiveChange}
               ref={(ref) => (this.directiveRef = ref)}
               onPaste={this.handlePaste}
+              disabled={this.props.disabled}
             />
           </div>
         </div>

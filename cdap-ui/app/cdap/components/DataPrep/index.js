@@ -253,7 +253,7 @@ export default class DataPrep extends Component {
         className={classnames('panel-toggle float-left text-center', {
           disabled: isEmpty(this.state.currentWorkspace),
         })}
-        onClick={this.onSidePanelToggle}
+        onClick={this.props.disabled ? undefined : this.onSidePanelToggle}
       >
         <span className="panel-button" title={tooltip}>
           {this.state.sidePanelToggle ? (
@@ -306,13 +306,14 @@ export default class DataPrep extends Component {
             <DataPrepTopPanel
               singleWorkspaceMode={this.props.singleWorkspaceMode}
               onSubmit={this.onSubmitToListener.bind(this)}
+              disabled={this.props.disabled}
             />
           </div>
         </div>
 
         <div className="row dataprep-body">
           <div className="dataprep-main col-12">
-            <DataPrepContentWrapper />
+            <DataPrepContentWrapper disabled={this.props.disabled} />
           </div>
         </div>
 
@@ -327,4 +328,5 @@ DataPrep.propTypes = {
   onSubmit: PropTypes.func,
   onConnectionsToggle: PropTypes.func.isRequired,
   onWorkspaceDelete: PropTypes.func,
+  disabled: PropTypes.bool,
 };

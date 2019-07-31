@@ -249,12 +249,13 @@ angular.module(PKG.name + '.commons')
         }
       },
       'wrangler-directives': {
-        element: '<my-wrangler-directives></my-wrangler-directives>',
+        element: '<wrangler-editor></wrangler-editor>',
         attributes: {
-          'ng-model': 'model',
+          'value': 'model',
           'disabled': 'disabled',
           'data-config': 'myconfig',
-          'properties': 'properties'
+          'properties': 'properties',
+          'on-change': 'onChange'
         }
       },
       'rules-engine-editor': {
