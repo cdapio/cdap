@@ -72,8 +72,7 @@
     "jest": true,
     "beforeEach": true,
     "afterEach": true,
-    "avsc": true,
-    "c3": true
+    "avsc": true
   },
   "plugins": [
     "react",
