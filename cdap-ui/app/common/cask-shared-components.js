@@ -85,6 +85,7 @@ var PluginConnectionBrowser = require('../cdap/components/DataPrepConnections/Pl
   .default;
 var FunctionDropdownAlias = require('../cdap/components/AbstractWidget/FunctionDropdownAliasWidget')
   .default;
+var ToggleSwitchWidget = require('../cdap/components/AbstractWidget/ToggleSwitchWidget').default;
 
 export {
   Store,
@@ -147,4 +148,5 @@ export {
   MultipleValuesWidget,
   PluginConnectionBrowser,
   FunctionDropdownAlias,
+  ToggleSwitchWidget,
 };

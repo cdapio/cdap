@@ -289,11 +289,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'toggle': {
-        element: '<my-toggle-switch></my-toggle-switch>',
+        element: '<toggle-switch-widget></toggle-switch-widget>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig',
+          'value': 'model',
+          'widget-attributes': 'myconfig["widget-attributes"]',
           'disabled': 'disabled',
+          'on-change': 'onChange'
         }
       },
     };
