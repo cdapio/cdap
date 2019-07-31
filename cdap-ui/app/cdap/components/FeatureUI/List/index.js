@@ -26,6 +26,12 @@ class List extends React.Component {
     super(props);
   }
 
+  onRemove(item) {
+    if (this.props.onPropertyRemoved) {
+      this.props.onPropertyRemoved(item);
+    }
+  }
+
   render() {
     let listData = isEmpty(this.props.dataProvider) ? [] : this.props.dataProvider;
     return (
@@ -43,6 +49,7 @@ class List extends React.Component {
                 <div className="parent-item" title = {item.parent}>{item.parent}</div>
                 <div>:</div>
                 <div className="child-item" title = {item.child}>{item.child}</div>
+                <i className="fa fa-times text-danger " onClick = { this.onRemove.bind(this, item)} />
               </div>);
           })
         }
@@ -54,5 +61,6 @@ List.propTypes = {
   dataProvider: PropTypes.array,
   header: PropTypes.string,
   headerClass: PropTypes.string,
-  onHeaderClick: PropTypes.func
+  onHeaderClick: PropTypes.func,
+  onPropertyRemoved: PropTypes.func
 };

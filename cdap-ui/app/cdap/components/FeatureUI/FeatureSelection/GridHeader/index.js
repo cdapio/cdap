@@ -41,6 +41,7 @@ class GridHeader extends Component {
           </div>
         </div>
         <div className="header-control">
+          <div className = "selected-feature">{ "Selected Features: " + this.props.selectedCount }</div>
           <button className = "feature-button left-margin" onClick={this.props.backnavigation}>Back</button>
           <button className = "feature-button left-margin" onClick={this.props.save}
             disabled={!this.props.enableSave}>Save</button>
@@ -55,5 +56,7 @@ GridHeader.propTypes = {
   selectedPipeline: PropTypes.object,
   backnavigation: PropTypes.func,
   save: PropTypes.func,
-  enableSave: PropTypes.any
+  enableSave: PropTypes.any,
+  selectedCount: PropTypes.number,
+  totalCount: PropTypes.number
 };

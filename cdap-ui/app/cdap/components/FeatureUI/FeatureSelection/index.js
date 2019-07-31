@@ -19,7 +19,7 @@ import FilterContainer from './FilterContainer';
 import './FeatureSelection.scss';
 import GridHeader from './GridHeader';
 import GridContainer from './GridContainer';
-import { isNil, cloneDeep } from 'lodash';
+import { isNil } from 'lodash';
 import {
   GET_PIPE_LINE_FILTERED,
   GET_FEATURE_CORRELAION,
@@ -34,27 +34,63 @@ import NamespaceStore from 'services/NamespaceStore';
 import { checkResponseError, getDefaultRequestHeader } from '../util';
 import SaveFeatureModal from './SaveFeatureModal';
 import PropTypes from 'prop-types';
+import { getRoundOfValue } from '../GridFormatters';
+import ModelContainer from './ModelContainer';
 
 class FeatureSelection extends Component {
 
-  filterColumnDefs = [];
-  filterGridRows = [];
-  correlationColumnDefs = [];
-  correlationGridRows = [];
+  gridInfoList = [];
+  targetVariable = "";
+  totalStatsFeature = 0;
+  identiferCol = "featureName";
+  setGridSelection;
 
   constructor(props) {
     super(props);
+    this.initGridInfo(3);   // Number of tabs
     const dataInfo = this.dataParser(this.props.pipeLineData);
     this.state = Object.assign({
-      activeTab: "1", selectedFeatures: [],
+      activeTab: "0", selectedFeatures: [],
       openSaveModal: false,
-      enableSave:false,
+      enableSave: false,
       isDataLoading: false,
     }, dataInfo);
 
+    this.updateGridInfo(0, dataInfo.gridColumnDefs, dataInfo.gridRowData);
+    this.totalStatsFeature = dataInfo.gridRowData.length;
+  }
 
-    this.storeGridInfo(true, dataInfo.gridColumnDefs, dataInfo.gridRowData);
-    this.storeGridInfo(false, dataInfo.gridColumnDefs, dataInfo.gridRowData);
+  componentWillMount() {
+    if (this.props.pipelineRequestConfig &&  this.props.pipelineRequestConfig.targetColumn && this.props.pipelineRequestConfig.targetColumn.column) {
+      this.targetVariable = this.props.pipelineRequestConfig.targetColumn.column;
+    }
+  }
+
+  initGridInfo(length) {
+    for (let i=0; i < length; i++) {
+      this.gridInfoList.push({
+        columDefs: {},
+        rowData: []
+      });
+    }
+  }
+
+  updateGridInfo(index, columDefs, rowData) {
+    if (index < this.gridInfoList.length) {
+      this.gridInfoList[index]['gridColumnDefs'] = columDefs;
+      this.gridInfoList[index]['gridRowData'] = rowData;
+    }
+  }
+
+  getGridInfo(index) {
+    if (index < this.gridInfoList.length) {
+      return this.gridInfoList[index];
+    } else {
+      return {
+        gridColumnDefs: {},
+        gridRowData: []
+      };
+    }
   }
 
   dataParser = (data) => {
@@ -77,10 +113,10 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField:'featureName' });
+          columDefs.push({ headerName: "Generated Feature", field: this.identiferCol, width: 500, checkboxSelection: true, headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField: this.identiferCol });
         }
         columns.forEach(element => {
-          columDefs.push({ headerName: element.name, field: element.name , resizable: true, filter:'agNumberColumnFilter'});
+          columDefs.push({ headerName: element.name, field: element.name, resizable: true, filter: 'agNumberColumnFilter' });
         });
       }
 
@@ -105,23 +141,13 @@ class FeatureSelection extends Component {
     };
   }
 
-  storeGridInfo(isFilter, columDefs, rows) {
-    if (isFilter) {
-      this.filterColumnDefs = cloneDeep(columDefs);
-      this.filterGridRows = cloneDeep(rows);
-    } else {
-      this.correlationColumnDefs = cloneDeep(columDefs);
-      this.correlationGridRows = cloneDeep(rows);
-    }
-  }
-
   navigateToParentWindow = () => {
     this.props.nagivateToParent();
   }
 
   gridRowSelectionChange = (selectedRows) => {
     if (!isNil(selectedRows) && selectedRows.length > 0) {
-      this.setState({ selectedFeatures: selectedRows, enableSave:true });
+      this.setState({ selectedFeatures: selectedRows, enableSave: true });
 
     } else {
       this.setState({ selectedFeatures: [], enableSave: false });
@@ -172,7 +198,7 @@ class FeatureSelection extends Component {
 
   getFilteredRecords(requestObj) {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
-    this.setState ({
+    this.setState({
       isDataLoading: true
     });
     FEDataServiceApi.pipelineFilteredData(
@@ -183,13 +209,13 @@ class FeatureSelection extends Component {
         result => {
           if (checkResponseError(result) || isNil(result["featureStatsList"])) {
             this.handleError(result, GET_PIPE_LINE_FILTERED);
-            this.setState ({
+            this.setState({
               isDataLoading: false,
               gridRowData: []
             });
           } else {
             const parsedResult = this.dataParser(result["featureStatsList"]);
-            this.storeGridInfo(true, parsedResult.gridColumnDefs, parsedResult.gridRowData);
+            this.updateGridInfo(0, parsedResult.gridColumnDefs, parsedResult.gridRowData);
             this.setState({
               isDataLoading: false,
               gridRowData: parsedResult.gridRowData
@@ -198,7 +224,7 @@ class FeatureSelection extends Component {
         },
         error => {
           this.handleError(error, GET_PIPE_LINE_FILTERED);
-          this.setState ({
+          this.setState({
             isDataLoading: false,
             gridRowData: []
           });
@@ -208,18 +234,22 @@ class FeatureSelection extends Component {
 
   toggle(tab) {
     if (this.state.activeTab !== tab) {
-      if (tab == '1') {
-        this.setState({ gridColumnDefs: this.filterColumnDefs, gridRowData: this.filterGridRows, activeTab: tab });
-      } else {
-        this.setState({ gridColumnDefs: this.correlationColumnDefs, gridRowData: this.correlationGridRows, activeTab: tab });
-      }
+      const gridInfo = this.getGridInfo(Number(tab));
+      this.setState({
+        gridColumnDefs: gridInfo['gridColumnDefs'],
+        gridRowData: gridInfo['gridRowData'],
+        activeTab: tab
+      });
+      setTimeout(() => {
+        this.setGridSelection(this.state.selectedFeatures, this.identiferCol);
+        }, 500);
     }
   }
 
   applyCorrelation = (value) => {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
-    const selectedFeatures = [value.selectedfeatures.name];
-    this.setState ({
+    const selectedFeatures = [value.selectedfeatures];
+    this.setState({
       isDataLoading: true
     });
     FEDataServiceApi.featureCorrelationData(
@@ -231,21 +261,25 @@ class FeatureSelection extends Component {
         result => {
           if (checkResponseError(result) || isNil(result["featureCorrelationScores"])) {
             this.handleError(result, GET_FEATURE_CORRELAION);
-            this.setState ({
+            this.setState({
               isDataLoading: false,
               gridRowData: [],
             });
           } else {
-            const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
-            this.storeGridInfo(false, parsedResult.gridColumnDefs, parsedResult.gridRowData);
+            const parsedResult = this.parseRelationalData(result["featureCorrelationScores"], 'featureCorrelationScores');
+            this.updateGridInfo(1, parsedResult.gridColumnDefs, parsedResult.gridRowData);
             this.setState({
               isDataLoading: false,
               gridColumnDefs: parsedResult.gridColumnDefs,
-              gridRowData: parsedResult.gridRowData });
+              gridRowData: parsedResult.gridRowData
+            });
+            setTimeout(() => {
+              this.setGridSelection(this.state.selectedFeatures, this.identiferCol);
+              }, 500);
           }
         },
         error => {
-          this.setState ({
+          this.setState({
             isDataLoading: false,
             gridRowData: [],
           });
@@ -254,48 +288,128 @@ class FeatureSelection extends Component {
       );
   }
 
-  clearCorrelation = () => {
-    this.onFeatureSelection(this.props.selectedPipeline);
-
+  applyModelSelection = (value) => {
+    const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
+    const selectedFeatures = [value.selectedfeatures];
+    this.setState({
+      isDataLoading: true
+    });
+    FEDataServiceApi.modelBasedData(
+      {
+        namespace: NamespaceStore.getState().selectedNamespace,
+        pipeline: featureGenerationPipelineName,
+        coefficientType: value.coefficientType.name
+      }, selectedFeatures, getDefaultRequestHeader()).subscribe(
+        result => {
+          if (checkResponseError(result) || isNil(result["featureImportanceScores"])) {
+            this.handleError(result, GET_FEATURE_CORRELAION);
+            this.setState({
+              isDataLoading: false,
+              gridRowData: [],
+            });
+          } else {
+            const parsedResult = this.parseRelationalData(result["featureImportanceScores"], 'featureImportanceScores');
+            this.updateGridInfo(2, parsedResult.gridColumnDefs, parsedResult.gridRowData);
+            this.setState({
+              isDataLoading: false,
+              gridColumnDefs: parsedResult.gridColumnDefs,
+              gridRowData: parsedResult.gridRowData
+            });
+            setTimeout(() => {
+              this.setGridSelection(this.state.selectedFeatures, this.identiferCol);
+              }, 500);
+          }
+        },
+        error => {
+          this.setState({
+            isDataLoading: false,
+            gridRowData: [],
+          });
+          this.handleError(error, GET_FEATURE_CORRELAION);
+        }
+      );
   }
+
 
 
   handleError(error, type) {
-    console.log('error ==> '+ error + "| type => " + type);
+    console.log('error ==> ' + error + "| type => " + type);
   }
 
-  praseCorrelation = (value) => {
+  parseRelationalData = (value, property) => {
     const columDefs = [];
     const rowData = [];
-    // generate column def\featureCorrelationScores
+    let minValue;
+    let maxValue;
     if (!isNil(value) && value.length > 0) {
-      const item = value[0]['featureCorrelationScores'];
-      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true,headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField:'featureName'  });
-      columDefs.push({ headerName: "Value", field: "value", filter:'agNumberColumnFilter' });
-
-      if (!isNil(item)) {
-        for (let key in item) {
-          rowData.push({ featureName: key, value: item[key] });
+      const respData = value[0][property];
+      if (!isNil(respData)) {
+        for (let key in respData) {
+          if (isNil(minValue) || minValue > respData[key]) {
+            minValue = respData[key];
+          } if (isNil(maxValue) || maxValue < respData[key]) {
+            maxValue = respData[key];
+          }
+          rowData.push({ featureName: key, value: respData[key] });
         }
       }
+      if (minValue >= 0) {
+        minValue = 0;
+      } else {
+        if ((minValue * -1) > maxValue) {
+          maxValue = (minValue * -1);
+        } else {
+          minValue = (maxValue * -1);
+        }
+      }
+      columDefs.push(
+        {
+          headerName: "Generated Feature",
+          field: this.identiferCol,
+          width: 450,
+          checkboxSelection: true,
+          headerCheckboxSelection: true,
+          headerCheckboxSelectionFilteredOnly:
+            true,
+          tooltipField: this.identiferCol
+        });
+      columDefs.push(
+        {
+          field: "VO",
+          headerName: "",
+          cellRenderer: 'correlationRenderer',
+          width: 440,
+        });
+      columDefs.push(
+        {
+          headerName: "Value",
+          field: "value",
+          width: 100,
+          filter: 'agNumberColumnFilter',
+          tooltipField: 'value',
+          valueFormatter: function (params) { return getRoundOfValue(params); },
+        });
     }
     return {
       gridColumnDefs: columDefs,
-      gridRowData: rowData
+      gridRowData: rowData.map((item => {
+        item['VO'] = { value: item['value'], min: minValue, max: maxValue };
+        return item;
+      }))
     };
   }
 
-  onSaveClick =()=>{
-    this.setState({openSaveModal:true});
+  onSaveClick = () => {
+    this.setState({ openSaveModal: true });
   }
 
   onSaveModalClose = () => {
-    this.setState({openSaveModal:false});
+    this.setState({ openSaveModal: false });
   }
 
-  onFeatureSelection(pipeline, isFilter=false) {
+  onFeatureSelection(pipeline, isFilter = false) {
     this.currentPipeline = pipeline;
-    this.setState ({
+    this.setState({
       isDataLoading: true
     });
     FEDataServiceApi.pipelineData({
@@ -305,7 +419,7 @@ class FeatureSelection extends Component {
       result => {
         if (checkResponseError(result) || isNil(result["featureStatsList"])) {
           this.handleError(result, GET_PIPE_LINE_DATA);
-          this.setState ({
+          this.setState({
             isDataLoading: false,
             gridRowData: []
           });
@@ -314,16 +428,16 @@ class FeatureSelection extends Component {
           if (!isFilter) {
             this.storeGridInfo(false, data.gridColumnDefs, data.gridRowData);
             this.setState({
-              gridColumnDefs:data.gridColumnDefs,
+              gridColumnDefs: data.gridColumnDefs,
               gridRowData: data.gridRowData,
               isDataLoading: false
-           });
+            });
           }
         }
       },
       error => {
         this.handleError(error, GET_PIPELINE);
-        this.setState ({
+        this.setState({
           isDataLoading: false,
           gridRowData: []
         });
@@ -331,15 +445,20 @@ class FeatureSelection extends Component {
     );
   }
 
+  setGridFunction(childFunc) {
+    this.setGridSelection  = childFunc;
+  }
 
   render() {
-    return (
+     return (
       <div className="feature-selection-box">
         <div className="grid-box">
           <GridHeader selectedPipeline={this.props.selectedPipeline} backnavigation={this.navigateToParentWindow}
+            selectedCount = { isNil(this.state.selectedFeatures)?this.totalStatsFeature:this.state.selectedFeatures.length }
+            totalCount = { isNil(this.state.gridRowData) ? this.totalStatsFeature:this.state.gridRowData.length }
             save={this.onSaveClick} enableSave={this.state.enableSave}></GridHeader>
           <GridContainer gridColums={this.state.gridColumnDefs}
-            rowData={this.state.gridRowData}
+            rowData={this.state.gridRowData} setFunctionPointer = { this.setGridFunction.bind(this) }
             selectionChange={this.gridRowSelectionChange}
           ></GridContainer>
         </div>
@@ -347,34 +466,49 @@ class FeatureSelection extends Component {
           <Nav tabs className="tab-header">
             <NavItem>
               <NavLink
+                className={classnames({ active: this.state.activeTab === '0' })}
+                onClick={() => { this.toggle('0'); }}>
+                Statistics
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
                 className={classnames({ active: this.state.activeTab === '1' })}
                 onClick={() => { this.toggle('1'); }}>
-                Filter
+                Correlation
               </NavLink>
             </NavItem>
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === '2' })}
                 onClick={() => { this.toggle('2'); }}>
-                Correlation
+                Model
               </NavLink>
             </NavItem>
           </Nav>
           <TabContent activeTab={this.state.activeTab} className="tab-content">
-            <TabPane tabId="1" className="tab-pane">
+            <TabPane tabId="0" className="tab-pane">
               <FilterContainer filterColumns={this.state.filterColumns}
                 applyFilter={this.applyFilter}></FilterContainer>
             </TabPane>
+            <TabPane tabId="1" className="tab-pane">
+              <CorrelationContainer applyCorrelation={this.applyCorrelation}
+                targetVariable={this.targetVariable}
+                featureNames={this.state.featureNames}
+                ></CorrelationContainer>
+            </TabPane>
             <TabPane tabId="2" className="tab-pane">
-              <CorrelationContainer applyCorrelation={this.applyCorrelation} featureNames={this.state.featureNames}
-              onClear={this.clearCorrelation}></CorrelationContainer>
+              <ModelContainer applyModelSelection={this.applyModelSelection}
+                targetVariable={this.targetVariable}
+                featureNames={this.state.featureNames}
+                ></ModelContainer>
             </TabPane>
           </TabContent>
         </div>
 
         <SaveFeatureModal open={this.state.openSaveModal} message={this.state.alertMessage}
           onClose={this.onSaveModalClose} selectedPipeline={this.props.selectedPipeline}
-          selectedFeatures={this.state.selectedFeatures}/>
+          selectedFeatures={this.state.selectedFeatures} />
       </div>
     );
   }
@@ -384,5 +518,6 @@ export default FeatureSelection;
 FeatureSelection.propTypes = {
   pipeLineData: PropTypes.array,
   nagivateToParent: PropTypes.func,
-  selectedPipeline: PropTypes.object
+  selectedPipeline: PropTypes.object,
+  pipelineRequestConfig: PropTypes.object
 };

@@ -94,7 +94,7 @@ class PropertySelector extends React.Component {
 
   setDefaultPropertyTobeConigured() {
     if (!isEmpty(this.props.availableProperties)) {
-      this.currentProperty = find(this.props.availableProperties, {groupName : 'basic'});
+      this.currentProperty = find(this.props.availableProperties, { groupName: 'basic' });
       if (this.currentProperty) {
         this.onAccordionChange(this.currentProperty.paramName);
       }
@@ -106,15 +106,15 @@ class PropertySelector extends React.Component {
       namespace: NamespaceStore.getState().selectedNamespace
     },
       this.props.selectedSchemas.map(schema => schema.schemaName)
-    , getDefaultRequestHeader()).subscribe(
-      result => {
-        this.setDetectedProperties(result);
-        this.props.setDetectedProperties(result);
-        setTimeout(() => {
-          this.setDefaultPropertyTobeConigured();
-        });
-      }
-    );
+      , getDefaultRequestHeader()).subscribe(
+        result => {
+          this.setDetectedProperties(result);
+          this.props.setDetectedProperties(result);
+          setTimeout(() => {
+            this.setDefaultPropertyTobeConigured();
+          });
+        }
+      );
   }
 
   setDetectedProperties(result) {
@@ -205,7 +205,7 @@ class PropertySelector extends React.Component {
 
 
   onAccordionChange(property) {
-    this.currentProperty = find(this.props.availableProperties, {paramName: property});
+    this.currentProperty = find(this.props.availableProperties, { paramName: property });
     if (this.currentProperty) {
       if (isEmpty(this.currentProperty.subParams)) {
         this.currentSubProperty = "none";
@@ -246,14 +246,16 @@ class PropertySelector extends React.Component {
     if (type != "All") {
       if (item.columnType == type) {
         if (key != '') {
-          return item.columnName.indexOf(key) > -1;
+          const col = item.columnName.toLowerCase();
+          return col.indexOf(key.toLowerCase()) > -1;
         }
       } else {
         return false;
       }
     } else {
       if (key != '') {
-        return item.columnName.indexOf(key) > -1;
+        const col = item.columnName.toLowerCase();
+        return col.indexOf(key.toLowerCase()) > -1;
       }
     }
     return true;
@@ -285,13 +287,52 @@ class PropertySelector extends React.Component {
     return false;
   }
 
+  onPropertyRemoved(propertyName, subProperty, item) {
+    let propertyMap = this.props.propertyMap;
+    let schemaColumns = [];
+    if (propertyMap.has(propertyName)) {
+      let subSchemaMap = find(propertyMap.get(propertyName), { header: subProperty });
+      if (subSchemaMap) {
+        subSchemaMap.value.forEach((value, key) => {
+          value.map(column => {
+            if ((key == item.parent) && (column.columnName != item.child)) {
+              schemaColumns.push(column);
+            }
+          });
+        });
+      }
+    }
+    const changedProperty = find(this.props.availableProperties, { paramName: propertyName });
+    if (changedProperty) {
+      let updateObj = getPropertyUpdateObj(changedProperty, subProperty, item.parent, schemaColumns);
+      let updatePropMap = cloneDeep(this.props.propertyMap);
+      updatePropertyMapWithObj(updatePropMap, updateObj);
+      this.props.updatePropertyMap(updatePropMap);
+    }
+    const schemas = cloneDeep(this.state.schemas);
+    if (this.currentProperty && this.currentProperty.paramName == propertyName &&
+      this.currentSubProperty && this.currentSubProperty == subProperty) {
+      schemas.forEach((schema) => {
+        if (schema.schemaName == item.parent) {
+          const colIndex  = findIndex(schema.schemaColumns, { columnName: item.child });
+          if (colIndex >= 0) {
+            schema.schemaColumns[colIndex].checked = false;
+          }
+        }
+      });
+    }
+    this.setState({
+      schemas: schemas
+    });
+  }
+
   render() {
     let updatedPropMap;
     let basicPropMap = new Map();
     let advancePropMap = new Map();
     let propertyDisplayNameMap = new Map();
     if (isNil(this.currentProperty) && !isEmpty(this.props.availableProperties)) {
-      this.currentProperty = find(this.props.availableProperties, {groupName : 'basic'});
+      this.currentProperty = find(this.props.availableProperties, { groupName: 'basic' });
     }
     this.props.availableProperties.map((property) => {
       if (property.groupName == 'basic') {
@@ -345,8 +386,8 @@ class PropertySelector extends React.Component {
                       description = subParams[0].description;
                     }
                     return (
-                      <AccordionItem key={property} uuid = {property} expanded={index == 0 ? true : false}>
-                        <AccordionItemTitle className = { (this.currentProperty && property == this.currentProperty.paramName) ? "accordion__title selected" : "accordion__title"}>
+                      <AccordionItem key={property} uuid={property} expanded={index == 0 ? true : false}>
+                        <AccordionItemTitle className={(this.currentProperty && property == this.currentProperty.paramName) ? "accordion__title selected" : "accordion__title"}>
                           <div className="title-items">
                             {
                               description && <InfoTip id={property + '_InfoTip'} description={description} />
@@ -366,6 +407,7 @@ class PropertySelector extends React.Component {
                                 key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
                                 header={(propValue.header == "none") ? undefined : propValue.displayName}
                                 headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
+                                onPropertyRemoved={this.onPropertyRemoved.bind(this, property, propValue.header)}
                                 onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
                             })
                           }
@@ -396,8 +438,8 @@ class PropertySelector extends React.Component {
                         description = subParams[0].description;
                       }
                       return (
-                        <AccordionItem key={property} uuid = {property}>
-                          <AccordionItemTitle className = { property == this.currentProperty.paramName? "accordion__title selected" : "accordion__title"}>
+                        <AccordionItem key={property} uuid={property}>
+                          <AccordionItemTitle className={property == this.currentProperty.paramName ? "accordion__title selected" : "accordion__title"}>
                             <div className="title-items">
                               {
                                 description && <InfoTip id={property + '_InfoTip'} description={description} />
@@ -431,7 +473,7 @@ class PropertySelector extends React.Component {
           </div>
         </div>
         <div className="schema-container">
-          <div className="config-selector-header">{"Select dataset columns for : "  + ( this.currentProperty ? (propertyDisplayNameMap.get(this.currentProperty.paramName))
+          <div className="config-selector-header">{"Select dataset columns for : " + (this.currentProperty ? (propertyDisplayNameMap.get(this.currentProperty.paramName))
             + (isEmpty(this.currentProperty.subParams) ? "" : (" (" + toCamelCase(this.currentSubProperty) + ")")) : "")}</div>
           <div className="schema-filter-container">
             <label>Column Type</label>

@@ -43,6 +43,7 @@
       display: flex;
       flex-direction: column;
       width: 100%;
+      overflow-y: auto;
       .list-item {
         display: flex;
         margin: 3px 20px;

@@ -17,19 +17,27 @@
 import React, { Component } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import isEmpty from 'lodash/isEmpty';
+import findIndex from 'lodash/findIndex';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './GridContainer.scss';
 import PropTypes from 'prop-types';
+import CorrelationRenderer from 'components/FeatureUI/GridRenderers/CorrelationRenderer';
 
 class GridContainer extends Component {
   gridApi;
   gridColumnApi;
+
   defaultColDef = {
     resizable: true
   }
   constructor(props) {
     super(props);
+    this.state = {
+      frameworkComponents: {
+        'correlationRenderer': CorrelationRenderer,
+      }
+    };
   }
 
   componentWillReceiveProps(nextProps) {
@@ -49,6 +57,23 @@ class GridContainer extends Component {
   onGridReady = params => {
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
+    if (this.props.setFunctionPointer) {
+      this.props.setFunctionPointer(this.setSelection.bind(this));
+    }
+  }
+
+  setSelection(selectedValues, identifierCol) {
+    const matchValue = {};
+    if (this.gridApi) {
+      this.gridApi.forEachNode((node, index) => {
+        matchValue[identifierCol] = this.props.rowData[index][identifierCol];
+        if (findIndex(selectedValues, matchValue ) < 0) {
+          node.setSelected(false);
+        } else {
+          node.setSelected(true);
+        }
+      });
+    }
   }
 
   onSelectionChanged = (data) => {
@@ -60,7 +85,8 @@ class GridContainer extends Component {
       <div
         className="ag-theme-balham grid-container"    >
         <AgGridReact
-          suppressMenuHide = {true}
+          suppressMenuHide={true}
+          frameworkComponents={this.state.frameworkComponents}
           columnDefs={this.props.gridColums}
           defaultColDef={this.defaultColDef}
           enableFilter={true}
@@ -80,5 +106,7 @@ GridContainer.propTypes = {
   data: PropTypes.object,
   selectionChange: PropTypes.func,
   gridColums: PropTypes.array,
-  rowData: PropTypes.array
+  rowData: PropTypes.array,
+  identifierCol: PropTypes.string,
+  setFunctionPointer: PropTypes.func
 };

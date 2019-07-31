@@ -36,7 +36,8 @@ import {
   PIPELINE_SCHEMAS,
   CLONE_PIPELINE,
   GET_PIPE_LINE_DATA,
-  TOTAL
+  TOTAL,
+  ERROR_MESSAGES
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
@@ -79,6 +80,7 @@ class LandingPage extends React.Component {
       displayFeatureSelection: false,
       pipeLineData: this.sampleData,
       selectedPipeline: {},
+      selectedPipelineRequestConfig: {},
       isDataLoading: false,
       currentNamespace: NamespaceStore.getState().selectedNamespace,
       statusList: this.generateStatusList([])
@@ -204,6 +206,24 @@ class LandingPage extends React.Component {
 
   onFeatureSelection(pipeline) {
     this.currentPipeline = pipeline;
+    FEDataServiceApi.readPipeline({
+      namespace: NamespaceStore.getState().selectedNamespace,
+      pipeline: pipeline.pipelineName
+    }, {}, getDefaultRequestHeader()).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["featureGenerationRequest"])) {
+          this.handleError(result, READ_PIPELINE);
+        } else {
+          this.fetchPipelineData(pipeline,result["featureGenerationRequest"]);
+        }
+      },
+      error => {
+        this.handleError(error, READ_PIPELINE);
+      }
+    );
+  }
+
+  fetchPipelineData(pipeline, selectedPipelineRequestConfig) {
     FEDataServiceApi.pipelineData({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
@@ -216,15 +236,18 @@ class LandingPage extends React.Component {
             pipeLineData: result["featureStatsList"],
             data: result["featureStatsList"],
             selectedPipeline: this.currentPipeline,
+            selectedPipelineRequestConfig: selectedPipelineRequestConfig,
             displayFeatureSelection: true
           });
         }
       },
       error => {
-        this.handleError(error, GET_PIPELINE);
+        this.handleError(error, GET_PIPE_LINE_DATA);
       }
     );
   }
+
+
 
   viewPipeline(pipeline) {
     let navigatePath = `${window.location.origin}/pipelines/ns/${NamespaceStore.getState().selectedNamespace}/view/${pipeline.pipelineName}`;
@@ -459,7 +482,11 @@ class LandingPage extends React.Component {
         result => {
           if (checkResponseError(result)) {
             this.handleError(result, type);
-            observer.error(result);
+            if (result && !isNil(result.message)) {
+              observer.error(result.message);
+            } else {
+              observer.error(ERROR_MESSAGES.SAVE_PIPELINE);
+            }
           } else {
             this.getPipelines(this.state.selectedPipelineType);
             observer.next(result);
@@ -468,7 +495,11 @@ class LandingPage extends React.Component {
         },
         err => {
           this.handleError(err, type);
-          observer.error(err);
+          if (err && !isNil(err.message)) {
+            observer.error(err.message);
+          } else {
+            observer.error(ERROR_MESSAGES.SAVE_PIPELINE);
+          }
         }
       );
     });
@@ -595,9 +626,11 @@ class LandingPage extends React.Component {
           this.handleError(result, GET_PROPERTY);
         } else {
           let configParamList = result["configParamList"];
-          let mandatoryParamList = configParamList.filter(item => item.isMandatory);
-          let nonMandatoryParamList = configParamList.filter(item => !item.isMandatory);
-          this.props.setAvailableProperties(mandatoryParamList.concat(nonMandatoryParamList));
+          if (!isNil(configParamList)) {
+            let mandatoryParamList = configParamList.filter(item => item.isMandatory);
+            let nonMandatoryParamList = configParamList.filter(item => !item.isMandatory);
+            this.props.setAvailableProperties(mandatoryParamList.concat(nonMandatoryParamList));
+          }
         }
       },
       error => {
@@ -648,6 +681,7 @@ class LandingPage extends React.Component {
           <div className="feature-selection">
             <FeatureSelection nagivateToParent={this.viewFeatureGeneration}
               selectedPipeline={this.state.selectedPipeline}
+              pipelineRequestConfig = { this.state.selectedPipelineRequestConfig }
               pipeLineData={this.state.pipeLineData}></FeatureSelection>
           </div>
           : <div className="feature-generation">

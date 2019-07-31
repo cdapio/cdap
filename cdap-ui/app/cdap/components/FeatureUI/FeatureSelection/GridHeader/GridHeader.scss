@@ -22,19 +22,34 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   .title-box {
     display: flex;
     flex-direction: column;
   }
+
   .subtitle {
     .subtitle-label {
       font-weight: 600;
       padding-right: 5px;
     }
+
     .pipeline-name {
       color: #150e9a;
     }
   }
+
+  .header-control {
+    display: flex;
+    align-items: center;
+  }
+
+  .selected-feature {
+    padding: 3px 6px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
   .left-margin {
     margin-left: 12px;
   }

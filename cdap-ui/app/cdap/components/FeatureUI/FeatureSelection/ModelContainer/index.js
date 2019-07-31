@@ -16,16 +16,16 @@
 
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import './CorrelationContainer.scss';
+import './ModelContainer.scss';
 import { isNil } from 'lodash';
 import PropTypes from 'prop-types';
 
-class CorrelationContainer extends Component {
-  algolist = [{ id: 1, name: "pearson" }, { id: 2, name: "spearman" }, { id: 3, name: "ChiSqTest" }, { id: 4, name: "mic" }, { id: 5, name: "anova" }, { id: 6, name: "kendallTau" }];
-  correlationItems = [{ id: 1, enable: false, name: "TopN", minValue: "", maxValue: "", doubleView: false, hasRangeError: false },
-  { id: 2, enable: false, name: "LowN", minValue: "", maxValue: "", doubleView: false, hasRangeError: false },
-  { id: 3, enable: false, name: "Range", minValue: "", maxValue: "", doubleView: true, hasRangeError: false }
-  ]
+class ModelContainer extends Component {
+  algolist = [
+    { id: 1, name: "lasso" },
+    { id: 2, name: "ridge" },
+    { id: 3, name: "randomForest" }
+  ];
 
   constructor(props) {
     super(props);
@@ -39,6 +39,7 @@ class CorrelationContainer extends Component {
 
   }
 
+
   toggleAlgoDropDown = () => {
     this.setState(prevState => ({
       openAlgoDropdown: !prevState.openAlgoDropdown
@@ -51,6 +52,9 @@ class CorrelationContainer extends Component {
       this.updateApplyBtnStatus();
     });
   }
+
+
+
 
   updateApplyBtnStatus = () => {
     let isValidFilterItems = true;
@@ -67,21 +71,21 @@ class CorrelationContainer extends Component {
   }
 
 
-  applyCorrelation = () => {
-    if (!isNil(this.props.applyCorrelation)) {
+  applyModelSelection = () => {
+    if (!isNil(this.props.applyModelSelection)) {
       const result = {
         coefficientType: this.state.selectedAlgo,
         selectedfeatures: this.state.selectedFeature
       };
-      this.props.applyCorrelation(result);
+      this.props.applyModelSelection(result);
     }
   }
 
-  render() {
 
+  render() {
     return (
-      <div className="correlation-container">
-        <div className="correlation-box">
+      <div className="model-container">
+        <div className="model-box">
           <div className="algo-box">
             <label className="algo-label">Algorithm: </label>
             <Dropdown isOpen={this.state.openAlgoDropdown} toggle={this.toggleAlgoDropDown}>
@@ -106,21 +110,21 @@ class CorrelationContainer extends Component {
               <label className="feature-label">Target Variable:</label>
               <label className="feature-variable">{this.props.targetVariable}</label>
             </div>
-
           </div>
         </div>
+
         <div className="control-box">
-          <button className="feature-button" onClick={this.applyCorrelation} disabled={!this.state.activeApplyBtn}>Apply</button>
+          <button className="feature-button" onClick={this.applyModelSelection} disabled={!this.state.activeApplyBtn}>Apply</button>
         </div>
       </div>
     );
   }
 }
 
-export default CorrelationContainer;
+export default ModelContainer;
 
-CorrelationContainer.propTypes = {
-  applyCorrelation: PropTypes.func,
+ModelContainer.propTypes = {
+  applyModelSelection: PropTypes.func,
   targetVariable: PropTypes.string
 };
 

@@ -40,7 +40,7 @@ class Configurator extends React.Component {
 
   updateConfiguration(nameValue) {
     if (!isNil(nameValue)) {
-      const index = findIndex(this.configPropList, { name: nameValue.name });
+      const index = findIndex(this.configPropList, {name : nameValue.name});
       if (index >= 0) {
         this.configPropList[index] = nameValue;
         this.props.updateConfigurationList(this.configPropList);
