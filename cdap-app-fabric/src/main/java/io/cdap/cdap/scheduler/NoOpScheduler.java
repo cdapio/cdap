@@ -126,4 +126,9 @@ public class NoOpScheduler implements Scheduler {
   public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
     return Collections.EMPTY_LIST;
   }
+
+  @Override
+  public void reEnableSchedules(NamespaceId namesapceId, long startTime, long endTime) {
+
+  }
 }

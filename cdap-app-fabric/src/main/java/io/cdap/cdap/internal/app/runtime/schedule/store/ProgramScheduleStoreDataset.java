@@ -402,6 +402,23 @@ public class ProgramScheduleStoreDataset {
   }
 
   /**
+   * Retrieve all schedules for a given namespace which were updated to status SUSPENDED between startTime and endTime.
+   *
+   * @param namespaceId the namespace for which to list the schedules
+   * @param startTime the lower bound (inclusive) for when the schedules were disabled
+   * @param endTime the upper bound (exclusive) for when the schedules were disabled
+   * @return a list of schedules for the namespace; never null
+   */
+  public List<ProgramSchedule> listSchedulesSuspended(NamespaceId namespaceId, long startTime, long endTime)
+    throws IOException {
+    Predicate<StructuredRow> predicate =
+      row -> row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) >= startTime &&
+        row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) < endTime &&
+        row.getString(StoreDefinition.ProgramScheduleStore.STATUS).equals(ProgramScheduleStatus.SUSPENDED.toString());
+    return listSchedulesWithPrefixAndKeyPredicate(getScheduleKeysForNamespaceScan(namespaceId), predicate);
+  }
+
+  /**
    * Retrieve all schedules for a given application.
    *
    * @param appId the application for which to list the schedules.
@@ -533,6 +550,35 @@ public class ProgramScheduleStoreDataset {
           ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
           if (schedule != null && filter.test(schedule)) {
             result.add(new ProgramScheduleRecord(schedule, extractMetaFromRow(schedule.getScheduleId(), row)));
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * List schedules with the given key prefix and only returns the schedules that can pass the filter.
+   *
+   * @param prefixKeys the prefix of the schedule records to be listed
+   * @param keyPredicate a filter that only returns true if the schedule will be returned in the result
+   * @return the schedules with the given key prefix that can pass the filter
+   */
+  private List<ProgramSchedule> listSchedulesWithPrefixAndKeyPredicate(Collection<Field<?>> prefixKeys,
+                                                                       Predicate<StructuredRow> keyPredicate)
+    throws IOException {
+    List<ProgramSchedule> result = new ArrayList<>();
+    try (CloseableIterator<StructuredRow> iterator =
+      scheduleStore.scan(Range.singleton(prefixKeys), Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        if (keyPredicate.test(row)) {
+          String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
+          if (serializedSchedule != null) {
+            ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
+            if (schedule != null) {
+              result.add(schedule);
+            }
           }
         }
       }
