@@ -166,7 +166,7 @@
     <jetty9.version>9.3.19.v20170502</jetty9.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
-    <kafka.version>0.8.2.2</kafka.version>
+    <kafka.version>0.8.2.1</kafka.version>
     <leveldb.version>0.6</leveldb.version>
     <logback.version>1.0.9</logback.version>
     <mockftp.version>2.6</mockftp.version>
@@ -2787,7 +2787,7 @@
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>
         <module>cdap-explore</module>
-        <module>cdap-unit-test</module>
+        <!--module>cdap-unit-test</module-->
         <module>cdap-unit-test-spark2_2.11</module>
         <module>cdap-kms</module>
         <module>cdap-master</module>
