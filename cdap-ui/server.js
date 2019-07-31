@@ -102,7 +102,7 @@ parser.extractConfig('cdap')
     });
 
     sockServer.on('connection', function (c) {
-      var a = new Aggregator(c);
+      var a = new Aggregator(c, cdapConfig);
       c.on('close', function () {
         delete a;
       });
