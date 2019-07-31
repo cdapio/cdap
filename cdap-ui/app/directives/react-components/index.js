@@ -14,97 +14,101 @@
  * the License.
 */
 
-angular.module(PKG.name + '.commons')
-  .directive('caskHeader', function (reactDirective) {
+angular
+  .module(PKG.name + '.commons')
+  .directive('caskHeader', function(reactDirective) {
     return reactDirective(window.CaskCommon.AppHeader);
   })
-  .directive('keyValuePairs', function (reactDirective) {
+  .directive('keyValuePairs', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValuePairs);
   })
   .directive('dataprep', (reactDirective) => {
     return reactDirective(window.CaskCommon.DataPrepHome);
   })
-  .directive('caskResourceCenterButton', function (reactDirective) {
+  .directive('caskResourceCenterButton', function(reactDirective) {
     return reactDirective(window.CaskCommon.ResourceCenterButton);
   })
-  .directive('pipelineSummary', function (reactDirective) {
+  .directive('pipelineSummary', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineSummary);
   })
-  .directive('rulesEngineHome', function (reactDirective) {
+  .directive('rulesEngineHome', function(reactDirective) {
     return reactDirective(window.CaskCommon.RulesEngineHome);
   })
-  .directive('pipelineNodeMetricsGraph', function (reactDirective) {
+  .directive('pipelineNodeMetricsGraph', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineNodeMetricsGraph);
   })
-  .directive('statusAlertMessage', function (reactDirective) {
+  .directive('statusAlertMessage', function(reactDirective) {
     return reactDirective(window.CaskCommon.StatusAlertMessage);
   })
-  .directive('loadingIndicator', function (reactDirective) {
+  .directive('loadingIndicator', function(reactDirective) {
     return reactDirective(window.CaskCommon.LoadingIndicator);
   })
-  .directive('pipelineTriggersSidebars', function (reactDirective) {
+  .directive('pipelineTriggersSidebars', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineTriggersSidebars);
   })
-  .directive('pipelineDetailsTopPanel', function (reactDirective) {
+  .directive('pipelineDetailsTopPanel', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineDetailsTopPanel);
   })
-  .directive('pipelineScheduler', function (reactDirective) {
+  .directive('pipelineScheduler', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineScheduler);
   })
-  .directive('pipelineDetailsRunLevelInfo', function (reactDirective) {
+  .directive('pipelineDetailsRunLevelInfo', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineDetailsRunLevelInfo);
   })
-  .directive('globalFooter', function (reactDirective) {
+  .directive('globalFooter', function(reactDirective) {
     return reactDirective(window.CaskCommon.Footer);
   })
-  .directive('iconSvg', function (reactDirective) {
+  .directive('iconSvg', function(reactDirective) {
     return reactDirective(window.CaskCommon.IconSVG);
   })
-  .directive('authRefresher', function (reactDirective) {
+  .directive('authRefresher', function(reactDirective) {
     return reactDirective(window.CaskCommon.AuthRefresher);
   })
-  .directive('toggleSwitch', function (reactDirective) {
+  .directive('toggleSwitch', function(reactDirective) {
     return reactDirective(window.CaskCommon.ToggleSwitch);
   })
-  .directive('markdown', function (reactDirective) {
+  .directive('markdown', function(reactDirective) {
     return reactDirective(window.CaskCommon.Markdown);
   })
-  .directive('codeEditor', function (reactDirective) {
+  .directive('codeEditor', function(reactDirective) {
     return reactDirective(window.CaskCommon.CodeEditor);
   })
-  .directive('jsonEditor', function (reactDirective) {
+  .directive('jsonEditor', function(reactDirective) {
     return reactDirective(window.CaskCommon.JSONEditor);
   })
-  .directive('textBox', function (reactDirective) {
+  .directive('textBox', function(reactDirective) {
     return reactDirective(window.CaskCommon.TextBox);
   })
-  .directive('number', function (reactDirective) {
+  .directive('number', function(reactDirective) {
     return reactDirective(window.CaskCommon.Number);
   })
-  .directive('csvWidget', function (reactDirective) {
+  .directive('csvWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.CSVWidget);
   })
-  .directive('keyValueWidget', function (reactDirective) {
+  .directive('keyValueWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValueWidget);
   })
-  .directive('selectDropdown', function (reactDirective) {
+  .directive('selectDropdown', function(reactDirective) {
     return reactDirective(window.CaskCommon.Select);
   })
-  .directive('keyValueDropdownWidget', function (reactDirective) {
+  .directive('keyValueDropdownWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValueDropdownWidget);
   })
-  .directive('multipleValuesWidget', function (reactDirective) {
+  .directive('multipleValuesWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.MultipleValuesWidget);
   })
-  .directive('connectionBrowser', function (reactDirective) {
+  .directive('connectionBrowser', function(reactDirective) {
     return reactDirective(window.CaskCommon.PluginConnectionBrowser);
   })
-  .directive('functionDropdownAliasWidget', function (reactDirective) {
+  .directive('functionDropdownAliasWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.FunctionDropdownAlias);
   })
-  .directive('toggleSwitchWidget', function (reactDirective) {
+  .directive('toggleSwitchWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.ToggleSwitchWidget);
   })
-  .directive('wranglerEditor', function (reactDirective) {
+  .directive('wranglerEditor', function(reactDirective) {
     return reactDirective(window.CaskCommon.WranglerEditor);
+  })
+  .directive('radioGroupWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.RadioGroupWidget);
   });
