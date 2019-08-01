@@ -24,18 +24,17 @@ describe('Generating and navigating field level lineage for datasets', () => {
     Helpers.loginIfRequired().then(() => {
       cy.getCookie('CDAP_Auth_Token').then((cookie) => {
         if (!cookie) {
-          return cy.start_wrangler(headers);
+          return;
         }
         headers = {
           Authorization: 'Bearer ' + cookie.value,
         };
-        return cy.start_wrangler(headers);
       });
     });
   });
   before(() => {
     // run a pipeline to generate lineage
-    Helpers.deployAndTestPipeline('fll_airport_pipeline.json', fllPipeline, () => {
+    Helpers.deployAndTestPipeline('fll_airport_pipeline2.json', fllPipeline, () => {
       cy.get('[data-cy="pipeline-run-btn"]').click();
       cy.wait(10000);
       cy.get('.run-info-container', { timeout: 150000 }).should('contain', 'Succeeded');
@@ -54,7 +53,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
     // should see the correct fields for the selected dataset
     cy.get('[data-cy="target-fields"]').within(() => {
       cy.get('.field-row').should(($fields) => {
-        expect($fields).to.have.length(8);
+        expect($fields).to.have.length(9);
         // should see the correct field(s) for the impact dataset
         expect($fields).to.contain('longitude');
       });
