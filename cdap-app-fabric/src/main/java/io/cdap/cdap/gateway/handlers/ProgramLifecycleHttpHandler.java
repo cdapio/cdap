@@ -562,6 +562,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Update schedules which were suspended between startTime and endTime
+   * @param startTime namespace of the triggering program in {@link ProgramStatusTrigger}
+   * @param endTime application name of the triggering program in {@link ProgramStatusTrigger}
+   */
+  @PUT
+  @Path("schedules/re-enable")
+  public void reEnableSuspendedSchedules(HttpRequest request, HttpResponder responder,
+                                         @PathParam("namespace-id") String namespaceId,
+                                         @QueryParam("start-time") long startTime,
+                                         @QueryParam("end-time") long endTime) throws Exception {
+    programScheduleService.reEnableSchedules(new NamespaceId(namespaceId), startTime, endTime);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
    * Get schedules containing {@link ProgramStatusTrigger} filtered by triggering program, and optionally by
    * triggering program statuses or schedule status
    *  @param triggerNamespaceId namespace of the triggering program in {@link ProgramStatusTrigger}
