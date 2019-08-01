@@ -24,11 +24,12 @@ describe('Generating and navigating field level lineage for datasets', () => {
     Helpers.loginIfRequired().then(() => {
       cy.getCookie('CDAP_Auth_Token').then((cookie) => {
         if (!cookie) {
-          return;
+          return cy.start_wrangler(headers);
         }
         headers = {
           Authorization: 'Bearer ' + cookie.value,
         };
+        return cy.start_wrangler(headers);
       });
     });
   });
