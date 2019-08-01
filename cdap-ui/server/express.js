@@ -15,6 +15,7 @@
  */
 
 /* global require, module, process, __dirname */
+var UrlValidator = require('./urlValidator.js');
 
 module.exports = {
   getApp: function () {
@@ -111,7 +112,7 @@ function extractUITheme(cdapConfig) {
 
 function makeApp (authAddress, cdapConfig, uiSettings) {
   var app = express();
-
+  const urlValidator = new UrlValidator(cdapConfig);
   const uiThemeConfig = extractUITheme(cdapConfig);
   const faviconPath = getFaviconPath(uiThemeConfig);
   // middleware
@@ -184,9 +185,16 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.post('/downloadQuery', function(req, res) {
     var url = req.body.backendUrl;
-
+    if (!urlValidator.isValidURL(req.url)) {
+      log.error('Bad Request');
+      var err = {
+        error: 400,
+        message: "Bad Request"
+      };
+      res.status(400).send(err);
+      return;
+    }
     log.info('Download Query Start: ', req.body.queryHandle);
-
     request({
       method: 'POST',
       url: url,
@@ -244,6 +252,15 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
     var method = (req.query.method || 'GET');
+    if (!urlValidator.isValidURL(url)) {
+      log.error('Bad Request');
+      var err = {
+        error: 400,
+        message: "Bad Request"
+      };
+      res.status(400).send(err);
+      return;
+    }
     log.info('Download Logs Start: ', url);
     var customHeaders;
     var requestObject = {
