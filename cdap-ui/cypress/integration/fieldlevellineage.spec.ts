@@ -88,7 +88,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
       cy.get('.react-calendar__navigation__prev-button').click();
     });
     cy.get('.react-calendar__month-view__days').within(() => {
-      cy.get('button')
+      cy.get('button:enabled')
         .first()
         .click();
     });
@@ -101,7 +101,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
       cy.get('.react-calendar__navigation__next-button').click();
     });
     cy.get('.react-calendar__month-view__days').within(() => {
-      cy.get('button')
+      cy.get('button:enabled')
         .first()
         .click();
     });
