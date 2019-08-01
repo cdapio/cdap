@@ -251,8 +251,8 @@ public class ProgramScheduleService {
    * Enables all schedules which were disabled or added between startTime and endTime in a given namespace.
    *
    * @param namespaceId the namespace to re-enable schedules in
-   * @param startTime the lower bound for when the schedule was disabled
-   * @param endTime the upper bound for when the schedule was disabled
+   * @param startTime the lower bound for when the schedule was disabled (inclusive)
+   * @param endTime the upper bound for when the schedule was disabled (exclusive)
    * @throws ConflictException if the schedule was already enabled
    */
   public void reEnableSchedules(NamespaceId namespaceId, long startTime, long endTime) throws Exception {
