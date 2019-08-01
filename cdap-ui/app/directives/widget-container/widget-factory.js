@@ -206,6 +206,7 @@ angular.module(PKG.name + '.commons')
           'value': 'model || myconfig.properties.default || myconfig["widget-attributes"].default',
           'options': '(myconfig.properties.values || myconfig["widget-attributes"].values)',
           'on-change': 'onChange',
+          'disabled': 'disabled',
         }
       },
       'dataset-selector': {
@@ -241,12 +242,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'input-field-selector': {
-        element: '<my-input-field-selector></my-input-field-selector>',
+        element: '<input-field-dropdown></input-field-dropdown>',
         attributes: {
-          'ng-model': 'model',
-          'disabled': 'disabled',
+          'value': 'model',
           'input-schema': 'inputSchema',
-          'config': 'myconfig'
+          'on-change': 'onChange',
+          'disabled': 'disabled'
         }
       },
       'wrangler-directives': {
