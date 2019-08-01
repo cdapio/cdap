@@ -37,7 +37,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
     Helpers.deployAndTestPipeline('fll_airport_pipeline.json', fllPipeline, () => {
       cy.get('[data-cy="pipeline-run-btn"]').click();
       cy.wait(10000);
-      cy.get('.run-info-container', { timeout: 50000 }).should('contain', 'Succeeded');
+      cy.get('.run-info-container', { timeout: 150000 }).should('contain', 'Succeeded');
     });
   });
   after(() => {
