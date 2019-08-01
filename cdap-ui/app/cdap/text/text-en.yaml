@@ -1068,6 +1068,7 @@ features:
       upload: Local File Upload
       viewSchemaBtnLabel: View Schema
       persistViewSchemaBtnLabel: Persist Dataset
+      exploreDataBtnLabel: Analyse
     Upgrade:
       errorCommunicating: Error while communicating with {featureName} service
       errorTitle: Enabling {featureName} failed
