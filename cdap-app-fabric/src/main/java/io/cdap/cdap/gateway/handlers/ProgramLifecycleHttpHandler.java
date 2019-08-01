@@ -563,8 +563,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Update schedules which were suspended between startTime and endTime
-   * @param startTime namespace of the triggering program in {@link ProgramStatusTrigger}
-   * @param endTime application name of the triggering program in {@link ProgramStatusTrigger}
+   * @param startTime lower bound of the update time for schedules (inclusive)
+   * @param endTime upper bound of the update time for schedules (exclusive)
    */
   @PUT
   @Path("schedules/re-enable")
