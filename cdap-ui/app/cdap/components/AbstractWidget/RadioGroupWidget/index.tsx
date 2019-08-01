@@ -61,7 +61,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupWidgetProps> = ({
   value,
   onChange,
 }) => {
-  const options: IOptions = objectQuery(widgetAttributes, 'options') || [];
+  const options: IOption[] = objectQuery(widgetAttributes, 'options') || [];
   const layout = objectQuery(widgetAttributes, 'layout');
   const defaultValue = objectQuery(widgetAttributes, 'default') || '';
   const model = value || defaultValue;
