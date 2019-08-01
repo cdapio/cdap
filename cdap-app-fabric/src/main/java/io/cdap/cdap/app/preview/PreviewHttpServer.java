@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -47,11 +48,13 @@ public class PreviewHttpServer extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final PreviewManager previewManager;
   private Cancellable cancelHttpService;
 
   @Inject
   PreviewHttpServer(CConfiguration cConf, DiscoveryService discoveryService, PreviewHttpHandler previewHttpHandler,
-                    MetricsCollectionService metricsCollectionService) {
+                    MetricsCollectionService metricsCollectionService,
+                    PreviewManager previewManager) {
     this.discoveryService = discoveryService;
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.PREVIEW_HTTP)
       .setHost(cConf.get(Constants.Preview.ADDRESS))
@@ -64,6 +67,7 @@ public class PreviewHttpServer extends AbstractIdleService {
       .setHandlerHooks(Collections.singletonList(
         new MetricsReporterHook(metricsCollectionService, Constants.Service.PREVIEW_HTTP)))
       .build();
+    this.previewManager = previewManager;
   }
 
   /**
@@ -74,6 +78,9 @@ public class PreviewHttpServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.PREVIEW_HTTP));
+    if (previewManager instanceof Service) {
+      ((Service) previewManager).startAndWait();
+    }
 
     httpService.start();
     cancelHttpService = discoveryService.register(
@@ -85,6 +92,9 @@ public class PreviewHttpServer extends AbstractIdleService {
   protected void shutDown() throws Exception {
     try {
       cancelHttpService.cancel();
+      if (previewManager instanceof Service) {
+        ((Service) previewManager).stopAndWait();
+      }
     } finally {
       httpService.stop();
     }

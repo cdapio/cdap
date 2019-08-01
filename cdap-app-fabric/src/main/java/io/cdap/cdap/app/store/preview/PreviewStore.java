@@ -17,10 +17,15 @@ package io.cdap.cdap.app.store.preview;
 
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Interface used by {@link DataTracer} to store the preview data.
@@ -52,4 +57,38 @@ public interface PreviewStore {
    * @param applicationId the id of the preview for which the data to be removed
    */
   void remove(ApplicationId applicationId);
+
+  /**
+   * Save the program run id associated with the preview run
+   *
+   * @param programRunId the program run id to save
+   */
+  void setProgramId(ProgramRunId programRunId);
+
+  /**
+   * Get the program run id associated with the preview run
+   *
+   * @param applicationId the preview id
+   * @return the program run id of the preview, null if no run has started with the preview id
+   */
+  @Nullable
+  ProgramRunId getProgramRunId(ApplicationId applicationId);
+
+  /**
+   * Set the preview status assoicated with the preview run
+   *
+   * @param applicationId the preview id
+   * @param previewStatus the preview status
+   */
+  void setPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus);
+
+  /**
+   * Get the preview status assoicated with the preview run
+   *
+   * @param applicationId the preview id
+   * @return the preview status of the preview run, null if no run has started with the preview id
+   *
+   */
+  @Nullable
+  PreviewStatus getPreviewStatus(ApplicationId applicationId);
 }

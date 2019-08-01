@@ -19,12 +19,15 @@ package io.cdap.cdap.internal.app.preview;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRunner;
+import io.cdap.cdap.app.preview.PreviewRunnerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -45,7 +48,9 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -53,6 +58,8 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -60,6 +67,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Tests for {@link DefaultPreviewManager}.
@@ -70,6 +79,7 @@ public class DefaultPreviewManagerTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static Injector injector;
+  private static TransactionManager txManager;
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -108,6 +118,13 @@ public class DefaultPreviewManagerTest {
         }
       }
     );
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    txManager.stopAndWait();
   }
 
   private Injector getInjector() {
@@ -116,23 +133,49 @@ public class DefaultPreviewManagerTest {
 
   @Test
   public void testInjector() throws Exception {
-
     PreviewManager previewManager = getInjector().getInstance(PreviewManager.class);
     DefaultPreviewManager defaultPreviewManager = (DefaultPreviewManager) previewManager;
 
-    Injector previewInjector = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"));
+    ProgramId programId1 = new ProgramId("ns1", "app1", ProgramType.WORKFLOW, "wf1");
+    Injector injector1 = defaultPreviewManager.createPreviewInjector(programId1);
+    Assert.assertEquals(
+      programId1,
+      injector1.getInstance(Key.get(ProgramId.class, Names.named(PreviewRunnerModule.PREVIEW_PROGRAM_ID))));
 
     // Make sure same PreviewManager instance is returned for a same preview
-    Assert.assertEquals(previewInjector.getInstance(PreviewRunner.class),
-                        previewInjector.getInstance(PreviewRunner.class));
+    Assert.assertEquals(injector1.getInstance(PreviewRunner.class),
+                        injector1.getInstance(PreviewRunner.class));
 
     // Also make sure it can return a LogReader
-    previewInjector.getInstance(LogReader.class);
+    injector1.getInstance(LogReader.class);
 
-    Injector anotherPreviewInjector
-      = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"));
+    ProgramId programId2 = new ProgramId("ns2", "app2", ProgramType.WORKFLOW, "wf2");
+    Injector injector2 = defaultPreviewManager.createPreviewInjector(programId2);
+    Assert.assertEquals(
+      programId2, injector2.getInstance(Key.get(ProgramId.class, Names.named(PreviewRunnerModule.PREVIEW_PROGRAM_ID))));
 
-    Assert.assertNotEquals(previewInjector.getInstance(PreviewRunner.class),
-                           anotherPreviewInjector.getInstance(PreviewRunner.class));
+    PreviewRunner runner1 = injector1.getInstance(PreviewRunner.class);
+    PreviewRunner runner2 = injector2.getInstance(PreviewRunner.class);
+    Assert.assertNotEquals(runner1, runner2);
+
+    // since we don't start any preview run, the app injectors should be empty
+    Assert.assertTrue((defaultPreviewManager.getCache().asMap().isEmpty()));
+
+    // Have to start and stop the runners so that the leveldb file is closed
+    ((DefaultPreviewRunner) runner1).startAndWait();
+    ((DefaultPreviewRunner) runner1).stopAndWait();
+    ((DefaultPreviewRunner) runner2).startAndWait();
+    ((DefaultPreviewRunner) runner2).stopAndWait();
+    // After creating 2 preview runners, two folders should get created, and start the preview manager should create
+    // the two injectors based on the fold name
+    defaultPreviewManager.startAndWait();
+    try {
+      Map<ApplicationId, Injector> cacheMap = defaultPreviewManager.getCache().asMap();
+      Assert.assertEquals(2, cacheMap.size());
+      Assert.assertTrue(cacheMap.containsKey(programId1.getParent()));
+      Assert.assertTrue(cacheMap.containsKey(programId2.getParent()));
+    } finally {
+      defaultPreviewManager.stopAndWait();
+    }
   }
 }

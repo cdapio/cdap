@@ -20,6 +20,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.Store;
@@ -50,6 +51,7 @@ import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.pipeline.PipelineFactory;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
@@ -67,6 +69,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class PreviewRunnerModule extends PrivateModule {
+  public static final String PREVIEW_PROGRAM_ID = "previewProgramId";
 
   private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
@@ -75,11 +78,12 @@ public class PreviewRunnerModule extends PrivateModule {
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
+  private final ProgramId programId;
 
   public PreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
                              AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
                              PrivilegesManager privilegesManager, PreferencesService preferencesService,
-                             ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
+                             ProgramRuntimeProviderLoader programRuntimeProviderLoader, ProgramId programId) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -87,6 +91,7 @@ public class PreviewRunnerModule extends PrivateModule {
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
+    this.programId = programId;
   }
 
   @Override
@@ -150,5 +155,8 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
+
+    bind(ProgramId.class).annotatedWith(Names.named(PREVIEW_PROGRAM_ID)).toInstance(programId);
+    expose(ProgramId.class).annotatedWith(Names.named(PREVIEW_PROGRAM_ID));
   }
 }
