@@ -562,7 +562,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Update schedules which were suspended between startTime and endTime
+   * Update schedules which were suspended between startTimeMillis and endTimeMillis
    * @param startTimeMillis lower bound in millis of the update time for schedules (inclusive)
    * @param endTimeMillis upper bound in millis of the update time for schedules (exclusive)
    */
