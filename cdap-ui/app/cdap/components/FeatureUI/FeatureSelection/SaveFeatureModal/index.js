@@ -16,7 +16,7 @@
  */
 
 import React from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter,FormGroup, Col, Label } from 'reactstrap';
 import PropTypes from 'prop-types';
 import FEDataServiceApi from '../../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
@@ -24,6 +24,8 @@ import { isNil } from 'lodash';
 import T from 'i18n-react';
 import { checkResponseError,getErrorMessage, getDefaultRequestHeader } from '../../util';
 import { ERROR_MESSAGES, SAVE_PIPELINE } from 'components/FeatureUI/config';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 
 require('./SaveFeatureModal.scss');
 const PREFIX = 'features.FeatureEngineering.FeatureSelection.SaveFeatureModal';
@@ -35,6 +37,7 @@ class SaveFeatureModal extends React.Component {
       loading: false,
       title: T.translate(`${PREFIX}.title`),
       name: "",
+      inputError: "",
       hasError: false,
       errorMessage: ""
     };
@@ -42,9 +45,19 @@ class SaveFeatureModal extends React.Component {
     this.onCancel = this.onCancel.bind(this);
   }
 
-  nameChange = (evt) => {
-    this.setState({ name: evt.target.value });
+  nameChange = (e) => {
+    const isValid = types['NAME'].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = 'Invalid Input, cannot contain any xml tag.';
+    }
+    if (!e.target.value) {
+      errorMsg = 'Pipeline Name is required.';
+    }
+
+    this.setState({ name: e.target.value , inputError:errorMsg});
   }
+
 
   onCancel() {
     this.setState({name:"",hasError:false, errorMessage:"",loading:false});
@@ -94,11 +107,24 @@ class SaveFeatureModal extends React.Component {
         <Modal isOpen={this.props.open} zIndex="1090" className="modal-box">
           <ModalHeader>{this.state.title}</ModalHeader>
           <ModalBody>
-            <div>
-              <label className="pipeline-label">Pipeline Name :</label>
-              <input className="pipeline-name" value={this.state.name}
-                onChange={this.nameChange}></input>
-            </div>
+            <FormGroup row>
+              <Label xs="3" className="text-xs-left">
+                Pipeline Name :
+                <span className="text-danger">*</span>
+              </Label>
+              <Col xs="8" className="dataset-name-group">
+                <ValidatedInput
+                  type="text"
+                  label="FSPipelineName"
+                  value={this.state.name}
+                  validationError={this.state.inputError}
+                  inputInfo={types['NAME'].getInfo()}
+                  placeholder='Pipeline Name'
+                  onChange={this.nameChange}
+                />
+              </Col>
+            </FormGroup>
+
           </ModalBody>
           <ModalFooter>
             {
@@ -110,7 +136,7 @@ class SaveFeatureModal extends React.Component {
               <button
                 className="btn btn-primary ok-btn"
                 onClick={this.onOk}
-                disabled={this.state.name.trim().length < 1}>
+                disabled={this.state.name.trim().length < 1 || this.state.inputError.length > 1}>
                 {
                   this.state.loading ?
                     <span className="fa fa-spin fa-spinner" />

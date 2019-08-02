@@ -16,8 +16,8 @@
 
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
-import { Input } from 'reactstrap';
-import InfoTip from '../InfoTip';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 import PropTypes from 'prop-types';
 
 require('./NameValueList.scss');
@@ -28,7 +28,8 @@ class NameValueList extends React.Component {
     this.state = {
       newName: '',
       newValue: '',
-      showAdvance: false
+      showAdvance: false,
+      inputs: {},
     };
   }
   onNewNameChange(event) {
@@ -44,9 +45,17 @@ class NameValueList extends React.Component {
   }
 
   onValueUpdated(item, event) {
+    // Validation Check here.
+    const isValid = types['DEFAULT'].validate(event.target.value);
+    this.setState({
+      inputs: {
+        ...this.state.inputs,
+        [item.name]: isValid ? '' : 'Invalid Input',
+      }
+    });
     this.props.updateNameValue({
       ...item,
-      value: event.target.value
+      value: isValid ? event.target.value : ''
     });
   }
 
@@ -85,12 +94,17 @@ class NameValueList extends React.Component {
                         }
                       </div>
                       <div className='colon'>:</div>
-                      <Input className='value' type="text" name="value" placeholder='value'
-                        defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />
-                      {
-                        item.description &&
-                        <InfoTip id={item.name + "_InfoTip"} description={item.description}></InfoTip>
-                      }
+                      <ValidatedInput
+                        className='value'
+                        type="text"
+                        name="value"
+                        label={item.name + "_validate"}
+                        validationError={this.state.inputs[item.name]}
+                        inputInfo={types['DEFAULT'].getInfo() + (item.description ? ("\n" + item.description) : "")}
+                        placeholder='value'
+                        defaultValue={item.value}
+                        onChange={this.onValueUpdated.bind(this, item)}
+                      />
                     </div>);
                 })
               }
@@ -113,12 +127,17 @@ class NameValueList extends React.Component {
                       <div className='list-row' key={item.name}>
                         <div className='name'>{isEmpty(item.displayName) ? item.name : item.displayName}</div>
                         <div className='colon'>:</div>
-                        <Input className='value' type="text" name="value" placeholder='value'
-                          defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />
-                        {
-                          item.description &&
-                          <InfoTip id={item.name + "_InfoTip"} description={item.description}></InfoTip>
-                        }
+                        <ValidatedInput
+                          className='value'
+                          type="text"
+                          name="value"
+                          label={item.name + "_validate"}
+                          validationError={this.state.inputs[item.name]}
+                          inputInfo={types['DEFAULT'].getInfo() + (item.ToolTip ? ("\n" + item.toolTip) : "")}
+                          placeholder='value'
+                          defaultValue={item.value}
+                          onChange={this.onValueUpdated.bind(this, item)}
+                        />
                       </div>);
                   })
                 }

@@ -21,13 +21,20 @@ import {connect , Provider} from 'react-redux';
 import HostPortActions from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortActions';
 import HostPortStore from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortStore';
 import HostPortRow from 'components/DataPrepConnections/KafkaConnection/HostPortEditor/HostPortRow';
+import types from 'services/inputValidationTemplates';
 
 require('./HostPortEditor.scss');
+
+const isValid = (host) => {
+  if (host === '') {return true;}
+  return types['HOSTNAME_1123'].validate(host, false);
+};
 
 const mapStateToFieldNameProps = (state, ownProps) => {
   return {
     host: state.hostport.rows[ownProps.index].host,
-    port: state.hostport.rows[ownProps.index].port
+    port: state.hostport.rows[ownProps.index].port,
+    valid: state.hostport.rows[ownProps.index].valid,
   };
 };
 
@@ -51,12 +58,19 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
       });
     },
     onChange: (fieldProp, e) => {
+
+      const payload = {
+        index: ownProps.index,
+        [fieldProp]: e.target.value
+      };
+
+      if (fieldProp === "host") {
+        payload.valid = isValid(e.target.value);
+      }
+
       dispatch({
         type: fieldToActionMap[fieldProp],
-        payload: {
-          index: ownProps.index,
-          [fieldProp]: e.target.value
-        }
+        payload: payload
       });
     }
   };

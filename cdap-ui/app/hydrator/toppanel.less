@@ -337,6 +337,25 @@ body.theme-cdap {
               }
             }
           }
+          .error-message {
+            color: @brand-danger;
+            font-size: 12px;
+          }
+          .info-message {
+            white-space: normal; 
+            margin-bottom: 10px;
+          }
+          .pipeline-input {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            span {
+              color: #098cf9;
+              cursor: pointer;
+              font-size: 1.3em;
+              margin-left: 5px;
+            }
+          }
         }
         input,
         textarea {
@@ -374,7 +393,6 @@ body.theme-cdap {
         }
         &.expanded {
           background-color: white;
-          height: 185px;
           cursor: auto;
           padding: 10px;
           width: 100%;
@@ -407,6 +425,12 @@ body.theme-cdap {
 
               &.save-button {
                 margin-right: 10px;
+                // Disable on this Button acting inversely in dev mode for some reason.
+                // This runs correctly in prod.
+                background-color: #255ddb !important;
+                &[disabled] {
+                  background-color: #5a84e4 !important;
+                }
               }
             }
           }

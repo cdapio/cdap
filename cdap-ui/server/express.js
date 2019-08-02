@@ -189,7 +189,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       log.error('Bad Request');
       var err = {
         error: 400,
-        message: "Bad Request"
+        message: 'Bad Request'
       };
       res.status(400).send(err);
       return;
@@ -256,7 +256,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       log.error('Bad Request');
       var err = {
         error: 400,
-        message: "Bad Request"
+        message: 'Bad Request'
       };
       res.status(400).send(err);
       return;

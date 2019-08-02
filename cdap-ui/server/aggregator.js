@@ -325,7 +325,7 @@ function onSocketData (message) {
         statusCode: 400,
       };
       var body = {
-        message: "Bad Request"
+        message: 'Bad Request'
       };
       emitResponse.call(this, r, false, err, body);
       log.error('Bad Socket Request');

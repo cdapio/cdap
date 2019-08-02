@@ -26,12 +26,11 @@
   .list-row {
     display: flex;
     padding-bottom: 10px;
-    align-items: center;
+    // align-items: center;
 
-    .name,
     .value {
-      width: 300px;
       height: 32px;
+      width: 100%;
     }
 
     .name {
@@ -40,6 +39,8 @@
       line-height: 2.5;
       padding-left: 10px;
       font-weight: 500;
+      width: 300px;
+      height: 32px;
     }
 
     .colon {

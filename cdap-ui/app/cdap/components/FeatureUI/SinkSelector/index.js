@@ -18,7 +18,8 @@ import cloneDeep from 'lodash/cloneDeep';
 import PropTypes from 'prop-types';
 import { Input } from 'reactstrap';
 import { isNil, isEmpty, remove } from 'lodash';
-import InfoTip from '../InfoTip';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 
 require('./SinkSelector.scss');
 
@@ -31,7 +32,11 @@ class SinkSelector extends React.Component {
     this.configPropList = [];
     this.configMap = {};
     this.state = {
-      sinks: []
+      sinks: [],
+      // inputs is like configMap and keeps track of input errors. It has to
+      // be defined in state so that child re-render happends when error changes.
+      inputs: {
+      }
     };
     this.onSinkChange = this.onSinkChange.bind(this);
     this.onValueUpdated = this.onValueUpdated.bind(this);
@@ -112,7 +117,26 @@ class SinkSelector extends React.Component {
       this.configMap[parent] = {};
     }
     this.configMap[parent][child] = value;
+    const error = this.getParamError(parent, child);
+    if (error) {
+      this.configMap[parent][child] = "";
+    }
+    this.setState({
+      inputs: {
+        ...this.state.inputs,
+        [parent + child]: error,
+      },
+    });
     this.updateConfiguration();
+  }
+
+  getParamError = (parent, child) => {
+    if (isNil(this.configMap[parent]) || !this.configMap[parent][child]) {
+      return "";
+    }
+    const isValid = types['DEFAULT'].validate(this.configMap[parent][child]);
+    !isValid && console.error(`${child} Invalid`);
+    return (isValid ? '' : 'Invalid Input');
   }
 
   render() {
@@ -145,14 +169,14 @@ class SinkSelector extends React.Component {
                               }
                             </div>
                             <div className='colon'>:</div>
-                            <Input className='value' type="text" name="value"
+                            <ValidatedInput
+                              className='value' type="text" name="value"
+                              label={item.paramName + param.paramName + "_ValidateInput"}
+                              inputInfo={types['DEFAULT'].getInfo() + (param.description ? "\n\n" + param.description : '')}
+                              validationError={this.state.inputs[item.paramName + param.paramName] || ''}
                               placeholder={'Enter ' + param.displayName + ' value'}
                               defaultValue={isNil(this.configMap[item.paramName][param.paramName]) ? '' : this.configMap[item.paramName][param.paramName]}
                               onChange={this.onValueUpdated.bind(this, item.paramName, param.paramName)} />
-                            {
-                              param.description &&
-                              <InfoTip id={param.paramName + "_InfoTip"} description={param.description}></InfoTip>
-                            }
                           </div>
                         );
                       })

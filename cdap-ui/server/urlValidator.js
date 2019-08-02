@@ -14,8 +14,7 @@
  * the License.
  */
 
-/*global require, module */
-
+/*global  module */
 
 function UrlValidator(cdapConfig) {
   this.whiteListIps = this.getWhiltListIps(cdapConfig);

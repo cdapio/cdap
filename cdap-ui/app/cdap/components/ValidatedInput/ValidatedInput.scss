@@ -12,19 +12,29 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-.add-feature-wizard {
-  min-width: 70vw !important;
-  margin: 5% !important;
-  .modal-content {
-    .modal-body {
-      min-height: 75vh !important;
-      .cask-wizard {
-        .wizard-body {
-          height: 90%;
-        }
-      }
-    }
-  }
+@import '~styles/variables.scss';
+
+.input-group-info {
+  border: none !important;
+  background: none !important;
+  font-size: 1.5rem !important;
+  line-height: 1rem !important;
+  color: #098cf9 !important;
+}
+
+.feedback-error {
+  color: $red-02;
+  padding-bottom: 5px;
+}
+
+.help {
+  cursor: pointer;
+}
+
+.validateInput {
+  padding-left: 15px;
+  margin-bottom: 0px !important;
+
 }

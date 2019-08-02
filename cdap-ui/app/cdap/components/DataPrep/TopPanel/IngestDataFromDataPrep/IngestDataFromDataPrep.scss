@@ -23,7 +23,6 @@ $max_height_error_container: 200px;
 .cdap-modal {
   &.dataprep-create-dataset-modal {
     form {
-      input.form-control,
       select.form-control {
         width: calc(100% - 20px); // 20px for the info icon.
         display: inline-block;

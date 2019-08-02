@@ -36,6 +36,7 @@ const hostport = (state = initialState, action = defaultAction) => {
         return stateCopy;
       }
       stateCopy.rows[action.payload.index].host = action.payload.host;
+      stateCopy.rows[action.payload.index].valid = action.payload.valid;
       return stateCopy;
     case HostPortActions.setPort:
       stateCopy = Object.assign({}, state);
@@ -50,7 +51,8 @@ const hostport = (state = initialState, action = defaultAction) => {
       stateCopy.rows.splice(action.payload.index + 1, 0, {
         host: '',
         port: '',
-        uniqueId: uuidV4()
+        uniqueId: uuidV4(),
+        valid: true,
       });
       return stateCopy;
     case HostPortActions.deletePair:
@@ -60,7 +62,8 @@ const hostport = (state = initialState, action = defaultAction) => {
         stateCopy.rows.push({
           host: '',
           port: '',
-          uniqueId: uuidV4()
+          uniqueId: uuidV4(),
+          valid: true,
         });
       }
       return stateCopy;

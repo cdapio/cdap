@@ -14,7 +14,8 @@
  * the License.
  */
 import React from 'react';
-import { Input } from 'reactstrap';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 import { EDIT_PIPELINE } from '../config';
 import PropTypes from 'prop-types';
 
@@ -24,10 +25,34 @@ class DetailProvider extends React.Component {
   name;
   constructor(props) {
     super(props);
+
+    this.state = {
+      inputs: {
+        'name': {
+          'error': '',
+          'required': true,
+          'template': 'NAME',
+          'label': 'name'
+        },
+      },
+    };
   }
 
-  onNameUpdated(event) {
-    this.name =  event.target.value;
+  onNameUpdated(key, event) {
+    const isValid = types[this.state.inputs[key]['template']].validate(event.target.value);
+    this.setState({
+      inputs: {
+        ...this.state.inputs,
+        [key]: {
+          ...this.state.inputs[key],
+          'error': isValid ? '' : 'Invalid Input',
+        }
+      }
+    });
+    // Validation Function in Store check if value is empty
+    // So by setting name to empty string (if there is error
+    // in input) we are invalidating submission in Store.
+    this.name = isValid ? event.target.value : '';
     this.props.updateFeatureName(this.name);
   }
 
@@ -36,11 +61,22 @@ class DetailProvider extends React.Component {
       <div className = "detail-step-container">
         <div className='field-row'>
             <div className='name'>Name
-              <i className = "fa fa-asterisk mandatory"></i>
+              { this.state.inputs['name']['required'] &&
+                <i className = "fa fa-asterisk mandatory"></i>
+              }
             </div>
             <div className='colon'>:</div>
-            <Input className='value' type="text" name="name" placeholder='name'  readOnly = {this.props.operationType == EDIT_PIPELINE}
-              defaultValue = {this.props.featureName} onChange={this.onNameUpdated.bind(this)}/>
+            <ValidatedInput
+              className='value'
+              label={this.state.inputs['name']['label']}
+              inputInfo={types[this.state.inputs['name']['template']].getInfo()}
+              validationError={this.state.inputs['name']['error']}
+              type="text"
+              placeholder='name'
+              readOnly = {this.props.operationType == EDIT_PIPELINE}
+              defaultValue = {this.props.featureName}
+              onChange={this.onNameUpdated.bind(this, 'name')}
+            />
         </div>
         <div className='field-row'>
             <div className='name'>Description</div>
