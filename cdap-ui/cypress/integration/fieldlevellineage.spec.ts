@@ -53,7 +53,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
     // should see the correct fields for the selected dataset
     cy.get('[data-cy="target-fields"]').within(() => {
       cy.get('.field-row').should(($fields) => {
-        expect($fields).to.have.length(9);
+        expect($fields).to.have.length(2);
         // should see the correct field(s) for the impact dataset
         expect($fields).to.contain('longitude');
       });
@@ -117,7 +117,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
 
     // Should see on field lineage for fields, which should be disabled
     cy.get('.field-row.disabled').should(($fields) => {
-      expect($fields).to.have.length(7);
+      expect($fields).to.have.length(1);
     });
   });
 });
