@@ -114,4 +114,7 @@ angular
   })
   .directive('multiSelect', function(reactDirective) {
     return reactDirective(window.CaskCommon.MultiSelect);
+  })
+  .directive('joinTypeWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.JoinTypeWidget);
   });

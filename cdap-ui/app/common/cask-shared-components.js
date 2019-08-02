@@ -89,6 +89,7 @@ var ToggleSwitchWidget = require('../cdap/components/AbstractWidget/ToggleSwitch
 var WranglerEditor = require('../cdap/components/AbstractWidget/WranglerEditor').default;
 var RadioGroupWidget = require('../cdap/components/AbstractWidget/RadioGroupWidget').default;
 var MultiSelect = require('../cdap/components/AbstractWidget/FormInputs/MultiSelect').default;
+var JoinTypeWidget = require('../cdap/components/AbstractWidget/JoinTypeWidget').default;
 
 export {
   Store,
@@ -155,4 +156,5 @@ export {
   WranglerEditor,
   RadioGroupWidget,
   MultiSelect,
+  JoinTypeWidget,
 };

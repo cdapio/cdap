@@ -225,10 +225,11 @@ angular.module(PKG.name + '.commons')
         }
       },
       'join-types': {
-        element: '<my-join-types></my-join-types>',
+        element: '<join-type-widget></join-type-widget>',
         attributes: {
-          'ng-model': 'model',
-          'input-schema': 'inputSchema'
+          'value': 'model',
+          'input-schema': 'inputSchema',
+          'on-change': 'onChange'
         }
       },
       'sql-conditions': {
