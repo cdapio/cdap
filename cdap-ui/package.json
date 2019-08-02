@@ -170,6 +170,7 @@
     "graphql-import": "0.7.1",
     "helmet-csp": "2.7.1",
     "history": "4.9.0",
+    "hsts": "2.2.0",
     "i18n-react": "0.3.0",
     "immutability-helper": "2.7.1",
     "intersection-observer": "0.4.2",
