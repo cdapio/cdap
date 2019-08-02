@@ -38,37 +38,15 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     pipelines.forEach((pipeline) => cy.cleanup_pipelines(headers, pipeline));
   });
 
-  function deployAndTestPipeline(filename, pipelineName, done) {
-    cy.visit('/');
-    cy.get('#resource-center-btn').click();
-    cy.get('#create-pipeline-link').click();
-    cy.url().should('include', '/studio');
-    cy.upload_pipeline(filename, '#pipeline-import-config-link > input[type="file"]');
-    // This is arbitrary. Right now we don't have a way to determine
-    // if the upgrade check is done. Since this a standalone the assumption
-    // is this won't take more than 10 seconds.
-    cy.wait(10000);
-    // Name pipeline then deploy pipeline
-    cy.get('.pipeline-name').click();
-    cy.get('#pipeline-name-input')
-      .clear()
-      .type(pipelineName)
-      .type('{enter}');
-    cy.get('[data-testid=deploy-pipeline]').click();
-    cy.wait(10000);
-    cy.url()
-      .should('include', `/view/${pipelineName}`)
-      .then(() => done());
-  }
   it('Should work with union splitter and condition plugins', (done) => {
-    deployAndTestPipeline(
+    Helpers.deployAndTestPipeline(
       'union_condition_splitter_pipeline_v1-cdap-data-pipeline.json',
       unionConditionPipeline,
       done
     );
   });
   it('Should work with null splitter plugin', (done) => {
-    deployAndTestPipeline(
+    Helpers.deployAndTestPipeline(
       'null_splitter_pipeline-cdap-data-pipeline.json',
       nullSplitterPipeline,
       done
