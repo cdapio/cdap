@@ -111,4 +111,7 @@ angular
   })
   .directive('radioGroupWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.RadioGroupWidget);
+  })
+  .directive('multiSelect', function(reactDirective) {
+    return reactDirective(window.CaskCommon.MultiSelect);
   });

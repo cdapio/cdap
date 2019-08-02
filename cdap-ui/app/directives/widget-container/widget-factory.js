@@ -205,7 +205,7 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'value': 'model || myconfig.properties.default || myconfig["widget-attributes"].default',
           'options': '(myconfig.properties.values || myconfig["widget-attributes"].values)',
-          'on-change': 'onChange'
+          'on-change': 'onChange',
         }
       },
       'dataset-selector': {
@@ -276,10 +276,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'multi-select': {
-        element: '<my-multi-select-dropdown></my-multi-select-dropdown>',
+        element: '<multi-select></multi-select>',
         attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig'
+          'value': 'model',
+          'options': 'myconfig["widget-attributes"].options',
+          'on-change': 'onChange',
+          'delimiter': 'myconfig["widget-attributes"].delimiter',
         }
       },
       'radio-group': {

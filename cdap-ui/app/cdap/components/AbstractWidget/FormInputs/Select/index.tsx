@@ -17,7 +17,7 @@ import React from 'react';
 
 import PropTypes from 'prop-types';
 import Select from '@material-ui/core/Select';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles from '@material-ui/core/styles/withStyles';
 import InputBase from '@material-ui/core/InputBase';
 
 const styles = () => {
@@ -56,9 +56,8 @@ export default function CustomSelect({ value, onChange, options }: ISelectProps)
   const optionValues = options.map((opt) => {
     return typeof opt === 'string' ? { value: opt, label: opt } : opt;
   });
-
   return (
-    <Select fullWidth native value={value} onChange={onChangeHandler} input={<CustomizedInput />}>
+    <Select fullWidth value={value} onChange={onChangeHandler} input={<CustomizedInput />}>
       {optionValues.map((opt) => (
         <option value={opt.value}>{opt.label}</option>
       ))}
