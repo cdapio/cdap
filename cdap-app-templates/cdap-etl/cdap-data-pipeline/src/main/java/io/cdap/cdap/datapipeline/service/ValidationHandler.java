@@ -32,6 +32,7 @@ import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.batch.BatchPipelineSpecGenerator;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
@@ -47,7 +48,6 @@ import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
 import io.cdap.cdap.etl.proto.v2.validation.ValidationError;
 import io.cdap.cdap.etl.proto.v2.validation.ValidationErrorSerDe;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
-import io.cdap.cdap.etl.validation.InvalidPipelineException;
 import io.cdap.cdap.etl.validation.ValidatingConfigurer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -110,7 +110,7 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
       new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
                                      Engine.SPARK);
 
-    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer();
+    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
       stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
     }
@@ -121,11 +121,8 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
       StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), stageConfig.getPlugin(),
                                                             pipelineConfigurer).build();
       responder.sendString(GSON.toJson(new StageValidationResponse(spec)));
-    } catch (InvalidPipelineException e) {
-      responder.sendString(GSON.toJson(new StageValidationResponse(e.getErrors())));
-    } catch (Exception e) {
-      responder.sendString(GSON.toJson(
-        new StageValidationResponse(Collections.singletonList(new ValidationError(e.getMessage())))));
+    } catch (ValidationException e) {
+      responder.sendString(GSON.toJson(new StageValidationResponse(e.getFailures())));
     }
   }
 

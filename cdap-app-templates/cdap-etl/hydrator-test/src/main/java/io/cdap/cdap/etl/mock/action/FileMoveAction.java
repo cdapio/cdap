@@ -67,6 +67,7 @@ public class FileMoveAction extends Action {
     if (!errors.isEmpty()) {
       throw new InvalidStageException(errors);
     }
+
   }
 
   @Override

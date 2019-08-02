@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -50,11 +51,13 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    if (config.millis < 1) {
-      throw new IllegalArgumentException("millis must be at least 1.");
-    }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    if (config.millis < 1) {
+      stageConfigurer.addFailure("Value of property millis can not be less than 1.",
+                                 "Value of property millis must be atleast 1.").withPluginConfigCause("millis");
+    }
+    stageConfigurer.throwIfFailure();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 

@@ -19,13 +19,13 @@ package io.cdap.cdap.etl.batch;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
-import io.cdap.cdap.etl.validation.InvalidPipelineException;
 
 import java.util.Set;
 
@@ -42,13 +42,14 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
   }
 
   @Override
-  public BatchPipelineSpec generateSpec(ETLBatchConfig config) throws InvalidPipelineException {
+  public BatchPipelineSpec generateSpec(ETLBatchConfig config) throws ValidationException {
     BatchPipelineSpec.Builder specBuilder = BatchPipelineSpec.builder();
 
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();
       DefaultPipelineConfigurer pipelineConfigurer =
-        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine, new DefaultStageConfigurer());
+        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine,
+                                      new DefaultStageConfigurer(name));
       StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer).build();
       specBuilder.addAction(new ActionSpec(name, spec.getPlugin()));
     }

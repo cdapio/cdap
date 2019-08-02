@@ -25,7 +25,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
-import io.cdap.cdap.etl.api.validation.InvalidStageException;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.mock.action.FileMoveAction;
 import io.cdap.cdap.etl.mock.action.MockAction;
 import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
@@ -113,7 +113,7 @@ public class HydratorTestBase extends TestBase {
                    Action.class.getPackage().getName(),
                    Condition.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
-                   InvalidStageException.class.getPackage().getName(),
+                   ValidationException.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
     batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0");
@@ -138,7 +138,7 @@ public class HydratorTestBase extends TestBase {
                    StreamingSource.class.getPackage().getName(),
                    Transform.class.getPackage().getName(),
                    SparkCompute.class.getPackage().getName(),
-                   InvalidStageException.class.getPackage().getName(),
+                   ValidationException.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
 
 

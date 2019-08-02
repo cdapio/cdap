@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.api;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -28,17 +30,35 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface MultiInputStageConfigurer {
+
   /**
-   * get the map of input stageName to input schema for this stage, or return empty map if its unknown
+   * Get the map of input stageName to input schema for this stage, or return empty map if its unknown.
    *
    * @return map of input schemas
    */
   Map<String, Schema> getInputSchemas();
 
   /**
-   * set output schema for this stage, or null if its unknown
+   * Set output schema for this stage, or null if its unknown.
    *
    * @param outputSchema output schema for this stage
    */
   void setOutputSchema(@Nullable Schema outputSchema);
+
+  /**
+   * Add validation failure to this configurer.
+   *
+   * @param message failure message
+   * @param correctiveAction corrective action
+   * @return a validation failure
+   */
+  ValidationFailure addFailure(String message, @Nullable String correctiveAction);
+
+  /**
+   * Throws validation exception if there are any failures that are added to the configurer through
+   * {@link #addFailure(String, String)}.
+   *
+   * @throws ValidationException if there are any validation failures
+   */
+  void throwIfFailure() throws ValidationException;
 }
