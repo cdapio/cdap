@@ -60,9 +60,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterators;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -402,19 +406,20 @@ public class ProgramScheduleStoreDataset {
   }
 
   /**
-   * Retrieve all schedules for a given namespace which were updated to status SUSPENDED between startTime and endTime.
+   * Retrieve all schedules for a given namespace which were updated to status SUSPENDED between startTimeMillis
+   * and endTimeMillis.
    *
    * @param namespaceId the namespace for which to list the schedules
-   * @param startTime the lower bound (inclusive) for when the schedules were disabled
-   * @param endTime the upper bound (exclusive) for when the schedules were disabled
+   * @param startTimeMillis the lower bound (inclusive) for when the schedules were disabled in millis
+   * @param endTimeMillis the upper bound (exclusive) for when the schedules were disabled in millis
    * @return a list of schedules for the namespace; never null
    */
-  public List<ProgramSchedule> listSchedulesSuspended(NamespaceId namespaceId, long startTime, long endTime)
+  public List<ProgramSchedule> listSchedulesSuspended(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis)
     throws IOException {
     Predicate<StructuredRow> predicate =
-      row -> row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) >= startTime &&
-        row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) < endTime &&
-        row.getString(StoreDefinition.ProgramScheduleStore.STATUS).equals(ProgramScheduleStatus.SUSPENDED.toString());
+      row -> row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) >= startTimeMillis &&
+        row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) < endTimeMillis &&
+        ProgramScheduleStatus.SUSPENDED.toString().equals(row.getString(StoreDefinition.ProgramScheduleStore.STATUS));
     return listSchedulesWithPrefixAndKeyPredicate(getScheduleKeysForNamespaceScan(namespaceId), predicate);
   }
 
@@ -513,21 +518,16 @@ public class ProgramScheduleStoreDataset {
    */
   private List<ProgramSchedule> listSchedulesWithPrefix(Collection<Field<?>> prefixKeys,
                                                         Predicate<ProgramSchedule> filter) throws IOException {
-    List<ProgramSchedule> result = new ArrayList<>();
     try (CloseableIterator<StructuredRow> iterator =
            scheduleStore.scan(Range.singleton(prefixKeys), Integer.MAX_VALUE)) {
-      while (iterator.hasNext()) {
-        StructuredRow row = iterator.next();
-        String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
-        if (serializedSchedule != null) {
-          ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
-          if (schedule != null && filter.test(schedule)) {
-            result.add(schedule);
-          }
-        }
-      }
+      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
+        .map(r -> r.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE))
+        .filter(Objects::nonNull)
+        .map(s -> GSON.fromJson(s, ProgramSchedule.class))
+        .filter(Objects::nonNull)
+        .filter(filter)
+        .collect(Collectors.toList());
     }
-    return result;
   }
 
   /**
@@ -567,23 +567,16 @@ public class ProgramScheduleStoreDataset {
   private List<ProgramSchedule> listSchedulesWithPrefixAndKeyPredicate(Collection<Field<?>> prefixKeys,
                                                                        Predicate<StructuredRow> keyPredicate)
     throws IOException {
-    List<ProgramSchedule> result = new ArrayList<>();
     try (CloseableIterator<StructuredRow> iterator =
       scheduleStore.scan(Range.singleton(prefixKeys), Integer.MAX_VALUE)) {
-      while (iterator.hasNext()) {
-        StructuredRow row = iterator.next();
-        if (keyPredicate.test(row)) {
-          String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
-          if (serializedSchedule != null) {
-            ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
-            if (schedule != null) {
-              result.add(schedule);
-            }
-          }
-        }
-      }
+      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
+        .filter(keyPredicate)
+        .map(r -> r.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE))
+        .filter(Objects::nonNull)
+        .map(s -> GSON.fromJson(s, ProgramSchedule.class))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     }
-    return result;
   }
 
   /**

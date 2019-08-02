@@ -1004,8 +1004,9 @@ public abstract class AppFabricTestBase {
     return o.get("status");
   }
 
-  protected int reEnableSchedules(String namespace, long startTime, long endTime) throws Exception {
-    String scheduleSuspend = String.format("schedules/re-enable?start-time=%d&end-time=%d", startTime, endTime);
+  protected int reEnableSchedules(String namespace, long startTimeMillis, long endTimeMillis) throws Exception {
+    String scheduleSuspend =
+      String.format("schedules/re-enable?start-time-millis=%d&end-time-millis=%d", startTimeMillis, endTimeMillis);
     String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
                                                            namespace);
     HttpResponse response = doPut(versionedScheduledSuspend, null);

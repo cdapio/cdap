@@ -525,12 +525,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void reEnableSchedules(NamespaceId namespaceId, long startTime, long endTime)
+  public void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis)
     throws ConflictException {
     checkStarted();
     try {
       execute((StoreTxRunnable<Void, Exception>) store -> {
-        List<ProgramSchedule> schedules = store.listSchedulesSuspended(namespaceId, startTime, endTime);
+        List<ProgramSchedule> schedules = store.listSchedulesSuspended(namespaceId, startTimeMillis, endTimeMillis);
         List<ScheduleId> scheduleIds =
           schedules.stream().map(schedule -> schedule.getScheduleId()).collect(Collectors.toList());
         for (ScheduleId scheduleId : scheduleIds) {
