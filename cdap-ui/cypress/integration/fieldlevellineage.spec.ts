@@ -70,7 +70,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
     cy.get('.modal-title .close-section').click();
   });
   it('Should allow user to see field level lineage for a custom date range', () => {
-    // click on date picker dropdown
+    // click on date picker dropdown and choose custom date range
     cy.get('.time-picker-dropdown')
       .find('.dropdown-toggle')
       .click();
@@ -82,11 +82,14 @@ describe('Generating and navigating field level lineage for datasets', () => {
       cy.contains('Start Time').click();
     });
     cy.get('.react-calendar').within(() => {
-      // start range two years and one month ago
+      // start of range is two years and one month ago, and first available day
+      // Go back two years
       cy.get('.react-calendar__navigation__prev2-button').click();
       cy.get('.react-calendar__navigation__prev2-button').click();
+      // Go back one month
       cy.get('.react-calendar__navigation__prev-button').click();
     });
+    // Choose first available day of the month
     cy.get('.react-calendar__month-view__days').within(() => {
       cy.get('button:enabled')
         .first()
@@ -96,10 +99,12 @@ describe('Generating and navigating field level lineage for datasets', () => {
     cy.get('.time-range-selector').within(() => {
       cy.contains('End Time').click();
     });
-    // end range two years ago
+    // end of range: two years and zero months for now, first available day
     cy.get('.react-calendar').within(() => {
+      // Go forward one month from the start date
       cy.get('.react-calendar__navigation__next-button').click();
     });
+    // Choose first available day of that month
     cy.get('.react-calendar__month-view__days').within(() => {
       cy.get('button:enabled')
         .first()
