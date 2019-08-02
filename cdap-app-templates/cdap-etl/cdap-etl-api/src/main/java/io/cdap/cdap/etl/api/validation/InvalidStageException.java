@@ -23,7 +23,10 @@ import java.util.List;
 /**
  * Thrown when a pipeline stage is invalid for any reason. If there are multiple reasons that the stage is invalid,
  * they should all be specified.
+ *
+ * Deprecated since 6.1.0. Use {@link ValidationFailure} instead.
  */
+@Deprecated
 public class InvalidStageException extends RuntimeException {
   private final List<? extends InvalidStageException> reasons;
 

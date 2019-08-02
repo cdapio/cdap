@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.api;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
 import javax.annotation.Nullable;
 
@@ -29,7 +31,12 @@ import javax.annotation.Nullable;
 public interface StageConfigurer {
 
   /**
-   * get the input schema for this stage, or null if its unknown
+   * Get the stage name for this stage.
+   */
+  String getStageName();
+
+  /**
+   * Get the input schema for this stage, or null if its unknown.
    *
    * @return input schema
    */
@@ -37,14 +44,14 @@ public interface StageConfigurer {
   Schema getInputSchema();
 
   /**
-   * set the output schema for this stage, or null if its unknown
+   * Set the output schema for this stage, or null if its unknown.
    *
    * @param outputSchema output schema for this stage
    */
   void setOutputSchema(@Nullable Schema outputSchema);
 
   /**
-   * set the error schema for this stage, or null if its unknown.
+   * Set the error schema for this stage, or null if its unknown.
    * If no error schema is set, it will default to the input schema for the stage. Note that since source
    * plugins do not have an input schema, it will default to null for sources.
    *
@@ -52,4 +59,18 @@ public interface StageConfigurer {
    */
   void setErrorSchema(@Nullable Schema errorSchema);
 
+  /**
+   * Adds a new validation failure to the configurer.
+   *
+   * @param failure a validation failure
+   */
+  void addValidationFailure(ValidationFailure failure);
+
+  /**
+   * Throws validation exception if there are any failures that are added to the configurer through
+   * {@link StageConfigurer#addValidationFailure(ValidationFailure)}.
+   *
+   * @throws ValidationException if there are any validation failures being carried by the configurer
+   */
+  void throwIfFailure() throws ValidationException;
 }

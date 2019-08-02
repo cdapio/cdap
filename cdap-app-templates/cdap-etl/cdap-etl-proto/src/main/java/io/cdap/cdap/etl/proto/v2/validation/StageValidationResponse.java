@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.etl.proto.v2.validation;
 
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.Collections;
@@ -28,24 +29,24 @@ import javax.annotation.Nullable;
  * Response for validating a pipeline stage.
  */
 public class StageValidationResponse {
-  private final List<? extends ValidationError> errors;
+  private final List<ValidationFailure> failures;
   private final StageSpec spec;
 
-  public StageValidationResponse(List<? extends ValidationError> errors) {
-    this(errors, null);
+  public StageValidationResponse(List<ValidationFailure> failures) {
+    this(failures, null);
   }
 
   public StageValidationResponse(StageSpec spec) {
     this(Collections.emptyList(), spec);
   }
 
-  private StageValidationResponse(List<? extends ValidationError> errors, @Nullable StageSpec spec) {
-    this.errors = errors;
+  private StageValidationResponse(List<ValidationFailure> failures, @Nullable StageSpec spec) {
+    this.failures = failures;
     this.spec = spec;
   }
 
-  public List<? extends ValidationError> getErrors() {
-    return errors == null ? Collections.emptyList() : errors;
+  public List<ValidationFailure> getFailures() {
+    return failures == null ? Collections.emptyList() : failures;
   }
 
   @Nullable
@@ -62,12 +63,11 @@ public class StageValidationResponse {
       return false;
     }
     StageValidationResponse that = (StageValidationResponse) o;
-    return Objects.equals(errors, that.errors) &&
-      Objects.equals(spec, that.spec);
+    return Objects.equals(failures, that.failures) && Objects.equals(spec, that.spec);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(errors, spec);
+    return Objects.hash(failures, spec);
   }
 }

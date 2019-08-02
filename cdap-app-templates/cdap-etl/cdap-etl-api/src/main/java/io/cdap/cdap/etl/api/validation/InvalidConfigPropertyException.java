@@ -19,7 +19,10 @@ package io.cdap.cdap.etl.api.validation;
 
 /**
  * Indicates a config property is invalid.
+ *
+ * Deprecated since 6.1.0. Use {@link ValidationFailure} instead.
  */
+@Deprecated
 public class InvalidConfigPropertyException extends InvalidStageException {
   private final String property;
 

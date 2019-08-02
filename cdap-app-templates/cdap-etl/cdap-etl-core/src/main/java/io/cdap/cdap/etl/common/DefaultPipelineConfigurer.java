@@ -50,7 +50,7 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
 
   public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
     C configurer, String stageName, Engine engine) {
-    this(configurer, stageName, engine, new DefaultStageConfigurer());
+    this(configurer, stageName, engine, new DefaultStageConfigurer(stageName));
   }
 
   public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(

@@ -27,6 +27,7 @@ import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 import io.cdap.cdap.etl.mock.action.FileMoveAction;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
@@ -37,10 +38,7 @@ import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
-import io.cdap.cdap.etl.proto.v2.validation.InvalidConfigPropertyError;
-import io.cdap.cdap.etl.proto.v2.validation.PluginNotFoundError;
 import io.cdap.cdap.etl.proto.v2.validation.StageSchema;
-import io.cdap.cdap.etl.proto.v2.validation.StageValidationError;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
 import io.cdap.cdap.etl.proto.v2.validation.ValidationError;
@@ -82,6 +80,9 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(ValidationError.class, new ValidationErrorSerDe())
     .create();
+  private static final String STAGE = "stage";
+  private static final String CONFIG_PROPERTY = "configProperty";
+
   private static ServiceManager serviceManager;
   private static URI serviceURI;
 
@@ -153,22 +154,24 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     String name = MockSource.NAME;
     String type = BatchSource.PLUGIN_TYPE;
     ArtifactSelectorConfig requestedArtifact = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
-                                                                          batchMocksArtifactId.getArtifact() + "-ghost",
+                                                                          batchMocksArtifactId.getArtifact() +
+                                                                          "-ghost",
                                                                           batchMocksArtifactId.getVersion());
 
     String stageName = "src";
     ETLStage stage = new ETLStage(stageName, new ETLPlugin(name, type, Collections.emptyMap(), requestedArtifact));
     StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    Assert.assertEquals(stageName, failure.getProperties().get("pluginId"));
+    Assert.assertEquals(type, failure.getProperties().get("pluginType"));
+    Assert.assertEquals(name, failure.getProperties().get("pluginName"));
 
-    ArtifactSelectorConfig expectedSuggestion = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
-                                                                           batchMocksArtifactId.getArtifact(),
-                                                                           batchMocksArtifactId.getVersion());
-    PluginNotFoundError error = new PluginNotFoundError(stageName, type, name, requestedArtifact, expectedSuggestion);
-    StageValidationResponse expected = new StageValidationResponse(Collections.singletonList(error));
+    StageValidationResponse expected = new StageValidationResponse(Collections.singletonList(failure));
     Assert.assertEquals(expected, actual);
   }
 
-  // test that InvalidConfigPropertyExceptions are captured as InvalidConfigPropertyErrors
+  // test that InvalidConfigPropertyExceptions are captured as ValidationFailure
   @Test
   public void testValidateStageSingleInvalidConfigProperty() throws Exception {
     // StringValueFilterTransform will be configured to filter records where field x has value 'y'
@@ -186,17 +189,17 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     StageValidationResponse actual = sendRequest(requestBody);
 
     Assert.assertNull(actual.getSpec());
-    Assert.assertEquals(1, actual.getErrors().size());
-    ValidationError error = actual.getErrors().iterator().next();
-    Assert.assertTrue(error instanceof InvalidConfigPropertyError);
-    Assert.assertEquals("field", ((InvalidConfigPropertyError) error).getProperty());
-    Assert.assertEquals(stageName, ((InvalidConfigPropertyError) error).getStage());
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    Assert.assertEquals("field", failure.getProperties().get(CONFIG_PROPERTY));
+    Assert.assertEquals(stageName, failure.getProperties().get(STAGE));
   }
 
-  // test that multiple exceptions set in an InvalidStageException are captured as errors
+  // test that multiple exceptions set in an InvalidStageException are captured as failures
   @Test
   public void testValidateStageMultipleErrors() throws Exception {
-    // configure an invalid regex and a set the source and destination to the same value, which should generate 2 errors
+    // configure an invalid regex and a set the source and destination to the same value,
+    // which should generate 2 errors
     String stageName = "stg";
     Map<String, String> properties = new HashMap<>();
     properties.put("filterRegex", "[");
@@ -208,21 +211,18 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     StageValidationResponse actual = sendRequest(request);
 
     Assert.assertNull(actual.getSpec());
-    Assert.assertEquals(2, actual.getErrors().size());
+    Assert.assertEquals(2, actual.getFailures().size());
 
-    ValidationError error1 = actual.getErrors().get(0);
-    ValidationError error2 = actual.getErrors().get(1);
+    ValidationFailure failure1 = actual.getFailures().get(0);
+    ValidationFailure failure2 = actual.getFailures().get(1);
 
-    Assert.assertTrue(error1 instanceof InvalidConfigPropertyError);
-    Assert.assertEquals("filterRegex", ((InvalidConfigPropertyError) error1).getProperty());
-    Assert.assertEquals(stageName, ((InvalidConfigPropertyError) error1).getStage());
-
-    Assert.assertTrue(error2 instanceof StageValidationError);
-    Assert.assertEquals(stageName, ((StageValidationError) error2).getStage());
+    Assert.assertEquals("filterRegex", failure1.getProperties().get(CONFIG_PROPERTY));
+    Assert.assertEquals(stageName, failure1.getProperties().get(STAGE));
+    Assert.assertEquals(stageName, failure2.getProperties().get(STAGE));
   }
 
   // tests that exceptions thrown by configurePipeline that are not InvalidStageExceptions are
-  // captured as a StageValidationError.
+  // captured as a ValidationFailure.
   @Test
   public void testValidateStageOtherExceptionsCaptured() throws Exception {
     // SleepTransform throws an IllegalArgumentException if the sleep time is less than 1
@@ -232,10 +232,9 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
 
     Assert.assertNull(actual.getSpec());
-    Assert.assertEquals(1, actual.getErrors().size());
-    ValidationError error = actual.getErrors().iterator().next();
-    Assert.assertTrue(error instanceof StageValidationError);
-    Assert.assertEquals(stageName, ((StageValidationError) error).getStage());
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    Assert.assertEquals(stageName, failure.getProperties().get(STAGE));
   }
 
 
@@ -249,10 +248,22 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
 
     Assert.assertNull(actual.getSpec());
-    Assert.assertEquals(1, actual.getErrors().size());
-    ValidationError error = actual.getErrors().iterator().next();
-    Assert.assertTrue(error instanceof StageValidationError);
-    Assert.assertEquals(stageName, ((StageValidationError) error).getStage());
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    Assert.assertEquals(stageName, failure.getProperties().get(STAGE));
+  }
+
+  @Test
+  public void testValidationFailures() throws Exception {
+    String stageName = "st";
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(SleepTransform.NAME, Transform.PLUGIN_TYPE,
+                                                           Collections.singletonMap("millis", "0")));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
+
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    Assert.assertEquals(stageName, failure.getProperties().get(STAGE));
   }
 
   private StageValidationResponse sendRequest(StageValidationRequest requestBody) throws IOException {

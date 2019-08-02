@@ -17,7 +17,7 @@
 package io.cdap.cdap.etl.api;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.etl.api.validation.InvalidStageException;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 
 /**
  * Allows the stage to configure pipeline.
@@ -27,8 +27,8 @@ public interface PipelineConfigurable {
 
   /**
    * Configure an ETL pipeline, registering datasets and plugins that the stage needs.
-   * Validation should be performed in this method, throwing a {@link InvalidStageException} if there are any invalid
-   * config properties, or if the input schema is not compatible. Output schema should also be set.
+   * Validation should be performed in this method, throwing a {@link ValidationException} if there are any
+   * invalid config properties, or if the input or output schema is not compatible. Output schema should also be set.
    * This method is called many times during the lifecycle of a pipeline so it should not generate any side effects.
    *
    * When the pipeline is being constructed, this is called in order to validate the pipeline and
@@ -39,7 +39,7 @@ public interface PipelineConfigurable {
    * are registered. Config properties that contain macros will not have been evaluated yet.
    *
    * @param pipelineConfigurer the configurer used to register required datasets and plugins
-   * @throws InvalidStageException if the pipeline stage is invalid
+   * @throws ValidationException if the pipeline stage is invalid
    */
   void configurePipeline(PipelineConfigurer pipelineConfigurer);
 }

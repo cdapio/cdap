@@ -26,6 +26,8 @@ import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
 import java.util.Collections;
 import java.util.Map;
@@ -61,6 +63,11 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   @Override
   public StageConfigurer getStageConfigurer() {
     return new StageConfigurer() {
+      @Override
+      public String getStageName() {
+        return "";
+      }
+
       @Nullable
       @Override
       public Schema getInputSchema() {
@@ -74,7 +81,17 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
 
       @Override
       public void setErrorSchema(@Nullable Schema errorSchema) {
+        // no-op
+      }
 
+      @Override
+      public void addValidationFailure(ValidationFailure failure) {
+        // no-op
+      }
+
+      @Override
+      public void throwIfFailure() throws ValidationException {
+        // no-op
       }
     };
   }

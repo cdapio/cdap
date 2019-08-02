@@ -19,8 +19,13 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.etl.api.validation.ValidationException;
+import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -32,16 +37,20 @@ import javax.annotation.Nullable;
  * where we allow multiple input schemas
  */
 public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer, MultiOutputStageConfigurer {
+  private String stageName;
   private Schema outputSchema;
   private Schema outputErrorSchema;
   private boolean errorSchemaSet;
   protected Map<String, Schema> inputSchemas;
   protected Map<String, Schema> outputPortSchemas;
+  private final List<ValidationFailure> failures;
 
-  public DefaultStageConfigurer() {
+  public DefaultStageConfigurer(String stageName) {
+    this.stageName = stageName;
     this.inputSchemas = new HashMap<>();
     this.outputPortSchemas = new HashMap<>();
     this.errorSchemaSet = false;
+    this.failures = new ArrayList<>();
   }
 
   @Nullable
@@ -79,6 +88,28 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   public void setErrorSchema(@Nullable Schema errorSchema) {
     this.outputErrorSchema = errorSchema;
     errorSchemaSet = true;
+  }
+
+  @Override
+  public String getStageName() {
+    return stageName;
+  }
+
+  @Override
+  public void addValidationFailure(ValidationFailure failure) {
+    failures.add(failure);
+  }
+
+  @Override
+  public void throwIfFailure() throws ValidationException {
+    if (!failures.isEmpty()) {
+      // throw a validation exception if this configurer has any stage validation failures
+      throw new ValidationException(Collections.unmodifiableList(new ArrayList<>(failures)));
+    }
+  }
+
+  public List<ValidationFailure> getValidationFailures() {
+    return failures;
   }
 
   public Schema getErrorSchema() {

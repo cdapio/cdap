@@ -19,10 +19,10 @@ package io.cdap.cdap.datastreams;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.macro.TimeParser;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
-import io.cdap.cdap.etl.validation.InvalidPipelineException;
 import org.apache.hadoop.fs.Path;
 
 import java.util.Set;
@@ -40,7 +40,7 @@ public class DataStreamsPipelineSpecGenerator
   }
 
   @Override
-  public DataStreamsPipelineSpec generateSpec(DataStreamsConfig config) throws InvalidPipelineException {
+  public DataStreamsPipelineSpec generateSpec(DataStreamsConfig config) throws ValidationException {
     long batchIntervalMillis;
     try {
       batchIntervalMillis = TimeParser.parseDuration(config.getBatchInterval());
