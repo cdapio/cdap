@@ -55,7 +55,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
       cy.get('.field-row').should(($fields) => {
         expect($fields).to.have.length(2);
         // should see the correct field(s) for the impact dataset
-        expect($fields).to.contain('longitude');
+        expect($fields).to.contain('body');
       });
     });
   });
