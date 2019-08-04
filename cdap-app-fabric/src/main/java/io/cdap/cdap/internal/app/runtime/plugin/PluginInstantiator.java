@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Defaults;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -500,7 +501,7 @@ public class PluginInstantiator implements Closeable {
     private final Set<String> macroFields;
 
     ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
-                             PluginProperties properties, Set<String> macroFields) {
+                      PluginProperties properties, Set<String> macroFields) {
       this.pluginClass = pluginClass;
       this.artifactId = artifactId;
       this.properties = properties;
@@ -534,14 +535,14 @@ public class PluginInstantiator implements Closeable {
       }
       String value = properties.getProperties().get(name);
       if (pluginPropertyField.isRequired() || value != null) {
-        field.set(instance, convertValue(declareTypeToken.resolveType(field.getGenericType()), value));
+        field.set(instance, convertValue(name, declareTypeToken.resolveType(field.getGenericType()), value));
       }
     }
 
     /**
      * Converts string value into value of the fieldType.
      */
-    private Object convertValue(TypeToken<?> fieldType, String value) throws Exception {
+    private Object convertValue(String name, TypeToken<?> fieldType, String value) throws Exception {
       // Currently we only support primitive, wrapped primitive and String types.
       Class<?> rawType = fieldType.getRawType();
 
@@ -576,8 +577,10 @@ public class PluginInstantiator implements Closeable {
         } catch (InvocationTargetException e) {
           if (e.getCause() instanceof NumberFormatException) {
             // if exception is due to wrong value for integer/double conversion
-            throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value),
-                                                   e.getCause());
+            String errorMessage = Strings.isNullOrEmpty(value) ?
+              String.format("Value of field %s is null or empty. It should be a number", name) :
+              String.format("Value of field %s is expected to be a number", name);
+            throw new InvalidPluginConfigException(errorMessage, e.getCause());
           }
           throw e;
         }
