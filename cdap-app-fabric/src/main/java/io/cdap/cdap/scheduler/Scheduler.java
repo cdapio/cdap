@@ -192,4 +192,14 @@ public interface Scheduler {
    * Find all schedules for a given trigger key
    */
   Collection<ProgramScheduleRecord> findSchedules(String triggerKey);
+
+  /**
+   * Enables all schedules which were disabled or added between startTimeMillis and endTimeMillis in a given namespace.
+   *
+   * @param namespaceId the namespace to re-enable schedules in
+   * @param startTimeMillis the lower bound in millis for when the schedule was disabled (inclusive)
+   * @param endTimeMillis the upper bound in millis for when the schedule was disabled (exclusive)
+   * @throws ConflictException if the schedule was already enabled
+   */
+  void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis) throws ConflictException;
 }

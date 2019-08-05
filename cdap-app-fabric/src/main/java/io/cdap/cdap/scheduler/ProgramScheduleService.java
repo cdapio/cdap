@@ -22,6 +22,7 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -32,6 +33,7 @@ import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
@@ -243,5 +245,18 @@ public class ProgramScheduleService {
   public void delete(ScheduleId scheduleId) throws Exception {
     authorizationEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(), Action.ADMIN);
     scheduler.deleteSchedule(scheduleId);
+  }
+
+  /**
+   * Enables all schedules which were disabled or added between startTimeMillis and endTimeMillis in a given namespace.
+   *
+   * @param namespaceId the namespace to re-enable schedules in
+   * @param startTimeMillis the lower bound in millis for when the schedule was disabled (inclusive)
+   * @param endTimeMillis the upper bound in millis for when the schedule was disabled (exclusive)
+   * @throws ConflictException if the schedule was already enabled
+   */
+  public void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis) throws Exception {
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
+    scheduler.reEnableSchedules(namespaceId, startTimeMillis, endTimeMillis);
   }
 }

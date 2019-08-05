@@ -1197,6 +1197,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     testAddSchedule(newSchedule);
     testDeleteSchedule(appV2Id, newSchedule);
     testUpdateSchedule(appV2Id);
+    testReEnableSchedule("reEnabledSchedule");
   }
 
   @Test
@@ -1317,6 +1318,41 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // wait for the workflow to stop and check the status
     Tasks.waitFor(runs + 1, () -> getProgramRuns(programId, ProgramRunStatus.FAILED).size(), 60, TimeUnit.SECONDS);
+  }
+
+  private void testReEnableSchedule(String scheduleName) throws Exception {
+    ProtoTrigger.TimeTrigger protoTime = new ProtoTrigger.TimeTrigger("0 * * * ?");
+    ProtoTrigger.PartitionTrigger protoPartition =
+      new ProtoTrigger.PartitionTrigger(NamespaceId.DEFAULT.dataset("data"), 5);
+    String description = "Something";
+    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
+                                                              AppWithSchedule.WORKFLOW_NAME);
+    ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
+    TimeTrigger timeTrigger = new TimeTrigger("0 * * * ?");
+    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                                                   scheduleName, description, programInfo, properties,
+                                                   timeTrigger, Collections.emptyList(),
+                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+
+    // start schedule
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        resumeSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName));
+
+    // suspend schedule
+    long startTime = System.currentTimeMillis();
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        suspendSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName));
+    long endTime = System.currentTimeMillis() + 1;
+
+    // re-enable schedule
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        reEnableSchedules(TEST_NAMESPACE1, startTime, endTime));
+
+    // assert schedule is running by suspending again
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+                        suspendSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, scheduleName));
   }
 
   private void testAddSchedule(String scheduleName) throws Exception {

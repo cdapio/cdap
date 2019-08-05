@@ -1004,6 +1004,15 @@ public abstract class AppFabricTestBase {
     return o.get("status");
   }
 
+  protected int reEnableSchedules(String namespace, long startTimeMillis, long endTimeMillis) throws Exception {
+    String scheduleSuspend =
+      String.format("schedules/re-enable?start-time-millis=%d&end-time-millis=%d", startTimeMillis, endTimeMillis);
+    String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           namespace);
+    HttpResponse response = doPut(versionedScheduledSuspend, null);
+    return response.getResponseCode();
+  }
+
   protected int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
     String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,

@@ -134,6 +134,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                                                                         AppWithMultipleSchedules.ANOTHER_WORKFLOW);
   private static final ProgramId TRIGGERED_WORKFLOW = APP_MULT_ID.program(ProgramType.WORKFLOW,
                                                                           AppWithMultipleSchedules.TRIGGERED_WORKFLOW);
+  private static final int BUFFER = 10;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -295,7 +296,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     int runs1 = getRuns(WORKFLOW_1, ProgramRunStatus.ALL);
     int runs2 = getRuns(WORKFLOW_2, ProgramRunStatus.ALL);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
+
+    // ensure schedule 2 is disabled after schedule 1
+    Thread.sleep(BUFFER);
+    long disableBeforeTime = System.currentTimeMillis();
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+    long disableAfterTime = System.currentTimeMillis() + 1;
 
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
     long minPublishTime = System.currentTimeMillis();
@@ -345,8 +351,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Assert.assertEquals(runs1, getRuns(WORKFLOW_1, ProgramRunStatus.ALL));
     Assert.assertEquals(runs2, getRuns(WORKFLOW_2, ProgramRunStatus.ALL));
 
-    // enable partition schedule 2
-    enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+    // enable partition schedule 2 and test reEnableSchedules
+    scheduler.reEnableSchedules(NamespaceId.DEFAULT, disableBeforeTime, disableAfterTime);
+    Assert.assertEquals(ProgramScheduleStatus.SCHEDULED, scheduler.getScheduleStatus(
+      APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2)));
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED, scheduler.getScheduleStatus(
+      APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1)));
     testScheduleUpdate("disable");
     testScheduleUpdate("update");
     testScheduleUpdate("delete");

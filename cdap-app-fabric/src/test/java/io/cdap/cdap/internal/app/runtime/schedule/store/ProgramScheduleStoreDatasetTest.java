@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.AndTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
@@ -147,6 +148,27 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
                             toScheduleSet(store.listScheduleRecords(PROG4_ID)));
         Assert.assertEquals(ImmutableSet.of(sched4),
                             toScheduleSet(store.listScheduleRecords(PROG5_ID)));
+      }
+    );
+
+    // disable a schedule in NS_1
+    long startTime = System.currentTimeMillis();
+    TransactionRunners.run(
+      transactionRunner,
+      context -> {
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+        store.updateScheduleStatus(sched1.getScheduleId(), ProgramScheduleStatus.SUSPENDED);
+      }
+    );
+    // add one since end is exclusive
+    long endTime = System.currentTimeMillis() + 1;
+
+    // test list schedule disabled
+    TransactionRunners.run(
+      transactionRunner,
+      context -> {
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+        Assert.assertEquals(ImmutableList.of(sched1), store.listSchedulesSuspended(NS1_ID, startTime, endTime));
       }
     );
 

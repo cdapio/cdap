@@ -303,12 +303,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     checkStarted();
     try {
       execute((StoreTxRunnable<Void, Exception>) store -> {
-        ProgramScheduleRecord record = store.getScheduleRecord(scheduleId);
-        if (ProgramScheduleStatus.SUSPENDED != record.getMeta().getStatus()) {
-          throw new ConflictException("Schedule '" + scheduleId + "' is already enabled");
-        }
-        timeSchedulerService.resumeProgramSchedule(record.getSchedule());
-        store.updateScheduleStatus(scheduleId, ProgramScheduleStatus.SCHEDULED);
+        enableScheduleInternal(store, scheduleId);
         return null;
       }, Exception.class);
     } catch (NotFoundException | ConflictException e) {
@@ -529,6 +524,30 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     return execute(store -> store.findSchedules(triggerKey), RuntimeException.class);
   }
 
+  @Override
+  public void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis)
+    throws ConflictException {
+    checkStarted();
+    try {
+      execute((StoreTxRunnable<Void, Exception>) store -> {
+        List<ProgramSchedule> schedules = store.listSchedulesSuspended(namespaceId, startTimeMillis, endTimeMillis);
+        List<ScheduleId> scheduleIds =
+          schedules.stream().map(schedule -> schedule.getScheduleId()).collect(Collectors.toList());
+        for (ScheduleId scheduleId : scheduleIds) {
+          enableScheduleInternal(store, scheduleId);
+        }
+        return null;
+      }, Exception.class);
+    } catch (ConflictException e) {
+      throw e;
+    } catch (SchedulerException | NotFoundException e) {
+      // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
+      throw new RuntimeException("Exception occurs when enabling schedules", e);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   /**
    * Gets a copy of the given {@link ProgramSchedule} and add user and artifact ID in the schedule properties
    * TODO CDAP-13662 - move logic to find artifactId and userId to dashboard service and remove this method
@@ -565,6 +584,16 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     // construct a copy of the schedule with the additional properties added
     return new ProgramSchedule(schedule.getName(), schedule.getDescription(), schedule.getProgramId(), newProperties,
                                schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
+  }
+
+  private void enableScheduleInternal(ProgramScheduleStoreDataset store, ScheduleId scheduleId)
+    throws IOException, NotFoundException, ConflictException, SchedulerException {
+    ProgramScheduleRecord record = store.getScheduleRecord(scheduleId);
+    if (ProgramScheduleStatus.SUSPENDED != record.getMeta().getStatus()) {
+      throw new ConflictException("Schedule '" + scheduleId + "' is already enabled");
+    }
+    timeSchedulerService.resumeProgramSchedule(record.getSchedule());
+    store.updateScheduleStatus(scheduleId, ProgramScheduleStatus.SCHEDULED);
   }
 
   private interface StoreTxRunnable<V, T extends Throwable> {
