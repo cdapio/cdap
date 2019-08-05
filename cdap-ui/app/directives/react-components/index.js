@@ -117,4 +117,7 @@ angular
   })
   .directive('joinTypeWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.JoinTypeWidget);
+  })
+  .directive('inputFieldDropdown', function (reactDirective) {
+    return reactDirective(window.CaskCommon.InputFieldDropdown);
   });

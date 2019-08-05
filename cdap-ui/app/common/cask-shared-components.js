@@ -90,6 +90,7 @@ var WranglerEditor = require('../cdap/components/AbstractWidget/WranglerEditor')
 var RadioGroupWidget = require('../cdap/components/AbstractWidget/RadioGroupWidget').default;
 var MultiSelect = require('../cdap/components/AbstractWidget/FormInputs/MultiSelect').default;
 var JoinTypeWidget = require('../cdap/components/AbstractWidget/JoinTypeWidget').default;
+var InputFieldDropdown = require('../cdap/components/AbstractWidget/InputFieldDropdown').default;
 
 export {
   Store,
@@ -157,4 +158,5 @@ export {
   RadioGroupWidget,
   MultiSelect,
   JoinTypeWidget,
+  InputFieldDropdown,
 };
