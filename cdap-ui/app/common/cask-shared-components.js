@@ -94,6 +94,7 @@ var InputFieldDropdown = require('../cdap/components/AbstractWidget/InputFieldDr
 var DatasetSelectorWidget = require('../cdap/components/AbstractWidget/DatasetSelectorWidget')
   .default;
 var SqlConditionsWidget = require('../cdap/components/AbstractWidget/SqlConditionsWidget').default;
+var SqlSelectorWidget = require('../cdap/components/AbstractWidget/SqlSelectorWidget').default;
 
 export {
   Store,
@@ -164,4 +165,5 @@ export {
   InputFieldDropdown,
   DatasetSelectorWidget,
   SqlConditionsWidget,
+  SqlSelectorWidget,
 };
