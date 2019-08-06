@@ -228,7 +228,7 @@ export function fetchFieldLineage(
   });
 }
 
-function constructQueryParams(context) {
+export function constructQueryParams(context) {
   let url = location.pathname;
 
   url += getTimeParamsFromSelection(context);
@@ -260,7 +260,7 @@ function getTimeParamsFromSelection(context) {
   let queryParams = `?time=${range}`;
 
   if (range === TIME_OPTIONS[0]) {
-    queryParams += `&start=${context.start}&end=${context.end}`;
+    queryParams += `&start=${context.state.start}&end=${context.state.end}`;
   }
   return queryParams;
 }

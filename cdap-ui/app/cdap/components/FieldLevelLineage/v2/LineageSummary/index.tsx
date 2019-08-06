@@ -169,7 +169,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     if (activeField) {
       d3.select(`#${activeField.id}`).classed('selected', true);
     }
-    this.clearCanvas(); // Do I need this?
+    this.clearCanvas();
     this.drawLinks(links, activeField);
   }
 

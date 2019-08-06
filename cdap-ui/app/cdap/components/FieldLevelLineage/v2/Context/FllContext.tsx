@@ -27,7 +27,6 @@ import {
   getTimeRangeFromUrl,
   fetchFieldLineage,
   replaceHistory,
-  getTimeRange,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -159,7 +158,25 @@ export class Provider extends React.Component<{ children }, IContextState> {
   };
 
   private setCustomTimeRange = ({ start, end }) => {
-    console.log(`range is ${start} to ${end}`);
+    this.setState(
+      {
+        selection: TIME_OPTIONS[0],
+        start,
+        end,
+      },
+      () => {
+        const namespace = getCurrentNamespace();
+        const qParams = parseQueryString();
+        const timeParams: ITimeParams = {
+          selection: this.state.selection,
+          range: { start, end },
+        };
+
+        fetchFieldLineage(this, namespace, this.state.target, qParams, timeParams);
+
+        replaceHistory(this); // construct url based on context
+      }
+    );
   };
 
   private setTimeRange = (selection) => {

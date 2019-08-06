@@ -40,17 +40,13 @@ const styles = (): StyleRules => {
     timePickerContainer: {
       paddingLeft: 50,
     },
-    // To do: Style menu (this isn't working)
+    // To do: Style menu
     menu: {
       getContentAnchorEl: 'null',
       anchorOrigin: {
         vertical: 'bottom',
         horizontal: 'center',
       },
-      // transformOrigin: {
-      //   vertical: 'top',
-      //   horizontal: 'center',
-      // },
     },
   };
 };
@@ -64,7 +60,6 @@ function TimeRangePicker({ classes }) {
     const range = e.target.value;
     setTimeRange(range);
 
-    // render date range picker if selection is custom
     if (range === TIME_OPTIONS[0]) {
       renderCustomTimeRange();
     }
