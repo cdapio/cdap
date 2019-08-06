@@ -20,12 +20,7 @@ import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-
-enum KEY_CODE {
-  Enter = 13,
-  Up = 38,
-  Down = 40,
-}
+import { KEY_CODE } from 'services/global-constants';
 
 export const AbstractRowStyles = (theme): StyleRules => {
   return {

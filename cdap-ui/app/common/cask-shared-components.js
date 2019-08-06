@@ -91,6 +91,8 @@ var RadioGroupWidget = require('../cdap/components/AbstractWidget/RadioGroupWidg
 var MultiSelect = require('../cdap/components/AbstractWidget/FormInputs/MultiSelect').default;
 var JoinTypeWidget = require('../cdap/components/AbstractWidget/JoinTypeWidget').default;
 var InputFieldDropdown = require('../cdap/components/AbstractWidget/InputFieldDropdown').default;
+var DatasetSelectorWidget = require('../cdap/components/AbstractWidget/DatasetSelectorWidget')
+  .default;
 
 export {
   Store,
@@ -159,4 +161,5 @@ export {
   MultiSelect,
   JoinTypeWidget,
   InputFieldDropdown,
+  DatasetSelectorWidget,
 };

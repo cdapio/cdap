@@ -300,6 +300,12 @@ const SCOPES = {
 
 const SYSTEM_NAMESPACE = 'system';
 
+const KEY_CODE = {
+  'Enter': 13,
+  'Up': 38,
+  'Down': 40,
+};
+
 export {
   NUMBER_TYPES,
   GLOBALS,
@@ -310,4 +316,5 @@ export {
   CLOUD,
   SCOPES,
   SYSTEM_NAMESPACE,
+  KEY_CODE,
 };

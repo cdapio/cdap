@@ -41,6 +41,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.LogViewerStore = LogViewerStore;
     this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -117,31 +118,31 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     // Timeouts
     this.setStateTimeout = null;
+
+    this.eventEmitter.on('dataset.selected', this.handleDatasetSelected.bind(this));
+
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.setStateTimeout);
-      this.EventPipe.cancelEvent('dataset.selected');
+      this.eventEmitter.off('dataset.selected', this.handleDatasetSelected.bind(this));
     });
-
-    let vm = this;
-
-    this.EventPipe.on('dataset.selected', (schema, format, datasetAlreadyExists, datasetId) => {
-      if (datasetAlreadyExists) {
-        vm.datasetAlreadyExists = datasetAlreadyExists;
-      } else {
-        vm.datasetAlreadyExists = false;
-      }
-
-      // if this plugin is having an existing dataset with a macro, then don't change anything.
-      // else if the user is changing to another existing dataset, then show basic mode.
-      if (this.myHelpers.objectQuery(vm, 'defaultState', 'node', 'plugin', 'properties', 'name') && vm.defaultState.node.plugin.properties.name !== datasetId) {
-        vm.state.schemaAdvance = false;
-      }
-      if (datasetId) {
-        vm.datasetId = datasetId;
-      }
-    });
-
   }
+  handleDatasetSelected(schema, format, datasetAlreadyExists, datasetId) {
+    if (datasetAlreadyExists) {
+      this.datasetAlreadyExists = datasetAlreadyExists;
+    } else {
+      this.datasetAlreadyExists = false;
+    }
+
+    // if this plugin is having an existing dataset with a macro, then don't change anything.
+    // else if the user is changing to another existing dataset, then show basic mode.
+    if (this.myHelpers.objectQuery(this, 'defaultState', 'node', 'plugin', 'properties', 'name') && this.defaultState.node.plugin.properties.name !== datasetId) {
+      this.state.schemaAdvance = false;
+    }
+    if (datasetId) {
+      this.datasetId = datasetId;
+    }
+  }
+
   showContents() {
     if (angular.isArray(this.state.watchers)) {
       this.state.watchers.forEach(watcher => watcher());
