@@ -123,4 +123,10 @@ angular
   })
   .directive('datasetSelectorWidget', function (reactDirective) {
     return reactDirective(window.CaskCommon.DatasetSelectorWidget);
+  })
+  .directive('sqlConditionsWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.SqlConditionsWidget);
+  })
+  .directive('functionDropdownAliasWidget', function (reactDirective) {
+    return reactDirective(window.CaskCommon.FunctionDropdownAlias);
   });
