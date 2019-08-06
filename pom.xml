@@ -29,8 +29,8 @@
   <url>https://github.com/caskdata/cdap</url>
 
   <organization>
-    <name>Cask Data, Inc.</name>
-    <url>http://cask.co</url>
+    <name>CDAP</name>
+    <url>http://cdap.io</url>
   </organization>
 
   <licenses>
@@ -50,9 +50,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/caskdata/cdap.git</connection>
-    <developerConnection>scm:git:git@github.com:caskdata/cdap.git</developerConnection>
-    <url>https://github.com/caskdata/cdap.git</url>
+    <connection>scm:git:https://github.com/cdapio/cdap.git</connection>
+    <developerConnection>scm:git:git@github.com:cdapio/cdap.git</developerConnection>
+    <url>https://github.com/cdapio/cdap.git</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -105,10 +105,6 @@
       <id>sonatype.snapshots</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
-    <site>
-      <id>cask</id>
-      <url>http://cask.co</url>
-    </site>
   </distributionManagement>
 
   <properties>
