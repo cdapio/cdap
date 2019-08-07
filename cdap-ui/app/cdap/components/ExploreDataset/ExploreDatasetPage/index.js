@@ -73,7 +73,7 @@ class ExploreDatasetPage extends React.Component {
   setDefaultPipelineName(defaultName) {
     if (this.props.updatePipelineName) {
       if (!isNilOrEmpty(defaultName)) {
-        this.props.updatePipelineName(defaultName) + "_" + Math.round(new Date().getTime()/1000);
+        this.props.updatePipelineName(defaultName + "_" + Math.round(new Date().getTime()/1000));
       }
     }
   }
