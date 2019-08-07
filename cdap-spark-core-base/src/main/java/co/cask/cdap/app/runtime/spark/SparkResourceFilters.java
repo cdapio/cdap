@@ -44,6 +44,12 @@ public final class SparkResourceFilters {
 
     @Override
     public boolean acceptResource(final String resource) {
+      
+      // workaround for https://issues.cask.co/browse/CDAP-15705
+      if(resource.startsWith("com/google/protobuf") || resource.startsWith("org/apache/arrow")) {
+        return true;
+      }
+      
       // All Spark API, Spark, Scala, Akka and Kryo classes should come from parent.
       if (resource.startsWith("co/cask/cdap/api/spark/")) {
         return true;
@@ -78,6 +84,12 @@ public final class SparkResourceFilters {
 
     @Override
     public boolean acceptPackage(final String packageName) {
+      
+      // workaround for https://issues.cask.co/browse/CDAP-15705
+      if(packageName.startsWith("com.google.protobuf") || packageName.startsWith("org.apache.arrow")) {
+        return true;
+      }
+      
       if (packageName.equals("co.cask.cdap.api.spark") || packageName.startsWith("co.cask.cdap.api.spark.")) {
         return true;
       }
