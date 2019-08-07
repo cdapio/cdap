@@ -41,8 +41,7 @@ UrlValidator.prototype.isValidURL = function (url) {
 
 UrlValidator.prototype.getUrlBreakup = function (url) {
   var protocol;
-  var hostname;
-  var port;
+  var hostPort;
   var path;
   // find  protocol (http, ftp, etc.) and get hostname
   if (url.indexOf('//') > -1) {
@@ -55,38 +54,41 @@ UrlValidator.prototype.getUrlBreakup = function (url) {
     protocolSplitArr.shift();
     var hostPortPathStr = protocolSplitArr.join('//');
 
-    var hostPortPathSplitArr = hostPortPathStr.split(':');
-    hostname = hostPortPathSplitArr.length > 0 ? hostPortPathSplitArr[0] : undefined;
-    hostPortPathSplitArr.shift();
-    var portPathStr = hostPortPathSplitArr.join(':');
-
-    if (portPathStr && portPathStr !== '') {
-      var splitSymbol;
-
-      var slashIndex = portPathStr.indexOf('/');
-      var questionIndex = portPathStr.indexOf('?');
-
-      if (slashIndex > -1 && questionIndex > -1) {
-
-        splitSymbol = slashIndex < questionIndex ? '/' : '?';
-
-      } else if (slashIndex > -1 || questionIndex > -1) {
-
-        splitSymbol = slashIndex > -1 ? '/' : '?';
-      }
-
+    //break url two parts hostportstr and pathstr
+    if (hostPortPathStr && hostPortPathStr != '') {
+      var splitSymbol = this.getPortSplitSymbol(hostPortPathStr);
       if (splitSymbol) {
-        var portPathSplitArr = portPathStr.split(splitSymbol);
-        port = portPathSplitArr[0];
-        portPathSplitArr.shift();
-        path = portPathSplitArr.join(splitSymbol);
+        var hostPortPathSplitArr = hostPortPathStr.split(splitSymbol);
+        hostPort = hostPortPathSplitArr.length > 0 ? hostPortPathSplitArr[0] : undefined;
+        hostPortPathSplitArr.shift();
+        path = hostPortPathSplitArr.join(splitSymbol);
       } else {
-        port = portPathStr;
+        hostPort = hostPortPathStr;
       }
     }
   }
-  return { ipAddress: `${protocol}://${hostname}:${port}`, path: path };
+  return { ipAddress: `${protocol}://${hostPort}`, path: path };
 };
+
+UrlValidator.prototype.getPortSplitSymbol = function (str) {
+  var splitSymbol;
+  if (str && str !== '') {
+
+    var slashIndex = str.indexOf('/');
+    var questionIndex = str.indexOf('?');
+
+    if (slashIndex > -1 && questionIndex > -1) {
+
+      splitSymbol = slashIndex < questionIndex ? '/' : '?';
+
+    } else if (slashIndex > -1 || questionIndex > -1) {
+
+      splitSymbol = slashIndex > -1 ? '/' : '?';
+    }
+  }
+  return splitSymbol;
+}
+
 
 UrlValidator.prototype.getWhiltListIps = function (config) {
   var whiteList = [];
