@@ -76,7 +76,9 @@ export class Provider extends React.Component<{ children }, IContextState> {
     if (!activeFieldId) {
       return;
     }
-    d3.select(`#${this.state.activeField.id}`).classed('selected', false);
+    if (this.state.activeField) {
+      d3.select(`#${this.state.activeField.id}`).classed('selected', false);
+    }
 
     const newField = {
       id: activeFieldId,
@@ -85,7 +87,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     this.setState(
       {
         activeField: newField,
-        activeLinks: this.getActiveLinks(),
+        activeLinks: this.getActiveLinks(activeFieldId),
       },
       () => {
         d3.select(`#${activeFieldId}`).classed('selected', true);
@@ -94,8 +96,8 @@ export class Provider extends React.Component<{ children }, IContextState> {
     );
   };
 
-  private getActiveLinks = () => {
-    const activeFieldId = this.state.activeField.id;
+  private getActiveLinks = (newTargetId?: string) => {
+    const activeFieldId = newTargetId || this.state.activeField.id;
     const activeLinks = [];
     this.state.links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
@@ -157,26 +159,33 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
+  private updateLineageFromRange(selection: string, start: number | string, end: number | string) {
+    const newState = {
+      selection,
+      start: null,
+      end: null,
+    };
+    // start and end are only set for custom date range
+    if (selection === TIME_OPTIONS[0]) {
+      newState.start = start;
+      newState.end = end;
+    }
+
+    this.setState(newState, () => {
+      const namespace = getCurrentNamespace();
+      const qParams = parseQueryString();
+      const timeParams: ITimeParams = {
+        selection,
+        range: { start, end },
+      };
+      fetchFieldLineage(this, namespace, this.state.target, qParams, timeParams);
+
+      replaceHistory(this); // construct url based on context
+    });
+  }
+
   private setCustomTimeRange = ({ start, end }) => {
-    this.setState(
-      {
-        selection: TIME_OPTIONS[0],
-        start,
-        end,
-      },
-      () => {
-        const namespace = getCurrentNamespace();
-        const qParams = parseQueryString();
-        const timeParams: ITimeParams = {
-          selection: this.state.selection,
-          range: { start, end },
-        };
-
-        fetchFieldLineage(this, namespace, this.state.target, qParams, timeParams);
-
-        replaceHistory(this); // construct url based on context
-      }
-    );
+    this.updateLineageFromRange(TIME_OPTIONS[0], start, end);
   };
 
   private setTimeRange = (selection) => {
@@ -186,22 +195,16 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
     const { start, end } = getTimeRange(selection);
 
-    this.setState({ selection, start, end }, () => {
-      if (selection === TIME_OPTIONS[0]) {
-        return;
-      }
-
-      const qParams = parseQueryString();
-      const timeParams: ITimeParams = {
+    // If CUSTOM, don't update lineage or url until date is picked
+    if (selection === TIME_OPTIONS[0]) {
+      this.setState({
         selection,
-        range: { start, end },
-      };
-      const namespace = getCurrentNamespace();
-
-      fetchFieldLineage(this, namespace, this.state.target, qParams, timeParams);
-
-      replaceHistory(this);
-    });
+        start: null,
+        end: null,
+      });
+      return;
+    }
+    this.updateLineageFromRange(selection, start, end);
   };
 
   public state = {

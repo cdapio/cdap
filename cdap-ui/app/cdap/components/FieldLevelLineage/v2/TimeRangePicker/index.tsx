@@ -58,11 +58,11 @@ function TimeRangePicker({ classes }) {
 
   const onSelect = (e: React.ChangeEvent<{ value: string }>) => {
     const range = e.target.value;
-    setTimeRange(range);
 
     if (range === TIME_OPTIONS[0]) {
       renderCustomTimeRange();
     }
+    setTimeRange(range);
   };
 
   const renderCustomTimeRange = () => {

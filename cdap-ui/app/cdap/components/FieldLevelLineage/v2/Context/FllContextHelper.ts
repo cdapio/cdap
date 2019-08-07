@@ -57,7 +57,7 @@ export interface ITableFields {
 
 export interface ITimeParams {
   selection: string;
-  range: { start: string; end: string };
+  range: { start: string | number; end: string | number };
 }
 
 interface IQueryParams {
@@ -169,8 +169,8 @@ export function getTimeRangeFromUrl() {
     return {
       selection,
       range: {
-        start: selection.start || 'now-7d',
-        end: selection.end || 'now',
+        start: queryString.start || 'now-7d',
+        end: queryString.end || 'now',
       },
     };
   }
@@ -187,7 +187,7 @@ export function fetchFieldLineage(
   let fieldname;
   let activeField: IField;
 
-  if (!qParams) {
+  if (!qParams || !qParams.field) {
     fieldname = null;
     activeField = null;
   } else {
@@ -229,12 +229,12 @@ export function fetchFieldLineage(
 }
 
 export function constructQueryParams(context) {
-  let url = location.pathname;
-
-  url += getTimeParamsFromSelection(context);
+  const pathname = location.pathname;
+  const timeParams = getTimeParamsFromSelection(context);
+  let url = `${pathname}${timeParams}`;
 
   if (context.state.activeField) {
-    url += `&field=${context.state.activeField.name}`;
+    url = `${url}&field=${context.state.activeField.name}`;
   }
   return url;
 }
@@ -260,7 +260,7 @@ function getTimeParamsFromSelection(context) {
   let queryParams = `?time=${range}`;
 
   if (range === TIME_OPTIONS[0]) {
-    queryParams += `&start=${context.state.start}&end=${context.state.end}`;
+    queryParams = `${queryParams}&start=${context.state.start}&end=${context.state.end}`;
   }
   return queryParams;
 }

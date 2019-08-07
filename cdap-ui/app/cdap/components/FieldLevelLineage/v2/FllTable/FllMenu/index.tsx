@@ -22,7 +22,6 @@ import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
 import T from 'i18n-react';
-import { grey } from 'components/ThemeWrapper/colors';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const PREFIX = 'features.FieldLevelLineage.v2.FllTable';
@@ -39,7 +38,7 @@ const styles = (theme): StyleRules => {
       fontSize: 'inherit',
     },
     menu: {
-      border: `1px solid ${grey[200]}`,
+      border: `1px solid ${theme.palette.grey[200]}`,
       borderRadius: '1px',
       color: theme.palette.blue[200],
       '& .MuiListItem-root': {
