@@ -32,6 +32,7 @@ import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ProtoTriggerCodec;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -181,6 +182,25 @@ public class ScheduleClient {
     Map<String, String> responseObject
       = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
     return responseObject.get("status");
+  }
+
+  /**
+   * Update schedules which were suspended between startTimeMillis and endTimeMillis.
+   *
+   * @param namespaceId the namespace in which to restart schedules
+   * @param startTimeMillis lower bound in millis of the update time for schedules (inclusive)
+   * @param endTimeMillis upper bound in millis of the update time for schedules (exclusive)
+   */
+  public void reEnableSuspendedSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis)
+    throws IOException, UnauthorizedException, UnauthenticatedException, NotFoundException {
+    String path =
+      String.format("schedules/re-enable?start-time-millis=%d&end-time-millis=%d", startTimeMillis, endTimeMillis);
+    URL url = config.resolveNamespacedURLV3(namespaceId.getNamespaceId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(namespaceId);
+    }
   }
 
   /*------------ private helpers ---------------------*/

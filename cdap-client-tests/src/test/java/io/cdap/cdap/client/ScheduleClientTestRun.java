@@ -93,6 +93,16 @@ public class ScheduleClientTestRun extends ClientTestBase {
     status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SCHEDULED", status);
 
+    long startTime = System.currentTimeMillis();
+    scheduleClient.suspend(schedule);
+    status = scheduleClient.getStatus(schedule);
+    Assert.assertEquals("SUSPENDED", status);
+    long endTime = System.currentTimeMillis() + 1;
+
+    scheduleClient.reEnableSuspendedSchedules(NamespaceId.DEFAULT, startTime, endTime);
+    status = scheduleClient.getStatus(schedule);
+    Assert.assertEquals("SCHEDULED", status);
+
     scheduleClient.suspend(schedule);
     status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SUSPENDED", status);
