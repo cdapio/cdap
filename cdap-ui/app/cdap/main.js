@@ -55,6 +55,19 @@ import {Theme} from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 import { getClassNameForHeaderFooter } from 'components/FeatureUI/util';
 
+var fontStyle = document.createElement('style');
+fontStyle.appendChild(document.createTextNode(`\
+@font-face {\
+font-family: icomoon;\
+src: url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.eot');\
+src: url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.eot') format('embedded-opentype'),\
+url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.woff') format('woff'),\
+url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.ttf') format('truetype'),\
+url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.svg') format('svg');\
+}\
+`));
+document.head.appendChild(fontStyle);
+
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
   loading: LoadingSVGCentered
@@ -110,7 +123,7 @@ class CDAP extends Component {
 
   render() {
     return (
-      <BrowserRouter basename="/cdap">
+      <BrowserRouter basename={`${window.knoxPrefix}/cdap`}>
         <div className="cdap-container">
           <Helmet title={Theme.productName} />
           <Header />

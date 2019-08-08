@@ -28,7 +28,7 @@ angular.module(PKG.name+'.services')
 
 .provider('mySocket', function () {
 
-  this.prefix = '/_sock';
+  this.prefix =  (window.knoxPrefix+'/_sock');
 
   this.$get = function (MYSOCKET_EVENT, SockJS, $log, EventPipe) {
 

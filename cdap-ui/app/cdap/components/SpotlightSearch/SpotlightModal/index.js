@@ -150,7 +150,7 @@ export default class SpotlightModal extends Component {
           return (
             <NavLinkWrapper
               key={entity.id}
-              to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
+              to={this.props.isNativeLink ? `${window.knoxPrefix}/cdap${entityUrl}` : entityUrl}
               isNativeLink={this.props.isNativeLink}
             >
               <div

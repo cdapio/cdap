@@ -34,7 +34,7 @@ const BrandSection: React.SFC<IBrandSectionProps> = ({ context }) => {
     <div className="brand-section">
         <NavLinkWrapper
           isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${baseCDAPUrl}` : baseCDAPUrl}
+          to={isNativeLink ? `${window.knoxPrefix}/cdap${baseCDAPUrl}` : baseCDAPUrl}
         >
           <img src={brandLogoSrc} />
         </NavLinkWrapper>

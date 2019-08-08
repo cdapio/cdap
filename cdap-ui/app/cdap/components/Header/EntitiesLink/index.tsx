@@ -39,7 +39,7 @@ class EntitiesLink extends React.PureComponent<IEntitiesLinkProps> {
       <DropdownItem tag="li">
         <NavLinkWrapper
           isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${baseCDAPUrl}` : baseCDAPUrl}
+          to={isNativeLink ? `${window.knoxPrefix}/cdap${baseCDAPUrl}` : baseCDAPUrl}
           isActive={this.isEntitiesActive}
         >
           {featureName}

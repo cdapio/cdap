@@ -16,6 +16,8 @@
 
 /* global require, module, process, __dirname */
 var UrlValidator = require('./urlValidator.js');
+var jwtDecode = require('jwt-decode');
+
 
 module.exports = {
   getApp: function () {
@@ -152,7 +154,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       securityEnabled: authAddress.enabled,
       isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV,
-      authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false
+      authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false,
+      knoxEnabled: cdapConfig['knox.enabled'] === 'true',
+      applicationPrefix: cdapConfig['application.prefix']
     });
 
     res.header({
@@ -160,6 +164,20 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       'Cache-Control': 'no-store, must-revalidate'
     });
     res.send('window.CDAP_CONFIG = '+data+';');
+  });
+
+   // serve the login config file
+   app.get('/loginConfig', function (req, res) {
+    var data = {
+      marketUrl: cdapConfig['market.base.url'],
+      sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
+      knoxLoginUrl: cdapConfig['knox.login.url'],
+      securityEnabled: authAddress.enabled,
+      knoxEnabled: cdapConfig['knox.enabled'] === 'true',
+      applicationPrefix: cdapConfig['application.prefix']
+    };
+    log.info('Data -> ', data);
+    res.status(200).send(data);
   });
 
   app.get('/ui-config.js', function (req, res) {
@@ -327,6 +345,56 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.post('/accessToken', authentication);
 
+  app.get('/cdapToken', function (req, res) {
+    // Invalid Knox Token Handler
+    const onInvalidKnoxToken = function(errObj) {
+      log.error('KNOX INVALID TOKEN', errObj);
+          var err = {
+            error: errObj,
+            message: 'KNOX INVALID TOKEN',
+          };
+          res.status(err.statusCode?err.statusCode:402).send(err);
+    };
+    var knoxToken = req.cookies['hadoop-jwt'];
+    if (!knoxToken) {
+      onInvalidKnoxToken({error: 'Token not found'});
+      return;
+    }
+
+    var userName = jwtDecode(knoxToken);
+    if (!userName || !userName.sub) {
+      onInvalidKnoxToken({error: 'Username not found'});
+      return;
+    }
+    userName = userName.sub;
+    var knoxUrl = ['https://', cdapConfig['router.server.address'], ':', '10010','/knoxToken'].join('');
+    log.info('AUTH ->' + knoxUrl);
+    var options = {
+      url: knoxUrl,
+      headers: {
+        'knoxToken': knoxToken
+      }
+    };
+    request(options, (error, response, body) => {
+      if (error) {
+        onInvalidKnoxToken(error);
+      } else if (response) {
+        if (response.statusCode === 200) {
+          var respObj = {};
+          if (body) {
+            respObj = JSON.parse(body);
+          }
+          respObj['userName'] = userName;
+          res.status(200).send(respObj);
+        } else {
+          onInvalidKnoxToken(response);
+        }
+      } else {
+        onInvalidKnoxToken({ error: 'Error retrieving data' });
+      }
+    });
+  });
+
   /*
     Handle POST requests made outside of the websockets from front-end.
     For now it handles file upload POST /namespaces/:namespace/apps API
@@ -447,6 +515,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       }
     );
   }
+
 
   app.get('/test/playground', [
     function (req, res) {

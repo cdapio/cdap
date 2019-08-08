@@ -92,6 +92,7 @@ declare global {
   /* tslint:disable:interface-name */
   interface Window {
     CDAP_UI_THEME: IOnePoint0SpecJSON;
+    knoxPrefix: any;
   }
 }
 
@@ -213,7 +214,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       For Production Deployment, Application Developers can optimise Playbooks using Developer Mode..`,
       productLogoNavbar: '/cdap_assets/img/company_logo.png',
       productLogoAbout: '/cdap_assets/img/Company_logo_darkgray.png',
-      favicon: '/cdap_assets/img/favicon.png',
+      favicon: `/cdap_assets/img/favicon.png`,
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
       showFooter: true,
@@ -268,7 +269,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         if (productLogoNavbarType === 'inline') {
           content.productLogoNavbar = objectQuery(productLogoNavbar, 'arguments', 'data');
         } else if (productLogoNavbarType === 'link') {
-          content.productLogoNavbar = objectQuery(productLogoNavbar, 'arguments', 'url');
+          content.productLogoNavbar = window.knoxPrefix + objectQuery(productLogoNavbar, 'arguments', 'url');
         }
       }
     }
@@ -279,7 +280,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         if (productLogoAboutType === 'inline') {
           content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'data');
         } else if (productLogoAboutType === 'link') {
-          content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'url');
+          content.productLogoAbout = window.knoxPrefix + objectQuery(productLogoAbout, 'arguments', 'url');
         }
       }
     }

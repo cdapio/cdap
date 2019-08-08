@@ -17,6 +17,9 @@
 class FlowsFlowletDetailController {
   constructor($state, $scope, myHelpers, myFlowsApi) {
     this.activeTab = 0;
+    this.flowletsInputTemplate = '/assets/features/flows/templates/tabs/runs/flowlets/input.html';
+    this.flowletsDataTemplate = '/assets/features/flows/templates/tabs/runs/flowlets/data.html';
+    this.flowletsOutputTemplate = '/assets/features/flows/templates/tabs/runs/flowlets/output.html';
     let flowletid = $scope.FlowletsController.activeFlowlet.name;
     this.myFlowsApi = myFlowsApi;
 
