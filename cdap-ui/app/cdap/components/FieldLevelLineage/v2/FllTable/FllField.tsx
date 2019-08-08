@@ -15,11 +15,15 @@
 */
 
 import React, { useState, useContext } from 'react';
-import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import {
+  IField,
+  getTimeQueryParams,
+} from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import If from 'components/If';
+import { Link } from 'react-router-dom';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import FllMenu from 'components/FieldLevelLineage/v2/FllTable/FllMenu';
 
@@ -54,27 +58,44 @@ interface IFieldProps extends WithStyles<typeof styles> {
 
 function FllField({ field, classes }: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
-  const { activeField, showingOneField, handleFieldClick, handleReset } = useContext<IContextState>(
-    FllContext
-  );
+  const {
+    activeField,
+    showingOneField,
+    handleFieldClick,
+    handleReset,
+    selection,
+    start,
+    end,
+  } = useContext<IContextState>(FllContext);
 
-  const toggleHoverState = () => {
-    setHoverState(!isHovering);
+  const timeParams = getTimeQueryParams(selection, start, end);
+
+  // TO DO: Update this link once we flip the switch
+  const linkPath = `/ns/${field.namespace}/datasets/${
+    field.dataset
+  }/fll-experiment${timeParams}&field=${field.name}`;
+
+  const toggleHoverState = (nextState) => {
+    setHoverState(nextState);
   };
   const isTarget = field.type === 'target';
   return (
     <div
       onClick={isTarget && !showingOneField ? handleFieldClick : undefined}
-      onMouseEnter={toggleHoverState}
-      onMouseLeave={toggleHoverState}
+      onMouseEnter={toggleHoverState.bind(this, true)}
+      onMouseLeave={toggleHoverState.bind(this, false)}
       className={classnames('grid-row', 'grid-link', classes.root)}
       id={field.id}
       data-fieldname={field.name}
+      data-hovering={isHovering}
+      data-target={isTarget}
     >
       {field.name}
       <If condition={isHovering && !isTarget}>
-        <span className={classes.hoverText}>
-          {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
+        <span>
+          <Link to={linkPath} className={classes.hoverText} title={field.name}>
+            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
+          </Link>
         </span>
       </If>
       <If condition={activeField && field.id === activeField.id && isTarget && !showingOneField}>

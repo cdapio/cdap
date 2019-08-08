@@ -99,7 +99,12 @@ function renderGridHeader(fields: IField[], showingOneField: boolean, classes) {
 
 function renderGridBody(fields: IField[], tableName: string, classes) {
   return (
-    <div className={classes.gridBody} id={tableName}>
+    <div
+      className={classes.gridBody}
+      id={tableName}
+      data-tablename={fields[0].dataset}
+      data-namespace={fields[0].namespace}
+    >
       {fields.map((field) => {
         return <FllField key={field.id} field={field} />;
       })}
