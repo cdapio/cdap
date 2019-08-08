@@ -15,40 +15,35 @@
 */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import { objectQuery } from 'services/helpers';
-
 import ToggleSwitch from 'components/ToggleSwitch';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 interface IToggle {
   label: string;
   value: string;
 }
-interface IWidgetAttributes {
+
+interface IToggleWidgetProps {
   on: IToggle;
   off: IToggle;
   default?: string;
 }
-interface IToggleSwitchWidgetProps {
-  value: string;
-  widgetAttributes: IWidgetAttributes;
-  disabled: boolean;
-  onChange: (value: string) => void;
-}
 
-const ToggleWidget: React.FC<IToggleSwitchWidgetProps> = ({
-  widgetAttributes,
+interface IToggleToggleSwitchProps extends IWidgetProps<IToggleWidgetProps> {}
+
+const ToggleSwitchWidget: React.FC<IToggleToggleSwitchProps> = ({
+  widgetProps,
   value,
   onChange,
   disabled,
 }) => {
-  const onValue = objectQuery(widgetAttributes, 'on', 'value') || 'on';
-  const offValue = objectQuery(widgetAttributes, 'off', 'value') || 'off';
-  const defaultValue = objectQuery(widgetAttributes, 'default') || onValue;
-  const onLabel = objectQuery(widgetAttributes, 'on', 'label') || 'On';
-  const offLabel = objectQuery(widgetAttributes, 'off', 'label') || 'Off';
-  const model = value || defaultValue;
-  const isOn = model === onValue;
+  const onValue = objectQuery(widgetProps, 'on', 'value') || 'on';
+  const offValue = objectQuery(widgetProps, 'off', 'value') || 'off';
+  const onLabel = objectQuery(widgetProps, 'on', 'label') || 'On';
+  const offLabel = objectQuery(widgetProps, 'off', 'label') || 'Off';
+  const isOn = value === onValue;
 
   function toggleSwitch() {
     onChange(isOn ? offValue : onValue);
@@ -63,10 +58,5 @@ const ToggleWidget: React.FC<IToggleSwitchWidgetProps> = ({
     />
   );
 };
-export default ToggleWidget;
-(ToggleWidget as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  widgetAttributes: PropTypes.object,
-  disabled: PropTypes.bool,
-};
+export default ToggleSwitchWidget;
+(ToggleSwitchWidget as any).propTypes = WIDGET_PROPTYPES;

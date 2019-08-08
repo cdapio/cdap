@@ -13,13 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import React from 'react';
 
-import PropTypes from 'prop-types';
+import React from 'react';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import withStyles from '@material-ui/core/styles/withStyles';
 import InputBase from '@material-ui/core/InputBase';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 const styles = () => {
   return {
@@ -41,23 +43,31 @@ interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
   label: string;
 }
-interface ISelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: ISelectOptions[];
-  disabled?: boolean;
+
+interface ISelectWidgetProps {
+  options: ISelectOptions[] | string[] | number[];
 }
 
-export default function CustomSelect({ value, onChange, options, disabled }: ISelectProps) {
+interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {}
+
+const CustomSelect: React.FC<ISelectProps> = ({
+  value,
+  onChange,
+  widgetProps,
+  disabled,
+}: ISelectProps) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
       onChange(v);
     }
   };
+
+  const options = objectQuery(widgetProps, 'options') || objectQuery(widgetProps, 'values') || [];
   const optionValues = options.map((opt) => {
-    return typeof opt === 'string' ? { value: opt, label: opt } : opt;
+    return ['string', 'number'].indexOf(typeof opt) !== -1 ? { value: opt, label: opt } : opt;
   });
+
   return (
     <Select
       fullWidth
@@ -73,11 +83,8 @@ export default function CustomSelect({ value, onChange, options, disabled }: ISe
       ))}
     </Select>
   );
-}
-
-(CustomSelect as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  options: PropTypes.arrayOf(PropTypes.string),
-  disabled: PropTypes.bool,
 };
+
+(CustomSelect as any).propTypes = WIDGET_PROPTYPES;
+
+export default CustomSelect;

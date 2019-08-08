@@ -14,28 +14,20 @@
  * the License.
 */
 import React from 'react';
-import PropTypes from 'prop-types';
 import Select from 'components/AbstractWidget/FormInputs/Select';
-
-interface IStage {
-  name: string;
-  schema: string;
-}
+import { IWidgetProps, IStageSchema } from 'components/AbstractWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 interface IField {
   name: string;
   type: string;
 }
 
-interface IInputFieldProps {
-  value: string;
-  onChange: (value: string) => void;
-  inputSchema: IStage[];
-  disabled?: boolean;
-}
+interface IInputFieldProps extends IWidgetProps<null> {}
 
 // We are assuming all incoming stages have the same schema
-function getFields(schemas: IStage[]) {
+function getFields(schemas: IStageSchema[]) {
   let fields = [];
   if (!schemas || schemas.length === 0) {
     return fields;
@@ -58,19 +50,18 @@ function getFields(schemas: IStage[]) {
 const InputFieldDropdown: React.FC<IInputFieldProps> = ({
   value,
   onChange,
-  inputSchema,
   disabled,
+  extraConfig,
 }) => {
+  const inputSchema = objectQuery(extraConfig, 'inputSchema');
   const fieldValues = getFields(inputSchema);
+  const widgetProps = {
+    options: fieldValues,
+  };
 
-  return <Select value={value} onChange={onChange} options={fieldValues} disabled={disabled} />;
+  return <Select value={value} onChange={onChange} widgetProps={widgetProps} disabled={disabled} />;
 };
 
 export default InputFieldDropdown;
 
-(InputFieldDropdown as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  inputSchema: PropTypes.object,
-  disabled: PropTypes.bool,
-};
+(InputFieldDropdown as any).propTypes = WIDGET_PROPTYPES;

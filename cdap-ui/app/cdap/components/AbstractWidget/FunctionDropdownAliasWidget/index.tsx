@@ -15,7 +15,6 @@
  */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import FunctionDropdownRow, {
   IDropdownOption,
 } from 'components/AbstractWidget/FunctionDropdownAliasWidget/FuctionDropdownRow';
@@ -23,14 +22,21 @@ import ThemeWrapper from 'components/ThemeWrapper';
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-interface IFunctionDropdownWidgetProps extends IMultiRowProps {
+interface IFunctionDropdownWidgetProps {
   placeholders?: Record<string, string>;
   dropdownOptions: IDropdownOption[];
+  delimiter?: string;
 }
 
-class FunctionDropdownWidget extends AbstractMultiRowWidget<IFunctionDropdownWidgetProps> {
+interface IFunctionDropdownProps extends IMultiRowProps<IFunctionDropdownWidgetProps> {}
+
+class FunctionDropdownAliasWidgetView extends AbstractMultiRowWidget<IFunctionDropdownProps> {
   public renderRow = (id, index) => {
+    const placeholders = objectQuery(this.props, 'widgetProps', 'placeholders');
+    const dropdownOptions = objectQuery(this.props, 'widgetProps', 'dropdownOptions');
     return (
       <FunctionDropdownRow
         key={id}
@@ -43,29 +49,20 @@ class FunctionDropdownWidget extends AbstractMultiRowWidget<IFunctionDropdownWid
         autofocus={this.state.autofocus === id}
         changeFocus={this.changeFocus}
         disabled={this.props.disabled}
-        placeholders={this.props.placeholders}
-        dropdownOptions={this.props.dropdownOptions}
+        placeholders={placeholders}
+        dropdownOptions={dropdownOptions}
         forwardedRef={this.values[id].ref}
       />
     );
   };
 }
 
-export default function StyledFunctionDropdownWrapper(props) {
+export default function FunctionDropdownAliasWidget(props) {
   return (
     <ThemeWrapper>
-      <FunctionDropdownWidget {...props} />
+      <FunctionDropdownAliasWidgetView {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledFunctionDropdownWrapper as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-  placeholders: PropTypes.shape({
-    field: PropTypes.string,
-    alias: PropTypes.string,
-  }),
-  dropdownOptions: PropTypes.array,
-};
+(FunctionDropdownAliasWidget as any).propTypes = WIDGET_PROPTYPES;

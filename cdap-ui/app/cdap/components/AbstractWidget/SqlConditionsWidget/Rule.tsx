@@ -22,7 +22,7 @@ import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/AddBox';
 import CancelIcon from '@material-ui/icons/Cancel';
 
-import Select from 'components/AbstractWidget/SelectWidget';
+import Select from 'components/AbstractWidget/FormInputs/Select';
 import If from 'components/If';
 
 import { IInputSchema, IRule } from 'components/AbstractWidget/SqlConditionsWidget';
@@ -105,10 +105,10 @@ const Rule: React.FC<IRuleProps> = ({
 }) => {
   const [hovered, setHovered] = useState(false);
   const last = ruleIdx === rulesCount - 1;
-  const fieldChange = (stageIdx, event) => {
+  const fieldChange = (stageIdx, val) => {
     const newRule = rule.map((row, i) => {
       if (i === stageIdx) {
-        return { ...row, fieldName: event.target.value };
+        return { ...row, fieldName: val };
       }
       return row;
     });
@@ -136,11 +136,11 @@ const Rule: React.FC<IRuleProps> = ({
             <div className={classes.tableCell}>
               <Select
                 widgetProps={{
-                  values: inputSchema[stage.stageName],
-                  disabled,
+                  options: inputSchema[stage.stageName],
                 }}
+                disabled={disabled}
                 value={stage.fieldName}
-                onChange={(e) => fieldChange(i, e)}
+                onChange={(val) => fieldChange(i, val)}
               />
             </div>
             <If condition={i !== rule.length - 1}>

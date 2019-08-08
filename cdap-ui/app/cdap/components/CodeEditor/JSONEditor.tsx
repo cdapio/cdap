@@ -16,12 +16,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import CodeEditor from 'components/CodeEditor';
+import CodeEditor, { IBaseCodeEditorProps } from 'components/CodeEditor';
 
-interface IJSONEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-}
 const prettyPrint = (unformattedValue: string) => {
   let v = unformattedValue;
   try {
@@ -31,7 +27,7 @@ const prettyPrint = (unformattedValue: string) => {
   }
   return JSON.stringify(v, null, 2);
 };
-function JSONEditor({ value, onChange, ...restProps }: IJSONEditorProps) {
+function JSONEditor({ value, onChange, ...restProps }: IBaseCodeEditorProps) {
   return (
     <CodeEditor
       {...restProps}

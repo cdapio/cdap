@@ -16,16 +16,13 @@
 
 import React from 'react';
 import classnames from 'classnames';
-
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-
 import { IFieldSchema } from 'components/AbstractWidget/SqlSelectorWidget';
-
-import Input from 'components/AbstractWidget/DefaultInput';
+import Input from 'components/AbstractWidget/FormInputs/TextBox';
 
 const styles = (theme): StyleRules => {
   return {
@@ -93,13 +90,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
         />
       </TableCell>
       <TableCell>
-        <Input
-          widgetProps={{ disabled: !field.selected || disabled }}
-          value={field.alias}
-          onChange={(e) => {
-            aliasChange(e.target.value);
-          }}
-        />
+        <Input value={field.alias} onChange={aliasChange} disabled={!field.selected || disabled} />
       </TableCell>
     </TableRow>
   );

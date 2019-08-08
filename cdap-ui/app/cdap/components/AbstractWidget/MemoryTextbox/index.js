@@ -15,8 +15,9 @@
 */
 
 import React from 'react';
-import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
+import { DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 import { Input } from 'reactstrap';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 require('./MemoryTextbox.scss');
 

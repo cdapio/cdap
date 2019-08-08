@@ -15,19 +15,26 @@
  */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import CSVRow from 'components/AbstractWidget/CSVWidget/CSVRow';
 import ThemeWrapper from 'components/ThemeWrapper';
 import AbstractMultiRowWidget, {
   IMultiRowProps,
+  IMultiRowWidgetProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-interface ICSVWidgetProps extends IMultiRowProps {
-  valuePlaceholder?: string;
+interface ICSVWidgetProps extends IMultiRowWidgetProps {
+  'value-placeholder'?: string;
+  delimiter?: string;
 }
 
-class CSVWidget extends AbstractMultiRowWidget<ICSVWidgetProps> {
+interface ICSVProps extends IMultiRowProps<ICSVWidgetProps> {}
+
+class CSVWidgetView extends AbstractMultiRowWidget<ICSVProps> {
   public renderRow = (id, index) => {
+    const valuePlaceholder = objectQuery(this.props, 'widgetProps', 'value-placeholder');
+
     return (
       <CSVRow
         key={id}
@@ -40,25 +47,19 @@ class CSVWidget extends AbstractMultiRowWidget<ICSVWidgetProps> {
         autofocus={this.state.autofocus === id}
         changeFocus={this.changeFocus}
         disabled={this.props.disabled}
-        valuePlaceholder={this.props.valuePlaceholder}
+        valuePlaceholder={valuePlaceholder}
         forwardedRef={this.values[id].ref}
       />
     );
   };
 }
 
-export default function StyledCSVWidgetWrapper(props) {
+export default function CSVWidget(props) {
   return (
     <ThemeWrapper>
-      <CSVWidget {...props} />
+      <CSVWidgetView {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledCSVWidgetWrapper as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-  delimiter: PropTypes.string,
-  valuePlaceholder: PropTypes.string,
-};
+(CSVWidget as any).propTypes = WIDGET_PROPTYPES;

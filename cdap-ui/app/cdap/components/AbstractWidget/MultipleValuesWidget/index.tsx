@@ -15,26 +15,33 @@
  */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import MultipleValuesRow from 'components/AbstractWidget/MultipleValuesWidget/MultipleValuesRow';
 import ThemeWrapper from 'components/ThemeWrapper';
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-interface IMultipleValuesWidgetProps extends IMultiRowProps {
+interface IMultipleValuesWidgetProps {
   placeholders?: string[];
-  valuesDelimiter?: string;
+  'values-delimiter'?: string;
   numValues: string | number;
+  delimiter?: string;
 }
 
-class MultipleValuesWidget extends AbstractMultiRowWidget<IMultipleValuesWidgetProps> {
+interface IMulipleValuesProps extends IMultiRowProps<IMultipleValuesWidgetProps> {}
+
+class MultipleValuesWidgetView extends AbstractMultiRowWidget<IMulipleValuesProps> {
   public renderRow = (id, index) => {
-    let numValues = this.props.numValues;
+    let numValues = objectQuery(this.props, 'widgetProps', 'numValues');
     if (typeof numValues === 'string') {
       numValues = parseInt(numValues, 10);
       numValues = isNaN(numValues) ? null : numValues;
     }
+
+    const placeholders = objectQuery(this.props, 'widgetProps', 'placeholders');
+    const valuesDelimiter = objectQuery(this.props, 'widgetProps', 'values-delimiter');
 
     return (
       <MultipleValuesRow
@@ -48,8 +55,8 @@ class MultipleValuesWidget extends AbstractMultiRowWidget<IMultipleValuesWidgetP
         autofocus={this.state.autofocus === id}
         changeFocus={this.changeFocus}
         disabled={this.props.disabled}
-        placeholders={this.props.placeholders}
-        valuesDelimiter={this.props.valuesDelimiter}
+        placeholders={placeholders}
+        valuesDelimiter={valuesDelimiter}
         numValues={numValues}
         forwardedRef={this.values[id].ref}
       />
@@ -57,20 +64,12 @@ class MultipleValuesWidget extends AbstractMultiRowWidget<IMultipleValuesWidgetP
   };
 }
 
-export default function StyledMultipleValuesWidgetWrapper(props) {
+export default function MultipleValuesWidget(props) {
   return (
     <ThemeWrapper>
-      <MultipleValuesWidget {...props} />
+      <MultipleValuesWidgetView {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledMultipleValuesWidgetWrapper as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-  delimiter: PropTypes.string,
-  placeholders: PropTypes.arrayOf(PropTypes.string),
-  valuesDelimiter: PropTypes.string,
-  numValues: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-};
+(MultipleValuesWidget as any).propTypes = WIDGET_PROPTYPES;

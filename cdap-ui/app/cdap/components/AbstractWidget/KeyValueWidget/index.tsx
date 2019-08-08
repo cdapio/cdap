@@ -21,16 +21,27 @@ import ThemeWrapper from 'components/ThemeWrapper';
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-interface IKeyValueWidgetProps extends IMultiRowProps {
-  keyPlaceholder?: string;
-  valuePlaceholder?: string;
-  kvDelimiter?: string;
-  isEncoded: boolean;
+interface IKeyValueWidgetProps {
+  'key-placeholder'?: string;
+  'value-placeholder'?: string;
+  'kv-delimiter'?: string;
+  delimiter?: string;
 }
 
-class KeyValueWidget extends AbstractMultiRowWidget<IKeyValueWidgetProps> {
+interface IKeyValueProps extends IMultiRowProps<IKeyValueWidgetProps> {
+  isEncoded?: boolean; // for compatiblity with keyvalue-encoded type
+}
+
+class KeyValueWidgetView extends AbstractMultiRowWidget<IKeyValueProps> {
   public renderRow = (id, index) => {
+    const keyPlaceholder = objectQuery(this.props, 'widgetProps', 'key-placeholder');
+    const valuePlaceholder = objectQuery(this.props, 'widgetProps', 'value-placeholder');
+    const kvDelimiter = objectQuery(this.props, 'widgetProps', 'kv-delimiter');
+    const isEncoded = this.props.isEncoded || objectQuery(this.props, 'widgetProps', 'isEncoded');
+
     return (
       <KeyValueRow
         key={id}
@@ -43,31 +54,25 @@ class KeyValueWidget extends AbstractMultiRowWidget<IKeyValueWidgetProps> {
         autofocus={this.state.autofocus === id}
         changeFocus={this.changeFocus}
         disabled={this.props.disabled}
-        keyPlaceholder={this.props.keyPlaceholder}
-        valuePlaceholder={this.props.valuePlaceholder}
-        kvDelimiter={this.props.kvDelimiter}
-        isEncoded={this.props.isEncoded}
+        keyPlaceholder={keyPlaceholder}
+        valuePlaceholder={valuePlaceholder}
+        kvDelimiter={kvDelimiter}
+        isEncoded={isEncoded}
         forwardedRef={this.values[id].ref}
       />
     );
   };
 }
 
-export default function StyledKeyValueWidgetWrapper(props) {
+export default function KeyValueWidget(props) {
   return (
     <ThemeWrapper>
-      <KeyValueWidget {...props} />
+      <KeyValueWidgetView {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledKeyValueWidgetWrapper as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-  delimiter: PropTypes.string,
-  valuePlaceholder: PropTypes.string,
-  keyPlaceholder: PropTypes.string,
-  kvDelimiter: PropTypes.string,
+(KeyValueWidget as any).propTypes = {
+  ...WIDGET_PROPTYPES,
   isEncoded: PropTypes.bool,
 };

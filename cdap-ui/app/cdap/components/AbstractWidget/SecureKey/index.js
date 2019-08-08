@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
+import { DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 import { MySecureKeyApi } from 'api/securekey';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
@@ -26,6 +26,7 @@ import { objectQuery } from 'services/helpers';
 import { SECURE_KEY_PREFIX, SECURE_KEY_SUFFIX, SYSTEM_NAMESPACE } from 'services/global-constants';
 import Mousetrap from 'mousetrap';
 import { Observable } from 'rxjs/Observable';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 require('./SecureKeyTextarea.scss');
 
 const PREFIX = 'features.AbstractWidget.SecureKeyTextarea';
