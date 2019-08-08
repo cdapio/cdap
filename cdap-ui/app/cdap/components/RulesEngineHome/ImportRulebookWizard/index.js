@@ -76,7 +76,7 @@ export default class ImportRulebookWizard extends Component {
 
   onSubmit = () => {
     let { selectedNamespace: namespace } = NamespaceStore.getState();
-    let url = `/namespaces/${namespace}/apps/yare/services/service/methods/rulebooks`;
+    let url = `/namespaces/system/apps/yare/services/service/methods/contexts/${namespace}/rulebooks`;
     let headers = {
       'content-type': 'application/rules-engine',
     };

@@ -18,9 +18,9 @@ import Datasource from 'services/datasource';
 import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = new Datasource();
-const appPath = '/namespaces/:namespace/apps/yare';
+const appPath = '/namespaces/system/apps/yare';
 const serviceBasepath = `${appPath}/services/service`;
-const serviceMethodsBasepath = `${appPath}/services/service/methods`;
+const serviceMethodsBasepath = `${serviceBasepath}/methods/contexts/:namespace`;
 const rbbasepath = `${serviceMethodsBasepath}/rulebooks/:rulebookid`;
 
 const MyRulesEngineApi = {
@@ -44,7 +44,7 @@ const MyRulesEngineApi = {
   getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceBasepath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceBasepath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/health`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceBasepath}/methods/health`),
 };
 
 export default MyRulesEngineApi;
