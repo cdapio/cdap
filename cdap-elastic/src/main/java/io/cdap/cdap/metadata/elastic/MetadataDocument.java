@@ -142,11 +142,23 @@ public class MetadataDocument {
     private final String scope;
     private final String name;
     private final String value;
+    // the value field's numeric representation, if applicable
+    private final Double numericValue;
 
     Property(String scope, String name, String value) {
       this.scope = scope;
       this.name = name;
       this.value = value;
+      this.numericValue = getNumericValue(value);
+    }
+
+    @Nullable
+    private Double getNumericValue(String value) {
+      try {
+        return Double.parseDouble(value);
+      } catch (NumberFormatException e) {
+        return null;
+      }
     }
 
     @Override
@@ -160,17 +172,18 @@ public class MetadataDocument {
       Property property = (Property) o;
       return Objects.equals(scope, property.scope) &&
         Objects.equals(name, property.name) &&
-        Objects.equals(value, property.value);
+        Objects.equals(value, property.value) &&
+          Objects.equals(numericValue, property.numericValue);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), scope, name, value);
+      return Objects.hash(super.hashCode(), scope, name, value, numericValue);
     }
 
     @Override
     public String toString() {
-      return scope + ':' + name + '=' + value;
+      return scope + ':' + name + '=' + value + '|' + numericValue;
     }
   }
 
