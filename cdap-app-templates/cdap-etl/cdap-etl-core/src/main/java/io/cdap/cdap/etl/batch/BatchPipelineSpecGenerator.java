@@ -48,7 +48,8 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();
       DefaultPipelineConfigurer pipelineConfigurer =
-        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine, new DefaultStageConfigurer());
+        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine,
+                                      new DefaultStageConfigurer(name));
       StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer).build();
       specBuilder.addAction(new ActionSpec(name, spec.getPlugin()));
     }

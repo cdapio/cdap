@@ -128,7 +128,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       pluginTypes.put(stageName, stage.getPlugin().getType());
       pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer,
                                                                      stageName, engine,
-                                                                     new DefaultStageConfigurer()));
+                                                                     new DefaultStageConfigurer(stageName)));
     }
     SchemaPropagator schemaPropagator = new SchemaPropagator(pluginConfigurers, validatedPipeline::getOutputs,
                                                              pluginTypes::get);

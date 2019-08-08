@@ -110,7 +110,7 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
       new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
                                      Engine.SPARK);
 
-    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer();
+    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
       stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
     }
