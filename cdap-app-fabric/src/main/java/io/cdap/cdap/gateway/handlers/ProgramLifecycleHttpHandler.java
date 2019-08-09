@@ -370,6 +370,24 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Restarts programs which were killed between startTimeSeconds and endTimeSeconds.
+   *
+   * @param startTimeSeconds lower bound in millis of the stoppage time for programs (inclusive)
+   * @param endTimeSeconds upper bound in millis of the stoppage time for programs (exclusive)
+   */
+  @PUT
+  @Path("apps/{app-id}/versions/{app-version}/restart-programs")
+  public void restartStoppedPrograms(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("app-version") String appVersion,
+                                     @QueryParam("start-time-seconds") long startTimeSeconds,
+                                     @QueryParam("end-time-seconds") long endTimeSeconds) throws Exception {
+    lifecycleService.restart(new ApplicationId(namespaceId, appId, appVersion), startTimeSeconds, endTimeSeconds);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
    * Returns program runs based on options it returns either currently running or completed or failed.
    * Default it returns all.
    */

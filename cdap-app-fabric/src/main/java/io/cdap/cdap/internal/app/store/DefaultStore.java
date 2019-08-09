@@ -328,6 +328,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Map<ProgramRunId, RunRecordMeta> getRuns(ApplicationId applicationId, ProgramRunStatus status, int limit,
+                                                  @Nullable Predicate<RunRecordMeta> filter) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getRuns(applicationId, status, limit, filter);
+    });
+  }
+
+  @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(programRunIds);
