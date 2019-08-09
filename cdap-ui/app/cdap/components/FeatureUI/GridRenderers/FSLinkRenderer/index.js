@@ -16,7 +16,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FEATURE_GENERATED_PIPELINE } from 'components/FeatureUI/config';
+import { FEATURE_GENERATED_PIPELINE, DEPLOYED } from 'components/FeatureUI/config';
 
 class FSLinkRenderer extends React.Component {
   constructor(props) {
@@ -35,9 +35,7 @@ class FSLinkRenderer extends React.Component {
 
   showLink(item) {
     if (item) {
-      if (item.pipelineType == FEATURE_GENERATED_PIPELINE) {
-        return !isNaN(item.lastStartEpochTime);
-      }
+      return (item.status != DEPLOYED) && (item.pipelineType == FEATURE_GENERATED_PIPELINE);
     }
     return false;
   }

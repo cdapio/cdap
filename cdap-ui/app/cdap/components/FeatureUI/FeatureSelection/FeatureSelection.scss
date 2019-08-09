@@ -32,6 +32,11 @@
       .nav-link.active {
         background-color: #eeeeee;
       }
+      .tab-inactive {
+        cursor: not-allowed;
+        opacity: 0.3;
+      }
+
     }
     .tab-content {
       height: calc(100% - 40px);

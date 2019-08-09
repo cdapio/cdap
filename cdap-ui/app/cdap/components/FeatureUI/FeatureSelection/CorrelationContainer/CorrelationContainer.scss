@@ -61,12 +61,56 @@
       border-radius: 4px;
       font-size: 16px;
     }
+
+    .search-group {
+      width: 97%;
+      .search-icon {
+        z-index: 10;
+        margin-left: -21px;
+        padding-top: 9px;
+      }
+    }
+
+    .search-input {
+      padding-right: 30px;
+    }
+
+    .list-group {
+      margin-top: 5px;
+      overflow-y: auto;
+      max-height: 220px;
+    }
+
+    .list-group-item {
+      padding-right: 0px;
+      height: 40px;
+      display: flex;
+    }
+
+    .feature-box-item {
+      width: 90%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      font-size: 12px;
+      margin: 0px;
+    }
+    .select-icon {
+      font-size: 20px;
+    }
   }
 
+  .correlation-item-box {
+    padding-left: 10px;
+  }
   .control-box {
     border-top: 1px solid grey;
     display: flex;
     flex-direction: row-reverse;
     padding-top: 10px;
+    .clear-button {
+      margin-right: 10px;
+    }
   }
 }
+

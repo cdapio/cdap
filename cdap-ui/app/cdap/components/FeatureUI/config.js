@@ -57,6 +57,7 @@ export const ERROR_MESSAGES = {
   GET_FEATURE_CORRELAION: "Error in getting correlation"
 };
 
+export const PIPELINE_SAVED_MSG = "Pipeline saved successfully";
 
 export const IS_OFFLINE = false;
 export const USE_REMOTE_SERVER = false;

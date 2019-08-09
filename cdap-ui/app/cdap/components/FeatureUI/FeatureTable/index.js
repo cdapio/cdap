@@ -20,7 +20,7 @@ import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import isEmpty from 'lodash/isEmpty';
 import PropTypes from 'prop-types';
-import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE, AFEGridColumns, EDIT, CLONE, DELETE } from '../config';
+import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, AFEGridColumns, EDIT, CLONE, DELETE } from '../config';
 import StatusRenderer from '../GridRenderers/StatusRenderer';
 import ActionRenderer from '../GridRenderers/ActionRenderer';
 import FELinkRenderer from '../GridRenderers/FELinkRenderer';
@@ -139,10 +139,6 @@ class FeatureTable extends React.Component {
     if (this.props.onClone) {
       this.props.onClone(item);
     }
-  }
-
-  isFeatureAvailable(item) {
-    return item && item.status == SUCCEEDED && item.pipelineType == FEATURE_GENERATED_PIPELINE;
   }
 
   getStatusClass(item) {

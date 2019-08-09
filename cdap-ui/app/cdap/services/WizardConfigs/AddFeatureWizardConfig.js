@@ -59,7 +59,8 @@ const AddFeatureWizardConfig = {
       description: '',
       content: (<FeatureDetailStep />)
     },
-  ]
+  ],
+  footertitle: 'generate Feature Engineering Pipeline'
 };
 
 export default AddFeatureWizardConfig;

@@ -47,7 +47,9 @@ class AlertModal extends React.Component {
             <div>{this.props.message}</div>
           </ModalBody>
           <ModalFooter>
-            <Button className="btn-margin" color="secondary" onClick={this.onCancel}>Cancel</Button>
+            {
+              this.props.showCancel && <Button className="btn-margin" color="secondary" onClick={this.onCancel}>Cancel</Button>
+            }
             <Button className="btn-margin" color="primary" onClick={this.onOk}>OK</Button>{' '}
           </ModalFooter>
         </Modal>
@@ -56,9 +58,14 @@ class AlertModal extends React.Component {
   }
 }
 
+AlertModal.defaultProps = {
+  showCancel: true
+};
+
 export default AlertModal;
 AlertModal.propTypes = {
   onClose: PropTypes.func,
+  showCancel: PropTypes.bool,
   open: PropTypes.any,
   message: PropTypes.string
 };

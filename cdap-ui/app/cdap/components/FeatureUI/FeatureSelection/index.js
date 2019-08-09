@@ -24,7 +24,8 @@ import {
   GET_PIPE_LINE_FILTERED,
   GET_FEATURE_CORRELAION,
   GET_PIPE_LINE_DATA,
-  GET_PIPELINE
+  GET_PIPELINE,
+  PIPELINE_SAVED_MSG
 } from '../config';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
@@ -36,11 +37,14 @@ import SaveFeatureModal from './SaveFeatureModal';
 import PropTypes from 'prop-types';
 import { getRoundOfValue } from '../GridFormatters';
 import ModelContainer from './ModelContainer';
+import AlertModal from '../AlertModal';
+import T from 'i18n-react';
+const PREFIX = 'features.FeatureEngineering.FeatureSelection.SaveFeatureModal';
 
 class FeatureSelection extends Component {
 
   gridInfoList = [];
-  targetVariable = "";
+  targetVariable = undefined;
   totalStatsFeature = 0;
   identiferCol = "featureName";
   setGridSelection;
@@ -54,6 +58,9 @@ class FeatureSelection extends Component {
       openSaveModal: false,
       enableSave: false,
       isDataLoading: false,
+      openAlertModal: false,
+      showCancelButton: false,
+      alertMessage: ''
     }, dataInfo);
 
     this.updateGridInfo(0, dataInfo.gridColumnDefs, dataInfo.gridRowData);
@@ -330,7 +337,9 @@ class FeatureSelection extends Component {
       );
   }
 
-
+  clearCorrelation = () => {
+    this.onFeatureSelection(this.props.selectedPipeline);
+  }
 
   handleError(error, type) {
     console.log('error ==> ' + error + "| type => " + type);
@@ -403,8 +412,20 @@ class FeatureSelection extends Component {
     this.setState({ openSaveModal: true });
   }
 
-  onSaveModalClose = () => {
-    this.setState({ openSaveModal: false });
+  onSaveModalClose = (message) => {
+    if (message == T.translate(`${PREFIX}.okButton`)) {
+      this.onSaved();
+    } else {
+      this.setState({ openSaveModal: false });
+    }
+  }
+
+  onSaved = () => {
+    this.setState({ openSaveModal: false , openAlertModal: true, alertMessage: PIPELINE_SAVED_MSG });
+  }
+
+  onAlertClose = () => {
+    this.setState({ openAlertModal: false, alertMessage: '' });
   }
 
   onFeatureSelection(pipeline, isFilter = false) {
@@ -449,6 +470,13 @@ class FeatureSelection extends Component {
     this.setGridSelection  = childFunc;
   }
 
+  modelBaseClick = () => {
+    if (this.targetVariable) {
+      this.toggle('2');
+    }
+
+  }
+
   render() {
      return (
       <div className="feature-selection-box">
@@ -480,8 +508,8 @@ class FeatureSelection extends Component {
             </NavItem>
             <NavItem>
               <NavLink
-                className={classnames({ active: this.state.activeTab === '2' })}
-                onClick={() => { this.toggle('2'); }}>
+                className={this.targetVariable ? classnames({ active: this.state.activeTab === '2'}) : 'tab-inactive'}
+                onClick={this.modelBaseClick}>
                 Model
               </NavLink>
             </NavItem>
@@ -495,9 +523,10 @@ class FeatureSelection extends Component {
               <CorrelationContainer applyCorrelation={this.applyCorrelation}
                 targetVariable={this.targetVariable}
                 featureNames={this.state.featureNames}
+                onClear={this.clearCorrelation}
                 ></CorrelationContainer>
             </TabPane>
-            <TabPane tabId="2" className="tab-pane">
+              <TabPane tabId="2" className="tab-pane">
               <ModelContainer applyModelSelection={this.applyModelSelection}
                 targetVariable={this.targetVariable}
                 featureNames={this.state.featureNames}
@@ -509,6 +538,9 @@ class FeatureSelection extends Component {
         <SaveFeatureModal open={this.state.openSaveModal} message={this.state.alertMessage}
           onClose={this.onSaveModalClose} selectedPipeline={this.props.selectedPipeline}
           selectedFeatures={this.state.selectedFeatures} />
+        <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
+              showCancel = {this.state.showCancelButton}
+              onClose={this.onAlertClose.bind(this)} />
       </div>
     );
   }
