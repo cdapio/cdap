@@ -47,6 +47,7 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -85,6 +86,7 @@ public class DataprocClient implements AutoCloseable {
   private final ClusterControllerClient client;
   private final Compute compute;
   private final String projectId;
+  private final String networkHostProjectId;
   private final String network;
   private final String zone;
   private final boolean useInternalIP;
@@ -109,6 +111,8 @@ public class DataprocClient implements AutoCloseable {
     }
 
     String projectId = conf.getProjectId();
+    String networkHostProjectID = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+      conf.getNetworkHostProjectID();
     String systemProjectId = null;
     try {
       systemProjectId = DataprocConf.getSystemProjectId();
@@ -121,14 +125,15 @@ public class DataprocClient implements AutoCloseable {
       network = systemNetwork;
     } else if (network == null) {
       // Otherwise, pick a network from the configured project using the Compute API
-      network = findNetwork(projectId, compute);
+
+      network = findNetwork(networkHostProjectID, compute);
     }
     if (network == null) {
       throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
     }
 
     String subnet = conf.getSubnet();
-    Network networkInfo = getNetworkInfo(projectId, network, compute);
+    Network networkInfo = getNetworkInfo(networkHostProjectID, network, compute);
 
     PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo, compute);
 
@@ -140,20 +145,24 @@ public class DataprocClient implements AutoCloseable {
       LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
                                "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
                                "to launch Dataproc clusters with internal IP only.", systemNetwork,
-                             systemProjectId, network, projectId));
+                             systemProjectId, network, networkHostProjectID));
     }
 
-    // Use internal IP for the Dataproc cluster if instance is private or user has not preferred external IP and
-    // (CDAP is running in the same customer project as Dataproc is going to be launched or
+    // Use internal IP for the Dataproc cluster if instance is private
+    // or
+    // user has not preferred external IP and (CDAP is running in the same customer project as Dataproc is going to
+    // be launched
+    // or
     // Network peering is done between customer network and system network and is in ACTIVE mode).
-    boolean useInternalIP = privateInstance || !conf.isPreferExternalIP()
-      && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
+    boolean useInternalIP = privateInstance ||
+      !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId)) ||
+      state == PeeringState.ACTIVE);
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
       throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
                                                          + "Please use a different subnet.",
-                                                       subnet, network, projectId));
+                                                       subnet, network, networkHostProjectID));
     }
 
     // if the network uses custom subnets, a subnet must be provided to the dataproc api
@@ -164,14 +173,11 @@ public class DataprocClient implements AutoCloseable {
       if (subnets == null || subnets.isEmpty()) {
         throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
                                                            + "Please create a subnet or use a different network.",
-                                                         network, projectId));
-      }
-
-      // if no subnet was configured, choose one
-      if (subnet == null) {
-        subnet = chooseSubnet(network, subnets, conf.getZone());
+                                                         network, networkHostProjectID));
       }
     }
+
+    subnet = chooseSubnet(network, subnets, subnet, conf.getZone());
 
     return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
   }
@@ -217,19 +223,24 @@ public class DataprocClient implements AutoCloseable {
 
   // subnets are identified as
   // "https://www.googleapis.com/compute/v1/projects/<project>/regions/<region>/subnetworks/<name>"
-  // a subnet in the same region as the dataproc cluster must be chosen
-  private static String chooseSubnet(String network, List<String> subnets, String zone) {
+  // a subnet in the same region as the dataproc cluster must be chosen. If a subnet name is provided then the subnet
+  // will be choosen and the region will be picked on basis of the given zone. If a subnet name is not provided then
+  // any subnetwork in the region of the given zone will be picked.
+  private static String chooseSubnet(String network, List<String> subnets, @Nullable String subnet, String zone) {
     // zones are always <region>-<letter>
     String region = zone.substring(0, zone.lastIndexOf('-'));
-    for (String subnet : subnets) {
-      if (subnet.contains(region + "/subnetworks")) {
-        return subnet;
+    for (String currentSubnet : subnets) {
+      // if a subnet name is given then get the region of that subnet based on the zone
+      if (subnet != null && !currentSubnet.endsWith("subnetworks/" + subnet)) {
+        continue;
+      }
+      if (currentSubnet.contains(region + "/subnetworks")) {
+        return currentSubnet;
       }
     }
     throw new IllegalArgumentException(
-      String.format("Could not find any subnets in network '%s' that are for region '%s'. "
-                      + "Please specify a subnet that is in the same region as the selected zone.",
-                    network, region));
+      String.format("Could not find %s in network '%s' that are for region '%s'", subnet == null ? "any subnet" :
+        String.format("a subnet named '%s", subnet), network, region));
   }
 
   private static String findNetwork(String project, Compute compute) throws IOException {
@@ -270,6 +281,8 @@ public class DataprocClient implements AutoCloseable {
   private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, boolean useInternalIP) {
     this.projectId = conf.getProjectId();
     this.network = conf.getNetwork();
+    this.networkHostProjectId = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+      conf.getNetworkHostProjectID();
     this.zone = conf.getZone();
     this.useInternalIP = useInternalIP;
     this.conf = conf;
@@ -307,11 +320,14 @@ public class DataprocClient implements AutoCloseable {
         .addServiceAccountScopes("https://www.googleapis.com/auth/cloud-platform")
         .setZoneUri(conf.getZone())
         .putAllMetadata(metadata);
+      String networkHostProjectId = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+        conf.getNetworkHostProjectID();
       // subnets are unique within a location, not within a network, which is why these configs are mutually exclusive.
       if (conf.getSubnet() != null) {
         clusterConfig.setSubnetworkUri(conf.getSubnet());
       } else {
-        clusterConfig.setNetworkUri(network);
+        clusterConfig.setNetworkUri(String.format("projects/%s/global/networks/%s", networkHostProjectId,
+                                                  conf.getNetwork()));
       }
 
       for (String targetTag : getFirewallTargetTags()) {
@@ -476,7 +492,7 @@ public class DataprocClient implements AutoCloseable {
    * @throws IOException If failed to discover those firewall rules
    */
   private Collection<String> getFirewallTargetTags() throws IOException {
-    FirewallList firewalls = compute.firewalls().list(projectId).execute();
+    FirewallList firewalls = compute.firewalls().list(networkHostProjectId).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
 
@@ -516,9 +532,9 @@ public class DataprocClient implements AutoCloseable {
     if (!requiredPorts.isEmpty()) {
       String portList = requiredPorts.stream().map(p -> String.valueOf(p.port)).collect(Collectors.joining(","));
       throw new IllegalArgumentException(String.format(
-        "Could not find an ingress firewall rule for network '%s' for ports '%s'. " +
+        "Could not find an ingress firewall rule for network '%s' in project '%s' for ports '%s'. " +
           "Please create a rule to allow incoming traffic on those ports for your IP range.",
-        network, portList));
+        network, networkHostProjectId, portList));
     }
     return tags;
   }
