@@ -184,6 +184,30 @@ public class ProgramClient {
   }
 
   /**
+   * Restarts programs stopped between startTimeSeconds and endTimeSeconds in the application.
+   *
+   * @param applicationId to restart programs in
+   * @param startTimeSeconds the lower bound of when programs were stopped to restart (inclusive)
+   * @param endTimeSeconds the upper bound of when programs were stopped to restart (exclusive)
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authenticated successfully in the gateway server
+   * @throws NotFoundException if the application cannot be found
+   * @throws UnauthorizedException if the request is not authorized successfully
+   */
+  public void restart(ApplicationId applicationId, long startTimeSeconds, long endTimeSeconds)
+    throws IOException, UnauthenticatedException, UnauthorizedException, NotFoundException {
+    String path = String.format("apps/%s/versions/%s/restart-programs?start-time-seconds=%d&end-time-seconds=%d",
+                                applicationId.getApplication(), applicationId.getVersion(), startTimeSeconds,
+                                endTimeSeconds);
+    URL url = config.resolveNamespacedURLV3(applicationId.getNamespaceId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(applicationId);
+    }
+  }
+
+  /**
    * Stops a program.
    *
    * @param programId the program to stop
