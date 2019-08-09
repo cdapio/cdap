@@ -1650,4 +1650,10 @@
       <name>zookeeper.session.timeout.millis</name>
       <value>40000</value>
     </property>
+
+    <property>
+      <name>white.list.ips</name>
+      <value>http://market.cask.co</value>
+    </property>
+
   </configuration>
