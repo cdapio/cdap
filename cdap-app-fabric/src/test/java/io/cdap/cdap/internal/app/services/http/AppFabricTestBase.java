@@ -836,6 +836,20 @@ public abstract class AppFabricTestBase {
   }
 
   /**
+   * Tries to restart programs in the application which were stopped between start and end.
+   */
+  protected int restartPrograms(ApplicationId applicationId, long startTimeSeconds, long endTimeSeconds)
+    throws Exception {
+    String path =
+      String.format("apps/%s/versions/%s/restart-programs?start-time-seconds=%d&end-time-seconds=%d",
+                    applicationId.getApplication(), applicationId.getVersion(), startTimeSeconds, endTimeSeconds);
+    String versionedPath = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           applicationId.getNamespace());
+    HttpResponse response = doPut(versionedPath, null);
+    return response.getResponseCode();
+  }
+
+  /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
   protected void debugProgram(Id.Program program, int expectedStatusCode) throws Exception {

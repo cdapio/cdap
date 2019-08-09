@@ -124,122 +124,139 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testProgramStartStopStatus() throws Exception {
-    // deploy, check the status
-    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    try {
+      // deploy, check the status
+      deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
-    ProgramId serviceId1 = new ServiceId(TEST_NAMESPACE1, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
-    ProgramId serviceId2 = new ServiceId(TEST_NAMESPACE2, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
+      ProgramId serviceId1 = new ServiceId(TEST_NAMESPACE1, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
+      ProgramId serviceId2 = new ServiceId(TEST_NAMESPACE2, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
 
-    // service is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
+      // service is stopped initially
+      Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
 
-    // start service in the wrong namespace and verify that it does not start
-    startProgram(serviceId2, 404);
+      // start service in the wrong namespace and verify that it does not start
+      startProgram(serviceId2, 404);
 
-    // start a service and check the status
-    startProgram(serviceId1);
-    waitState(serviceId1, RUNNING);
+      // start a service and check the status
+      startProgram(serviceId1);
+      waitState(serviceId1, RUNNING);
 
-    // stop the service and check the status
-    stopProgram(serviceId1);
-    waitState(serviceId1, STOPPED);
+      // stop the service and check the status
+      stopProgram(serviceId1);
+      waitState(serviceId1, STOPPED);
 
-    // deploy another app in a different namespace and verify
-    deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+      // deploy another app in a different namespace and verify
+      deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
-    Id.Program dummyMR1 = Id.Program.from(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-    Id.Program dummyMR2 = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+      Id.Program dummyMR1 = Id.Program.from(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+      Id.Program dummyMR2 = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
 
-    // mapreduce is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
+      // mapreduce is stopped initially
+      Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-    // start mapreduce in the wrong namespace and verify it does not start
-    startProgram(dummyMR1, 404);
-    Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
+      // start mapreduce in the wrong namespace and verify it does not start
+      startProgram(dummyMR1, 404);
+      Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-    // start map-reduce and verify status
-    startProgram(dummyMR2);
-    waitState(dummyMR2, RUNNING);
+      // start map-reduce and verify status
+      startProgram(dummyMR2);
+      waitState(dummyMR2, RUNNING);
 
-    // stop the mapreduce program and check the status
-    stopProgram(dummyMR2);
-    waitState(dummyMR2, STOPPED);
+      // stop the mapreduce program and check the status
+      stopProgram(dummyMR2);
+      waitState(dummyMR2, STOPPED);
 
-    // start multiple runs of the map-reduce program
-    startProgram(dummyMR2);
-    startProgram(dummyMR2);
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
+      // start multiple runs of the map-reduce program
+      startProgram(dummyMR2);
+      startProgram(dummyMR2);
+      verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
 
-    // stop all runs of the map-reduce program
-    stopProgram(dummyMR2, 200);
-    waitState(dummyMR2, STOPPED);
+      // stop all runs of the map-reduce program
+      stopProgram(dummyMR2, 200);
+      waitState(dummyMR2, STOPPED);
 
-    // deploy an app containing a workflow
-    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+      // deploy an app containing a workflow
+      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
-    Id.Program sleepWorkflow1 =
-      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
-    Id.Program sleepWorkflow2 =
-      Id.Program.from(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+      Id.Program sleepWorkflow1 =
+        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+      Id.Program sleepWorkflow2 =
+        Id.Program.from(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
-    // workflow is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+      // workflow is stopped initially
+      Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
 
-    // start workflow in the wrong namespace and verify that it does not start
-    startProgram(sleepWorkflow1, 404);
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+      // start workflow in the wrong namespace and verify that it does not start
+      startProgram(sleepWorkflow1, 404);
+      Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
 
-    // start workflow and check status
-    startProgram(sleepWorkflow2);
-    waitState(sleepWorkflow2, RUNNING);
+      // start workflow and check status
+      startProgram(sleepWorkflow2);
+      waitState(sleepWorkflow2, RUNNING);
 
-    // workflow will stop itself
-    waitState(sleepWorkflow2, STOPPED);
+      // workflow will stop itself
+      waitState(sleepWorkflow2, STOPPED);
 
-    // start multiple runs of the workflow
-    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
-    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
-    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
+      // start multiple runs of the workflow
+      startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
+      startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
+      verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
 
-    List<RunRecord> runs = getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING);
-    Assert.assertEquals(2, runs.size());
-    stopProgram(sleepWorkflow2, runs.get(0).getPid(), 200);
-    stopProgram(sleepWorkflow2, runs.get(1).getPid(), 200);
-    waitState(sleepWorkflow2, STOPPED);
+      List<RunRecord> runs = getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING);
+      Assert.assertEquals(2, runs.size());
+      stopProgram(sleepWorkflow2, runs.get(0).getPid(), 200);
+      stopProgram(sleepWorkflow2, runs.get(1).getPid(), 200);
+      waitState(sleepWorkflow2, STOPPED);
 
-    // verify batch runs endpoint
-    List<ProgramId> programs = ImmutableList.of(sleepWorkflow2.toEntityId(), dummyMR2.toEntityId(),
-                                                serviceId2);
-    List<BatchProgramHistory> batchRuns = getProgramRuns(new NamespaceId(TEST_NAMESPACE2), programs);
-    BatchProgramHistory sleepRun = batchRuns.get(0);
-    BatchProgramHistory dummyMR2Run = batchRuns.get(1);
-    BatchProgramHistory service2Run = batchRuns.get(2);
+      long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+      // Set super long sleep so we can suspend the workflow ourselves.
+      startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "500000"));
+      waitState(sleepWorkflow2, RUNNING);
+      stopProgram(sleepWorkflow2);
+      waitState(sleepWorkflow2, STOPPED);
+      long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 1;
 
-    // verify results come back in order
-    Assert.assertEquals(sleepWorkflow2.getId(), sleepRun.getProgramId());
-    Assert.assertEquals(dummyMR2.getId(), dummyMR2Run.getProgramId());
-    Assert.assertEquals(serviceId2.getProgram(), service2Run.getProgramId());
+      // sleepWorkflow2 should be restarted
+      restartPrograms(new ApplicationId(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID), startTime, endTime);
+      waitState(sleepWorkflow2, RUNNING);
 
-    // verify status. AllProgramsApp was never deployed in NS2 and should not exist
-    Assert.assertEquals(200, sleepRun.getStatusCode());
-    Assert.assertEquals(200, dummyMR2Run.getStatusCode());
-    Assert.assertEquals(404, service2Run.getStatusCode());
+      stopProgram(sleepWorkflow2);
+      waitState(sleepWorkflow2, STOPPED);
 
-    // verify the run record is correct
-    RunRecord runRecord = getProgramRuns(sleepWorkflow2, ProgramRunStatus.ALL).iterator().next();
-    Assert.assertEquals(runRecord.getPid(), sleepRun.getRuns().iterator().next().getPid());
+      // verify batch runs endpoint
+      List<ProgramId> programs = ImmutableList.of(sleepWorkflow2.toEntityId(), dummyMR2.toEntityId(),
+                                                  serviceId2);
+      List<BatchProgramHistory> batchRuns = getProgramRuns(new NamespaceId(TEST_NAMESPACE2), programs);
+      BatchProgramHistory sleepRun = batchRuns.get(0);
+      BatchProgramHistory dummyMR2Run = batchRuns.get(1);
+      BatchProgramHistory service2Run = batchRuns.get(2);
 
-    runRecord = getProgramRuns(dummyMR2, ProgramRunStatus.ALL).iterator().next();
-    Assert.assertEquals(runRecord.getPid(), dummyMR2Run.getRuns().iterator().next().getPid());
+      // verify results come back in order
+      Assert.assertEquals(sleepWorkflow2.getId(), sleepRun.getProgramId());
+      Assert.assertEquals(dummyMR2.getId(), dummyMR2Run.getProgramId());
+      Assert.assertEquals(serviceId2.getProgram(), service2Run.getProgramId());
 
-    Assert.assertTrue(service2Run.getRuns().isEmpty());
+      // verify status. AllProgramsApp was never deployed in NS2 and should not exist
+      Assert.assertEquals(200, sleepRun.getStatusCode());
+      Assert.assertEquals(200, dummyMR2Run.getStatusCode());
+      Assert.assertEquals(404, service2Run.getStatusCode());
 
-    // cleanup
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
-                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-    Assert.assertEquals(200, response.getResponseCode());
+      // verify the run record is correct
+      RunRecord runRecord = getProgramRuns(sleepWorkflow2, ProgramRunStatus.ALL).iterator().next();
+      Assert.assertEquals(runRecord.getPid(), sleepRun.getRuns().iterator().next().getPid());
+
+      runRecord = getProgramRuns(dummyMR2, ProgramRunStatus.ALL).iterator().next();
+      Assert.assertEquals(runRecord.getPid(), dummyMR2Run.getRuns().iterator().next().getPid());
+
+      Assert.assertTrue(service2Run.getRuns().isEmpty());
+    } finally {
+      // cleanup
+      HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                           Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+      Assert.assertEquals(200, response.getResponseCode());
+      response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
   }
 
   @Test

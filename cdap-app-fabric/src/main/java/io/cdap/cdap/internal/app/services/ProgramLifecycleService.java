@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.LogLevelUpdater;
@@ -54,6 +55,7 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -81,6 +83,7 @@ import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -396,6 +399,33 @@ public class ProgramLifecycleService {
     return runInternal(programId, userArgs, sysArgs, debug);
   }
 
+  /**
+   * Starts programs which were suspended between startTime and endTime.
+   *
+   * @param applicationId the application to restart programs in
+   * @param startTimeSeconds earliest stop time in seconds of programs to restart
+   * @param endTimeSeconds latest stop time in seconds of programs to restart
+   * @return {@link Set<RunId>} of runs restarted
+   * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
+   * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
+   * @throws IOException if there is an error starting the program
+   * @throws UnauthorizedException if the logged in user is not authorized to start the program. To start a program,
+   *                               a user requires {@link Action#EXECUTE} on the program
+   * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
+   */
+  public Set<RunId> restart(ApplicationId applicationId, long startTimeSeconds, long endTimeSeconds) throws Exception {
+    Set<RunId> runs = new HashSet<>();
+    Map<ProgramRunId, RunRecordMeta> runMap =
+      store.getRuns(applicationId, ProgramRunStatus.KILLED, Integer.MAX_VALUE,
+                    meta -> meta.getStopTs() >= startTimeSeconds && meta.getStopTs() < endTimeSeconds);
+
+    for (ProgramRunId programRunId : runMap.keySet()) {
+      ProgramId programId = programRunId.getParent();
+      runs.add(run(programId, getRuntimeArgs(programId), false));
+    }
+
+    return runs;
+  }
 
   /**
    * Runs a Program without authorization.

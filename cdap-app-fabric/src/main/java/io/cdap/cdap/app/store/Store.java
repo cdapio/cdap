@@ -220,6 +220,17 @@ public interface Store {
    */
   Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, long startTime,
                                            long endTime, int limit, Predicate<RunRecordMeta> filter);
+  /**
+   * Fetches run records for the particular status.
+   *
+   * @param applicationId to filter the records
+   * @param status status of the program to filter the records
+   * @param limit max number of entries to fetch for this history call
+   * @param filter predicate to be passed to filter the records
+   * @return a map from {@link ProgramRunId} to the corresponding {@link RunRecordMeta}.
+   */
+  Map<ProgramRunId, RunRecordMeta> getRuns(ApplicationId applicationId, ProgramRunStatus status,
+                                           int limit, Predicate<RunRecordMeta> filter);
 
   /**
    * Fetches the run records for given ProgramRunIds.
