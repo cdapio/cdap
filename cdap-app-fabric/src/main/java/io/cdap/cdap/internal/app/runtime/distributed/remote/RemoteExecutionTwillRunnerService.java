@@ -627,6 +627,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         // in which the remote port forwarding will be closed automatically
         int remotePort = session.createRemotePortForward(0,
                                                          serviceSocksProxy.getBindAddress().getPort()).getRemotePort();
+
+        LOG.debug("Service SOCKS proxy started on port {} for program run {}", remotePort, programRunId);
         ServiceSocksProxyInfo info = new ServiceSocksProxyInfo(remotePort);
 
         // Upload the service socks proxy information to the remote runtime
@@ -634,6 +636,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         byte[] content = GSON.toJson(info).getBytes(StandardCharsets.UTF_8);
         session.copy(new ByteArrayInputStream(content),
                      targetPath, Constants.RuntimeMonitor.SERVICE_PROXY_FILE, content.length, 0600, null, null);
+        LOG.debug("Service proxy file uploaded to remote runtime for program run {}", programRunId);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -698,6 +701,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
           LOG.debug("Remote runtime server for program run {} is running at {}", programRunId, address);
           return address;
         } catch (Exception e) {
+          LOG.warn("Failed to create SSH session for program run {} monitoring. Will be retried.", programRunId);
           return null;
         }
       }
