@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * the output schema that could be sent to the next stages from this stage.
  */
 @Beta
-public interface MultiOutputStageConfigurer {
+public interface MultiOutputStageConfigurer extends FailureCollector {
 
   /**
    * Get the input schema for this stage, or null if its unknown

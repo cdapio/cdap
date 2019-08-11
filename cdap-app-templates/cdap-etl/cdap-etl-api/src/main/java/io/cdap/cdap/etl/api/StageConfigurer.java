@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * the output schema that could be sent to the next stages from this stage.
  */
 @Beta
-public interface StageConfigurer {
+public interface StageConfigurer extends FailureCollector {
 
   /**
    * get the input schema for this stage, or null if its unknown
@@ -51,5 +51,4 @@ public interface StageConfigurer {
    * @param errorSchema error schema for this stage
    */
   void setErrorSchema(@Nullable Schema errorSchema);
-
 }
