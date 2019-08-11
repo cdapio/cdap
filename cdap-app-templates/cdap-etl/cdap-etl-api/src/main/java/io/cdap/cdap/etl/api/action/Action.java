@@ -33,7 +33,7 @@ public abstract class Action implements PipelineConfigurable {
   public abstract void run(ActionContext context) throws Exception;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     //no-op
   }
 }

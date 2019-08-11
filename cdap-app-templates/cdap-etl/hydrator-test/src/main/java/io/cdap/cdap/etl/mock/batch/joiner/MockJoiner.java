@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.mock.batch.joiner;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -35,6 +36,7 @@ import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -59,8 +61,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   public void configurePipeline(MultiInputPipelineConfigurer pipelineConfigurer) {
     MultiInputStageConfigurer stageConfigurer = pipelineConfigurer.getMultiInputStageConfigurer();
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
+    config.validateConfig(stageConfigurer);
     stageConfigurer.setOutputSchema(getOutputSchema(inputSchemas));
-    config.validateConfig();
   }
 
   @Override
@@ -121,13 +123,13 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
     for (Map.Entry<String, Schema> entry : sortedMap.entrySet()) {
       Schema inputSchema = entry.getValue();
       if (Iterables.contains(requiredInputs, entry.getKey())) {
-        for (Schema.Field inputField: inputSchema.getFields()) {
+        for (Schema.Field inputField : inputSchema.getFields()) {
           outputFields.add(Schema.Field.of(inputField.getName(), inputField.getSchema()));
         }
       } else { // mark fields as nullable
-        for (Schema.Field inputField: inputSchema.getFields()) {
+        for (Schema.Field inputField : inputSchema.getFields()) {
           outputFields.add(Schema.Field.of(inputField.getName(),
-                                        Schema.nullableOf(inputField.getSchema())));
+                                           Schema.nullableOf(inputField.getSchema())));
         }
       }
     }
@@ -150,31 +152,65 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
       this.requiredInputs = "requiredInputs";
     }
 
-    private void validateConfig() {
+    private void validateConfig(MultiInputStageConfigurer configurer) {
+      Map<String, Schema> inputSchemas = configurer.getInputSchemas();
       if (joinKeys == null || joinKeys.isEmpty()) {
-        throw new IllegalArgumentException(String.format(
-          "join keys can not be empty or null for plugin %s", PLUGIN_CLASS));
+        configurer.addFailure("Config property joinKeys is either null or empty",
+                              "Provide non-empty joinKeys config property").withConfigProperty("joinKeys");
+        configurer.throwIfFailure();
       }
 
-      Iterable<String> multipleJoinKeys = Splitter.on('&').trimResults().omitEmptyStrings().split(joinKeys);
-      for (String key : multipleJoinKeys) {
-        Iterable<String> perStageJoinKeys = Splitter.on('=').trimResults().omitEmptyStrings().split(key);
+      List<String> multipleJoinKeys = Lists.newArrayList(Splitter.on('&').trimResults()
+                                                           .omitEmptyStrings().split(joinKeys));
+      for (String joinKey : multipleJoinKeys) {
+        Map<String, String> map = new LinkedHashMap<>();
+        List<String> perStageJoinKeys = Lists.newArrayList(Splitter.on('=').trimResults()
+                                                             .omitEmptyStrings().split(joinKey));
         for (String perStageKey : perStageJoinKeys) {
-          Iterable<String> stageKey = Splitter.on('.').trimResults().omitEmptyStrings().split(perStageKey);
-          if (Iterables.size(stageKey) != 2) {
-            throw new IllegalArgumentException(String.format("Join key should be specified in stageName.columnName " +
-                                                               "format for key %s of type %s",
-                                                             perStageKey, PLUGIN_TYPE));
+          List<String> stageKey = Lists.newArrayList(Splitter.on('.').trimResults()
+                                                       .omitEmptyStrings().split(perStageKey));
+          if (stageKey.size() != 2) {
+            configurer.addFailure(String.format("Join key is not specified in stageName.columnName " +
+                                                  "format for key %s", perStageKey),
+                                  "Make sure syntax for joinKeys config property is correct")
+              .withConfigProperty("joinKeys");
+          } else {
+            map.putIfAbsent(stageKey.get(0), stageKey.get(1));
           }
         }
+
+        Schema prevSchema = null;
+        String prevStage = null;
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+          String stageName = entry.getKey();
+          String keyField = entry.getValue();
+          Schema.Field field = inputSchemas.get(stageName).getField(keyField);
+          if (field == null) {
+            configurer.addFailure(String.format("Join key field %s is not present in input schema", field),
+                                  "Make sure all the join keys are present in the input schema")
+              .withConfigElement("joinKeys", joinKey);
+            continue;
+          }
+
+          if (prevSchema != null && !prevSchema.equals(field.getSchema())) {
+            configurer.addFailure(String.format("Schema of joinKey field %s.%s does not match with other join keys.",
+                                                stageName, keyField), "Make sure all the join keys are of same type")
+              .withConfigElement("joinKeys", joinKey)
+              .withInputSchemaField(keyField, stageName).withInputSchemaField(keyField, prevStage);
+          }
+          prevSchema = field.getSchema();
+          prevStage = stageName;
+        }
       }
+
+      configurer.throwIfFailure();
     }
 
     /**
      * Converts join keys to map of per stage join keys For example,
      * customers.id=items.cust_id&customers.name=items.cust_name
      * will get converted to customers -> (id,name) and items -> (cust_id,cust_name)
-     * @return
+     * @return map of stage to join key fields from that stage
      */
     private Map<String, List<String>> getJoinKeys() {
       Map<String, List<String>> stageToKey = new HashMap<>();

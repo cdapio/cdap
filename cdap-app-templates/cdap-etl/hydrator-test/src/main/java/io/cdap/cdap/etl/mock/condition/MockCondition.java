@@ -60,7 +60,7 @@ public class MockCondition extends Condition {
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     if (config.tableName != null) {
       pipelineConfigurer.createDataset(config.tableName, Table.class);
     }

@@ -42,7 +42,7 @@ public class FilterErrorTransform extends ErrorTransform<StructuredRecord, Struc
   private Config config;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }

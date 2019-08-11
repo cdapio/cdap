@@ -26,7 +26,7 @@ public abstract class AlertPublisher implements PipelineConfigurable, StageLifec
   private AlertPublisherContext context;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

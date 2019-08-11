@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,48 +14,73 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.mock.transform;
+package io.cdap.cdap.etl.mock.batch;
 
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Transform that doubles every record it receives.
+ * Transform that throws null pointer exception while configuring it.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("Double")
-public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
+@Name("NullErrorTransform")
+public class NullErrorTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
+  private final NullErrorTransform.Config config;
+
+  public NullErrorTransform(NullErrorTransform.Config config) {
+    this.config = config;
+  }
 
   @Override
+  @SuppressWarnings("ConstantConditions")
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
-    stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+      config.name = null;
+    // throw null pointer exception
+    if (config.name.equals("xyz")) {
+      config.name = "pqr";
+    }
+  }
+
+  @Override
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
   }
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(input);
-    emitter.emit(input);
+    // no-op
+  }
+
+  /**
+   * Config for NullErrorTransform.
+   */
+  public static class Config extends PluginConfig {
+    private String name;
   }
 
   public static ETLPlugin getPlugin() {
-    return new ETLPlugin("Double", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
+    Map<String, String> properties = new HashMap<>();
+    properties.put("name", "");
+    return new ETLPlugin("NullErrorTransform", Transform.PLUGIN_TYPE, properties, null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(Transform.PLUGIN_TYPE, "Double", "", DoubleTransform.class.getName(), null, properties);
+    properties.put("name", new PluginPropertyField("name", "", "string", true, false));
+    return new PluginClass(Transform.PLUGIN_TYPE, "NullErrorTransform", "", NullErrorTransform.class.getName(),
+                           "config", properties);
   }
 }

@@ -44,7 +44,7 @@ public class GroupFilterAggregator extends BatchAggregator<String, StructuredRec
   private Config config;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Schema inputSchema = stageConfigurer.getInputSchema();
     if (inputSchema == null) {

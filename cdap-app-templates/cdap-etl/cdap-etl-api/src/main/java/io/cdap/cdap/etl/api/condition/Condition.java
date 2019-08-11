@@ -35,7 +35,7 @@ public abstract class Condition implements PipelineConfigurable {
   public abstract boolean apply(ConditionContext context) throws Exception;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     //no-op
   }
 }

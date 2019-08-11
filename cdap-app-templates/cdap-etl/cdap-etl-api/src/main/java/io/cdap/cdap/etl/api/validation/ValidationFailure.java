@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.etl.api.validation;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.artifact.ArtifactId;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +33,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class ValidationFailure {
+  private static final Gson GSON = new Gson();
   private final String message;
   private final String correctiveAction;
   private final List<Cause> causes;
@@ -75,21 +78,63 @@ public class ValidationFailure {
    * @param pluginType plugin type
    * @return validation failure with plugin not found cause
    */
-  public ValidationFailure withPluginNotFoundCause(String pluginId, String pluginName, String pluginType) {
-    causes.add(new Cause().addAttribute(CauseAttributes.PLUGIN_ID, pluginId)
-                 .addAttribute(CauseAttributes.PLUGIN_NAME, pluginName)
-                 .addAttribute(CauseAttributes.PLUGIN_TYPE, pluginType));
+  public ValidationFailure withPluginNotFound(String pluginId, String pluginName, String pluginType) {
+    return withPluginNotFound(pluginId, pluginName, pluginType, null, null);
+  }
+
+  /**
+   * Adds cause attributes that represents plugin not found failure cause.
+   *
+   * @param pluginId plugin id
+   * @param pluginName plugin name
+   * @param pluginType plugin type
+   * @param requestedArtifact requested artifact
+   * @param suggestedArtifact suggested artifact
+   * @return validation failure with plugin not found cause
+   */
+  public ValidationFailure withPluginNotFound(String pluginId, String pluginName, String pluginType,
+                                              @Nullable ArtifactId requestedArtifact,
+                                              @Nullable ArtifactId suggestedArtifact) {
+    Cause cause = new Cause().addAttribute(CauseAttributes.PLUGIN_ID, pluginId)
+      .addAttribute(CauseAttributes.PLUGIN_NAME, pluginName)
+      .addAttribute(CauseAttributes.PLUGIN_TYPE, pluginType);
+    if (requestedArtifact != null) {
+      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_NAME, requestedArtifact.getName());
+      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_SCOPE, requestedArtifact.getScope().name());
+      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_VERSION, requestedArtifact.getVersion().getVersion());
+    }
+
+    if (suggestedArtifact != null) {
+      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_NAME, suggestedArtifact.getName());
+      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_SCOPE, suggestedArtifact.getScope().name());
+      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_VERSION, suggestedArtifact.getVersion().getVersion());
+    }
+    causes.add(cause);
     return this;
   }
 
   /**
-   * Adds cause attributes that represents stage configure property failure cause.
+   * Adds cause attributes that represents invalid stage configure property failure cause.
    *
    * @param stageConfigProperty stage config property
    * @return validation failure with invalid stage config property cause
    */
-  public ValidationFailure withStageConfigCause(String stageConfigProperty) {
+  public ValidationFailure withConfigProperty(String stageConfigProperty) {
     causes.add(new Cause().addAttribute(CauseAttributes.STAGE_CONFIG, stageConfigProperty));
+    return this;
+  }
+
+  /**
+   * Adds cause attributes for failure cause that represents an invalid element in the list associated with given stage
+   * configure property.
+   *
+   * @param stageConfigProperty stage config property
+   * @param element element in the list associated by a given stageConfigProperty
+   * @return validation failure with invalid stage config property element cause
+   */
+  public ValidationFailure withConfigElement(String stageConfigProperty, String element) {
+    causes.add(new Cause().addAttribute(CauseAttributes.STAGE_CONFIG, stageConfigProperty)
+                 .addAttribute(CauseAttributes.CONFIG_ELEMENT, element));
     return this;
   }
 
@@ -100,9 +145,10 @@ public class ValidationFailure {
    * @param inputStage stage name
    * @return validation failure with invalid input schema field cause
    */
-  public ValidationFailure withInvalidInputSchemaCause(String fieldName, @Nullable String inputStage) {
-    causes.add(new Cause().addAttribute(CauseAttributes.INPUT_STAGE, inputStage)
-                 .addAttribute(CauseAttributes.INPUT_SCHEMA_FIELD, fieldName));
+  public ValidationFailure withInputSchemaField(String fieldName, @Nullable String inputStage) {
+    Cause cause = new Cause().addAttribute(CauseAttributes.INPUT_SCHEMA_FIELD, fieldName);
+    cause = inputStage == null ? cause : cause.addAttribute(CauseAttributes.INPUT_STAGE, inputStage);
+    causes.add(cause);
     return this;
   }
 
@@ -113,9 +159,21 @@ public class ValidationFailure {
    * @param outputPort stage name
    * @return validation failure with invalid output schema field cause
    */
-  public ValidationFailure withInvalidOutputSchemaCause(String fieldName, @Nullable String outputPort) {
-    causes.add(new Cause().addAttribute(CauseAttributes.OUTPUT_PORT, outputPort)
-                 .addAttribute(CauseAttributes.OUTPUT_SCHEMA_FIELD, fieldName));
+  public ValidationFailure withOutputSchemaField(String fieldName, @Nullable String outputPort) {
+    Cause cause = new Cause().addAttribute(CauseAttributes.OUTPUT_SCHEMA_FIELD, fieldName);
+    cause = outputPort == null ? cause : cause.addAttribute(CauseAttributes.OUTPUT_PORT, outputPort);
+    causes.add(cause);
+    return this;
+  }
+
+  /**
+   * Adds cause attributes that represents a stacktrace.
+   *
+   * @param stacktraceElements stacktrace for the error
+   * @return validation failure with stacktrace
+   */
+  public ValidationFailure withStacktrace(StackTraceElement[] stacktraceElements) {
+    causes.add(new Cause().addAttribute(CauseAttributes.STACKTRACE, GSON.toJson(stacktraceElements)));
     return this;
   }
 

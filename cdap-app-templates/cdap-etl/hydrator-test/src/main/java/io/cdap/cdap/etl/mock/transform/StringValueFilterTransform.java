@@ -30,7 +30,6 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -60,14 +59,17 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     if (inputSchema != null && !config.containsMacro("field")) {
       Schema.Field field = inputSchema.getField(config.field);
       if (field == null) {
-        throw new InvalidConfigPropertyException(
-          String.format("'%s' is not a field in the input schema.", config.field), "field");
+        stageConfigurer.addFailure(String.format("'%s' is not a field in the input schema.", config.field),
+                                   "Make sure field is present in the input schema.")
+          .withConfigProperty("field");
+        stageConfigurer.throwIfFailure();
       }
       Schema fieldSchema = field.getSchema();
       Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (fieldType != Schema.Type.STRING) {
-        throw new InvalidConfigPropertyException(
-          String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType), "field");
+        stageConfigurer.addFailure(String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType),
+                                   "Make sure provided field is of type string.")
+          .withConfigProperty("field").withInputSchemaField(config.field, null);
       }
     }
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());

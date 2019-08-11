@@ -68,7 +68,7 @@ public class MockAction extends Action {
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     pipelineConfigurer.createDataset(config.tableName, Table.class);
   }
 

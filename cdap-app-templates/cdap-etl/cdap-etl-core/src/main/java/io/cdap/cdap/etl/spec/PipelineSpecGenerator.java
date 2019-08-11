@@ -22,6 +22,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
@@ -39,11 +42,13 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.planner.Dag;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
@@ -51,10 +56,6 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.proto.v2.validation.InvalidConfigPropertyError;
-import io.cdap.cdap.etl.proto.v2.validation.PluginNotFoundError;
-import io.cdap.cdap.etl.proto.v2.validation.StageValidationError;
-import io.cdap.cdap.etl.validation.InvalidPipelineException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,9 +105,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * All inputs into a stage have the same schema.
    *
    * @param config user provided ETL config
-   * @throws InvalidPipelineException if the pipeline is invalid
+   * @throws ValidationException if the pipeline is invalid
    */
-  public abstract P generateSpec(C config) throws InvalidPipelineException;
+  public abstract P generateSpec(C config) throws ValidationException;
 
   /**
    * Performs most of the validation and configuration needed by a pipeline.
@@ -114,9 +115,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    *
    * @param config user provided ETL config
    * @param specBuilder builder for creating a pipeline spec.
-   * @throws InvalidPipelineException if the pipeline is invalid
+   * @throws ValidationException if the pipeline is invalid
    */
-  protected void configureStages(ETLConfig config, PipelineSpec.Builder specBuilder) throws InvalidPipelineException {
+  protected void configureStages(ETLConfig config, PipelineSpec.Builder specBuilder) throws ValidationException {
     // validate the config and determine the order we should configure the stages in.
     ValidatedPipeline validatedPipeline = validateConfig(config);
     List<ETLStage> traversalOrder = validatedPipeline.getTraversalOrder();
@@ -197,10 +198,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @param validatedPipeline the validated pipeline config
    * @param pluginConfigurer configurer used to configure the stage
    * @return the spec for the stage
+   * @throws ValidationException if the plugin threw an exception during configuration
    */
   private ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
-                                         DefaultPipelineConfigurer pluginConfigurer)
-    throws InvalidPipelineException {
+                                         DefaultPipelineConfigurer pluginConfigurer) throws ValidationException {
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
 
@@ -259,31 +260,18 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @param etlPlugin user provided configuration for the plugin
    * @param pipelineConfigurer default pipeline configurer to configure the plugin
    * @return the spec for the plugin
-   * @throws InvalidPipelineException if the plugin threw an exception during configuration
+   * @throws IllegalArgumentException if the plugin with same id is already deployed
+   * @throws ValidationException if the plugin threw an exception during configuration
    */
   public StageSpec.Builder configureStage(String stageName, ETLPlugin etlPlugin,
-                                          DefaultPipelineConfigurer pipelineConfigurer)
-    throws InvalidPipelineException {
+                                          DefaultPipelineConfigurer pipelineConfigurer) throws ValidationException {
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
       new ArtifactSelectorProvider().getPluginSelector(etlPlugin.getArtifactConfig()));
     String type = etlPlugin.getType();
+    String pluginName = etlPlugin.getName();
 
-    Object plugin;
-    try {
-      plugin = pluginConfigurer.usePlugin(etlPlugin.getType(),
-                                          etlPlugin.getName(),
-                                          stageName,
-                                          etlPlugin.getPluginProperties(),
-                                          pluginSelector);
-    } catch (Exception e) {
-      throw new InvalidPipelineException(new StageValidationError(e.getMessage(), stageName));
-    }
-    if (plugin == null) {
-      throw new InvalidPipelineException(new PluginNotFoundError(stageName, type, etlPlugin.getName(),
-                                                                 etlPlugin.getArtifactConfig(),
-                                                                 pluginSelector.getSuggestion()));
-    }
-
+    DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    Object plugin = getPlugin(stageName, etlPlugin, pluginSelector, type, pluginName, stageConfigurer);
     try {
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
@@ -296,28 +284,41 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         singlePlugin.configurePipeline(pipelineConfigurer);
       }
     } catch (InvalidConfigPropertyException e) {
-      throw new InvalidPipelineException(new InvalidConfigPropertyError(stageName, e), e);
+      stageConfigurer.addFailure(e.getMessage(),
+                                 String.format("Provide valid value for config property '%s'.", e.getProperty()))
+        .withConfigProperty(e.getProperty());
     } catch (InvalidStageException e) {
       if (e.getReasons().isEmpty()) {
-        throw new InvalidPipelineException(new StageValidationError(e.getMessage(), stageName), e);
+        stageConfigurer.addFailure(e.getMessage(), null);
       }
-      List<StageValidationError> errors = new ArrayList<>(e.getReasons().size());
+
       for (InvalidStageException reason : e.getReasons()) {
         if (reason instanceof InvalidConfigPropertyException) {
-          errors.add(new InvalidConfigPropertyError(stageName, (InvalidConfigPropertyException) reason));
+          InvalidConfigPropertyException configException = (InvalidConfigPropertyException) reason;
+          stageConfigurer.addFailure(configException.getMessage(),
+                                     String.format("Provide valid value for config property '%s'.",
+                                                   configException.getProperty()))
+            .withConfigProperty(configException.getProperty());
         } else {
-          errors.add(new StageValidationError(reason.getMessage(), stageName));
+          stageConfigurer.addFailure(reason.getMessage(), null);
         }
       }
-      throw new InvalidPipelineException(errors, e);
+    } catch (ValidationException e) {
+      throw e;
+    } catch (NullPointerException e) {
+      // handle the case where plugin throws null pointer exception, this is to avoid having 'null' as error message
+      stageConfigurer.addFailure("Null error occurred while configuring the stage.", null)
+        .withStacktrace(e.getStackTrace());
     } catch (Exception e) {
-      throw new InvalidPipelineException(new StageValidationError(
-        String.format("Error configuring stage '%s': %s", stageName, e.getMessage()), stageName), e);
+      stageConfigurer.addFailure(String.format("Error encountered while configuring the stage: '%s'.",
+                                               e.getMessage()), null);
     }
 
-    PluginSpec pluginSpec = new PluginSpec(etlPlugin.getType(), etlPlugin.getName(), etlPlugin.getProperties(),
+    // throw validation exception if there are any errors being carried by stage configurer
+    stageConfigurer.throwIfFailure();
+
+    PluginSpec pluginSpec = new PluginSpec(type, pluginName, etlPlugin.getProperties(),
                                            pluginSelector.getSelectedArtifact());
-    DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     StageSpec.Builder specBuilder = StageSpec.builder(stageName, pluginSpec)
       .addInputSchemas(pipelineConfigurer.getStageConfigurer().getInputSchemas())
       .setErrorSchema(stageConfigurer.getErrorSchema());
@@ -328,6 +329,59 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
     }
     return specBuilder;
+  }
+
+  /**
+   * Adds a Plugin usage to the Application and create a new instance.
+   *
+   * @param stageName stage name
+   * @param etlPlugin plugin
+   * @param pluginSelector plugin selector
+   * @param type type of the plugin
+   * @param pluginName plugin name
+   * @param stageConfigurer stage configurer
+   * @throws ValidationException if error while creating new plugin instance
+   * @return new instance of the plugin
+   */
+  private Object getPlugin(String stageName, ETLPlugin etlPlugin, TrackedPluginSelector pluginSelector, String type,
+                           String pluginName, DefaultStageConfigurer stageConfigurer) {
+    Object plugin = null;
+    try {
+      // Call to usePlugin may throw IllegalArgumentException if hte plugin with the same id is already deployed.
+      // This would mean there is a bug in the app and this can not be fixed by user. That is why it is not handled as
+      // a ValidationFailure.
+      plugin = pluginConfigurer.usePlugin(type, pluginName, stageName, etlPlugin.getPluginProperties(), pluginSelector);
+    } catch (Exception e) {
+      // TODO: Catch specific exceptions when CDAP-15744 is fixed
+      stageConfigurer.addFailure(e.getMessage(), null);
+    }
+
+    // throw validation exception if any error occurred while creating a new instance of the plugin
+    stageConfigurer.throwIfFailure();
+
+    if (plugin == null) {
+      String errorMessage = String.format("Plugin named '%s' of type '%s' not found.", pluginName, type);
+      String correctiveAction = String.format("Make sure plugin '%s' of type '%s' is already deployed.",
+                                              pluginName, type);
+      ArtifactSelectorConfig requested = etlPlugin.getArtifactConfig();
+      ArtifactId requestedArtifactId = new ArtifactId(requested.getName(), new ArtifactVersion(requested.getVersion()),
+                                                      ArtifactScope.valueOf(requested.getScope()));
+
+      ArtifactSelectorConfig suggestion = pluginSelector.getSuggestion();
+      ArtifactId suggestedArtifactId = null;
+      if (suggestion != null) {
+        suggestedArtifactId = new ArtifactId(suggestion.getName(), new ArtifactVersion(suggestion.getVersion()),
+                                             ArtifactScope.valueOf(suggestion.getScope()));
+
+      }
+
+      stageConfigurer.addFailure(errorMessage, correctiveAction)
+        .withPluginNotFound(stageName, pluginName, type, requestedArtifactId, suggestedArtifactId);
+
+      // throw validation exception if the plugin is not initialized
+      stageConfigurer.throwIfFailure();
+    }
+    return plugin;
   }
 
   /**

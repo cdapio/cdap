@@ -33,7 +33,7 @@ public abstract class Windower implements PipelineConfigurable, Serializable {
   private static final long serialVersionUID = -7949508317034247623L;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 
