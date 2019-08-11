@@ -66,18 +66,48 @@ public class StartProgramCommand extends AbstractAuthCommand {
       // run with stored runtime args
       programClient.start(programId, isDebug, null);
       runtimeArgsString = SPACE_EQUALS_JOINER.join(programClient.getRuntimeArgs(programId));
-      output.printf("Successfully started %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
+      if (waitForRunning(output, programClient, programId)) {
+        output.printf("Successfully started %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
                     elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+      } else {
+        output.printf("Could not start %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
+                elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+      }
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString,
                                                                 ArgumentName.RUNTIME_ARGS.toString());
       programClient.start(programId, isDebug, runtimeArgs);
-      output.printf("Successfully started %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
+      if (waitForRunning(output, programClient, programId)) {
+        output.printf("Successfully started %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
                     elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+      } else {
+        output.printf("Could not start %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
+                elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+      }
     }
 
   }
+
+  private Boolean waitForRunning(PrintStream printStream, ProgramClient programClient, ProgramId programId)
+          throws InterruptedException, IOException, ProgramNotFoundException, UnauthenticatedException {
+    // 1sec waiting
+    int waitingMillis = 1000;
+    int count = 0;
+    while (count < Integer.MAX_VALUE) {
+      Thread.sleep(waitingMillis);
+      String status = programClient.getStatus(programId);
+      printStream.printf(" ..");
+      if (status.equals(ProgramStatus.RUNNING.toString())) {
+        printStream.printf("\n");
+        return true;
+      }
+      count++;
+    }
+    printStream.printf("\n");
+    return false;
+  }
+
 
   @Override
   public String getPattern() {
