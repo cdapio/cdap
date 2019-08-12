@@ -37,8 +37,11 @@ public interface FailureCollector {
    * @param message failure message
    * @param correctiveAction corrective action
    * @return a validation failure
+   * @throws UnsupportedOperationException if the implementation does not override this method
    */
-  ValidationFailure addFailure(String message, @Nullable String correctiveAction);
+  default ValidationFailure addFailure(String message, @Nullable String correctiveAction) {
+    throw new UnsupportedOperationException("Adding a failure is not supported.");
+  }
 
   /**
    * Throws validation exception if there are any failures that are added to the failure collector through
@@ -46,5 +49,7 @@ public interface FailureCollector {
    *
    * @throws ValidationException if there are any validation failures
    */
-  void throwIfFailure() throws ValidationException;
+  default void throwIfFailure() throws ValidationException {
+    // no-op
+  }
 }
