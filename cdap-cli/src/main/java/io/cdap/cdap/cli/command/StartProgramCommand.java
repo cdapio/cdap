@@ -17,6 +17,8 @@
 package io.cdap.cdap.cli.command;
 
 import com.google.common.base.Joiner;
+
+import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CLIConfig;
 import io.cdap.cdap.cli.ElementType;
@@ -26,9 +28,12 @@ import io.cdap.cdap.cli.exception.CommandInputError;
 import io.cdap.cdap.cli.util.AbstractAuthCommand;
 import io.cdap.cdap.cli.util.ArgumentParser;
 import io.cdap.cdap.client.ProgramClient;
+import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.common.cli.Arguments;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
 
