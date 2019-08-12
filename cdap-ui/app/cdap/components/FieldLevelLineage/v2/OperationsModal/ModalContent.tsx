@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,11 @@
  * the License.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import React, { useContext } from 'react';
+import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import { humanReadableDate, objectQuery } from 'services/helpers';
-import Navigation from 'components/FieldLevelLineage/OperationsModal/Navigation';
-import OperationsTable from 'components/FieldLevelLineage/OperationsModal/OperationsTable';
+import Navigation from 'components/FieldLevelLineage/v2/OperationsModal/Navigation';
+import OperationsTable from 'components/FieldLevelLineage/v2/OperationsModal/OperationsTable';
 import Heading, { HeadingTypes } from 'components/Heading';
 import T from 'i18n-react';
 
@@ -52,14 +51,16 @@ function getDatasets(operations) {
   };
 }
 
-function ModalContentView({ operations, activeIndex }) {
-  const activeSet = operations[activeIndex];
+const ModalContentView: React.FC = () => {
+  const { operations, activeOpsIndex } = useContext<IContextState>(FllContext);
+  const activeSet = operations[activeOpsIndex];
   const lastApp = objectQuery(activeSet, 'programs', 0);
   const application = objectQuery(lastApp, 'program', 'application');
   const lastExecutedTime = objectQuery(lastApp, 'lastExecutedTimeInSeconds');
   const activeOperations = activeSet.operations;
 
   const { sources, targets } = getDatasets(activeOperations);
+
   return (
     <div className="operations-container">
       <Heading
@@ -79,23 +80,9 @@ function ModalContentView({ operations, activeIndex }) {
         className="last-executed"
       />
 
-      <OperationsTable operations={activeOperations} />
+      <OperationsTable />
     </div>
   );
-}
-
-ModalContentView.propTypes = {
-  operations: PropTypes.array,
-  activeIndex: PropTypes.number,
 };
 
-const mapStateToProps = (state) => {
-  return {
-    operations: state.operations.operations,
-    activeIndex: state.operations.activeIndex,
-  };
-};
-
-const ModalContent = connect(mapStateToProps)(ModalContentView);
-
-export default ModalContent;
+export default ModalContentView;

@@ -17,10 +17,11 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
+import OperationsModal from 'components/FieldLevelLineage/v2/OperationsModal';
 import {
   ITableFields,
-  ILink,
   IField,
+  ILinkSet,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
@@ -28,9 +29,13 @@ import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
 import If from 'components/If';
+import TopPanel from 'components/FieldLevelLineage/v2/TopPanel';
 
 const styles = (): StyleRules => {
   return {
+    wrapper: {
+      overflowY: 'scroll',
+    },
     root: {
       paddingLeft: '100px',
       paddingRight: '100px',
@@ -41,7 +46,7 @@ const styles = (): StyleRules => {
     },
     container: {
       position: 'absolute',
-      height: '110%',
+      height: '100%',
       width: '100%',
       pointerEvents: 'none',
       overflow: 'visible',
@@ -53,7 +58,7 @@ interface ILineageState {
   activeField: IField;
   activeCauseSets: ITableFields;
   activeImpactSets: ITableFields;
-  activeLinks: ILink[];
+  activeLinks: ILinkSet;
 }
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
@@ -136,23 +141,25 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   }
 
   // Draws only active links
-  private drawActiveLinks(activeLinks) {
+  private drawActiveLinks(activeLinks: ILinkSet) {
     this.clearCanvas();
 
-    activeLinks.forEach((link) => {
+    const allLinks = activeLinks.incoming.concat(activeLinks.outgoing);
+
+    allLinks.forEach((link) => {
       this.drawLineFromLink(link, true);
     });
   }
 
-  private drawLinks(links: ILink[], activeField: IField = null) {
+  private drawLinks(allLinks: ILinkSet, activeField: IField = null) {
     const activeFieldId = activeField ? activeField.id : undefined;
-
-    if (links.length === 0) {
+    const comboLinks = allLinks.incoming.concat(allLinks.outgoing);
+    if (comboLinks.length === 0) {
       return;
     }
     this.clearCanvas();
 
-    links.forEach((link) => {
+    comboLinks.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
       this.drawLineFromLink(link, isSelected);
     });
@@ -160,6 +167,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
   public componentDidUpdate() {
     const { showingOneField, links, activeLinks, activeField } = this.context;
+
     // if user has just clicked "View Cause and Impact"
     if (showingOneField) {
       this.clearCanvas();
@@ -207,39 +215,48 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
             visibleCauseSets = activeCauseSets;
             visibleImpactSets = activeImpactSets;
           }
+          const allLinks = visibleLinks.incoming.concat(visibleLinks.outgoing);
 
           return (
-            <div className={this.props.classes.root} id="fll-container">
-              <svg id="links-container" className={this.props.classes.container}>
-                <g>
-                  {visibleLinks.map((link) => {
-                    const id = `${link.source.id}_${link.destination.id}`;
-                    return <svg id={id} key={id} className="fll-link" />;
+            <div className={this.props.classes.wrapper}>
+              <TopPanel />
+              <div className={this.props.classes.root} id="fll-container">
+                <svg id="links-container" className={this.props.classes.container}>
+                  <g>
+                    {allLinks.map((link) => {
+                      const id = `${link.source.id}_${link.destination.id}`;
+                      return <svg id={id} key={id} className="fll-link" />;
+                    })}
+                  </g>
+                  <g id="selected-links" />
+                </svg>
+                <div>
+                  <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
+                  <If condition={Object.keys(visibleCauseSets).length === 0}>
+                    <FllTable type="cause" />
+                  </If>
+                  {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
+                    return (
+                      <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />
+                    );
                   })}
-                </g>
-                <g id="selected-links" />
-              </svg>
-              <div>
-                <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
-                <If condition={Object.keys(visibleCauseSets).length === 0}>
-                  <FllTable type="cause" />
-                </If>
-                {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
-                  return <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />;
-                })}
-              </div>
-              <div>
-                <FllHeader type="target" total={Object.keys(targetFields).length} />
-                <FllTable tableId={target} fields={targetFields} type="target" />
-              </div>
-              <div>
-                <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
-                <If condition={Object.keys(visibleImpactSets).length === 0}>
-                  <FllTable type="impact" />
-                </If>
-                {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
-                  return <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />;
-                })}
+                </div>
+                <div>
+                  <FllHeader type="target" total={Object.keys(targetFields).length} />
+                  <FllTable tableId={target} fields={targetFields} type="target" />
+                </div>
+                <div>
+                  <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
+                  <If condition={Object.keys(visibleImpactSets).length === 0}>
+                    <FllTable type="impact" />
+                  </If>
+                  {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
+                    return (
+                      <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />
+                    );
+                  })}
+                </div>
+                <OperationsModal />
               </div>
             </div>
           );

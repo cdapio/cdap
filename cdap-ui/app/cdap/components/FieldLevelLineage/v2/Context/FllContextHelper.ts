@@ -17,6 +17,7 @@
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
 import { parseQueryString } from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyMetadataApi } from 'api/metadata';
 import { Theme } from 'services/ThemeHelper';
 import { IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
@@ -52,13 +53,23 @@ export interface ILink {
   destination: IField;
 }
 
+export interface ILinkSet {
+  incoming: ILink[];
+  outgoing: ILink[];
+}
+
 export interface ITableFields {
   [tablename: string]: IField[];
 }
 
 export interface ITimeParams {
   selection: string;
-  range: { start: string | number; end: string | number };
+  range: ITimeRange;
+}
+
+interface ITimeRange {
+  start: string | number;
+  end: string | number;
 }
 
 export interface IQueryParams {
@@ -67,6 +78,34 @@ export interface IQueryParams {
   start?: string;
   end?: string;
 }
+
+export interface IOperationSummary {
+  operations: IOperation[];
+  programs: IProgram[];
+}
+
+interface IProgram {
+  lastExecutedTimeInSeconds?: number;
+  program: {
+    application: string;
+    entity: string;
+    namespace: string;
+    program: string;
+    type: string;
+    version: string;
+  };
+}
+
+interface IOperation {
+  description: string;
+  inputs?: { endpoint: { name: string; namespace: string } };
+  name: string;
+  outputs?: { fields: string[] };
+}
+
+export const getDefaultLinks = () => {
+  return { incoming: [], outgoing: [] };
+};
 
 /** Parses an incoming or outgoing entity object from backend response
  * to get array of edges and an object with fields keyed by dataset.
@@ -80,7 +119,7 @@ export function parseRelations(
   isCause: boolean = true
 ) {
   const tables: ITableFields = {};
-  const relLinks = [];
+  const relLinks: ILink[] = [];
   ents.map((ent) => {
     // Assumes that all tableNames are unique within a namespace
 
@@ -135,7 +174,7 @@ export function getFieldsAndLinks(d) {
   const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
   const causeTables = incoming.tables;
   const impactTables = outgoing.tables;
-  const links = incoming.relLinks.concat(outgoing.relLinks);
+  const links: ILinkSet = { incoming: incoming.relLinks, outgoing: outgoing.relLinks };
   return { causeTables, impactTables, links };
 }
 
@@ -185,12 +224,12 @@ export function getFieldLineage(
   timeParams: ITimeParams,
   cb: (lineage: IContextState) => void
 ) {
-  let fieldname;
+  let fieldname: string;
   let activeField: IField;
 
   if (!qParams || !qParams.field) {
     fieldname = null;
-    activeField = null;
+    activeField = { id: null, name: null };
   } else {
     fieldname = qParams.field;
     activeField = {
@@ -223,6 +262,9 @@ export function getFieldLineage(
       end,
       activeField,
       showingOneField: false,
+      showOperations: false,
+      activeOpsIndex: 0,
+      loading: false,
     };
     cb(targetInfo);
   });
@@ -238,7 +280,7 @@ function constructQueryParams(
   const timeParams = getTimeParamsFromSelection(selection, start, end);
   let url = `${pathname}${timeParams}`;
 
-  if (activeField) {
+  if (activeField.id) {
     url = `${url}&field=${activeField.name}`;
   }
   return url;
@@ -301,4 +343,27 @@ export function getTimeQueryParams(selection, start, end) {
     params = `${params}&start=${start}&end=${end}`;
   }
   return params;
+}
+
+export function getOperations(
+  dataset: string,
+  timeParams: ITimeRange,
+  fieldName: string,
+  direction: string,
+  cb: (lineage: IContextState) => void
+) {
+  const namespace = getCurrentNamespace();
+  const params = {
+    namespace,
+    entityId: dataset,
+    fieldName,
+    start: timeParams.start,
+    end: timeParams.end,
+    direction,
+  };
+
+  MyMetadataApi.getFieldOperations(params).subscribe((res) => {
+    const operations = res[direction];
+    cb(operations);
+  });
 }

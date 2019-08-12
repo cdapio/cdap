@@ -1544,8 +1544,8 @@ features:
           resetLineage: "Reset"
         FllMenu:
           causeImpact: "Cause and impact"
-          viewIncoming: "Outgoing operations"
-          viewOutgoing: "Incoming operations"
+          viewIncoming: "Incoming operations"
+          viewOutgoing: "Outgoing operations"
         noRelatedTables: "There is no {type} for {target}"
         relatedFieldsCount:
           1: "{context} related field"

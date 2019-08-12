@@ -70,10 +70,9 @@ function FllField({ field, classes }: IFieldProps) {
 
   const timeParams = getTimeQueryParams(selection, start, end);
 
-  // TO DO: Update this link once we flip the switch
-  const linkPath = `/ns/${field.namespace}/datasets/${
-    field.dataset
-  }/fll-experiment${timeParams}&field=${field.name}`;
+  const linkPath = `/ns/${field.namespace}/datasets/${field.dataset}/fields${timeParams}&field=${
+    field.name
+  }`;
 
   const toggleHoverState = (nextState) => {
     setHoverState(nextState);
@@ -98,10 +97,10 @@ function FllField({ field, classes }: IFieldProps) {
           </Link>
         </span>
       </If>
-      <If condition={activeField && field.id === activeField.id && isTarget && !showingOneField}>
+      <If condition={activeField.id && field.id === activeField.id && isTarget && !showingOneField}>
         <FllMenu />
       </If>
-      <If condition={activeField && field.id === activeField.id && isTarget && showingOneField}>
+      <If condition={activeField.id && field.id === activeField.id && isTarget && showingOneField}>
         <span className={classes.targetView} onClick={handleReset}>
           {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}
         </span>
