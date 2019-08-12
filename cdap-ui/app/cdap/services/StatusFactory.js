@@ -125,10 +125,10 @@ const startPolling = () => {
   stopPolling();
   startServicePolling();
   pollingObservable = Observable
-    .interval(12000)
+    .interval(2000)
     .mergeMap(() =>
       Observable
-        .fromPromise(fetch(`${window.knoxPrefix}/backendstatus`, getRequestInfo()))
+        .fromPromise(fetch('/backendstatus', getRequestInfo()))
         .catch(error => {
           dispatchNodeServerDown();
           return Observable.of(`Error: ${error}`);

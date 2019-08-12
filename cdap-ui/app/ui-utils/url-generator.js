@@ -33,10 +33,9 @@
     without any side effects. Moving forward once we have everything in react we should use this
     as a proper utility function in es6 module system.
 */
-
 window.getAbsUIUrl = function(navigationObj = {}) {
   let {uiApp = 'cdap', redirectUrl, clientId, namespaceId, appId, entityType, entityId, runId} = navigationObj;
-  let baseUrl = `${location.protocol}//${location.host}${window.knoxPrefix}/${uiApp}`;
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
   if (uiApp === 'login') {
     baseUrl += `?`;
   }
@@ -135,7 +134,7 @@ window.getDataPrepUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
 
   let uiApp = 'cdap';
-  let baseUrl = `${location.protocol}//${location.host}${window.knoxPrefix}/${uiApp}/ns/:namespace`;
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
 
   let stateToUrlMap = {
     'connections': '/connections',
@@ -150,7 +149,7 @@ window.getDataPrepUrl = function(navigationObj = {}) {
 window.getTrackerUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
   let uiApp = 'metadata';
-  let baseUrl = `${location.protocol}//${location.host}${window.knoxPrefix}/${uiApp}/ns/:namespace`;
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'tracker': '',
     'tracker.detail': '',
@@ -165,7 +164,7 @@ window.getTrackerUrl = function(navigationObj = {}) {
 window.getHydratorUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
   let uiApp = 'pipelines';
-  let baseUrl = `${location.protocol}//${location.host}${window.knoxPrefix}/${uiApp}/ns/:namespace`;
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'hydrator': '',
     'hydrator.create': '/studio',
@@ -179,7 +178,7 @@ window.getHydratorUrl = function(navigationObj = {}) {
 window.getOldCDAPUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
   let uiApp = 'oldcdap';
-  let baseUrl = `${location.protocol}//${location.host}${window.knoxPrefix}/${uiApp}/ns/:namespace`;
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'datasets.detail.overview.status': '/datasets/:datasetId/overview/status',
     'datasets.detail.overview.explore': '/datasets/:datasetId/overview/explore',
