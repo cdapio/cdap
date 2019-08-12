@@ -44,22 +44,34 @@ const styles = (theme): StyleRules => {
       '& .MuiListItem-root': {
         minHeight: 0,
       },
+      '& .Mui-disabled': {
+        color: theme.palette.grey[200],
+      },
     },
   };
 };
 
 function FllMenu({ classes }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { handleViewCauseImpact } = useContext<IContextState>(FllContext);
+  const { handleViewCauseImpact, toggleOperations, activeCauseSets, activeImpactSets } = useContext<
+    IContextState
+  >(FllContext);
 
   function handleViewClick(e: React.MouseEvent<HTMLButtonElement>) {
     setAnchorEl(e.currentTarget);
   }
 
-  function handleClose() {
+  function handleCloseMenu() {
     setAnchorEl(null);
   }
 
+  function handleShowOperations(direction: string) {
+    toggleOperations(direction);
+    handleCloseMenu();
+  }
+
+  const hasIncomingOps = Object.keys(activeCauseSets).length !== 0;
+  const hasOutgoingOps = Object.keys(activeImpactSets).length !== 0;
   return (
     <span className={classes.root}>
       <Button onClick={handleViewClick} className={classes.targetView}>
@@ -70,7 +82,7 @@ function FllMenu({ classes }) {
         classes={{ paper: classes.menu }}
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={handleClose}
+        onClose={handleCloseMenu}
         getContentAnchorEl={null}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         transformOrigin={{ vertical: 'top', horizontal: 'center' }}
@@ -79,8 +91,18 @@ function FllMenu({ classes }) {
           {T.translate(`${PREFIX}.FllMenu.causeImpact`)}
         </MenuItem>
         <Divider variant="middle" />
-        <MenuItem onClick={handleClose}>{T.translate(`${PREFIX}.FllMenu.viewIncoming`)}</MenuItem>
-        <MenuItem onClick={handleClose}>{T.translate(`${PREFIX}.FllMenu.viewOutgoing`)}</MenuItem>
+        <MenuItem
+          onClick={hasIncomingOps ? handleShowOperations.bind(this, 'incoming') : undefined}
+          disabled={!hasIncomingOps}
+        >
+          {T.translate(`${PREFIX}.FllMenu.viewIncoming`)}
+        </MenuItem>
+        <MenuItem
+          onClick={hasOutgoingOps ? handleShowOperations.bind(this, 'outgoing') : undefined}
+          disabled={!hasOutgoingOps}
+        >
+          {T.translate(`${PREFIX}.FllMenu.viewOutgoing`)}
+        </MenuItem>
       </Menu>
     </span>
   );

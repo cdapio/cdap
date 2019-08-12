@@ -27,20 +27,28 @@ import {
   getTimeRangeFromUrl,
   replaceHistory,
   getFieldLineage,
+  ILinkSet,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
+import {
+  getOperations,
+  IOperationSummary,
+} from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 
 const defaultContext: IContextState = {
   target: '',
   targetFields: [],
-  links: [],
+  links: { incoming: [], outgoing: [] },
   causeSets: {},
   impactSets: {},
   showingOneField: false,
   start: null,
   end: null,
   selection: TIME_OPTIONS[1],
+  showOperations: false,
+  activeOpsIndex: 0,
+  loading: false,
 };
 
 export const FllContext = React.createContext<IContextState>(defaultContext);
@@ -50,26 +58,34 @@ type ITimeType = number | string | null;
 export interface IContextState {
   target: string;
   targetFields: IField[];
-  links: ILink[];
+  links: { incoming: ILink[]; outgoing: ILink[] };
   causeSets: ITableFields;
   impactSets: ITableFields;
   showingOneField: boolean;
   start: ITimeType;
   end: ITimeType;
   selection: string;
+  showOperations: boolean;
+  activeOpsIndex: number;
+  loading: boolean;
+  operations?: IOperationSummary[];
+  direction?: string;
   handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleViewCauseImpact?: () => void;
   handleReset?: () => void;
   activeField?: IField;
   activeCauseSets?: ITableFields;
   activeImpactSets?: ITableFields;
-  activeLinks?: ILink[];
+  activeLinks?: { incoming: ILink[]; outgoing: ILink[] };
   numTables?: number;
   firstCause?: number;
   firstImpact?: number;
   firstField?: number;
   setTimeRange?: (range: string) => void;
   setCustomTimeRange?: ({ start, end }) => void;
+  toggleOperations?: (direction?: string) => void;
+  prevOperation?: () => void;
+  nextOperation?: () => void;
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
@@ -86,10 +102,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
       id: activeFieldId,
       name: (e.target as HTMLDivElement).dataset.fieldname,
     };
+    const activeLinks = this.getActiveLinks(activeFieldId);
+    const activeSets = this.getActiveSets(activeLinks);
+
     this.setState(
       {
         activeField: newField,
-        activeLinks: this.getActiveLinks(activeFieldId),
+        activeLinks,
+        activeCauseSets: activeSets.activeCauseSets,
+        activeImpactSets: activeSets.activeImpactSets,
       },
       () => {
         d3.select(`#${activeFieldId}`).classed('selected', true);
@@ -103,60 +124,58 @@ export class Provider extends React.Component<{ children }, IContextState> {
     );
   };
 
-  private getActiveLinks = (activeFieldId: string = this.state.activeField.id) => {
-    const activeLinks = [];
-    this.state.links.forEach((link) => {
-      const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
-      if (isSelected) {
-        activeLinks.push(link);
+  private getActiveLinks = (
+    newTargetId?: string,
+    newLinks?: { incoming: ILink[]; outgoing: ILink[] }
+  ) => {
+    const activeFieldId = newTargetId || this.state.activeField || this.state.activeField.id;
+    const activeLinks = { incoming: [], outgoing: [] };
+    const links = newLinks
+      ? newLinks.incoming.concat(newLinks.outgoing)
+      : this.state.links.incoming.concat(this.state.links.outgoing);
+    links.forEach((link) => {
+      if (link.destination.id === activeFieldId) {
+        activeLinks.incoming.push(link);
+      }
+      if (link.source.id === activeFieldId) {
+        activeLinks.outgoing.push(link);
       }
     });
     return activeLinks;
   };
 
-  private getActiveSets = () => {
+  private getActiveSets = (activeLinks: ILinkSet = this.state.activeLinks) => {
     const activeCauseSets = {};
     const activeImpactSets = {};
-    let activeLinks = this.state.activeLinks;
 
-    if (!this.state.activeLinks) {
+    if (!activeLinks) {
       activeLinks = this.getActiveLinks();
     }
 
-    activeLinks.forEach((link) => {
-      // for each link, look at id prefix to find the field that is not the target and add to the activeCauseSets or activeImpactSets
-      const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
-      const tableId = getTableId(nonTargetFd.dataset, nonTargetFd.namespace, nonTargetFd.type);
+    for (const links of Object.values(activeLinks)) {
+      links.forEach((link) => {
+        const nonTargetFd = link.source.type !== 'target' ? link.source : link.destination;
+        const tableId = getTableId(nonTargetFd.dataset, nonTargetFd.namespace, nonTargetFd.type);
 
-      if (nonTargetFd.type === 'cause') {
-        if (!(tableId in activeCauseSets)) {
-          activeCauseSets[tableId] = [];
+        if (nonTargetFd.type === 'cause') {
+          if (!(tableId in activeCauseSets)) {
+            activeCauseSets[tableId] = [];
+          }
+          activeCauseSets[tableId].push(nonTargetFd);
+        } else {
+          if (!(tableId in activeImpactSets)) {
+            activeImpactSets[tableId] = [];
+          }
+          activeImpactSets[tableId].push(nonTargetFd);
         }
-        activeCauseSets[tableId].push(nonTargetFd);
-      } else {
-        if (!(tableId in activeImpactSets)) {
-          activeImpactSets[tableId] = [];
-        }
-        activeImpactSets[tableId].push(nonTargetFd);
-      }
-    });
+      });
+    }
 
-    this.setState(
-      {
-        activeLinks,
-        activeCauseSets,
-        activeImpactSets,
-      },
-      () => {
-        this.setState({
-          showingOneField: true,
-        });
-      }
-    );
+    return { activeCauseSets, activeImpactSets };
   };
 
   private handleViewCauseImpact = () => {
-    this.getActiveSets();
+    this.setState({ showingOneField: true });
   };
 
   private handleReset = () => {
@@ -167,7 +186,13 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
   private fetchFieldLineage(qParams, timeParams, dataset = this.state.target) {
     const namespace = getCurrentNamespace();
-    const updateState = (newState) => this.setState(newState);
+    const updateState = (newState) => {
+      // if there is an active field, get active links
+      if (newState.activeField.id) {
+        newState.activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
+      }
+      this.setState(newState);
+    };
     getFieldLineage(namespace, dataset, qParams, timeParams, updateState);
   }
 
@@ -223,10 +248,34 @@ export class Provider extends React.Component<{ children }, IContextState> {
     this.updateLineageFromRange(selection, start, end);
   };
 
+  private toggleOperations = (direction?: string) => {
+    this.setState({ showOperations: !this.state.showOperations, loading: true, direction }, () => {
+      if (this.state.showOperations && direction) {
+        const timeParams = { start: this.state.start, end: this.state.end };
+        const cb = (operations) => {
+          this.setState({ operations, loading: false, activeOpsIndex: 0 });
+        };
+        getOperations(this.state.target, timeParams, this.state.activeField.name, direction, cb);
+      }
+    });
+  };
+
+  private nextOperation = () => {
+    this.setState({
+      activeOpsIndex: this.state.activeOpsIndex + 1,
+    });
+  };
+
+  private prevOperation = () => {
+    this.setState({
+      activeOpsIndex: this.state.activeOpsIndex - 1,
+    });
+  };
+
   public state = {
     target: '',
     targetFields: [],
-    links: [],
+    links: { incoming: [], outgoing: [] },
     causeSets: {},
     impactSets: {},
     activeField: null,
@@ -234,19 +283,26 @@ export class Provider extends React.Component<{ children }, IContextState> {
     start: null,
     end: null,
     selection: TIME_OPTIONS[1],
-    activeCauseSets: null,
-    activeImpactSets: null,
+    activeCauseSets: {},
+    activeImpactSets: {},
     activeLinks: null,
+    loading: false,
+    direction: null,
     // for handling pagination
     numTables: 4,
     firstCause: 1,
     firstImpact: 1,
     firstField: 1,
+    showOperations: false,
+    activeOpsIndex: 0,
     handleFieldClick: this.handleFieldClick,
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
     setTimeRange: this.setTimeRange,
     setCustomTimeRange: this.setCustomTimeRange,
+    toggleOperations: this.toggleOperations,
+    nextOperation: this.nextOperation,
+    prevOperation: this.prevOperation,
   };
 
   public initialize() {
