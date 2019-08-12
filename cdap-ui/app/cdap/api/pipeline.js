@@ -25,6 +25,8 @@ const schedulePath = `${basepath}/schedules/:scheduleId`;
 const programPath = `${basepath}/:programType/:programName`;
 const runsCountPath = '/namespaces/:namespace/runcount';
 const batchRunsPath = '/namespaces/:namespace/runs';
+const pluginsPath =
+  '/namespaces/:namespace/artifacts/:parentArtifact/versions/:version/extensions/:extension/plugins/:pluginName';
 
 export const MyPipelineApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps'),
@@ -53,4 +55,6 @@ export const MyPipelineApi = {
   ),
   getBatchRuns: apiCreator(dataSrc, 'POST', 'REQUEST', batchRunsPath),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
+
+  getPluginProperties: apiCreator(dataSrc, 'GET', 'REQUEST', pluginsPath),
 };
