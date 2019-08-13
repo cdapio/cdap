@@ -39,6 +39,7 @@ import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterControllerSettings;
+import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
 import com.google.cloud.dataproc.v1.DiskConfig;
@@ -293,13 +294,14 @@ final class DataprocClient implements AutoCloseable {
    * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
    * @param labels labels to set on the cluster
+   * @return create operation metadata
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws AlreadyExistsException if the cluster already exists
    * @throws IOException if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  void createCluster(String name, String imageVersion,
-                     Map<String, String> labels) throws RetryableProvisionException, InterruptedException, IOException {
+  public ClusterOperationMetadata createCluster(String name, String imageVersion, Map<String, String> labels)
+    throws RetryableProvisionException, InterruptedException, IOException {
 
     try {
       Map<String, String> metadata = new HashMap<>();
@@ -377,7 +379,7 @@ final class DataprocClient implements AutoCloseable {
                      .build())
         .build();
 
-      client.createClusterAsync(projectId, conf.getRegion(), cluster).getInitialFuture().get();
+      return client.createClusterAsync(projectId, conf.getRegion(), cluster).getMetadata().get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
@@ -395,7 +397,8 @@ final class DataprocClient implements AutoCloseable {
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  void deleteCluster(String name) throws RetryableProvisionException, InterruptedException {
+  public Optional<ClusterOperationMetadata> deleteCluster(String name)
+    throws RetryableProvisionException, InterruptedException {
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
         .setClusterName(name)
@@ -403,14 +406,29 @@ final class DataprocClient implements AutoCloseable {
         .setRegion(conf.getRegion())
         .build();
 
-      client.deleteClusterAsync(request).getInitialFuture().get();
+      return Optional.of(client.deleteClusterAsync(request).getMetadata().get());
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
         ApiException apiException = (ApiException) cause;
         if (apiException.getStatusCode().getCode().getHttpStatusCode() == 404) {
           // if the cluster was not found, it's ok that means it's deleted
-          return;
+          return Optional.empty();
+        }
+        // Sometimes the cluster could not be created because firewall rules prevent communication between nodes.
+        // In this situation, the cluster create operation fails after some timeout and the cluster transitions
+        // to the DELETING state on its own.
+        // If a delete call is then made, the delete call fails because the API does not allow deleting a cluster
+        // that is in the DELETING state
+        // In general, if the cluster is already in the deleting state, behave as if the delete request was successful
+        try {
+          Optional<Cluster> cluster = getDataprocCluster(name);
+          if (!cluster.isPresent() || cluster.get().getStatus().getState() == ClusterStatus.State.DELETING) {
+            return Optional.empty();
+          }
+          // if the cluster isn't gone or in the deleting state, handle the original delete error
+        } catch (Exception e1) {
+          // if there was an error getting the cluster information, ignore it and handle the original delete error
         }
         throw handleApiException((ApiException) cause);
       }

@@ -322,8 +322,8 @@ final class DataprocConf {
     int masterMemoryGB = getInt(properties, "masterMemoryMB", 15 * 1024);
     int workerMemoryGB = getInt(properties, "workerMemoryMB", 15 * 1024);
 
-    int masterDiskGB = getInt(properties, "masterDiskGB", 500);
-    int workerDiskGB = getInt(properties, "workerDiskGB", 500);
+    int masterDiskGB = getInt(properties, "masterDiskGB", 1000);
+    int workerDiskGB = getInt(properties, "workerDiskGB", 1000);
 
     long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
     long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
