@@ -182,7 +182,7 @@ angular.module(PKG.name + '.feature.hydrator')
               }).$promise.then((artifactsFromBackend) => {
                 let showWarningAndNavigateAway = () => {
                   if (!$state.current.name.length) {
-                    $state.go('hydrator.list').then(showError);
+                    $state.go('hydrator.create').then(showError);
                     return;
                   } else {
                     $state.go($state.current).then(showError);
@@ -282,7 +282,7 @@ angular.module(PKG.name + '.feature.hydrator')
             document.title = `${productName} | ${featureName} | ${$stateParams.pipelineId}`;
           },
           resolve : {
-            rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, $window) {
               var params = {
                 namespace: $stateParams.namespace,
                 pipeline: $stateParams.pipelineId
@@ -304,7 +304,12 @@ angular.module(PKG.name + '.feature.hydrator')
                       $q.reject(false);
                       // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
                       // and in our case the parent state is 'hydrator and since its an abstract state it goes to home.'
-                      $state.go('hydrator.list');
+                      $window.location.href = $window.getHydratorUrl({
+                        stateName: 'hydrator.list',
+                        stateParams: {
+                          namespace: $stateParams.namespace
+                        },
+                      });
                       return;
                     }
                     if (!config.stages) {
@@ -315,7 +320,12 @@ angular.module(PKG.name + '.feature.hydrator')
                       $q.reject(false);
                       // FIXME: We should not have done this. But ui-router when rejected on a 'resolve:' function takes it to the parent state apparently
                       // and in our case the parent state is 'hydrator and since its an abstract state it goes to home.'
-                      $state.go('hydrator.list');
+                      $window.location.href = $window.getHydratorUrl({
+                        stateName: 'hydrator.list',
+                        stateParams: {
+                          namespace: $stateParams.namespace
+                        },
+                      });
                       return;
                     }
                     return $q.resolve(pipelineDetail);
