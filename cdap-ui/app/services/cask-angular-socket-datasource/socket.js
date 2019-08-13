@@ -116,6 +116,7 @@ angular.module(PKG.name+'.services')
 
         $log.debug('[mySocket] →', msg.action, r.method, r.url);
       }
+      msg.sessionToken = window.CaskCommon.SessionTokenStore.default.getState();
 
       socket.send(JSON.stringify(msg));
     }

@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
+import SessionStore from 'services/SessionTokenStore';
 import T from 'i18n-react';
 import 'whatwg-fetch';
 
@@ -82,7 +83,11 @@ export default class AccessTokenModal extends Component<
     });
     fetch('/login', {
       method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        sessionToken: SessionStore.getState(),
+      },
       body: JSON.stringify({
         username: this.state.usernameInput,
         password: this.state.passwordInput,

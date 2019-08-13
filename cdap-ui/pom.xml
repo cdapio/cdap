@@ -149,6 +149,7 @@
                 <excludes>
                   <exclude>**/*.editorconfig</exclude>
                   <exclude>**/server_dist/**</exclude>
+                  <exclude>**/server/config/development/session_secret.key</exclude>
                   <exclude>**/*.babelrc</exclude>
                   <exclude>**/*.jshintrc</exclude>
                   <exclude>**/*.jshintignore</exclude>

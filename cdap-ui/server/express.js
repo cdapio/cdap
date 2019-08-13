@@ -16,26 +16,12 @@
  */
 
 /* global require, module, process, __dirname */
-var urlhelper = require('./url-helper');
-const url = require('url');
-const csp = require('helmet-csp');
-var proxy = require('express-http-proxy');
-const frameguard = require('frameguard');
-
-module.exports = {
-  getApp: function() {
-    return require('q')
-      .all([
-        // router check also fetches the auth server address if security is enabled
-        require('./config/router-check.js').ping(),
-        require('./config/parser.js').extractConfig('cdap'),
-        require('./config/parser.js').extractUISettings(),
-      ])
-      .spread(makeApp);
-  },
-};
-
-var express = require('express'),
+const urlhelper = require('./url-helper'),
+  url = require('url'),
+  csp = require('helmet-csp'),
+  proxy = require('express-http-proxy'),
+  path = require('path'),
+  express = require('express'),
   cookieParser = require('cookie-parser'),
   compression = require('compression'),
   finalhandler = require('finalhandler'),
@@ -45,7 +31,6 @@ var express = require('express'),
   log4js = require('log4js'),
   bodyParser = require('body-parser'),
   ejs = require('ejs'),
-  path = require('path'),
   DLL_PATH = path.normalize(__dirname + '/../dll'),
   DIST_PATH = path.normalize(__dirname + '/../dist'),
   LOGIN_DIST_PATH = path.normalize(__dirname + '/../login_dist'),
@@ -53,12 +38,12 @@ var express = require('express'),
   MARKET_DIST_PATH = path.normalize(__dirname + '/../common_dist'),
   fs = require('fs'),
   hsts = require('hsts'),
-  objectQuery = require('lodash/get');
+  uiThemeWrapper = require('./uiThemeWrapper'),
+  frameguard = require('frameguard'),
+  sessionToken = require('./token');
 
 ejs.delimiter = '_';
-var log = log4js.getLogger('default');
-const uiThemePropertyName = 'ui.theme.file';
-
+const log = log4js.getLogger('default');
 const isModeDevelopment = () => process.env.NODE_ENV === 'development';
 const isModeProduction = () => process.env.NODE_ENV === 'production';
 
@@ -71,89 +56,6 @@ const getExpressStaticConfig = () => {
     maxAge: '1y',
   };
 };
-
-function getFaviconPath(uiThemeConfig) {
-  let faviconPath = DIST_PATH + '/assets/img/favicon.png';
-  let themeFaviconPath = objectQuery(uiThemeConfig, ['content', 'favicon-path']);
-  if (themeFaviconPath) {
-    // If absolute path no need to modify as require'ing absolute path should
-    // be fine.
-    if (themeFaviconPath[0] !== '/') {
-      themeFaviconPath = `${CDAP_DIST_PATH}/${themeFaviconPath}`;
-    }
-    try {
-      if (fs.existsSync(themeFaviconPath)) {
-        faviconPath = themeFaviconPath;
-      } else {
-        log.warn(`Unable to find favicon at path ${themeFaviconPath}`);
-      }
-    } catch (e) {
-      log.warn(`Unable to find favicon at path ${themeFaviconPath}`);
-    }
-  }
-  return faviconPath;
-}
-
-function extractUIThemeWrapper(cdapConfig) {
-  const uiThemePath = cdapConfig[uiThemePropertyName];
-  return extractUITheme(cdapConfig, uiThemePath);
-}
-
-function extractUITheme(cdapConfig, uiThemePath) {
-  const DEFAULT_CONFIG = {};
-
-  if (!(uiThemePropertyName in cdapConfig)) {
-    log.warn(`Unable to find ${uiThemePropertyName} property`);
-    log.warn(`UI using default theme`);
-    return DEFAULT_CONFIG;
-  }
-
-  let uiThemeConfig = DEFAULT_CONFIG;
-  // Absolute path
-  if (uiThemePath[0] === '/') {
-    try {
-      if (require.resolve(uiThemePath)) {
-        uiThemeConfig = require(uiThemePath);
-        log.info(`UI using theme file: ${uiThemePath}`);
-        return uiThemeConfig;
-      }
-    } catch (e) {
-      log.info('UI Theme file not found at: ', uiThemePath);
-      throw e;
-    }
-  }
-  // Relative path
-
-  {
-    let themePath;
-
-    try {
-      // __dirname will always be <entire-cdap-home>/ui/server.
-      // So the uiThemePath should be relative to the ui folder
-      // Ideally this will be of the form 'server/config/themes/default|light.json
-      // For development since we are starting node from the ui folder we need to drop
-      // the 'server' from the beginning of the path (config/themes/default|light.json)
-
-      if (uiThemePath.startsWith('server')) {
-        uiThemePath = path.join('..', uiThemePath);
-      }
-
-      themePath = path.join(__dirname, uiThemePath);
-
-      if (require.resolve(themePath)) {
-        uiThemeConfig = require(themePath);
-        log.info(`UI using theme file: ${themePath}`);
-        return uiThemeConfig;
-      }
-    } catch (e) {
-      // This will show the user what the full path is.
-      // This should help them give proper relative path
-      log.info('UI Theme file not found at: ', themePath);
-      throw e;
-    }
-  }
-  return uiThemeConfig;
-}
 
 function makeApp(authAddress, cdapConfig, uiSettings) {
   var app = express();
@@ -175,12 +77,12 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
    */
   let uiThemeConfig = {};
   try {
-    uiThemeConfig = extractUIThemeWrapper(cdapConfig);
+    uiThemeConfig = uiThemeWrapper.extractUIThemeWrapper(cdapConfig);
   } catch (e) {
     // This means there was error reading the theme file.
     // We can ignore this as the extract theme takes care of it.
   }
-  const faviconPath = getFaviconPath(uiThemeConfig);
+  const faviconPath = uiThemeWrapper.getFaviconPath(uiThemeConfig);
   // middleware
   try {
     app.use(serveFavicon(faviconPath));
@@ -266,6 +168,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       sandboxMode: process.env.NODE_ENV,
       authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false,
       instanceMetadataId: cdapConfig['instance.metadata.id'],
+      sslEnabled: cdapConfig['ssl.external.enabled'] || false,
     });
 
     res.header({
@@ -311,7 +214,14 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       targetLink = req.query.target,
       sourceMethod = req.query.sourceMethod || 'GET',
       targetMethod = req.query.targetMethod || 'POST';
-
+    let authToken = req.headers.authorization;
+    if (
+      !req.headers['session-token'] ||
+      (req.headers['session-token'] &&
+        !sessionToken.validateToken(req.headers['session-token'], cdapConfig, log, authToken))
+    ) {
+      return res.status(500).send('Unable to validate session');
+    }
     sourceLink = urlhelper.constructUrl(cdapConfig, sourceLink, urlhelper.REQUEST_ORIGIN_MARKET);
     targetLink = urlhelper.constructUrl(cdapConfig, targetLink);
     var forwardRequestObject = {
@@ -347,9 +257,9 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       agent: false,
     };
 
-    if (req.cookies['CDAP_Auth_Token']) {
+    if (req.headers.authorization) {
       customHeaders = {
-        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token'],
+        authorization: 'Bearer ' + req.headers.authorization,
       };
     }
 
@@ -409,6 +319,14 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     var headers = {};
     if (req.headers) {
       headers = req.headers;
+    }
+    let authToken = req.headers.authorization;
+    if (
+      !req.headers['session-token'] ||
+      (req.headers['session-token'] &&
+        !sessionToken.validateToken(req.headers['session-token'], cdapConfig, log, authToken))
+    ) {
+      return res.status(500).send('Unable to validate session');
     }
     const constructedPath = `/v3/namespaces/${req.param('namespace')}/${req.param('path')}`;
     var opts = {
@@ -478,7 +396,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         user: req.body.username,
         password: req.body.password,
       },
-      url: authAddress.get(),
+      url: 'https://localhost:10010/token', // authAddress.get(),
     };
     request(opts, function(nerr, nres, nbody) {
       if (nerr || nres.statusCode !== 200) {
@@ -497,13 +415,19 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
 
   app.get('/login', [
     function(req, res) {
-      if (!authAddress.get() || req.cookies.CDAP_Auth_Token) {
+      if (!authAddress.get() || req.headers.authorization) {
         res.redirect('/');
         return;
       }
       res.render('login', { nonceVal: res.locals.nonce });
     },
   ]);
+
+  app.get('/sessionToken', function(req, res) {
+    let authToken = req.headers.authorization || '';
+    const sToken = sessionToken.generateToken(cdapConfig, log, authToken);
+    res.send(sToken);
+  });
 
   /*
     For now both login and accessToken APIs do the same thing.
@@ -655,12 +579,20 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
    * be used and we need to persist this information somewhere.
    */
   app.post('/updateTheme', function(req, res) {
+    let authToken = req.headers.authorization;
+    if (
+      !req.headers['session-token'] ||
+      (req.headers['session-token'] &&
+        !sessionToken.validateToken(req.headers['session-token'], cdapConfig, log, authToken))
+    ) {
+      return res.status(500).send('Unable to validate session');
+    }
     const uiThemePath = req.body.uiThemePath;
     if (!uiThemePath) {
       return res.status(500).send('UnKnown theme file. Please make sure the path is valid');
     }
     try {
-      uiThemeConfig = extractUITheme(cdapConfig, uiThemePath);
+      uiThemeConfig = uiThemeWrapper.cdapConfigextractUITheme(cdapConfig, uiThemePath);
     } catch (e) {
       return res
         .status(500)
@@ -739,3 +671,16 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
 
   return app;
 }
+
+module.exports = {
+  getApp: function(cdapConfig) {
+    return require('q')
+      .all([
+        // router check also fetches the auth server address if security is enabled
+        require('./config/router-check.js').ping(),
+        Promise.resolve(cdapConfig),
+        require('./config/parser.js').extractUISettings(),
+      ])
+      .spread(makeApp);
+  },
+};

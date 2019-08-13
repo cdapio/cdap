@@ -191,6 +191,7 @@ angular
               extendConfig.headers.Authorization = 'Bearer ' + $rootScope.currentUser.token;
             }
 
+            extendConfig.headers.sessionToken = window.CaskCommon.SessionTokenStore.default.getState();
             angular.extend(config, extendConfig);
           }
           return config;

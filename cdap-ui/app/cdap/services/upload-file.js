@@ -15,6 +15,7 @@
  */
 
 import { Observable } from 'rxjs/Observable';
+import SessionTokenStore from 'services/SessionTokenStore';
 const UploadFile = ({ url, fileContents, headers }) => {
   let observerable$ = Observable.create(function(observer) {
     let xhr = new window.XMLHttpRequest();
@@ -29,6 +30,7 @@ const UploadFile = ({ url, fileContents, headers }) => {
     if (typeof headers === 'object') {
       Object.keys(headers).forEach((header) => xhr.setRequestHeader(header, headers[header]));
     }
+    xhr.setRequestHeader('Session-Token', SessionTokenStore.getState());
     xhr.send(fileContents);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4) {

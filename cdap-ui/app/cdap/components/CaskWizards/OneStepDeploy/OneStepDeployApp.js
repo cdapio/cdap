@@ -28,6 +28,7 @@ import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
+import SessionStore from 'services/SessionTokenStore';
 
 export default class OneStepDeployApp extends Component {
   constructor(props) {
@@ -91,6 +92,7 @@ export default class OneStepDeployApp extends Component {
     let headers = {
       'Content-Type': 'application/octet-stream',
       'X-Archive-Name': jarName,
+      'Session-Token': SessionStore.getState(),
     };
 
     if (window.CDAP_CONFIG.securityEnabled) {

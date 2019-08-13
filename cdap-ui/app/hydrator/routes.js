@@ -31,6 +31,9 @@ angular.module(PKG.name + '.feature.hydrator')
         url: '/',
         template: '<ui-view/>',
         resolve: {
+          sessionToken: function() {
+            window.CaskCommon.SessionTokenStore.fetchSessionToken();
+          },
           rNsList: function (myNamespace) {
             return myNamespace.getList();
           }
@@ -43,6 +46,9 @@ angular.module(PKG.name + '.feature.hydrator')
         template: '<ui-view/>',
         title: 'Hydrator',
         resolve: {
+          sessionToken: function() {
+            window.CaskCommon.SessionTokenStore.fetchSessionToken();
+          },
           // This is f%&$*d up. We need to cause this manual delay for react to finish its click handlers
           // before angular takes up the state change routing -_-.
           rDelay: function($q) {

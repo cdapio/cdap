@@ -18,15 +18,15 @@
  * Spins up servers
  */
 var express = require('./server/express.js'),
-    Aggregator = require('./server/aggregator.js'),
-    parser = require('./server/config/parser.js'),
-    cdapConfigurator = require('./server/cdap-config.js'),
-    sockjs = require('sockjs'),
-    http = require('http'),
-    fs = require('fs'),
-    log4js = require('log4js'),
-    graphql = require('./graphql/graphql.js'),
-    https = require('https');
+  Aggregator = require('./server/aggregator.js'),
+  parser = require('./server/config/parser.js'),
+  cdapConfigurator = require('./server/cdap-config.js'),
+  sockjs = require('sockjs'),
+  http = require('http'),
+  fs = require('fs'),
+  log4js = require('log4js'),
+  graphql = require('./graphql/graphql.js'),
+  https = require('https');
 
 var cdapConfig, securityConfig;
 
@@ -39,77 +39,108 @@ var cdapConfig, securityConfig;
  * We configure using LOG4JS_CONFIG specified file or we use
  * the default provided in the conf/log4js.json file.
  */
-if(process.env.LOG4JS_CONFIG) {
-  log4js.configure({}, { reloadSecs: 600});
-} else {
-  log4js.configure(__dirname + "/server/config/log4js.json", { reloadSecs: 300});
+if (!process.env.LOG4JS_CONFIG) {
+  log4js.configure(__dirname + '/server/config/log4js.json');
 }
 
 // Get a log handle.
 var log = log4js.getLogger('default');
 
-log.info("Starting CDAP UI ...");
-cdapConfigurator.getCDAPConfig()
-  .then(function (c) {
+log.info('Starting CDAP UI ...');
+cdapConfigurator
+  .getCDAPConfig()
+  .then(function(c) {
     cdapConfig = c;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
-      log.debug("CDAP Security has been enabled");
+      log.debug('CDAP Security has been enabled');
       return parser.extractConfig('security');
     }
   })
 
-  .then(function (s) {
+  .then(function(s) {
     securityConfig = s;
-    return express.getApp(cdapConfig);
+    return express.getApp(Object.assign({}, cdapConfig, securityConfig));
   })
 
-  .then(function (app) {
-    graphql.applyMiddleware(app);
-    
+  .then(function(app) {
+    graphql.applyMiddleware(app, Object.assign({}, cdapConfig, securityConfig), log);
+
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {
       if (cdapConfig['dashboard.ssl.disable.cert.check'] === 'true') {
-
         // For self signed certs: see https://github.com/mikeal/request/issues/418
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       }
 
       try {
-        server = https.createServer({
-          key: fs.readFileSync(securityConfig['dashboard.ssl.key']),
-          cert: fs.readFileSync(securityConfig['dashboard.ssl.cert'])
-        }, app);
-      } catch(e) {
-        log.debug('SSL key/cert files read failed. Please fix the key/ssl certificate files and restart node server -  ', e);
+        server = https.createServer(
+          {
+            key: fs.readFileSync(securityConfig['dashboard.ssl.key']),
+            cert: fs.readFileSync(securityConfig['dashboard.ssl.cert']),
+          },
+          app
+        );
+      } catch (e) {
+        log.debug(
+          'SSL key/cert files read failed. Please fix the key/ssl certificate files and restart node server -  ',
+          e
+        );
       }
       port = cdapConfig['dashboard.ssl.bind.port'];
-    }
-    else {
+    } else {
       server = http.createServer(app);
       port = cdapConfig['dashboard.bind.port'];
     }
-
-    server.listen(port, cdapConfig['dashboard.bind.address'], function () {
+    server.listen(port, cdapConfig['dashboard.bind.address'], function() {
       log.info('CDAP UI listening on port %s', port);
     });
 
     return server;
   })
 
-  .then(function (server) {
-
+  .then(function(server) {
     var sockServer = sockjs.createServer({
-      log: function (lvl, msg) {
+      log: function(lvl, msg) {
         log.trace(msg);
-      }
+      },
     });
 
-    sockServer.on('connection', function (c) {
+    sockServer.on('connection', function(c) {
+      // @ts-ignore
       var a = new Aggregator(c);
-      c.on('close', function () {
-        delete a;
+      c.on('close', function() {
+        a = null;
       });
     });
 
     sockServer.installHandlers(server, { prefix: '/_sock' });
+
+    server.addListener('upgrade', function(req, socket) {
+      const nodejsserver = cdapConfig['dashboard.bind.address'];
+      let nodejsport = cdapConfig['dashboard.bind.port'];
+      const isSSLEnabled = cdapConfig['ssl.external.enabled'] === 'true';
+      const nodejsprotocol = isSSLEnabled ? 'https' : 'http';
+      if (isSSLEnabled) {
+        nodejsport = cdapConfig['dashboard.ssl.bind.port'];
+      }
+      let allowedOrigin;
+      if (nodejsport) {
+        allowedOrigin = [`${nodejsprotocol}://${nodejsserver}:${nodejsport}`];
+      } else {
+        allowedOrigin = [`${nodejsprotocol}://${nodejsserver}`];
+      }
+      if (['localhost', '127.0.0.1', '0.0.0.0'].indexOf(nodejsserver) !== -1) {
+        allowedOrigin.push(
+          `${nodejsprotocol}://127.0.0.1:${nodejsport}`,
+          `${nodejsprotocol}://0.0.0.0:${nodejsport}`,
+          `${nodejsprotocol}://localhost:${nodejsport}`
+        );
+      }
+      if (allowedOrigin.indexOf(req.headers.origin) === -1) {
+        log.info('Unknown Origin: ' + req.headers.origin);
+        log.info('Denying socket connection and closing the channel');
+        socket.end();
+        socket.destroy();
+      }
+    });
   });

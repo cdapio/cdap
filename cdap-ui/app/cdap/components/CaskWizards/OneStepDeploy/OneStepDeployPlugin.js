@@ -30,6 +30,7 @@ import { MyArtifactApi } from 'api/artifact';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
+import SessionStore from 'services/SessionTokenStore';
 
 export default class OneStepDeployPlugin extends Component {
   constructor(props) {
@@ -117,6 +118,7 @@ export default class OneStepDeployPlugin extends Component {
           'Artifact-Version': pluginVersion,
           'Artifact-Extends': artifactExtends,
           'Artifact-Plugins': artifactPlugins,
+          'Session-Token': SessionStore.getState(),
         };
 
         if (window.CDAP_CONFIG.securityEnabled) {
