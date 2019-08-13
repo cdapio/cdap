@@ -30,6 +30,7 @@ const getWebpackOutputObj = (mode) => {
     path: path.join(__dirname, 'dll'),
     filename: 'dll.shared.[name].js',
     library: 'shared_[name]',
+    globalObject: 'window',
   };
   if (mode === 'development') {
     output.filename = 'dll.shared.[name].development.js';
@@ -57,9 +58,6 @@ var plugins = [
 
 var webpackConfig = {
   mode,
-  node: {
-    global: false,
-  },
   entry: {
     vendor: [
       'react',

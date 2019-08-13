@@ -1027,7 +1027,7 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Sandbox"; };
 #
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} Sandbox || return ${?}
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v10.16.2} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/index.js} | grep -v grep | awk '{ print $1 }')
   
   if [[ -z ${__node_pid} ]]; then
@@ -1203,12 +1203,12 @@ cdap_ui() {
       MAIN_CMD="${CDAP_HOME}"/ui/bin/node
     elif [[ $(which node 2>/dev/null) ]]; then
       MAIN_CMD=node
-      cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
+      cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v10.16.2} || return ${?}
     else
       die "Unable to locate Node.js binary (node), is it installed and in the PATH?"
     fi
   else
-    cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
+    cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v10.16.2} || return ${?}
   fi
   local readonly MAIN_CMD=${MAIN_CMD}
   export NODE_ENV="production"
@@ -1317,7 +1317,7 @@ cdap_apply_pack() {
   local __ui_pack=${1}
   local __ext=${__ui_pack##*.}
 
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v8.7.0} || return ${?}
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v10.16.2} || return ${?}
 
   if [[ -f ${__ui_pack} ]] && [[ -r ${__ui_pack} ]] && [[ ${__ext} == zip ]]; then
     # ui upgrade script must be run from subdirectory

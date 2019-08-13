@@ -222,10 +222,10 @@
         },
         "nodejs": {
           "install_method": "binary",
-          "version": "8.7.0",
+          "version": "10.16.2",
           "binary": {
             "checksum": {
-              "linux_x64": "115c7bd133170fd7a1bf408b2e293021e4b5a80a66a4962829ce5d362ce43762"
+              "linux_x64": "2779d04b1a9744bbb003a1a4476db2444b5f697034bc902a07dde4a8669ae6d0"
             }
           }
         },

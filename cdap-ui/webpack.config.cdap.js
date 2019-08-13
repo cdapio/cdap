@@ -203,9 +203,6 @@ if (mode === 'development') {
 
 var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
-  node: {
-    global: false,
-  },
   context: __dirname + '/app/cdap',
   entry: {
     cdap: ['@babel/polyfill', './cdap.js'],

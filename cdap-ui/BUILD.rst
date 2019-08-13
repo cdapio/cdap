@@ -10,12 +10,12 @@ Building the UI
 
 Prerequisites
 -------------
-- NodeJS Version: 8.7.0
+- NodeJS Version: 10.16.2
 
-  CDAP UI requires  NodeJS version 8.7.0.
+  CDAP UI requires  NodeJS version 10.16.2.
   You could either download from the nodejs.org website or use a version manager.
 
-  - `v8.7.0 Download <https://nodejs.org/download/release/v8.7.0/>`__
+  - `v10.16.2 Download <https://nodejs.org/download/release/v10.16.2/>`__
 
   - `nvm <https://github.com/creationix/nvm#install-script>`__ or
 
