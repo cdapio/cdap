@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -32,12 +36,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Manual tool for testing out dataproc provisioning and deprovisioning.
  */
 public class DataprocTool {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+  private static final String PROVISION = "provision";
+  private static final String DETAILS = "details";
+  private static final String DEPROVISION = "deprovision";
+  private static final Set<String> COMMANDS = ImmutableSet.of(PROVISION, DETAILS, DEPROVISION);
 
   public static void main(String[] args) throws Exception {
 
@@ -55,9 +64,7 @@ public class DataprocTool {
     String command = commandArgs.length > 0 ? commandArgs[0] : null;
 
     // if help is an option, or if there isn't a single 'upgrade' command, print usage and exit.
-    if (commandLine.hasOption("h") || commandArgs.length != 1 ||
-      (!"provision".equalsIgnoreCase(command) && !"details".equalsIgnoreCase(command) &&
-        !"deprovision".equalsIgnoreCase(command))) {
+    if (commandLine.hasOption("h") || commandArgs.length != 1 || !COMMANDS.contains(command.toLowerCase())) {
       printUsage(options);
       System.exit(0);
     }
@@ -77,7 +84,8 @@ public class DataprocTool {
         System.exit(-1);
       }
       try (Reader reader = new FileReader(configFile)) {
-        conf = GSON.fromJson(reader, DataprocConf.class);
+        Map<String, String> map = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+        conf = DataprocConf.create(map, null);
       }
     } else {
       if (!commandLine.hasOption('k')) {
@@ -100,15 +108,19 @@ public class DataprocTool {
 
     String name = commandLine.getOptionValue('n');
     try (DataprocClient client = DataprocClient.fromConf(conf, false)) {
-      if ("provision".equals(command)) {
-        client.createCluster(name, imageVersion, Collections.emptyMap());
-      } else if ("details".equals(command)) {
+      if (PROVISION.equalsIgnoreCase(command)) {
+        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap());
+        System.out.println(GSON.toJson(createOp));
+      } else if (DETAILS.equalsIgnoreCase(command)) {
         Optional<Cluster> cluster = client.getCluster(name);
         if (cluster.isPresent()) {
           System.out.println(GSON.toJson(cluster));
         }
-      } else if ("deprovision".equals(command)) {
-        client.deleteCluster(name);
+      } else if (DEPROVISION.equalsIgnoreCase(command)) {
+        Optional<ClusterOperationMetadata> deleteOp = client.deleteCluster(name);
+        if (deleteOp.isPresent()) {
+          System.out.println(GSON.toJson(deleteOp));
+        }
       }
     }
   }
