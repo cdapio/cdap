@@ -269,6 +269,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       parentClassLoader = createParentClassLoader(artifactId, parentArtifacts, entityImpersonator);
     }
     try {
+      additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
       ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
@@ -500,11 +501,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
-  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                          @Nullable Set<PluginClass> additionalPlugins,
-                                          @Nullable ClassLoader parentClassLoader) throws IOException,
-    InvalidArtifactException {
-    ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile, Set<PluginClass> additionalPlugins,
+                                          @Nullable ClassLoader parentClassLoader)
+    throws IOException, InvalidArtifactException {
+    ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile,
+                                                                        parentClassLoader, additionalPlugins);
     validatePluginSet(artifactClasses.getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
       return artifactClasses;
