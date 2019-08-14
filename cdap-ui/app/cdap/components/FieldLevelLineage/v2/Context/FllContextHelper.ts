@@ -19,6 +19,7 @@ import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreat
 import { parseQueryString } from 'services/helpers';
 import { MyMetadataApi } from 'api/metadata';
 import { Theme } from 'services/ThemeHelper';
+import { IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 // types for backend response
 interface IFllEntity {
@@ -177,12 +178,12 @@ export function getTimeRangeFromUrl() {
   return { selection, range: TIME_OPTIONS_MAP[selection] };
 }
 
-export function fetchFieldLineage(
-  context: React.Component,
+export function getFieldLineage(
   namespace: string,
   dataset: string,
   qParams: IQueryParams | null,
-  timeParams: ITimeParams
+  timeParams: ITimeParams,
+  cb: (lineage: IContextState) => void
 ) {
   let fieldname;
   let activeField: IField;
@@ -211,7 +212,7 @@ export function fetchFieldLineage(
 
   MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
     const parsedRes = getFieldsAndLinks(res);
-    const targetInfo = {
+    const targetInfo: IContextState = {
       target: res.entityId.dataset,
       targetFields: makeTargetFields(res.entityId, res.fields),
       links: parsedRes.links,
@@ -223,18 +224,22 @@ export function fetchFieldLineage(
       activeField,
       showingOneField: false,
     };
-
-    context.setState(targetInfo);
+    cb(targetInfo);
   });
 }
 
-export function constructQueryParams(context) {
+function constructQueryParams(
+  selection: string,
+  activeField: IField,
+  start: string | number,
+  end: string | number
+) {
   const pathname = location.pathname;
-  const timeParams = getTimeParamsFromSelection(context);
+  const timeParams = getTimeParamsFromSelection(selection, start, end);
   let url = `${pathname}${timeParams}`;
 
-  if (context.state.activeField) {
-    url = `${url}&field=${context.state.activeField.name}`;
+  if (activeField) {
+    url = `${url}&field=${activeField.name}`;
   }
   return url;
 }
@@ -255,18 +260,26 @@ export function getTimeRange(selection) {
   return { start, end };
 }
 
-function getTimeParamsFromSelection(context) {
-  const range = context.state.selection;
-  let queryParams = `?time=${range}`;
+function getTimeParamsFromSelection(
+  selection: string,
+  start: string | number,
+  end: string | number
+) {
+  let queryParams = `?time=${selection}`;
 
-  if (range === TIME_OPTIONS[0]) {
-    queryParams = `${queryParams}&start=${context.state.start}&end=${context.state.end}`;
+  if (selection === TIME_OPTIONS[0]) {
+    queryParams = `${queryParams}&start=${start}&end=${end}`;
   }
   return queryParams;
 }
 
-export function replaceHistory(context) {
-  const url = constructQueryParams(context);
+export function replaceHistory(
+  selection: string,
+  activeField: IField,
+  start: string | number,
+  end: string | number
+) {
+  const url = constructQueryParams(selection, activeField, start, end);
   const currentLocation = location.pathname + location.search;
 
   if (url === currentLocation) {

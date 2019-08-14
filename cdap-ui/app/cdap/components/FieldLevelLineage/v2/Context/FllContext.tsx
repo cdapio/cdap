@@ -25,8 +25,8 @@ import {
   getTableId,
   getTimeRange,
   getTimeRangeFromUrl,
-  fetchFieldLineage,
   replaceHistory,
+  getFieldLineage,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -52,8 +52,8 @@ export interface IContextState {
   causeSets: ITableFields;
   impactSets: ITableFields;
   showingOneField: boolean;
-  start: number;
-  end: number;
+  start: number | string | null;
+  end: number | string | null;
   selection: string;
   handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleViewCauseImpact?: () => void;
@@ -71,8 +71,8 @@ export interface IContextState {
 }
 
 export class Provider extends React.Component<{ children }, IContextState> {
-  private handleFieldClick = (e) => {
-    const activeFieldId = e.target.id;
+  private handleFieldClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const activeFieldId = (e.target as HTMLDivElement).id; // casting because EventTarget lacks target and name
     if (!activeFieldId) {
       return;
     }
@@ -82,7 +82,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
     const newField = {
       id: activeFieldId,
-      name: e.target.dataset.fieldname,
+      name: (e.target as HTMLDivElement).dataset.fieldname,
     };
     this.setState(
       {
@@ -91,13 +91,17 @@ export class Provider extends React.Component<{ children }, IContextState> {
       },
       () => {
         d3.select(`#${activeFieldId}`).classed('selected', true);
-        replaceHistory(this);
+        replaceHistory(
+          this.state.selection,
+          this.state.activeField,
+          this.state.start,
+          this.state.end
+        );
       }
     );
   };
 
-  private getActiveLinks = (newTargetId?: string) => {
-    const activeFieldId = newTargetId || this.state.activeField.id;
+  private getActiveLinks = (activeFieldId: string = this.state.activeField.id) => {
     const activeLinks = [];
     this.state.links.forEach((link) => {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
@@ -159,6 +163,12 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
+  private fetchFieldLineage(qParams, timeParams, dataset = this.state.target) {
+    const namespace = getCurrentNamespace();
+    const updateState = (newState) => this.setState(newState);
+    getFieldLineage(namespace, dataset, qParams, timeParams, updateState);
+  }
+
   private updateLineageFromRange(selection: string, start: number | string, end: number | string) {
     const newState = {
       selection,
@@ -172,23 +182,27 @@ export class Provider extends React.Component<{ children }, IContextState> {
     }
 
     this.setState(newState, () => {
-      const namespace = getCurrentNamespace();
       const qParams = parseQueryString();
       const timeParams: ITimeParams = {
         selection,
         range: { start, end },
       };
-      fetchFieldLineage(this, namespace, this.state.target, qParams, timeParams);
+      this.fetchFieldLineage(qParams, timeParams);
 
-      replaceHistory(this); // construct url based on context
+      replaceHistory(
+        this.state.selection,
+        this.state.activeField,
+        this.state.start,
+        this.state.end
+      );
     });
   }
 
-  private setCustomTimeRange = ({ start, end }) => {
+  private setCustomTimeRange = ({ start, end }: { start: number; end: number }) => {
     this.updateLineageFromRange(TIME_OPTIONS[0], start, end);
   };
 
-  private setTimeRange = (selection) => {
+  private setTimeRange = (selection: string) => {
     if (TIME_OPTIONS.indexOf(selection) === -1) {
       return;
     }
@@ -234,11 +248,10 @@ export class Provider extends React.Component<{ children }, IContextState> {
   };
 
   public initialize() {
-    const namespace = getCurrentNamespace();
     const dataset = objectQuery(this.props, 'match', 'params', 'datasetId');
     const queryParams = parseQueryString();
     const timeParams = getTimeRangeFromUrl();
-    fetchFieldLineage(this, namespace, dataset, queryParams, timeParams);
+    this.fetchFieldLineage(queryParams, timeParams, dataset);
   }
 
   public componentDidMount() {
