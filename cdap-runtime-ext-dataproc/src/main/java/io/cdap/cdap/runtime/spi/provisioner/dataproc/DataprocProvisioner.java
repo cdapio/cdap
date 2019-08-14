@@ -189,10 +189,9 @@ public class DataprocProvisioner implements Provisioner {
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion, systemLabels);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
-        LOG.warn("Dataproc cluster create operation has {} warning{}", numWarnings, numWarnings > 1 ? "s" : "");
-        for (int i = 0; i < numWarnings; i++) {
-          LOG.warn("{}", createOperationMeta.getWarnings(i));
-        }
+        LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
+                 numWarnings, numWarnings > 1 ? "s" : "",
+                 String.join("\n", createOperationMeta.getWarningsList()));
       }
       return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
     }
