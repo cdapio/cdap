@@ -35,6 +35,7 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.NetworkList;
+import com.google.api.services.compute.model.NetworkPeering;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -49,6 +50,8 @@ import com.google.cloud.dataproc.v1.SoftwareConfig;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -67,11 +70,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
 public class DataprocClient implements AutoCloseable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
 
@@ -83,7 +89,14 @@ public class DataprocClient implements AutoCloseable {
   private final String zone;
   private final boolean useInternalIP;
 
-  public static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
+  private enum PeeringState {
+    ACTIVE,
+    INACTIVE,
+    NONE
+  }
+
+  public static DataprocClient fromConf(DataprocConf conf,
+                                        boolean privateInstance) throws IOException, GeneralSecurityException {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
 
@@ -102,15 +115,10 @@ public class DataprocClient implements AutoCloseable {
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP, ignore
     }
-    boolean useInternalIP = false;
-
     if (network == null && projectId.equals(systemProjectId)) {
       // If the CDAP instance is running on a GCE/GKE VM from a project that matches the provisioner project,
       // use the network of that VM.
       network = systemNetwork;
-      // Also, use internal IPs (unless explicitly configured to use external IPs),
-      // as CDAP and the dataproc cluster will be in the same network.
-      useInternalIP = !conf.isPreferExternalIP();
     } else if (network == null) {
       // Otherwise, pick a network from the configured project using the Compute API
       network = findNetwork(projectId, compute);
@@ -121,6 +129,25 @@ public class DataprocClient implements AutoCloseable {
 
     String subnet = conf.getSubnet();
     Network networkInfo = getNetworkInfo(projectId, network, compute);
+
+    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo, compute);
+
+    if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
+      // Peering is setup between the system network and customer network and is in ACTIVE state.
+      // However user has selected to preferred external IP the instance. This is not a private instance and is
+      // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
+      // internal IP can be used.
+      LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
+                               "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
+                               "to launch Dataproc clusters with internal IP only.", systemNetwork,
+                             systemProjectId, network, projectId));
+    }
+
+    // Use internal IP for the Dataproc cluster if instance is private or user has not preferred external IP and
+    // (CDAP is running in the same customer project as Dataproc is going to be launched or
+    // Network peering is done between customer network and system network and is in ACTIVE mode).
+    boolean useInternalIP = privateInstance || !conf.isPreferExternalIP()
+      && ((network.equals(systemNetwork) && projectId.equals(systemProjectId)) || state == PeeringState.ACTIVE);
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
@@ -147,6 +174,33 @@ public class DataprocClient implements AutoCloseable {
     }
 
     return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
+  }
+
+  private static PeeringState getPeeringState(@Nullable String systemNetwork, String systemProjectId,
+                                              Network networkInfo, Compute compute) throws IOException {
+    // systemNetwork can be null when CDAP is not running on GCP for example CDAP running in sandbox environment
+    if (systemNetwork == null) {
+      return PeeringState.NONE;
+    }
+
+    // note: vpc network is a global resource.
+    // https://cloud.google.com/compute/docs/regions-zones/global-regional-zonal-resources#globalresources
+    String systemNetworkPath = String.format("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
+                                             systemProjectId, systemNetwork);
+
+    LOG.info(String.format("Self link for the system network is %s", systemNetworkPath));
+    List<NetworkPeering> peerings = networkInfo.getPeerings();
+    // if the customer does not has a peering established at all the peering list is null
+    if (peerings == null) {
+      return PeeringState.NONE;
+    }
+    for (NetworkPeering peering : peerings) {
+      if (!systemNetworkPath.equals(peering.getNetwork())) {
+        continue;
+      }
+      return peering.getState().equals("ACTIVE") ? PeeringState.ACTIVE : PeeringState.INACTIVE;
+    }
+    return PeeringState.NONE;
   }
 
   private static boolean subnetExists(List<String> subnets, String subnet) {
@@ -259,8 +313,14 @@ public class DataprocClient implements AutoCloseable {
       } else {
         clusterConfig.setNetworkUri(network);
       }
+
       for (String targetTag : getFirewallTargetTags()) {
         clusterConfig.addTags(targetTag);
+      }
+
+      // if internal ip is prefered then create dataproc cluster without external ip for better security
+      if (useInternalIP) {
+        clusterConfig.setInternalIpOnly(true);
       }
 
       Map<String, String> dataprocProps = new HashMap<>(conf.getDataprocProperties());
@@ -479,10 +539,13 @@ public class DataprocClient implements AutoCloseable {
       Path path = Paths.get(networkInterface.getNetwork());
       String networkName = path.getFileName().toString();
       if (network.equals(networkName)) {
-        for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
-          if (accessConfig.getNatIP() != null) {
-            properties.put("ip.external", accessConfig.getNatIP());
-            break;
+        // if the cluster does not have an external ip then then access config is null
+        if (networkInterface.getAccessConfigs() != null) {
+          for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
+            if (accessConfig.getNatIP() != null) {
+              properties.put("ip.external", accessConfig.getNatIP());
+              break;
+            }
           }
         }
         properties.put("ip.internal", networkInterface.getNetworkIP());

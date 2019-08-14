@@ -105,7 +105,7 @@
       "type": "googlecompute",
       "account_file": "{{user `gcp_account_file`}}",
       "project_id": "{{user `gcp_project_id`}}",
-      "source_image": "ubuntu-1604-xenial-v20180814",
+      "source_image": "ubuntu-1604-xenial-v20190628",
       "source_image_family": "ubuntu-1604-lts",
       "source_image_project_id": "ubuntu-os-cloud",
       "ssh_username": "packer",
