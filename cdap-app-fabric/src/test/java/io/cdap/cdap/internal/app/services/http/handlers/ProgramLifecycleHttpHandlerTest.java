@@ -124,139 +124,137 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testProgramStartStopStatus() throws Exception {
-    try {
-      // deploy, check the status
-      deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    // deploy, check the status
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
-      ProgramId serviceId1 = new ServiceId(TEST_NAMESPACE1, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
-      ProgramId serviceId2 = new ServiceId(TEST_NAMESPACE2, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
+    ProgramId serviceId1 = new ServiceId(TEST_NAMESPACE1, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
+    ProgramId serviceId2 = new ServiceId(TEST_NAMESPACE2, AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME);
 
-      // service is stopped initially
-      Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
+    // service is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
 
-      // start service in the wrong namespace and verify that it does not start
-      startProgram(serviceId2, 404);
+    // start service in the wrong namespace and verify that it does not start
+    startProgram(serviceId2, 404);
 
-      // start a service and check the status
-      startProgram(serviceId1);
-      waitState(serviceId1, RUNNING);
+    // start a service and check the status
+    startProgram(serviceId1);
+    waitState(serviceId1, RUNNING);
 
-      // stop the service and check the status
-      stopProgram(serviceId1);
-      waitState(serviceId1, STOPPED);
+    // stop the service and check the status
+    stopProgram(serviceId1);
+    waitState(serviceId1, STOPPED);
 
-      // deploy another app in a different namespace and verify
-      deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    // deploy another app in a different namespace and verify
+    deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
-      Id.Program dummyMR1 = Id.Program.from(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
-      Id.Program dummyMR2 = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    Id.Program dummyMR1 = Id.Program.from(TEST_NAMESPACE1, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
+    Id.Program dummyMR2 = Id.Program.from(TEST_NAMESPACE2, DUMMY_APP_ID, ProgramType.MAPREDUCE, DUMMY_MR_NAME);
 
-      // mapreduce is stopped initially
-      Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
+    // mapreduce is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-      // start mapreduce in the wrong namespace and verify it does not start
-      startProgram(dummyMR1, 404);
-      Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
+    // start mapreduce in the wrong namespace and verify it does not start
+    startProgram(dummyMR1, 404);
+    Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-      // start map-reduce and verify status
-      startProgram(dummyMR2);
-      waitState(dummyMR2, RUNNING);
+    // start map-reduce and verify status
+    startProgram(dummyMR2);
+    waitState(dummyMR2, RUNNING);
 
-      // stop the mapreduce program and check the status
-      stopProgram(dummyMR2);
-      waitState(dummyMR2, STOPPED);
+    // stop the mapreduce program and check the status
+    stopProgram(dummyMR2);
+    waitState(dummyMR2, STOPPED);
 
-      // start multiple runs of the map-reduce program
-      startProgram(dummyMR2);
-      startProgram(dummyMR2);
-      verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
+    // start multiple runs of the map-reduce program
+    startProgram(dummyMR2);
+    startProgram(dummyMR2);
+    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
 
-      // stop all runs of the map-reduce program
-      stopProgram(dummyMR2, 200);
-      waitState(dummyMR2, STOPPED);
+    // stop all runs of the map-reduce program
+    stopProgram(dummyMR2, 200);
+    waitState(dummyMR2, STOPPED);
 
-      // deploy an app containing a workflow
-      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    // deploy an app containing a workflow
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
-      Id.Program sleepWorkflow1 =
-        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
-      Id.Program sleepWorkflow2 =
-        Id.Program.from(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    Id.Program sleepWorkflow1 =
+      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    Id.Program sleepWorkflow2 =
+      Id.Program.from(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
-      // workflow is stopped initially
-      Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+    // workflow is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
 
-      // start workflow in the wrong namespace and verify that it does not start
-      startProgram(sleepWorkflow1, 404);
-      Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+    // start workflow in the wrong namespace and verify that it does not start
+    startProgram(sleepWorkflow1, 404);
+    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
 
-      // start workflow and check status
-      startProgram(sleepWorkflow2);
-      waitState(sleepWorkflow2, RUNNING);
+    // start workflow and check status
+    startProgram(sleepWorkflow2);
+    waitState(sleepWorkflow2, RUNNING);
 
-      // workflow will stop itself
-      waitState(sleepWorkflow2, STOPPED);
+    // workflow will stop itself
+    waitState(sleepWorkflow2, STOPPED);
 
-      // start multiple runs of the workflow
-      startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
-      startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
-      verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
+    // start multiple runs of the workflow
+    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
+    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
+    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
 
-      List<RunRecord> runs = getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING);
-      Assert.assertEquals(2, runs.size());
-      stopProgram(sleepWorkflow2, runs.get(0).getPid(), 200);
-      stopProgram(sleepWorkflow2, runs.get(1).getPid(), 200);
-      waitState(sleepWorkflow2, STOPPED);
+    List<RunRecord> runs = getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING);
+    Assert.assertEquals(2, runs.size());
+    stopProgram(sleepWorkflow2, runs.get(0).getPid(), 200);
+    stopProgram(sleepWorkflow2, runs.get(1).getPid(), 200);
+    waitState(sleepWorkflow2, STOPPED);
 
-      long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-      // Set super long sleep so we can suspend the workflow ourselves.
-      startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "500000"));
-      waitState(sleepWorkflow2, RUNNING);
-      stopProgram(sleepWorkflow2);
-      waitState(sleepWorkflow2, STOPPED);
-      long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 1;
+    long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    // Set super long sleep so we can suspend the workflow ourselves.
+    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "500000"));
+    waitState(sleepWorkflow2, RUNNING);
+    stopProgram(sleepWorkflow2);
+    waitState(sleepWorkflow2, STOPPED);
+    long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 1;
 
-      // sleepWorkflow2 should be restarted
-      restartPrograms(new ApplicationId(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID), startTime, endTime);
-      waitState(sleepWorkflow2, RUNNING);
+    // sleepWorkflow2 should be restarted
+    restartPrograms(new ApplicationId(TEST_NAMESPACE2, SLEEP_WORKFLOW_APP_ID), startTime, endTime);
+    waitState(sleepWorkflow2, RUNNING);
 
-      stopProgram(sleepWorkflow2);
-      waitState(sleepWorkflow2, STOPPED);
+    stopProgram(sleepWorkflow2);
+    waitState(sleepWorkflow2, STOPPED);
 
-      // verify batch runs endpoint
-      List<ProgramId> programs = ImmutableList.of(sleepWorkflow2.toEntityId(), dummyMR2.toEntityId(),
-                                                  serviceId2);
-      List<BatchProgramHistory> batchRuns = getProgramRuns(new NamespaceId(TEST_NAMESPACE2), programs);
-      BatchProgramHistory sleepRun = batchRuns.get(0);
-      BatchProgramHistory dummyMR2Run = batchRuns.get(1);
-      BatchProgramHistory service2Run = batchRuns.get(2);
+    // verify batch runs endpoint
+    List<ProgramId> programs = ImmutableList.of(sleepWorkflow2.toEntityId(), dummyMR2.toEntityId(),
+                                                serviceId2);
+    List<BatchProgramHistory> batchRuns = getProgramRuns(new NamespaceId(TEST_NAMESPACE2), programs);
+    BatchProgramHistory sleepRun = batchRuns.get(0);
+    BatchProgramHistory dummyMR2Run = batchRuns.get(1);
+    BatchProgramHistory service2Run = batchRuns.get(2);
 
-      // verify results come back in order
-      Assert.assertEquals(sleepWorkflow2.getId(), sleepRun.getProgramId());
-      Assert.assertEquals(dummyMR2.getId(), dummyMR2Run.getProgramId());
-      Assert.assertEquals(serviceId2.getProgram(), service2Run.getProgramId());
+    // verify results come back in order
+    Assert.assertEquals(sleepWorkflow2.getId(), sleepRun.getProgramId());
+    Assert.assertEquals(dummyMR2.getId(), dummyMR2Run.getProgramId());
+    Assert.assertEquals(serviceId2.getProgram(), service2Run.getProgramId());
 
-      // verify status. AllProgramsApp was never deployed in NS2 and should not exist
-      Assert.assertEquals(200, sleepRun.getStatusCode());
-      Assert.assertEquals(200, dummyMR2Run.getStatusCode());
-      Assert.assertEquals(404, service2Run.getStatusCode());
+    // verify status. AllProgramsApp was never deployed in NS2 and should not exist
+    Assert.assertEquals(200, sleepRun.getStatusCode());
+    Assert.assertEquals(200, dummyMR2Run.getStatusCode());
+    Assert.assertEquals(404, service2Run.getStatusCode());
 
-      // verify the run record is correct
-      RunRecord runRecord = getProgramRuns(sleepWorkflow2, ProgramRunStatus.ALL).iterator().next();
-      Assert.assertEquals(runRecord.getPid(), sleepRun.getRuns().iterator().next().getPid());
+    // verify the run record is correct
+    RunRecord runRecord = getProgramRuns(sleepWorkflow2, ProgramRunStatus.ALL).iterator().next();
+    Assert.assertEquals(runRecord.getPid(), sleepRun.getRuns().iterator().next().getPid());
 
-      runRecord = getProgramRuns(dummyMR2, ProgramRunStatus.ALL).iterator().next();
-      Assert.assertEquals(runRecord.getPid(), dummyMR2Run.getRuns().iterator().next().getPid());
+    runRecord = getProgramRuns(dummyMR2, ProgramRunStatus.ALL).iterator().next();
+    Assert.assertEquals(runRecord.getPid(), dummyMR2Run.getRuns().iterator().next().getPid());
 
-      Assert.assertTrue(service2Run.getRuns().isEmpty());
-    } finally {
-      // cleanup
-      HttpResponse response = doDelete(getVersionedAPIPath("apps/",
-                                                           Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-      Assert.assertEquals(200, response.getResponseCode());
-      response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-      Assert.assertEquals(200, response.getResponseCode());
-    }
+    Assert.assertTrue(service2Run.getRuns().isEmpty());
+
+    // cleanup
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   @Test
@@ -490,124 +488,107 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(SlowTests.class)
   @Test
   public void testWorkflowHistory() throws Exception {
-    try {
-      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-      Id.Program sleepWorkflow1 =
-        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program sleepWorkflow1 =
+      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
-      // first run
-      startProgram(sleepWorkflow1);
-      int numWorkflowRunsStopped = getProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED).size();
-      // workflow stops by itself after actions are done
-      waitState(sleepWorkflow1, STOPPED);
-      verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped);
+    // first run
+    startProgram(sleepWorkflow1);
+    int numWorkflowRunsStopped = getProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED).size();
+    // workflow stops by itself after actions are done
+    waitState(sleepWorkflow1, STOPPED);
+    verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped);
 
-      // second run
-      startProgram(sleepWorkflow1);
-      // workflow stops by itself after actions are done
-      waitState(sleepWorkflow1, STOPPED);
-      verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
+    // second run
+    startProgram(sleepWorkflow1);
+    // workflow stops by itself after actions are done
+    waitState(sleepWorkflow1, STOPPED);
+    verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
 
-      historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
-    } finally {
-      Assert.assertEquals(200, doDelete(getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway
-        .API_VERSION_3_TOKEN, TEST_NAMESPACE1)).getResponseCode());
-    }
+    historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
+
+    deleteApp(sleepWorkflow1.getApplication(), 200);
   }
 
   @Test
   public void testProvisionerFailureStateAndMetrics() throws Exception {
     // test that metrics and program state are correct after a program run fails due to provisioning failures
-    try {
-      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-      Id.Program workflowId =
-        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program workflowId =
+      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
-      // get number of failed runs and metrics
-      long failMetricCount = getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS);
-      int numFailedRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED).size();
+    // get number of failed runs and metrics
+    long failMetricCount = getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS);
+    int numFailedRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED).size();
 
-      // this tells the provisioner to fail the create call
-      Map<String, String> args = new HashMap<>();
-      args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.FAIL_CREATE, Boolean.TRUE.toString());
-      startProgram(workflowId, args);
+    // this tells the provisioner to fail the create call
+    Map<String, String> args = new HashMap<>();
+    args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.FAIL_CREATE, Boolean.TRUE.toString());
+    startProgram(workflowId, args);
 
-      Tasks.waitFor(numFailedRuns + 1, () -> getProgramRuns(workflowId, ProgramRunStatus.FAILED).size(),
-                    5, TimeUnit.MINUTES);
+    Tasks.waitFor(numFailedRuns + 1, () -> getProgramRuns(workflowId, ProgramRunStatus.FAILED).size(),
+                  5, TimeUnit.MINUTES);
 
-      // check program state and cluster state
-      Tasks.waitFor(ProgramRunClusterStatus.DEPROVISIONED, () -> {
-        RunRecord runRecord = getProgramRuns(workflowId, ProgramRunStatus.FAILED).iterator().next();
-        return runRecord.getCluster().getStatus();
-      }, 1, TimeUnit.MINUTES);
+    // check program state and cluster state
+    Tasks.waitFor(ProgramRunClusterStatus.DEPROVISIONED, () -> {
+      RunRecord runRecord = getProgramRuns(workflowId, ProgramRunStatus.FAILED).iterator().next();
+      return runRecord.getCluster().getStatus();
+    }, 1, TimeUnit.MINUTES);
 
-      // check profile metrics. Though not guaranteed to be set when the program is done, it should be set soon after.
-      Tasks.waitFor(failMetricCount + 1, () -> getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS),
-                    60, TimeUnit.SECONDS);
-    } finally {
-      HttpResponse deleteResponse = doDelete(
-        getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-      Assert.assertEquals(200, deleteResponse.getResponseCode());
-    }
+    // check profile metrics. Though not guaranteed to be set when the program is done, it should be set soon after.
+    Tasks.waitFor(failMetricCount + 1, () -> getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS),
+                  60, TimeUnit.SECONDS);
+    deleteApp(workflowId.getApplication(), 200);
   }
 
   @Test
   public void testStopProgramWhilePending() throws Exception {
-    try {
-      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-      Id.Program workflowId =
-        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program workflowId =
+      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
-      int numKilledRuns = getProgramRuns(workflowId, ProgramRunStatus.KILLED).size();
+    int numKilledRuns = getProgramRuns(workflowId, ProgramRunStatus.KILLED).size();
 
-      // this tells the provisioner to wait for 60s before trying to create the cluster for the run
-      Map<String, String> args = new HashMap<>();
-      args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
-      startProgram(workflowId, args);
+    // this tells the provisioner to wait for 60s before trying to create the cluster for the run
+    Map<String, String> args = new HashMap<>();
+    args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
+    startProgram(workflowId, args);
 
-      // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
-      waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
+    // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
+    waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
 
-      stopProgram(workflowId);
-      waitState(workflowId, STOPPED);
+    stopProgram(workflowId);
+    waitState(workflowId, STOPPED);
 
-      verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
-    } finally {
-      HttpResponse deleteResponse = doDelete(
-        getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-      Assert.assertEquals(200, deleteResponse.getResponseCode());
-    }
+    verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
+
+    deleteApp(workflowId.getApplication(), 200);
   }
 
   @Test
   public void testStopProgramRunWhilePending() throws Exception {
-    try {
-      deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-      Id.Program workflowId =
-        Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
+    deploy(SleepingWorkflowApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program workflowId =
+      Id.Program.from(TEST_NAMESPACE1, SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW, SLEEP_WORKFLOW_NAME);
 
-      int numKilledRuns = getProgramRuns(workflowId, ProgramRunStatus.KILLED).size();
+    int numKilledRuns = getProgramRuns(workflowId, ProgramRunStatus.KILLED).size();
 
-      // this tells the provisioner to wait for 60s before trying to create the cluster for the run
-      Map<String, String> args = new HashMap<>();
-      args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
-      startProgram(workflowId, args);
+    // this tells the provisioner to wait for 60s before trying to create the cluster for the run
+    Map<String, String> args = new HashMap<>();
+    args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(120000));
+    startProgram(workflowId, args);
 
-      // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
-      waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
-      List<RunRecord> runRecords = getProgramRuns(workflowId, ProgramRunStatus.PENDING);
-      Assert.assertEquals(1, runRecords.size());
-      String runId = runRecords.iterator().next().getPid();
+    // should be safe to wait for starting since the provisioner is configure to sleep while creating a cluster
+    waitState(workflowId, io.cdap.cdap.proto.ProgramStatus.STARTING.name());
+    List<RunRecord> runRecords = getProgramRuns(workflowId, ProgramRunStatus.PENDING);
+    Assert.assertEquals(1, runRecords.size());
+    String runId = runRecords.iterator().next().getPid();
 
-      stopProgram(workflowId, runId, 200);
-      waitState(workflowId, STOPPED);
+    stopProgram(workflowId, runId, 200);
+    waitState(workflowId, STOPPED);
 
-      verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
-    } finally {
-      HttpResponse deleteResponse = doDelete(
-        getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-      Assert.assertEquals(200, deleteResponse.getResponseCode());
-    }
+    verifyProgramRuns(workflowId, ProgramRunStatus.KILLED, numKilledRuns);
+    deleteApp(workflowId.getApplication(), 200);
   }
 
   @Test
@@ -1712,28 +1693,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private void testHistory(Class<?> app, Id.Program program) throws Exception {
     String namespace = program.getNamespaceId();
-    try {
-      deploy(app, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-      verifyProgramHistory(program.toEntityId());
-    } catch (Exception e) {
-      LOG.error("Got exception: ", e);
-    } finally {
-      deleteApp(program.getApplication(), 200);
-    }
+    deploy(app, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    verifyProgramHistory(program.toEntityId());
+    deleteApp(program.getApplication(), 200);
+
     ApplicationId appId = new ApplicationId(namespace, program.getApplicationId(), VERSION1);
     ProgramId programId = appId.program(program.getType(), program.getId());
-    try {
-      Id.Artifact artifactId = Id.Artifact.from(program.getNamespace(), app.getSimpleName(), "1.0.0");
-      addAppArtifact(artifactId, app);
-      AppRequest<Config> request = new AppRequest<>(
-        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
-      Assert.assertEquals(200, deploy(appId, request).getResponseCode());
-      verifyProgramHistory(programId);
-    } catch (Exception e) {
-      LOG.error("Got exception: ", e);
-    } finally {
-      deleteApp(appId, 200);
-    }
+    Id.Artifact artifactId = Id.Artifact.from(program.getNamespace(), app.getSimpleName(), "1.0.0");
+    addAppArtifact(artifactId, app);
+    AppRequest<Config> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
+    Assert.assertEquals(200, deploy(appId, request).getResponseCode());
+    verifyProgramHistory(programId);
+    deleteApp(appId, 200);
   }
 
   private void verifyProgramHistory(ProgramId program) throws Exception {
