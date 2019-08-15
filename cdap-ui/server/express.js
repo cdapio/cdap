@@ -20,6 +20,7 @@ var urlhelper = require('./url-helper');
 const url = require('url');
 const csp = require('helmet-csp');
 var proxy = require('express-http-proxy');
+const frameguard = require('frameguard');
 
 module.exports = {
   getApp: function() {
@@ -203,6 +204,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       maxAge: 60 * 60 * 24 * 365, // one year in seconds
     })
   );
+  app.use(frameguard({ action: 'sameorigin' }));
 
   if (!isModeDevelopment()) {
     let marketUrl = url.parse(cdapConfig['market.base.url']);
