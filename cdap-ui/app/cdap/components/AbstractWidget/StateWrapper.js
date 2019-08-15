@@ -26,10 +26,11 @@ export default class StateWrapper extends PureComponent {
     onChange: PropTypes.func,
     widgetProps: PropTypes.object,
     extraConfig: PropTypes.object,
+    disabled: PropTypes.bool,
   };
 
   state = {
-    value: this.props.value || objectQuery(this.props, 'widgetProps', 'default'),
+    value: this.props.value || objectQuery(this.props, 'widgetProps', 'default') || '',
   };
 
   onChange = (value) => {
@@ -44,27 +45,29 @@ export default class StateWrapper extends PureComponent {
   };
 
   render() {
-    let { comp: Comp, widgetProps, extraConfig } = this.props;
+    let { comp: Comp, widgetProps, extraConfig, disabled } = this.props;
+    const value = typeof this.state.value === 'function' ? this.state.value() : this.state.value;
+    /*
+      TL;DR - Get new value for input widget during each render.
+      When a function is passed instead of state each re-render gets the upto date value.
+      I only envision this to be happening when the AbstractWidget is used inside an
+      Accordion.
+
+      Hack Advisory:
+        When a AbstractWidget is used inside an Accordion, it clones it once
+        and remove the element if its not an active accordion pane. So if I don't want to
+        tie the value to a state variable as the value for an input element then I need to
+        pass in a function to get a new value everytime the widget is rendered.
+
+        Ways to solve this problem. Use redux or figure out a way to use React context in 16.3+
+    */
     return (
-      /*
-        TL;DR - Get new value for input widget during each render.
-        When a function is passed instead of state each re-render gets the upto date value.
-        I only envision this to be happening when the AbstractWidget is used inside an
-        Accordion.
-
-        Hack Advisory:
-          When a AbstractWidget is used inside an Accordion, it clones it once
-          and remove the element if its not an active accordion pane. So if I don't want to
-          tie the value to a state variable as the value for an input element then I need to
-          pass in a function to get a new value everytime the widget is rendered.
-
-          Ways to solve this problem. Use redux or figure out a way to use React context in 16.3+
-      */
       <Comp
         widgetProps={widgetProps}
-        value={typeof this.state.value === 'function' ? this.state.value() : this.state.value}
+        value={value}
         onChange={this.onChange}
         extraConfig={extraConfig}
+        disabled={disabled}
       />
     );
   }

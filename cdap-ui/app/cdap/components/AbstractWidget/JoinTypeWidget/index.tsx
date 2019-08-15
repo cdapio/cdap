@@ -15,17 +15,17 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import isEqual from 'lodash/isEqual';
-
-import Select from 'components/AbstractWidget/SelectWidget';
+import Select from 'components/AbstractWidget/FormInputs/Select';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Paper from '@material-ui/core/Paper';
-
 import ThemeWrapper from 'components/ThemeWrapper';
 import If from 'components/If';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 const styles = (theme): StyleRules => {
   return {
@@ -69,23 +69,21 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IJoinTypeWidgetProps extends WithStyles<typeof styles> {
-  value: string;
-  inputSchema: Array<{ name: string }>;
-  onChange: (value: string) => void;
-}
+interface IJoinTypeWidgetProps extends IWidgetProps<null>, WithStyles<typeof styles> {}
 
 const DROP_DOWN_OPTIONS: string[] = ['Inner', 'Outer'];
 
 const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
   value,
-  inputSchema,
+  extraConfig,
   onChange,
+  disabled,
   classes,
 }) => {
   const [joinType, setJoinType] = useState(DROP_DOWN_OPTIONS[1]);
   const [selectedCount, setSelectedCount] = useState(0);
   const [inputs, setInputs] = useState([]);
+  const inputSchema = objectQuery(extraConfig, 'inputSchema');
 
   const formatOutput = () => {
     const outputArr = inputs.filter((schema) => schema.selected).map((schema) => schema.name);
@@ -93,11 +91,11 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
     setSelectedCount(outputArr.length);
   };
 
-  const joinTypeChange = (event) => {
-    setJoinType(event.target.value);
+  const joinTypeChange = (val) => {
+    setJoinType(val);
     setInputs(
       inputSchema.map((input) => {
-        return { name: input.name, selected: event.target.value === 'Inner' };
+        return { name: input.name, selected: val === 'Inner' };
       })
     );
   };
@@ -122,7 +120,10 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
       );
       return;
     }
-    const initialModel = value.split(',').map((input) => input.trim());
+    const initialModel = value
+      .toString()
+      .split(',')
+      .map((input) => input.trim());
     if (isEqual(initialModel, inputSchema.map((schema) => schema.name.trim()))) {
       setJoinType('Inner');
       setInputs(
@@ -155,9 +156,10 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
       <If condition={inputs.length > 0}>
         <Paper className={classes.multiCheckboxesContainer}>
           <Select
-            widgetProps={{ values: DROP_DOWN_OPTIONS }}
+            widgetProps={{ options: DROP_DOWN_OPTIONS }}
             value={joinType}
             onChange={joinTypeChange}
+            disabled={disabled}
           />
           <If condition={joinType === 'Outer'}>
             <div className={classes.checkboxesGroup}>
@@ -173,6 +175,7 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
                     <FormControlLabel
                       className={classes.checkbox}
                       key={`${i}-${input.name}`}
+                      disabled={disabled}
                       control={
                         <Checkbox
                           checked={input.selected}
@@ -208,8 +211,4 @@ export default function JoinTypeWidget(props: IJoinTypeWidgetProps) {
   );
 }
 
-(JoinTypeWidget as any).propTypes = {
-  value: PropTypes.string,
-  inputSchema: PropTypes.object,
-  onChange: PropTypes.func,
-};
+(JoinTypeWidget as any).propTypes = WIDGET_PROPTYPES;

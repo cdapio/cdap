@@ -15,17 +15,16 @@
 */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { objectQuery } from 'services/helpers';
-
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-
 import ThemeWrapper from 'components/ThemeWrapper';
 import If from 'components/If';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 export const styles = (): StyleRules => {
   return {
@@ -38,42 +37,35 @@ export const styles = (): StyleRules => {
     },
   };
 };
-interface IWidgetAttributes {
-  layout: string;
-  options: IOption[];
-  default: string;
-}
+
 interface IOption {
   id: string;
   label: string;
 }
-interface IRadioGroupWidgetProps extends WithStyles<typeof styles> {
-  value: string;
-  widgetAttributes: IWidgetAttributes;
-  propertyName: string;
-  onChange: (value: string) => void;
+
+interface IRadioGroupWidgetProps {
+  layout: string;
+  options: IOption[];
 }
 
-const RadioGroupWidgetView: React.FC<IRadioGroupWidgetProps> = ({
-  widgetAttributes,
-  propertyName,
+interface IRadioGroupProps
+  extends IWidgetProps<IRadioGroupWidgetProps>,
+    WithStyles<typeof styles> {}
+
+const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
+  widgetProps,
   classes,
   value,
+  disabled,
   onChange,
 }) => {
-  const options: IOption[] = objectQuery(widgetAttributes, 'options') || [];
-  const layout = objectQuery(widgetAttributes, 'layout');
-  const defaultValue = objectQuery(widgetAttributes, 'default') || '';
-  const model = value || defaultValue;
-  const isModelValid = options.find((option: IOption) => option.id === model);
+  const options: IOption[] = objectQuery(widgetProps, 'options') || [];
+  const layout = objectQuery(widgetProps, 'layout') || 'block';
+  const isModelValid = options.find((option: IOption) => option.id === value);
   let error = null;
 
-  if (!Array.isArray(options) || (Array.isArray(options) && !options.length)) {
-    error = `Missing options for ${propertyName}`;
-  }
-
   if (!isModelValid) {
-    error = `Unknown value for ${propertyName} specified.`;
+    error = `Unknown value ${value} specified.`;
   }
 
   function updateModel(e) {
@@ -87,7 +79,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupWidgetProps> = ({
       </If>
       <RadioGroup
         className={classnames({ [classes.inlineRadio]: layout === 'inline' })}
-        value={model}
+        value={value.toString()}
         onChange={updateModel}
       >
         {options.map((option: IOption, i) => {
@@ -98,6 +90,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupWidgetProps> = ({
               value={option.id}
               control={<Radio color="primary" />}
               label={option.label || option.id}
+              disabled={disabled}
             />
           );
         })}
@@ -106,19 +99,14 @@ const RadioGroupWidgetView: React.FC<IRadioGroupWidgetProps> = ({
   );
 };
 
-const RadioGroupWidget = withStyles(styles)(RadioGroupWidgetView);
+const StyledRadioGroupWidget = withStyles(styles)(RadioGroupWidgetView);
 
-export default function StyledRadioGroupWidget(props) {
+export default function RadioGroupWidget(props) {
   return (
     <ThemeWrapper>
-      <RadioGroupWidget {...props} />
+      <StyledRadioGroupWidget {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledRadioGroupWidget as any).propTypes = {
-  value: PropTypes.string,
-  widgetAttributes: PropTypes.object,
-  propertyName: PropTypes.string,
-  onChange: PropTypes.func,
-};
+(RadioGroupWidget as any).propTypes = WIDGET_PROPTYPES;

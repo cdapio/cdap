@@ -43,7 +43,7 @@ const styles = (theme) => {
   };
 };
 
-interface ICodeEditorProps extends WithStyles<typeof styles> {
+export interface IBaseCodeEditorProps {
   mode?: string;
   value: string;
   onChange: (value: string) => void;
@@ -55,7 +55,10 @@ interface ICodeEditorProps extends WithStyles<typeof styles> {
   showPrettyPrintButton?: boolean;
   prettyPrintFunction?: (value: string) => string;
 }
-class CodeEditor extends React.Component<ICodeEditorProps> {
+
+interface ICodeEditorProps extends IBaseCodeEditorProps, WithStyles<typeof styles> {}
+
+class CodeEditorView extends React.Component<ICodeEditorProps> {
   public static LINE_HEIGHT = 20;
   public static defaultProps = {
     mode: 'plain_text',
@@ -94,7 +97,7 @@ class CodeEditor extends React.Component<ICodeEditorProps> {
       <div className={classes.root}>
         <div
           className={`${className} ${classes.editor}`}
-          style={{ height: `${this.props.rows * CodeEditor.LINE_HEIGHT}px` }}
+          style={{ height: `${this.props.rows * CodeEditorView.LINE_HEIGHT}px` }}
           ref={(ref) => (this.aceRef = ref)}
         >
           {value}
@@ -119,16 +122,16 @@ class CodeEditor extends React.Component<ICodeEditorProps> {
     );
   }
 }
-const CodeEditorWrapper = withStyles(styles)(CodeEditor);
-export default function StyledCodeEditor(props) {
+const StyledCodeEditor = withStyles(styles)(CodeEditorView);
+export default function CodeEditor(props) {
   return (
     <ThemeWrapper>
-      <CodeEditorWrapper {...props} />
+      <StyledCodeEditor {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledCodeEditor as any).propTypes = {
+(CodeEditor as any).propTypes = {
   mode: PropTypes.string,
   value: PropTypes.string,
   onChange: PropTypes.func,

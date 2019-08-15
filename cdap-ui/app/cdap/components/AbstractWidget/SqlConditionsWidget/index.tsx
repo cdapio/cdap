@@ -15,14 +15,14 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import classnames from 'classnames';
-
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-
 import ThemeWrapper from 'components/ThemeWrapper';
 import If from 'components/If';
 import Rule from 'components/AbstractWidget/SqlConditionsWidget/Rule';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { objectQuery } from 'services/helpers';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 export const styles = (): StyleRules => {
   return {
@@ -54,12 +54,7 @@ export interface IInputSchema {
   [key: string]: string[];
 }
 
-interface ISqlConditionsWidgetProps extends WithStyles<typeof styles> {
-  value: string;
-  inputSchema: any[];
-  onChange: (arg0: string) => void;
-  disabled: boolean;
-}
+interface ISqlConditionsProps extends IWidgetProps<null>, WithStyles<typeof styles> {}
 
 interface ISqlConditionsWidgetState {
   warning: string;
@@ -70,7 +65,7 @@ interface ISqlConditionsWidgetState {
 }
 
 class SqlConditionsWidgetView extends React.Component<
-  ISqlConditionsWidgetProps,
+  ISqlConditionsProps,
   ISqlConditionsWidgetState
 > {
   public state = {
@@ -158,7 +153,9 @@ class SqlConditionsWidgetView extends React.Component<
     const stageList = [];
     const mapInputSchema = {};
     let error = null;
-    this.props.inputSchema.forEach((input) => {
+    const inputSchema = objectQuery(this.props, 'extraConfig', 'inputSchema');
+
+    inputSchema.forEach((input) => {
       stageList.push(input.name);
       try {
         mapInputSchema[input.name] = JSON.parse(input.schema).fields.map((field) => field.name);
@@ -181,7 +178,10 @@ class SqlConditionsWidgetView extends React.Component<
       this.setState({ error, stageList, mapInputSchema }, this.addRule);
       return;
     }
-    const modelSplit = this.props.value.split('&').map((rule) => rule.trim());
+    const modelSplit = this.props.value
+      .toString()
+      .split('&')
+      .map((rule) => rule.trim());
     modelSplit.forEach((rule) => {
       const rulesArr = [];
       rule.split('=').forEach((field) => {
@@ -252,19 +252,14 @@ class SqlConditionsWidgetView extends React.Component<
   }
 }
 
-const SqlConditionsWidget = withStyles(styles)(SqlConditionsWidgetView);
+const StyledSqlConditionsWidget = withStyles(styles)(SqlConditionsWidgetView);
 
-export default function StyledSqlConditionsWidget(props) {
+export default function SqlConditionsWidget(props) {
   return (
     <ThemeWrapper>
-      <SqlConditionsWidget {...props} />
+      <StyledSqlConditionsWidget {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledSqlConditionsWidget as any).propTypes = {
-  value: PropTypes.string,
-  inputSchema: PropTypes.object,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-};
+(SqlConditionsWidget as any).propTypes = WIDGET_PROPTYPES;

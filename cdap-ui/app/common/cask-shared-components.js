@@ -70,7 +70,7 @@ var ToggleSwitch = require('../cdap/components/ToggleSwitch').default;
 var PipelineList = require('../cdap/components/PipelineList').default;
 var AppHeader = require('../cdap/components/AppHeader').default;
 var Markdown = require('../cdap/components/Markdown').MarkdownWithStyles;
-var CodeEditor = require('../cdap/components/CodeEditor').default;
+var CodeEditor = require('../cdap/components/AbstractWidget/CodeEditorWidget').default;
 var JSONEditor = require('../cdap/components/CodeEditor/JSONEditor').default;
 var TextBox = require('../cdap/components/AbstractWidget/FormInputs/TextBox').default;
 var Number = require('../cdap/components/AbstractWidget/FormInputs/Number').default;
@@ -95,6 +95,8 @@ var DatasetSelectorWidget = require('../cdap/components/AbstractWidget/DatasetSe
   .default;
 var SqlConditionsWidget = require('../cdap/components/AbstractWidget/SqlConditionsWidget').default;
 var SqlSelectorWidget = require('../cdap/components/AbstractWidget/SqlSelectorWidget').default;
+var KeyValueEncodedWidget = require('../cdap/components/AbstractWidget/KeyValueWidget/KeyValueEncodedWidget')
+  .default;
 
 export {
   Store,
@@ -166,4 +168,5 @@ export {
   DatasetSelectorWidget,
   SqlConditionsWidget,
   SqlSelectorWidget,
+  KeyValueEncodedWidget,
 };

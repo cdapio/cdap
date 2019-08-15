@@ -17,27 +17,23 @@
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 import MultiRowContainer from 'components/AbstractWidget/AbstractMultiRowWidget/Container';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { objectQuery } from 'services/helpers';
 
-export interface IMultiRowProps {
-  onChange: (values: string) => void;
-  value: string;
-  disabled: boolean;
+export interface IMultiRowWidgetProps {
   delimiter?: string;
 }
+
+export interface IMultiRowProps<W extends IMultiRowWidgetProps> extends IWidgetProps<W> {}
 
 interface IMultiRowState {
   rows: string[];
   autofocus?: string;
 }
 
-export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends React.PureComponent<
-  P,
-  IMultiRowState
-> {
-  public static defaultProps = {
-    delimiter: ',',
-  };
-
+export default class AbstractMultiRowWidget<
+  W extends IWidgetProps<IMultiRowWidgetProps>
+> extends React.PureComponent<W, IMultiRowState> {
   public state = {
     rows: [],
     autofocus: null,
@@ -80,7 +76,7 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
       return;
     }
 
-    const delimiter = props.delimiter;
+    const delimiter = objectQuery(props, 'widgetProps', 'delimiter') || ',';
 
     const splitValues = props.value.split(delimiter);
     const rows = [];
@@ -146,10 +142,12 @@ export default class AbstractMultiRowWidget<P extends IMultiRowProps> extends Re
   };
 
   private constructValues = () => {
+    const delimiter = objectQuery(this.props, 'widgetProps', 'delimiter') || ',';
+
     const values = this.state.rows
       .filter((id) => this.values[id] && this.values[id].value)
       .map((id) => this.values[id].value)
-      .join(this.props.delimiter);
+      .join(delimiter);
 
     return values;
   };

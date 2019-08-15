@@ -16,9 +16,11 @@
 
 import React from 'react';
 import TextField from '@material-ui/core/TextField';
-import PropTypes from 'prop-types';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
+import { objectQuery } from 'services/helpers';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 const styles = (theme) => {
   return {
@@ -40,19 +42,23 @@ const styles = (theme) => {
     notchedOutline: {},
   };
 };
-interface ITextBoxProps extends WithStyles<typeof styles> {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
+
+interface ITextBoxWidgetProps {
+  placeholder?: string;
 }
 
-function TextBox({ value, onChange, placeholder, classes }: ITextBoxProps) {
+interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps>, WithStyles<typeof styles> {}
+
+const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabled, classes }) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
       onChange(v);
     }
   };
+
+  const placeholder = objectQuery(widgetProps, 'placeholder');
+
   return (
     <TextField
       fullWidth
@@ -61,12 +67,13 @@ function TextBox({ value, onChange, placeholder, classes }: ITextBoxProps) {
       onChange={onChangeHandler}
       className={classes.root}
       placeholder={placeholder}
+      disabled={disabled}
       InputProps={{
         classes,
       }}
     />
   );
-}
+};
 const StyledTextBox = withStyles(styles)(TextBox);
 export default function TextBoxWrapper(props) {
   return (
@@ -75,8 +82,5 @@ export default function TextBoxWrapper(props) {
     </ThemeWrapper>
   );
 }
-(TextBoxWrapper as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  placeholder: PropTypes.string,
-};
+
+(TextBoxWrapper as any).propTypes = WIDGET_PROPTYPES;

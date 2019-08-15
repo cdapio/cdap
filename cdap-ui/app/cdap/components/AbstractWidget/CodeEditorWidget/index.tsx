@@ -14,14 +14,33 @@
  * the License.
  */
 
-import React from 'react';
-import SecureKey from 'components/AbstractWidget/SecureKey';
-import { DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
+import * as React from 'react';
+import { IWidgetProps } from 'components/AbstractWidget';
+import CodeEditor from 'components/CodeEditor';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import PropTypes from 'prop-types';
 
-export default function SecureKeyText(props) {
-  return <SecureKey inputTextType="text" {...props} />;
+interface ICodeEditorProps extends IWidgetProps<null> {
+  mode: string;
+  rows: number;
 }
 
-SecureKeyText.propTypes = WIDGET_PROPTYPES;
-SecureKeyText.defaultProps = DEFAULT_WIDGET_PROPS;
+const CodeEditorWidget: React.FC<ICodeEditorProps> = ({
+  value,
+  onChange,
+  disabled,
+  mode,
+  rows,
+}) => {
+  return (
+    <CodeEditor mode={mode} rows={rows} value={value} onChange={onChange} disabled={disabled} />
+  );
+};
+
+(CodeEditorWidget as any).propTypes = {
+  ...WIDGET_PROPTYPES,
+  mode: PropTypes.string,
+  rows: PropTypes.number,
+};
+
+export default CodeEditorWidget;

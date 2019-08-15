@@ -15,18 +15,17 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import isEqual from 'lodash/isEqual';
 import classnames from 'classnames';
 import { objectQuery } from 'services/helpers';
 import T from 'i18n-react';
-
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
-
 import ThemeWrapper from 'components/ThemeWrapper';
 import SchemaContainer from 'components/AbstractWidget/SqlSelectorWidget/SchemaContainer';
 import If from 'components/If';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 const I18N_PREFIX = 'features.AbstractWidget.SqlSelectorWidget';
 
@@ -53,16 +52,8 @@ export const styles = () => {
   };
 };
 
-interface IInputSchema {
-  name: string;
-  schema: string;
-}
-interface ISqlSelectorWidgetProps extends WithStyles<typeof styles> {
-  value: string;
-  inputSchema: IInputSchema[];
-  onChange: (value: any) => void;
-  disabled: boolean;
-}
+interface ISqlSelectorProps extends IWidgetProps<null>, WithStyles<typeof styles> {}
+
 export interface IFieldSchema {
   selected: boolean;
   name: string;
@@ -83,7 +74,7 @@ interface ISqlSelectorWidgetState {
 }
 
 class SqlSelectorWidgetView extends React.PureComponent<
-  ISqlSelectorWidgetProps,
+  ISqlSelectorProps,
   ISqlSelectorWidgetState
 > {
   public state = {
@@ -99,7 +90,9 @@ class SqlSelectorWidgetView extends React.PureComponent<
   };
 
   public componentDidMount() {
-    this.setState({ modelCopy: this.props.value }, () => this.init(this.state.modelCopy));
+    this.setState({ modelCopy: this.props.value ? this.props.value.toString() : '' }, () =>
+      this.init(this.state.modelCopy)
+    );
   }
 
   private toggleExpandAll = () => {
@@ -236,7 +229,10 @@ class SqlSelectorWidgetView extends React.PureComponent<
         }
       });
     }
-    this.props.inputSchema.forEach((input, i) => {
+
+    const inputSchema = objectQuery(this.props, 'extraConfig', 'inputSchema') || [];
+
+    inputSchema.forEach((input, i) => {
       let schema;
       try {
         schema = JSON.parse(input.schema);
@@ -325,19 +321,14 @@ class SqlSelectorWidgetView extends React.PureComponent<
   }
 }
 
-const SqlSelectorWidget = withStyles(styles)(SqlSelectorWidgetView);
+const StyledSqlSelectorWidget = withStyles(styles)(SqlSelectorWidgetView);
 
-export default function StyledSqlSelectorWidget(props) {
+export default function SqlSelectorWidget(props) {
   return (
     <ThemeWrapper>
-      <SqlSelectorWidget {...props} />
+      <StyledSqlSelectorWidget {...props} />
     </ThemeWrapper>
   );
 }
 
-(StyledSqlSelectorWidget as any).propTypes = {
-  value: PropTypes.string,
-  inputSchema: PropTypes.object,
-  onChange: PropTypes.func,
-  disabled: PropTypes.bool,
-};
+(SqlSelectorWidget as any).propTypes = WIDGET_PROPTYPES;

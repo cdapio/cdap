@@ -132,4 +132,7 @@ angular
   })
   .directive('sqlSelectorWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.SqlSelectorWidget);
+  })
+  .directive('keyValueEncodedWidget', function(reactDirective) {
+    return reactDirective(window.CaskCommon.KeyValueEncodedWidget);
   });

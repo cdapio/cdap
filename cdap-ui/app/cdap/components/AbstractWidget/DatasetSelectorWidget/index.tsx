@@ -24,9 +24,10 @@ import classnames from 'classnames';
 import ee from 'event-emitter';
 import { objectQuery } from 'services/helpers';
 import ThemeWrapper from 'components/ThemeWrapper';
-import PropTypes from 'prop-types';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { KEY_CODE } from 'services/global-constants';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { IWidgetProps } from 'components/AbstractWidget';
 
 const styles = (theme): StyleRules => {
   return {
@@ -78,26 +79,30 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IDatasetSelector extends WithStyles<typeof styles> {
-  onChange: (value) => void;
-  value: string;
+interface IDatasetSelectorWidgetProps {
   placeholder?: string;
 }
+
+interface IDatasetSelectorProps
+  extends IWidgetProps<IDatasetSelectorWidgetProps>,
+    WithStyles<typeof styles> {}
 
 const RESULT_LIMIT = 5;
 
 export const DatasetSelectedEvent = 'dataset.selected';
 
-const DatasetSelectorView: React.SFC<IDatasetSelector> = ({
+const DatasetSelectorView: React.SFC<IDatasetSelectorProps> = ({
   value,
   onChange,
   classes,
-  placeholder,
+  widgetProps,
+  disabled,
 }) => {
   const [datasets, setDatasets] = React.useState([]);
   const [showAutocomplete, setShowAutoComplete] = React.useState(false);
   const [selection, setSelection] = React.useState(0);
   const eventEmitter = ee(ee);
+  const placeholder = objectQuery(widgetProps, 'placeholder');
 
   React.useEffect(() => {
     MyDatasetApi.list({ namespace: getCurrentNamespace() }).subscribe(setDatasets);
@@ -109,13 +114,13 @@ const DatasetSelectorView: React.SFC<IDatasetSelector> = ({
   }
 
   function getMatch() {
-    if (!value || value.length === 0) {
+    if (!value || value.toString().length === 0) {
       return datasets.slice(0, RESULT_LIMIT);
     }
     return datasets
       .filter((dataset) => {
         const datasetName = dataset.name.toLowerCase();
-        const inputValue = value.toLowerCase();
+        const inputValue = value.toString().toLowerCase();
         return datasetName.indexOf(inputValue) !== -1;
       })
       .slice(0, RESULT_LIMIT);
@@ -192,6 +197,7 @@ const DatasetSelectorView: React.SFC<IDatasetSelector> = ({
           onKeyDown={handleKeyDown}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
+          disabled={disabled}
           onFocus={() => setShowAutoComplete(true)}
           InputProps={{
             classes: {
@@ -237,10 +243,6 @@ function DatasetSelector(props) {
     </ThemeWrapper>
   );
 }
-(DatasetSelector as any).propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
-  placeholder: PropTypes.string,
-};
+(DatasetSelector as any).propTypes = WIDGET_PROPTYPES;
 
 export default DatasetSelector;

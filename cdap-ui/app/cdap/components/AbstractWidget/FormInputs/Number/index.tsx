@@ -16,9 +16,11 @@
 
 import React from 'react';
 import ThemeWrapper from 'components/ThemeWrapper';
-import PropTypes from 'prop-types';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import TextField from '@material-ui/core/TextField';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 const styles = (theme) => {
   return {
@@ -35,20 +37,29 @@ const styles = (theme) => {
   };
 };
 
-interface INumberProps extends WithStyles<typeof styles> {
-  value: string;
-  onChange: (value: string) => void;
-  disabled: boolean;
-  isFieldRequired: boolean;
+interface INumberWidgetProps extends WithStyles<typeof styles> {
+  min?: number;
+  max?: number;
 }
 
-function Number({ value, onChange, disabled, isFieldRequired, classes }: INumberProps) {
+interface INumberProps extends IWidgetProps<INumberWidgetProps>, WithStyles<typeof styles> {}
+
+const NumberView: React.FC<INumberProps> = ({
+  value,
+  onChange,
+  disabled,
+  widgetProps,
+  classes,
+}) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
       onChange(v);
     }
   };
+
+  const min = objectQuery(widgetProps, 'min') || Number.MIN_SAFE_INTEGER;
+  const max = objectQuery(widgetProps, 'max') || Number.MAX_SAFE_INTEGER;
 
   return (
     <TextField
@@ -57,16 +68,19 @@ function Number({ value, onChange, disabled, isFieldRequired, classes }: INumber
       type="number"
       value={value}
       onChange={onChangeHandler}
-      required={isFieldRequired}
       disabled={disabled}
+      inputProps={{
+        min,
+        max,
+      }}
       InputProps={{
         classes,
       }}
     />
   );
-}
+};
 
-const StyledNumber = withStyles(styles)(Number);
+const StyledNumber = withStyles(styles)(NumberView);
 
 export default function StyledNumberWrapper(props) {
   return (
@@ -76,9 +90,4 @@ export default function StyledNumberWrapper(props) {
   );
 }
 
-(StyledNumberWrapper as any).propTypes = {
-  value: PropTypes.string,
-  disabled: PropTypes.bool,
-  isFieldRequired: PropTypes.bool,
-  onChange: PropTypes.bool,
-};
+(StyledNumberWrapper as any).propTypes = WIDGET_PROPTYPES;

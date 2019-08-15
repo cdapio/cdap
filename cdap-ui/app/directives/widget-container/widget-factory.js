@@ -21,9 +21,9 @@ angular.module(PKG.name + '.commons')
         element: '<number></number>',
         attributes: {
           'value': 'model',
-          'disabled': 'disabled',
           'on-change': 'onChange',
-          'is-field-required': 'isFieldRequired'
+          'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'textbox': {
@@ -31,7 +31,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'value': 'model',
           'on-change': 'onChange',
-          placeholder: 'myconfig["widget-attributes"].placeholder'
+          'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'textarea': {
@@ -51,19 +52,18 @@ angular.module(PKG.name + '.commons')
           'ng-trim': 'false'
         }
       },
-      'datetime': {
-        element: '<my-timestamp-picker></my-timestamp-picker>',
-        attributes: {
-          'ng-model': 'model',
-          'data-label': 'Date'
-        }
-      },
+      // 'datetime': {
+      //   element: '<my-timestamp-picker></my-timestamp-picker>',
+      //   attributes: {
+      //     'ng-model': 'model',
+      //     'data-label': 'Date'
+      //   }
+      // },
       'csv': {
         element: '<csv-widget></csv-widget>',
         attributes: {
           'value': 'model',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
-          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'widget-props': 'myconfig["widget-attributes"]',
           'on-change': 'onChange',
           'disabled': 'disabled',
         },
@@ -72,8 +72,7 @@ angular.module(PKG.name + '.commons')
         element: '<csv-widget></csv-widget>',
         attributes: {
           'value': 'model',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
-          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
+          'widget-props': 'myconfig["widget-attributes"]',
           'on-change': 'onChange',
           'disabled': 'disabled',
         },
@@ -84,10 +83,7 @@ angular.module(PKG.name + '.commons')
           'value': 'model',
           'on-change': 'onChange',
           'disabled': 'disabled',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
-          'placeholders': 'myconfig["widget-attributes"].placeholders',
-          'values-delimiter': 'myconfig["widget-attributes"]["values-delimiter"]',
-          'num-values': 'myconfig["widget-attributes"].numValues',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'json-editor': {
@@ -139,48 +135,38 @@ angular.module(PKG.name + '.commons')
           'rows': 15,
         }
       },
-      'schema': {
-        element: '<my-schema-editor></my-schema-editor>',
-        attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
-        }
-      },
+      // 'schema': {
+      //   element: '<my-schema-editor></my-schema-editor>',
+      //   attributes: {
+      //     'ng-model': 'model',
+      //     'data-config': 'myconfig'
+      //   }
+      // },
       'keyvalue': {
         element: '<key-value-widget></key-value-widget>',
         attributes: {
           'value': 'model',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
-          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
-          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
-          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
           'on-change': 'onChange',
           'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'keyvalue-encoded': {
-        element: '<key-value-widget></key-value-widget>',
+        element: '<key-value-encoded-widget></key-value-encoded-widget>',
         attributes: {
           'value': 'model',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
-          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
-          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
-          'value-placeholder': 'myconfig["widget-attributes"]["value-placeholder"]',
           'on-change': 'onChange',
           'disabled': 'disabled',
-          'is-encoded': true,
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'keyvalue-dropdown': {
         element: '<key-value-dropdown-widget></key-value-dropdown-widget>',
         attributes: {
           'value': 'model',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
-          'kv-delimiter': 'myconfig["widget-attributes"]["kv-delimiter"]',
-          'key-placeholder': 'myconfig["widget-attributes"]["key-placeholder"]',
-          'dropdown-options': 'myconfig["widget-attributes"]["dropdownOptions"]',
           'on-change': 'onChange',
           'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'function-dropdown-with-alias': {
@@ -189,24 +175,23 @@ angular.module(PKG.name + '.commons')
           'value': 'model',
           'on-change': 'onChange',
           'disabled': 'disabled',
-          'placeholders': 'myconfig["widget-attributes"].placeholders',
-          'dropdown-options': 'myconfig["widget-attributes"]["dropdownOptions"]',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
-      'schedule': {
-        element: '<my-schedule></my-schedule>',
-        attributes: {
-          'ng-model': 'model',
-          'data-config': 'myconfig'
-        }
-      },
+      // 'schedule': {
+      //   element: '<my-schedule></my-schedule>',
+      //   attributes: {
+      //     'ng-model': 'model',
+      //     'data-config': 'myconfig'
+      //   }
+      // },
       'select': {
         element: '<select-dropdown></select-dropdown>',
         attributes: {
-          'value': 'model || myconfig.properties.default || myconfig["widget-attributes"].default',
-          'options': '(myconfig.properties.values || myconfig["widget-attributes"].values)',
+          'value': 'model',
           'on-change': 'onChange',
           'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'dataset-selector': {
@@ -214,42 +199,44 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'value': 'model',
           'on-change': 'onChange',
-          'placeholder': 'myconfig["widget-attributes"].placeholder',
+          'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         },
       },
       'sql-select-fields': {
         element: '<sql-selector-widget></sql-selector-widget>',
         attributes: {
           'value': 'model',
-          'input-schema': 'inputSchema',
           'on-change': 'onChange',
-          'disabled': 'disabled'
+          'disabled': 'disabled',
+          'extra-config': '{ inputSchema: {{ inputSchema }} }',
         }
       },
       'join-types': {
         element: '<join-type-widget></join-type-widget>',
         attributes: {
           'value': 'model',
-          'input-schema': 'inputSchema',
-          'on-change': 'onChange'
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'extra-config': '{ inputSchema: {{ inputSchema }} }',
         }
       },
       'sql-conditions': {
         element: '<sql-conditions-widget></sql-conditions-widget>',
         attributes: {
           'value': 'model',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          'input-schema': 'inputSchema',
-          'on-change': 'onChange'
+          'extra-config': '{ inputSchema: {{ inputSchema }} }',
         }
       },
       'input-field-selector': {
         element: '<input-field-dropdown></input-field-dropdown>',
         attributes: {
           'value': 'model',
-          'input-schema': 'inputSchema',
           'on-change': 'onChange',
-          'disabled': 'disabled'
+          'disabled': 'disabled',
+          'extra-config': '{ inputSchema: {{ inputSchema }} }',
         }
       },
       'wrangler-directives': {
@@ -270,40 +257,40 @@ angular.module(PKG.name + '.commons')
           'properties': 'properties'
         }
       },
-      'textarea-validate': {
-        element: '<my-textarea-validate></my-textarea-validate>',
-        attributes: {
-          'ng-model': 'model',
-          'config': 'myconfig',
-          'disabled': 'disabled',
-          'node': 'node'
-        }
-      },
+      // 'textarea-validate': {
+      //   element: '<my-textarea-validate></my-textarea-validate>',
+      //   attributes: {
+      //     'ng-model': 'model',
+      //     'config': 'myconfig',
+      //     'disabled': 'disabled',
+      //     'node': 'node'
+      //   }
+      // },
       'multi-select': {
         element: '<multi-select></multi-select>',
         attributes: {
           'value': 'model',
-          'options': 'myconfig["widget-attributes"].options',
           'on-change': 'onChange',
-          'delimiter': 'myconfig["widget-attributes"].delimiter',
+          'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'radio-group': {
         element: '<radio-group-widget></radio-group-widget>',
         attributes: {
           'value': 'model',
-          'widget-attributes': 'myconfig["widget-attributes"]',
-          'property-name':'myconfig.name',
-          'on-change': 'onChange'
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
       'toggle': {
         element: '<toggle-switch-widget></toggle-switch-widget>',
         attributes: {
           'value': 'model',
-          'widget-attributes': 'myconfig["widget-attributes"]',
+          'on-change': 'onChange',
           'disabled': 'disabled',
-          'on-change': 'onChange'
+          'widget-props': 'myconfig["widget-attributes"]',
         }
       },
     };
