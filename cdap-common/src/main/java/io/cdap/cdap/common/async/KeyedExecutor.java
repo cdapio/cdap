@@ -78,7 +78,8 @@ public class KeyedExecutor<K> {
       public boolean cancel(boolean mayInterruptIfRunning) {
         // Cancel the task execution
         if (cancelled.compareAndSet(false, true)) {
-          Optional.ofNullable(futureReference.get()).ifPresent(f -> f.cancel(mayInterruptIfRunning));
+          Future<?> f = futureReference.get();
+          return f == null || f.cancel(mayInterruptIfRunning);
         }
         return super.cancel(mayInterruptIfRunning);
       }
