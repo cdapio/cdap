@@ -12,12 +12,6 @@
         "modules": false
       }
     ],
-    [
-      "@babel/preset-stage-2",
-      {
-        "decoratorsLegacy": true
-      }
-    ],
     "@babel/preset-react",
     "@babel/preset-typescript"
   ],
@@ -35,12 +29,6 @@
             }
           }
         ],
-        [
-          "@babel/preset-stage-2",
-          {
-            "decoratorsLegacy": true
-          }
-        ],
         "@babel/preset-react",
         "@babel/preset-typescript"
       ]
@@ -51,6 +39,16 @@
     "lodash",
     "@babel/plugin-proposal-class-properties",
     "@babel/plugin-proposal-object-rest-spread",
-    "@babel/plugin-syntax-dynamic-import"
+    "@babel/plugin-syntax-dynamic-import",
+    [
+      "@babel/plugin-proposal-decorators",
+      {
+        "legacy": true
+      }
+    ],
+    "@babel/plugin-proposal-function-sent",
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-proposal-numeric-separator",
+    "@babel/plugin-proposal-throw-expressions"
   ]
 }

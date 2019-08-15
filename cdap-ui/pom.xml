@@ -211,8 +211,8 @@
                   <goal>install-node-and-yarn</goal>
                 </goals>
                 <configuration>
-                  <nodeVersion>v8.11.0</nodeVersion>
-                  <yarnVersion>v1.10.1</yarnVersion>
+                  <nodeVersion>v10.16.2</nodeVersion>
+                  <yarnVersion>v1.7.0</yarnVersion>
                 </configuration>
               </execution>
               <execution>
@@ -340,8 +340,8 @@
                   <goal>install-node-and-yarn</goal>
                 </goals>
                 <configuration>
-                  <nodeVersion>v8.11.2</nodeVersion>
-                  <yarnVersion>v1.2.1</yarnVersion>
+                  <nodeVersion>v10.16.2</nodeVersion>
+                  <yarnVersion>v1.7.0</yarnVersion>
                 </configuration>
               </execution>
               <execution>

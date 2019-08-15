@@ -30,6 +30,7 @@ const getWebpackOutputObj = (mode) => {
     path: path.join(__dirname, 'dll'),
     filename: 'dll.cdap.[name].js',
     library: 'cdap_[name]',
+    globalObject: 'window',
   };
   if (mode === 'development') {
     output.filename = 'dll.cdap.[name].development.js';
@@ -58,9 +59,6 @@ var plugins = [
 
 var webpackConfig = {
   mode,
-  node: {
-    global: false,
-  },
   entry: {
     vendor: [
       'whatwg-fetch',

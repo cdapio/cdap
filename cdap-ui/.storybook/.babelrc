@@ -12,17 +12,22 @@
         "modules": false
       }
     ],
-    [
-      "@babel/preset-stage-2",
-      {
-        "decoratorsLegacy": true
-      }
-    ],
     "@babel/preset-react",
     "@babel/preset-typescript"
   ],
   "comments": true,
   "plugins": [
+    // Stage 2
+    [
+      "@babel/plugin-proposal-decorators",
+      {
+        "legacy": true
+      }
+    ],
+    "@babel/plugin-proposal-function-sent",
+    "@babel/plugin-proposal-export-namespace-from",
+    "@babel/plugin-proposal-numeric-separator",
+    "@babel/plugin-proposal-throw-expressions",
     "lodash",
     "@babel/plugin-proposal-class-properties",
     "@babel/plugin-proposal-object-rest-spread",

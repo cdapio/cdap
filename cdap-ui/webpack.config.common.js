@@ -136,9 +136,6 @@ var rules = [
 ];
 var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
-  node: {
-    global: false,
-  },
   context: __dirname + '/app/common',
   optimization: {
     splitChunks: {
@@ -178,6 +175,7 @@ var webpackConfig = {
     library: 'CaskCommon',
     libraryTarget: 'umd',
     publicPath: '/common_assets/',
+    globalObject: 'window',
   },
   externals: {
     react: {
