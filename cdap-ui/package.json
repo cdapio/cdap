@@ -49,6 +49,7 @@
     "@babel/plugin-proposal-throw-expressions": "7.0.0",
     "@babel/plugin-syntax-dynamic-import": "7.0.0",
     "@babel/plugin-syntax-import-meta": "7.0.0",
+    "@babel/plugin-transform-modules-commonjs": "7.0.0",
     "@babel/preset-env": "7.0.0",
     "@babel/preset-react": "7.0.0",
     "@babel/preset-typescript": "7.0.0",
@@ -166,6 +167,7 @@
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
     "fuse.js": "2.5.0",
+    "global": "^4.4.0",
     "graphql": "14.4.0",
     "graphql-import": "0.7.1",
     "helmet-csp": "2.7.1",
@@ -249,6 +251,15 @@
       "/^api/": "<rootDir>/app/cdap/api",
       "^lib": "<rootDir>/../lib",
       "^mocks": "<rootDir>/__mocks__"
+    },
+    "globals": {
+      "ts-jest": {
+        "babelConfig": {
+          "plugins": [
+            "@babel/plugin-transform-modules-commonjs"
+          ]
+        }
+      }
     }
   }
 }

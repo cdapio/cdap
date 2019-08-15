@@ -24,6 +24,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ErrorBoundary from 'components/ErrorBoundary';
+import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 
 require('./Home.scss');
 
@@ -158,6 +159,7 @@ export default class Home extends Component {
           />
           <Route path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
+          <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route component={Page404} />
         </Switch>
       </div>
