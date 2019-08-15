@@ -189,10 +189,15 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
     // Wait for the shutdown signal from the runtime monitor before shutting off the http server.
     // This allows the runtime monitor still able to talk to this service until all data are fetched.
-    Uninterruptibles.awaitUninterruptibly(shutdownLatch);
-    trafficRelayServer.stopAndWait();
-    httpService.stop();
-    LOG.info("Runtime monitor server stopped");
+    try {
+      if (!shutdownLatch.await(5, TimeUnit.MINUTES)) {
+        LOG.warn("Timed out waiting for a shutdown signal from the master, proceeding with shutdown.");
+      }
+    } finally {
+      trafficRelayServer.stopAndWait();
+      httpService.stop();
+      LOG.info("Runtime monitor server stopped");
+    }
   }
 
   @Nullable

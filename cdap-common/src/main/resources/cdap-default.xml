@@ -2626,6 +2626,14 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.poll.retry.timeout.ms</name>
+    <value>600000</value>
+    <description>
+      Maximum amount of milliseconds to retry failures encountered when polling updates from a runtime
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.batch.size</name>
     <value>1000</value>
     <description>

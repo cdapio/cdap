@@ -28,6 +28,8 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -66,6 +68,8 @@ import java.util.stream.Stream;
 public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitor.class);
+  private static final Logger WARN_LOG =
+    Loggers.sampling(LOG, LogSamplers.all(LogSamplers.skipFirstN(10), LogSamplers.limitRate(10 * 1000)));
 
   private static final Gson GSON = new Gson();
 
@@ -79,6 +83,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private final long pollTimeMillis;
   private final long gracefulShutdownMillis;
+  private final long pollErrorRetryTimeout;
   private final Deque<MonitorMessage> lastProgramStateMessages;
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
@@ -90,6 +95,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private Map<String, MonitorConsumeRequest> topicsToRequest;
   private long programFinishTime;
+  private long pollErrorStartTime;
 
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf, RuntimeMonitorClient monitorClient,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
@@ -104,6 +110,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.limit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
+    this.pollErrorRetryTimeout = cConf.getLong(Constants.RuntimeMonitor.POLL_ERROR_RETRY_TIMEOUT_MS);
     this.topicsToRequest = new HashMap<>();
     this.messagingContext = messagingContext;
     this.scheduledExecutorService = scheduledExecutorService;
@@ -115,6 +122,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.programStateWriter = programStateWriter;
     this.transactionRunner = transactionRunner;
     this.extraServices = new ArrayList<>(Arrays.asList(extraServices));
+    this.pollErrorStartTime = -1L;
   }
 
   @Override
@@ -182,13 +190,25 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     try {
       monitorResponses = monitorClient.fetchMessages(topicsToRequest);
     } catch (ServiceUnavailableException | IOException e) {
+      long now = System.currentTimeMillis();
+      if (pollErrorStartTime < 0L) {
+        pollErrorStartTime = now;
+      }
+      boolean doneRetrying = (now - pollErrorStartTime) > pollErrorRetryTimeout;
       // If the remote process is still running, just try to poll again in the next cycle
-      if (remoteProcessController.isRunning()) {
+      if (remoteProcessController.isRunning() && !doneRetrying) {
+        WARN_LOG.warn("Encountered an error while fetching messages from the remote runtime server. "
+                        + "The remote process is still running, will continue polling.", pollTimeMillis, e);
         return pollTimeMillis;
       }
+      if (doneRetrying) {
+        LOG.warn("Failed to fetch messages from the remote runtime server for {} ms. "
+                   + "Program run {} will be terminated.", programRunId, now - pollErrorStartTime);
+        triggerRuntimeShutdown();
+      }
 
-      // If failed to fetch messages and the remote process is not running, emit a failure program state and
-      // terminates the monitor
+      // If failed to fetch messages and the remote process is not running or the timeout has been reached,
+      // emit a failure program state and terminate the monitor
       programStateWriter.error(programRunId,
                                new IllegalStateException("Program runtime terminated abnormally. " +
                                                            "Please inspect logs for root cause.", e));
@@ -196,6 +216,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
       stop();
       return 0;
     }
+    pollErrorStartTime = -1L;
 
     // Update programFinishTime when remote runtime is in terminal state. Also buffer all the program status
     // events. This is done before transactional publishing to avoid re-fetching same remote runtime status
@@ -220,6 +241,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
       long now = System.currentTimeMillis();
       if ((latestPublishTime < 0 && now - (gracefulShutdownMillis >> 1) > programFinishTime)
         || (now - gracefulShutdownMillis > programFinishTime)) {
+        LOG.debug("Program run {} completed at {}, shutting down remote runtime.", programRunId, programFinishTime);
         triggerRuntimeShutdown();
         stop();
       }
@@ -346,7 +368,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
    * Calls into the remote runtime to ask for it to terminate itself.
    */
   private void triggerRuntimeShutdown() {
-    LOG.debug("Program run {} completed at {}, shutting down remote runtime.", programRunId, programFinishTime);
 
     // Publish all cached program state messages
     if (!lastProgramStateMessages.isEmpty()) {

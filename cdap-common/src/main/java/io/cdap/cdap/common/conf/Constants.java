@@ -845,6 +845,7 @@ public final class Constants {
    */
   public static final class RuntimeMonitor {
     public static final String POLL_TIME_MS = "app.program.runtime.monitor.polltime.ms";
+    public static final String POLL_ERROR_RETRY_TIMEOUT_MS = "app.program.runtime.monitor.poll.retry.timeout.ms";
     public static final String BATCH_SIZE = "app.program.runtime.monitor.batch.size";
     public static final String TOPICS_CONFIGS = "app.program.runtime.monitor.topics.configs";
     public static final String GRACEFUL_SHUTDOWN_MS = "app.program.runtime.monitor.graceful.shutdown.ms";
