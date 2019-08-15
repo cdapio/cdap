@@ -28,7 +28,10 @@ function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
     return `${cdapConfig['market.base.url']}/${path}`;
   }
   let routerhost = cdapConfig['router.server.address'],
-    routerport = cdapConfig['router.server.port'],
+    routerport =
+      cdapConfig['ssl.external.enabled'] === 'true'
+        ? cdapConfig['router.ssl.server.port']
+        : cdapConfig['router.server.port'],
     routerprotocol = cdapConfig['ssl.external.enabled'] === 'true' ? 'https' : 'http';
   const baseUrl = `${routerprotocol}://${routerhost}:${routerport}`;
   return path ? `${baseUrl}/${path}` : baseUrl;

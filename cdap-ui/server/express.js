@@ -34,7 +34,6 @@ module.exports = {
   },
 };
 
-var path = require('path');
 var express = require('express'),
   cookieParser = require('cookie-parser'),
   compression = require('compression'),
@@ -45,12 +44,14 @@ var express = require('express'),
   log4js = require('log4js'),
   bodyParser = require('body-parser'),
   ejs = require('ejs'),
+  path = require('path'),
   DLL_PATH = path.normalize(__dirname + '/../dll'),
   DIST_PATH = path.normalize(__dirname + '/../dist'),
   LOGIN_DIST_PATH = path.normalize(__dirname + '/../login_dist'),
   CDAP_DIST_PATH = path.normalize(__dirname + '/../cdap_dist'),
   MARKET_DIST_PATH = path.normalize(__dirname + '/../common_dist'),
   fs = require('fs'),
+  hsts = require('hsts'),
   objectQuery = require('lodash/get');
 
 ejs.delimiter = '_';
@@ -121,10 +122,10 @@ function extractUITheme(cdapConfig, uiThemePath) {
     }
   }
   // Relative path
-  
+
   {
     let themePath;
-    
+
     try {
       // __dirname will always be <entire-cdap-home>/ui/server.
       // So the uiThemePath should be relative to the ui folder
@@ -197,6 +198,11 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
+  app.use(
+    hsts({
+      maxAge: 60 * 60 * 24 * 365, // one year in seconds
+    })
+  );
 
   if (!isModeDevelopment()) {
     let marketUrl = url.parse(cdapConfig['market.base.url']);
