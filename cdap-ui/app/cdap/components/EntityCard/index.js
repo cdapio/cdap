@@ -28,6 +28,8 @@ import FastActions from 'components/EntityCard/FastActions';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import isNil from 'lodash/isNil';
 import capitalize from 'lodash/capitalize';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 
 require('./EntityCard.scss');
 
@@ -73,7 +75,11 @@ export default class EntityCard extends Component {
   }
 
   onClick() {
-    if (this.props.entity.type === 'artifact' || this.props.entity.type === 'program') {
+    if (
+      this.props.entity.type === 'artifact' ||
+      this.props.entity.type === 'program' ||
+      this.props.entity.isHydrator
+    ) {
       return;
     }
 
@@ -110,6 +116,62 @@ export default class EntityCard extends Component {
         successMessage={this.state.successMessage}
       />
     );
+
+    let card = (
+      <Card
+        header={header}
+        id={
+          this.props.entity.isHydrator
+            ? `entity-cards-datapipeline`
+            : `entity-cards-${this.props.entity.type}`
+        }
+        onClick={this.onClick.bind(this)}
+      >
+        <div className="entity-information clearfix">
+          <div
+            className={classnames('entity-id-container', {
+              'with-version': this.props.entity.version,
+            })}
+          >
+            <h4
+              className={classnames({ 'with-version': this.props.entity.version })}
+              title={this.props.entity.id}
+            >
+              {this.props.entity.id}
+            </h4>
+            <small>{objectQuery(this.props, 'entity', 'version')}</small>
+          </div>
+        </div>
+
+        {this.renderEntityStatus()}
+
+        <div className="fast-actions-container text-center">
+          <FastActions
+            entity={this.props.entity}
+            onUpdate={this.onFastActionUpdate.bind(this)}
+            onSuccess={this.props.onFastActionSuccess}
+            className="btn-group"
+          />
+        </div>
+      </Card>
+    );
+
+    if (this.props.entity.isHydrator) {
+      const navObject = {
+        stateName: 'hydrator.detail',
+        stateParams: {
+          namespace: getCurrentNamespace(),
+          pipelineId: this.props.entity.id,
+        },
+      };
+      const link = window.getHydratorUrl(navObject);
+      card = (
+        <a href={link} title={this.props.entity.id}>
+          {card}
+        </a>
+      );
+    }
+
     return (
       <div
         className={classnames(
@@ -120,42 +182,7 @@ export default class EntityCard extends Component {
         id={this.props.id}
         ref={(ref) => (this.cardRef = ref)}
       >
-        <Card
-          header={header}
-          id={classnames(
-            this.props.entity.isHydrator
-              ? `entity-cards-datapipeline`
-              : `entity-cards-${this.props.entity.type}`
-          )}
-          onClick={this.onClick.bind(this)}
-        >
-          <div className="entity-information clearfix">
-            <div
-              className={classnames('entity-id-container', {
-                'with-version': this.props.entity.version,
-              })}
-            >
-              <h4
-                className={classnames({ 'with-version': this.props.entity.version })}
-                title={this.props.entity.id}
-              >
-                {this.props.entity.id}
-              </h4>
-              <small>{this.props.entity.version ? this.props.entity.version : ''}</small>
-            </div>
-          </div>
-
-          {this.renderEntityStatus()}
-
-          <div className="fast-actions-container text-center">
-            <FastActions
-              entity={this.props.entity}
-              onUpdate={this.onFastActionUpdate.bind(this)}
-              onSuccess={this.props.onFastActionSuccess}
-              className="btn-group"
-            />
-          </div>
-        </Card>
+        {card}
       </div>
     );
   }
