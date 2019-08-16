@@ -25,7 +25,7 @@ import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage.TimeRangeOptions';
 
-class TimePickerView extends Component {
+export class TimePickerView extends Component {
   static propTypes = {
     selections: PropTypes.string,
     start: PropTypes.number,

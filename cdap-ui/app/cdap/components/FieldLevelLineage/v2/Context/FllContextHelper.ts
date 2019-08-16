@@ -18,6 +18,8 @@ import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';
 import { parseQueryString } from 'services/helpers';
 import { MyMetadataApi } from 'api/metadata';
+import { Theme } from 'services/ThemeHelper';
+import { IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 // types for backend response
 interface IFllEntity {
@@ -39,10 +41,10 @@ export interface IRelation {
 // These types are used by the frontend
 export interface IField {
   id: string;
-  type: string;
   name: string;
-  dataset: string;
-  namespace: string;
+  type?: string;
+  dataset?: string;
+  namespace?: string;
 }
 
 export interface ILink {
@@ -52,6 +54,18 @@ export interface ILink {
 
 export interface ITableFields {
   [tablename: string]: IField[];
+}
+
+export interface ITimeParams {
+  selection: string;
+  range: { start: string | number; end: string | number };
+}
+
+interface IQueryParams {
+  time?: string;
+  field?: string;
+  start?: string;
+  end?: string;
 }
 
 /** Parses an incoming or outgoing entity object from backend response
@@ -148,33 +162,45 @@ export function getTableId(dataset, namespace, type) {
   return `${type}_ns-${namespace}_ds-${dataset}`;
 }
 
-export function getTimeRange() {
+export function getTimeRangeFromUrl() {
   const queryString = parseQueryString();
   const selection = queryString ? queryString.time : TIME_OPTIONS[1]; // default is last 7 days
 
   if (selection === TIME_OPTIONS[0]) {
     return {
-      start: selection.start || 'now-7d',
-      end: selection.end || 'now',
+      selection,
+      range: {
+        start: queryString.start || 'now-7d',
+        end: queryString.end || 'now',
+      },
     };
   }
-  return TIME_OPTIONS_MAP[selection];
+  return { selection, range: TIME_OPTIONS_MAP[selection] };
 }
 
-export function fetchFieldLineage(context, namespace, dataset, qParams, timeRange) {
+export function getFieldLineage(
+  namespace: string,
+  dataset: string,
+  qParams: IQueryParams | null,
+  timeParams: ITimeParams,
+  cb: (lineage: IContextState) => void
+) {
   let fieldname;
-  let activeField;
+  let activeField: IField;
 
-  if (!qParams) {
+  if (!qParams || !qParams.field) {
     fieldname = null;
     activeField = null;
   } else {
     fieldname = qParams.field;
-    activeField = getFieldId(fieldname, dataset, namespace, 'target');
+    activeField = {
+      name: fieldname,
+      id: getFieldId(fieldname, dataset, namespace, 'target'),
+    };
   }
 
-  const start = timeRange.start;
-  const end = timeRange.end;
+  const start = timeParams.range.start;
+  const end = timeParams.range.end;
 
   const params = {
     namespace,
@@ -186,15 +212,84 @@ export function fetchFieldLineage(context, namespace, dataset, qParams, timeRang
 
   MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
     const parsedRes = getFieldsAndLinks(res);
-    const targetInfo = {
+    const targetInfo: IContextState = {
       target: res.entityId.dataset,
       targetFields: makeTargetFields(res.entityId, res.fields),
       links: parsedRes.links,
       causeSets: parsedRes.causeTables,
       impactSets: parsedRes.impactTables,
+      selection: timeParams.selection,
+      start,
+      end,
       activeField,
+      showingOneField: false,
     };
-
-    context.setState(targetInfo);
+    cb(targetInfo);
   });
+}
+
+function constructQueryParams(
+  selection: string,
+  activeField: IField,
+  start: string | number,
+  end: string | number
+) {
+  const pathname = location.pathname;
+  const timeParams = getTimeParamsFromSelection(selection, start, end);
+  let url = `${pathname}${timeParams}`;
+
+  if (activeField) {
+    url = `${url}&field=${activeField.name}`;
+  }
+  return url;
+}
+
+export function getTimeRange(selection) {
+  if (TIME_OPTIONS.indexOf(selection) === -1) {
+    return;
+  }
+
+  let start = null;
+  let end = null;
+
+  // set start and end times if not CUSTOM
+  if (selection !== TIME_OPTIONS[0]) {
+    ({ start, end } = TIME_OPTIONS_MAP[selection]);
+  }
+
+  return { start, end };
+}
+
+function getTimeParamsFromSelection(
+  selection: string,
+  start: string | number,
+  end: string | number
+) {
+  let queryParams = `?time=${selection}`;
+
+  if (selection === TIME_OPTIONS[0]) {
+    queryParams = `${queryParams}&start=${start}&end=${end}`;
+  }
+  return queryParams;
+}
+
+export function replaceHistory(
+  selection: string,
+  activeField: IField,
+  start: string | number,
+  end: string | number
+) {
+  const url = constructQueryParams(selection, activeField, start, end);
+  const currentLocation = location.pathname + location.search;
+
+  if (url === currentLocation) {
+    return;
+  }
+
+  const stateObj = {
+    title: Theme.productName,
+    url,
+  };
+
+  history.replaceState(stateObj, stateObj.title, stateObj.url);
 }

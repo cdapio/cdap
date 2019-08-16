@@ -18,16 +18,32 @@ import React, { useState, useContext } from 'react';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import IconButton from '@material-ui/core/IconButton';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import Divider from '@material-ui/core/Divider';
+import Button from '@material-ui/core/Button';
+import T from 'i18n-react';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
+const PREFIX = 'features.FieldLevelLineage.v2.FllTable';
 const styles = (theme): StyleRules => {
   return {
-    viewDropdown: {
+    root: {
+      paddingLeft: '20px',
+    },
+    targetView: {
       padding: 0,
       color: theme.palette.blue[200],
+      textAlign: 'right',
+      textTransform: 'none',
+      fontSize: 'inherit',
+    },
+    menu: {
+      border: `1px solid ${theme.palette.grey[200]}`,
+      borderRadius: '1px',
+      color: theme.palette.blue[200],
+      '& .MuiListItem-root': {
+        minHeight: 0,
+      },
     },
   };
 };
@@ -45,11 +61,13 @@ function FllMenu({ classes }) {
   }
 
   return (
-    <span>
-      <IconButton onClick={handleViewClick} className={classes.viewDropdown}>
+    <span className={classes.root}>
+      <Button onClick={handleViewClick} className={classes.targetView}>
+        {T.translate(`${PREFIX}.FllField.viewDropdown`)}
         <KeyboardArrowDownIcon />
-      </IconButton>
+      </Button>
       <Menu
+        classes={{ paper: classes.menu }}
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
@@ -57,10 +75,12 @@ function FllMenu({ classes }) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         transformOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <MenuItem onClick={handleViewCauseImpact}>Cause and impact</MenuItem>
+        <MenuItem onClick={handleViewCauseImpact}>
+          {T.translate(`${PREFIX}.FllMenu.causeImpact`)}
+        </MenuItem>
         <Divider variant="middle" />
-        <MenuItem onClick={handleClose}>Outgoing operations</MenuItem>
-        <MenuItem onClick={handleClose}>Incoming operations</MenuItem>
+        <MenuItem onClick={handleClose}>{T.translate(`${PREFIX}.FllMenu.viewIncoming`)}</MenuItem>
+        <MenuItem onClick={handleClose}>{T.translate(`${PREFIX}.FllMenu.viewOutgoing`)}</MenuItem>
       </Menu>
     </span>
   );

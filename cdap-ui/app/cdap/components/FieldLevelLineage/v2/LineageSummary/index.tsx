@@ -17,7 +17,11 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
-import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import {
+  ITableFields,
+  ILink,
+  IField,
+} from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import { Consumer, FllContext } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
@@ -45,7 +49,7 @@ const styles = (): StyleRules => {
 };
 
 interface ILineageState {
-  activeField: string;
+  activeField: IField;
   activeCauseSets: ITableFields;
   activeImpactSets: ITableFields;
   activeLinks: ILink[];
@@ -62,7 +66,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     const destEl = d3.select(`#${destId}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -48 + window.pageYOffset; // From the FllHeader
+    const offsetY = -48 + window.pageYOffset - 70; // From the FllHeader and TopPanel
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
@@ -139,7 +143,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     });
   }
 
-  private drawLinks(links: ILink[], activeFieldId: string = null) {
+  private drawLinks(links: ILink[], activeField: IField = null) {
+    const activeFieldId = activeField ? activeField.id : undefined;
+
     if (links.length === 0) {
       return;
     }
@@ -161,9 +167,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     }
 
     if (activeField) {
-      d3.select(`#${activeField}`).classed('selected', true);
+      d3.select(`#${activeField.id}`).classed('selected', true);
     }
-
+    this.clearCanvas();
     this.drawLinks(links, activeField);
   }
 

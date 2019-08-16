@@ -1535,18 +1535,33 @@ features:
         TargetHeader: 'Select a field to view lineage and operations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       FllTable:
-        fieldsCount:
+        fieldsCount: 
           1: "{context} field"
           _: "{context} fields"
         FllField:
           viewLineage: "View lineage"
           viewDropdown: "View"
           resetLineage: "Reset"
+        FllMenu:
+          causeImpact: "Cause and impact"
+          viewIncoming: "Outgoing operations"
+          viewOutgoing: "Incoming operations"
         noRelatedTables: "There is no {type} for {target}"
         relatedFieldsCount:
           1: "{context} related field"
           _: "{context} related fields"
-
+      TimeRangePicker:
+        TimeRangeOptions:
+          CUSTOM: Custom
+          last14d: Last 14 days
+          last6M: Last 6 months
+          last7d: Last 7 days
+          lastMonth: Last month
+          lastYear: Last 12 months
+        view: "View"
+      TopPanel:
+        timePickerCaption: "View"
+          
   ADLSBrowser:
     directory: Directory
     EmptyMessage:
