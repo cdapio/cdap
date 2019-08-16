@@ -16,9 +16,16 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
@@ -30,13 +37,14 @@ import io.cdap.cdap.data2.metadata.lineage.Relation;
 import io.cdap.cdap.data2.metadata.writer.BasicLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.LineageWriter;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -196,8 +204,8 @@ public class LineageAdminTest extends AppFabricTestBase {
         new Relation(dataset1, program2, AccessType.WRITE, twillRunId(run2)),
         new Relation(dataset2, program2, AccessType.READ, twillRunId(run2)),
         new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
-        new Relation(dataset4, program3, AccessType.WRITE, twillRunId(run3), emptySet()),
-        new Relation(dataset3, program3, AccessType.READ, twillRunId(run3), emptySet())
+        new Relation(dataset4, program3, AccessType.WRITE, twillRunId(run3)),
+        new Relation(dataset3, program3, AccessType.READ, twillRunId(run3))
       )
     );
 
@@ -336,12 +344,12 @@ public class LineageAdminTest extends AppFabricTestBase {
         new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
         new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2)),
 
-        new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
-        new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet()),
+        new Relation(dataset5, program3, AccessType.READ, twillRunId(run3)),
+        new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3)),
 
-        new Relation(dataset2, program4, AccessType.READ, twillRunId(run4), emptySet()),
-        new Relation(dataset3, program4, AccessType.READ, twillRunId(run4), emptySet()),
-        new Relation(dataset7, program4, AccessType.WRITE, twillRunId(run4), emptySet())
+        new Relation(dataset2, program4, AccessType.READ, twillRunId(run4)),
+        new Relation(dataset3, program4, AccessType.READ, twillRunId(run4)),
+        new Relation(dataset7, program4, AccessType.WRITE, twillRunId(run4))
       )
     );
 
@@ -408,16 +416,16 @@ public class LineageAdminTest extends AppFabricTestBase {
         new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
         new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2)),
 
-        new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
-        new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet()),
+        new Relation(dataset5, program3, AccessType.READ, twillRunId(run3)),
+        new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3)),
 
-        new Relation(dataset2, program4, AccessType.READ, twillRunId(run4), emptySet()),
-        new Relation(dataset3, program4, AccessType.READ, twillRunId(run4), emptySet()),
-        new Relation(dataset7, program4, AccessType.WRITE, twillRunId(run4), emptySet()),
+        new Relation(dataset2, program4, AccessType.READ, twillRunId(run4)),
+        new Relation(dataset3, program4, AccessType.READ, twillRunId(run4)),
+        new Relation(dataset7, program4, AccessType.WRITE, twillRunId(run4)),
 
-        new Relation(dataset3, program5, AccessType.READ, twillRunId(run5), emptySet()),
-        new Relation(dataset6, program5, AccessType.READ, twillRunId(run5), emptySet()),
-        new Relation(dataset1, program5, AccessType.WRITE, twillRunId(run5), emptySet())
+        new Relation(dataset3, program5, AccessType.READ, twillRunId(run5)),
+        new Relation(dataset6, program5, AccessType.READ, twillRunId(run5)),
+        new Relation(dataset1, program5, AccessType.WRITE, twillRunId(run5))
       )
     );
 
@@ -441,8 +449,8 @@ public class LineageAdminTest extends AppFabricTestBase {
         new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
         new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2)),
 
-        new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
-        new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet())
+        new Relation(dataset5, program3, AccessType.READ, twillRunId(run3)),
+        new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3))
       ),
       oneLevelLineage.getRelations()
     );
@@ -451,32 +459,58 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   @Test
   public void testWorkflowLineage() {
-    // Lineage for D3 -> P2 -> D2 -> P1 -> D1
 
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
+    ApplicationId testApp = NamespaceId.DEFAULT.app("testApp");
+    ProgramId workflowId = testApp.workflow("wf1");
+    // if the spark and mr job are inner jobs of workflow, they should be in the same app
+    ProgramId mrId = testApp.mr("mr1");
+    ProgramId sparkId = testApp.mr("spark1");
+    ImmutableList<WorkflowNode> nodes = ImmutableList.of(
+      new WorkflowActionNode("mr1", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr1")),
+      new WorkflowActionNode("spark1", new ScheduleProgramInfo(SchedulableProgramType.SPARK, "spark1")));
+    WorkflowSpecification wfSpec =
+      new WorkflowSpecification("test", "wf1", "", Collections.emptyMap(),
+                                nodes,
+                                Collections.emptyMap(), Collections.emptyMap());
+    ApplicationSpecification appSpec =
+      new DefaultApplicationSpecification("testApp", "dummy app", null,
+                                          NamespaceId.DEFAULT.artifact("testArtifact",
+                                                                       "1.0").toApiArtifactId(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          ImmutableMap.of(workflowId.getProgram(), wfSpec),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap());
+
     Store store = getInjector().getInstance(Store.class);
+    store.addApplication(testApp, appSpec);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
+    //                                           |
+    //                                           |-> P5,
+    // P1 and P2 are inner programs of the workflow
     // We need to use current time here as metadata store stores access time using current time
-    ProgramRunId run1 = program1.run(RunIds.generate(System.currentTimeMillis()).getId());
-    ProgramRunId run2 = program2.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId run1 = mrId.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId run2 = sparkId.run(RunIds.generate(System.currentTimeMillis()).getId());
     ProgramRunId run3 = program3.run(RunIds.generate(System.currentTimeMillis()).getId());
 
-    ProgramRunId workflow = program6.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId workflow = workflowId.run(RunIds.generate(System.currentTimeMillis()).getId());
 
     ProgramRunId run5 = program5.run(RunIds.generate(System.currentTimeMillis()).getId());
 
-    addWorkflowRuns(store, workflow.getProgram(), workflow.getRun(), run1, run2, run3);
     addRuns(store, workflow);
+    // only mr and spark can be inner programs
+    addWorkflowRuns(store, workflow.getProgram(), workflow.getRun(), run1, run2);
+    addRuns(store, run3);
     addRuns(store, run5);
 
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE);
     lineageWriter.addAccess(run1, dataset1, AccessType.WRITE);
     lineageWriter.addAccess(run1, dataset2, AccessType.READ);
 
@@ -492,11 +526,11 @@ public class LineageAdminTest extends AppFabricTestBase {
     // only access type
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset1, program6, AccessType.WRITE, twillRunId(workflow)),
-        new Relation(dataset2, program6, AccessType.READ, twillRunId(workflow)),
-        new Relation(dataset2, program6, AccessType.WRITE, twillRunId(workflow)),
-        new Relation(dataset3, program6, AccessType.READ, twillRunId(workflow)),
-        new Relation(dataset1, program6, AccessType.UNKNOWN, twillRunId(workflow)),
+        new Relation(dataset1, workflowId, AccessType.WRITE, twillRunId(workflow)),
+        new Relation(dataset2, workflowId, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset2, workflowId, AccessType.WRITE, twillRunId(workflow)),
+        new Relation(dataset3, workflowId, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3)),
         new Relation(dataset1, program5, AccessType.READ, twillRunId(run5))
       )
     );
@@ -519,20 +553,20 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(dataset1, program6, AccessType.WRITE, twillRunId(workflow)),
-        new Relation(dataset2, program6, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset1, workflowId, AccessType.WRITE, twillRunId(workflow)),
+        new Relation(dataset2, workflowId, AccessType.READ, twillRunId(workflow)),
         new Relation(dataset1, program5, AccessType.READ, twillRunId(run5)),
-        new Relation(dataset1, program6, AccessType.UNKNOWN, twillRunId(workflow))
+        new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       ),
       oneLevelLineage.getRelations());
 
     // Run tests without workflow parameter
     expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1)),
-        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2)),
-        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2)),
+        new Relation(dataset1, mrId, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset2, mrId, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset2, sparkId, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset3, sparkId, AccessType.READ, twillRunId(run2)),
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3)),
         new Relation(dataset1, program5, AccessType.READ, twillRunId(run5))
       )
@@ -542,7 +576,6 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                         100, null);
     // Lineage for D1
     Assert.assertEquals(expectedLineage, resultLineage);
-
 
     resultLineage = lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000,
                                                 100, null);
@@ -556,8 +589,8 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, mrId, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset2, mrId, AccessType.READ, twillRunId(run1)),
         new Relation(dataset1, program5, AccessType.READ, twillRunId(run5)),
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       ),
@@ -595,6 +628,117 @@ public class LineageAdminTest extends AppFabricTestBase {
     Assert.assertEquals(101, scanRange.getEnd());
   }
 
+  @Test
+  public void testLocalDatasetsInWorkflow() throws Exception {
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader =
+      new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
+
+    ApplicationId testApp = NamespaceId.DEFAULT.app("testLocalDatasets");
+    ProgramId workflowId = testApp.workflow("wf1");
+    // if the spark and mr job are inner jobs of workflow, they should be in the same app
+    ProgramId mrId1 = testApp.mr("mr1");
+    ProgramId mrId2 = testApp.mr("mr2");
+    ProgramId sparkId = testApp.spark("spark1");
+    ImmutableList<WorkflowNode> nodes = ImmutableList.of(
+      new WorkflowActionNode("mr1", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr1")),
+      new WorkflowActionNode("mr2", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr2")),
+      new WorkflowActionNode("spark1", new ScheduleProgramInfo(SchedulableProgramType.SPARK, "spark1")));
+    WorkflowSpecification wfSpec =
+      new WorkflowSpecification("test", "wf1", "", Collections.emptyMap(),
+                                nodes,
+                                Collections.emptyMap(), Collections.emptyMap());
+    ApplicationSpecification appSpec =
+      new DefaultApplicationSpecification("testLocalDatasets", "dummy app", null,
+                                          NamespaceId.DEFAULT.artifact("testArtifact",
+                                                                       "1.0").toApiArtifactId(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          ImmutableMap.of(workflowId.getProgram(), wfSpec),
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap());
+
+    Store store = getInjector().getInstance(Store.class);
+    store.addApplication(testApp, appSpec);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
+
+    // Add accesses for D1 -|
+    //                      |-> MR1 -> LOCAL1 -> MR2 -> LOCAL2 -> SPARK -> D3
+    //                  D2 -|
+    // P1 and P2 are inner programs of the workflow
+    // We need to use current time here as metadata store stores access time using current time
+    ProgramRunId mr1Run = mrId1.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId mr2Run = mrId2.run((RunIds.generate(System.currentTimeMillis()).getId()));
+    ProgramRunId sparkRun = sparkId.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId workflow = workflowId.run(RunIds.generate(System.currentTimeMillis()).getId());
+
+    // local datasets always end with workflow run id
+    DatasetId localDataset1 = NamespaceId.DEFAULT.dataset("localDataset1" + workflow.getRun());
+    DatasetId localDataset2 = NamespaceId.DEFAULT.dataset("localDataset2" + workflow.getRun());
+
+    addRuns(store, workflow);
+    // only mr and spark can be inner programs
+    addWorkflowRuns(store, workflow.getProgram(), workflow.getRun(), mr1Run, mr2Run, sparkRun);
+
+    lineageWriter.addAccess(mr1Run, dataset1, AccessType.READ);
+    lineageWriter.addAccess(mr1Run, dataset2, AccessType.READ);
+    lineageWriter.addAccess(mr1Run, localDataset1, AccessType.WRITE);
+
+    lineageWriter.addAccess(mr2Run, localDataset1, AccessType.READ);
+    lineageWriter.addAccess(mr2Run, localDataset2, AccessType.WRITE);
+
+    lineageWriter.addAccess(sparkRun, localDataset2, AccessType.READ);
+    lineageWriter.addAccess(sparkRun, dataset3, AccessType.WRITE);
+
+    // compute the lineage without roll up, the local datasets and inner program should not roll up
+    Lineage expectedLineage = new Lineage(
+      ImmutableSet.of(
+        new Relation(dataset1, mrId1, AccessType.READ, twillRunId(mr1Run)),
+        new Relation(dataset2, mrId1, AccessType.READ, twillRunId(mr1Run)),
+        new Relation(localDataset1, mrId1, AccessType.WRITE, twillRunId(mr1Run)),
+        new Relation(localDataset1, mrId2, AccessType.READ, twillRunId(mr2Run)),
+        new Relation(localDataset2, mrId2, AccessType.WRITE, twillRunId(mr2Run)),
+        new Relation(localDataset2, sparkId, AccessType.READ, twillRunId(sparkRun)),
+        new Relation(dataset3, sparkId, AccessType.WRITE, twillRunId(sparkRun))));
+    Lineage resultLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000,
+                                                        100, null);
+    // Lineage for D1
+    Assert.assertEquals(expectedLineage, resultLineage);
+    // D3 should have same lineage for all levels
+    resultLineage = lineageAdmin.computeLineage(dataset3, 500, System.currentTimeMillis() + 10000,
+                                                100, null);
+    Assert.assertEquals(expectedLineage, resultLineage);
+
+    // if only query for one level with no roll up, the roll up should not happen and the inner program and local
+    // dataset should get returned
+    expectedLineage = new Lineage(
+      ImmutableSet.of(
+        new Relation(dataset3, sparkId, AccessType.WRITE, twillRunId(sparkRun)),
+        new Relation(localDataset2, sparkId, AccessType.READ, twillRunId(sparkRun))));
+    resultLineage = lineageAdmin.computeLineage(dataset3, 500, System.currentTimeMillis() + 10000,
+                                                1, null);
+    Assert.assertEquals(expectedLineage, resultLineage);
+
+    // query for roll up the workflow, all the inner program and local datasets should not be in the result,
+    // the entire workflow information should get returned
+    expectedLineage = new Lineage(
+      ImmutableSet.of(
+        new Relation(dataset1, workflowId, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset2, workflowId, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset3, workflowId, AccessType.WRITE, twillRunId(workflow))));
+    // D1, D2, D3 should give same result
+    resultLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000,
+                                                1, "workflow");
+    Assert.assertEquals(expectedLineage, resultLineage);
+    resultLineage = lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000,
+                                                1, "workflow");
+    Assert.assertEquals(expectedLineage, resultLineage);
+    resultLineage = lineageAdmin.computeLineage(dataset3, 500, System.currentTimeMillis() + 10000,
+                                                1, "workflow");
+    Assert.assertEquals(expectedLineage, resultLineage);
+  }
+
   private void setStartAndRunning(Store store, ProgramId id, String pid, ArtifactId artifactId) {
     setStartAndRunning(store, id, pid, ImmutableMap.of(), ImmutableMap.of(), artifactId);
   }
@@ -627,16 +771,16 @@ public class LineageAdminTest extends AppFabricTestBase {
    * @param store store instance
    * @param workflowName name of the workflow
    * @param workflowRunId run ID associated with all program runs
-   * @param runs list ofo runs to be added
+   * @param runs list of runs to be added
    */
   private void addWorkflowRuns(Store store, String workflowName, String workflowRunId, ProgramRunId... runs) {
     Map<String, String> workflowIDMap = new HashMap<>();
     Map<String, String> emptyMap = ImmutableMap.of();
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowName);
-    workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "workflowNodeId");
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
     workflowIDMap.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     for (ProgramRunId run : runs) {
+      workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, run.getProgram());
       ArtifactId artifactId = run.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
       store.setProvisioning(run, emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
       store.setProvisioned(run, 0, AppFabricTestHelper.createSourceId(++sourceId));
@@ -644,10 +788,6 @@ public class LineageAdminTest extends AppFabricTestBase {
       store.setRunning(run, RunIds.getTime(run.getRun(), TimeUnit.SECONDS) + 1, null,
                        AppFabricTestHelper.createSourceId(++sourceId));
     }
-  }
-
-  private static Set<NamespacedEntityId> emptySet() {
-    return Collections.emptySet();
   }
 
   private RunId twillRunId(ProgramRunId run) {

@@ -337,6 +337,6 @@ public class LineageTable {
     ProgramId program = getProgramFromRow(row);
     LOG.trace("Got program {}", program);
 
-    return new Relation(datasetInstance, program, accessType, runId, Collections.emptySet());
+    return new Relation(datasetInstance, program, accessType, runId);
   }
 }
