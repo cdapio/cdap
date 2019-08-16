@@ -204,7 +204,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
       myapp2Id.getParent().getNamespace(), myapp2Id.getArtifact(),
       new ArtifactVersion(myapp2Id.getVersion()), new ArtifactVersion("3.0.0")));
     Set<PluginClass> additionalPlugins = Sets.newHashSet(new PluginClass(
-      "jdbc", "mysql", "", "com.mysql.jdbc.Driver", null, Collections.<String, PluginPropertyField>emptyMap()));
+      "jdbc", "mysql", "", Plugin1.class.getName(), null, Collections.<String, PluginPropertyField>emptyMap()));
     artifactClient.add(pluginId.getParent(), pluginId.getArtifact(), contentProvider,
                        pluginId.getVersion(), parents, additionalPlugins);
 

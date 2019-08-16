@@ -110,14 +110,15 @@ final class ArtifactInspector {
    * @param artifactFile the artifact file
    * @param parentClassLoader the parent classloader to use when inspecting plugins contained in the artifact.
    *                          For example, a ProgramClassLoader created from the artifact the input artifact extends
+   * @param additionalPlugins Additional plugin classes
    * @return metadata about the classes contained in the artifact
    * @throws IOException if there was an exception opening the jar file
    * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
    *                                  actually an Application.
    */
   ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                  @Nullable ClassLoader parentClassLoader) throws IOException,
-                                                                                  InvalidArtifactException {
+                                  @Nullable ClassLoader parentClassLoader, Set<PluginClass> additionalPlugins)
+    throws IOException, InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
     Files.createDirectories(tmpDir);
@@ -132,12 +133,12 @@ final class ArtifactInspector {
         PluginInstantiator pluginInstantiator =
           new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
                                  Files.createTempDirectory(stageDir, "plugins-").toFile(),
-                                 false)
-      ) {
+                                 false)) {
         pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
         ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
                                                               artifactLocation, artifactClassLoader);
-        return inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator).build();
+        return inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator,
+                              additionalPlugins).build();
       }
     } catch (EOFException | ZipException e) {
       throw new InvalidArtifactException("Artifact " + artifactId + " is not a valid zip file.", e);
@@ -222,8 +223,11 @@ final class ArtifactInspector {
    * Inspects the plugin file and extracts plugin classes information.
    */
   private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, File artifactFile,
-                                                 ArtifactId artifactId, PluginInstantiator pluginInstantiator)
+                                                 ArtifactId artifactId, PluginInstantiator pluginInstantiator,
+                                                 Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
+    ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
+    inspectAdditionalPlugins(artifactId, additionalPlugins, pluginClassLoader);
 
     // See if there are export packages. Plugins should be in those packages
     Set<String> exportPackages = getExportPackages(artifactFile);
@@ -232,7 +236,6 @@ final class ArtifactInspector {
     }
 
     try {
-      ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
       for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
         Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
         if (pluginAnnotation == null) {
@@ -257,6 +260,24 @@ final class ArtifactInspector {
     }
 
     return builder;
+  }
+
+  private void inspectAdditionalPlugins(ArtifactId artifactId, Set<PluginClass> additionalPlugins,
+                                        ClassLoader pluginClassLoader) throws InvalidArtifactException {
+    if (additionalPlugins != null) {
+      for (PluginClass pluginClass : additionalPlugins) {
+        try {
+          // Make sure additional plugin classes can be loaded. This is to ensure that plugin artifacts without
+          // plugin classes are not deployed.
+          pluginClassLoader.loadClass(pluginClass.getClassName());
+        } catch (ClassNotFoundException e) {
+          throw new InvalidArtifactException(
+            String.format("Artifact %s with version %s and scope %s does not have class %s.",
+                          artifactId.getName(), artifactId.getVersion(), artifactId.getScope().name(),
+                          pluginClass.getClassName()), e);
+        }
+      }
+    }
   }
 
   /**

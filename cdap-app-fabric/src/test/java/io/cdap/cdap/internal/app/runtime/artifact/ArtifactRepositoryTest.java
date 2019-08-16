@@ -214,8 +214,8 @@ public class ArtifactRepositoryTest {
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
     Set<PluginClass> manuallyAddedPlugins1 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", "io.cdap.classname", null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", "io.cdap.otherclassname", null, emptyMap)
+      new PluginClass("typeA", "manual1", "desc", TestPlugin.class.getName(), null, emptyMap),
+      new PluginClass("typeB", "manual2", "desc", TestPlugin.class.getName(), null, emptyMap)
     );
     File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
@@ -237,8 +237,8 @@ public class ArtifactRepositoryTest {
 
     // write plugins config file
     Set<PluginClass> manuallyAddedPlugins2 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", "co.notcask.classname", null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", "co.notcask.otherclassname", null, emptyMap)
+      new PluginClass("typeA", "manual1", "desc", TestPlugin.class.getName(), null, emptyMap),
+      new PluginClass("typeB", "manual2", "desc", TestPlugin.class.getName(), null, emptyMap)
     );
     pluginConfigFile = new File(systemArtifactsDir2, "BPlugin-1.0.0.json");
     ArtifactConfig pluginConfig2 = new ArtifactConfig(

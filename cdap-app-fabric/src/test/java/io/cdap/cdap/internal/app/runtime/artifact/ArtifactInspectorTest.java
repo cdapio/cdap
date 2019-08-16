@@ -52,6 +52,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -85,7 +86,7 @@ public class ArtifactInspectorTest {
            classLoaderFactory.createClassLoader(
              ImmutableList.of(artifactLocation).iterator(),
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
-      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
+      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader, Collections.emptySet());
     }
   }
 
@@ -128,7 +129,8 @@ public class ArtifactInspectorTest {
              ImmutableList.of(artifactLocation).iterator(),
              new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
 
-      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
+      ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader,
+                                                                  Collections.emptySet());
 
       // check app classes
       Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
@@ -150,6 +152,25 @@ public class ArtifactInspectorTest {
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
         new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)));
       Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
+    }
+  }
+
+  @Test(expected = InvalidArtifactException.class)
+  public void inspectAdditionaPluginClasses() throws Exception {
+    File artifactFile = createJar(InspectionApp.class, new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"),
+                                  new Manifest());
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
+    Location artifactLocation = Locations.toLocation(artifactFile);
+    try (CloseableClassLoader artifactClassLoader =
+           classLoaderFactory.createClassLoader(
+             ImmutableList.of(artifactLocation).iterator(),
+             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
+
+      // PluginClass contains a non existing classname that is not present in the artifact jar being used
+      PluginClass pluginClass = new PluginClass("plugin_type", "plugin_name", "", "non-existing-class",
+                                                "pluginConf", ImmutableMap.of());
+      // Inspects the jar and ensures that additional plugin classes can be loaded from the artifact jar
+      artifactInspector.inspectArtifact(artifactId, artifactFile, artifactClassLoader, ImmutableSet.of(pluginClass));
     }
   }
 
