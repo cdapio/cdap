@@ -40,10 +40,9 @@ public abstract class SparkCompute<IN, OUT> implements PipelineConfigurable, Ser
    * Configure a pipeline.
    *
    * @param pipelineConfigurer the configurer used to add required datasets and streams
-   * @throws IllegalArgumentException if the given config is invalid
    */
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     //no-op
   }
 

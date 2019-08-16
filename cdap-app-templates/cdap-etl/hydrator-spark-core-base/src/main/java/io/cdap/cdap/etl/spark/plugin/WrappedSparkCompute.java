@@ -41,7 +41,7 @@ public class WrappedSparkCompute<IN, OUT> extends SparkCompute<IN, OUT> {
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {

@@ -34,7 +34,6 @@ public interface PluginConfigurer {
    *                   instance at execution time
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
-   * @throws IllegalArgumentException if the pluginId has been used already
    * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
@@ -54,7 +53,6 @@ public interface PluginConfigurer {
    * @param selector for selecting which plugin to use
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
-   * @throws IllegalArgumentException if the pluginId has been used already
    * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
@@ -72,7 +70,6 @@ public interface PluginConfigurer {
    *                   instance at execution time
    * @param <T> type of the plugin class
    * @return A {@link Class} for the plugin class or {@code null} if no plugin was found
-   * @throws IllegalArgumentException if the pluginId has been used already
    * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
@@ -93,7 +90,6 @@ public interface PluginConfigurer {
    * @param selector for selecting which plugin to use
    * @param <T> type of the plugin class
    * @return A {@link Class} for the plugin class or {@code null} if no plugin was found
-   * @throws IllegalArgumentException if the pluginId has been used already
    * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable

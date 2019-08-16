@@ -22,6 +22,7 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageLifecycle;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 
 import java.util.Iterator;
 
@@ -52,6 +53,7 @@ public abstract class BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends Batch
    * setting output schema, and things of that nature.
    *
    * @param pipelineConfigurer the configurer used to add required datasets and streams
+   * @throws ValidationException if the given config is invalid
    */
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

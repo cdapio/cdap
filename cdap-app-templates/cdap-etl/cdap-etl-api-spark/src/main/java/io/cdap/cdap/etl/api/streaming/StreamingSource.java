@@ -44,7 +44,7 @@ public abstract class StreamingSource<T> implements PipelineConfigurable, Serial
   public abstract JavaDStream<T> getStream(StreamingContext context) throws Exception;
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
   }
 

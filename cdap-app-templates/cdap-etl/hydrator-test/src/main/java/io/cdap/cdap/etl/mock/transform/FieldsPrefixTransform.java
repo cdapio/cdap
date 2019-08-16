@@ -49,7 +49,7 @@ public class FieldsPrefixTransform extends Transform<StructuredRecord, Structure
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     try {
       Schema outSchema = config.getOutputSchema(Schema.parseJson(config.schemaStr));

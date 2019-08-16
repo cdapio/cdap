@@ -40,7 +40,7 @@ public class IdentityAggregator extends BatchAggregator<StructuredRecord, Struct
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }

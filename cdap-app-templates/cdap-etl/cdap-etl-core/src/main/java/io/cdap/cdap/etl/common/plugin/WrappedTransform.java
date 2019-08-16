@@ -43,7 +43,7 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       transform.configurePipeline(pipelineConfigurer);
       return null;

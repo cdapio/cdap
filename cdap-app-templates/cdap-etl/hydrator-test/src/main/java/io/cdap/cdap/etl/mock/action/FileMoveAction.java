@@ -25,15 +25,12 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
-import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
-import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import org.apache.twill.filesystem.Location;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -55,17 +52,17 @@ public class FileMoveAction extends Action {
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     pipelineConfigurer.createDataset(conf.destinationFileset, FileSet.class);
-    List<InvalidStageException> errors = new ArrayList<>();
+    StageConfigurer configurer = pipelineConfigurer.getStageConfigurer();
     try {
       Pattern.compile(conf.filterRegex);
     } catch (Exception e) {
-      errors.add(new InvalidConfigPropertyException(e.getMessage(), "filterRegex"));
+      configurer.addFailure("Error encountered while compiling filter regex: " + e.getMessage(),
+                            "Make sure filter regex is valid.").withConfigProperty("filterRegex");
     }
     if (conf.sourceFileset.equals(conf.destinationFileset)) {
-      errors.add(new InvalidStageException("source and destination filesets must be different"));
-    }
-    if (!errors.isEmpty()) {
-      throw new InvalidStageException(errors);
+      configurer.addFailure("Source and destination filesets must be different",
+                            "Make sure source and destination filesets are different")
+        .withConfigProperty("sourceFileset").withConfigProperty("destinationFileset");
     }
   }
 

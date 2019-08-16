@@ -54,7 +54,7 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }

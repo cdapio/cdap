@@ -54,6 +54,7 @@ import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.ActionSpec;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
@@ -90,7 +91,6 @@ import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.batch.ETLSpark;
-import io.cdap.cdap.etl.validation.InvalidPipelineException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -173,8 +173,10 @@ public class SmartWorkflow extends AbstractWorkflow {
                                             ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                             AlertPublisher.PLUGIN_TYPE),
                                             config.getEngine()).generateSpec(config);
-    } catch (InvalidPipelineException e) {
-      throw new IllegalArgumentException(String.format("Failed to configure pipeline: %s", e.getMessage()), e);
+    } catch (ValidationException e) {
+      throw new IllegalArgumentException(
+        String.format("Failed to configure pipeline: %s",
+                      e.getFailures().isEmpty() ? e.getMessage() : e.getFailures().iterator().next().getMessage()), e);
     }
 
     stageSpecs = new HashMap<>();

@@ -23,8 +23,8 @@ import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
-import io.cdap.cdap.etl.validation.InvalidPipelineException;
 
 /**
  * Data Streams Application.
@@ -42,8 +42,10 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
                                                   ImmutableSet.of(StreamingSource.PLUGIN_TYPE),
                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
                                                                   AlertPublisher.PLUGIN_TYPE)).generateSpec(config);
-    } catch (InvalidPipelineException e) {
-      throw new IllegalArgumentException(String.format("Failed to configure pipeline: %s", e.getMessage()), e);
+    } catch (ValidationException e) {
+      throw new IllegalArgumentException(
+        String.format("Failed to configure pipeline: %s",
+                      e.getFailures().isEmpty() ? e.getMessage() : e.getFailures().iterator().next().getMessage()), e);
     }
     addSpark(new DataStreamsSparkLauncher(spec));
   }

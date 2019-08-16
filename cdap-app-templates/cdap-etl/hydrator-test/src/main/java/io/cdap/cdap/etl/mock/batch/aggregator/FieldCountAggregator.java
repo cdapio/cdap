@@ -53,7 +53,7 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     if (!config.containsMacro("fieldType") && !config.containsMacro("fieldName")) {
       stageConfigurer.setOutputSchema(config.getSchema());

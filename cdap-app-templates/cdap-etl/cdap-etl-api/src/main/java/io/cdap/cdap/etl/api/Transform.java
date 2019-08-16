@@ -46,10 +46,9 @@ public abstract class Transform<IN, OUT> implements StageLifecycle<TransformCont
    * Configure an ETL pipeline.
    *
    * @param pipelineConfigurer the configurer used to add required datasets and streams
-   * @throws IllegalArgumentException if the given config is invalid
    */
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     //no-op
   }
 
