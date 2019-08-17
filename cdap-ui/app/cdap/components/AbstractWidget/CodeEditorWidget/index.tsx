@@ -15,27 +15,60 @@
  */
 
 import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IWidgetProps } from 'components/AbstractWidget';
 import CodeEditor from 'components/CodeEditor';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import PropTypes from 'prop-types';
+import ThemeWrapper from 'components/ThemeWrapper';
 
-interface ICodeEditorProps extends IWidgetProps<null> {
+const styles = (): StyleRules => {
+  return {
+    root: {
+      paddingTop: '7px',
+    },
+    editorRoot: {
+      border: 0,
+    },
+  };
+};
+
+interface ICodeEditorProps extends IWidgetProps<null>, WithStyles<typeof styles> {
   mode: string;
   rows: number;
 }
 
-const CodeEditorWidget: React.FC<ICodeEditorProps> = ({
+const CodeEditorWidgetView: React.FC<ICodeEditorProps> = ({
   value,
   onChange,
   disabled,
   mode,
   rows,
+  classes,
 }) => {
   return (
-    <CodeEditor mode={mode} rows={rows} value={value} onChange={onChange} disabled={disabled} />
+    <div className={classes.root}>
+      <CodeEditor
+        mode={mode}
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        classes={{ root: classes.editorRoot }}
+      />
+    </div>
   );
 };
+
+const StyledCodeEditorWidget = withStyles(styles)(CodeEditorWidgetView);
+
+function CodeEditorWidget(props) {
+  return (
+    <ThemeWrapper>
+      <StyledCodeEditorWidget {...props} />
+    </ThemeWrapper>
+  );
+}
 
 (CodeEditorWidget as any).propTypes = {
   ...WIDGET_PROPTYPES,

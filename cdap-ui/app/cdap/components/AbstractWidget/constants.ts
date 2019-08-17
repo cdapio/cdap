@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 export const WIDGET_PROPTYPES = {
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onChange: PropTypes.func,
+  updateAllProperties: PropTypes.func,
   widgetProps: PropTypes.object,
   extraConfig: PropTypes.object,
   disabled: PropTypes.bool,

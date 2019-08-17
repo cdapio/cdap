@@ -1,0 +1,63 @@
+/*
+ * Copyright © 2019 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$tab_border_color: #d1d3da;
+$tab_active_color: #f5f5f5;
+$dropdown_item_font_color: #373a3c;
+
+body.state-hydrator-create.state-hydrator {
+  .modal.rules-engine-modal {
+    .modal-dialog {
+      margin-top: 0;
+      margin-bottom: 0;
+
+      .rules-engine-home {
+        .nav.nav-tabs {
+          padding-left: 0;
+          margin-bottom: 0;
+          list-style: none;
+          border-bottom: 1px solid $tab_border_color;
+
+          .nav-link {
+            padding: 10px;
+            &.active {
+              background: $tab_active_color;
+            }
+          }
+        }
+        .right-panel {
+          .rule-book-menu {
+            .dropdown-item {
+              display: block;
+              width: 100%;
+              clear: both;
+              font-weight: normal;
+              color: $dropdown_item_font_color;
+              text-align: inherit;
+              white-space: nowrap;
+              background: none;
+              border: 0;
+              &.divider {
+                margin-top: 2px;
+                margin-bottom: 2px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

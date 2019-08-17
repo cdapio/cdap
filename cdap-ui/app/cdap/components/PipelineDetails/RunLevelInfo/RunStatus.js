@@ -54,7 +54,7 @@ const RunStatus = ({ runs, currentRun, pipelineId }) => {
       <span className={`run-status-bubble ${statusCSSClass}`}>
         <IconSVG name={statusIcon} />
       </span>
-      <span>{statusLabel}</span>
+      <span data-cy={statusLabel}>{statusLabel}</span>
       {runningRuns.length > 1 && status === PROGRAM_STATUSES.RUNNING ? (
         <RunningRunsPopover
           runs={runningRuns}

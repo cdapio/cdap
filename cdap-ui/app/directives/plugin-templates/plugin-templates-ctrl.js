@@ -120,6 +120,11 @@ angular.module(`${PKG.name}.commons`)
       });
     }
 
+    function createOnChangeHandler(field) {
+      return function (value) {
+        vm.pluginConfig.plugin.properties[field] = value;
+      };
+    }
 
     vm.onPluginVersionSelect = function () {
       vm.submitted = false;
@@ -165,6 +170,8 @@ angular.module(`${PKG.name}.commons`)
               if (field.defaultValue) {
                 vm.pluginConfig.plugin.properties[field.name] = vm.pluginConfig.plugin.properties[field.name] || field.defaultValue;
               }
+
+              field.onChangeHandler = createOnChangeHandler(field.name);
             });
           });
 

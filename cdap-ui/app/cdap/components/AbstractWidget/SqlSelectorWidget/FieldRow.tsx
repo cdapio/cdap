@@ -22,7 +22,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Typography from '@material-ui/core/Typography';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IFieldSchema } from 'components/AbstractWidget/SqlSelectorWidget';
-import Input from 'components/AbstractWidget/FormInputs/TextBox';
+import TextField from '@material-ui/core/TextField';
 
 const styles = (theme): StyleRules => {
   return {
@@ -90,7 +90,14 @@ const FieldRow: React.FC<IFieldRowProps> = ({
         />
       </TableCell>
       <TableCell>
-        <Input value={field.alias} onChange={aliasChange} disabled={!field.selected || disabled} />
+        <TextField
+          fullWidth
+          margin="dense"
+          variant="outlined"
+          value={field.alias}
+          onChange={aliasChange}
+          disabled={!field.selected || disabled}
+        />
       </TableCell>
     </TableRow>
   );

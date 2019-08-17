@@ -64,7 +64,7 @@ describe('Creating a pipeline', () => {
     cy.get('.node-configure-btn')
       .invoke('show')
       .click();
-    cy.get('.form-group')
+    cy.get('[data-cy=configuration-group]')
       .contains('Path')
       .parent()
       .find('input')

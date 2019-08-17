@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import Popover from 'components/Popover';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import AvailablePluginsStore from 'services/AvailablePluginsStore';
 import { MyArtifactApi } from 'api/artifact';
-import { generateNodeConfig } from 'services/HydratorPluginConfigFactory';
 import { Modal, ModalBody } from 'reactstrap';
-import SelectWithOptions from 'components/SelectWithOptions';
-import KeyValuePairs from 'components/KeyValuePairs';
-import RadioGroup from 'components/RadioGroup';
-import DSVEditor from 'components/DSVEditor';
-import { convertMapToKeyValuePairsObj } from 'components/KeyValuePairs/KeyValueStoreActions';
-import uuidV4 from 'uuid/v4';
 import { preventPropagation } from 'services/helpers';
+import { MyPipelineApi } from 'api/pipeline';
+import ConfigurationGroup from 'components/ConfigurationGroup';
 
 export default class PostRunActionsWizard extends Component {
   static propTypes = {
@@ -39,15 +32,11 @@ export default class PostRunActionsWizard extends Component {
   };
 
   state = {
-    groupsConfig: {},
+    widgetJson: {},
   };
 
-  componentWillMount() {
-    if (!Object.keys(this.props.action._backendProperties || {}).length) {
-      this.pluginFetch(this.props.action);
-    } else {
-      this.fetchWidgets(this.props.action);
-    }
+  componentDidMount() {
+    this.pluginFetch(this.props.action);
   }
 
   // Fetching Backend Properties
@@ -70,109 +59,25 @@ export default class PostRunActionsWizard extends Component {
 
   // Fetching Widget JSON for the plugin
   fetchWidgets(action) {
-    let pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
-    let { name, version, scope } = action.plugin.artifact;
-    let actionNameType = `${action.plugin.name}-${action.plugin.type}`;
-    let postRunActionPluginKey = `${actionNameType}-${name}-${version}-${scope}`;
-    let pluginJson = pluginsMap[postRunActionPluginKey];
-    let groupsConfig = generateNodeConfig(this.props.action._backendProperties, pluginJson.widgets);
-    this.setState({
-      groupsConfig,
-    });
-  }
-
-  getComponentFromWidgetType(type, name, attributes) {
-    let Component;
-    let props;
-    let value = this.props.action.plugin.properties[name];
-    switch (type) {
-      case 'select':
-        Component = SelectWithOptions;
-        props = {
-          value,
-          options: attributes.values,
-          className: 'form-control disabled',
-        };
-        break;
-      case 'number':
-        Component = 'input';
-        props = {
-          type: 'number',
-          value,
-          className: 'form-control',
-        };
-        break;
-      case 'textbox':
-        Component = 'input';
-        props = {
-          type: 'text',
-          value,
-          className: 'form-control',
-        };
-        break;
-      case 'textarea':
-        Component = 'textarea';
-        props = {
-          value,
-          className: 'form-control',
-        };
-        if (attributes && attributes.rows) {
-          props.rows = attributes.rows;
-        }
-        break;
-      case 'password':
-        Component = 'input';
-        props = {
-          type: 'password',
-          value,
-          className: 'form-control',
-        };
-        break;
-      case 'csv':
-      case 'dsv': {
-        Component = DSVEditor;
-        let values = value.split(attributes.delimiter || ',');
-        values = values.map((value) => ({
-          property: value,
-          uniqueId: uuidV4(),
-        }));
-        props = {
-          values,
-          placeholder: attributes['value-placeholder'],
-          disabled: true,
-        };
-        break;
-      }
-      case 'keyvalue': {
-        Component = KeyValuePairs;
-        let keyValuePairsMap = {};
-        let keyValuePairs = value.split('\n');
-        keyValuePairs.forEach((keyValuePair) => {
-          let keyAndValue = keyValuePair.split(':');
-          keyValuePairsMap[keyAndValue[0]] = keyAndValue[1];
+    const { name, version, scope } = action.plugin.artifact;
+    const widgetKey = `widgets.${action.plugin.name}-${action.plugin.type}`;
+    const widgetParams = {
+      namespace: getCurrentNamespace(),
+      artifactName: name,
+      scope: scope,
+      artifactVersion: version,
+      keys: widgetKey,
+    };
+    MyPipelineApi.fetchWidgetJson(widgetParams).subscribe((res) => {
+      try {
+        const parsedWidget = JSON.parse(res[widgetKey]);
+        this.setState({
+          widgetJson: parsedWidget,
         });
-        props = {
-          keyValues: convertMapToKeyValuePairsObj(keyValuePairsMap),
-          disabled: true,
-        };
-        break;
+      } catch (e) {
+        console.log(`Cannot parse widget JSON for ${action.plugin.name}`, e);
       }
-      case 'radio-group':
-        Component = RadioGroup;
-        props = {
-          value,
-          layout: attributes.layout,
-          options: attributes.options,
-        };
-        break;
-      default:
-        Component = 'input';
-        props = {
-          type: 'text',
-          className: 'form-control',
-        };
-    }
-    return <Component {...props} />;
+    });
   }
 
   toggleAndPreventPropagation = (e) => {
@@ -180,52 +85,16 @@ export default class PostRunActionsWizard extends Component {
     preventPropagation(e);
   };
 
-  renderBody() {
-    if (!this.state.groupsConfig.groups) {
-      return null;
-    }
-
+  renderBody = () => {
     return (
-      <fieldset disabled>
-        <div className="confirm-step-content">
-          {this.state.groupsConfig.groups.map((group, index) => {
-            return (
-              <div key={index}>
-                <div className="widget-group-container">
-                  {group.fields.map((field, i) => {
-                    return (
-                      <div key={i}>
-                        <div className="form-group">
-                          <label className="control-label">
-                            <span>{field.label}</span>
-                            <Popover
-                              target={() => <IconSVG name="icon-info-circle" />}
-                              showOn="Hover"
-                              placement="right"
-                            >
-                              {field.description}
-                            </Popover>
-                            {this.props.action._backendProperties[field.name].required ? (
-                              <IconSVG name="icon-asterisk" />
-                            ) : null}
-                          </label>
-                          {this.getComponentFromWidgetType(
-                            field['widget-type'],
-                            field.name,
-                            field['widget-attributes']
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </fieldset>
+      <ConfigurationGroup
+        values={this.props.action.plugin.properties}
+        pluginProperties={this.props.action._backendProperties}
+        widgetJson={this.state.widgetJson}
+        disabled={true}
+      />
     );
-  }
+  };
 
   render() {
     let action = this.props.action;

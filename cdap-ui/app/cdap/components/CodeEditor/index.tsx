@@ -18,27 +18,23 @@ import React from 'react';
 import 'ace-builds/src-min-noconflict/ace';
 import ThemeWrapper from 'components/ThemeWrapper';
 import PropTypes from 'prop-types';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
 
-const styles = (theme) => {
+const styles = (theme): StyleRules => {
   return {
     root: {
       display: 'block',
-      position: 'relative' as any,
+      position: 'relative',
+      border: `1px solid ${theme.palette.grey[400]}`,
     },
     button: {
-      position: 'absolute' as any,
+      position: 'absolute',
       right: 0,
       top: 0,
       zIndex: 1000,
       margin: 0,
-    },
-    editor: {
-      border: `1px solid ${theme.palette.grey['300']}`,
-      borderRadius: 4,
-      margin: '10px 0 10px 10px',
     },
   };
 };
@@ -54,6 +50,7 @@ export interface IBaseCodeEditorProps {
   activeLineMarker?: boolean;
   showPrettyPrintButton?: boolean;
   prettyPrintFunction?: (value: string) => string;
+  classes: Record<string, string>;
 }
 
 interface ICodeEditorProps extends IBaseCodeEditorProps, WithStyles<typeof styles> {}
@@ -71,6 +68,16 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
   };
   public aceRef: HTMLElement;
   private editor;
+
+  public componentWillReceiveProps(nextProps) {
+    const currentValue = this.editor.getSession().getValue();
+    if (nextProps.value === currentValue) {
+      return;
+    }
+
+    this.editor.getSession().setValue(nextProps.value);
+  }
+
   public componentDidMount() {
     window.ace.config.set('basePath', '/assets/bundle/ace-editor-worker-scripts/');
     this.editor = window.ace.edit(this.aceRef);
@@ -96,7 +103,7 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
     return (
       <div className={classes.root}>
         <div
-          className={`${className} ${classes.editor}`}
+          className={`${className}`}
           style={{ height: `${this.props.rows * CodeEditorView.LINE_HEIGHT}px` }}
           ref={(ref) => (this.aceRef = ref)}
         >
@@ -107,12 +114,11 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
             className={classes.button}
             variant="outlined"
             onClick={() => {
-              let v;
-              const code = this.editor.getSession().getValue();
+              let code = this.editor.getSession().getValue();
               if (typeof this.props.prettyPrintFunction === 'function') {
-                v = this.props.prettyPrintFunction(code);
+                code = this.props.prettyPrintFunction(code);
               }
-              this.editor.getSession().setValue(v);
+              this.props.onChange(code);
             }}
           >
             Tidy

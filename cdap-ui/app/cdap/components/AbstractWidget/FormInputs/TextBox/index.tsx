@@ -15,41 +15,18 @@
 */
 
 import React from 'react';
-import TextField from '@material-ui/core/TextField';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import ThemeWrapper from 'components/ThemeWrapper';
 import { objectQuery } from 'services/helpers';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-
-const styles = (theme) => {
-  return {
-    input: {
-      padding: 10,
-    },
-    root: {
-      '& $notchedOutline': {
-        borderColor: theme.palette.grey['300'],
-      },
-      '&:hover $notchedOutline': {
-        borderColor: theme.palette.grey['300'],
-      },
-      '&$focused $notchedOutline': {
-        border: `1px solid ${theme.palette.blue[100]}`,
-      },
-    },
-    focused: {},
-    notchedOutline: {},
-  };
-};
+import InputBase from '@material-ui/core/InputBase';
 
 interface ITextBoxWidgetProps {
   placeholder?: string;
 }
 
-interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps>, WithStyles<typeof styles> {}
+interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {}
 
-const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabled, classes }) => {
+const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabled }) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
@@ -58,29 +35,16 @@ const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabl
   };
 
   const placeholder = objectQuery(widgetProps, 'placeholder');
-
   return (
-    <TextField
+    <InputBase
       fullWidth
-      variant="outlined"
       value={value}
       onChange={onChangeHandler}
-      className={classes.root}
       placeholder={placeholder}
-      disabled={disabled}
-      InputProps={{
-        classes,
-      }}
+      readOnly={disabled}
     />
   );
 };
-const StyledTextBox = withStyles(styles)(TextBox);
-export default function TextBoxWrapper(props) {
-  return (
-    <ThemeWrapper>
-      <StyledTextBox {...props} />
-    </ThemeWrapper>
-  );
-}
 
-(TextBoxWrapper as any).propTypes = WIDGET_PROPTYPES;
+export default TextBox;
+(TextBox as any).propTypes = WIDGET_PROPTYPES;

@@ -22,9 +22,11 @@ require('./AbstractWidget.scss');
 export const DEFAULT_WIDGET_PROPS = {
   widgetProps: {},
   value: '',
-  // tslint:disable-next-line:no-empty
-  onChange: () => {},
   disabled: false,
+  // tslint:disable:no-empty
+  onChange: () => {},
+  updateAllProperties: () => {},
+  // tslint:enable:no-empty
 };
 
 export interface IStageSchema {
@@ -33,12 +35,14 @@ export interface IStageSchema {
 }
 
 export interface IWidgetProps<T = any> {
-  widgetProps: T;
+  widgetProps?: T;
   value: string | number;
   onChange: (value) => void | React.Dispatch<any>;
+  updateAllProperties?: (values: Record<string, string>) => void | React.Dispatch<any>;
   extraConfig?: {
     namespace?: string;
     inputSchema?: IStageSchema[];
+    properties?: Record<string, string>;
   };
   disabled?: boolean;
 }
@@ -59,6 +63,7 @@ export default class AbstractWidget extends React.PureComponent<IAbstractWidgetP
         <StateWrapper
           comp={Comp}
           onChange={this.props.onChange}
+          updateAllProperties={this.props.updateAllProperties}
           value={this.props.value}
           widgetProps={this.props.widgetProps}
           extraConfig={this.props.extraConfig}

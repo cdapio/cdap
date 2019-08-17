@@ -27,14 +27,14 @@ const prettyPrint = (unformattedValue: string) => {
   }
   return JSON.stringify(v, null, 2);
 };
-function JSONEditor({ value, onChange, ...restProps }: IBaseCodeEditorProps) {
+function JSONEditor({ value, onChange, disabled, ...restProps }: IBaseCodeEditorProps) {
+  const codeValue = disabled ? prettyPrint(value) : value;
+
   return (
     <CodeEditor
       {...restProps}
-      value={prettyPrint(value)}
-      onChange={(v) => {
-        onChange(v.replace(/(\n|\t| +)/g, ''));
-      }}
+      value={codeValue}
+      onChange={onChange}
       activeLineMarker={false}
       showPrettyPrintButton={true}
       prettyPrintFunction={prettyPrint}
@@ -48,6 +48,7 @@ function JSONEditor({ value, onChange, ...restProps }: IBaseCodeEditorProps) {
   onChange: PropTypes.func,
   rows: PropTypes.number,
   disabled: PropTypes.bool,
+  classes: PropTypes.object,
 };
 
 export default JSONEditor;

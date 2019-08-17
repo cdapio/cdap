@@ -19,6 +19,16 @@ import { objectQuery } from 'services/helpers';
 import ToggleSwitch from 'components/ToggleSwitch';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import ThemeWrapper from 'components/ThemeWrapper';
+
+const styles = (): StyleRules => {
+  return {
+    root: {
+      paddingTop: '7px',
+    },
+  };
+};
 
 interface IToggle {
   label: string;
@@ -31,13 +41,16 @@ interface IToggleWidgetProps {
   default?: string;
 }
 
-interface IToggleToggleSwitchProps extends IWidgetProps<IToggleWidgetProps> {}
+interface IToggleToggleSwitchProps
+  extends IWidgetProps<IToggleWidgetProps>,
+    WithStyles<typeof styles> {}
 
-const ToggleSwitchWidget: React.FC<IToggleToggleSwitchProps> = ({
+const ToggleSwitchWidgetView: React.FC<IToggleToggleSwitchProps> = ({
   widgetProps,
   value,
   onChange,
   disabled,
+  classes,
 }) => {
   const onValue = objectQuery(widgetProps, 'on', 'value') || 'on';
   const offValue = objectQuery(widgetProps, 'off', 'value') || 'off';
@@ -49,14 +62,27 @@ const ToggleSwitchWidget: React.FC<IToggleToggleSwitchProps> = ({
     onChange(isOn ? offValue : onValue);
   }
   return (
-    <ToggleSwitch
-      isOn={isOn}
-      onToggle={toggleSwitch}
-      disabled={disabled}
-      onLabel={onLabel}
-      offLabel={offLabel}
-    />
+    <div className={classes.root}>
+      <ToggleSwitch
+        isOn={isOn}
+        onToggle={toggleSwitch}
+        disabled={disabled}
+        onLabel={onLabel}
+        offLabel={offLabel}
+      />
+    </div>
   );
 };
+
+const StyledToggleSwitchWidget = withStyles(styles)(ToggleSwitchWidgetView);
+
+function ToggleSwitchWidget(props) {
+  return (
+    <ThemeWrapper>
+      <StyledToggleSwitchWidget {...props} />
+    </ThemeWrapper>
+  );
+}
+
 export default ToggleSwitchWidget;
 (ToggleSwitchWidget as any).propTypes = WIDGET_PROPTYPES;

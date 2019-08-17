@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -125,6 +125,19 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.$timeout.cancel(this.setStateTimeout);
       this.eventEmitter.off('dataset.selected', this.handleDatasetSelected.bind(this));
     });
+
+    this.labelConfig = {
+      widgetProperty: {
+        label: 'Label',
+        'widget-type': 'textbox',
+      },
+      pluginProperty: {
+        required: true,
+      }
+    };
+
+    this.onPropertiesChange = this.onPropertiesChange.bind(this);
+    this.handleLabelChange = this.handleLabelChange.bind(this);
   }
   handleDatasetSelected(schema, format, datasetAlreadyExists, datasetId) {
     if (datasetAlreadyExists) {
@@ -141,6 +154,13 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (datasetId) {
       this.datasetId = datasetId;
     }
+  }
+
+  onPropertiesChange(values = {}) {
+    this.state.node.plugin.properties = values;
+  }
+  handleLabelChange(value) {
+    this.state.node.plugin.label = value;
   }
 
   showContents() {
@@ -276,12 +296,17 @@ class HydratorPlusPlusNodeConfigCtrl {
       )
         .then(
           (res) => {
+            this.widgetJson = res;
+
+            // Not going to eliminate the groupsConfig just yet, because there are still other things depending on it
+            // such as output schema.
             try {
               this.state.groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
             } catch (e) {
               noJsonErrorHandler();
               return;
             }
+
             const generateJumpConfig = (jumpConfig, properties) => {
               let datasets = [];
               let jumpConfigDatasets = jumpConfig.datasets || [];
@@ -302,33 +327,6 @@ class HydratorPlusPlusNodeConfigCtrl {
               // Jumpconfig is only for published view where everything is disabled.
               delete this.state.groupsConfig.jumpConfig;
             }
-            angular.forEach(this.state.groupsConfig.groups, (group) => {
-              angular.forEach(group.fields, (field) => {
-                field.errorTooltip = '\'' + field.label + '\' is a required field';
-                if (field.defaultValue) {
-                  this.state.node.plugin.properties[field.name] = this.state.node.plugin.properties[field.name] || field['widget-attributes'].default;
-                }
-              });
-            });
-            let listOfFields = _.flatten(this.state.groupsConfig.groups.map(group => group.fields));
-            this.emptyHiddenFields = listOfFields
-              .filter(field => {
-                var defaultValue = this.myHelpers.objectQuery(field, 'widget-attributes', 'default');
-                var widgetType = field['widget-type'];
-                var isEmpty = function isEmpty(v) {
-                  return _.isUndefined(v) || _.isNull(v) || _.isEmpty(v);
-                };
-                let requiredFields = _.values(this.state.node._backendProperties, function (field) {
-                    return field;
-                  }).filter(function (field) {
-                    return field.required;
-                  }).map(function (field) {
-                    return field.name;
-                  });
-                return requiredFields.indexOf(field.name) !== -1 && widgetType === 'hidden' && isEmpty(defaultValue);
-              })
-              .map(field => '"' + field.name + '"');
-
             var configOutputSchema = this.state.groupsConfig.outputSchema;
             // If its an implicit schema, set the output schema to the implicit schema and inform ConfigActionFactory
             if (configOutputSchema.implicitSchema) {

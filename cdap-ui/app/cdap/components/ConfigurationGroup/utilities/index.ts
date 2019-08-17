@@ -103,3 +103,14 @@ export function processConfigurationGroups(
     configurationGroups: filteredConfigurationGroups,
   };
 }
+
+export function isMacro(value) {
+  if (!value || !value.length) {
+    return false;
+  }
+
+  const beginChar = value.indexOf('${') === 0;
+  const endingChar = value.charAt(value.length - 1) === '}';
+
+  return beginChar && endingChar;
+}

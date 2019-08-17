@@ -110,7 +110,9 @@ export default class AbstractMultiRowWidget<
         autofocus: shouldFocus ? id : null,
       },
       () => {
-        this.onChange();
+        if (shouldFocus) {
+          this.onChange();
+        }
       }
     );
   };

@@ -17,20 +17,19 @@
 import React, { useState, useEffect } from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import isEqual from 'lodash/isEqual';
-import Select from 'components/AbstractWidget/FormInputs/Select';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import Paper from '@material-ui/core/Paper';
 import ThemeWrapper from 'components/ThemeWrapper';
 import If from 'components/If';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import OutlinedSelect from 'components/OutlinedSelect';
 
 const styles = (theme): StyleRules => {
   return {
     multiCheckboxesContainer: {
-      padding: '20px',
+      padding: '10px',
     },
     emptyMessageContainer: {
       backgroundColor: 'initial',
@@ -154,9 +153,9 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
   return (
     <div>
       <If condition={inputs.length > 0}>
-        <Paper className={classes.multiCheckboxesContainer}>
-          <Select
-            widgetProps={{ options: DROP_DOWN_OPTIONS }}
+        <div className={classes.multiCheckboxesContainer}>
+          <OutlinedSelect
+            options={DROP_DOWN_OPTIONS}
             value={joinType}
             onChange={joinTypeChange}
             disabled={disabled}
@@ -191,7 +190,7 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
               </div>
             </div>
           </If>
-        </Paper>
+        </div>
       </If>
       <If condition={inputs.length === 0}>
         <div className={classes.emptyMessageContainer}>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,11 @@ class WizardConfigureConfirmStepCtrl {
     this.HydratorPlusPlusPluginConfigFactory = HydratorPlusPlusPluginConfigFactory;
     this.showLoadingIcon = true;
     this.action.properties = this.action.properties || {};
+    this.widgetJson = {};
     this.requiredPropertyError = GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
+
+    this.onChangeHandler = this.onChangeHandler.bind(this);
+
     if (this.action && !Object.keys(this.action._backendProperties || {}).length) {
       this.pluginFetch(this.action)
         .then( () => this.showLoadingIcon = false);
@@ -62,23 +66,15 @@ class WizardConfigureConfirmStepCtrl {
     return this.HydratorPlusPlusPluginConfigFactory
       .fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
       .then( (widgetJson) => {
-        this.noConfig = false;
-
-        this.groupsConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(this.action._backendProperties, widgetJson);
-
-        // Initializing default value
-        angular.forEach(this.groupsConfig.groups, (group) => {
-          angular.forEach(group.fields, (field) => {
-            if (field.defaultValue) {
-              this.action.properties[field.name] = this.action.properties[field.name] || field.defaultValue;
-            }
-          });
-        });
+        this.widgetJson = widgetJson;
         this.loadingPlugin = false;
       }, () => {
         this.loadingPlugin = false;
-        this.noConfig = true;
       });
+  }
+
+  onChangeHandler(values = {}) {
+    this.action.properties = values;
   }
 
   addAction(isClose) {
@@ -118,8 +114,6 @@ class WizardConfigureConfirmStepCtrl {
     this.addAction();
   }
 }
-
-WizardConfigureConfirmStepCtrl.$inject = ['$state', 'myPipelineApi', 'HydratorPlusPlusPluginConfigFactory', 'GLOBALS'];
 
 angular.module(PKG.name + '.commons')
   .controller('WizardConfigureConfirmStepCtrl', WizardConfigureConfirmStepCtrl);

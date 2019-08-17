@@ -15,7 +15,6 @@
 */
 
 import React, { useState } from 'react';
-import TextField from '@material-ui/core/TextField';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import InputAdornment from '@material-ui/core/InputAdornment';
@@ -25,6 +24,7 @@ import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import InputBase from '@material-ui/core/InputBase';
 
 const styles = (theme) => {
   return {
@@ -62,30 +62,24 @@ function Password({ value, onChange, widgetProps, disabled, classes }: IPassword
   const placeholder = objectQuery(widgetProps, 'placeholder');
 
   return (
-    <TextField
+    <InputBase
       fullWidth
-      variant="outlined"
       type={pwdVisibility ? 'text' : 'password'}
       value={value}
       onChange={onChangeHandler}
       placeholder={placeholder}
       disabled={disabled}
-      InputProps={{
-        classes: {
-          input: classes.input,
-        },
-        startAdornment: (
-          <InputAdornment position="start">
-            <IconButton
-              className={classes.button}
-              aria-label="Toggle password visibility"
-              onClick={handleClickShowPassword}
-            >
-              {pwdVisibility ? <Visibility /> : <VisibilityOff />}
-            </IconButton>
-          </InputAdornment>
-        ),
-      }}
+      startAdornment={
+        <InputAdornment position="start">
+          <IconButton
+            className={classes.button}
+            aria-label="Toggle password visibility"
+            onClick={handleClickShowPassword}
+          >
+            {pwdVisibility ? <Visibility /> : <VisibilityOff />}
+          </IconButton>
+        </InputAdornment>
+      }
     />
   );
 }

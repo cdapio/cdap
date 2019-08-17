@@ -18,7 +18,6 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { MyDatasetApi } from 'api/dataset';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import TextField from '@material-ui/core/TextField';
 import If from 'components/If';
 import classnames from 'classnames';
 import ee from 'event-emitter';
@@ -28,25 +27,10 @@ import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { KEY_CODE } from 'services/global-constants';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import { IWidgetProps } from 'components/AbstractWidget';
+import InputBase from '@material-ui/core/InputBase';
 
 const styles = (theme): StyleRules => {
   return {
-    textInput: {
-      padding: '10px',
-    },
-    root: {
-      '& $notchedOutline': {
-        borderColor: theme.palette.grey['300'],
-      },
-      '&:hover $notchedOutline': {
-        borderColor: theme.palette.grey['300'],
-      },
-      '&$focused $notchedOutline': {
-        border: `1px solid ${theme.palette.blue[100]}`,
-      },
-    },
-    focused: {},
-    notchedOutline: {}, // empty object to override styles
     autocompleteContainer: {
       position: 'relative',
     },
@@ -189,8 +173,7 @@ const DatasetSelectorView: React.SFC<IDatasetSelectorProps> = ({
   return (
     <ClickAwayListener onClickAway={handleBlur}>
       <div>
-        <TextField
-          variant="outlined"
+        <InputBase
           value={value}
           onChange={handleChange}
           fullWidth
@@ -199,16 +182,6 @@ const DatasetSelectorView: React.SFC<IDatasetSelectorProps> = ({
           placeholder={placeholder}
           disabled={disabled}
           onFocus={() => setShowAutoComplete(true)}
-          InputProps={{
-            classes: {
-              root: classes.root,
-              focused: classes.focused,
-              notchedOutline: classes.notchedOutline,
-            },
-          }}
-          inputProps={{
-            className: classes.textInput,
-          }}
         />
         <div className={classes.autocompleteContainer}>
           <If condition={showAutocomplete && matches.length > 0}>
