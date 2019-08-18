@@ -19,3 +19,5 @@ coverage/
 .project
 .settings/
 server_dist/
+server/public/*
+!server/public/dll

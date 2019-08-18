@@ -20,7 +20,7 @@ var TerserPlugin = require('terser-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-let pathsToClean = ['common_dist'];
+let pathsToClean = ['server/public/common_dist'];
 
 // the clean options to use
 let cleanOptions = {
@@ -83,11 +83,10 @@ var rules = [
     exclude: [
       /node_modules/,
       /bower_components/,
-      /dist/,
-      /cdap_dist/,
-      /common_dist/,
+      /server\/public\/dist/,
+      /server\/public\/cdap_dist/,
+      /server\/public\/common_dist/,
       /lib/,
-      /wrangler_dist/,
     ],
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
@@ -171,7 +170,7 @@ var webpackConfig = {
   output: {
     filename: '[name].js',
     chunkFilename: '[name].[chunkhash].js',
-    path: __dirname + '/common_dist',
+    path: __dirname + '/server/public/common_dist',
     library: 'CaskCommon',
     libraryTarget: 'umd',
     publicPath: '/common_assets/',
