@@ -764,7 +764,7 @@
 
     <property>
       <name>messaging.container.memory.mb</name>
-      <value>512</value>
+      <value>4096</value>
     </property>
 
     <property>
