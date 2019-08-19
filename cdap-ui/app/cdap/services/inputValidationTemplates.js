@@ -34,6 +34,9 @@ const NAME = {
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid Input, see input instructions.';
     }
 };
 

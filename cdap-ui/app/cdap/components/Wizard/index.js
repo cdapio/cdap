@@ -259,6 +259,7 @@ export default class Wizard extends Component {
         <span>{T.translate('features.Wizard.NavigationButtons.previous')}</span>
       </button>
     );
+    //set finish button status while invalid input
     let finishButton = (
       <button
         className="btn btn-primary"

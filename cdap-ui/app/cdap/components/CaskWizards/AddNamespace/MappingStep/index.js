@@ -20,6 +20,45 @@ import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespac
 import T from 'i18n-react';
 import InputWithValidations from 'components/InputWithValidations';
 import {Provider, connect} from 'react-redux';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
+
+var inputs = {
+  hdfs: {
+    error: '',
+    required: false,
+    template: 'NAME',
+    label: 'hdfsDirectory',
+  },
+  hive: {
+    error: '',
+    required: false,
+    template: 'NAME',
+    label: 'hiveDatabaseName',
+  },
+  hbase: {
+    error: '',
+    required: false,
+    template: 'NAME',
+    label: 'hbaseNamespace',
+  },
+  scheduler: {
+    error: '',
+    required: false,
+    template: 'NAME',
+    label: 'schedulerQueueName',
+  },
+}
+
+const getErrorMessage = (value, field) => {
+  const isValid = types[inputs[field].template].validate(value);
+  if (value && !isValid) {
+    return types[inputs[field].template].getErrorMsg();
+  } else {
+    return '';
+  }
+}
+
 
 // HDFS Root Directory
 const mapStateToHDFSRootDirectoryProps = (state) => {
@@ -27,16 +66,20 @@ const mapStateToHDFSRootDirectoryProps = (state) => {
     value: state.mapping.hdfsDirectory,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hdfs-root-directory-placeholder'),
-    disabled: state.editableFields.fields.indexOf('hdfsDirectory') === -1
+    disabled: state.editableFields.fields.indexOf('hdfsDirectory') === -1,
+    label:  inputs.hdfs.label,
+    inputInfo: types[inputs.hdfs.template].getInfo(),
+    validationError: inputs.hdfs.error
   };
 };
 
 const mapDispatchToHDFSRootDirectoryProps = (dispatch) => {
   return {
     onChange: (e) => {
+      inputs.hdfs.error = getErrorMessage(e.target.value, 'hdfs');
       dispatch({
         type: AddNamespaceActions.setHDFSDirectory,
-        payload: { hdfsDirectory : e.target.value }
+        payload: { hdfsDirectory : e.target.value, hdfsDirectory_valid: inputs.hdfs.error !== '' ? false : true  }
       });
     }
   };
@@ -48,16 +91,20 @@ const mapStateToHiveDatabaseNameProps = (state) => {
     value: state.mapping.hiveDatabaseName,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hive-db-name-placeholder'),
-    disabled: state.editableFields.fields.indexOf('hiveDatabaseName') === -1
+    disabled: state.editableFields.fields.indexOf('hiveDatabaseName') === -1,
+    label:  inputs.hive.label,
+    inputInfo: types[inputs.hive.template].getInfo(),
+    validationError: inputs.hive.error
   };
 };
 
 const mapDispatchToHiveDatabaseNameProps = (dispatch) => {
   return {
     onChange: (e) => {
+      inputs.hive.error = getErrorMessage(e.target.value, 'hive')
       dispatch({
         type: AddNamespaceActions.setHiveDatabaseName,
-        payload: { hiveDatabaseName : e.target.value }
+        payload: { hiveDatabaseName : e.target.value, hiveDatabaseName_valid: inputs.hive.error !== '' ? false : true  }
       });
     }
   };
@@ -69,16 +116,20 @@ const mapStateToHBASENamespaceNameProps = (state) => {
     value: state.mapping.hbaseNamespace,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.hbase-nm-name-placeholder'),
-    disabled: state.editableFields.fields.indexOf('hbaseNamespace') === -1
+    disabled: state.editableFields.fields.indexOf('hbaseNamespace') === -1,
+    label:  inputs.hbase.label,
+    inputInfo: types[inputs.hbase.template].getInfo(),
+    validationError: inputs.hbase.error
   };
 };
 
 const mapDispatchToHBASENamespaceNameProps = (dispatch) => {
   return {
     onChange: (e) => {
+      inputs.hbase.error = getErrorMessage(e.target.value, 'hbase');
       dispatch({
         type: AddNamespaceActions.setHBaseNamespace,
-        payload: { hbaseNamespace : e.target.value }
+        payload: { hbaseNamespace : e.target.value, hbaseNamespace_valid: inputs.hbase.error !== '' ? false : true  }
       });
     }
   };
@@ -89,15 +140,19 @@ const mapStateToSchedulerQueueNameProps = (state) => {
     value: state.mapping.schedulerQueueName,
     type: 'text',
     placeholder: T.translate('features.Wizard.Add-Namespace.Step2.scheduler-queue-placeholder'),
-    disabled: state.editableFields.fields.indexOf('schedulerQueueName') === -1
+    disabled: state.editableFields.fields.indexOf('schedulerQueueName') === -1,
+    label:  inputs.scheduler.label,
+    inputInfo: types[inputs.scheduler.template].getInfo(),
+    validationError: inputs.scheduler.error
   };
 };
 const mapDispatchToSchedulerQueueNameProps = (dispatch) => {
   return {
     onChange: (e) => {
+      inputs.scheduler.error = getErrorMessage(e.target.value, 'scheduler');
       dispatch({
         type: AddNamespaceActions.setSchedulerQueueName,
-        payload: { schedulerQueueName: e.target.value }
+        payload: { schedulerQueueName : e.target.value, schedulerQueueName_valid: inputs.scheduler.error !== '' ? false : true  }
       });
     }
   };
@@ -106,19 +161,19 @@ const mapDispatchToSchedulerQueueNameProps = (dispatch) => {
 const InputRootDirectory = connect(
   mapStateToHDFSRootDirectoryProps,
   mapDispatchToHDFSRootDirectoryProps
-)(InputWithValidations);
+)(ValidatedInput);
 
 const InputHiveDbName = connect(
   mapStateToHiveDatabaseNameProps,
   mapDispatchToHiveDatabaseNameProps
-)(InputWithValidations);
+)(ValidatedInput);
 
 const InputHbaseNamespace = connect(
   mapStateToHBASENamespaceNameProps,
   mapDispatchToHBASENamespaceNameProps
-)(InputWithValidations);
+)(ValidatedInput);
 
-const InputSchedulerQueueName = connect(mapStateToSchedulerQueueNameProps, mapDispatchToSchedulerQueueNameProps)(InputWithValidations);
+const InputSchedulerQueueName = connect(mapStateToSchedulerQueueNameProps, mapDispatchToSchedulerQueueNameProps)(ValidatedInput);
 export default function MappingStep() {
   return (
     <Provider store={AddNamespaceStore}>
