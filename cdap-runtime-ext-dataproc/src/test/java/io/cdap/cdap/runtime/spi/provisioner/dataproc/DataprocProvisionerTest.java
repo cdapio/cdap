@@ -102,7 +102,8 @@ public class DataprocProvisionerTest {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
     props.put("accountKey", "key");
-    props.put("zone", "zone");
+    props.put("region", "region1");
+    props.put("zone", "region1-a");
     props.put("network", "network");
     props.put("spark:spark.reducer.maxSizeInFlight", "100");
     props.put("hadoop-env:MAPREDUCE_CLASSPATH", "xyz");
@@ -111,7 +112,8 @@ public class DataprocProvisionerTest {
     DataprocConf conf = DataprocConf.fromProperties(props);
 
     Assert.assertEquals(conf.getProjectId(), "pid");
-    Assert.assertEquals(conf.getZone(), "zone");
+    Assert.assertEquals(conf.getRegion(), "region1");
+    Assert.assertEquals(conf.getZone(), "region1-a");
 
     Map<String, String> dataprocProps = conf.getDataprocProperties();
     Assert.assertEquals(3, dataprocProps.size());
@@ -119,5 +121,30 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("100", dataprocProps.get("spark:spark.reducer.maxSizeInFlight"));
     Assert.assertEquals("xyz", dataprocProps.get("hadoop-env:MAPREDUCE_CLASSPATH"));
     Assert.assertEquals("true", dataprocProps.get("dataproc:am.primary_only"));
+  }
+
+  @Test
+  public void testAutoZone() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put("zone", "auto-detect");
+    props.put("network", "network");
+
+    DataprocConf conf = DataprocConf.fromProperties(props);
+    Assert.assertNull(conf.getZone());
+  }
+
+  @Test (expected = IllegalArgumentException.class)
+  public void testInvalidZoneCheck() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put("zone", "region2-a");
+    props.put("network", "network");
+
+    DataprocConf.fromProperties(props);
   }
 }

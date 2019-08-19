@@ -21,7 +21,6 @@ import com.google.common.base.Splitter;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
-import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
@@ -184,7 +183,8 @@ public class DataprocProvisioner implements Provisioner {
           break;
       }
 
-      LOG.info("Creating Dataproc cluster {} with system labels {}", clusterName, systemLabels);
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with system labels {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), systemLabels);
       client.createCluster(clusterName, imageVersion, systemLabels);
       return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
     }
@@ -232,19 +232,6 @@ public class DataprocProvisioner implements Provisioner {
                                                                                                    "false")))) {
       client.deleteCluster(clusterName);
     }
-  }
-
-  private String getMasterExternalIp(Cluster cluster) {
-    Node masterNode = cluster.getNodes().stream()
-      .filter(node -> Node.Type.MASTER == node.getType())
-      .findFirst().orElseThrow(() -> new IllegalArgumentException("Cluster has no node of master type: " + cluster));
-
-    String ip = masterNode.getIpAddress();
-    if (ip == null) {
-      throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
-                                                       masterNode.getId(), cluster));
-    }
-    return ip;
   }
 
   @Override

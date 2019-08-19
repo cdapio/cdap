@@ -39,7 +39,10 @@ import javax.annotation.Nullable;
 /**
  * Configuration for Dataproc.
  */
-public class DataprocConf {
+final class DataprocConf {
+
+  static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
+
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String NETWORK = "network";
@@ -119,86 +122,87 @@ public class DataprocConf {
     this.dataprocProperties = dataprocProperties;
   }
 
-  public String getRegion() {
+  String getRegion() {
     return region;
   }
 
-  public String getZone() {
+  @Nullable
+  String getZone() {
     return zone;
   }
 
-  public String getProjectId() {
+  String getProjectId() {
     return projectId;
   }
 
   @Nullable
-  public String getNetwork() {
+  String getNetwork() {
     return network;
   }
 
   @Nullable
-  public String getSubnet() {
+  String getSubnet() {
     return subnet;
   }
 
-  public int getMasterNumNodes() {
+  int getMasterNumNodes() {
     return masterNumNodes;
   }
 
-  public int getMasterDiskGB() {
+  int getMasterDiskGB() {
     return masterDiskGB;
   }
 
-  public int getWorkerNumNodes() {
+  int getWorkerNumNodes() {
     return workerNumNodes;
   }
 
-  public int getWorkerDiskGB() {
+  int getWorkerDiskGB() {
     return workerDiskGB;
   }
 
-  public String getMasterMachineType() {
+  String getMasterMachineType() {
     return getMachineType(masterCPUs, masterMemoryMB);
   }
 
-  public String getWorkerMachineType() {
+  String getWorkerMachineType() {
     return getMachineType(workerCPUs, workerMemoryMB);
   }
 
-  public long getPollCreateDelay() {
+  long getPollCreateDelay() {
     return pollCreateDelay;
   }
 
-  public long getPollCreateJitter() {
+  long getPollCreateJitter() {
     return pollCreateJitter;
   }
 
-  public long getPollDeleteDelay() {
+  long getPollDeleteDelay() {
     return pollDeleteDelay;
   }
 
-  public long getPollInterval() {
+  long getPollInterval() {
     return pollInterval;
   }
 
-  public boolean isPreferExternalIP() {
+  boolean isPreferExternalIP() {
     return preferExternalIP;
   }
 
-  public boolean isStackdriverLoggingEnabled() {
+  boolean isStackdriverLoggingEnabled() {
     return stackdriverLoggingEnabled;
   }
 
-  public boolean isStackdriverMonitoringEnabled() {
+  boolean isStackdriverMonitoringEnabled() {
     return stackdriverMonitoringEnabled;
   }
 
   @Nullable
-  public SSHPublicKey getPublicKey() {
+  SSHPublicKey getPublicKey() {
     return publicKey;
   }
 
-  public Map<String, String> getDataprocProperties() {
+  Map<String, String> getDataprocProperties() {
     return dataprocProperties;
   }
 
@@ -206,14 +210,14 @@ public class DataprocConf {
    * @return GoogleCredential for use with Compute
    * @throws IOException if there was an error reading the account key
    */
-  public GoogleCredential getComputeCredential() throws IOException {
+  GoogleCredential getComputeCredential() throws IOException {
     if (accountKey == null) {
       return GoogleCredential.getApplicationDefault();
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
       return GoogleCredential.fromStream(is)
-        .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));
+        .createScoped(Collections.singleton(CLOUD_PLATFORM_SCOPE));
     }
   }
 
@@ -221,13 +225,13 @@ public class DataprocConf {
    * @return GoogleCredentials for use with Dataproc
    * @throws IOException if there was an error reading the account key
    */
-  public GoogleCredentials getDataprocCredentials() throws IOException {
+  GoogleCredentials getDataprocCredentials() throws IOException {
     if (accountKey == null) {
       return getComputeEngineCredentials();
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
-      return GoogleCredentials.fromStream(is);
+      return GoogleCredentials.fromStream(is).createScoped(CLOUD_PLATFORM_SCOPE);
     }
   }
 
@@ -253,11 +257,11 @@ public class DataprocConf {
    *
    * @throws IllegalArgumentException if it is an invalid config
    */
-  public static DataprocConf fromProperties(Map<String, String> properties) {
+  static DataprocConf fromProperties(Map<String, String> properties) {
     return create(properties, null);
   }
 
-  public static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
+  static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       try {
@@ -272,9 +276,27 @@ public class DataprocConf {
     }
 
     String zone = getString(properties, "zone");
-    if (zone == null || AUTO_DETECT.equals(zone)) {
-      zone = getSystemZone();
+    String region = getString(properties, "region");
+    if (region == null || AUTO_DETECT.equals(region)) {
+      // See if the user specified a zone.
+      // If it does, derived region from the provided zone; otherwise, use the system zone.
+      if (zone == null || AUTO_DETECT.equals(zone)) {
+        region = getRegionFromZone(getSystemZone());
+      } else {
+        region = getRegionFromZone(zone);
+      }
     }
+
+    if (zone == null || AUTO_DETECT.equals(zone)) {
+      // Region is always set so that zone can be omitted
+      zone = null;
+    } else {
+      // Make sure the zone provided match with the region
+      if (!zone.startsWith(region + "-")) {
+        throw new IllegalArgumentException("Provided zone " + zone + " is not in the region " + region);
+      }
+    }
+
     String network = getString(properties, NETWORK);
     if (network == null || AUTO_DETECT.equals(network)) {
       network = null;
@@ -321,8 +343,7 @@ public class DataprocConf {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
     );
 
-    // always use 'global' region until CDAP-14376 is fixed.
-    return new DataprocConf(accountKey, "global", zone, projectId, network, subnet,
+    return new DataprocConf(accountKey, region, zone, projectId, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
@@ -403,6 +424,18 @@ public class DataprocConf {
                                            + "Please explicitly set the zone.", e);
     }
   }
+
+  /**
+   * Returns the region of the given zone.
+   */
+  private static String getRegionFromZone(String zone) {
+    int idx = zone.lastIndexOf("-");
+    if (idx <= 0) {
+      throw new IllegalArgumentException("Invalid zone. Zone must be in the format of <region>-<zone-name>");
+    }
+    return zone.substring(0, idx);
+  }
+
 
   /**
    * Get project id from the metadata server.
