@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
 
 import java.util.Collections;
@@ -35,18 +36,16 @@ public class Relation {
   private final AccessType access;
   private final RunId run;
   private final Set<NamespacedEntityId> components;
+  // Don't serialize this id
+  private final transient ProgramRunId runId;
 
   public Relation(DatasetId data, ProgramId program, AccessType access, RunId run) {
-    this(data, program, access, run, Collections.<NamespacedEntityId>emptySet());
-  }
-
-  public Relation(DatasetId data, ProgramId program, AccessType access, RunId run,
-                  Set<? extends NamespacedEntityId> components) {
     this.data = data;
     this.program = program;
     this.access = access;
     this.run = run;
-    this.components = ImmutableSet.copyOf(components);
+    this.components = Collections.emptySet();
+    this.runId = program.run(run);
   }
 
   public NamespacedEntityId getData() {
@@ -67,6 +66,10 @@ public class Relation {
 
   public Set<NamespacedEntityId> getComponents() {
     return components;
+  }
+
+  public ProgramRunId getProgramRunId() {
+    return runId;
   }
 
   @Override
