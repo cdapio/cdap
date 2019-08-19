@@ -55,7 +55,7 @@ UrlValidator.prototype.getUrlBreakup = function (url) {
     var hostPortPathStr = protocolSplitArr.join('//');
 
     //break url two parts hostportstr and pathstr
-    if (hostPortPathStr && hostPortPathStr != '') {
+    if (hostPortPathStr && hostPortPathStr !== '') {
       var splitSymbol = this.getPortSplitSymbol(hostPortPathStr);
       if (splitSymbol) {
         var hostPortPathSplitArr = hostPortPathStr.split(splitSymbol);
@@ -87,7 +87,7 @@ UrlValidator.prototype.getPortSplitSymbol = function (str) {
     }
   }
   return splitSymbol;
-}
+};
 
 
 UrlValidator.prototype.getWhiltListIps = function (config) {

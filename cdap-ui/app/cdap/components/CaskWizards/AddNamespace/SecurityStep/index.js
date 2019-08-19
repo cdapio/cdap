@@ -17,7 +17,6 @@ import React from 'react';
 import {Col, FormGroup, Label, Form} from 'reactstrap';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
-import InputWithValidations from 'components/InputWithValidations';
 import {Provider, connect} from 'react-redux';
 import T from 'i18n-react';
 import ValidatedInput from 'components/ValidatedInput';
@@ -37,7 +36,7 @@ var inputs = {
     template: 'NAME',
     label: 'keyTab',
   },
-}
+};
 
 const getErrorMessage = (value, field) => {
   const isValid = types[inputs[field].template].validate(value);
@@ -46,7 +45,7 @@ const getErrorMessage = (value, field) => {
   } else {
     return '';
   }
-}
+};
 
 
 // Principal

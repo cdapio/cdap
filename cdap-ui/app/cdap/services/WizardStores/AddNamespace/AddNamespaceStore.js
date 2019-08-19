@@ -94,7 +94,7 @@ const isComplete = (state, requiredFields, validFields) => {
   let isAnyFieldInvalids = validFields
     .filter(field => {
       return stateFields.indexOf(field) !== -1 && !state[field];
-    })
+    });
 
   let emptyFieldsInState = stateFields
     .filter(fieldName => {

@@ -36,7 +36,7 @@ var inputs = {
     template: 'NAME',
     label: 'GeneralInfo Description',
   },
-}
+};
 
 const getErrorMessage = (value, field) => {
   const isValid = types[inputs[field].template].validate(value);
@@ -45,7 +45,7 @@ const getErrorMessage = (value, field) => {
   } else {
     return '';
   }
-}
+};
 
 // Namespace Name
 const mapStateToNamespaceNameProps = (state) => {

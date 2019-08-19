@@ -18,7 +18,6 @@ import {Col, FormGroup, Label, Form} from 'reactstrap';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import T from 'i18n-react';
-import InputWithValidations from 'components/InputWithValidations';
 import {Provider, connect} from 'react-redux';
 import ValidatedInput from 'components/ValidatedInput';
 import types from 'services/inputValidationTemplates';
@@ -48,7 +47,7 @@ var inputs = {
     template: 'NAME',
     label: 'schedulerQueueName',
   },
-}
+};
 
 const getErrorMessage = (value, field) => {
   const isValid = types[inputs[field].template].validate(value);
@@ -57,7 +56,7 @@ const getErrorMessage = (value, field) => {
   } else {
     return '';
   }
-}
+};
 
 
 // HDFS Root Directory
@@ -101,7 +100,7 @@ const mapStateToHiveDatabaseNameProps = (state) => {
 const mapDispatchToHiveDatabaseNameProps = (dispatch) => {
   return {
     onChange: (e) => {
-      inputs.hive.error = getErrorMessage(e.target.value, 'hive')
+      inputs.hive.error = getErrorMessage(e.target.value, 'hive');
       dispatch({
         type: AddNamespaceActions.setHiveDatabaseName,
         payload: { hiveDatabaseName : e.target.value, hiveDatabaseName_valid: inputs.hive.error !== '' ? false : true  }
