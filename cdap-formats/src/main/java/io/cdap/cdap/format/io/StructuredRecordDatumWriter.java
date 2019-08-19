@@ -48,7 +48,6 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
       .put(Float.class, Schema.Type.FLOAT)
       .put(Double.class, Schema.Type.DOUBLE)
       .put(String.class, Schema.Type.STRING)
-      .put(ByteBuffer.class, Schema.Type.BYTES)
       .put(byte[].class, Schema.Type.BYTES)
       .put(StructuredRecord.class, Schema.Type.RECORD)
       .build()
@@ -359,9 +358,14 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     }
 
     Class<?> cls = value.getClass();
+
     Schema.Type type = TYPE_TO_SCHEMA.get(cls);
     if (type != null) {
       return type;
+    }
+
+    if (ByteBuffer.class.isAssignableFrom(cls)) {
+      return Schema.Type.BYTES;
     }
 
     if (Collection.class.isAssignableFrom(cls) || cls.isArray()) {

@@ -75,6 +75,28 @@ public class StructuredRecordStringConverterTest {
   }
 
   @Test
+  public void testNullableBytes() throws Exception {
+    Schema s = Schema.recordOf("nullableBytes", Schema.Field.of("b", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
+    byte[] bytes = new byte[] { 0, 1, 2 };
+
+    StructuredRecord byteBuf = StructuredRecord.builder(s).set("b", ByteBuffer.wrap(bytes)).build();
+    StructuredRecord byteArr = StructuredRecord.builder(s).set("b", bytes).build();
+    StructuredRecord nullRec = StructuredRecord.builder(s).build();
+
+    String encoded = StructuredRecordStringConverter.toJsonString(byteBuf);
+    StructuredRecord decoded = StructuredRecordStringConverter.fromJsonString(encoded, s);
+    Assert.assertArrayEquals(Bytes.toBytes((ByteBuffer) decoded.get("b")), bytes);
+
+    encoded = StructuredRecordStringConverter.toJsonString(byteArr);
+    decoded = StructuredRecordStringConverter.fromJsonString(encoded, s);
+    Assert.assertArrayEquals(Bytes.toBytes((ByteBuffer) decoded.get("b")), bytes);
+
+    encoded = StructuredRecordStringConverter.toJsonString(nullRec);
+    decoded = StructuredRecordStringConverter.fromJsonString(encoded, s);
+    Assert.assertNull(decoded.get("b"));
+  }
+
+  @Test
   public void checkConversion() throws Exception {
     for (boolean nullable : Arrays.asList(true, false)) {
       StructuredRecord initial = getStructuredRecord(nullable);
