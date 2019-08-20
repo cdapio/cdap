@@ -44,6 +44,7 @@ const { mapReduceTypeTotalRunsResolver } = require('./types/MapReduce/totalRunsR
 const {
   scheduleDetailTypeNextRuntimesResolver,
 } = require('./types/ScheduleDetail/nextRuntimesResolver');
+const sessionToken = require('../server/token');
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
@@ -97,25 +98,29 @@ const resolvers = {
   },
   ScheduleDetail: { nextRuntimes: scheduleDetailTypeNextRuntimesResolver },
 };
+const getApolloServer = (cdapConfig, logger = console) =>
+  new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: ({ req }) => {
+      if (!req || !req.headers || !req.headers.authorization) {
+        return {};
+      }
+      const sToken = req.headers['session-token'];
+      const auth = req.headers.authorization;
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: ({ req }) => {
-    if (!req || !req.headers || !req.headers.authorization) {
-      return {};
-    }
+      if (!sToken || (sToken && !sessionToken.validateToken(sToken, cdapConfig, logger, auth))) {
+        throw new Error('Invalid Sesion Token');
+      }
 
-    const auth = req.headers.authorization;
+      return { auth };
+    },
+    introspection: env === 'production' ? false : true,
+    playground: env === 'production' ? false : true,
+  });
 
-    return { auth };
-  },
-  introspection: env === 'production' ? false : true,
-  playground: env === 'production' ? false : true,
-});
-
-function applyMiddleware(app) {
-  server.applyMiddleware({ app });
+function applyMiddleware(app, cdapConfig, logger) {
+  getApolloServer(cdapConfig, logger).applyMiddleware({ app });
 }
 
 module.exports = {

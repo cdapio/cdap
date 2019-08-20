@@ -47,6 +47,7 @@ angular.module(PKG.name + '.services')
         }
 
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
+        xhr.setRequestHeader('sessionToken', window.CaskCommon.SessionTokenStore.getState());
 
         if ($window.CDAP_CONFIG.securityEnabled && myAuth.currentUser.token) {
           xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);

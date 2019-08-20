@@ -18,7 +18,6 @@ angular.module(PKG.name + '.services')
   .service('myNamespace', function myNamespace($q, MyCDAPDataSource, EventPipe, $http, $rootScope, myAuth, myHelpers, $state) {
 
     this.namespaceList = [];
-    window.CaskCommon.StatusFactory.startPollingForBackendStatus();
     var data = new MyCDAPDataSource(),
         prom,
         queryInProgress = null;

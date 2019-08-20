@@ -59,6 +59,7 @@ import ApolloClient from 'apollo-boost';
 import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemory';
 // See ./graphql/fragements/README.md
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
+import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -73,12 +74,13 @@ const client = new ApolloClient({
   uri: '/graphql',
   cache: new InMemoryCache({ fragmentMatcher }),
   request: (operation) => {
-    if (cookie.load('CDAP_Auth_Token')) {
+    if (window.CDAP_CONFIG.securityEnabled && cookie.load('CDAP_Auth_Token')) {
       const token = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
 
       operation.setContext({
         headers: {
           authorization: token,
+          'Session-Token': SessionTokenStore.getState(),
         },
       });
     }
@@ -92,11 +94,17 @@ class CDAP extends Component {
       selectedNamespace: NamespaceStore.getState().selectedNamespace,
       version: '',
       authorizationFailed: false,
+      loading: true,
     };
     this.eventEmitter = ee(ee);
   }
 
   componentWillMount() {
+    this.fetchSessionTokenAndUpdateState().then(this.setUIState);
+  }
+
+  setUIState = () => {
+    StatusFactory.startPollingForBackendStatus();
     applyTheme();
     cookie.save('DEFAULT_UI', 'NEW', { path: '/' });
     if (window.CDAP_CONFIG.securityEnabled) {
@@ -108,7 +116,6 @@ class CDAP extends Component {
       });
     }
 
-    StatusFactory.startPollingForBackendStatus();
     this.eventEmitter.on(globalEvents.NONAMESPACE, () => {
       this.setState({
         authorizationFailed: true,
@@ -125,9 +132,29 @@ class CDAP extends Component {
         });
       });
     }
+  };
+
+  async fetchSessionTokenAndUpdateState() {
+    try {
+      await fetchSessionToken();
+    } catch (e) {
+      console.log('Fetching session token failed.');
+    }
+    this.setState({
+      loading: false,
+    });
   }
 
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="cdap-container">
+          <Helmet title={Theme.productName} />
+          <LoadingSVGCentered />
+          <LoadingIndicator />
+        </div>
+      );
+    }
     return (
       <Router history={history}>
         <ApolloProvider client={client}>

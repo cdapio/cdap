@@ -15,21 +15,24 @@
 -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>Login</title>
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Cask Data Application Platform">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+  <title>Login</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Cask Data Application Platform">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
+
 <body>
   <div id="login-form"></div>
   <div id="footer-container"></div>
-  <script type="text/javascript" nonce="<_= nonceVal _>" src="/dll_assets/dll.shared.vendor.<%= htmlWebpackPlugin.options.mode %>js?<%= htmlWebpackPlugin.options.hashId %>"></script>
-  <script type="text/javascript" nonce="<_= nonceVal _>" src="/login_assets/login.js"></script>
+  <script type="text/javascript" nonce="<_= nonceVal _>"
+    src="/dll_assets/dll.shared.vendor.<%= htmlWebpackPlugin.options.mode %>js?<%= htmlWebpackPlugin.options.hashId %>"></script>
   <% for (key in htmlWebpackPlugin.files.js) { %>
   <script type="text/javascript" nonce="<_= nonceVal _>" src="<%= htmlWebpackPlugin.files.js[key] %>"></script>
   <% } %>
 </body>
+
 </html>

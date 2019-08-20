@@ -17,6 +17,7 @@
 import SockJS from 'sockjs-client';
 import { Subject } from 'rxjs/Subject';
 import ee from 'event-emitter';
+import SessionTokenStore,{ fetchSessionToken } from 'services/SessionTokenStore';
 
 class Socket {
   constructor() {
@@ -25,7 +26,13 @@ class Socket {
     this.timeout = null;
     this.eventEmitter = ee(ee);
     this.isFirstTime = true;
-    this.init();
+    const unsub = SessionTokenStore.subscribe(() => {
+      let sessionToken = SessionTokenStore.getState();
+      if (sessionToken) {
+        this.init();
+        unsub();
+      }
+    })
   }
 
   init(attempt) {
@@ -34,8 +41,9 @@ class Socket {
 
     this.socket = new SockJS('/_sock');
 
-    this.socket.onopen = () => {
+    this.socket.onopen = async () => {
       if (!this.isFirstTime) {
+        await fetchSessionToken();
         this.eventEmitter.emit('SOCKET_RECONNECT');
       }
       this.isFirstTime = false;
@@ -78,7 +86,7 @@ class Socket {
   }
 
   send(obj) {
-    if (!this.socket.readyState) {
+    if (!this.socket || !this.socket.readyState) {
       this.buffer.push(obj);
       return false;
     }
@@ -93,8 +101,11 @@ class Socket {
       console.log(obj.resource);
       console.groupEnd();
     }
+    obj = {
+      ...obj,
+      sessionToken: SessionTokenStore.getState()
+    };
     this.socket.send(JSON.stringify(obj));
   }
 }
-
 export default new Socket();

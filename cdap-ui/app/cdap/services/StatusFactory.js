@@ -22,7 +22,7 @@ import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import { Observable } from 'rxjs/Observable';
 import SystemServicesStore, { pollSystemServices } from 'services/SystemServicesStore';
-import { getCurrentNamespace } from 'services/NamespaceStore';
+import SessionTokenStore from 'services/SessionTokenStore';
 
 let pollingObservable;
 let systemServiceSubscription;
@@ -104,11 +104,10 @@ const dispatchNodeServerDown = () => {
 
 const getRequestInfo = () => {
   let headers = {
-    'Access-Control-Allow-Origin': '*',
+    sessionToken: SessionTokenStore.getState()
   };
   let requestInfo = {
     credentials: 'include',
-    mode: 'no-cors',
   };
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');

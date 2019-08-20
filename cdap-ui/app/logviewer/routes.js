@@ -19,6 +19,11 @@ angular.module(PKG.name + '.feature.logviewer')
     const productName = window.CaskCommon.ThemeHelper.Theme.productName;
     $stateProvider
       .state('logviewerhome', {
+        resolve: {
+          sessionToken: function() {
+            window.CaskCommon.SessionTokenStore.fetchSessionToken();
+          }
+        },
         url: '/view?namespace&appId&programType&programId&runId&filter&startTime&endTime',
         templateUrl: '/assets/features/logviewer/templates/home.html',
         onEnter: function($stateParams) {

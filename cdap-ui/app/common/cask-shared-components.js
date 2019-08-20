@@ -97,6 +97,7 @@ var SqlConditionsWidget = require('../cdap/components/AbstractWidget/SqlConditio
 var SqlSelectorWidget = require('../cdap/components/AbstractWidget/SqlSelectorWidget').default;
 var KeyValueEncodedWidget = require('../cdap/components/AbstractWidget/KeyValueWidget/KeyValueEncodedWidget')
   .default;
+var SessionTokenStore = require('../cdap/services/SessionTokenStore');
 
 export {
   Store,
@@ -169,4 +170,5 @@ export {
   SqlConditionsWidget,
   SqlSelectorWidget,
   KeyValueEncodedWidget,
+  SessionTokenStore,
 };

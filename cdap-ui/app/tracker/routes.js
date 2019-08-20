@@ -22,6 +22,9 @@ angular.module(PKG.name + '.feature.tracker')
         url: '/',
         template: '<ui-view/>',
         resolve: {
+          sessionToken: function() {
+            window.CaskCommon.SessionTokenStore.fetchSessionToken();
+          },
           rNsList: function (myNamespace) {
             return myNamespace.getList();
           }
@@ -35,13 +38,23 @@ angular.module(PKG.name + '.feature.tracker')
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
-        }
+        },
+        resolve: {
+          sessionToken: function() {
+            window.CaskCommon.SessionTokenStore.fetchSessionToken();
+          },
+        },
       })
       .state('tracker', {
         url: '?iframe&sourceUrl',
         abstract: true,
         parent: 'ns',
-        template: '<ui-view/>'
+        template: '<ui-view/>',
+        resolve: {
+          sessionToken: function() {
+            window.CaskCommon.SessionTokenStore.fetchSessionToken();
+          },
+        },
       })
 
       .state('tracker.home', {

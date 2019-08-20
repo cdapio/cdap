@@ -32,8 +32,8 @@ function createApi(dataSrc, method, type, path, options = {}) {
       reqObj = Object.assign({}, reqObj, { headers });
     }
 
-    if (cookie.load('CDAP_Auth_Token')) {
-      reqObj.headers = reqObj.headers || {};
+    reqObj.headers = reqObj.headers || {};
+    if (window.CDAP_CONFIG.securityEnabled && cookie.load('CDAP_Auth_Token')) {
       if (!isNil(cookie.load('CDAP_Auth_Token'))) {
         reqObj.headers.Authorization = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
       }

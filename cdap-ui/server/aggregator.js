@@ -17,15 +17,14 @@
 
 /* global require, module */
 
-var request = require('request'),
+const request = require('request'),
   fs = require('fs'),
-  log4js = require('log4js');
-
-var log = log4js.getLogger('default');
-var hash = require('object-hash');
-/* jshint ignore:start */
-var parser = require('./config/parser.js');
-/* jshint ignore:end */
+  log4js = require('log4js'),
+  log = log4js.getLogger('default'),
+  hash = require('object-hash'),
+  urlHelper = require('./url-helper'),
+  parser = require('./config/parser.js'),
+  sessionToken = require('./token');
 
 /**
  * Default Poll Interval used by the backend.
@@ -35,7 +34,6 @@ var parser = require('./config/parser.js');
  * in their request.
  */
 var POLL_INTERVAL = 10 * 1000;
-var urlHelper = require('./url-helper');
 
 /**
  * Aggregator
@@ -49,32 +47,71 @@ function Aggregator(conn) {
   if (!(this instanceof Aggregator)) {
     return new Aggregator(conn);
   }
-
-  conn.on('data', onSocketData.bind(this));
-  conn.on('close', onSocketClose.bind(this));
-
+  this.cdapConfig = null;
   this.connection = conn;
 
   // WebSocket local resource pool. Key here is the resource id
   // as send from the backend. The FE has to guarantee that the
   // the resource id is unique within a websocket connection.
   this.polledResources = {};
-
-  this.cdapConfig = null;
-  this.populateCdapConfig();
+  this.populateCdapConfig().then(this.initializeEventListeners.bind(this));
+  this.isSessionValid = false;
 }
 
-/* jshint ignore:start */
-Aggregator.prototype.populateCdapConfig = async function() {
+Aggregator.prototype.initializeEventListeners = function() {
+  /**
+   * Handler for data from client via websocket connection
+   * Checks for the session token in the first message.
+   * If valid sets the isSessionValid flag to true and proceeds to skip
+   * validations for subsequent messages.
+   */
+  this.connection.on('data', (message) => {
+    if (this.isSessionValid) {
+      return onSocketData.call(this, message);
+    }
+    if (!this.validateSession(message)) {
+      return;
+    }
+    this.isSessionValid = true;
+    onSocketData.call(this, message);
+  });
+  this.connection.on('close', onSocketClose.bind(this));
+};
+
+Aggregator.prototype.validateSession = function(message) {
+  let messageJSON;
   try {
-    this.cdapConfig = await parser.extractConfig('cdap');
+    /**
+     * Closes the connection if the session is not valid.
+     */
+    messageJSON = JSON.parse(message);
+    let authToken = messageJSON.resource.headers.Authorization || '';
+    if (!sessionToken.validateToken(messageJSON.sessionToken, this.cdapConfig, log, authToken)) {
+      log.error('Found invalid session token. Closing websocket connection');
+      this.connection.end();
+      onSocketClose.call(this);
+      return false;
+    }
+  } catch (e) {
+    log.error('Unable to parse message : ' + e);
+    return false;
+  }
+  return true;
+};
+
+Aggregator.prototype.populateCdapConfig = async function() {
+  let cdapConfig, securityConfig;
+  try {
+    cdapConfig = await parser.extractConfig('cdap');
+    securityConfig = await parser.extractConfig('security');
+    this.cdapConfig = { ...cdapConfig, ...securityConfig };
   } catch (e) {
     log.error(
-      "[ERROR]: Unable to parse CDAP config. CDAP UI Proxy won't be able to serve any request to the client"
+      "[ERROR]: Unable to parse CDAP config. CDAP UI Proxy won't be able to serve any request to the client: " +
+        e
     );
   }
 };
-/* jshint ignore:end */
 
 /**
  * Checks if the 'id' received from the client is already registered -- This
