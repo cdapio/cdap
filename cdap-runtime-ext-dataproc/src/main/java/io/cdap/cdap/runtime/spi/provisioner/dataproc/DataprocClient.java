@@ -23,7 +23,6 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Throwables;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.longrunning.OperationSnapshot;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.NotFoundException;
@@ -75,7 +74,7 @@ import javax.annotation.Nullable;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-public class DataprocClient implements AutoCloseable {
+final class DataprocClient implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
@@ -86,7 +85,6 @@ public class DataprocClient implements AutoCloseable {
   private final Compute compute;
   private final String projectId;
   private final String network;
-  private final String zone;
   private final boolean useInternalIP;
 
   private enum PeeringState {
@@ -95,8 +93,8 @@ public class DataprocClient implements AutoCloseable {
     NONE
   }
 
-  public static DataprocClient fromConf(DataprocConf conf,
-                                        boolean privateInstance) throws IOException, GeneralSecurityException {
+  static DataprocClient fromConf(DataprocConf conf,
+                                 boolean privateInstance) throws IOException, GeneralSecurityException {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
 
@@ -130,7 +128,7 @@ public class DataprocClient implements AutoCloseable {
     String subnet = conf.getSubnet();
     Network networkInfo = getNetworkInfo(projectId, network, compute);
 
-    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo, compute);
+    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo);
 
     if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
       // Peering is setup between the system network and customer network and is in ACTIVE state.
@@ -169,15 +167,15 @@ public class DataprocClient implements AutoCloseable {
 
       // if no subnet was configured, choose one
       if (subnet == null) {
-        subnet = chooseSubnet(network, subnets, conf.getZone());
+        subnet = chooseSubnet(network, subnets, conf.getRegion());
       }
     }
 
     return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
   }
 
-  private static PeeringState getPeeringState(@Nullable String systemNetwork, String systemProjectId,
-                                              Network networkInfo, Compute compute) throws IOException {
+  private static PeeringState getPeeringState(@Nullable String systemNetwork,
+                                              String systemProjectId, Network networkInfo) {
     // systemNetwork can be null when CDAP is not running on GCP for example CDAP running in sandbox environment
     if (systemNetwork == null) {
       return PeeringState.NONE;
@@ -218,9 +216,7 @@ public class DataprocClient implements AutoCloseable {
   // subnets are identified as
   // "https://www.googleapis.com/compute/v1/projects/<project>/regions/<region>/subnetworks/<name>"
   // a subnet in the same region as the dataproc cluster must be chosen
-  private static String chooseSubnet(String network, List<String> subnets, String zone) {
-    // zones are always <region>-<letter>
-    String region = zone.substring(0, zone.lastIndexOf('-'));
+  private static String chooseSubnet(String network, List<String> subnets, String region) {
     for (String subnet : subnets) {
       if (subnet.contains(region + "/subnetworks")) {
         return subnet;
@@ -228,7 +224,7 @@ public class DataprocClient implements AutoCloseable {
     }
     throw new IllegalArgumentException(
       String.format("Could not find any subnets in network '%s' that are for region '%s'. "
-                      + "Please specify a subnet that is in the same region as the selected zone.",
+                      + "Please specify a subnet that is in the same selected region.",
                     network, region));
   }
 
@@ -251,11 +247,25 @@ public class DataprocClient implements AutoCloseable {
     return networkObj;
   }
 
+  /**
+   * Extracts and returns the zone name from the given full zone URI.
+   */
+  private static String getZone(String zoneUri) {
+    int idx = zoneUri.lastIndexOf("/");
+    if (idx <= 0) {
+      throw new IllegalArgumentException("Invalid zone uri " + zoneUri);
+    }
+    return zoneUri.substring(idx + 1);
+  }
+
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
+    String regionalEndpoint = conf.getRegion() + "-dataproc.googleapis.com:443";
+
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)
+      .setEndpoint(regionalEndpoint)
       .build();
     return ClusterControllerClient.create(controllerSettings);
   }
@@ -270,7 +280,6 @@ public class DataprocClient implements AutoCloseable {
   private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, boolean useInternalIP) {
     this.projectId = conf.getProjectId();
     this.network = conf.getNetwork();
-    this.zone = conf.getZone();
     this.useInternalIP = useInternalIP;
     this.conf = conf;
     this.client = client;
@@ -284,14 +293,13 @@ public class DataprocClient implements AutoCloseable {
    * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
    * @param labels labels to set on the cluster
-   * @return the response for issuing the create
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws AlreadyExistsException if the cluster already exists
    * @throws IOException if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public OperationSnapshot createCluster(String name, String imageVersion, Map<String, String> labels)
-    throws RetryableProvisionException, InterruptedException, IOException {
+  void createCluster(String name, String imageVersion,
+                     Map<String, String> labels) throws RetryableProvisionException, InterruptedException, IOException {
 
     try {
       Map<String, String> metadata = new HashMap<>();
@@ -304,9 +312,13 @@ public class DataprocClient implements AutoCloseable {
       metadata.put("enable-oslogin", "false");
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-        .addServiceAccountScopes("https://www.googleapis.com/auth/cloud-platform")
-        .setZoneUri(conf.getZone())
+        .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
         .putAllMetadata(metadata);
+
+      if (conf.getZone() != null) {
+        clusterConfig.setZoneUri(conf.getZone());
+      }
+
       // subnets are unique within a location, not within a network, which is why these configs are mutually exclusive.
       if (conf.getSubnet() != null) {
         clusterConfig.setSubnetworkUri(conf.getSubnet());
@@ -365,7 +377,7 @@ public class DataprocClient implements AutoCloseable {
                      .build())
         .build();
 
-      return client.createClusterAsync(projectId, conf.getRegion(), cluster).getInitialFuture().get();
+      client.createClusterAsync(projectId, conf.getRegion(), cluster).getInitialFuture().get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
@@ -380,13 +392,10 @@ public class DataprocClient implements AutoCloseable {
    * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
    *
    * @param name the name of the cluster to delete
-   * @return the response for issuing the delete, or empty if the cluster already does not exist
    * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public Optional<OperationSnapshot> deleteCluster(String name)
-    throws RetryableProvisionException, InterruptedException {
-
+  void deleteCluster(String name) throws RetryableProvisionException, InterruptedException {
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
         .setClusterName(name)
@@ -394,14 +403,14 @@ public class DataprocClient implements AutoCloseable {
         .setRegion(conf.getRegion())
         .build();
 
-      return Optional.of(client.deleteClusterAsync(request).getInitialFuture().get());
+      client.deleteClusterAsync(request).getInitialFuture().get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
         ApiException apiException = (ApiException) cause;
         if (apiException.getStatusCode().getCode().getHttpStatusCode() == 404) {
           // if the cluster was not found, it's ok that means it's deleted
-          return Optional.empty();
+          return;
         }
         throw handleApiException((ApiException) cause);
       }
@@ -416,7 +425,7 @@ public class DataprocClient implements AutoCloseable {
    * @return the cluster status
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public io.cdap.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
+  io.cdap.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
     throws RetryableProvisionException {
     return getDataprocCluster(name).map(cluster -> convertStatus(cluster.getStatus()))
       .orElse(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
@@ -429,7 +438,7 @@ public class DataprocClient implements AutoCloseable {
    * @return the cluster information if it exists
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
+  Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
     throws RetryableProvisionException, IOException {
     Optional<Cluster> clusterOptional = getDataprocCluster(name);
     if (!clusterOptional.isPresent()) {
@@ -437,13 +446,14 @@ public class DataprocClient implements AutoCloseable {
     }
 
     Cluster cluster = clusterOptional.get();
+    String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri());
 
     List<Node> nodes = new ArrayList<>();
     for (String masterName : cluster.getConfig().getMasterConfig().getInstanceNamesList()) {
-      nodes.add(getNode(compute, Node.Type.MASTER, masterName));
+      nodes.add(getNode(compute, Node.Type.MASTER, zone, masterName));
     }
     for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
-      nodes.add(getNode(compute, Node.Type.WORKER, workerName));
+      nodes.add(getNode(compute, Node.Type.WORKER, zone, workerName));
     }
     return Optional.of(new io.cdap.cdap.runtime.spi.provisioner.Cluster(
       cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
@@ -523,7 +533,7 @@ public class DataprocClient implements AutoCloseable {
     return tags;
   }
 
-  private Node getNode(Compute compute, Node.Type type, String nodeName) throws IOException {
+  private Node getNode(Compute compute, Node.Type type, String zone, String nodeName) throws IOException {
     Instance instance;
     try {
       instance = compute.instances().get(projectId, zone, nodeName).execute();
@@ -584,7 +594,7 @@ public class DataprocClient implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     client.close();
   }
 

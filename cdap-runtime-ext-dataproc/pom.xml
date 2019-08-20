@@ -45,12 +45,12 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-dataproc</artifactId>
-      <version>0.41.0-alpha</version>
+      <version>0.105.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-compute</artifactId>
-      <version>v1-rev174-1.23.0</version>
+      <version>v1-rev214-1.25.0</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.guava</groupId>
