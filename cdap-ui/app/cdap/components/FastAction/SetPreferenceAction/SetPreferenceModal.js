@@ -125,6 +125,8 @@ export default class SetPreferenceModal extends Component {
                 'pairs': [{
                     'key':'',
                     'value':'',
+                    'validKey':true,
+                    'validValue':true,
                     'uniqueId': uuidV4()
                   }]
               };
@@ -203,7 +205,9 @@ export default class SetPreferenceModal extends Component {
       return {
         key: key,
         value: prefObj[key],
-        uniqueId: uuidV4()
+        uniqueId: uuidV4(),
+        'validKey':true,
+        'validValue':true,
       };
     });
   }
@@ -244,6 +248,15 @@ export default class SetPreferenceModal extends Component {
         let emptyKeyField = (keyValuePair.key.length === 0);
         let emptyValueField = (keyValuePair.value.length === 0);
         return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
+      });
+    }
+    return false;
+  }
+
+  invalidValues() {
+    if (this.state.keyValues.pairs) {
+      return this.state.keyValues.pairs.some((keyValuePair) => {
+        return !keyValuePair.validKey || !keyValuePair.validValue;
       });
     }
     return false;
@@ -478,7 +491,7 @@ export default class SetPreferenceModal extends Component {
                     <button
                       className="btn btn-primary float-xs-left not-saving"
                       onClick={this.setPreferences}
-                      disabled={(this.oneFieldMissing() || this.state.error) ? 'disabled' : null}
+                      disabled={(this.oneFieldMissing() || this.invalidValues() || this.state.error) ? 'disabled' : null}
                     >
                       <span>{saveAndCloseLabel}</span>
                     </button>

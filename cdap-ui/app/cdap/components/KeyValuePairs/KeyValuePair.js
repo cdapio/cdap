@@ -85,7 +85,7 @@ class KeyValuePair extends Component {
           onPaste={this.handlePaste}
           />
           {
-            !this.props.validKey &&
+            ((this.props.validKey !== undefined) && !this.props.validKey) &&
             <div className="invalid-feedback">Invalid Key</div>
           }
       </div>
@@ -123,7 +123,7 @@ class KeyValuePair extends Component {
           onPaste={this.handlePaste}
           />
           {
-            !this.props.validValue &&
+            ((this.props.validValue !== undefined) && !this.props.validValue)&&
             <div className="invalid-feedback">Invalid value</div>
           }
       </div>

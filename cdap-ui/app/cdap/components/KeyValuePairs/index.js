@@ -175,6 +175,8 @@ KeyValuePairs.propTypes = {
     pairs: PropTypes.arrayOf(PropTypes.shape({
       key : PropTypes.string,
       value : PropTypes.string,
+      validKey: PropTypes.bool,
+      validValue: PropTypes.bool,
       uniqueId : PropTypes.string,
       provided: PropTypes.bool,
       notDeletable : PropTypes.bool,
