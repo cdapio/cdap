@@ -26,12 +26,12 @@ to never re/define a CSS variable in any local scope
 */
 
 :root {
-  --brand-primary-color: $brand-primary-color;
-  --navbar-color: $navbar-bg;
-  --font-family: $font-family-base; // base font defined in bootstrap/scss/_variables.scss
-  --page-name-color: $grey-04;
-  --welcome-banner-image: $welcome_banner_image;
-  --plugin-reference-heading-bg-color: $grey-03;
+  --brand-primary-color: #{$brand-primary-color};
+  --navbar-color: #{$navbar-bg};
+  --font-family: #{$font-family-base}; // base font defined in bootstrap/scss/_variables.scss
+  --page-name-color: #{$grey-04};
+  --welcome-banner-image: #{$welcome_banner_image};
+  --plugin-reference-heading-bg-color: #{$grey-03};
 }
 
 html {

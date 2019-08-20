@@ -26,7 +26,7 @@ var TerserPlugin = require('terser-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-let pathsToClean = ['cdap_dist'];
+let pathsToClean = ['server/public/cdap_dist'];
 
 // the clean options to use
 let cleanOptions = {
@@ -45,12 +45,12 @@ const getWebpackDllPlugins = (mode) => {
   }
   return [
     new webpack.DllReferencePlugin({
-      context: path.resolve(__dirname, 'dll'),
-      manifest: require(path.join(__dirname, 'dll', sharedDllManifestFileName)),
+      context: path.resolve(__dirname, 'server', 'public', 'dll'),
+      manifest: require(path.join(__dirname, 'server', 'public', 'dll', sharedDllManifestFileName)),
     }),
     new webpack.DllReferencePlugin({
-      context: path.resolve(__dirname, 'dll'),
-      manifest: require(path.join(__dirname, 'dll', cdapDllManifestFileName)),
+      context: path.resolve(__dirname, 'server', 'public', 'dll'),
+      manifest: require(path.join(__dirname, 'server', 'public', 'dll', cdapDllManifestFileName)),
     }),
   ];
 };
@@ -128,11 +128,10 @@ var rules = [
     exclude: [
       /node_modules/,
       /bower_components/,
-      /dist/,
-      /cdap_dist/,
-      /common_dist/,
+      /server\/public\/dist/,
+      /server\/public\/cdap_dist/,
+      /server\/public\/common_dist/,
       /lib/,
-      /wrangler_dist/,
     ],
   },
   {
@@ -213,7 +212,7 @@ var webpackConfig = {
   output: {
     filename: '[name].[chunkhash].js',
     chunkFilename: '[name].[chunkhash].js',
-    path: __dirname + '/cdap_dist/cdap_assets/',
+    path: __dirname + '/server/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
   },
   stats: {

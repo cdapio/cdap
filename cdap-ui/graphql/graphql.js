@@ -55,12 +55,12 @@ let rootSchemaPath;
  * instead of cdap-sdk/ui/graphql. So when we start from sdk we need to append
  * graphql to the path for accessing schema.
  */
+let typeDefs;
 if (!__dirname.endsWith('/graphql')) {
-  rootSchemaPath = path.join(__dirname, '/graphql/schema/rootSchema.graphql');
+  typeDefs = importSchema(path.join(__dirname, '/graphql/schema/rootSchema.graphql'));
 } else {
-  rootSchemaPath = path.join(__dirname, '/schema/rootSchema.graphql');
+  typeDefs = importSchema(path.join(__dirname, '/schema/rootSchema.graphql'));
 }
-let typeDefs = importSchema(rootSchemaPath);
 
 if (typeof typeDefs === 'undefined') {
   const errorMessage = 'The GraphQL type definitions are undefined';

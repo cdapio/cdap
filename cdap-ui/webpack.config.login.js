@@ -24,7 +24,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var TerserPlugin = require('terser-webpack-plugin');
-let pathsToClean = ['login_dist'];
+let pathsToClean = ['server/public/login_dist'];
 
 // the clean options to use
 let cleanOptions = {
@@ -40,8 +40,8 @@ const getWebpackDllPlugins = (mode) => {
     sharedDllManifestFileName = 'shared-vendor-development-manifest.json';
   }
   return new webpack.DllReferencePlugin({
-    context: path.resolve(__dirname, 'dll'),
-    manifest: require(path.join(__dirname, 'dll', sharedDllManifestFileName)),
+    context: path.resolve(__dirname, 'server', 'public', 'dll'),
+    manifest: require(path.join(__dirname, 'server', 'public', 'dll', sharedDllManifestFileName)),
   });
 };
 var plugins = [
@@ -179,7 +179,7 @@ var webpackConfig = {
   },
   output: {
     filename: '[name].js',
-    path: __dirname + '/login_dist/login_assets',
+    path: __dirname + '/server/public/login_dist/login_assets',
     publicPath: '/login_assets/',
   },
   plugins: plugins,
