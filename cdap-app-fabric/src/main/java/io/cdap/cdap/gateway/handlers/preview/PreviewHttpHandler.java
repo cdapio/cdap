@@ -91,10 +91,12 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     AppRequest appRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       appRequest = GSON.fromJson(reader, AppRequest.class);
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.start(namespace, appRequest)));
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage());
     }
-    responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.start(namespace, appRequest)));
   }
 
   @POST

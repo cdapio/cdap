@@ -26,6 +26,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinConfig;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
@@ -61,7 +62,7 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   public void configurePipeline(MultiInputPipelineConfigurer pipelineConfigurer) {
     MultiInputStageConfigurer stageConfigurer = pipelineConfigurer.getMultiInputStageConfigurer();
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
-    config.validateConfig(stageConfigurer);
+    config.validateConfig(inputSchemas, stageConfigurer.getFailureCollector());
     stageConfigurer.setOutputSchema(getOutputSchema(inputSchemas));
   }
 
@@ -152,12 +153,11 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
       this.requiredInputs = "requiredInputs";
     }
 
-    private void validateConfig(MultiInputStageConfigurer configurer) {
-      Map<String, Schema> inputSchemas = configurer.getInputSchemas();
+    private void validateConfig(Map<String, Schema> inputSchemas, FailureCollector collector) {
       if (joinKeys == null || joinKeys.isEmpty()) {
-        configurer.addFailure("Config property joinKeys is either null or empty",
-                              "Provide non-empty joinKeys config property").withConfigProperty("joinKeys");
-        configurer.throwIfFailure();
+        collector.addFailure("Config property joinKeys is either null or empty",
+                             "Provide non-empty joinKeys config property").withConfigProperty("joinKeys");
+        collector.getOrThrowException();
       }
 
       List<String> multipleJoinKeys = Lists.newArrayList(Splitter.on('&').trimResults()
@@ -170,9 +170,9 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
           List<String> stageKey = Lists.newArrayList(Splitter.on('.').trimResults()
                                                        .omitEmptyStrings().split(perStageKey));
           if (stageKey.size() != 2) {
-            configurer.addFailure(String.format("Join key is not specified in stageName.columnName " +
-                                                  "format for key %s", perStageKey),
-                                  "Make sure syntax for joinKeys config property is correct")
+            collector.addFailure(String.format("Join key is not specified in stageName.columnName " +
+                                                 "format for key %s", perStageKey),
+                                 "Make sure syntax for joinKeys config property is correct")
               .withConfigProperty("joinKeys");
           } else {
             map.putIfAbsent(stageKey.get(0), stageKey.get(1));
@@ -186,15 +186,15 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
           String keyField = entry.getValue();
           Schema.Field field = inputSchemas.get(stageName).getField(keyField);
           if (field == null) {
-            configurer.addFailure(String.format("Join key field %s is not present in input schema", field),
-                                  "Make sure all the join keys are present in the input schema")
+            collector.addFailure(String.format("Join key field %s is not present in input schema", field),
+                                 "Make sure all the join keys are present in the input schema")
               .withConfigElement("joinKeys", joinKey);
             continue;
           }
 
           if (prevSchema != null && !prevSchema.equals(field.getSchema())) {
-            configurer.addFailure(String.format("Schema of joinKey field %s.%s does not match with other join keys.",
-                                                stageName, keyField), "Make sure all the join keys are of same type")
+            collector.addFailure(String.format("Schema of joinKey field %s.%s does not match with other join keys.",
+                                               stageName, keyField), "Make sure all the join keys are of same type")
               .withConfigElement("joinKeys", joinKey)
               .withInputSchemaField(keyField, stageName).withInputSchemaField(keyField, prevStage);
           }
@@ -203,7 +203,7 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
         }
       }
 
-      configurer.throwIfFailure();
+      collector.getOrThrowException();
     }
 
     /**

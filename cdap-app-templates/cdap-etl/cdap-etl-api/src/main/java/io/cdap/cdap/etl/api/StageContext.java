@@ -161,4 +161,14 @@ public interface StageContext extends ServiceDiscoverer, MetadataReader, Metadat
    * @return the pipeline arguments for this run
    */
   Arguments getArguments();
+
+  /**
+   * Returns a failure collector for the stage.
+   *
+   * @return a failure collector
+   * @throws UnsupportedOperationException if the implementation does not override this method
+   */
+  default FailureCollector getFailureCollector() {
+    throw new UnsupportedOperationException("Getting failure collector is not supported.");
+  }
 }

@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * the output schema that could be sent to the next stages from this stage.
  */
 @Beta
-public interface MultiOutputStageConfigurer extends FailureCollector {
+public interface MultiOutputStageConfigurer {
 
   /**
    * Get the input schema for this stage, or null if its unknown
@@ -44,4 +44,14 @@ public interface MultiOutputStageConfigurer extends FailureCollector {
    * @param outputSchemas map of output port to its schema
    */
   void setOutputSchemas(Map<String, Schema> outputSchemas);
+
+  /**
+   * Returns a failure collector for the stage.
+   *
+   * @return a failure collector
+   * @throws UnsupportedOperationException if the implementation does not override this method
+   */
+  default FailureCollector getFailureCollector() {
+    throw new UnsupportedOperationException("Getting failure collector is not supported.");
+  }
 }
