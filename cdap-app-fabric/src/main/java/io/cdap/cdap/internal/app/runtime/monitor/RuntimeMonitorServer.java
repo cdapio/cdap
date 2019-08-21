@@ -124,7 +124,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     // Writes the port to a local file
     Retries.runWithRetries(
       () -> {
-        String content = GSON.toJson(new RuntimeMonitorServerInfo(httpService.getBindAddress().getPort()));
+        String content = GSON.toJson(new RuntimeMonitorServerInfo(httpService.getBindAddress()));
         java.nio.file.Path infoFile = Paths.get(cConf.get(Constants.RuntimeMonitor.SERVER_INFO_FILE));
         Files.deleteIfExists(infoFile);
         Files.move(Files.write(Files.createTempFile(infoFile.getFileName().toString(), ".tmp"),

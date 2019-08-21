@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServerInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.PortForwardingProvider;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -30,6 +31,7 @@ import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.List;
@@ -46,11 +48,13 @@ import javax.annotation.Nullable;
 final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
 
   private final ConcurrentMap<ProgramRunId, SSHInfo> sshInfos;
-  private final ConcurrentMap<InetSocketAddress, ProgramRunId> allowedPortForwardings;
+  private final ConcurrentMap<InetAddress, ProgramRunId> allowedPortForwardings;
+  private final ConcurrentMap<ProgramRunId, RuntimeMonitorServerInfo> monitorServerInfos;
 
   SSHSessionManager() {
     this.sshInfos = new ConcurrentHashMap<>();
     this.allowedPortForwardings = new ConcurrentHashMap<>();
+    this.monitorServerInfos = new ConcurrentHashMap<>();
   }
 
   /**
@@ -75,20 +79,23 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
    * Associates the remote runtime server address with the given program run.
    *
    * @param programRunId the {@link ProgramRunId} to have the runtime server information added
-   * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
+   * @param allowedAddr the {@link InetAddress} where remote runtime server where program run is running on
+   * @param serverInfo the {@link RuntimeMonitorServerInfo} about the remote runtime server binding information
    */
-  void addRuntimeServer(ProgramRunId programRunId, InetSocketAddress serverAddr) {
-    allowedPortForwardings.put(serverAddr, programRunId);
+  void addRuntimeServer(ProgramRunId programRunId, InetAddress allowedAddr, RuntimeMonitorServerInfo serverInfo) {
+    monitorServerInfos.put(programRunId, serverInfo);
+    allowedPortForwardings.put(allowedAddr, programRunId);
   }
 
   /**
    * Removes the remote runtime server address with the given program run.
    *
    * @param programRunId the {@link ProgramRunId} to have the runtime server information removed
-   * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
+   * @param allowedAddr the {@link InetAddress} of where the runtime monitor server is running
    */
-  void removeRuntimeServer(ProgramRunId programRunId, InetSocketAddress serverAddr) {
-    allowedPortForwardings.remove(serverAddr, programRunId);
+  void removeRuntimeServer(ProgramRunId programRunId, InetAddress allowedAddr) {
+    allowedPortForwardings.remove(allowedAddr, programRunId);
+    monitorServerInfos.remove(programRunId);
   }
 
   /**
@@ -107,11 +114,20 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
   @Override
   public PortForwarding createPortForwarding(InetSocketAddress serverAddr,
                                              PortForwarding.DataConsumer dataConsumer) throws IOException {
-    ProgramRunId programRunId = allowedPortForwardings.get(serverAddr);
+    ProgramRunId programRunId = allowedPortForwardings.get(serverAddr.getAddress());
     if (programRunId == null) {
       throw new IllegalStateException("No SSHSession available for server " + serverAddr);
     }
-    return getSession(programRunId).createLocalPortForward("localhost", serverAddr.getPort(),
+    RuntimeMonitorServerInfo serverInfo = monitorServerInfos.get(programRunId);
+    if (serverInfo == null) {
+      throw new IllegalStateException("No runtime monitor information available for program run " + programRunId);
+    }
+    if (serverAddr.getPort() != serverInfo.getPort()) {
+      throw new IllegalStateException("Runtime monitor server is listening on port " + serverInfo.getPort()
+                                        + ", which is different than the request port " + serverAddr.getPort());
+    }
+    return getSession(programRunId).createLocalPortForward(serverInfo.getHostAddress().getHostAddress(),
+                                                           serverInfo.getPort(),
                                                            serverAddr.getPort(), dataConsumer);
   }
 
