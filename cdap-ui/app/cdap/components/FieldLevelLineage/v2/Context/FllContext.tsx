@@ -317,6 +317,14 @@ export class Provider extends React.Component<{ children }, IContextState> {
     this.fetchFieldLineage(queryParams, timeParams, dataset);
   }
 
+  public componentDidUpdate(prevProps) {
+    const existingDataset = objectQuery(prevProps, 'match', 'params', 'datasetId');
+    const newDataset = objectQuery(this.props, 'match', 'params', 'datasetId');
+    if (existingDataset !== newDataset) {
+      this.initialize();
+    }
+  }
+
   public componentDidMount() {
     this.initialize();
   }

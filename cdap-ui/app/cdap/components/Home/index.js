@@ -23,8 +23,8 @@ import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import ErrorBoundary from 'components/ErrorBoundary';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
+import ErrorBoundary from 'components/ErrorBoundary';
 
 require('./Home.scss');
 
@@ -82,7 +82,8 @@ const OpsDashboard = Loadable({
   loading: LoadingSVGCentered,
 });
 const FieldLevelLineage = Loadable({
-  loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
+  loader: () =>
+    import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage/v2'),
   loading: LoadingSVGCentered,
 });
 const PipelineList = Loadable({
@@ -112,23 +113,10 @@ export default class Home extends Component {
           <Route
             exact
             path="/ns/:namespace/datasets/:datasetId/fields"
-            component={FieldLevelLineage}
-          />
-          <Route
-            exact
-            path="/ns/:namespace/datasets/:datasetId/fll-experiment"
             render={(props) => {
-              if (window.CDAP_CONFIG.cdap.mode !== 'development') {
-                return <Page404 {...props} />;
-              }
-              const FllExperiment = Loadable({
-                loader: () =>
-                  import(/* webpackChunkName: "FLLExperiment" */ 'components/Experiments/FieldLevelLineage'),
-                loading: LoadingSVGCentered,
-              });
               return (
                 <ErrorBoundary>
-                  <FllExperiment {...props} />
+                  <FieldLevelLineage {...props} />
                 </ErrorBoundary>
               );
             }}

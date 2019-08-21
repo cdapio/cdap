@@ -35,6 +35,8 @@ export default function LineageTab({ entity }) {
   let encodedSource = encodeURIComponent(url);
   url += `&sourceUrl=${encodedSource}`;
 
+  let fllUrl = `/ns/${namespace}/datasets/${entity.id}/fields`;
+
   return (
     <div className="dataset-lineage-tab embed-responsive embed-responsive-16by9">
       <iframe
@@ -45,7 +47,7 @@ export default function LineageTab({ entity }) {
         className="embed-responsive-item"
       />
       <div className="field-lineage-link">
-        <Link className="btn btn-secondary" to={`/ns/${namespace}/datasets/${entity.id}/fields`}>
+        <Link className="btn btn-secondary" to={fllUrl}>
           Field Level Lineage
         </Link>
       </div>
