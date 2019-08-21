@@ -198,13 +198,14 @@ public class RuntimeMonitorTest {
   }
 
   /**
-   * Verifies the {@link RuntimeMonitorServer} writes out its port to a file as specified by the
+   * Verifies the {@link RuntimeMonitorServer} writes out its host and port to a file as specified by the
    * {@link Constants.RuntimeMonitor#SERVER_INFO_FILE} config.
    */
   private void verifyServerPortWritten() throws IOException {
     String file = cConf.get(Constants.RuntimeMonitor.SERVER_INFO_FILE);
     try (Reader reader = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8)) {
       RuntimeMonitorServerInfo info = new Gson().fromJson(reader, RuntimeMonitorServerInfo.class);
+      Assert.assertEquals(runtimeServer.getBindAddress().getAddress(), info.getHostAddress());
       Assert.assertEquals(runtimeServer.getBindAddress().getPort(), info.getPort());
     }
   }
