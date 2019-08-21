@@ -15,6 +15,7 @@
 */
 
 import * as React from 'react';
+import { objectQuery } from 'services/helpers';
 import CodeEditorWidget from 'components/AbstractWidget/CodeEditorWidget';
 import CSVWidget from 'components/AbstractWidget/CSVWidget';
 import DatasetSelector from 'components/AbstractWidget/DatasetSelectorWidget';
@@ -30,6 +31,7 @@ import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
 import MultipleValuesWidget from 'components/AbstractWidget/MultipleValuesWidget';
 import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
 import NumberWidget from 'components/AbstractWidget/FormInputs/Number';
+import PasswordWidget from 'components/AbstractWidget/FormInputs/Password';
 import RadioGroupWidget from 'components/AbstractWidget/RadioGroupWidget';
 import SecureKeyPassword from 'components/AbstractWidget/SecureKey/SecureKeyPassword';
 import SecureKeyText from 'components/AbstractWidget/SecureKey/SecureKeyText';
@@ -39,7 +41,6 @@ import SqlConditionsWidget from 'components/AbstractWidget/SqlConditionsWidget';
 import SqlSelectorWidget from 'components/AbstractWidget/SqlSelectorWidget';
 import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
-import { objectQuery } from 'services/helpers';
 
 /**
  * Please maintain alphabetical order of the widget factory.
@@ -61,6 +62,7 @@ export const WIDGET_FACTORY = {
   'memory-textbox': MemoryTextbox,
   'multi-select': MultiSelect,
   number: NumberWidget,
+  password: PasswordWidget,
   'radio-group': RadioGroupWidget,
   'securekey-password': SecureKeyPassword,
   'securekey-text': SecureKeyText,
@@ -75,7 +77,7 @@ export const WIDGET_FACTORY = {
     return <CodeEditorWidget mode="javascript" rows={25} {...props} />;
   },
   'json-editor': (props) => {
-    const rows = objectQuery(props, 'widgetProps', 'rows') || 5;
+    const rows = getRowsFromWidgetProps(props);
     return <JsonEditorWidget rows={rows} {...props} />;
   },
   'python-editor': (props) => {
@@ -88,7 +90,7 @@ export const WIDGET_FACTORY = {
     return <CodeEditorWidget mode="sql" rows={15} {...props} />;
   },
   textarea: (props) => {
-    const rows = objectQuery(props, 'widgetProps', 'rows') || 5;
+    const rows = getRowsFromWidgetProps(props);
     return <CodeEditorWidget mode="plain_text" rows={rows} {...props} />;
   },
 
@@ -103,3 +105,12 @@ export default new Proxy(WIDGET_FACTORY, {
     return prop in obj ? obj[prop] : TextBox;
   },
 });
+
+function getRowsFromWidgetProps(props, defaultRows = 5) {
+  let rows = objectQuery(props, 'widgetProps', 'rows') || defaultRows;
+  if (typeof rows === 'string') {
+    rows = parseInt(rows, 10);
+    rows = isNaN(rows) ? defaultRows : rows;
+  }
+  return rows;
+}
