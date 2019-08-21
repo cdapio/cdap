@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.gson.Gson;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.common.ssh.TestSSHServer;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServerInfo;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
@@ -118,8 +120,12 @@ public class SSHSessionManagerTest {
         // Expected
       }
 
+      // Serialize and deserialize the RuntimeMonitorServerInfo to simulate what's actually happen in remote runtime.
+      Gson gson = new Gson();
+      RuntimeMonitorServerInfo serverInfo = gson.fromJson(gson.toJson(new RuntimeMonitorServerInfo(serverAddr)),
+                                                          RuntimeMonitorServerInfo.class);
       // Add the server address
-      manager.addRuntimeServer(programRunId, serverAddr);
+      manager.addRuntimeServer(programRunId, serverAddr.getAddress(), serverInfo);
 
       // Now can create the port forwarding
       PortForwarding portForwarding = manager.createPortForwarding(serverAddr, new PortForwarding.DataConsumer() {
@@ -136,6 +142,7 @@ public class SSHSessionManagerTest {
       Assert.assertFalse(portForwarding.isOpen());
 
     } finally {
+      manager.close();
       serverSocket.close();
     }
   }
