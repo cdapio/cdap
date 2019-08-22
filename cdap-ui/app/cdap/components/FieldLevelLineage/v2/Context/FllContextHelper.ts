@@ -220,12 +220,12 @@ export function getFieldLineage(
   timeParams: ITimeParams,
   cb: (lineage: IContextState) => void
 ) {
-  let fieldname;
+  let fieldname: string;
   let activeField: IField;
 
   if (!qParams || !qParams.field) {
     fieldname = null;
-    activeField = null;
+    activeField = { id: null, name: null };
   } else {
     fieldname = qParams.field;
     activeField = {
@@ -276,7 +276,7 @@ function constructQueryParams(
   const timeParams = getTimeParamsFromSelection(selection, start, end);
   let url = `${pathname}${timeParams}`;
 
-  if (activeField) {
+  if (activeField.id) {
     url = `${url}&field=${activeField.name}`;
   }
   return url;

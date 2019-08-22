@@ -94,11 +94,11 @@ export class Provider extends React.Component<{ children }, IContextState> {
     if (!activeFieldId) {
       return;
     }
-    if (this.state.activeField) {
+    if (this.state.activeField.id) {
       d3.select(`#${this.state.activeField.id}`).classed('selected', false);
     }
 
-    const newField = {
+    const newField: IField = {
       id: activeFieldId,
       name: (e.target as HTMLDivElement).dataset.fieldname,
     };
@@ -128,7 +128,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     newTargetId?: string,
     newLinks?: { incoming: ILink[]; outgoing: ILink[] }
   ) => {
-    const activeFieldId = newTargetId || this.state.activeField || this.state.activeField.id;
+    const activeFieldId = newTargetId || this.state.activeField.id;
     const activeLinks = { incoming: [], outgoing: [] };
     const links = newLinks
       ? newLinks.incoming.concat(newLinks.outgoing)
@@ -186,10 +186,15 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
   private fetchFieldLineage(qParams, timeParams, dataset = this.state.target) {
     const namespace = getCurrentNamespace();
-    const updateState = (newState) => {
-      // if there is an active field, get active links
+    const updateState = (newState: IContextState) => {
+      // if there is an active field, get active links and active sets
       if (newState.activeField.id) {
-        newState.activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
+        const activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
+        const activeSets = this.getActiveSets(activeLinks);
+
+        newState.activeLinks = activeLinks;
+        newState.activeCauseSets = activeSets.activeCauseSets;
+        newState.activeImpactSets = activeSets.activeImpactSets;
       }
       this.setState(newState);
     };
@@ -278,7 +283,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     links: { incoming: [], outgoing: [] },
     causeSets: {},
     impactSets: {},
-    activeField: null,
+    activeField: { id: null, name: null },
     showingOneField: false,
     start: null,
     end: null,

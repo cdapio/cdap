@@ -60,7 +60,6 @@ function ModalContentView({ operations, activeIndex }) {
   const activeOperations = activeSet.operations;
 
   const { sources, targets } = getDatasets(activeOperations);
-  console.log('operations ', operations);
   return (
     <div className="operations-container">
       <Heading
