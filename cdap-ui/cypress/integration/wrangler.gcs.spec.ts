@@ -26,17 +26,20 @@ let headers;
 
 describe('Wrangler GCS tests', () => {
   before(() => {
-    return Helpers.loginIfRequired().then(() => {
-      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
-        if (!cookie) {
-          return cy.start_wrangler(headers);
-        }
-        headers = {
-          Authorization: 'Bearer ' + cookie.value,
-        };
-        return cy.start_wrangler(headers);
-      });
-    });
+    return Helpers.loginIfRequired()
+      .then(() => {
+        cy.getCookie('CDAP_Auth_Token').then((cookie) => {
+          if (!cookie) {
+            return cy.wrap(headers);
+          }
+          headers = {
+            Authorization: 'Bearer ' + cookie.value,
+          };
+        });
+      })
+      .then(Helpers.getSessionToken)
+      .then(sessionToken => headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
+      .then(() => cy.start_wrangler(headers));
   });
 
   it('Should successfully test GCS connection', () => {
@@ -87,7 +90,7 @@ describe('Wrangler GCS tests', () => {
     cy.visit('/cdap/ns/default/connections');
     cy.get(
       `[data-cy="connection-action-popover-toggle-${
-        ConnectionType.GCS
+      ConnectionType.GCS
       }-${DEFAULT_GCS_CONNECTION_NAME}"`
     ).click();
     cy.get(`[data-cy="wrangler-${ConnectionType.GCS}-connection-delete"]`).click();

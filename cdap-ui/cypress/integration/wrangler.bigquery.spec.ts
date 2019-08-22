@@ -26,17 +26,24 @@ let headers;
 
 describe('Wrangler BigQuery tests', () => {
   before(() => {
-    return Helpers.loginIfRequired().then(() => {
-      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
-        if (!cookie) {
-          return cy.start_wrangler(headers);
-        }
-        headers = {
-          Authorization: 'Bearer ' + cookie.value,
-        };
-        return cy.start_wrangler(headers);
-      });
-    });
+    return Helpers.loginIfRequired()
+      .then(() => {
+        cy.getCookie('CDAP_Auth_Token').then((cookie) => {
+          if (!cookie) {
+            return cy.wrap(headers);
+          }
+          headers = {
+            Authorization: 'Bearer ' + cookie.value,
+          };
+        });
+        return cy.wrap(headers);
+      })
+      .then(Helpers.getSessionToken)
+      .then(sessionToken => {
+        headers = Object.assign({}, headers, { 'Session-Token': sessionToken });
+        return cy.wrap(headers);
+      })
+      .then(() => cy.start_wrangler(headers));
   });
   it('Should successfully test BigQuery connection', () => {
     cy.test_BIGQUERY_connection(DEFAULT_BIGQUERY_CONNECTION_NAME);
@@ -58,7 +65,7 @@ describe('Wrangler BigQuery tests', () => {
     cy.create_BIGQUERY_connection(DEFAULT_BIGQUERY_CONNECTION_NAME);
     cy.get(
       `[data-cy="wrangler-${
-        ConnectionType.BIGQUERY
+      ConnectionType.BIGQUERY
       }-connection-${DEFAULT_BIGQUERY_CONNECTION_NAME}"]`
     );
   });
@@ -76,7 +83,7 @@ describe('Wrangler BigQuery tests', () => {
     cy.visit('/cdap/ns/default/connections');
     cy.get(
       `[data-cy="wrangler-${
-        ConnectionType.BIGQUERY
+      ConnectionType.BIGQUERY
       }-connection-${DEFAULT_BIGQUERY_CONNECTION_NAME}"]`
     ).click();
     cy.contains(DEFAULT_BIGQUERY_DATASET).click();
@@ -95,7 +102,7 @@ describe('Wrangler BigQuery tests', () => {
     cy.visit('/cdap/ns/default/connections');
     cy.get(
       `[data-cy="connection-action-popover-toggle-${
-        ConnectionType.BIGQUERY
+      ConnectionType.BIGQUERY
       }-${DEFAULT_BIGQUERY_CONNECTION_NAME}"`
     ).click();
     cy.get(`[data-cy="wrangler-${ConnectionType.BIGQUERY}-connection-delete"]`).click();
@@ -103,7 +110,7 @@ describe('Wrangler BigQuery tests', () => {
     cy.get(`[data-cy="wrangler-${ConnectionType.BIGQUERY}-delete-confirmation-btn"]`).click();
     cy.get(
       `[data-cy="wrangler-${
-        ConnectionType.BIGQUERY
+      ConnectionType.BIGQUERY
       }-connection-${DEFAULT_BIGQUERY_CONNECTION_NAME}"]`
     ).should('not.exist');
   });

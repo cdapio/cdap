@@ -18,6 +18,7 @@ const username = Cypress.env('username') || 'admin';
 const password = Cypress.env('password') || 'admin';
 let isAuthEnabled = false;
 let authToken = null;
+let sessionToken = null;
 
 function loginIfRequired() {
   if (isAuthEnabled && authToken !== null) {
@@ -57,6 +58,20 @@ function loginIfRequired() {
         });
       }
     });
+}
+
+function getSessionToken() {
+  if (sessionToken !== null) {
+    return sessionToken;
+  }
+  return cy.request({
+    method: 'GET',
+    url: `http://${Cypress.env('host')}:11011/sessionToken`,
+    failOnStatusCode: false,
+  }).then(response => {
+    sessionToken = response.body;
+    return sessionToken;
+  });
 }
 
 function getArtifactsPoll(headers, retries = 0) {
@@ -99,4 +114,4 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .then(() => done());
 }
 
-export { loginIfRequired, getArtifactsPoll, deployAndTestPipeline };
+export { loginIfRequired, getArtifactsPoll, deployAndTestPipeline, getSessionToken };
