@@ -290,6 +290,7 @@ export default class DataPrepTopPanel extends Component {
     },
     {
       label: T.translate(`${PREFIX}.exploreDataBtnLabel`),
+      shouldRender: () => Theme.showFeatureEngineering && Theme.showEDA,
       iconName: 'icon-info-circle',
       onClick: this.toggleExploreDataset
     }

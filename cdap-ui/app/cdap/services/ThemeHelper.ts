@@ -83,6 +83,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "hub"?: boolean;
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
+    "EDA"?: boolean;
   };
 }
 
@@ -162,6 +163,7 @@ interface IThemeObj {
   showReports?: boolean;
   showDataPrep?: boolean;
   showFeatureEngineering?: boolean;
+  showEDA?: boolean;
   showPipelines?: boolean;
   showAnalytics?: boolean;
   showRulesEngine?: boolean;
@@ -301,6 +303,15 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       if ('feature-engineering' in contentJson['feature-names']) {
         featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'feature-engineering');
       }
+
+      if ('non-unified-modules' in contentJson['feature-names']) {
+        featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'non-unified-modules');
+      }
+
+      if ('EDA' in contentJson['feature-names']) {
+        featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'EDA');
+      }
+
       if ('entities' in contentJson['feature-names']) {
         featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
       }
@@ -333,6 +344,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showReports: true,
       showDataPrep: true,
       showFeatureEngineering: false,
+      showEDA: false,
       showPipelines: true,
       showAnalytics: true,
       showRulesEngine: true,
@@ -356,6 +368,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('feature-engineering' in featuresJson && isBoolean(featuresJson['feature-engineering'])) {
       features.showFeatureEngineering = featuresJson['feature-engineering'];
+    }
+    if ('EDA' in featuresJson && isBoolean(featuresJson.EDA)) {
+      features.showEDA = featuresJson.EDA;
     }
     if ('pipelines' in featuresJson && isBoolean(featuresJson.pipelines)) {
       features.showPipelines = featuresJson.pipelines;

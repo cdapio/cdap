@@ -110,7 +110,10 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/datasets/:datasetId/fields" component={FieldLevelLineage} />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
           <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
-          <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />
+          {
+            Theme.showRulesEngine && <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />
+          }
+
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
           <Route path="/ns/:namespace/databasebrowser" render={() => {
@@ -127,12 +130,18 @@ export default class Home extends Component {
               <DataPrepBrowser />
             );
           }} />
+
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           {
             Theme.showFeatureEngineering && <Route path="/ns/:namespace/featureEngineering" component={FeatureUI} />
           }
           <Route path="/ns/:namespace/exploredataset" component={ExploreDatasetUI} />
-          <Route path="/ns/:namespace/experiments" component={Experiments} />
+
+          <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
+          {
+            Theme.showAnalytics && <Route path="/ns/:namespace/experiments" component={Experiments} />
+          }
+
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route path="/ns/:namespace/reports" component={Reports} />

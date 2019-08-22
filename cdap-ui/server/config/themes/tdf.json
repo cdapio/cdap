@@ -1,0 +1,42 @@
+{
+  "spec-version": "1.0",
+  "styles": {
+    "brand-primary-color": "#3b78e7",
+    "navbar-color": "#383846",
+    "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+  },
+  "content": {
+    "product-name": "Data Playbook",
+    "product-description": "Enables SME in Designer Mode to create Analytics use cases by creation of Playbook using re-usable Accelerators. For Production Deployment, Application Developers can optimise Playbooks using Developer Mode.",
+    "product-logo-navbar": {
+      "type": "link",
+      "arguments": {
+         "url": "/cdap_assets/img/company_logo.png"
+      }
+    },
+    "product-logo-about": {
+      "type": "link",
+      "arguments": {
+         "url": "/cdap_assets/img/Company_logo_darkgray.png"
+      }
+    },
+    "favicon-path": "/cdap_assets/img/favicon.png",
+    "footer-text": "Licensed under the Apache License, Version 2.0",
+    "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
+  },
+  "features": {
+    "about-product": true,
+    "dashboard": true,
+    "reports": true,
+    "data-prep": true,
+    "pipelines": true,
+    "analytics": false,
+    "rules-engine": false,
+    "metadata": false,
+    "hub": true,
+    "ingest-data": true,
+    "add-namespace": true,
+    "feature-engineering": false,
+    "EDA": false
+  }
+}
