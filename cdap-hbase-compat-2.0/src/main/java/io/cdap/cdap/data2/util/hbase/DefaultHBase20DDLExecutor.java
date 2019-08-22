@@ -34,7 +34,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of the {@link HBaseDDLExecutor} for HBase 1.1
+ * Implementation of the {@link HBaseDDLExecutor} for HBase 2.0
  */
 public class DefaultHBase20DDLExecutor extends DefaultHBaseDDLExecutor {
 

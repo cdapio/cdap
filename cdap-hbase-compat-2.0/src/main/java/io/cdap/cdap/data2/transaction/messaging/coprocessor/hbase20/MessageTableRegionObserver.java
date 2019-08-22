@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase20;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
@@ -38,6 +39,7 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.HStore;
@@ -53,14 +55,19 @@ import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
+import org.apache.tephra.hbase.coprocessor.FilteredInternalScanner;
+import org.apache.tephra.hbase.coprocessor.TransactionProcessor;
 import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
+import org.apache.tephra.util.TxUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -124,28 +131,19 @@ public class MessageTableRegionObserver implements RegionObserver, Coprocessor {
                                   InternalScanner scanner, FlushLifeCycleTracker tracker) throws IOException {
     LOG.info("preFlush, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
-    Scan scan = new Scan();
-    scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                         prefixLength, topicMetadataCache, txVisibilityState));
+    MessageDataFilter filter = new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
+                                                     prefixLength, topicMetadataCache, txVisibilityState);
+    StoreScanner delegate = new StoreScanner((HStore) store, ((HStore) store).getScanInfo(),
+                                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
+                                             HConstants.OLDEST_TIMESTAMP);
+
     return new LoggingInternalScanner("MessageDataFilter", "preFlush",
-                                      new StoreScanner((HStore) store, ((HStore) store).getScanInfo(), scan,
-                                                       ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
-                                                       HConstants.OLDEST_TIMESTAMP), txVisibilityState);
+                                      new FilteredInternalScanner(delegate, filter), txVisibilityState);
   }
 
   @Override
   public void preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                   ScanOptions options, FlushLifeCycleTracker tracker) throws IOException {
-    LOG.info("preFlush, filter using MessageDataFilter");
-    TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
-    Scan scan = new Scan();
-    scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                         prefixLength, topicMetadataCache, txVisibilityState));
-    return new LoggingInternalScanner("MessageDataFilter", "preFlush",
-                                      new StoreScanner(store, ((HStore) store).getScanInfo(), scan,
-                                                       Collections.singletonList(memstoreScanner),
-                                                       ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
-                                                       HConstants.OLDEST_TIMESTAMP), txVisibilityState);
   }
 
   @Override
@@ -179,10 +177,13 @@ public class MessageTableRegionObserver implements RegionObserver, Coprocessor {
       compactionState.record(request, txVisibilityState);
     }
 
-    Scan scan = new Scan();
-    scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                         prefixLength, topicMetadataCache, txVisibilityState));
-    return new LoggingInternalScanner("MessageDataFilter", "preCompact", scanner, txVisibilityState);
+    MessageDataFilter filter = new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
+                                                     prefixLength, topicMetadataCache, txVisibilityState);
+    StoreScanner delegate = new StoreScanner((HStore) store, ((HStore) store).getScanInfo(),
+                                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
+                                             HConstants.OLDEST_TIMESTAMP);
+    return new LoggingInternalScanner("MessageDataFilter", "preCompact",
+                                      new FilteredInternalScanner(delegate, filter), txVisibilityState);
 
   }
 
@@ -298,6 +299,60 @@ public class MessageTableRegionObserver implements RegionObserver, Coprocessor {
     }
     return numStoreFiles;
   }
+
+  /**
+   * Wrapper of InternalScanner to apply Transaction visibility filter for flush and compact
+   */
+  private static class FilteredInternalScanner implements InternalScanner {
+
+    private final InternalScanner delegate;
+    private final Filter filter;
+    private List<Cell> outResult = new ArrayList<Cell>();
+
+    public FilteredInternalScanner(InternalScanner internalScanner, Filter filter) {
+      this.delegate = internalScanner;
+      this.filter = filter;
+    }
+
+    @Override
+    public void close() throws IOException {
+      this.delegate.close();
+    }
+
+    @Override
+    public boolean next(List<Cell> result, ScannerContext scannerContext) throws IOException {
+      outResult.clear();
+      if (filter.filterAllRemaining()) {
+        return false;
+      }
+      while (true) {
+        boolean next = delegate.next(outResult, scannerContext);
+        for (Cell cell : outResult) {
+          Filter.ReturnCode code = filter.filterKeyValue(cell);
+          switch (code) {
+            // included, so we are done
+            case INCLUDE:
+            case INCLUDE_AND_NEXT_COL:
+              result.add(cell);
+              break;
+            case SKIP:
+            case NEXT_COL:
+            case NEXT_ROW:
+            default:
+              break;
+          }
+        }
+        if (!next) {
+          return next;
+        }
+        if (!result.isEmpty()) {
+          return true;
+        }
+
+      }
+    }
+  }
+
 
   private static final class MessageDataFilter extends FilterBase {
     private final RegionCoprocessorEnvironment env;

@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.increment.hbase20;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
 import io.cdap.cdap.data2.increment.hbase.TimestampOracle;
@@ -40,7 +39,6 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
-import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
@@ -48,8 +46,8 @@ import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
-import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.tephra.TxConstants;
 
 import java.io.IOException;

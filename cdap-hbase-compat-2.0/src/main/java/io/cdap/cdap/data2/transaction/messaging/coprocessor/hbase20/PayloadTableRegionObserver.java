@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.hbase.coprocessor.FilteredInternalScanner;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

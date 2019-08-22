@@ -23,8 +23,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,9 +104,8 @@ public class HBase20TableDescriptorUtil {
       = ColumnFamilyDescriptor.BloomType.valueOf(descriptor.getBloomFilterType().name().toUpperCase());
 
     Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : descriptor.getValues().entrySet()) {
-      properties.put(org.apache.hadoop.hbase.util.Bytes.toString(value.getKey().get()),
-                     org.apache.hadoop.hbase.util.Bytes.toString(value.getValue().get()));
+    for (Map.Entry<Bytes, Bytes> value : descriptor.getValues().entrySet()) {
+      properties.put(Bytes.toString(value.getKey().get()), Bytes.toString(value.getValue().get()));
     }
     return new ColumnFamilyDescriptor(name, maxVersions, compressionType, bloomType, properties);
   }
