@@ -57,6 +57,15 @@ angular.module(PKG.name + '.commons')
         fieldset.append(angularElement);
         var content = $compile(fieldset)(scope);
         element.append(content);
+
+        // keep widget type in _backend_node_properties
+        var view_Type = scope.myconfig['widget-type'];
+        var field_name = scope.myconfig['name'];
+
+        if(view_Type && field_name && scope.node._backendProperties && scope.node._backendProperties[field_name] )  {
+          scope.node._backendProperties[field_name]['widget-type'] = view_Type;
+        }
+
       }
     };
 

@@ -27,12 +27,12 @@ angular.module(PKG.name + '.commons')
         }
       },
       'textbox': {
-        element: '<input/>',
+        element: '<my-input-box-widget></my-input-box-widget>',
         attributes: {
-          'class': 'form-control',
           'ng-trim': 'false',
           'ng-model': 'model',
-          placeholder: '{{ ::myconfig["widget-attributes"].placeholder}}'
+          'disabled': 'disabled',
+          'placeholder': '{{ ::myconfig["widget-attributes"].placeholder}}'
         }
       },
       'textarea': {

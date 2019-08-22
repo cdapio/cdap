@@ -40,7 +40,9 @@ function getEs6Directives(isNegate) {
     'timeline',
     'widget-container',
     'plugin-functions',
-    'my-link-button'
+    'my-link-button',
+    'input-validator'
+
   ];
 
   return es6directives.map(function (directive) {
