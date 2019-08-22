@@ -25,11 +25,12 @@ import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
-import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -37,6 +38,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteProcessController;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeTable;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -44,10 +46,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -165,10 +167,37 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected boolean shouldRetry(Exception ex) {
-    if (!(ex instanceof ServiceUnavailableException)) {
-      LOG.warn("Exception raised when fetching monitoring data from program run {}.", programRunId, ex);
-    }
+    OUTAGE_LOGGER.warn("Failed to fetch monitoring messages for program {}", programRunId, ex);
     return true;
+  }
+
+  @Override
+  protected long handleRetriesExhausted(Exception e) throws Exception {
+    // kill the remote process and record a program run error
+    // log this in the program context so it shows up in program logs
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
+    Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
+    try {
+      LOG.error("Failed to monitor the remote process, terminating the run.", e);
+    } finally {
+      cancellable.cancel();
+    }
+
+    try {
+      remoteProcessController.kill();
+    } catch (Exception e1) {
+      LOG.warn("Failed to kill the remote process controller for program {}. "
+                 + "The remote process may need to be killed manually.", programRunId, e1);
+    }
+
+    // If failed to fetch messages and the remote process is not running, emit a failure program state and
+    // terminates the monitor
+    programStateWriter.error(programRunId,
+                             new IllegalStateException("Program runtime terminated abnormally. " +
+                                                         "Please inspect logs for root cause.", e));
+    clearStates();
+    stop();
+    throw e;
   }
 
   @Override
@@ -186,28 +215,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     }
 
     // Next to fetch data from the remote runtime
-    Map<String, Deque<MonitorMessage>> monitorResponses;
-    try {
-      monitorResponses = monitorClient.fetchMessages(topicsToRequest);
-    } catch (ServiceUnavailableException | IOException e) {
-      OUTAGE_LOGGER.warn("Failed to fetch monitoring messages for program {}", programRunId, e);
-
-      // If the remote process is still running, just try to poll again in the next cycle
-      if (remoteProcessController.isRunning()) {
-        return pollTimeMillis;
-      }
-
-      LOG.error("Remote process for program {} is no longer running.", programRunId, e);
-
-      // If failed to fetch messages and the remote process is not running, emit a failure program state and
-      // terminates the monitor
-      programStateWriter.error(programRunId,
-                               new IllegalStateException("Program runtime terminated abnormally. " +
-                                                           "Please inspect logs for root cause.", e));
-      clearStates();
-      stop();
-      return 0;
-    }
+    Map<String, Deque<MonitorMessage>> monitorResponses = monitorClient.fetchMessages(topicsToRequest);
 
     // Update programFinishTime when remote runtime is in terminal state. Also buffer all the program status
     // events. This is done before transactional publishing to avoid re-fetching same remote runtime status

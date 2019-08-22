@@ -2719,7 +2719,7 @@
 
   <property>
     <name>system.runtime.monitor.retry.policy.max.time.secs</name>
-    <value>2147483647</value>
+    <value>3600</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
     </description>

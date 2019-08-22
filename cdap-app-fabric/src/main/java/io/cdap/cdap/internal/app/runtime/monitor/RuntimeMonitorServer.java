@@ -88,6 +88,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
   private final ProxySelector proxySelector;
   private final Authenticator authenticator;
   private final NettyHttpService httpService;
+  private final long shutdownTimeoutSeconds;
   private TrafficRelayServer trafficRelayServer;
   private ProxySelector oldProxySelector;
   private volatile String keyStoreHash;
@@ -102,6 +103,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     this.programRunCancellable = programRunCancellable;
     this.proxySelector = proxySelector;
     this.authenticator = authenticator;
+    this.shutdownTimeoutSeconds = cConf.getLong("system.runtime.monitor.retry.policy.max.time.secs");
 
     // Creates the http service
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
@@ -189,7 +191,10 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
     // Wait for the shutdown signal from the runtime monitor before shutting off the http server.
     // This allows the runtime monitor still able to talk to this service until all data are fetched.
-    Uninterruptibles.awaitUninterruptibly(shutdownLatch);
+    if (!Uninterruptibles.awaitUninterruptibly(shutdownLatch, shutdownTimeoutSeconds, TimeUnit.SECONDS)) {
+      LOG.warn("Did not receive a shutdown signal from the master after {} seconds, proceeding with shutdown. "
+                 + "This may result in missing logs or metrics.", shutdownTimeoutSeconds);
+    }
     trafficRelayServer.stopAndWait();
     httpService.stop();
     LOG.info("Runtime monitor server stopped");
