@@ -26,6 +26,7 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
@@ -108,10 +109,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final MutationOptions ASYNC = MutationOptions.builder().setAsynchronous(true).build();
 
   private final MetadataAdmin metadataAdmin;
+  private final FeatureProvider featureProvider;
 
   @Inject
-  MetadataHttpHandler(MetadataAdmin metadataAdmin) {
+  MetadataHttpHandler(MetadataAdmin metadataAdmin, CConfiguration cConf) {
     this.metadataAdmin = metadataAdmin;
+    featureProvider = new FeatureProvider(cConf);
   }
 
   @GET
@@ -311,6 +314,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK,
                        GSON.toJson("v5".equals(responseFormat)
                                      ? MetadataCompatibility.toV5Response(response, entityScope) : response));
+  }
+
+  @GET
+  @Path("/metadata/search/features")
+  public void getSearchFeatures(HttpRequest request, HttpResponder responder) {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(featureProvider.getFeatureInfo()));
   }
 
   @GET
@@ -538,6 +547,46 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                                     "from specified scope, or just omit the parameter to get " +
                                                     "entities from both scopes",
                                                   entityScope, EntityScope.USER, EntityScope.SYSTEM));
+    }
+  }
+
+  private class FeatureProvider {
+    private final CConfiguration cConf;
+
+    private FeatureProvider(CConfiguration cConf) {
+      this.cConf = cConf;
+    }
+
+    private FeatureInfo getFeatureInfo() {
+      final String engine = cConf.get(Constants.Metadata.STORAGE_PROVIDER_IMPLEMENTATION);
+
+      if (engine == null) { // default storage implementation is noSQL
+        return new FeatureInfo("nosql", ImmutableList.of(new Feature("REQUIRED")));
+      } else if (engine.equals("elastic")) {
+        return new FeatureInfo("elastic", ImmutableList.of(
+            new Feature("REQUIRED"),
+            new Feature("DATE"),
+            new Feature("NUMERIC")));
+      }
+      throw new IllegalArgumentException("Metadata storage implementation \"" + engine + "\" is unsupported.");
+    }
+  }
+
+  private class FeatureInfo {
+    private final String engine;
+    private final List<Feature> features;
+
+    private FeatureInfo(String engine, List<Feature> features) {
+      this.engine = engine;
+      this.features = features;
+    }
+  }
+
+  private class Feature {
+    private final String name;
+
+    private Feature(String name) {
+      this.name = name;
     }
   }
 }
