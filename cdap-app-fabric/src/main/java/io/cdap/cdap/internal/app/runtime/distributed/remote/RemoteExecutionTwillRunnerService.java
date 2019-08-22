@@ -679,20 +679,27 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
           // Try to read the port file on the remote host, for up to 3 seconds.
           RetryStrategy strategy = RetryStrategies.timeLimit(3, TimeUnit.SECONDS,
                                                              RetryStrategies.fixDelay(200, TimeUnit.MILLISECONDS));
-          int port = Retries.callWithRetries(() -> {
+          RuntimeMonitorServerInfo serverInfo = Retries.callWithRetries(() -> {
             String json = session.executeAndWait("cat " + programRunId.getRun() + "/"
                                                    + cConf.get(Constants.RuntimeMonitor.SERVER_INFO_FILE));
             RuntimeMonitorServerInfo info = GSON.fromJson(json, RuntimeMonitorServerInfo.class);
             if (info == null) {
               throw new IOException("Cannot find the port for the runtime monitor server");
             }
-            return info.getPort();
+            // This is for backward compatibility case. It could happen when CDAP is upgraded to monitor a
+            // remote runtime that was started with older CDAP version.
+            // For older CDAP, we assume the runtime monitor server binds to 127.0.0.1.
+            if (info.getHostAddress() == null) {
+              info = new RuntimeMonitorServerInfo(new InetSocketAddress("127.0.0.1", info.getPort()));
+            }
+
+            return info;
           }, strategy, IOException.class::isInstance);
 
-          this.address = address = new InetSocketAddress(session.getAddress().getAddress(), port);
+          this.address = address = new InetSocketAddress(session.getAddress().getAddress(), serverInfo.getPort());
 
           // Once acquired the server address, add it to the SSHSessionManager so that the proxy server can use it
-          sshSessionManager.addRuntimeServer(programRunId, address);
+          sshSessionManager.addRuntimeServer(programRunId, address.getAddress(), serverInfo);
 
           LOG.debug("Remote runtime server for program run {} is running at {}", programRunId, address);
           return address;
@@ -707,7 +714,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       closed = true;
       InetSocketAddress address = this.address;
       if (address != null) {
-        sshSessionManager.removeRuntimeServer(programRunId, address);
+        sshSessionManager.removeRuntimeServer(programRunId, address.getAddress());
       }
     }
   }

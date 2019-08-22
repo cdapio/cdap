@@ -16,15 +16,27 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 /**
  * A class containing information about the {@link RuntimeMonitorServer} that are used by the client.
  */
 public final class RuntimeMonitorServerInfo {
 
+  private final InetAddress hostAddress;
   private final int port;
 
-  public RuntimeMonitorServerInfo(int port) {
-    this.port = port;
+  public RuntimeMonitorServerInfo(InetSocketAddress address) {
+    this.hostAddress = address.getAddress();
+    this.port = address.getPort();
+  }
+
+  /**
+   * Returns the host address that the {@link RuntimeMonitorServer} is listening on.
+   */
+  public InetAddress getHostAddress() {
+    return hostAddress;
   }
 
   /**
