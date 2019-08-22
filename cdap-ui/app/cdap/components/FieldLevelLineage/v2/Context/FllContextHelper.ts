@@ -61,7 +61,7 @@ export interface ITimeParams {
   range: { start: string | number; end: string | number };
 }
 
-interface IQueryParams {
+export interface IQueryParams {
   time?: string;
   field?: string;
   start?: string;
@@ -292,4 +292,13 @@ export function replaceHistory(
   };
 
   history.replaceState(stateObj, stateObj.title, stateObj.url);
+}
+
+export function getTimeQueryParams(selection, start, end) {
+  const timeRange = selection ? selection : TIME_OPTIONS[1];
+  let params = `?time=${timeRange}`;
+  if (start && selection === TIME_OPTIONS[0]) {
+    params = `${params}&start=${start}&end=${end}`;
+  }
+  return params;
 }

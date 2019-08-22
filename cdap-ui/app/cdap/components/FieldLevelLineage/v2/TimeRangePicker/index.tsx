@@ -40,14 +40,6 @@ const styles = (): StyleRules => {
     timePickerContainer: {
       paddingLeft: 50,
     },
-    // To do: Style menu
-    menu: {
-      getContentAnchorEl: 'null',
-      anchorOrigin: {
-        vertical: 'bottom',
-        horizontal: 'center',
-      },
-    },
   };
 };
 
@@ -58,10 +50,6 @@ function TimeRangePicker({ classes }) {
 
   const onSelect = (e: React.ChangeEvent<{ value: string }>) => {
     const range = e.target.value;
-
-    if (range === TIME_OPTIONS[0]) {
-      renderCustomTimeRange();
-    }
     setTimeRange(range);
   };
 
@@ -79,7 +67,14 @@ function TimeRangePicker({ classes }) {
   return (
     <div className={classes.timePickerContainer}>
       <span className={classes.view}>{T.translate(`${PREFIX}.view`)}</span>
-      <Select value={selection} onChange={onSelect}>
+      <Select
+        value={selection}
+        onChange={onSelect}
+        MenuProps={{
+          anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+          getContentAnchorEl: null,
+        }}
+      >
         {TIME_OPTIONS.map((option) => {
           return (
             <MenuItem value={option} key={option}>

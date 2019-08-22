@@ -37,6 +37,7 @@ const styles = (): StyleRules => {
       display: 'flex',
       justifyContent: 'space-between',
       position: 'relative',
+      overflowX: 'hidden',
     },
     container: {
       position: 'absolute',
