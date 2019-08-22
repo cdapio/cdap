@@ -135,7 +135,7 @@ function getSecretFromCDAPConfig(cdapConfig, logger) {
  * Example output (not representative of size but the structure)
  * eCEsJ32ACxFp7wkHnsKxZA==-eFM6EJU568EzM+xFl2eeVQ4ruEk6WjjCJ1sISpDU5jpTF4w==
  */
-function generateToken(cdapConfig, logger, authToken) {
+function generateToken(cdapConfig, logger = console, authToken = '') {
   const instanceName = cdapConfig['instance.metadata.id'];
   const secret = getSecretFromCDAPConfig(cdapConfig, logger);
   const salt = getSalt();
@@ -163,7 +163,7 @@ function generateToken(cdapConfig, logger, authToken) {
  *  - Both the shasum should match
  *  - AND age of token shouldn't be more than an hour.
  */
-function validateToken(encryptedToken, cdapConfig, logger, authToken) {
+function validateToken(encryptedToken, cdapConfig, logger = console, authToken = '') {
   let timestamp, shasum, timeinmiilis;
   if (!encryptedToken) {
     return false;

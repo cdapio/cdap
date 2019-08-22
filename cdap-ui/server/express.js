@@ -592,7 +592,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       return res.status(500).send('UnKnown theme file. Please make sure the path is valid');
     }
     try {
-      uiThemeConfig = uiThemeWrapper.cdapConfigextractUITheme(cdapConfig, uiThemePath);
+      uiThemeConfig = uiThemeWrapper.extractUITheme(cdapConfig, uiThemePath);
     } catch (e) {
       return res
         .status(500)

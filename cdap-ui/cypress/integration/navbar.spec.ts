@@ -24,16 +24,19 @@ const NAVBAR_BG_COLOR_LIGHT = 'rgb(59, 120, 231)';
 let headers = {};
 describe('Navbar tests', () => {
   before(() => {
-    Helpers.loginIfRequired().then(() => {
-      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
-        if (!cookie) {
-          return;
-        }
-        headers = {
-          Authorization: 'Bearer ' + cookie.value,
-        };
-      });
-    });
+    Helpers.loginIfRequired()
+      .then(() => {
+        cy.getCookie('CDAP_Auth_Token').then((cookie) => {
+          if (!cookie) {
+            return;
+          }
+          headers = {
+            Authorization: 'Bearer ' + cookie.value,
+          };
+        });
+      })
+      .then(Helpers.getSessionToken)
+      .then(sessionToken => headers = Object.assign({}, headers, { 'Session-Token': sessionToken }));
   });
   after(() => {
     cy.request({
