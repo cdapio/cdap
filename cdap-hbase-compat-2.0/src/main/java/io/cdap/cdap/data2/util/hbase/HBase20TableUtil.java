@@ -51,26 +51,27 @@ import java.util.List;
 /**
  *
  */
-public class HBase11TableUtil extends HBaseTableUtil {
+public class HBase20TableUtil extends HBaseTableUtil {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HBase11TableUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBase20TableUtil.class);
 
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
+    return (HTable) ConnectionFactory.createConnection(conf).getTable(HTableNameConverter.toTableName(tablePrefix,
+                                                                                                      tableId));
   }
 
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HBase11HTableDescriptorBuilder(HTableNameConverter.toTableName(tablePrefix, tableId));
+    return new HBase20HTableDescriptorBuilder(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(HTableDescriptor descriptorToCopy) {
     Preconditions.checkArgument(descriptorToCopy != null, "Table descriptor should not be null");
-    return new HBase11HTableDescriptorBuilder(descriptorToCopy);
+    return new HBase20HTableDescriptorBuilder(descriptorToCopy);
   }
 
   @Override
@@ -112,7 +113,7 @@ public class HBase11TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(ddlExecutor != null, "HBaseDDLExecutor should not be null");
     Preconditions.checkArgument(tableDescriptor != null, "Table descriptor should not be null.");
     TableName tableName = tableDescriptor.getTableName();
-    TableDescriptor tbd = HBase11TableDescriptorUtil.getTableDescriptor(tableDescriptor);
+    TableDescriptor tbd = HBase20TableDescriptorUtil.getTableDescriptor(tableDescriptor);
     ddlExecutor.modifyTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), tbd);
   }
 
@@ -255,46 +256,46 @@ public class HBase11TableUtil extends HBaseTableUtil {
 
   @Override
   public ScanBuilder buildScan() {
-    return new HBase11ScanBuilder();
+    return new HBase20ScanBuilder();
   }
 
   @Override
   public ScanBuilder buildScan(Scan scan) throws IOException {
-    return new HBase11ScanBuilder(scan);
+    return new HBase20ScanBuilder(scan);
   }
 
   @Override
   public IncrementBuilder buildIncrement(byte[] row) {
-    return new HBase11IncrementBuilder(row);
+    return new HBase20IncrementBuilder(row);
   }
 
   @Override
   public PutBuilder buildPut(byte[] row) {
-    return new HBase11PutBuilder(row);
+    return new HBase20PutBuilder(row);
   }
 
   @Override
   public PutBuilder buildPut(Put put) {
-    return new HBase11PutBuilder(put);
+    return new HBase20PutBuilder(put);
   }
 
   @Override
   public GetBuilder buildGet(byte[] row) {
-    return new HBase11GetBuilder(row);
+    return new HBase20GetBuilder(row);
   }
 
   @Override
   public GetBuilder buildGet(Get get) {
-    return new HBase11GetBuilder(get);
+    return new HBase20GetBuilder(get);
   }
 
   @Override
   public DeleteBuilder buildDelete(byte[] row) {
-    return new HBase11DeleteBuilder(row);
+    return new HBase20DeleteBuilder(row);
   }
 
   @Override
   public DeleteBuilder buildDelete(Delete delete) {
-    return new HBase11DeleteBuilder(delete);
+    return new HBase20DeleteBuilder(delete);
   }
 }

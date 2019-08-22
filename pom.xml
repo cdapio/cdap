@@ -139,6 +139,7 @@
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
     <hbase11.version>1.1.1</hbase11.version>
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
+    <hbase20.version>2.0.5</hbase20.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>1.2.1</hive.version>
@@ -313,6 +314,17 @@
       <dependency>
         <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-hbase-compat-1.1</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tephra</groupId>
+        <artifactId>tephra-hbase-compat-2.0</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -2673,6 +2685,7 @@
         <module>cdap-hbase-compat-1.0</module>
         <module>cdap-hbase-compat-1.1</module>
         <module>cdap-hbase-compat-1.2-cdh5.7.0</module>
+        <module>cdap-hbase-compat-2.0</module>
         <module>cdap-hbase-spi</module>
         <module>cdap-kubernetes</module>
         <module>cdap-common</module>
