@@ -110,6 +110,10 @@ public class UpgradeJobMain {
               scheduleClient.suspend(scheduleId);
             }
           }
+          // Need to stop workflows first or else the program will fail to stop below
+          if (programClient.getStatus(workflowId).equals(ProgramStatus.RUNNING.toString())) {
+            programClient.stop(workflowId);
+          }
         }
       }
 
