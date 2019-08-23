@@ -465,7 +465,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         try {
           schema = JSON.parse(input.schema);
         } catch (e) {
-          schemaParseError = e;
+          schemaParseError = e.toString();
         }
         return {
           stage: input.name,
@@ -473,10 +473,10 @@ class HydratorPlusPlusNodeConfigCtrl {
         };
       })
     };
-
     if (schemaParseError) {
       vm.validationErrors = [schemaParseError];
-      return;
+      console.log("Schema Parse Error", schemaParseError);
+      // return;
     }
 
     const parseResSchema = (res) => {
