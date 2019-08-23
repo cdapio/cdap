@@ -18,15 +18,18 @@ package io.cdap.cdap.data2.replication;
 
 import io.cdap.cdap.replication.ReplicationConstants;
 import io.cdap.cdap.replication.StatusUtils;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.coprocessor.BaseWALObserver;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.WALCoprocessorEnvironment;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.coprocessor.WALObserver;
+import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.hadoop.hbase.wal.WALKey;
+import org.apache.hadoop.hbase.wal.WALKeyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,40 +39,46 @@ import java.io.IOException;
  * HBase coprocessor that tracks WAL writes for all tables to track replication status.
  * For each region the writeTime of the last WAL entry is written to the REPLICATION_STATE table.
 */
-public class LastWriteTimeObserver extends BaseWALObserver {
-  private HBase20TableUpdater hBase11TableUpdater = null;
+public class LastWriteTimeObserver implements WALObserver, Coprocessor {
+  private HBase20TableUpdater hBase20TableUpdater = null;
   private static final Logger LOG = LoggerFactory.getLogger(LastWriteTimeObserver.class);
 
   @Override
   public void start(CoprocessorEnvironment env) throws IOException {
     LOG.info("LastWriteTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
-    HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase11TableUpdater = new HBase20TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
-                                                  env.getConfiguration(), htableInterface);
+    Table hTable = ConnectionFactory.createConnection(env.getConfiguration()).getTable(TableName.valueOf(tableName));
+    hBase20TableUpdater = new HBase20TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
+                                                  env.getConfiguration(), hTable);
   }
 
   @Override
   public void stop(CoprocessorEnvironment e) throws IOException {
     LOG.info("LastWriteTimeObserver Stop received.");
-    hBase11TableUpdater.cancelTimer();
+    hBase20TableUpdater.cancelTimer();
   }
 
   @Override
-  public void postWALWrite(ObserverContext<? extends WALCoprocessorEnvironment> ctx, HRegionInfo info,
-                           WALKey logKey, WALEdit logEdit) throws IOException {
-    if (logKey.getScopes() == null || logKey.getScopes().size() == 0 || !logKey.getClusterIds().isEmpty()) {
-      //if replication scope is not set for this entry, do not update write time.
-      // This is to save us from cases where some HBase tables do not have replication enabled.
-      // Ideally, you would check scopes against REPLICATION_SCOPE_LOCAL, but cell.getFamily() is expensive.
-      // also ignore if this logkey was processed by another cluster,
-      // which means the write originated on another cluster
-      return;
+  public void postWALWrite(ObserverContext<? extends WALCoprocessorEnvironment> ctx,
+                           RegionInfo info, WALKey logKey, WALEdit logEdit) throws IOException {
+
+    if (logKey instanceof WALKeyImpl) {
+      WALKeyImpl key = (WALKeyImpl) logKey;
+      if (key.getReplicationScopes() == null || key.getReplicationScopes().size() == 0 ||
+        !key.getClusterIds().isEmpty()) {
+        //if replication scope is not set for this entry, do not update write time.
+        // This is to save us from cases where some HBase tables do not have replication enabled.
+        // Ideally, you would check scopes against REPLICATION_SCOPE_LOCAL, but cell.getFamily() is expensive.
+        // also ignore if this logkey was processed by another cluster,
+        // which means the write originated on another cluster
+        return;
+      }
     }
+
     LOG.debug("Update LastWriteTimeObserver for Table {}:{} for region={}",
-              logKey.getTablename().toString(),
+              logKey.getTableName().toString(),
               logKey.getWriteTime(),
               logKey.getEncodedRegionName().toString());
-    hBase11TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
+    hBase20TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
   }
 }

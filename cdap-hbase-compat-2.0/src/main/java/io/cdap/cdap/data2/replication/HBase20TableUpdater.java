@@ -23,9 +23,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +43,11 @@ import java.util.Map;
 public class HBase20TableUpdater extends TableUpdater {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBase20TableUpdater.class);
-  private final HTableInterface hTableInterface;
+  private final Table hTable;
 
-  public HBase20TableUpdater(String rowType, Configuration conf, HTableInterface hTableInterface) {
+  public HBase20TableUpdater(String rowType, Configuration conf, Table hTable) {
     super(rowType, conf);
-    this.hTableInterface = hTableInterface;
+    this.hTable = hTable;
   }
 
   @Override
@@ -62,15 +63,15 @@ public class HBase20TableUpdater extends TableUpdater {
 
     if (!puts.isEmpty()) {
       LOG.debug("Update Replication State table now. {} entries.", puts.size());
-      hTableInterface.put(puts);
+      hTable.put(puts);
     }
   }
 
   @Override
   protected void createTableIfNotExists(Configuration conf) throws IOException {
-    try (HBaseAdmin admin = new HBaseAdmin(conf)) {
+    try (Admin admin = ConnectionFactory.createConnection(conf).getAdmin()) {
       String tableName = StatusUtils.getReplicationStateTableName(conf);
-      if (admin.tableExists(tableName)) {
+      if (admin.tableExists(TableName.valueOf(tableName))) {
         return;
       }
       HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
