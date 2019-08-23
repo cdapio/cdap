@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -676,7 +677,9 @@ public class FieldLineageInfo {
         orderedOperations.add(operationMap.get(current));
       }
 
-      Iterator<String> outgoingsIter = outgoingOperations.get(current).iterator();
+      // it is possible that there are no outgoings for the field, since it is possible some field is not used in the
+      // downstream of plugins
+      Iterator<String> outgoingsIter = outgoingOperations.getOrDefault(current, Collections.emptySet()).iterator();
       while (outgoingsIter.hasNext()) {
         String next = outgoingsIter.next();
         outgoingsIter.remove();
