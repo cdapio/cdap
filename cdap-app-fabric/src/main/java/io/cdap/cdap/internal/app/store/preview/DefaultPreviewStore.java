@@ -24,14 +24,20 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +54,8 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] TRACER = Bytes.toBytes("t");
   private static final byte[] PROPERTY = Bytes.toBytes("p");
   private static final byte[] VALUE = Bytes.toBytes("v");
+  private static final byte[] RUN = Bytes.toBytes("r");
+  private static final byte[] STATUS = Bytes.toBytes("s");
 
   private final AtomicLong counter = new AtomicLong(0L);
 
@@ -124,6 +132,69 @@ public class DefaultPreviewStore implements PreviewStore {
       String message = String.format("Error while removing preview data for application '%s'.", applicationId);
       throw new RuntimeException(message, e);
     }
+  }
+
+  @Override
+  public void setProgramId(ProgramRunId programRunId) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
+    MDSKey mdsKey = new MDSKey.Builder().add(programRunId.getNamespace()).add(programRunId.getApplication()).build();
+    try {
+      table.put(mdsKey.getKey(), RUN, Bytes.toBytes(gson.toJson(programRunId)), 1L);
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to put %s into preview store", programRunId), e);
+    }
+  }
+
+  @Override
+  public ProgramRunId getProgramRunId(ApplicationId applicationId) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
+    MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace()).add(applicationId.getApplication()).build();
+
+    Map<byte[], byte[]> row = null;
+    try {
+      row = table.getRow(mdsKey.getKey(), new byte[][]{RUN},
+                                             null, null, -1, null);
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to get program run id for preview %s", applicationId), e);
+    }
+    if (!row.isEmpty()) {
+      return gson.fromJson(Bytes.toString(row.get(RUN)), ProgramRunId.class);
+    }
+    return null;
+  }
+
+  @Override
+  public void setPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+    MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace()).add(applicationId.getApplication()).build();
+    try {
+      table.put(mdsKey.getKey(), STATUS, Bytes.toBytes(gson.toJson(previewStatus)), 1L);
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to put preview status %s for preview %s",
+                                               previewStatus, applicationId), e);
+    }
+  }
+
+  @Override
+  public PreviewStatus getPreviewStatus(ApplicationId applicationId) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+    MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace()).add(applicationId.getApplication()).build();
+
+    Map<byte[], byte[]> row = null;
+    try {
+      row = table.getRow(mdsKey.getKey(), new byte[][]{STATUS},
+                                             null, null, -1, null);
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to get the preview status for preview %s", applicationId), e);
+    }
+    if (!row.isEmpty()) {
+      return gson.fromJson(Bytes.toString(row.get(STATUS)), PreviewStatus.class);
+    }
+    return null;
   }
 
   @VisibleForTesting

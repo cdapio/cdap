@@ -19,16 +19,20 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
+import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,5 +101,25 @@ public class DefaultPreviewStoreTest {
     store.remove(firstApplicationId);
     firstApplicationData = store.get(firstApplicationId, "mytracer");
     Assert.assertEquals(0, firstApplicationData.size());
+  }
+
+  @Test
+  public void testPreviewInfo() throws IOException {
+    // test non existing preview
+    ApplicationId nonexist = new ApplicationId("ns1", "nonexist");
+    Assert.assertNull(store.getProgramRunId(nonexist));
+    Assert.assertNull(store.getPreviewStatus(nonexist));
+
+    // test put and get
+    ApplicationId applicationId = new ApplicationId("ns1", "app1");
+    ProgramRunId runId = new ProgramRunId("ns1", "app1", ProgramType.WORKFLOW, "test",
+                                          RunIds.generate().getId());
+    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.COMPLETED, null, 0L,
+                                             System.currentTimeMillis());
+    store.setProgramId(runId);
+    store.setPreviewStatus(applicationId, status);
+
+    Assert.assertEquals(runId, store.getProgramRunId(applicationId));
+    Assert.assertEquals(status, store.getPreviewStatus(applicationId));
   }
 }

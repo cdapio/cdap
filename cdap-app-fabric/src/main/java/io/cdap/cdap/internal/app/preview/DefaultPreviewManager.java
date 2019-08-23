@@ -21,11 +21,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
@@ -40,6 +42,7 @@ import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerModule;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -85,6 +88,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -98,10 +102,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 /**
  * Class responsible for creating the injector for preview and starting it.
  */
-public class DefaultPreviewManager implements PreviewManager {
+public class DefaultPreviewManager extends AbstractIdleService implements PreviewManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
-  private static final String PREFIX = "preview-";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -154,32 +157,66 @@ public class DefaultPreviewManager implements PreviewManager {
             if (runner instanceof Service) {
               stopQuietly((Service) runner);
             }
+            removePreviewDir(injector.getInstance(Key.get(ProgramId.class,
+                                                          Names.named(PreviewRunnerModule.PREVIEW_PROGRAM_ID))));
           }
-          ApplicationId application = notification.getKey();
-          if (application == null) {
-            return;
-          }
-          removePreviewDir(application);
         }
       })
       .build();
   }
 
   @Override
+  protected void startUp() throws Exception {
+    File previewDir = previewDataDir.toFile();
+
+    // there should be at most 10 directories so the process should not take very long
+    for (File file : DirUtils.listFiles(previewDir, File::isDirectory)) {
+      ProgramId programId;
+      String name = file.getName();
+      try {
+        String[] parts = name.split("\\.");
+        programId = new ProgramId(parts[0], parts[1], parts[2], parts[3]);
+      } catch (Exception e) {
+        // if there is an exception converting to a preview id, just continue
+        LOG.debug("Failed to parse the file directory {} to a valid preview id", name, e);
+        continue;
+      }
+      Injector injector = createPreviewInjector(programId);
+      PreviewRunner runner = injector.getInstance(PreviewRunner.class);
+      if (runner instanceof Service) {
+        ((Service) runner).startAndWait();
+      }
+      appInjectors.put(programId.getParent(), injector);
+    }
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    appInjectors.asMap().forEach((applicationId, injector) -> {
+      PreviewRunner runner = injector.getInstance(PreviewRunner.class);
+      if (runner instanceof Service) {
+        stopQuietly((Service) runner);
+      }
+    });
+  }
+
+  @Override
   public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
-    ApplicationId previewApp = namespace.app(PREFIX + System.currentTimeMillis());
-    Injector injector = createPreviewInjector(previewApp);
+    // make sure preview id is unique for each run
+    ApplicationId previewApp = namespace.app(RunIds.generate().getId());
+    ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
+    Injector injector = createPreviewInjector(programId);
     PreviewRunner runner = injector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
       ((Service) runner).startAndWait();
     }
     try {
-      runner.startPreview(new PreviewRequest<>(getProgramIdFromRequest(previewApp, appRequest), appRequest));
+      runner.startPreview(new PreviewRequest<>(programId, appRequest));
     } catch (Exception e) {
       if (runner instanceof Service) {
         stopQuietly((Service) runner);
       }
-      removePreviewDir(previewApp);
+      removePreviewDir(programId);
       throw e;
     }
     appInjectors.put(previewApp, injector);
@@ -210,7 +247,7 @@ public class DefaultPreviewManager implements PreviewManager {
    * Create injector for the given application id.
    */
   @VisibleForTesting
-  Injector createPreviewInjector(ApplicationId applicationId) throws IOException {
+  Injector createPreviewInjector(ProgramId programId) throws IOException {
     CConfiguration previewCConf = CConfiguration.copy(cConf);
 
     // Change all services bind address to local host
@@ -220,7 +257,10 @@ public class DefaultPreviewManager implements PreviewManager {
       .filter(s -> s.endsWith(".bind.address"))
       .forEach(key -> previewCConf.set(key, localhost));
 
-    Path previewDir = Files.createDirectories(previewDataDir.resolve(applicationId.getApplication()));
+    // the preview directory will be <namespace-name>.<app-id>.<program-type>.<program-name>
+    Path previewDir = Files.createDirectories(previewDataDir.resolve(
+      String.format("%s.%s.%s.%s", programId.getNamespace(), programId.getApplication(),
+                    programId.getType().name(), programId.getProgram())));
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
@@ -243,7 +283,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new LocalLocationModule(),
       new ConfigStoreModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-                              privilegesManager, preferencesService, programRuntimeProviderLoader),
+                              privilegesManager, preferencesService, programRuntimeProviderLoader, programId),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
@@ -282,6 +322,11 @@ public class DefaultPreviewManager implements PreviewManager {
     );
   }
 
+  @VisibleForTesting
+  Cache<ApplicationId, Injector> getCache() {
+    return appInjectors;
+  }
+
   private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) throws BadRequestException {
     if (request.getPreview() == null) {
       throw new BadRequestException("Preview config cannot be null");
@@ -305,11 +350,11 @@ public class DefaultPreviewManager implements PreviewManager {
     }
   }
 
-  private void removePreviewDir(ApplicationId applicationId) {
-    Path previewDirPath = previewDataDir.resolve(applicationId.getApplication());
+  private void removePreviewDir(ProgramId programId) {
+    Path previewDirPath = previewDataDir.resolve(programId.toString());
 
     try {
-      DataTracerFactoryProvider.removeDataTracerFactory(applicationId);
+      DataTracerFactoryProvider.removeDataTracerFactory(programId.getParent());
       DirUtils.deleteDirectoryContents(previewDirPath.toFile());
     } catch (IOException e) {
       LOG.debug("Error deleting the preview directory {}", previewDirPath, e);

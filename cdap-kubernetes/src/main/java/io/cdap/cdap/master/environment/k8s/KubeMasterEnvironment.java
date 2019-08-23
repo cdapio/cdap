@@ -126,7 +126,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
           delayMillis = Long.parseLong(confDelay);
           if (delayMillis <= 0) {
             delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
-            LOG.warn("Only positive value is allowed for configuration {}. Defaulting to ",
+            LOG.warn("Only positive value is allowed for configuration {}. Defaulting to {}",
                      POD_KILLER_DELAY_MILLIS, delayMillis);
           }
         } catch (NumberFormatException e) {
