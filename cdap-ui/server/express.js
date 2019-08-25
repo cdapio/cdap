@@ -396,7 +396,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         user: req.body.username,
         password: req.body.password,
       },
-      url: 'https://localhost:10010/token', // authAddress.get(),
+      url: authAddress.get(),
     };
     request(opts, function(nerr, nres, nbody) {
       if (nerr || nres.statusCode !== 200) {

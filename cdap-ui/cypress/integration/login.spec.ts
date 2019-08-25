@@ -26,6 +26,7 @@ describe('Logging in', () => {
     }).then((response) => {
       // only login when ping request returns 401
       if (response.status === 401) {
+        return cy.clearCookies();
         isAuthEnabled = true;
       }
     });
@@ -61,7 +62,7 @@ describe('Logging in', () => {
       .click()
       .type(DUMMY_PW);
     cy.get('#submit').click();
-    cy.url({ timeout: 10000 }).should('include', '/cdap/ns');
+    cy.url({ timeout: 60000 }).should('include', '/cdap/ns');
     cy.getCookie('CDAP_Auth_Token').should('exist');
     cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
   });

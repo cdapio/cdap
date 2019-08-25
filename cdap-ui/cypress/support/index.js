@@ -14,4 +14,5 @@
  * the License.
 */
 
+require('cypress-plugin-retries');
 import './commands';

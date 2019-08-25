@@ -95,6 +95,7 @@ export default class ConfigurableTab extends Component {
                   key={index}
                   onClick={() => this.setTab(tab.id)}
                   activeTab={this.isActiveTab(tab.id)}
+                  dataCy={`tab-head-${tab.name}`}
                 >
                   <TabIcon iconObj={tab.icon} />
                   <span title={tab.name}>{tab.name}</span>
@@ -106,6 +107,7 @@ export default class ConfigurableTab extends Component {
             className={classnames('tab-content active', {
               [activeTab.contentClassName || '']: true,
             })}
+            data-cy={`tab-content-${activeTab.name}`}
           >
             <div
               className={`tab-pane active ${

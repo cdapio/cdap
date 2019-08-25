@@ -66,6 +66,7 @@
     "@types/react-input-calendar": "0.0.34",
     "@types/react-router": "4.0.30",
     "@types/storybook__react": "3.0.9",
+    "@zeit/ncc": "0.20.4",
     "autoprefixer": "9.6.1",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "7.2.3",
@@ -79,6 +80,7 @@
     "copy-webpack-plugin": "4.5.2",
     "css-loader": "0.28.7",
     "cypress": "3.3.2",
+    "cypress-plugin-retries": "1.2.2",
     "del": "2.2.0",
     "eslint": "4.6.1",
     "eslint-loader": "2.0.0",
@@ -139,8 +141,7 @@
     "url-loader": "0.6.2",
     "webpack": "4.20.2",
     "webpack-cli": "3.1.1",
-    "webpack-livereload-plugin": "2.1.1",
-    "@zeit/ncc": "0.20.4"
+    "webpack-livereload-plugin": "2.1.1"
   },
   "dependencies": {
     "@babel/polyfill": "7.0.0",
@@ -177,6 +178,7 @@
     "i18n-react": "0.3.0",
     "immutability-helper": "2.7.1",
     "intersection-observer": "0.4.2",
+    "ip": "1.1.5",
     "js-file-download": "0.4.1",
     "lodash": "4.17.10",
     "log4js": "4.5.1",

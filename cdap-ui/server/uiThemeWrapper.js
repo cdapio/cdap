@@ -57,17 +57,23 @@ function extractUITheme(cdapConfig, uiThemePath) {
     let themePath;
 
     try {
-      // __dirname will always be <entire-cdap-home>/ui/server.
-      // So the uiThemePath should be relative to the ui folder
-      // Ideally this will be of the form 'server/config/themes/default|light.json
-      // For development since we are starting node from the ui folder we need to drop
-      // the 'server' from the beginning of the path (config/themes/default|light.json)
-
-      if (uiThemePath.startsWith('server')) {
-        uiThemePath = path.join('..', uiThemePath);
+      /**
+       * Two paths
+       * theme file path : config/themes/light.json | server/config/themes/light.json
+       * __dirname: <cdap-home>/ui | <cdap-home/ui/server
+       *
+       * The configs exists in <cdap-home>/ui/sever/config/themes/*.json
+       *
+       */
+      themePath = uiThemePath;
+      if (uiThemePath.startsWith('server') && __dirname.endsWith('server')) {
+        themePath = path.join('..', uiThemePath);
       }
 
-      themePath = path.join(__dirname, uiThemePath);
+      if (uiThemePath.startsWith('config') && !__dirname.endsWith('server')) {
+        themePath = path.join('server', uiThemePath);
+      }
+      themePath = path.join(__dirname, themePath);
 
       if (require.resolve(themePath)) {
         uiThemeConfig = require(themePath);

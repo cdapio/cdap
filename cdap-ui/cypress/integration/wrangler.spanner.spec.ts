@@ -32,14 +32,14 @@ describe('Wrangler SPANNER tests', () => {
       .then(() => {
         cy.getCookie('CDAP_Auth_Token').then((cookie) => {
           if (!cookie) {
-            return cy.wrap(headers);
+            return Helpers.getSessionToken({});
           }
           headers = {
             Authorization: 'Bearer ' + cookie.value,
           };
+          return Helpers.getSessionToken(headers);
         });
       })
-      .then(Helpers.getSessionToken)
       .then(sessionToken => headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
       .then(() => cy.start_wrangler(headers));
   });
