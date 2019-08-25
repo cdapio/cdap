@@ -58,7 +58,7 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-hbase-compat-0.98</artifactId>
+      <artifactId>cdap-hbase-compat-1.0</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -90,7 +90,7 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-hbase-compat-0.98</artifactId>
+      <artifactId>cdap-hbase-compat-1.0</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
@@ -124,6 +124,14 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+          <forkCount>2</forkCount>
+        </configuration>
+      </plugin>
       <!-- Shouldn't deploy test module -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

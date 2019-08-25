@@ -26,11 +26,12 @@ import io.cdap.cdap.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.store.AbstractMessageTable;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.RawMessageTableEntry;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,17 +49,19 @@ final class HBaseMessageTable extends AbstractMessageTable {
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
-  private final HTable hTable;
+  private final Table table;
+  private final BufferedMutator mutator;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
   private final int scanCacheRows;
   private final HBaseExceptionHandler exceptionHandler;
 
-  HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor, int scanCacheRows,
-                    HBaseExceptionHandler exceptionHandler) {
+  HBaseMessageTable(HBaseTableUtil tableUtil, Table table, byte[] columnFamily,
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
+                    int scanCacheRows, HBaseExceptionHandler exceptionHandler) throws IOException {
     this.tableUtil = tableUtil;
-    this.hTable = hTable;
+    this.table = table;
+    this.mutator = tableUtil.createBufferedMutator(table, HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
@@ -75,7 +78,7 @@ final class HBaseMessageTable extends AbstractMessageTable {
       .build();
 
     try {
-      final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
+      final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor);
       final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
       return new AbstractCloseableIterator<RawMessageTableEntry>() {
         private boolean closed = false;
@@ -134,10 +137,8 @@ final class HBaseMessageTable extends AbstractMessageTable {
 
     try {
       if (!batchPuts.isEmpty()) {
-        hTable.put(batchPuts);
-        if (!hTable.isAutoFlush()) {
-          hTable.flushCommits();
-        }
+        mutator.mutate(batchPuts);
+        mutator.flush();
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);
@@ -153,7 +154,7 @@ final class HBaseMessageTable extends AbstractMessageTable {
       .build();
 
     List<Put> batchPuts = new ArrayList<>();
-    try (ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor)) {
+    try (ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor)) {
       for (Result result : scanner) {
         // No need to turn the key back to the original row key because we want to put with the actual row key
         PutBuilder putBuilder = tableUtil.buildPut(result.getRow());
@@ -164,10 +165,8 @@ final class HBaseMessageTable extends AbstractMessageTable {
 
     try {
       if (!batchPuts.isEmpty()) {
-        hTable.put(batchPuts);
-        if (!hTable.isAutoFlush()) {
-          hTable.flushCommits();
-        }
+        mutator.mutate(batchPuts);
+        mutator.flush();
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);
@@ -176,6 +175,10 @@ final class HBaseMessageTable extends AbstractMessageTable {
 
   @Override
   public void close() throws IOException {
-    hTable.close();
+    try {
+      mutator.close();
+    } finally {
+      table.close();
+    }
   }
 }

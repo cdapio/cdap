@@ -30,10 +30,10 @@ import io.cdap.cdap.data2.util.hbase.ScanBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 
 import java.io.IOException;
@@ -116,7 +116,7 @@ public class TopicMetadataCache extends AbstractIdleService {
    */
   @VisibleForTesting
   public synchronized void updateCache() throws IOException {
-    HTableInterface metadataTable = null;
+    Table metadataTable = null;
     long now = System.currentTimeMillis();
     long topicCount = 0;
     try {
@@ -131,7 +131,7 @@ public class TopicMetadataCache extends AbstractIdleService {
 
         metadataTable = getMetadataTable(tableName);
         if (metadataTable == null) {
-          LOG.warn(String.format("Could not find HTableInterface of metadataTable %s:%s. Cannot update metadata cache",
+          LOG.warn(String.format("Could not find Table of metadataTable %s:%s. Cannot update metadata cache",
                                  hbaseNamespacePrefix, tableName));
           return;
         }
@@ -167,7 +167,7 @@ public class TopicMetadataCache extends AbstractIdleService {
     }
   }
 
-  private HTableInterface getMetadataTable(String tableName) throws IOException {
+  private Table getMetadataTable(String tableName) throws IOException {
     return env.getTable(HTableNameConverter.toTableName(hbaseNamespacePrefix,
                                                         TableId.from(metadataTableNamespace, tableName)));
   }

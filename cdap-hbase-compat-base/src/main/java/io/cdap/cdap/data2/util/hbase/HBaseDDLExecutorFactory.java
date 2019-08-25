@@ -64,16 +64,6 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
   }
 
   @Override
-  protected String getHBase96Classname() {
-    return "io.cdap.cdap.data2.util.hbase.DefaultHBase96DDLExecutor";
-  }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "io.cdap.cdap.data2.util.hbase.DefaultHBase98DDLExecutor";
-  }
-
-  @Override
   protected String getHBase10Classname() {
     return "io.cdap.cdap.data2.util.hbase.DefaultHBase10DDLExecutor";
   }

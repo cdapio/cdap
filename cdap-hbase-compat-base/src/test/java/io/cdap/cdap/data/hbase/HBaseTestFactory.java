@@ -57,16 +57,6 @@ public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase>
   }
 
   @Override
-  protected String getHBase96Classname() {
-    return "io.cdap.cdap.data.hbase.HBase96Test";
-  }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "io.cdap.cdap.data.hbase.HBase98Test";
-  }
-
-  @Override
   protected String getHBase10Classname() {
     return "io.cdap.cdap.data.hbase.HBase10Test";
   }

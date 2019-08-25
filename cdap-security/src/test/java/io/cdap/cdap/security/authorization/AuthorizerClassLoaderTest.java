@@ -24,7 +24,7 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -69,7 +69,7 @@ public class AuthorizerClassLoaderTest {
     // classes from guava should not be available
     assertClassUnavailable(ImmutableList.class);
     // classes from hbase should not be available
-    assertClassUnavailable(HTable.class);
+    assertClassUnavailable(Table.class);
     // classes from spark should not be available
     assertClassUnavailable("org.apache.spark.SparkConf");
     // classes from cdap-common should not be available

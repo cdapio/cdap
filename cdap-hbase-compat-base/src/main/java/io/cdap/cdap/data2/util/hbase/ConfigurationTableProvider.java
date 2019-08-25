@@ -17,7 +17,7 @@
 package io.cdap.cdap.data2.util.hbase;
 
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 
@@ -26,12 +26,12 @@ import java.io.IOException;
  */
 public interface ConfigurationTableProvider {
   /**
-   * @return the configuration table as an HTableInterface
+   * @return the configuration table as an {@link Table}
    * @throws TableNotFoundException if the table does not exist. This is expected if a coprocessor starts before
    *                                the CDAP master creates the table.
    * @throws IOException for other errors
    */
-  HTableInterface get() throws IOException;
+  Table get() throws IOException;
 
   /**
    * @return the full table name of the configuration table. This should be used for logging purposes only.

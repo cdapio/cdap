@@ -37,7 +37,6 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -54,12 +53,6 @@ import java.util.List;
 public class HBase11TableUtil extends HBaseTableUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBase11TableUtil.class);
-
-  @Override
-  public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
-    Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTable(conf, HTableNameConverter.toTableName(tablePrefix, tableId));
-  }
 
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(TableId tableId) {

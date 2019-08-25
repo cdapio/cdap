@@ -27,7 +27,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 import java.util.List;
@@ -43,8 +43,8 @@ class DelegatingHBaseTableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
-    return delegate.createHTable(conf, tableId);
+  public Table createTable(Configuration conf, TableId tableId) throws IOException {
+    return delegate.createTable(conf, tableId);
   }
 
   @Override

@@ -20,12 +20,13 @@ import io.cdap.cdap.test.XSlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
@@ -53,12 +54,11 @@ public abstract class RowKeyDistributorTestBase {
   public static boolean runAfter = true;
 
   protected static final String TABLE_NAME = "table";
-  protected static final byte[] TABLE = Bytes.toBytes(TABLE_NAME);
   protected static final byte[] CF = Bytes.toBytes("colfam");
   protected static final byte[] QUAL = Bytes.toBytes("qual");
   private final AbstractRowKeyDistributor keyDistributor;
   private static HBaseTestingUtility testingUtility;
-  private static HTable hTable;
+  private static Table table;
 
   public RowKeyDistributorTestBase(AbstractRowKeyDistributor keyDistributor) {
     this.keyDistributor = keyDistributor;
@@ -86,7 +86,7 @@ public abstract class RowKeyDistributorTestBase {
     hConf.setInt("hbase.regionserver.info.port", Networks.getRandomPort());
 
     testingUtility.startMiniCluster();
-    hTable = testingUtility.createTable(TABLE, CF);
+    table = testingUtility.createTable(TableName.valueOf(TABLE_NAME), CF);
   }
 
   @AfterClass
@@ -99,7 +99,7 @@ public abstract class RowKeyDistributorTestBase {
 
   @After
   public void after() throws Exception {
-    testingUtility.truncateTable(hTable.getTableName());
+    testingUtility.truncateTable(table.getTableDescriptor().getTableName());
   }
 
   /** Testing simple get. */
@@ -110,9 +110,9 @@ public abstract class RowKeyDistributorTestBase {
     byte[] distributedKey = keyDistributor.getDistributedKey(key);
     byte[] value = Bytes.toBytes("some");
 
-    hTable.put(new Put(distributedKey).add(CF, QUAL, value));
+    table.put(new Put(distributedKey).addColumn(CF, QUAL, value));
 
-    Result result = hTable.get(new Get(distributedKey));
+    Result result = table.get(new Get(distributedKey));
     Assert.assertArrayEquals(key, keyDistributor.getOriginalKey(result.getRow()));
     Assert.assertArrayEquals(value, result.getValue(CF, QUAL));
   }
@@ -175,7 +175,7 @@ public abstract class RowKeyDistributorTestBase {
       byte[] key = Bytes.toBytes(origKeyPrefix + val);
       byte[] distributedKey = keyDistributor.getDistributedKey(key);
       byte[] value = Bytes.toBytes(val);
-      hTable.put(new Put(distributedKey).add(CF, QUAL, value));
+      table.put(new Put(distributedKey).add(CF, QUAL, value));
     }
     return valuesCountInSeekInterval;
   }
@@ -186,7 +186,7 @@ public abstract class RowKeyDistributorTestBase {
             writeTestData(origKeyPrefix, numValues, startWithValue, seekIntervalMinValue, seekIntervalMaxValue);
 
     // TODO: add some filters to the scan for better testing
-    ResultScanner distributedScanner = DistributedScanner.create(hTable, scan, keyDistributor,
+    ResultScanner distributedScanner = DistributedScanner.create(table, scan, keyDistributor,
                                                                  Executors.newFixedThreadPool(2));
 
     Result previous = null;

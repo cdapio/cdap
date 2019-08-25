@@ -16,10 +16,10 @@
 package io.cdap.cdap.hbase.wd;
 
 import com.google.common.base.Throwables;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -49,7 +48,7 @@ public class DistributedScanner implements ResultScanner {
   private DistributedScanner(AbstractRowKeyDistributor keyDistributor,
                             ResultScanner[] scanners,
                             int caching,
-                            ExecutorService scansExecutor) throws IOException {
+                            ExecutorService scansExecutor) {
     this.keyDistributor = keyDistributor;
     this.scanners = scanners;
     this.caching = caching;
@@ -94,7 +93,7 @@ public class DistributedScanner implements ResultScanner {
         break;
       }
     }
-    return resultSets.toArray(new Result[resultSets.size()]);
+    return resultSets.toArray(new Result[0]);
   }
 
   @Override
@@ -104,7 +103,7 @@ public class DistributedScanner implements ResultScanner {
     }
   }
 
-  public static DistributedScanner create(HTableInterface hTable,
+  public static DistributedScanner create(Table table,
                                           Scan originalScan,
                                           AbstractRowKeyDistributor keyDistributor,
                                           ExecutorService scansExecutor) throws IOException {
@@ -112,14 +111,14 @@ public class DistributedScanner implements ResultScanner {
 
     ResultScanner[] rss = new ResultScanner[scans.length];
     for (int i = 0; i < scans.length; i++) {
-      rss[i] = hTable.getScanner(scans[i]);
+      rss[i] = table.getScanner(scans[i]);
     }
 
     int caching = originalScan.getCaching();
     // to optimize work of distributed scan we need to know that, so we are resolving it from config in the case it is
     // not set for scan
     if (caching < 1) {
-      caching = hTable.getConfiguration().getInt("hbase.client.scanner.caching", 1);
+      caching = table.getConfiguration().getInt("hbase.client.scanner.caching", 1);
     }
 
     return new DistributedScanner(keyDistributor, rss, caching, scansExecutor);
@@ -139,12 +138,7 @@ public class DistributedScanner implements ResultScanner {
 
       if (nextOfScanners[i].size() == 0) {
         final ResultScanner scanner = scanners[i];
-        advanceFutures[i] = scansExecutor.submit(new Callable<Result[]>() {
-          @Override
-          public Result[] call() throws Exception {
-            return scanner.next(caching);
-          }
-        });
+        advanceFutures[i] = scansExecutor.submit(() -> scanner.next(caching));
       }
     }
 

@@ -46,12 +46,16 @@ import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.BufferedMutatorParams;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +64,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import javax.annotation.Nullable;
 
@@ -90,8 +95,7 @@ public abstract class HBaseTableUtil {
   // 4Mb
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
-  private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
-  public static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
+  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
 
   /**
    * This property is ONLY used in test cases.
@@ -241,9 +245,6 @@ public abstract class HBaseTableUtil {
     return tdBuilder;
   }
 
-  // For simplicity we allow max 255 splits per bucket for now
-  private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
-
   public static void setTablePrefix(HTableDescriptorBuilder tableDescriptorBuilder, CConfiguration cConf) {
     tableDescriptorBuilder.setValue(Constants.Dataset.TABLE_PREFIX, getTablePrefix(cConf));
   }
@@ -270,44 +271,7 @@ public abstract class HBaseTableUtil {
   }
 
   public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {
-    // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case
-    if (splits == 1) {
-      return new byte[0][];
-    }
-
-    byte[][] bucketSplits = keyDistributor.getAllDistributedKeys(Bytes.EMPTY_BYTE_ARRAY);
-    Preconditions.checkArgument(splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
-                                "Number of pre-splits should be in [1.." +
-                                  MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
-
-
-    // Splits have format: <salt bucket byte><extra byte>. We use extra byte to allow more splits than buckets:
-    // salt bucket bytes are usually sequential in which case we cannot insert any value in between them.
-
-    int splitsPerBucket = (splits + buckets - 1) / buckets;
-    splitsPerBucket = splitsPerBucket == 0 ? 1 : splitsPerBucket;
-
-    byte[][] splitKeys = new byte[bucketSplits.length * splitsPerBucket - 1][];
-
-    int prefixesPerSplitInBucket = (MAX_SPLIT_COUNT_PER_BUCKET + 1) / splitsPerBucket;
-
-    for (int i = 0; i < bucketSplits.length; i++) {
-      for (int k = 0; k < splitsPerBucket; k++) {
-        if (i == 0 && k == 0) {
-          // hbase will figure out first split
-          continue;
-        }
-        int splitStartPrefix = k * prefixesPerSplitInBucket;
-        int thisSplit = i * splitsPerBucket + k - 1;
-        if (splitsPerBucket > 1) {
-          splitKeys[thisSplit] = new byte[] {(byte) i, (byte) splitStartPrefix};
-        } else {
-          splitKeys[thisSplit] = new byte[] {(byte) i};
-        }
-      }
-    }
-
-    return splitKeys;
+    return keyDistributor.getSplitKeys(splits, buckets);
   }
 
   /**
@@ -364,13 +328,63 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Creates a new {@link HTable} which may contain an HBase namespace depending on the HBase version
+   * Creates a new {@link Table} which may contain an HBase namespace depending on the HBase version
    *
    * @param conf the hadoop configuration
-   * @param tableId the {@link TableId} to create an {@link HTable} for
-   * @return an {@link HTable} for the tableName in the namespace
+   * @param tableId the {@link TableId} to create a {@link Table} for
+   * @return an {@link Table} for the tableName in the namespace
    */
-  public abstract HTable createHTable(Configuration conf, TableId tableId) throws IOException;
+  public Table createTable(Configuration conf, TableId tableId) throws IOException {
+    Preconditions.checkArgument(tableId != null, "Table id should not be null");
+    Connection connection = ConnectionFactory.createConnection(conf);
+    Table table = connection.getTable(HTableNameConverter.toTableName(tablePrefix, tableId));
+    return new TableWithConnection(connection, table);
+  }
+
+  /**
+   * Creates a new {@link BufferedMutator} for batch mutation operations.
+   *
+   * @param table the {@link Table} to have the {@link BufferedMutator} to create on
+   * @param writeBufferSize the write buffer size for the buffering
+   * @return a {@link BufferedMutator}
+   * @throws IOException if failed to create connection to HBase
+   */
+  public BufferedMutator createBufferedMutator(Table table, long writeBufferSize) throws IOException {
+    TableName tableName = table.getTableDescriptor().getTableName();
+
+    BufferedMutatorParams params = new BufferedMutatorParams(tableName)
+      .writeBufferSize(writeBufferSize);
+
+    // Try to reuse the connection from the Table
+    if (table instanceof TableWithConnection) {
+      Connection connection = ((TableWithConnection) table).acquireConnection();
+      if (connection != null) {
+        return new DelegatingBufferedMutator(connection.getBufferedMutator(params)) {
+          @Override
+          public void close() throws IOException {
+            try {
+              super.close();
+            } finally {
+              ((TableWithConnection) table).releaseConnection();
+            }
+          }
+        };
+      }
+    }
+
+    // If cannot get a connection from the given table, create a new one and use it to create BufferedMutator
+    Connection connection = ConnectionFactory.createConnection(table.getConfiguration());
+    return new DelegatingBufferedMutator(connection.getBufferedMutator(params)) {
+      @Override
+      public void close() throws IOException {
+        try {
+          super.close();
+        } finally {
+          connection.close();
+        }
+      }
+    };
+  }
 
   /**
    * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
@@ -393,7 +407,7 @@ public abstract class HBaseTableUtil {
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param tableId the {@link TableId} to construct an {@link HTableDescriptor} for
    * @return an {@link HTableDescriptor} for the table
-   * @throws IOException
+   * @throws IOException if failed to get the table descriptor
    */
   public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException;
 
@@ -411,7 +425,7 @@ public abstract class HBaseTableUtil {
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param tableId {@link TableId} for the specified table
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public abstract boolean tableExists(HBaseAdmin admin, TableId tableId) throws IOException;
 
@@ -420,7 +434,7 @@ public abstract class HBaseTableUtil {
    *
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId {@link TableId} for the specified table
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public abstract void deleteTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException;
 
@@ -429,7 +443,7 @@ public abstract class HBaseTableUtil {
    *
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableDescriptor the modified {@link HTableDescriptor}
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public abstract void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor) throws IOException;
 
@@ -439,7 +453,7 @@ public abstract class HBaseTableUtil {
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param tableId {@link TableId} for the specified table
    * @return a list of {@link HRegionInfo} for the specified {@link TableId}
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
 
@@ -450,7 +464,7 @@ public abstract class HBaseTableUtil {
    * @param namespaceId namespace for which the tables are being deleted
    * @param hConf The {@link Configuration} instance
    * @param predicate The {@link Predicate} to decide whether to drop a table or not
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
                                    Configuration hConf, Predicate<TableId> predicate) throws IOException {
@@ -469,11 +483,11 @@ public abstract class HBaseTableUtil {
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being deleted
    * @param hConf The {@link Configuration} instance
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId, Configuration hConf)
     throws IOException {
-    deleteAllInNamespace(ddlExecutor, namespaceId, hConf, Predicates.<TableId>alwaysTrue());
+    deleteAllInNamespace(ddlExecutor, namespaceId, hConf, Predicates.alwaysTrue());
   }
 
   /**
@@ -494,7 +508,7 @@ public abstract class HBaseTableUtil {
    * Disables and deletes a table.
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId  {@link TableId} for the specified table
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public void dropTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
@@ -506,7 +520,7 @@ public abstract class HBaseTableUtil {
    * Truncates a table.
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId  {@link TableId} for the specified table
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public void truncateTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
@@ -520,7 +534,7 @@ public abstract class HBaseTableUtil {
    * @param permissions A map from user or group name to the permissions for that user or group, given as a string
    *                    containing only characters 'a'(Admin), 'c'(Create), 'r'(Read), 'w'(Write), and 'x'(Execute).
    *                    Group names must be prefixed with the character '@'.
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public void grantPermissions(HBaseDDLExecutor ddlExecutor, TableId tableId,
                                Map<String, String> permissions) throws IOException {
@@ -611,7 +625,7 @@ public abstract class HBaseTableUtil {
    * //TODO: Explore the possiblitity of returning a {@code Map<TableId, TableStats>}
    * @param admin instance of {@link HBaseAdmin} to communicate with HBase
    * @return map of table name -> table stats
-   * @throws IOException
+   * @throws IOException if failed to connect to HBase
    */
   public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
     // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
@@ -662,7 +676,7 @@ public abstract class HBaseTableUtil {
     private int storeFileSizeMB = 0;
     private int memStoreSizeMB = 0;
 
-    public TableStats(int storeFileSizeMB, int memStoreSizeMB) {
+    TableStats(int storeFileSizeMB, int memStoreSizeMB) {
       this.storeFileSizeMB = storeFileSizeMB;
       this.memStoreSizeMB = memStoreSizeMB;
     }
@@ -720,6 +734,56 @@ public abstract class HBaseTableUtil {
 
     public Map<String, String> getProperties() {
       return properties;
+    }
+  }
+
+  /**
+   * A HBase {@link Table} wrapper that provides access to the {@link Connection} for creating the table.
+   */
+  private static class TableWithConnection extends DelegatingTable {
+
+    private final Connection connection;
+    private final AtomicInteger connectionCount;
+
+    TableWithConnection(Connection connection, Table delegate) {
+      super(delegate);
+      this.connection = connection;
+      this.connectionCount = new AtomicInteger(1);
+    }
+
+    @Override
+    public void close() throws IOException {
+      try {
+        super.close();
+      } finally {
+        releaseConnection();
+      }
+    }
+
+    /**
+     * Acquires the usage of the current connection.
+     *
+     * @return the {@link Connection} to use or {@code null} if the connection is already closed.
+     */
+    @Nullable
+    Connection acquireConnection() {
+      int oldCount;
+      do {
+        oldCount = connectionCount.get();
+        if (oldCount == 0) {
+          return null;
+        }
+      } while (!connectionCount.compareAndSet(oldCount, oldCount + 1));
+      return connection;
+    }
+
+    void releaseConnection() throws IOException {
+      int useCount = connectionCount.decrementAndGet();
+      if (useCount == 0) {
+        connection.close();
+      } else {
+        LOG.trace("HBase connection is still in used by {} clients", useCount);
+      }
     }
   }
 }

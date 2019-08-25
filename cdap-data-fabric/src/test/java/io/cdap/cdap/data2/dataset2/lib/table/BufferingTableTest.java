@@ -49,10 +49,8 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
   public void testRollingBackAfterExceptionDuringPersist() throws Exception {
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
-    try {
+    try (BufferingTable myTable1 = new BufferingTableWithPersistingFailure(getTable(CONTEXT1, MY_TABLE))) {
       Transaction tx1 = txClient.startShort();
-      BufferingTable myTable1 =
-        new BufferingTableWithPersistingFailure(getTable(CONTEXT1, MY_TABLE));
       myTable1.startTx(tx1);
       // write some data but not commit
       myTable1.put(R1, a(C1), a(V1));
@@ -79,12 +77,13 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      Table myTable2 = getTable(CONTEXT1, MY_TABLE);
-      ((TransactionAware) myTable2).startTx(tx2);
+      try (Table myTable2 = getTable(CONTEXT1, MY_TABLE)) {
+        ((TransactionAware) myTable2).startTx(tx2);
 
-      // verify don't see rolled back changes
-      TableAssert.assertRow(a(), myTable2.get(R1, a(C1)));
-      TableAssert.assertRow(a(), myTable2.get(R2, a(C2)));
+        // verify don't see rolled back changes
+        TableAssert.assertRow(a(), myTable2.get(R1, a(C1)));
+        TableAssert.assertRow(a(), myTable2.get(R2, a(C2)));
+      }
 
     } finally {
       admin.drop();
@@ -99,10 +98,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
     String testScanWithBuffering = "testScanWithBuffering";
     DatasetAdmin admin = getTableAdmin(CONTEXT1, testScanWithBuffering);
     admin.create();
-    try {
+    try (Table table1 = getTable(CONTEXT1, testScanWithBuffering)) {
       //
       Transaction tx1 = txClient.startShort();
-      Table table1 = getTable(CONTEXT1, testScanWithBuffering);
       ((TransactionAware) table1).startTx(tx1);
 
       table1.put(Bytes.toBytes("1_01"), a(C1), a(V1));
@@ -202,10 +200,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
       TableProperties.builder().setReadlessIncrementSupport(isReadlessIncrementSupported()).build();
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
-    try {
+    try (BufferingTable table = getTable(CONTEXT1, MY_TABLE, props)) {
       // writing some data: we'll need it to test delete later
       Transaction tx = txClient.startShort();
-      BufferingTable table = getTable(CONTEXT1, MY_TABLE, props);
       table.startTx(tx);
 
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});
@@ -393,9 +390,8 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
     DatasetAdmin admin2 = getTableAdmin(CONTEXT2, tableName);
     admin1.create();
     admin2.create();
-    try {
-      BufferingTable table1 = getTable(CONTEXT1, tableName);
-      BufferingTable table2 = getTable(CONTEXT2, tableName);
+    try (BufferingTable table1 = getTable(CONTEXT1, tableName);
+         BufferingTable table2 = getTable(CONTEXT2, tableName)) {
 
       // write some values in table1
       Transaction tx1 = txClient.startShort();
@@ -436,9 +432,8 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
   public void testMultiGetIncludesBuffer() throws Exception {
     DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
     admin.create();
-    try {
+    try (BufferingTable table = getTable(CONTEXT1, MY_TABLE)) {
       // persist some data
-      BufferingTable table = getTable(CONTEXT1, MY_TABLE);
       Transaction tx1 = txClient.startShort();
       table.startTx(tx1);
       // writing a couple rows

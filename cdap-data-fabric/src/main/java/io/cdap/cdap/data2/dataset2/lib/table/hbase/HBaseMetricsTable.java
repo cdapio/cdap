@@ -40,13 +40,14 @@ import io.cdap.cdap.hbase.wd.DistributedScanner;
 import io.cdap.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -76,7 +77,8 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private final HBaseTableUtil tableUtil;
   private final TableId tableId;
-  private final HTable hTable;
+  private final Table table;
+  private final BufferedMutator mutator;
   private final byte[] columnFamily;
   private AbstractRowKeyDistributor rowKeyDistributor;
   private ExecutorService scanExecutor;
@@ -88,11 +90,9 @@ public class HBaseMetricsTable implements MetricsTable {
 
     initializeVars(cConf, spec);
 
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
+    this.table = tableUtil.createTable(hConf, tableId);
     // todo: make configurable
-    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlushTo(false);
-    this.hTable = hTable;
+    this.mutator = tableUtil.createBufferedMutator(table, HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
   }
 
@@ -134,7 +134,7 @@ public class HBaseMetricsTable implements MetricsTable {
         .addColumn(columnFamily, column)
         .setMaxVersions(1)
         .build();
-      Result getResult = hTable.get(get);
+      Result getResult = table.get(get);
       if (!getResult.isEmpty()) {
         return getResult.getValue(columnFamily, column);
       }
@@ -156,8 +156,8 @@ public class HBaseMetricsTable implements MetricsTable {
       puts.add(put.build());
     }
     try {
-      hTable.put(puts);
-      hTable.flushCommits();
+      mutator.mutate(puts);
+      mutator.flush();
     } catch (IOException e) {
       throw new DataSetException("Put failed on table " + tableId, e);
     }
@@ -175,8 +175,8 @@ public class HBaseMetricsTable implements MetricsTable {
       puts.add(put.build());
     }
     try {
-      hTable.put(puts);
-      hTable.flushCommits();
+      mutator.mutate(puts);
+      mutator.flush();
     } catch (IOException e) {
       throw new DataSetException("Put failed on table " + tableId, e);
     }
@@ -191,12 +191,12 @@ public class HBaseMetricsTable implements MetricsTable {
         Delete delete = tableUtil.buildDelete(distributedKey)
           .deleteColumns(columnFamily, column)
           .build();
-        return hTable.checkAndDelete(distributedKey, columnFamily, column, oldValue, delete);
+        return table.checkAndDelete(distributedKey, columnFamily, column, oldValue, delete);
       } else {
         Put put = tableUtil.buildPut(distributedKey)
           .add(columnFamily, column, newValue)
           .build();
-        return hTable.checkAndPut(distributedKey, columnFamily, column, oldValue, put);
+        return table.checkAndPut(distributedKey, columnFamily, column, oldValue, put);
       }
     } catch (IOException e) {
       throw new DataSetException("Swap failed on table " + tableId, e);
@@ -208,8 +208,8 @@ public class HBaseMetricsTable implements MetricsTable {
     byte[] distributedKey = createDistributedRowKey(row);
     Put increment = getIncrementalPut(distributedKey, increments);
     try {
-      hTable.put(increment);
-      hTable.flushCommits();
+      mutator.mutate(increment);
+      mutator.flush();
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -252,8 +252,8 @@ public class HBaseMetricsTable implements MetricsTable {
     }
 
     try {
-      hTable.put(puts);
-      hTable.flushCommits();
+      mutator.mutate(puts);
+      mutator.flush();
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -270,7 +270,7 @@ public class HBaseMetricsTable implements MetricsTable {
     Increment increment = new Increment(distributedKey);
     increment.addColumn(columnFamily, column, delta);
     try {
-      Result result = hTable.increment(increment);
+      Result result = table.increment(increment);
       return Bytes.toLong(result.getValue(columnFamily, column));
     } catch (IOException e) {
       // figure out whether this is an illegal increment
@@ -292,7 +292,7 @@ public class HBaseMetricsTable implements MetricsTable {
       delete.deleteColumns(columnFamily, column);
     }
     try {
-      hTable.delete(delete.build());
+      table.delete(delete.build());
     } catch (IOException e) {
       throw new DataSetException("Delete failed on table " + tableId, e);
     }
@@ -301,8 +301,7 @@ public class HBaseMetricsTable implements MetricsTable {
   @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow,
                       @Nullable FuzzyRowFilter filter) {
-    ScanBuilder scanBuilder = tableUtil.buildScan();
-    configureRangeScan(scanBuilder, startRow, stopRow, filter);
+    ScanBuilder scanBuilder = configureRangeScan(tableUtil.buildScan(), startRow, stopRow, filter);
     try {
       ResultScanner resultScanner = getScanner(scanBuilder);
       return new HBaseScanner(resultScanner, columnFamily, rowKeyDistributor);
@@ -312,8 +311,8 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   private ResultScanner getScanner(ScanBuilder scanBuilder) throws IOException {
-    return rowKeyDistributor == null ? hTable.getScanner(scanBuilder.build()) :
-      DistributedScanner.create(hTable, scanBuilder.build(), rowKeyDistributor, scanExecutor);
+    return rowKeyDistributor == null ? table.getScanner(scanBuilder.build()) :
+      DistributedScanner.create(table, scanBuilder.build(), rowKeyDistributor, scanExecutor);
   }
 
   private ScanBuilder configureRangeScan(ScanBuilder scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
@@ -346,6 +345,10 @@ public class HBaseMetricsTable implements MetricsTable {
 
   @Override
   public void close() throws IOException {
-    hTable.close();
+    try {
+      mutator.close();
+    } finally {
+      table.close();
+    }
   }
 }
