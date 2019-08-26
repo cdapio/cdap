@@ -17,7 +17,7 @@
 angular.module(`${PKG.name}.feature.experimental`)
   .controller('DirectivePlayGround', function() {
     this.dsMultipleValuesModel = 'value1:value2:value3,newValue1:newValue2:newValue3';
-
+    this.experimentalPopoverTemplate = '/assets/features/experimental/templates/popover/popover-template.html';
     this.topAppsData = {
       'total' : 15,
       'results' : [

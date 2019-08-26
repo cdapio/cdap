@@ -68,6 +68,7 @@ function objectQuery(obj) {
     }
     obj = obj[arguments[i]];
   }
+
   return obj;
 }
 export const HUMANREADABLESTORAGE = 'STORAGE';
@@ -407,6 +408,8 @@ const parseQueryString = () => {
 
   return queryObj;
 };
+
+window.knoxPrefix = (window.CDAP_CONFIG && window.CDAP_CONFIG.knoxEnabled ? window.CDAP_CONFIG.applicationPrefix : '' );
 
 export {
   objectQuery,

@@ -97,6 +97,7 @@ angular.module(PKG.name+'.feature.login')
   .run(function ($rootScope, $state, myAlertOnValium, MYAUTH_EVENT, MY_CONFIG, myAlert, myAuth) {
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
+
       $state.go('login');
     });
 

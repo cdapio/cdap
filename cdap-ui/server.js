@@ -98,7 +98,11 @@ parser.extractConfig('cdap')
     var sockServer = sockjs.createServer({
       log: function (lvl, msg) {
         log.trace(msg);
-      }
+      },
+      transports:[
+        'websocket',
+        'websocket-raw'
+      ]
     });
 
     sockServer.on('connection', function (c) {

@@ -20,7 +20,7 @@
 
 angular.module(PKG.name+'.feature.dashboard').controller('UserDashboardCtrl',
 function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, myAlertOnValium, DashboardHelper) {
-
+  $scope.userDashboardWdgtHeadTemplate = '/assets/features/dashboard/templates/partials/wdgt-head.html';
   $scope.unknownBoard = false;
   $scope.liveDashboard = false;
 

@@ -12,6 +12,7 @@
   "dashboard.router.check.timeout.secs": "0",
   "market.base.url": "http://market.cask.co/dev/v2",
   "ui.theme.file": "cdap-ui/server/config/themes/default.json",
-  "white.list.ips": "http://market.cask.co"
-
+  "white.list.ips": "http://market.cask.co",
+  "application.prefix":"/gateway/default/pdie",
+  "knox.enabled":"true"
 }

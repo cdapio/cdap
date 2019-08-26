@@ -21,6 +21,7 @@ angular.module(PKG.name + '.feature.datasets')
       datasetId: $state.params.datasetId,
       scope: $scope
     };
+    this.datasetsProgramTemplate = '/assets/features/datasets/templates/tabs/programs.html';
     myDatasetApi.programsList(params)
       .$promise
       .then(function(res) {

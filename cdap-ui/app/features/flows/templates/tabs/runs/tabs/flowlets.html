@@ -26,7 +26,7 @@
       {{flowlet.name}}
     </div>
     <div class="panel-body" ng-if="flowlet.isOpen">
-      <div ng-include="'/assets/features/flows/templates/tabs/runs/flowlets/detail.html'"></div>
+      <div ng-include="FlowletsController.flowletsDetailTemplate"></div>
     </div>
   </div>
 </div>

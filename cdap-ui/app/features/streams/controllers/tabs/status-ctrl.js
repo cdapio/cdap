@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.streams')
     var dataSrc = new MyCDAPDataSource($scope);
     this.storage = null;
     this.events = null;
-
+    this.statusProgramsTemplate = '/assets/features/datasets/templates/tabs/programs.html';
     this.schema = rStreamData.format.schema.fields;
 
     [

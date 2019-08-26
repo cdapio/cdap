@@ -22,7 +22,7 @@ angular.module(PKG.name + '.feature.userprofile')
       username: myAuth.currentUser.username
     };
     $scope.readonlyUsername = true;
-
+    $scope.loginTemplate = '/assets/features/login/login.html';
     $scope.doLogin = function(credentials) {
       $http({
         method: 'POST',

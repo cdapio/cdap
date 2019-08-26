@@ -163,7 +163,7 @@ export default class ADLSBrowser extends Component {
     } else {
       if (objectQuery(props, 'match', 'url')) {
         let pathname = window.location.pathname.replace(/\/cdap/, '');
-        hdfsPath = pathname.slice(props.match.url.length);
+        hdfsPath = pathname.slice((window.knoxPrefix + props.match.url).length);
         hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
       }
     }

@@ -42,7 +42,7 @@ class ReportsLink extends React.PureComponent<IReportsLinkProps> {
       <DropdownItem tag="li">
         <NavLinkWrapper
           isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${reportsUrl}` : reportsUrl}
+          to={isNativeLink ? `${window.knoxPrefix}/cdap${reportsUrl}` : reportsUrl}
           isActive={this.isReportsActive}
         >
           {featureName}
