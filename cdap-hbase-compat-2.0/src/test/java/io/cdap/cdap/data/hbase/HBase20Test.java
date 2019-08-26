@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -43,8 +44,8 @@ import java.util.TreeMap;
 /**
  * {@link HBaseTestBase} implementation supporting HBase 1.1.
  */
-public class HBase11Test extends HBaseTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(HBase11Test.class);
+public class HBase20Test extends HBaseTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(HBase20Test.class);
 
   protected HBaseTestingUtility testUtil = new HBaseTestingUtility();
 
@@ -81,7 +82,7 @@ public class HBase11Test extends HBaseTestBase {
     if (conf == null) {
       conf = new Configuration();
     }
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     for (byte [] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
@@ -93,7 +94,7 @@ public class HBase11Test extends HBaseTestBase {
         throw new IOException("Failed delete of " + path);
       }
     }
-    return HRegion.createHRegion(info, path, conf, htd);
+    return HRegion.createHRegion(info, path, conf, htd, null);
   }
 
   @Override
@@ -102,7 +103,7 @@ public class HBase11Test extends HBaseTestBase {
     Map<byte[], T> results = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     // make sure consumer config cache is updated
     for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-      List<Region> serverRegions = t.getRegionServer().getOnlineRegions(TableName.valueOf(tableName));
+      List<HRegion> serverRegions = t.getRegionServer().getRegions(TableName.valueOf(tableName));
       for (Region region : serverRegions) {
         results.put(region.getRegionInfo().getRegionName(), function.apply((HRegion) region));
       }
@@ -119,28 +120,22 @@ public class HBase11Test extends HBaseTestBase {
 
   @Override
   public Runnable createFlushRegion(final HRegion region) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          region.flushcache(true, false);
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
+    return () -> {
+      try {
+        region.flushcache(true, false, FlushLifeCycleTracker.DUMMY);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     };
   }
 
   @Override
   public Runnable createCompactRegion(final HRegion region, final boolean majorCompact) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          region.compact(majorCompact);
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
+    return () -> {
+      try {
+        region.compact(majorCompact);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     };
   }

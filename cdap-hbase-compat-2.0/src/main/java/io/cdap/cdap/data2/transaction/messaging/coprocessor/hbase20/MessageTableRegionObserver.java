@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.transaction.messaging.coprocessor.hbase20;
 
-import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
@@ -31,45 +30,32 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.TableDescriptor;
-import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
-import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
-import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
-import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.ScanOptions;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
-import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
-import org.apache.tephra.hbase.coprocessor.FilteredInternalScanner;
-import org.apache.tephra.hbase.coprocessor.TransactionProcessor;
 import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
-import org.apache.tephra.util.TxUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -132,18 +118,10 @@ public class MessageTableRegionObserver implements RegionObserver, Coprocessor {
     LOG.info("preFlush, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
     MessageDataFilter filter = new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                                     prefixLength, topicMetadataCache, txVisibilityState);
-    StoreScanner delegate = new StoreScanner((HStore) store, ((HStore) store).getScanInfo(),
-                                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
-                                             HConstants.OLDEST_TIMESTAMP);
-
+                                                     prefixLength, topicMetadataCache, txVisibilityState,
+                                                     ScanType.COMPACT_DROP_DELETES);
     return new LoggingInternalScanner("MessageDataFilter", "preFlush",
-                                      new FilteredInternalScanner(delegate, filter), txVisibilityState);
-  }
-
-  @Override
-  public void preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                  ScanOptions options, FlushLifeCycleTracker tracker) throws IOException {
+                                      new FilteredInternalScanner(scanner, filter), txVisibilityState);
   }
 
   @Override
@@ -178,12 +156,10 @@ public class MessageTableRegionObserver implements RegionObserver, Coprocessor {
     }
 
     MessageDataFilter filter = new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                                     prefixLength, topicMetadataCache, txVisibilityState);
-    StoreScanner delegate = new StoreScanner((HStore) store, ((HStore) store).getScanInfo(),
-                                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(),
-                                             HConstants.OLDEST_TIMESTAMP);
+                                                     prefixLength, topicMetadataCache, txVisibilityState,
+                                                     ScanType.COMPACT_DROP_DELETES);
     return new LoggingInternalScanner("MessageDataFilter", "preCompact",
-                                      new FilteredInternalScanner(delegate, filter), txVisibilityState);
+                                      new FilteredInternalScanner(scanner, filter), txVisibilityState);
 
   }
 
@@ -300,82 +276,31 @@ public class MessageTableRegionObserver implements RegionObserver, Coprocessor {
     return numStoreFiles;
   }
 
-  /**
-   * Wrapper of InternalScanner to apply Transaction visibility filter for flush and compact
-   */
-  private static class FilteredInternalScanner implements InternalScanner {
-
-    private final InternalScanner delegate;
-    private final Filter filter;
-    private List<Cell> outResult = new ArrayList<Cell>();
-
-    public FilteredInternalScanner(InternalScanner internalScanner, Filter filter) {
-      this.delegate = internalScanner;
-      this.filter = filter;
-    }
-
-    @Override
-    public void close() throws IOException {
-      this.delegate.close();
-    }
-
-    @Override
-    public boolean next(List<Cell> result, ScannerContext scannerContext) throws IOException {
-      outResult.clear();
-      if (filter.filterAllRemaining()) {
-        return false;
-      }
-      while (true) {
-        boolean next = delegate.next(outResult, scannerContext);
-        for (Cell cell : outResult) {
-          Filter.ReturnCode code = filter.filterKeyValue(cell);
-          switch (code) {
-            // included, so we are done
-            case INCLUDE:
-            case INCLUDE_AND_NEXT_COL:
-              result.add(cell);
-              break;
-            case SKIP:
-            case NEXT_COL:
-            case NEXT_ROW:
-            default:
-              break;
-          }
-        }
-        if (!next) {
-          return next;
-        }
-        if (!result.isEmpty()) {
-          return true;
-        }
-
-      }
-    }
-  }
-
-
   private static final class MessageDataFilter extends FilterBase {
     private final RegionCoprocessorEnvironment env;
     private final long timestamp;
     private final TransactionVisibilityState state;
     private final int prefixLength;
     private final TopicMetadataCache metadataCache;
+    private final boolean clearDeletes;
 
     private byte[] prevTopicIdBytes;
     private Long currentTTL;
     private Integer currentGen;
 
     MessageDataFilter(RegionCoprocessorEnvironment env, long timestamp, int prefixLength,
-                      TopicMetadataCache metadataCache, @Nullable TransactionVisibilityState state) {
+                      TopicMetadataCache metadataCache, @Nullable TransactionVisibilityState state,
+                      ScanType  scanType) {
       this.env = env;
       this.timestamp = timestamp;
       this.prefixLength = prefixLength;
       this.metadataCache = metadataCache;
       this.state = state;
+      this.clearDeletes = scanType == ScanType.COMPACT_DROP_DELETES;
     }
 
     @Override
-    public ReturnCode filterKeyValue(Cell cell) throws IOException {
+    public ReturnCode filterCell(Cell cell) throws IOException {
       int rowKeyOffset = cell.getRowOffset() + prefixLength;
       int sizeOfRowKey = cell.getRowLength() - prefixLength;
       long publishTimestamp = MessagingUtils.getPublishTimestamp(cell.getRowArray(), rowKeyOffset, sizeOfRowKey);

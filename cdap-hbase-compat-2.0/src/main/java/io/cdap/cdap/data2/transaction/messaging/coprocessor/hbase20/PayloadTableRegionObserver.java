@@ -28,31 +28,22 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.TableDescriptor;
-import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
-import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
-import org.apache.hadoop.hbase.regionserver.ScanOptions;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
-import org.apache.hadoop.hbase.regionserver.StoreScanner;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.tephra.hbase.coprocessor.FilteredInternalScanner;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -99,29 +90,19 @@ public class PayloadTableRegionObserver implements RegionObserver, Coprocessor {
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                   InternalScanner scanner, FlushLifeCycleTracker tracker) throws IOException {
     LOG.info("preFlush, filter using PayloadDataFilter");
-    Scan scan = new Scan();
-    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
-                                         topicMetadataCache));
-    return new StoreScanner(store, store.getScanInfo(), scan, Collections.singletonList(memstoreScanner),
-                            ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
+    PayloadDataFilter filter = new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
+                                                     topicMetadataCache);
+    return new FilteredInternalScanner(scanner, filter);
   }
 
   @Override
-  public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                             ScanOptions options, FlushLifeCycleTracker tracker) throws IOException {
-  }
-
-  @Override
-  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                               List<? extends KeyValueScanner> scanners, ScanType scanType,
-                                               long earliestPutTs, InternalScanner s,
-                                               CompactionRequest request) throws IOException {
+  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
+                                    InternalScanner scanner, ScanType scanType, CompactionLifeCycleTracker tracker,
+                                    CompactionRequest request) throws IOException {
     LOG.info("preCompact, filter using PayloadDataFilter");
-    Scan scan = new Scan();
-    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
-                                         topicMetadataCache));
-    return new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType, store.getSmallestReadPoint(),
-                            earliestPutTs);
+    PayloadDataFilter filter = new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
+                                         topicMetadataCache);
+    return new FilteredInternalScanner(scanner, filter);
   }
 
   private static final class PayloadDataFilter extends FilterBase {

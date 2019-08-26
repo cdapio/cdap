@@ -18,24 +18,16 @@ package io.cdap.cdap.data2.replication;
 
 import io.cdap.cdap.replication.ReplicationConstants;
 import io.cdap.cdap.replication.StatusUtils;
-import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.coprocessor.BaseRegionServerObserver;
-import org.apache.hadoop.hbase.coprocessor.ObserverContext;
-import org.apache.hadoop.hbase.coprocessor.RegionObserver;
-import org.apache.hadoop.hbase.coprocessor.RegionServerCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionServerObserver;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * HBase Coprocessor that tracks write time of the WAL entries successfully replicated to a Slave Cluster.
@@ -60,15 +52,15 @@ public class LastReplicateTimeObserver implements RegionServerObserver, Coproces
     hBase20TableUpdater.cancelTimer();
   }
 
-  @Override
-  public void postReplicateLogEntries(ObserverContext<RegionServerCoprocessorEnvironment> ctx) throws IOException {
-    for (AdminProtos.WALEntry entry : entries) {
-      LOG.debug("Update LastReplicateTimeObserver for Table {}:{} for region {}",
-                entry.getKey().getTableName().toStringUtf8(),
-                entry.getKey().getWriteTime(),
-                entry.getKey().getEncodedRegionName().toStringUtf8());
-      hBase20TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
-                                     entry.getKey().getWriteTime());
-    }
-  }
+//  @Override
+//  public void postReplicateLogEntries(ObserverContext<RegionServerCoprocessorEnvironment> ctx) throws IOException {
+//    for (AdminProtos.WALEntry entry : entries) {
+//      LOG.debug("Update LastReplicateTimeObserver for Table {}:{} for region {}",
+//                entry.getKey().getTableName().toStringUtf8(),
+//                entry.getKey().getWriteTime(),
+//                entry.getKey().getEncodedRegionName().toStringUtf8());
+//      hBase20TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
+//                                     entry.getKey().getWriteTime());
+//    }
+//  }
 }

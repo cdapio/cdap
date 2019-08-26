@@ -18,7 +18,7 @@ package io.cdap.cdap.data2.increment.hbase20;
 
 import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.data.hbase.HBase11Test;
+import io.cdap.cdap.data.hbase.HBase20Test;
 import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.data2.increment.hbase.IncrementHandlerState;
 import io.cdap.cdap.data2.util.TableId;
@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeepDeletedCells;
 import org.apache.hadoop.hbase.MockRegionServerServices;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.Delete;
@@ -41,6 +42,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.regionserver.FlushLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
@@ -67,7 +69,7 @@ import static org.junit.Assert.assertTrue;
 public class IncrementSummingScannerTest {
 
   @ClassRule
-  public static final HBase11Test TEST_HBASE = new HBase11Test();
+  public static final HBase20Test TEST_HBASE = new HBase20Test();
 
   private static final byte[] TRUE = Bytes.toBytes(true);
   private static Configuration conf;
@@ -90,7 +92,7 @@ public class IncrementSummingScannerTest {
 
       // test handling of a single increment value alone
       Put p = new Put(Bytes.toBytes("r1"));
-      p.add(familyBytes, columnBytes, Bytes.toBytes(3L));
+      p.addColumn(familyBytes, columnBytes, Bytes.toBytes(3L));
       p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
@@ -102,11 +104,11 @@ public class IncrementSummingScannerTest {
       assertEquals(1, results.size());
       Cell cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(3L, Bytes.toLong(cell.getValue()));
+      assertEquals(3L, Bytes.toLong(cell.getValueArray()));
 
       // test handling of a single total sum
       p = new Put(Bytes.toBytes("r2"));
-      p.add(familyBytes, columnBytes, Bytes.toBytes(5L));
+      p.addColumn(familyBytes, columnBytes, Bytes.toBytes(5L));
       region.put(p);
 
       scan = new Scan(Bytes.toBytes("r2"));
@@ -118,13 +120,13 @@ public class IncrementSummingScannerTest {
       assertEquals(1, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(5L, Bytes.toLong(cell.getValue()));
+      assertEquals(5L, Bytes.toLong(cell.getValueArray()));
 
       // test handling of multiple increment values
       long now = System.currentTimeMillis();
       p = new Put(Bytes.toBytes("r3"));
       for (int i = 0; i < 5; i++) {
-        p.add(familyBytes, columnBytes, now - i, Bytes.toBytes((long) (i + 1)));
+        p.addColumn(familyBytes, columnBytes, now - i, Bytes.toBytes((long) (i + 1)));
       }
       p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
@@ -138,20 +140,20 @@ public class IncrementSummingScannerTest {
       assertEquals(1, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(15L, Bytes.toLong(cell.getValue()));
+      assertEquals(15L, Bytes.toLong(cell.getValueArray()));
 
       // test handling of multiple increment values followed by a total sum, then other increments
       now = System.currentTimeMillis();
       p = new Put(Bytes.toBytes("r4"));
       for (int i = 0; i < 3; i++) {
-        p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
       p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
       // this put will appear as a "total" sum prior to all the delta puts
       p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
+      p.addColumn(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
       region.put(p);
 
       scan = new Scan(Bytes.toBytes("r4"));
@@ -163,11 +165,11 @@ public class IncrementSummingScannerTest {
       assertEquals(1, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(8L, Bytes.toLong(cell.getValue()));
+      assertEquals(8L, Bytes.toLong(cell.getValueArray()));
 
       // test handling of an increment column followed by a non-increment column
       p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, Bytes.toBytes("c2"), Bytes.toBytes("value"));
+      p.addColumn(familyBytes, Bytes.toBytes("c2"), Bytes.toBytes("value"));
       region.put(p);
 
       scan = new Scan(Bytes.toBytes("r4"));
@@ -179,21 +181,21 @@ public class IncrementSummingScannerTest {
       assertEquals(2, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(8L, Bytes.toLong(cell.getValue()));
+      assertEquals(8L, Bytes.toLong(cell.getValueArray()));
 
       cell = results.get(1);
       assertNotNull(cell);
-      assertEquals("value", Bytes.toString(cell.getValue()));
+      assertEquals("value", Bytes.toString(cell.getValueArray()));
 
       // test handling of an increment column followed by a delete
       now = System.currentTimeMillis();
       Delete d = new Delete(Bytes.toBytes("r5"));
-      d.deleteColumn(familyBytes, columnBytes, now - 3);
+      d.addColumn(familyBytes, columnBytes, now - 3);
       region.delete(d);
 
       p = new Put(Bytes.toBytes("r5"));
       for (int i = 2; i >= 0; i--) {
-        p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
       p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
@@ -209,7 +211,7 @@ public class IncrementSummingScannerTest {
       assertEquals(2, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(3L, Bytes.toLong(cell.getValue(), IncrementHandlerState.DELTA_MAGIC_PREFIX.length, 8));
+      assertEquals(3L, Bytes.toLong(cell.getValueArray(), IncrementHandlerState.DELTA_MAGIC_PREFIX.length, 8));
       // next cell should be the delete
       cell = results.get(1);
       assertTrue(CellUtil.isDelete(cell));
@@ -233,7 +235,7 @@ public class IncrementSummingScannerTest {
       byte[] row1 = Bytes.toBytes("row1");
       for (int i = 0; i < 50; i++) {
         Put p = new Put(row1);
-        p.add(familyBytes, columnBytes, ts, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, ts, Bytes.toBytes(1L));
         p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         ts++;
         region.put(p);
@@ -243,17 +245,17 @@ public class IncrementSummingScannerTest {
       ts = System.currentTimeMillis();
       // start with a full put
       Put row2P = new Put(row2);
-      row2P.add(familyBytes, columnBytes, ts++, Bytes.toBytes(10L));
+      row2P.addColumn(familyBytes, columnBytes, ts++, Bytes.toBytes(10L));
       region.put(row2P);
       for (int i = 0; i < 10; i++) {
         Put p = new Put(row2);
-        p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
         p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
       }
 
       // force a region flush
-      region.flushcache(true, false);
+      region.flushcache(true, false, FlushLifeCycleTracker.DUMMY);
       region.waitForFlushesAndCompactions();
 
       Result r1 = region.get(new Get(row1));
@@ -262,7 +264,7 @@ public class IncrementSummingScannerTest {
       // row1 should have a full put aggregating all 50 incrments
       Cell r1Cell = r1.getColumnLatestCell(familyBytes, columnBytes);
       assertNotNull(r1Cell);
-      assertEquals(50L, Bytes.toLong(r1Cell.getValue()));
+      assertEquals(50L, Bytes.toLong(r1Cell.getValueArray()));
 
       Result r2 = region.get(new Get(row2));
       assertNotNull(r2);
@@ -270,12 +272,12 @@ public class IncrementSummingScannerTest {
       // row2 should have a full put aggregating prior put + 10 increments
       Cell r2Cell = r2.getColumnLatestCell(familyBytes, columnBytes);
       assertNotNull(r2Cell);
-      assertEquals(20L, Bytes.toLong(r2Cell.getValue()));
+      assertEquals(20L, Bytes.toLong(r2Cell.getValueArray()));
 
       // add 30 more increments to row2
       for (int i = 0; i < 30; i++) {
         Put p = new Put(row2);
-        p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
         p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
       }
@@ -286,16 +288,16 @@ public class IncrementSummingScannerTest {
       assertFalse(r2.isEmpty());
       r2Cell = r2.getColumnLatestCell(familyBytes, columnBytes);
       assertNotNull(r2Cell);
-      assertEquals(50L, Bytes.toLong(r2Cell.getValue()));
+      assertEquals(50L, Bytes.toLong(r2Cell.getValueArray()));
 
       // force another region flush
-      region.flushcache(true, false);
+      region.flushcache(true, false, FlushLifeCycleTracker.DUMMY);
       region.waitForFlushesAndCompactions();
 
       // add 100 more increments to row2
       for (int i = 0; i < 100; i++) {
         Put p = new Put(row2);
-        p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
         p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
       }
@@ -306,7 +308,7 @@ public class IncrementSummingScannerTest {
       assertFalse(r2.isEmpty());
       r2Cell = r2.getColumnLatestCell(familyBytes, columnBytes);
       assertNotNull(r2Cell);
-      assertEquals(150L, Bytes.toLong(r2Cell.getValue()));
+      assertEquals(150L, Bytes.toLong(r2Cell.getValueArray()));
     } finally {
       region.close();
     }
@@ -324,33 +326,33 @@ public class IncrementSummingScannerTest {
       long now = System.currentTimeMillis();
       // put a non increment columns
       Put p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, Bytes.toBytes("c1"), Bytes.toBytes("value1"));
+      p.addColumn(familyBytes, Bytes.toBytes("c1"), Bytes.toBytes("value1"));
       region.put(p);
 
       // now put some increment deltas in a column
       p = new Put(Bytes.toBytes("r4"));
       for (int i = 0; i < 3; i++) {
-        p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
       }
       p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
       region.put(p);
 
       // put some non - increment columns
       p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, Bytes.toBytes("c3"), Bytes.toBytes("value3"));
+      p.addColumn(familyBytes, Bytes.toBytes("c3"), Bytes.toBytes("value3"));
       region.put(p);
 
       p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, Bytes.toBytes("c4"), Bytes.toBytes("value4"));
+      p.addColumn(familyBytes, Bytes.toBytes("c4"), Bytes.toBytes("value4"));
       region.put(p);
 
       p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, Bytes.toBytes("c5"), Bytes.toBytes("value5"));
+      p.addColumn(familyBytes, Bytes.toBytes("c5"), Bytes.toBytes("value5"));
       region.put(p);
 
       // this put will appear as a "total" sum prior to all the delta puts
       p = new Put(Bytes.toBytes("r4"));
-      p.add(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
+      p.addColumn(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
       region.put(p);
 
       Scan scan = new Scan(Bytes.toBytes("r4"));
@@ -362,13 +364,13 @@ public class IncrementSummingScannerTest {
       assertEquals(3, results.size());
       Cell cell = results.get(0);
       assertNotNull(cell);
-      assertEquals("value1", Bytes.toString(cell.getValue()));
+      assertEquals("value1", Bytes.toString(cell.getValueArray()));
       cell = results.get(1);
       assertNotNull(cell);
-      assertEquals(8L, Bytes.toLong(cell.getValue()));
+      assertEquals(8L, Bytes.toLong(cell.getValueArray()));
       cell = results.get(2);
       assertNotNull(cell);
-      assertEquals("value3", Bytes.toString(cell.getValue()));
+      assertEquals("value3", Bytes.toString(cell.getValueArray()));
     } finally {
       region.close();
     }
@@ -390,12 +392,12 @@ public class IncrementSummingScannerTest {
 
       // Initial put to row1,c2
       Put row1P = new Put(row1);
-      row1P.add(familyBytes, columnBytes2, now - 1, Bytes.toBytes(5L));
+      row1P.addColumn(familyBytes, columnBytes2, now - 1, Bytes.toBytes(5L));
       region.put(row1P);
 
       // Initial put to row2,c
       Put row2P = new Put(row2);
-      row2P.add(familyBytes, columnBytes, now - 1, Bytes.toBytes(10L));
+      row2P.addColumn(familyBytes, columnBytes, now - 1, Bytes.toBytes(10L));
       region.put(row2P);
 
       // Generate some increments
@@ -419,23 +421,23 @@ public class IncrementSummingScannerTest {
       assertEquals(2, results.size());
       Cell cell = results.get(0);
       assertNotNull(cell);
-      assertEquals("row1", Bytes.toString(cell.getRow()));
-      assertEquals("c", Bytes.toString(cell.getQualifier()));
-      assertEquals(50, Bytes.toLong(cell.getValue()));
+      assertEquals("row1", Bytes.toString(cell.getRowArray()));
+      assertEquals("c", Bytes.toString(cell.getQualifierArray()));
+      assertEquals(50, Bytes.toLong(cell.getValueArray()));
 
       cell = results.get(1);
       assertNotNull(cell);
-      assertEquals("row1", Bytes.toString(cell.getRow()));
-      assertEquals("c2", Bytes.toString(cell.getQualifier()));
-      assertEquals(55, Bytes.toLong(cell.getValue()));
+      assertEquals("row1", Bytes.toString(cell.getRowArray()));
+      assertEquals("c2", Bytes.toString(cell.getQualifierArray()));
+      assertEquals(55, Bytes.toLong(cell.getValueArray()));
 
       results.clear();
       assertFalse(scanner.next(results, ScannerContext.newBuilder().setBatchLimit(10).build()));
       assertEquals(1, results.size());
       cell = results.get(0);
       assertNotNull(cell);
-      assertEquals("row2", Bytes.toString(cell.getRow()));
-      assertEquals(60, Bytes.toLong(cell.getValue()));
+      assertEquals("row2", Bytes.toString(cell.getRowArray()));
+      assertEquals(60, Bytes.toLong(cell.getValueArray()));
     } finally {
       region.close();
     }
@@ -458,7 +460,7 @@ public class IncrementSummingScannerTest {
       // adding 5 delta increments
       for (int i = 0; i < 5; i++) {
         Put p = new Put(Bytes.toBytes("r1"), now++);
-        p.add(familyBytes, columnBytes, Bytes.toBytes(1L));
+        p.addColumn(familyBytes, columnBytes, Bytes.toBytes(1L));
         p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
         counter1++;
@@ -491,7 +493,7 @@ public class IncrementSummingScannerTest {
       int counter2 = 0;
       for (int i = 0; i < 5; i++) {
         Put p = new Put(Bytes.toBytes("r2"), now + i);
-        p.add(familyBytes, columnBytes, Bytes.toBytes(2L));
+        p.addColumn(familyBytes, columnBytes, Bytes.toBytes(2L));
         p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
         region.put(p);
         counter2 += 2;
@@ -514,7 +516,7 @@ public class IncrementSummingScannerTest {
 
   private Put generateIncrementPut(byte[] familyBytes, byte[] columnBytes, byte [] row, long ts) {
     Put p = new Put(row);
-    p.add(familyBytes, columnBytes, ts, Bytes.toBytes(1L));
+    p.addColumn(familyBytes, columnBytes, ts, Bytes.toBytes(1L));
     p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
     return p;
   }
@@ -533,7 +535,7 @@ public class IncrementSummingScannerTest {
       assertEquals(1, results.size());
       Cell cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(count, Bytes.toLong(cell.getValue()));
+      assertEquals(count, Bytes.toLong(cell.getValueArray()));
     }
     assertFalse(hasMore);
   }
@@ -558,7 +560,7 @@ public class IncrementSummingScannerTest {
       assertEquals(1, results.size());
       Cell cell = results.get(0);
       assertNotNull(cell);
-      assertEquals(count, Bytes.toLong(cell.getValue()));
+      assertEquals(count, Bytes.toLong(cell.getValueArray()));
     }
     assertFalse(hasMore);
   }
@@ -572,7 +574,7 @@ public class IncrementSummingScannerTest {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
-    cfd.setKeepDeletedCells(true);
+    cfd.setKeepDeletedCells(KeepDeletedCells.TRUE);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
 
@@ -582,9 +584,9 @@ public class IncrementSummingScannerTest {
     Path hlogPath = new Path("/tmp/hlog-" + tableName);
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
-    WALFactory walFactory = new WALFactory(hConf, null, hlogPath.toString());
-    WAL hLog = walFactory.getWAL(new byte[]{1});
+    WALFactory walFactory = new WALFactory(hConf, hlogPath.getName());
     HRegionInfo regionInfo = new HRegionInfo(desc.getTableName());
+    WAL hLog = walFactory.getWAL(regionInfo);
     HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
     return new HRegion(regionFS, hLog, hConf, desc,
                        new LocalRegionServerServices(hConf, ServerName.valueOf(

@@ -28,7 +28,7 @@ import org.junit.experimental.categories.Category;
  *
  */
 @Category(XSlowTests.class)
-public class HBase11TableUtilTest extends AbstractHBaseTableUtilTest {
+public class HBase20TableUtilTest extends AbstractHBaseTableUtilTest {
 
   @Override
   protected HBaseTableUtil getTableUtil() {
