@@ -28,14 +28,14 @@ describe('Navbar tests', () => {
       .then(() => {
         cy.getCookie('CDAP_Auth_Token').then((cookie) => {
           if (!cookie) {
-            return;
+            return Helpers.getSessionToken({});
           }
           headers = {
             Authorization: 'Bearer ' + cookie.value,
           };
+          return Helpers.getSessionToken(headers);
         });
       })
-      .then(Helpers.getSessionToken)
       .then(sessionToken => headers = Object.assign({}, headers, { 'Session-Token': sessionToken }));
   });
   after(() => {

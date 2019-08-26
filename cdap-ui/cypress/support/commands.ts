@@ -23,7 +23,7 @@ import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../suppo
  * @selector - css selector to query for the input[type="file"] element.
  */
 Cypress.Commands.add('upload_pipeline', (fileName, selector) => {
-  return cy.get(selector).then((subject) => {
+  return cy.get(selector, { timeout: 60000 }).then((subject) => {
     return cy.fixture(fileName).then((pipeline1) => {
       const el = subject[0];
       const blob = new Blob([JSON.stringify(pipeline1, null, 2)], { type: 'application/json' });
@@ -68,7 +68,7 @@ Cypress.Commands.add(
     serviceAccountPath = DEFAULT_GCP_SERVICEACCOUNT_PATH
   ) => {
     cy.visit('/cdap/ns/default/connections');
-    cy.get('[data-cy="wrangler-add-connection-button"]', { timeout: 30000 }).click();
+    cy.get('[data-cy="wrangler-add-connection-button"]', { timeout: 60000 }).click();
     cy.get(`[data-cy="wrangler-connection-${ConnectionType.GCS}`).click();
     cy.get(`[data-cy="wrangler-${ConnectionType.GCS}-connection-name"]`).type(connectionId);
     cy.get(`[data-cy="wrangler-${ConnectionType.GCS}-connection-projectid"]`).type(projectId);

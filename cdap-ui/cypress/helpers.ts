@@ -60,7 +60,7 @@ function loginIfRequired() {
     });
 }
 
-function getSessionToken() {
+function getSessionToken(headers) {
   if (sessionToken !== null) {
     return sessionToken;
   }
@@ -68,6 +68,7 @@ function getSessionToken() {
     method: 'GET',
     url: `http://${Cypress.env('host')}:11011/sessionToken`,
     failOnStatusCode: false,
+    headers,
   }).then(response => {
     sessionToken = response.body;
     return sessionToken;

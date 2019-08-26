@@ -29,7 +29,7 @@ angular.module(PKG.name + '.services')
 
       // FIXME: There is a circular dependency and that is why
       // myAuth.isAuthenticated is not used. There should be a better way to do this.
-      if ($rootScope.currentUser && $rootScope.currentUser.token) {
+      if (window.CDAP_CONFIG.securityEnabled && $rootScope.currentUser && $rootScope.currentUser.token) {
         resource.headers = {
           Authorization: 'Bearer '+ $rootScope.currentUser.token
         };
@@ -52,7 +52,7 @@ angular.module(PKG.name + '.services')
     };
 
     MyCDAPDataSource.prototype.request = function(resource, cb, errorCb) {
-      if ($rootScope.currentUser && $rootScope.currentUser.token) {
+      if (window.CDAP_CONFIG.securityEnabled && $rootScope.currentUser && $rootScope.currentUser.token) {
         resource.headers = {
           Authorization: 'Bearer '+ $rootScope.currentUser.token
         };

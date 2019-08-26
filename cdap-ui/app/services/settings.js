@@ -51,7 +51,7 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.set = function (key, value) {
 
       myHelpers.deepSet(this.data, key, value);
-      if (myAuth.isAuthenticated()) {
+      if (window.CDAP_CONFIG.securityEnabled) {
         this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
       }
       return data.request(
@@ -75,7 +75,7 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.get = function (key, force) {
 
       var val = myHelpers.deepGet(this.data, key, true);
-      if (myAuth.isAuthenticated()) {
+      if (window.CDAP_CONFIG.securityEnabled) {
         this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
       }
 

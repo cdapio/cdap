@@ -26,9 +26,15 @@ var express = require('./server/express.js'),
   fs = require('fs'),
   log4js = require('log4js'),
   graphql = require('./graphql/graphql.js'),
-  https = require('https');
+  https = require('https'),
+  getHostName = require('./server/config/hostname'),
+  ip = require('ip');
 
-var cdapConfig, securityConfig;
+var cdapConfig,
+  securityConfig,
+  allowedOrigin = [],
+  hostname,
+  hostIP = ip.address();
 
 /**
  * Configuring the logger. In order to use the logger anywhere
@@ -46,12 +52,42 @@ if (!process.env.LOG4JS_CONFIG) {
 // Get a log handle.
 var log = log4js.getLogger('default');
 
+function getFullURL(host) {
+  let nodejsport = cdapConfig['dashboard.bind.port'];
+  const isSSLEnabled = cdapConfig['ssl.external.enabled'] === 'true';
+  const nodejsprotocol = isSSLEnabled ? 'https' : 'http';
+  if (isSSLEnabled) {
+    nodejsport = cdapConfig['dashboard.ssl.bind.port'];
+  }
+  let baseUrl = `${nodejsprotocol}://${host}`;
+  return nodejsport ? `${baseUrl}:${nodejsport}` : baseUrl;
+}
+async function setAllowedOrigin() {
+  const nodejsserver = cdapConfig['dashboard.bind.address'];
+  allowedOrigin = [getFullURL(nodejsserver)];
+  try {
+    hostname = await getHostName();
+  } catch (e) {
+    log.error('Unable to determine hostname: ' + e);
+    hostname = null;
+  }
+  if (hostname) {
+    allowedOrigin.push(getFullURL(hostname));
+  }
+  if (hostIP) {
+    allowedOrigin.push(getFullURL(hostIP));
+  }
+  if (['localhost', '127.0.0.1', '0.0.0.0'].indexOf(nodejsserver) !== -1) {
+    allowedOrigin.push(getFullURL('127.0.0.1'), getFullURL('0.0.0.0'), getFullURL('localhost'));
+  }
+}
+
 log.info('Starting CDAP UI ...');
 cdapConfigurator
   .getCDAPConfig()
   .then(function(c) {
     cdapConfig = c;
-    if (cdapConfig['ssl.external.enabled'] === 'true') {
+    if (cdapConfig['security.enabled'] === 'true') {
       log.debug('CDAP Security has been enabled');
       return parser.extractConfig('security');
     }
@@ -59,6 +95,7 @@ cdapConfigurator
 
   .then(function(s) {
     securityConfig = s;
+    setAllowedOrigin();
     return express.getApp(Object.assign({}, cdapConfig, securityConfig));
   })
 
@@ -98,7 +135,7 @@ cdapConfigurator
     return server;
   })
 
-  .then(function(server) {
+  .then(async function(server) {
     var sockServer = sockjs.createServer({
       log: function(lvl, msg) {
         log.trace(msg);
@@ -114,28 +151,7 @@ cdapConfigurator
     });
 
     sockServer.installHandlers(server, { prefix: '/_sock' });
-
     server.addListener('upgrade', function(req, socket) {
-      const nodejsserver = cdapConfig['dashboard.bind.address'];
-      let nodejsport = cdapConfig['dashboard.bind.port'];
-      const isSSLEnabled = cdapConfig['ssl.external.enabled'] === 'true';
-      const nodejsprotocol = isSSLEnabled ? 'https' : 'http';
-      if (isSSLEnabled) {
-        nodejsport = cdapConfig['dashboard.ssl.bind.port'];
-      }
-      let allowedOrigin;
-      if (nodejsport) {
-        allowedOrigin = [`${nodejsprotocol}://${nodejsserver}:${nodejsport}`];
-      } else {
-        allowedOrigin = [`${nodejsprotocol}://${nodejsserver}`];
-      }
-      if (['localhost', '127.0.0.1', '0.0.0.0'].indexOf(nodejsserver) !== -1) {
-        allowedOrigin.push(
-          `${nodejsprotocol}://127.0.0.1:${nodejsport}`,
-          `${nodejsprotocol}://0.0.0.0:${nodejsport}`,
-          `${nodejsprotocol}://localhost:${nodejsport}`
-        );
-      }
       if (allowedOrigin.indexOf(req.headers.origin) === -1) {
         log.info('Unknown Origin: ' + req.headers.origin);
         log.info('Denying socket connection and closing the channel');

@@ -94,11 +94,11 @@ describe('Creating a pipeline', () => {
     cy.get('[data-testid=deploy-pipeline]').click();
 
     // Do assertions
-    cy.url({ timeout: 10000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
+    cy.url({ timeout: 60000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
     cy.contains(TEST_PIPELINE_NAME);
     cy.contains('FileDelete');
-    cy.contains('Configure').click();
-    cy.contains('Pipeline config').click();
+    cy.get('.pipeline-configure-btn', { timeout: 60000 }).click();
+    cy.get('[data-cy="tab-head-Pipeline config"]').click();
     cy.get('.label-with-toggle')
       .contains('Instrumentation')
       .parent()

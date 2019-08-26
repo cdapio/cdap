@@ -1,7 +1,8 @@
 {
   "baseUrl": "http://localhost:11011",
   "env": {
-    "host": "localhost"
+    "host": "localhost",
+    "RETRIES": 3
   },
   "video": false,
   "pluginsFile": "cypress/plugins/index.js",

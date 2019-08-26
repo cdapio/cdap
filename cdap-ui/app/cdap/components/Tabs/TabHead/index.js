@@ -41,6 +41,7 @@ export default class TabHead extends Component {
           horizontal: this.state.layout === 'horizontal',
         })}
         onClick={this.props.onClick}
+        data-cy={this.props.dataCy}
       >
         {this.props.children}
       </div>
@@ -52,4 +53,5 @@ TabHead.propTypes = {
   onClick: PropTypes.func,
   activeTab: PropTypes.bool,
   layout: PropTypes.string,
+  dataCy: PropTypes.string,
 };
