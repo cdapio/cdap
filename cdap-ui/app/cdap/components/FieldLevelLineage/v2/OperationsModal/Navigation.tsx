@@ -19,7 +19,7 @@ import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
-function NavigationView() {
+const NavigationView: React.FC = () => {
   const { activeOpsIndex, operations, prevOperation, nextOperation } = useContext<IContextState>(
     FllContext
   );
@@ -46,6 +46,6 @@ function NavigationView() {
       </span>
     </div>
   );
-}
+};
 
 export default NavigationView;

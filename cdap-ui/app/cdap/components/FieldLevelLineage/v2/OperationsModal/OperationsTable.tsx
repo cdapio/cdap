@@ -39,7 +39,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
     });
   }
 
-  public handleInputClick(field, operation) {
+  private handleInputClick(field, operation) {
     this.setState({
       activeOrigin: field.origin,
       activeField: {
@@ -49,7 +49,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
     });
   }
 
-  public joinEndpoints(endpoints) {
+  private joinEndpoints(endpoints) {
     if (!endpoints || !endpoints.endPoint) {
       return '--';
     }
@@ -57,15 +57,15 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
     return endpoints.endPoint.name;
   }
 
-  public renderInput(operation) {
+  private renderInput(operation) {
     return this.joinEndpoints(operation.inputs);
   }
 
-  public renderOutput(operation) {
+  private renderOutput(operation) {
     return this.joinEndpoints(operation.outputs);
   }
 
-  public renderInputFields(operation) {
+  private renderInputFields(operation) {
     const fields = operation.inputs.fields;
     if (!fields) {
       return '--';
@@ -79,7 +79,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
         this.state.activeOrigin === field.origin;
 
       return (
-        <span key={i}>
+        <span key={`${field.name}-${i}`}>
           <span
             className={classnames('input-field', { selected: isSelected })}
             onClick={this.handleInputClick.bind(this, field, operation)}
@@ -92,7 +92,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
     });
   }
 
-  public renderOutputFields(operation) {
+  private renderOutputFields(operation) {
     if (!operation.outputs.fields) {
       return '--';
     }
@@ -100,7 +100,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
     return operation.outputs.fields.join(', ');
   }
 
-  public renderHeader() {
+  private renderHeader() {
     const headers = ['input', 'inputFields', 'operation', 'description', 'outputFields', 'output'];
 
     return (
@@ -115,7 +115,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
     );
   }
 
-  public renderBody(operations) {
+  private renderBody(operations) {
     return (
       <div className="grid-body">
         {operations.map((operation, i) => {
@@ -135,7 +135,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
 
           return (
             <div
-              key={i}
+              key={`${operation.name}-${i}`}
               className={classnames('grid-row', {
                 active: operation.name === this.state.activeOrigin,
               })}
