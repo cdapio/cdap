@@ -34,6 +34,10 @@ const styles = (theme): StyleRules => {
       position: 'relative',
       padding: '7px 10px 5px',
     },
+    noWrapper: {
+      border: 0,
+      padding: 0,
+    },
     label: {
       fontSize: '12px',
       position: 'absolute',
@@ -98,18 +102,25 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
     setIsFocused(false);
   }
 
+  const hideWrapper = !!objectQuery(widgetProperty, 'widget-category');
+
   return (
     <div
-      className={classnames(classes.widgetWrapper, { [classes.focus]: isFocused && !disabled })}
+      className={classnames(classes.widgetWrapper, {
+        [classes.focus]: isFocused && !disabled,
+        [classes.noWrapper]: hideWrapper,
+      })}
       onFocus={onFocus}
       onBlur={onBlur}
     >
-      <div className={classes.label}>
-        {widgetProperty.label}
-        <If condition={pluginProperty.required}>
-          <span className={classes.required}>*</span>
-        </If>
-      </div>
+      <If condition={!hideWrapper}>
+        <div className={classes.label}>
+          {widgetProperty.label}
+          <If condition={pluginProperty.required}>
+            <span className={classes.required}>*</span>
+          </If>
+        </div>
+      </If>
       <div className={classes.widgetContainer}>
         <AbstractWidget
           type={widgetType}

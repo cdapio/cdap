@@ -43,7 +43,11 @@ export function processConfigurationGroups(
     return {
       ...group,
       properties: group.properties
-        .filter((property) => pluginProperties[property.name])
+        .filter(
+          (property) =>
+            pluginProperties[property.name] ||
+            (property['widget-category'] && property['widget-category'] === 'plugin')
+        )
         .map((property) => {
           return {
             ...property,
@@ -67,7 +71,7 @@ export function processConfigurationGroups(
 
   const flattenGroupProperties = flatten(
     filteredConfigurationGroups.map((group) => {
-      return group.properties.map((property) => property.name);
+      return group.properties.map((property) => property.name).filter((property) => property);
     })
   );
 
@@ -82,6 +86,7 @@ export function processConfigurationGroups(
 
   // add missing properties under Generic group
   const excludedProperties = xor(flattenGroupProperties, pluginPropertiesName);
+
   if (excludedProperties.length > 0) {
     const genericGroup = {
       label: 'Generic',

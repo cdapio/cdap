@@ -119,10 +119,10 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
             </div>
 
             <div>
-              {group.properties.map((property) => {
+              {group.properties.map((property, j) => {
                 return (
                   <PropertyRow
-                    key={property.name}
+                    key={`${property.name}-${j}`}
                     widgetProperty={property}
                     pluginProperty={pluginProperties[property.name]}
                     value={values[property.name]}

@@ -32,11 +32,11 @@ export interface IWidgetJson {
 }
 
 export interface IPluginProperty {
-  name: string;
-  type: string;
-  required: boolean;
-  macroSupported: boolean;
-  description: string;
+  name?: string;
+  type?: string;
+  required?: boolean;
+  macroSupported?: boolean;
+  description?: string;
 }
 
 export type PluginProperties = Record<string, IPluginProperty>;

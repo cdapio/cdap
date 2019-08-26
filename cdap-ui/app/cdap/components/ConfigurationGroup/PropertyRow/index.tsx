@@ -66,6 +66,10 @@ interface IState {
 }
 
 class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
+  public static defaultProps = {
+    pluginProperty: {},
+  };
+
   public state = {
     isMacroTextbox:
       isMacro(this.props.value) && objectQuery(this.props.pluginProperty, 'macroSupported'),
