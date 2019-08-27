@@ -47,8 +47,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
 import org.apache.hadoop.hbase.mapreduce.Import;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
@@ -162,11 +166,14 @@ public class HBaseTableExporter {
       }
     }
 
+    TableName hbaseTableName = TableName.valueOf(tableName);
     HFileOutputFormat2.setOutputPath(job, bulkloadDir);
-    HTable hTable = new HTable(hConf, tableName);
-    HFileOutputFormat2.configureIncrementalLoad(job, hTable);
-
-    return job;
+    try (Connection connection = ConnectionFactory.createConnection(hConf);
+         Table table = connection.getTable(hbaseTableName);
+         RegionLocator locator = connection.getRegionLocator(hbaseTableName)) {
+      HFileOutputFormat2.configureIncrementalLoad(job, table, locator);
+      return job;
+    }
   }
 
   private void startUp() throws Exception {

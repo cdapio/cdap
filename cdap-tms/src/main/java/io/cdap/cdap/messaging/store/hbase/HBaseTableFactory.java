@@ -53,8 +53,8 @@ import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -140,7 +140,7 @@ public final class HBaseTableFactory implements TableFactory {
   @Override
   public MetadataTable createMetadataTable() throws IOException {
     TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, metadataTableName);
-    HTable hTable = null;
+    Table table = null;
 
     // If the table descriptor is in the cache, we assume the table exists.
     if (!tableDescriptors.containsKey(tableId)) {
@@ -155,16 +155,16 @@ public final class HBaseTableFactory implements TableFactory {
               HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf).addColumnFamily(cfdBuilder.build());
 
             ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
-            hTable = tableUtil.createHTable(hConf, tableId);
-            tableDescriptors.put(tableId, hTable.getTableDescriptor());
+            table = tableUtil.createTable(hConf, tableId);
+            tableDescriptors.put(tableId, table.getTableDescriptor());
           }
         }
       }
     }
-    if (hTable == null) {
-      hTable = tableUtil.createHTable(hConf, tableId);
+    if (table == null) {
+      table = tableUtil.createTable(hConf, tableId);
     }
-    return new HBaseMetadataTable(tableUtil, hTable, COLUMN_FAMILY,
+    return new HBaseMetadataTable(tableUtil, table, COLUMN_FAMILY,
                                   cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS),
                                   createExceptionHandler(tableId));
   }
@@ -177,7 +177,7 @@ public final class HBaseTableFactory implements TableFactory {
       tableId, cConf.getInt(Constants.MessagingSystem.MESSAGE_TABLE_HBASE_SPLITS), tableCoprocessor
     );
     return new HBaseMessageTable(
-      tableUtil, tableWithRowKeyDistributor.getHTable(), COLUMN_FAMILY,
+      tableUtil, tableWithRowKeyDistributor.getTable(), COLUMN_FAMILY,
       tableWithRowKeyDistributor.getRowKeyDistributor(),
       scanExecutor, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS),
       createExceptionHandler(tableId)
@@ -192,7 +192,7 @@ public final class HBaseTableFactory implements TableFactory {
       tableId, cConf.getInt(Constants.MessagingSystem.PAYLOAD_TABLE_HBASE_SPLITS), tableCoprocessor
     );
     return new HBasePayloadTable(
-      tableUtil, tableWithRowKeyDistributor.getHTable(), COLUMN_FAMILY,
+      tableUtil, tableWithRowKeyDistributor.getTable(), COLUMN_FAMILY,
       tableWithRowKeyDistributor.getRowKeyDistributor(),
       scanExecutor, cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS),
       createExceptionHandler(tableId)
@@ -347,7 +347,7 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   /**
-   * Creates a new instance of {@link HTable} for the given {@link TableId}. If the hbase table doesn't
+   * Creates a new instance of {@link Table} for the given {@link TableId}. If the hbase table doesn't
    * exist, a new one will be created with the given number of splits.
    */
   private HTableWithRowKeyDistributor createTable(TableId tableId, int splits,
@@ -355,7 +355,7 @@ public final class HBaseTableFactory implements TableFactory {
 
     // Lookup the table descriptor from the cache first. If it is there, we assume the HBase table exists
     // Otherwise, attempt to create it.
-    HTable hTable = null;
+    Table table = null;
     HTableDescriptor htd = tableDescriptors.get(tableId);
 
     if (htd == null) {
@@ -393,12 +393,12 @@ public final class HBaseTableFactory implements TableFactory {
                 splits, splits, new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(splits)));
               ddlExecutor.createTableIfNotExists(tdBuilder.build(), splitKeys);
 
-              hTable = tableUtil.createHTable(hConf, tableId);
-              htd = hTable.getTableDescriptor();
+              table = tableUtil.createTable(hConf, tableId);
+              htd = table.getTableDescriptor();
               tableDescriptors.put(tableId, htd);
             } else {
-              hTable = tableUtil.createHTable(hConf, tableId);
-              htd = hTable.getTableDescriptor();
+              table = tableUtil.createTable(hConf, tableId);
+              htd = table.getTableDescriptor();
               tableDescriptors.put(tableId, htd);
             }
           }
@@ -406,12 +406,11 @@ public final class HBaseTableFactory implements TableFactory {
       }
     }
 
-    if (hTable == null) {
-      hTable = tableUtil.createHTable(hConf, tableId);
+    if (table == null) {
+      table = tableUtil.createTable(hConf, tableId);
     }
-    hTable.setAutoFlushTo(false);
     return new HTableWithRowKeyDistributor(
-      hTable, new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(tableId, htd)))
+      table, new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(tableId, htd)))
     );
   }
 
@@ -435,19 +434,19 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   /**
-   * A holder class for {@link HTable} and a {@link AbstractRowKeyDistributor} for operating on the given table.
+   * A holder class for {@link Table} and a {@link AbstractRowKeyDistributor} for operating on the given table.
    */
   private static final class HTableWithRowKeyDistributor {
-    private final HTable hTable;
+    private final Table table;
     private final AbstractRowKeyDistributor rowKeyDistributor;
 
-    private HTableWithRowKeyDistributor(HTable hTable, AbstractRowKeyDistributor rowKeyDistributor) {
-      this.hTable = hTable;
+    private HTableWithRowKeyDistributor(Table table, AbstractRowKeyDistributor rowKeyDistributor) {
+      this.table = table;
       this.rowKeyDistributor = rowKeyDistributor;
     }
 
-    HTable getHTable() {
-      return hTable;
+    Table getTable() {
+      return table;
     }
 
     AbstractRowKeyDistributor getRowKeyDistributor() {

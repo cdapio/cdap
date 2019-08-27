@@ -32,6 +32,10 @@ import java.util.List;
  * Defines the way row keys are distributed.
  */
 public abstract class AbstractRowKeyDistributor implements Parametrizable {
+
+  // For simplicity we allow max 255 splits per bucket for now
+  private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
+
   public abstract byte[] getDistributedKey(byte[] originalKey);
 
   public abstract byte[] getOriginalKey(byte[] adjustedKey);
@@ -124,9 +128,9 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
     }
 
     byte[][] bucketSplits = getAllDistributedKeys(io.cdap.cdap.api.common.Bytes.EMPTY_BYTE_ARRAY);
-    Preconditions.checkArgument(splits >= 1 && splits <= 0xff * bucketSplits.length,
+    Preconditions.checkArgument(splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
                                 "Number of pre-splits should be in [1.." +
-                                  0xff * bucketSplits.length + "] range");
+                                  MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
 
 
     // Splits have format: <salt bucket byte><extra byte>. We use extra byte to allow more splits than buckets:
@@ -137,7 +141,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
 
     byte[][] splitKeys = new byte[bucketSplits.length * splitsPerBucket - 1][];
 
-    int prefixesPerSplitInBucket = (0xff + 1) / splitsPerBucket;
+    int prefixesPerSplitInBucket = (MAX_SPLIT_COUNT_PER_BUCKET + 1) / splitsPerBucket;
 
     for (int i = 0; i < bucketSplits.length; i++) {
       for (int k = 0; k < splitsPerBucket; k++) {

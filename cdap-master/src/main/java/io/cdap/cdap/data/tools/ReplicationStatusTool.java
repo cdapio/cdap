@@ -42,9 +42,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -293,14 +293,14 @@ public class ReplicationStatusTool {
 
   private static Map<String, Long> getMapFromTable(String rowType) throws IOException {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTable hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
 
     // Scan the table to scan for all regions.
     ScanBuilder scan = getScanBuilder(tableUtil, rowType);
     Result result;
     HashMap<String, Long> timeMap = new HashMap<>();
 
-    try (ResultScanner resultScanner = hTable.getScanner(scan.build())) {
+    try (Table table = tableUtil.createTable(hConf, getReplicationStateTableId(tableUtil));
+         ResultScanner resultScanner = table.getScanner(scan.build())) {
       while ((result = resultScanner.next()) != null) {
         ReplicationStatusKey key = new ReplicationStatusKey(result.getRow());
         String region = key.getRegionName();
@@ -313,8 +313,6 @@ public class ReplicationStatusTool {
     } catch (Exception e) {
       LOG.error("Error while reading table.", e);
       throw Throwables.propagate(e);
-    } finally {
-      hTable.close();
     }
     return timeMap;
   }
@@ -393,14 +391,16 @@ public class ReplicationStatusTool {
 
     System.out.println("\nThis is all the HBase regions on the Cluster:");
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTable hTable = tableUtil.createHTable(hConf, getReplicationStateTableId(tableUtil));
+
     ScanBuilder scan = tableUtil.buildScan();
     scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
                    Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));
     scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
                    Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE));
-    Result result;
-    try (ResultScanner resultScanner = hTable.getScanner(scan.build())) {
+
+    try (Table table = tableUtil.createTable(hConf, getReplicationStateTableId(tableUtil));
+         ResultScanner resultScanner = table.getScanner(scan.build())) {
+      Result result;
       while ((result = resultScanner.next()) != null) {
         ReplicationStatusKey key = new ReplicationStatusKey(result.getRow());
         String rowType = key.getRowType();
@@ -413,8 +413,6 @@ public class ReplicationStatusTool {
         System.out.println("Key=>rowType:" + rowType + ":region:" + region + ":RSID:" + rsID
                              + " writeTime:" + writeTime + ":replicateTime:" + replicateTime);
       }
-    } finally {
-      hTable.close();
     }
   }
 

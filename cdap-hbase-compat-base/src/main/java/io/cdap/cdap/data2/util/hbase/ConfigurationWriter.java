@@ -24,8 +24,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,9 +81,8 @@ public class ConfigurationWriter extends ConfigurationReader {
     Delete d = new Delete(rowKey);
     d.deleteFamily(FAMILY, now - 1);
 
-    HTableInterface table = tableProvider.get();
+    Table table = tableProvider.get();
     try {
-      table.setAutoFlushTo(false);
       LOG.info("Writing new configuration to row '{}' in configuration table {} and time stamp {}.",
                type, table.getName(), now);
       // populate the configuration data

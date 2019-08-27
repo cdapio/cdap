@@ -38,8 +38,8 @@ import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -287,7 +287,8 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("default", resultTableId.getNamespace());
     Assert.assertEquals("cdap.user.my.dataset", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
+                        Bytes.toString(tableUtil.createTable(TEST_HBASE.getConfiguration(), hTableId)
+                                         .getTableDescriptor().getTableName().getName()));
     drop(tableId);
     tableId = TableId.from("default", "system.queue.config");
     hTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
@@ -297,7 +298,8 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("default", resultTableId.getNamespace());
     Assert.assertEquals("cdap.system.queue.config", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
-                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
+                        Bytes.toString(tableUtil.createTable(TEST_HBASE.getConfiguration(), hTableId)
+                                         .getTableDescriptor().getTableName().getName()));
     drop(tableId);
     tableId = TableId.from("myspace", "could.be.any.table.name");
     hTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
@@ -307,7 +309,8 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals("cdap_myspace", resultTableId.getNamespace());
     Assert.assertEquals("could.be.any.table.name", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(hTableId),
-                        Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
+                        Bytes.toString(tableUtil.createTable(TEST_HBASE.getConfiguration(), hTableId)
+                                         .getTableDescriptor().getTableName().getName()));
     drop(tableId);
     deleteNamespace("myspace");
   }
@@ -450,7 +453,7 @@ public abstract class AbstractHBaseTableUtilTest {
   private void writeSome(String namespace, String tableName) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(namespace), tableName);
-    try (HTable table = tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId)) {
+    try (Table table = tableUtil.createTable(TEST_HBASE.getConfiguration(), hTableId)) {
       // writing at least couple megs to reflect in "megabyte"-based metrics
       for (int i = 0; i < 8; i++) {
         Put put = new Put(Bytes.toBytes("row" + i));

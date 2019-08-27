@@ -30,11 +30,11 @@ import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 import java.io.IOException;
@@ -59,14 +59,14 @@ public final class HBaseMetadataTable implements MetadataTable {
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
-  private final HTable hTable;
+  private final Table table;
   private final int scanCacheRows;
   private final HBaseExceptionHandler exceptionHandler;
 
-  HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+  HBaseMetadataTable(HBaseTableUtil tableUtil, Table table, byte[] columnFamily,
                      int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;
-    this.hTable = hTable;
+    this.table = table;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.scanCacheRows = scanCacheRows;
     this.exceptionHandler = exceptionHandler;
@@ -79,7 +79,7 @@ public final class HBaseMetadataTable implements MetadataTable {
       .build();
 
     try {
-      Result result = hTable.get(get);
+      Result result = table.get(get);
       byte[] value = result.getValue(columnFamily, COL);
       if (value == null) {
         throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -110,14 +110,14 @@ public final class HBaseMetadataTable implements MetadataTable {
     try {
       boolean completed = false;
       while (!completed) {
-        Result result = hTable.get(get);
+        Result result = table.get(get);
         byte[] value = result.getValue(columnFamily, COL);
 
         if (value == null) {
           TreeMap<String, String> properties = new TreeMap<>(topicMetadata.getProperties());
           properties.put(TopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
           putBuilder.add(columnFamily, COL, Bytes.toBytes(GSON.toJson(properties, MAP_TYPE)));
-          completed = hTable.checkAndPut(rowKey, columnFamily, COL, null, putBuilder.build());
+          completed = table.checkAndPut(rowKey, columnFamily, COL, null, putBuilder.build());
         } else {
           Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
           TopicMetadata metadata = new TopicMetadata(topicId, properties);
@@ -130,7 +130,7 @@ public final class HBaseMetadataTable implements MetadataTable {
           newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(newGenerationId));
 
           putBuilder.add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)));
-          completed = hTable.checkAndPut(rowKey, columnFamily, COL, value, putBuilder.build());
+          completed = table.checkAndPut(rowKey, columnFamily, COL, value, putBuilder.build());
         }
       }
     } catch (IOException e) {
@@ -154,7 +154,7 @@ public final class HBaseMetadataTable implements MetadataTable {
           .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
           .build();
         byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
-        completed = hTable.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
+        completed = table.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);
@@ -176,7 +176,7 @@ public final class HBaseMetadataTable implements MetadataTable {
           .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
           .build();
         byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
-        completed = hTable.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
+        completed = table.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);
@@ -205,7 +205,7 @@ public final class HBaseMetadataTable implements MetadataTable {
 
     try {
       List<TopicId> topicIds = new ArrayList<>();
-      try (ResultScanner resultScanner = hTable.getScanner(scan)) {
+      try (ResultScanner resultScanner = table.getScanner(scan)) {
         for (Result result : resultScanner) {
           TopicId topicId = MessagingUtils.toTopicId(result.getRow());
           byte[] value = result.getValue(columnFamily, COL);
@@ -224,6 +224,6 @@ public final class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public synchronized void close() throws IOException {
-    hTable.close();
+    table.close();
   }
 }

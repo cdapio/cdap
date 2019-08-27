@@ -30,6 +30,7 @@ import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -61,10 +62,6 @@ public class MetricHBaseTableUtilTest {
     executor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
-  }
-
   @Test
   public void testGetVersion() throws Exception {
     // Verify new metric datasets are properly recognized as 2.8+ version from now on
@@ -80,18 +77,19 @@ public class MetricHBaseTableUtilTest {
     HBaseAdmin hAdmin = TEST_HBASE.getHBaseAdmin();
     TableId hTableId = hBaseTableUtil.createHTableId(NamespaceId.SYSTEM, spec.getName());
     HTableDescriptor desc = hBaseTableUtil.getHTableDescriptor(hAdmin, hTableId);
+    desc.addFamily(new HColumnDescriptor("c"));
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));
 
     // Verify HBase table without coprocessor is properly recognized as 2.6- version
     TableName table26 = TableName.valueOf("metricV2.6");
-    hAdmin.createTable(new HTableDescriptor(table26));
+    hAdmin.createTable(new HTableDescriptor(table26).addFamily(new HColumnDescriptor("c")));
     desc = hAdmin.getTableDescriptor(table26);
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_6_OR_LOWER, util.getVersion(desc));
 
     // Verify HBase table with IncrementHandler coprocessor but without cdap.version on it is properly recognized as
     // 2.7 version
     TableName table27 = TableName.valueOf("metricV2.7");
-    desc = new HTableDescriptor(table27);
+    desc = new HTableDescriptor(table27).addFamily(new HColumnDescriptor("c"));
     desc.addCoprocessor(hBaseTableUtil.getIncrementHandlerClassForVersion().getName());
     hAdmin.createTable(desc);
     desc = hAdmin.getTableDescriptor(table27);

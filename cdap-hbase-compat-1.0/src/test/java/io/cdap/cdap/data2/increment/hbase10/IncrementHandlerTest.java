@@ -30,11 +30,11 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -57,7 +57,7 @@ import static org.junit.Assert.assertNotNull;
 public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
 
   @Override
-  public void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
+  public void assertColumn(Table table, byte[] row, byte[] col, long expected) throws Exception {
     Result res = table.get(new Get(row));
     Cell resA = res.getColumnLatestCell(FAMILY, col);
     assertFalse(res.isEmpty());
@@ -75,7 +75,8 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     assertEquals(expected, Bytes.toLong(scanResA.getValue()));
   }
 
-  public void assertColumns(HTable table, byte[] row, byte[][] cols, long[] expected) throws Exception {
+  @Override
+  public void assertColumns(Table table, byte[] row, byte[][] cols, long[] expected) throws Exception {
     assertEquals(cols.length, expected.length);
 
     Get get = new Get(row);
@@ -107,7 +108,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
   }
 
   @Override
-  public HTable createTable(TableId tableId) throws Exception {
+  public Table createTable(TableId tableId) throws Exception {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     HTableDescriptorBuilder tableDesc = tableUtil.buildHTableDescriptor(tableId);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
@@ -118,7 +119,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     HTableDescriptor htd = tableDesc.build();
     TEST_HBASE.getHBaseAdmin().createTable(htd);
     TEST_HBASE.waitUntilTableAvailable(htd.getName(), 5000);
-    return tableUtil.createHTable(conf, tableId);
+    return tableUtil.createTable(conf, tableId);
   }
 
   @Override

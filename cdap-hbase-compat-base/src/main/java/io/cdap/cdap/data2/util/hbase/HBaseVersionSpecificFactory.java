@@ -48,13 +48,10 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
       HBaseVersion.Version hbaseVersion = HBaseVersion.get();
       switch (hbaseVersion) {
         case HBASE_94:
-          throw new ProvisionException("HBase 0.94 is no longer supported.  Please upgrade to HBase 0.96 or newer.");
         case HBASE_96:
-          instance = createInstance(getHBase96Classname());
-          break;
         case HBASE_98:
-          instance = createInstance(getHBase98Classname());
-          break;
+          throw new ProvisionException("HBase " + hbaseVersion.getMajorVersion()
+                                         + " is no longer supported. Please upgrade to HBase 1.0 or newer.");
         case HBASE_10:
           instance = createInstance(getHBase10Classname());
           break;
@@ -102,8 +99,6 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
     return Instances.newInstance(clz);
   }
 
-  protected abstract String getHBase96Classname();
-  protected abstract String getHBase98Classname();
   protected abstract String getHBase10Classname();
   protected abstract String getHBase10CDHClassname();
   protected abstract String getHBase11Classname();

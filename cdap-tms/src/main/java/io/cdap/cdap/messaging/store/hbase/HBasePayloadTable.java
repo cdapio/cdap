@@ -25,11 +25,12 @@ import io.cdap.cdap.hbase.wd.DistributedScanner;
 import io.cdap.cdap.messaging.store.AbstractPayloadTable;
 import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.RawPayloadTableEntry;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,17 +47,19 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
-  private final HTable hTable;
+  private final Table table;
+  private final BufferedMutator mutator;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
   private final int scanCacheRows;
   private final HBaseExceptionHandler exceptionHandler;
 
-  HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+  HBasePayloadTable(HBaseTableUtil tableUtil, Table table, byte[] columnFamily,
                     AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
-                    int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
+                    int scanCacheRows, HBaseExceptionHandler exceptionHandler) throws IOException {
     this.tableUtil = tableUtil;
-    this.hTable = hTable;
+    this.table = table;
+    this.mutator = tableUtil.createBufferedMutator(table, HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
     this.rowKeyDistributor = rowKeyDistributor;
     this.scanExecutor = scanExecutor;
@@ -73,7 +76,7 @@ final class HBasePayloadTable extends AbstractPayloadTable {
       .setCaching(scanCacheRows)
       .build();
 
-    final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
+    final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor);
     return new AbstractCloseableIterator<RawPayloadTableEntry>() {
       private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
       private boolean closed = false;
@@ -123,10 +126,8 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
     try {
       if (!batchPuts.isEmpty()) {
-        hTable.put(batchPuts);
-        if (!hTable.isAutoFlush()) {
-          hTable.flushCommits();
-        }
+        mutator.mutate(batchPuts);
+        mutator.flush();
       }
     } catch (IOException e) {
       throw exceptionHandler.handle(e);
@@ -135,6 +136,10 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
   @Override
   public void close() throws IOException {
-    hTable.close();
+    try {
+      mutator.close();
+    } finally {
+      table.close();
+    }
   }
 }

@@ -40,9 +40,9 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Table;
 
 import java.io.IOException;
 import java.util.Map;
@@ -159,13 +159,13 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
     private final HBaseTableUtil tableUtil;
-    private final HTable table;
+    private final Table table;
 
     KVTableImpl(DatasetContext datasetContext, String tableName,
                 Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
       TableId tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
-      this.table = this.tableUtil.createHTable(hConf, tableId);
+      this.table = this.tableUtil.createTable(hConf, tableId);
     }
 
     @WriteOnly
