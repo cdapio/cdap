@@ -28,6 +28,7 @@ import {
   replaceHistory,
   getFieldLineage,
   ILinkSet,
+  getDefaultLinks,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -39,7 +40,7 @@ import {
 const defaultContext: IContextState = {
   target: '',
   targetFields: [],
-  links: { incoming: [], outgoing: [] },
+  links: getDefaultLinks(),
   causeSets: {},
   impactSets: {},
   showingOneField: false,
@@ -58,7 +59,7 @@ type ITimeType = number | string | null;
 export interface IContextState {
   target: string;
   targetFields: IField[];
-  links: { incoming: ILink[]; outgoing: ILink[] };
+  links: ILinkSet;
   causeSets: ITableFields;
   impactSets: ITableFields;
   showingOneField: boolean;
@@ -76,7 +77,7 @@ export interface IContextState {
   activeField?: IField;
   activeCauseSets?: ITableFields;
   activeImpactSets?: ITableFields;
-  activeLinks?: { incoming: ILink[]; outgoing: ILink[] };
+  activeLinks?: ILinkSet;
   numTables?: number;
   firstCause?: number;
   firstImpact?: number;
@@ -124,12 +125,9 @@ export class Provider extends React.Component<{ children }, IContextState> {
     );
   };
 
-  private getActiveLinks = (
-    newTargetId?: string,
-    newLinks?: { incoming: ILink[]; outgoing: ILink[] }
-  ) => {
+  private getActiveLinks = (newTargetId?: string, newLinks?: ILinkSet) => {
     const activeFieldId = newTargetId || this.state.activeField.id;
-    const activeLinks = { incoming: [], outgoing: [] };
+    const activeLinks: ILinkSet = getDefaultLinks();
     const links = newLinks
       ? newLinks.incoming.concat(newLinks.outgoing)
       : this.state.links.incoming.concat(this.state.links.outgoing);
@@ -280,7 +278,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
   public state = {
     target: '',
     targetFields: [],
-    links: { incoming: [], outgoing: [] },
+    links: getDefaultLinks(),
     causeSets: {},
     impactSets: {},
     activeField: { id: null, name: null },

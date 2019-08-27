@@ -70,7 +70,6 @@ function FllField({ field, classes }: IFieldProps) {
 
   const timeParams = getTimeQueryParams(selection, start, end);
 
-  // TO DO: Update this link once we flip the switch
   const linkPath = `/ns/${field.namespace}/datasets/${field.dataset}/fields${timeParams}&field=${
     field.name
   }`;

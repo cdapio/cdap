@@ -33,6 +33,7 @@ const styles = (theme): StyleRules => {
     targetView: {
       padding: 0,
       color: theme.palette.blue[200],
+      minWidth: '60px',
       textAlign: 'right',
       textTransform: 'none',
       fontSize: 'inherit',

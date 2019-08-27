@@ -103,6 +103,10 @@ interface IOperation {
   outputs?: { fields: string[] };
 }
 
+export const getDefaultLinks = () => {
+  return { incoming: [], outgoing: [] };
+};
+
 /** Parses an incoming or outgoing entity object from backend response
  * to get array of edges and an object with fields keyed by dataset.
  * namespace and target are the target namespace and dataset name
