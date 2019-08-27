@@ -29,9 +29,13 @@ class Socket {
   init(attempt) {
     attempt = attempt || 1;
     clearTimeout(this.timeout);
-
-    this.socket = new SockJS('/_sock');
-
+    this.socket = new SockJS((window.knoxPrefix+'/_sock'),{} ,
+    {
+      transports:[
+        'websocket',
+        'websocket-raw'
+      ]
+    });
     this.socket.onopen = () => {
       // Buffering request while Socket is still starting up
       this.buffer.forEach((req) => {

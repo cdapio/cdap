@@ -55,7 +55,7 @@ UrlValidator.prototype.getUrlBreakup = function (url) {
     var hostPortPathStr = protocolSplitArr.join('//');
 
     //break url two parts hostportstr and pathstr
-    if (hostPortPathStr && hostPortPathStr !== '') {
+    if (hostPortPathStr) {
       var splitSymbol = this.getPortSplitSymbol(hostPortPathStr);
       if (splitSymbol) {
         var hostPortPathSplitArr = hostPortPathStr.split(splitSymbol);
@@ -72,7 +72,7 @@ UrlValidator.prototype.getUrlBreakup = function (url) {
 
 UrlValidator.prototype.getPortSplitSymbol = function (str) {
   var splitSymbol;
-  if (str && str !== '') {
+  if (str) {
 
     var slashIndex = str.indexOf('/');
     var questionIndex = str.indexOf('?');

@@ -28,7 +28,7 @@ angular.module(PKG.name+'.services')
 
 .provider('mySocket', function () {
 
-  this.prefix = '/_sock';
+  this.prefix =  (window.knoxPrefix+'/_sock');
 
   this.$get = function (MYSOCKET_EVENT, SockJS, $log, EventPipe) {
 
@@ -40,8 +40,13 @@ angular.module(PKG.name+'.services')
       $log.log('[mySocket] init');
 
       attempt = attempt || 1;
-      socket = new SockJS(self.prefix);
-
+      socket = new SockJS(self.prefix, {} ,
+        {
+          transports:[
+            'websocket',
+            'websocket-raw'
+          ]
+        });
       socket.onmessage = function (event) {
         try {
           var data = JSON.parse(event.data);

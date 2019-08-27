@@ -16,6 +16,19 @@
 
 console.time(PKG.name);
 
+var fontStyle = document.createElement('style');
+fontStyle.appendChild(document.createTextNode(`\
+@font-face {\
+font-family: icomoon;\
+src: url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.eot');\
+src: url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.eot') format('embedded-opentype'),\
+url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.woff') format('woff'),\
+url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.ttf') format('truetype'),\
+url('${window.knoxPrefix}/cdap_assets/fonts/icomoon.svg') format('svg');\
+}\
+`));
+document.head.appendChild(fontStyle);
+
 angular
   .module(PKG.name, [
 

@@ -82,7 +82,7 @@ function link (scope, element) {
   /* ------------------- Plot Function ------------------- */
   scope.plot = function(){
 
-    if(typeof timelineData.qid === 'undefined') {
+    if(timelineData === undefined || typeof timelineData.qid === 'undefined') {
       return;
     }
 

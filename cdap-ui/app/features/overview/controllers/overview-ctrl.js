@@ -32,7 +32,7 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
   this.isEnterprise = MY_CONFIG.isEnterprise;
   // this.systemStatus = '#C9C9D1';
   this.systemStatus = ServiceStatusFactory.systemStatus;
-
+  this.dataAppsTemplate = '/assets/features/overview/templates/data-apps.html';
   this.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
   var widgetSettings = {

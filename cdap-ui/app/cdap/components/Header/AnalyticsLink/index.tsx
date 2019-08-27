@@ -50,7 +50,7 @@ class AnalyticsLink extends React.PureComponent<IAnalyticsLinkProps> {
       >
         <NavLinkWrapper
           isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${analyticsUrl}` : analyticsUrl}
+          to={isNativeLink ? `${window.knoxPrefix}/cdap${analyticsUrl}` : analyticsUrl}
         >
           {featureName}
         </NavLinkWrapper>

@@ -17,6 +17,7 @@
 class FlowletsController {
   constructor($scope, $state, $filter, FlowDiagramData) {
     this.flowlets = [];
+    this.flowletsDetailTemplate = '/assets/features/flows/templates/tabs/runs/flowlets/detail.html';
     this.$filter = $filter;
     let filterFilter = this.$filter('filter');
     FlowDiagramData.fetchData($state.params.appId, $state.params.programId)

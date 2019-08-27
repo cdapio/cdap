@@ -42,7 +42,7 @@ class DashboardLink extends React.PureComponent<IDashboardLinkProps> {
       <DropdownItem tag="li">
         <NavLinkWrapper
           isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${dashboardUrl}` : dashboardUrl}
+          to={isNativeLink ? `${window.knoxPrefix}/cdap${dashboardUrl}` : dashboardUrl}
           isActive={this.isDashboardActive}
         >
           {featureName}

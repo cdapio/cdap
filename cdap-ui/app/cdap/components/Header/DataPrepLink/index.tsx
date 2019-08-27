@@ -49,7 +49,7 @@ class DataPrepLink extends React.PureComponent<IDataPrepLinkProps> {
       >
         <NavLinkWrapper
           isNativeLink={isNativeLink}
-          to={isNativeLink ? `/cdap${dataPrepUrl}` : dataPrepUrl}
+          to={isNativeLink ? `${window.knoxPrefix}/cdap${dataPrepUrl}` : dataPrepUrl}
         >
           {featureName}
         </NavLinkWrapper>

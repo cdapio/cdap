@@ -48,7 +48,7 @@ class FELink extends React.PureComponent<IFELinkProps> {
   protected navigateToFeature = (namespace) => {
     const feURL = `/ns/${namespace}/featureEngineering`;
     const fePath = `/cdap${feURL}`;
-    window.location.href = fePath;
+    window.location.href = window.knoxPrefix + fePath;
   }
 
   protected isFEActive = (location = window.location): boolean => {
