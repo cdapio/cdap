@@ -1,0 +1,141 @@
+{
+    "name": "Airport_test",
+    "description": "Data Pipeline Application",
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.1.0-SNAPSHOT",
+        "scope": "SYSTEM"
+    },
+    "config": {
+        "resources": {
+            "memoryMB": 1024,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 1024,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "Airport_source",
+                "to": "Wrangler"
+            },
+            {
+                "from": "Wrangler",
+                "to": "Airport_sink"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": true,
+        "stages": [
+            {
+                "name": "Airport_source",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsource",
+                    "label": "Airport_source",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.3.0-SNAPSHOT",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "copyHeader": "true",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "path": "file:/tmp/cdap-ui-integration-fixtures/airports.csv",
+                        "format": "text",
+                        "ignoreNonExistingFolders": "false",
+                        "recursive": "false",
+                        "referenceName": "airports.csv",
+                        "filenameOnly": "false"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "type": "batchsource",
+                "label": "Airport_source",
+                "icon": "icon-file",
+                "$$hashKey": "object:2727",
+                "_uiPosition": {
+                    "left": "320px",
+                    "top": "239.5px"
+                }
+            },
+            {
+                "name": "Wrangler",
+                "plugin": {
+                    "name": "Wrangler",
+                    "type": "transform",
+                    "label": "Wrangler",
+                    "artifact": {
+                        "name": "wrangler-transform",
+                        "version": "4.1.0-SNAPSHOT",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "workspaceId": "d39a2514-b8f8-4314-a03f-1e7291d30428",
+                        "directives": "parse-as-csv :body ',' true\ndrop body",
+                        "schema": "{\"name\":\"avroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"string\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"string\",\"null\"]}]}",
+                        "field": "body",
+                        "precondition": "false",
+                        "threshold": "1"
+                    }
+                },
+                "outputSchema": "{\"name\":\"avroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"string\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"string\",\"null\"]}]}",
+                "type": "transform",
+                "label": "Wrangler",
+                "icon": "icon-DataPreparation",
+                "$$hashKey": "object:2728",
+                "_uiPosition": {
+                    "left": "620px",
+                    "top": "239.5px"
+                }
+            },
+            {
+                "name": "Airport_sink",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsink",
+                    "label": "Airport_sink",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.3.0-SNAPSHOT",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "suffix": "yyyy-MM-dd-HH-mm",
+                        "format": "csv",
+                        "referenceName": "Airport_sink",
+                        "path": "/tmp/cdap-ui-integration-fixtures"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": ""
+                    }
+                ],
+                "inputSchema": [],
+                "type": "batchsink",
+                "label": "Airport_sink",
+                "icon": "icon-file",
+                "$$hashKey": "object:2729",
+                "_uiPosition": {
+                    "left": "920px",
+                    "top": "239.5px"
+                }
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "mapreduce",
+        "numOfRecordsPreview": 100,
+        "maxConcurrentRuns": 1
+    }
+}
