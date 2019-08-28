@@ -2000,6 +2000,8 @@
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
         <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
+        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
+          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</dependency.groupId.exclusions>
       </properties>
       <build>
         <pluginManagement>
@@ -2039,8 +2041,7 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
-                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</excludeGroupIds>
+                    <excludeGroupIds>${dependency.groupId.exclusions}</excludeGroupIds>
                     <excludeArtifactIds>hive-exec,jackson-core-asl,jackson-mapper-asl</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
