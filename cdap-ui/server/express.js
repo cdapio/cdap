@@ -54,14 +54,20 @@ var log = log4js.getLogger('default');
 
 const isModeDevelopment = () => process.env.NODE_ENV === 'development';
 const isModeProduction = () => process.env.NODE_ENV === 'production';
+const _headers = function(res, path) {
+  res.set("Connection", "close");
+};
 
 const getExpressStaticConfig = () => {
   if (isModeDevelopment()) {
-    return {};
+    return {
+      setHeaders: _headers
+    };
   }
   return {
     index: false,
-    maxAge: '1y'
+    maxAge: '1y',
+    setHeaders: _headers
   };
 };
 
@@ -161,7 +167,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
+      'Connection': 'close'
     });
     res.send('window.CDAP_CONFIG = '+data+';');
   });
@@ -176,6 +183,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       knoxEnabled: cdapConfig['knox.enabled'] === 'true',
       applicationPrefix: cdapConfig['application.prefix']
     };
+    res.header({
+      'Connection': 'close'
+    });
     log.info('Data -> ', data);
     res.status(200).send(data);
   });
@@ -188,7 +198,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     fileConfig = fs.readFileSync(path, 'utf8');
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
+      'Connection': 'close'
     });
     res.send('window.CDAP_UI_CONFIG = ' + fileConfig+ ';');
   });
@@ -196,13 +207,17 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   app.get('/ui-theme.js', function (req, res) {
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
+      'Connection': 'close'
     });
     res.send(`window.CDAP_UI_THEME = ${JSON.stringify(uiThemeConfig)};`);
   });
 
   app.post('/downloadQuery', function(req, res) {
     var url = req.body.backendUrl;
+    res.header({
+      'Connection': 'close'
+    });
     if (!urlValidator.isValidURL(req.url)) {
       log.error('Bad Request');
       var err = {
@@ -252,7 +267,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       method: targetMethod,
       headers: req.headers
     };
-
+    res.header({
+      'Connection': 'close'
+    });
     request({
       url: sourceLink,
       method: sourceMethod
@@ -270,6 +287,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
     var method = (req.query.method || 'GET');
+    res.header({
+      'Connection': 'close'
+    });
     if (!urlValidator.isValidURL(url)) {
       log.error('Bad Request');
       var err = {
@@ -347,6 +367,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.get('/cdapToken', function (req, res) {
     // Invalid Knox Token Handler
+    res.header({
+      'Connection': 'close'
+    });
     const onInvalidKnoxToken = function(errObj) {
       log.error('KNOX INVALID TOKEN', errObj);
           var err = {
@@ -367,7 +390,13 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       return;
     }
     userName = userName.sub;
-    var knoxUrl = ['https://', cdapConfig['router.server.address'], ':', '10010','/knoxToken'].join('');
+    var knoxUrl = [
+      cdapConfig['ssl.external.enabled'] === 'true' ? 'https://' : 'http://',
+      cdapConfig['router.server.address'],
+      ':',
+      cdapConfig['ssl.external.enabled'] === 'true' ? '10010' : '10009',
+      '/knoxToken'
+    ].join('');
     log.info('AUTH ->' + knoxUrl);
     var options = {
       url: knoxUrl,
@@ -435,7 +464,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         'Content-Type': headers['content-type']
       }
     };
-
+    res.header({
+      'Connection': 'close'
+    });
     req
       .on('error', function (e) {
         log.error(e);
@@ -458,7 +489,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   // serve static assets
   app.use('/assets', [
-    express.static(DIST_PATH + '/assets'),
+    express.static(DIST_PATH + '/assets',{setHeaders: _headers}),
     function(req, res) {
       finalhandler(req, res)(false); // 404
     }
@@ -483,7 +514,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/common_assets', [
     express.static(MARKET_DIST_PATH, {
-      index: false
+      index: false,
+      setHeaders: _headers
     }),
     function(req, res) {
       finalhandler(req, res)(false); // 404
@@ -491,6 +523,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.get('/robots.txt', [
     function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       res.type('text/plain');
       res.send('User-agent: *\nDisallow: /');
     }
@@ -504,6 +539,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       },
       url: authAddress.get()
     };
+    res.header({
+      'Connection': 'close'
+    });
     request(opts,
       function (nerr, nres, nbody) {
         if (nerr || nres.statusCode !== 200) {
@@ -519,17 +557,26 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.get('/test/playground', [
     function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       res.sendFile(DIST_PATH + '/test.html');
     }
   ]);
 
   // CDAP-678, CDAP-8260 This is added for health check on node proxy.
   app.get('/status', function(req, res) {
+    res.header({
+      'Connection': 'close'
+    });
     res.send(200, 'OK');
   });
 
   app.get('/login', [
     function(req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       if (!authAddress.get() || req.cookies.CDAP_Auth_Token) {
         res.redirect('/');
         return;
@@ -577,6 +624,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       // That is the reason we are temporarily stripping out referer from the headers.
       var headers = req.headers;
       delete headers.referer;
+      res.header({
+        'Connection': 'close'
+      });
       request({
         method: 'GET',
         url: link,
@@ -608,6 +658,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         var fileConfig = {};
         var filesToMetadataMap = [];
         var filePath = __dirname + '/../templates/apps/predefined/config.json';
+        res.header({
+          'Connection': 'close'
+        });
         try {
           fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
           filesToMetadataMap = fileConfig[apptype] || [];
@@ -641,6 +694,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       var filePath = dirPath + 'config.json';
       var config = {};
       var fileConfig = {};
+      res.header({
+        'Connection': 'close'
+      });
       try {
         fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         filesToMetadataMap = fileConfig[apptype] || [];
@@ -670,7 +726,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       var filePath = __dirname + '/../templates/validators/validators.json';
       var config = {};
       var validators = {};
-
+      res.header({
+        'Connection': 'close'
+      });
       try {
         validators = JSON.parse(fs.readFileSync(filePath));
         res.send(validators);
@@ -686,6 +744,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   // any other path, serve index.html
   app.all(['/pipelines', '/pipelines*'], [
     function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
       // is being used to interact with the CDAP backend.
@@ -701,6 +762,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.all(['/metadata', '/metadata*'], [
     function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
       // is being used to interact with the CDAP backend.
@@ -717,6 +781,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.all(['/logviewer', '/logviewer*'], [
     function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
       // is being used to interact with the CDAP backend.
@@ -733,6 +800,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.all(['/', '/cdap', '/cdap*'], [
     function(req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
     }
   ]);
@@ -745,7 +815,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     fileConfig = fs.readFileSync(path, 'utf8');
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
+      'Connection': 'close'
     });
     res.send('angular.module("'+pkg.name+'.config")' +
               '.constant("UI_CONFIG",'+fileConfig+');');
@@ -771,7 +842,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
     res.header({
       'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate'
+      'Cache-Control': 'no-store, must-revalidate',
+      'Connection': 'close'
     });
     res.send('angular.module("'+pkg.name+'.config", [])' +
               '.constant("MY_CONFIG",'+data+');');
@@ -779,6 +851,9 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.all(['/oldcdap', '/oldcdap*'], [
     function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
       res.sendFile(OLD_DIST_PATH + '/index.html');
     }
   ]);
