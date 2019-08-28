@@ -409,8 +409,6 @@ cdap_set_hbase() {
   local readonly __compat __compatlib __class=io.cdap.cdap.data2.util.hbase.HBaseVersion
   HBASE_VERSION=${HBASE_VERSION:-$("${JAVA}" -cp ${CLASSPATH} ${__class} 2>/dev/null)}
   case ${HBASE_VERSION} in
-    0.96*) __compat=hbase-compat-0.96 ;;
-    0.98*) __compat=hbase-compat-0.98 ;;
     1.0-cdh5.5*|1.0-cdh5.6*) __compat=hbase-compat-1.0-cdh5.5.0 ;; # 5.5 and 5.6 are compatible
     1.0-cdh*) __compat=hbase-compat-1.0-cdh ;;
     1.0*) __compat=hbase-compat-1.0 ;;

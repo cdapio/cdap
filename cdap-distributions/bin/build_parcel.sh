@@ -22,7 +22,7 @@ PARCEL_VERSION=${PARCEL_VERSION}
 PARCEL_ITERATION=${PARCEL_ITERATION:-1}
 
 # Components should map to top-level directories: "cdap-${COMPONENT}"
-COMPONENTS="cli gateway hbase-compat-0.96 hbase-compat-0.98 hbase-compat-1.0 hbase-compat-1.0-cdh hbase-compat-1.0-cdh5.5.0 hbase-compat-1.1 hbase-compat-1.2-cdh5.7.0 kafka master security ui"
+COMPONENTS="cli gateway hbase-compat-1.0 hbase-compat-1.0-cdh hbase-compat-1.0-cdh5.5.0 hbase-compat-1.1 hbase-compat-1.2-cdh5.7.0 kafka master security ui"
 
 # Find our location and base repo directory
 # Resolve links: $0 may be a link
