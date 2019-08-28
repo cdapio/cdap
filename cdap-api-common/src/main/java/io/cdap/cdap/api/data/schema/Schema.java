@@ -734,6 +734,40 @@ public final class Schema implements Serializable {
   }
 
   /**
+   * Returns display name of this schema. If the schema is of logical type following mapping will be applied. If the
+   * schema is not of logical type, then the method will return type name of the schema in lower case.
+   *
+   * {@link LogicalType#DATE} -> "date"
+   * {@link LogicalType#TIME_MILLIS} -> "time of day in milliseconds"
+   * {@link LogicalType#TIME_MICROS} -> "time of day in microseconds"
+   * {@link LogicalType#TIMESTAMP_MILLIS} -> "timestamp in milliseconds"
+   * {@link LogicalType#TIMESTAMP_MICROS} -> "timestamp in microseconds"
+   * {@link LogicalType#DECIMAL} -> "decimal with precision p and scale s"
+   *
+   * @return display name of this schema.
+   */
+  public String getDisplayName() {
+    if (logicalType != null) {
+      switch (logicalType) {
+        case DATE:
+          return "date";
+        case TIME_MILLIS:
+          return "time of day in milliseconds";
+        case TIME_MICROS:
+          return "time of day in microseconds";
+        case TIMESTAMP_MILLIS:
+          return "timestamp in milliseconds";
+        case TIMESTAMP_MICROS:
+          return "timestamp in microseconds";
+        case DECIMAL:
+          return String.format("decimal with precision %d and scale %d", precision, scale);
+      }
+    }
+
+    return type.name().toLowerCase();
+  }
+
+  /**
    * @return a JSON representation of this schema, which can be parsed with {@link #parseJson}
    */
   @Override
@@ -774,7 +808,6 @@ public final class Schema implements Serializable {
     }
     return hash;
   }
-
 
   /**
    * Checks if the given target schema is compatible with this schema, meaning datum being written with this

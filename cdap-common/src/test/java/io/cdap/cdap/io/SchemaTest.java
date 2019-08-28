@@ -587,6 +587,35 @@ public class SchemaTest {
     Assert.assertEquals(timestampMicros, timestampMicros);
   }
 
+  @Test
+  public void testSchemaDisplayName() {
+    Schema schema = Schema.recordOf("record",
+                                    Schema.Field.of("bytes", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
+                                    Schema.Field.of("string", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of("date", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))),
+                                    Schema.Field.of("decimal", Schema.decimalOf(10, 5)),
+                                    Schema.Field.of("ts_micros", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
+                                    Schema.Field.of("ts_millis", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
+                                    Schema.Field.of("time_micros", Schema.of(Schema.LogicalType.TIME_MICROS)),
+                                    Schema.Field.of("time_millis", Schema.of(Schema.LogicalType.TIME_MILLIS)),
+                                    Schema.Field.of("map",
+                                                    Schema.nullableOf(Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                                                   Schema.of(Schema.Type.INT)))),
+                                    Schema.Field.of("union", Schema.unionOf(Schema.of(Schema.Type.STRING))));
+
+    Assert.assertEquals("bytes", schema.getField("bytes").getSchema().getNonNullable().getDisplayName());
+    Assert.assertEquals("string", schema.getField("string").getSchema().getDisplayName());
+    Assert.assertEquals("date", schema.getField("date").getSchema().getNonNullable().getDisplayName());
+    Assert.assertEquals("decimal with precision 10 and scale 5",
+                        schema.getField("decimal").getSchema().getDisplayName());
+    Assert.assertEquals("timestamp in microseconds", schema.getField("ts_micros").getSchema().getDisplayName());
+    Assert.assertEquals("timestamp in milliseconds", schema.getField("ts_millis").getSchema().getDisplayName());
+    Assert.assertEquals("time of day in microseconds", schema.getField("time_micros").getSchema().getDisplayName());
+    Assert.assertEquals("time of day in milliseconds", schema.getField("time_millis").getSchema().getDisplayName());
+    Assert.assertEquals("map", schema.getField("map").getSchema().getNonNullable().getDisplayName());
+    Assert.assertEquals("union", schema.getField("union").getSchema().getDisplayName());
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidDecimalSchema() {
     Schema.of(Schema.LogicalType.DECIMAL);
