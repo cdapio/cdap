@@ -91,10 +91,10 @@
       <rewrite template="{$frontend[path]}/pdie/login"/>
     </rule>
     <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/cdapns" pattern="/cdap/ns">
-      <rewrite template="{$frontend[path]}/pdie/cdap/ns/"/>
+      <rewrite template="{$frontend[path]}/pdie/cdap/ns"/>
     </rule>
     <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/downloadLogs" pattern="/downloadLogs">
-      <rewrite template="{$frontend[path]}/pdie/downloadLogs/"/>
+      <rewrite template="{$frontend[path]}/pdie/downloadLogs"/>
     </rule>
     <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/cdaptoken" pattern="/cdapToken">
       <rewrite template="{$frontend[path]}/pdie/cdapToken"/>
