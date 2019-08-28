@@ -129,6 +129,7 @@
           <apply path="/login_assets/" rule="CDAP/cdap/outbound/js/filter/loginassets"/>
           <apply path="/cdaptoken" rule="CDAP/cdap/outbound/js/filter/cdaptoken"/>
           <apply path="/loginConfig" rule="CDAP/cdap/outbound/js/filter/loginconfig"/>
+          <apply path="/login" rule="CDAP/cdap/outbound/html/filter/bashhref"/>
       </content>
     </filter>
 </rules>
