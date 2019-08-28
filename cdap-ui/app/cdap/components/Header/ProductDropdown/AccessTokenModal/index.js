@@ -21,6 +21,8 @@ import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
 import T from 'i18n-react';
 import 'whatwg-fetch';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 
 require('./AccessTokenModal.scss');
 
@@ -33,7 +35,8 @@ export default class AccessTokenModal extends Component {
       passwordInput: '',
       accessToken: '',
       error: null,
-      loading: false
+      loading: false,
+      inputs : this.getValidationState(),
     };
 
     this.toggleModal = this.toggleModal.bind(this);
@@ -47,16 +50,58 @@ export default class AccessTokenModal extends Component {
       usernameInput: '',
       passwordInput: '',
       accessToken: '',
-      error: null
+      error: null,
+      inputs: this.getValidationState(),
     });
     this.props.toggle();
   }
 
-  handleUsernameChange(e) {
-    this.setState({usernameInput: e.target.value});
+  getValidationState = () => {
+    return {
+      name: {
+        error: '',
+        required: true,
+        template: 'NAME',
+        label: 'userName',
+      },
+      password: {
+        error: '',
+        required: false,
+        template: 'NAME',
+        label: 'password',
+      },
+    };
   }
+
+
+  handleUsernameChange(e) {
+    let inputsValue = {...this.state.inputs};
+    const isValid = types[this.state.inputs.name.template].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = types[this.state.inputs.name.template].getErrorMsg();
+    }
+    inputsValue.name.error = errorMsg;
+
+    this.setState({
+      usernameInput: e.target.value,
+      inputs: inputsValue
+    });
+  }
+
   handlePasswordChange(e) {
-    this.setState({passwordInput: e.target.value});
+    let inputsValue = {...this.state.inputs};
+    const isValid = types[this.state.inputs.password.template].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = types[this.state.inputs.password.template].getErrorMsg();
+    }
+    inputsValue.password.error = errorMsg;
+
+    this.setState({
+      passwordInput: e.target.value,
+      inputs: inputsValue
+    });
   }
 
   onSubmit() {
@@ -93,27 +138,34 @@ export default class AccessTokenModal extends Component {
   }
 
   renderLogin() {
-    let disabled = this.state.usernameInput.length === 0 || this.state.passwordInput.length === 0 || this.state.loading;
+    let disabled = this.state.usernameInput.length === 0 || this.state.passwordInput.length === 0
+        || this.state.inputs.name.error.length > 0 || this.state.inputs.password.error.length > 0 || this.state.loading;
     return (
       <div>
         <span>
           {T.translate('features.AccessTokenModal.login.textContent')}
         </span>
         <div className="username-password">
-          <input
+          <ValidatedInput
             type="text"
-            className="form-control username"
+            label={this.state.inputs.name.label}
             placeholder={T.translate('features.AccessTokenModal.login.usernamePlaceholder')}
+            inputInfo={types[this.state.inputs.name.template].getInfo()}
+            validationError={this.state.inputs.name.error}
             value={this.state.usernameInput}
             onChange={this.handleUsernameChange}
           />
-          <input
+
+          <ValidatedInput className="password"
             type="password"
-            className="form-control password"
+            label={this.state.inputs.password.label}
             placeholder={T.translate('features.AccessTokenModal.login.passwordPlaceholder')}
+            inputInfo={types[this.state.inputs.password.template].getInfo()}
+            validationError={this.state.inputs.password.error}
             value={this.state.passwordInput}
             onChange={this.handlePasswordChange}
           />
+
         </div>
         <div className="text-xs-left submit-button">
           <button

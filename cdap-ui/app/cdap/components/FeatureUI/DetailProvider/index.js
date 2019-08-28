@@ -78,11 +78,11 @@ class DetailProvider extends React.Component {
               onChange={this.onNameUpdated.bind(this, 'name')}
             />
         </div>
-        <div className='field-row'>
+        {/* <div className='field-row'>
             <div className='name'>Description</div>
             <div className='colon'>:</div>
             <textarea className='description'></textarea>
-        </div>
+        </div> */}
       </div>
     );
   }
