@@ -86,17 +86,17 @@ the License.
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-standalone</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <exclusions>
+      <exclusions>-->
         <!--
           Exclude jackson from cdap-standalone. That one doesn't work with Spark 2 and we can't exclude it using
           Classloader isolation like in SDK.
         -->
-        <exclusion>
+        <!--<exclusion>
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-core</artifactId>
         </exclusion>
@@ -124,12 +124,12 @@ the License.
       <version>${project.version}</version>
       <scope>test</scope>
       <type>test-jar</type>
-      <exclusions>
+      <exclusions>-->
         <!--
           Exclude jackson from cdap-standalone. That one doesn't work with Spark 2 and we can't exclude it using
           Classloader isolation like in SDK.
         -->
-        <exclusion>
+        <!--<exclusion>
           <groupId>com.fasterxml.jackson.core</groupId>
           <artifactId>jackson-core</artifactId>
         </exclusion>
@@ -150,7 +150,7 @@ the License.
           <artifactId>jackson-module-scala_2.10</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
+    </dependency>-->
   </dependencies>
 
   <build>
