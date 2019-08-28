@@ -14,7 +14,7 @@
  * the License.
 */
 
-@import '~styles/variables.scss';
+// @import '~styles/variables.scss';
 
 .input-group-info {
   border: none !important;
@@ -25,7 +25,7 @@
 }
 
 .feedback-error {
-  color: $red-02;
+  color: red;
   padding-bottom: 5px;
 }
 

@@ -217,8 +217,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       final String expandedProgramJarName = "expanded." + programJarName.substring(0, programJarName.indexOf(".jar")) + ".zip";
       final String expandedProgramJarLocation = programJarLocation.toString().substring(0, programJarLocation.toString().lastIndexOf(File.separator)) + File.separator + expandedProgramJarName;
       Path expandedProgramJarLocationPath = new Path(expandedProgramJarLocation);
-      System.out.println("expandedProgramJarLocationPath=" + expandedProgramJarLocationPath.toUri());
-      FileUtil.copy(fs, new Path(programJarLocation.toURI()), fs, expandedProgramJarLocationPath, false, true, hConf);
+      LOG.info("expandedProgramJarLocationPath: {}", expandedProgramJarLocationPath.toUri());
+      if (!fs.exists(expandedProgramJarLocationPath)) {
+    	  FileUtil.copy(fs, new Path(programJarLocation.toURI()), fs, expandedProgramJarLocationPath, false, true, hConf);
+      }
       localizeResources.put(expandedProgramJarName, new LocalizeResource(expandedProgramJarLocationPath.toUri(), true));
 
       // Localize the app spec

@@ -22,18 +22,24 @@ $reset-button-color: #0275d8;
   justify-content: center;
   align-items: center;
   margin-right: -25px;
+  margin-bottom: 10px !important;
 
   input:focus {
     outline: 0;
   }
 
-  .key-container,
+  .key-container {
+    border: none;
+    border: none;
+    width: 40%;
+    margin-right: 10px;
+
+  }
   .value-container {
     border: none;
     border: none;
     width: 40%;
-    margin-bottom: 5px;
-    padding-left: 0px;
+    margin-right: 10px;
   }
   .key-input,
   .value-input {
@@ -41,7 +47,6 @@ $reset-button-color: #0275d8;
     border-bottom: 1px solid lightgrey;
     border-radius: 0;
     width: 100%;
-    margin-right: 10px;
 
     &.wider {
       width: 50%;
