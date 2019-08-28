@@ -34,7 +34,11 @@ import org.apache.hadoop.hbase.NamespaceNotFoundException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.security.access.AccessControlClient;
 import org.slf4j.Logger;
@@ -53,13 +57,13 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptorBuilder(HTableNameConverter.toTableName(tablePrefix, tableId));
+    return new HBase10CDHHTableDescriptorBuilder(HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(HTableDescriptor tableDescriptorToCopy) {
     Preconditions.checkArgument(tableDescriptorToCopy != null, "Table descriptor should not be null");
-    return new HTableDescriptorBuilder(tableDescriptorToCopy);
+    return new HBase10CDHHTableDescriptorBuilder(tableDescriptorToCopy);
   }
 
   @Override
@@ -240,5 +244,50 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   @Override
   public Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion() {
     return PayloadTableRegionObserver.class;
+  }
+
+  @Override
+  public ScanBuilder buildScan() {
+    return new HBase10CDHScanBuilder();
+  }
+
+  @Override
+  public ScanBuilder buildScan(Scan scan) throws IOException {
+    return new HBase10CDHScanBuilder(scan);
+  }
+
+  @Override
+  public IncrementBuilder buildIncrement(byte[] row) {
+    return new HBase10CDHIncrementBuilder(row);
+  }
+
+  @Override
+  public PutBuilder buildPut(byte[] row) {
+    return new HBase10CDHPutBuilder(row);
+  }
+
+  @Override
+  public PutBuilder buildPut(Put put) {
+    return new HBase10CDHPutBuilder(put);
+  }
+
+  @Override
+  public GetBuilder buildGet(byte[] row) {
+    return new HBase10CDHGetBuilder(row);
+  }
+
+  @Override
+  public GetBuilder buildGet(Get get) {
+    return new HBase10CDHGetBuilder(get);
+  }
+
+  @Override
+  public DeleteBuilder buildDelete(byte[] row) {
+    return new HBase10CDHDeleteBuilder(row);
+  }
+
+  @Override
+  public DeleteBuilder buildDelete(Delete delete) {
+    return new HBase10CDHDeleteBuilder(delete);
   }
 }
