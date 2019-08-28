@@ -54,8 +54,8 @@ var log = log4js.getLogger('default');
 
 const isModeDevelopment = () => process.env.NODE_ENV === 'development';
 const isModeProduction = () => process.env.NODE_ENV === 'production';
-const _headers = function(res, path) {
-  res.set("Connection", "close");
+const _headers = function(res) {
+  res.set('Connection', 'close');
 };
 
 const getExpressStaticConfig = () => {

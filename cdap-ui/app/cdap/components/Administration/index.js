@@ -41,7 +41,7 @@ class Administration extends Component {
   componentDidMount() {
     this.getUptime();
     this.getPlatformDetails();
-    if(document.querySelector('#header-namespace-dropdown')){
+    if (document.querySelector('#header-namespace-dropdown')) {
       document.querySelector('#header-namespace-dropdown').style.display = 'none';
     }
   }
@@ -56,7 +56,7 @@ class Administration extends Component {
   }
 
   componentWillUnmount() {
-    if(document.querySelector('#header-namespace-dropdown')){
+    if (document.querySelector('#header-namespace-dropdown')) {
       document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
     }
   }

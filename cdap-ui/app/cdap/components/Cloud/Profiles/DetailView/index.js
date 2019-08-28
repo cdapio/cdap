@@ -65,7 +65,7 @@ export default class ProfileDetailView extends Component {
   }
 
   componentWillUnmount() {
-    if(document.querySelector('#header-namespace-dropdown')){
+    if (document.querySelector('#header-namespace-dropdown')) {
       document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
     }
   }
