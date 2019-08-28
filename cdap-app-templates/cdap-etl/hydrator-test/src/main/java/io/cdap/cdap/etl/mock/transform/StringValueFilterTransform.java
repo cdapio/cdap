@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.InvalidEntry;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
@@ -56,19 +57,20 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Schema inputSchema = stageConfigurer.getInputSchema();
+    FailureCollector collector = stageConfigurer.getFailureCollector();
     if (inputSchema != null && !config.containsMacro("field")) {
       Schema.Field field = inputSchema.getField(config.field);
       if (field == null) {
-        stageConfigurer.addFailure(String.format("'%s' is not a field in the input schema.", config.field),
-                                   "Make sure field is present in the input schema.")
+        collector.addFailure(String.format("'%s' is not a field in the input schema.", config.field),
+                             "Make sure field is present in the input schema.")
           .withConfigProperty("field");
-        stageConfigurer.throwIfFailure();
+        collector.getOrThrowException();
       }
       Schema fieldSchema = field.getSchema();
       Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (fieldType != Schema.Type.STRING) {
-        stageConfigurer.addFailure(String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType),
-                                   "Make sure provided field is of type string.")
+        collector.addFailure(String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType),
+                             "Make sure provided field is of type string.")
           .withConfigProperty("field").withInputSchemaField(config.field, null);
       }
     }

@@ -16,15 +16,13 @@
 package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.MultiInputStageConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
-import io.cdap.cdap.etl.api.validation.ValidationException;
-import io.cdap.cdap.etl.api.validation.ValidationFailure;
+import io.cdap.cdap.etl.validation.DefaultFailureCollector;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -36,21 +34,18 @@ import javax.annotation.Nullable;
  * where we allow multiple input schemas
  */
 public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer, MultiOutputStageConfigurer {
-  private static final String STAGE = "stage";
   private Schema outputSchema;
   private Schema outputErrorSchema;
   private boolean errorSchemaSet;
+  private FailureCollector collector;
   protected Map<String, Schema> inputSchemas;
   protected Map<String, Schema> outputPortSchemas;
-  private final List<ValidationFailure> failures;
-  private final String stageName;
 
   public DefaultStageConfigurer(String stageName) {
     this.inputSchemas = new HashMap<>();
     this.outputPortSchemas = new HashMap<>();
     this.errorSchemaSet = false;
-    this.failures = new ArrayList<>();
-    this.stageName = stageName;
+    this.collector = new DefaultFailureCollector(stageName);
   }
 
   @Nullable
@@ -91,34 +86,8 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   }
 
   @Override
-  public ValidationFailure addFailure(String message, @Nullable String correctiveAction) {
-    ValidationFailure failure = new ValidationFailure(message, correctiveAction);
-    failures.add(failure);
-    return failure;
-  }
-
-  @Override
-  public void throwIfFailure() throws ValidationException {
-    if (!failures.isEmpty()) {
-      for (ValidationFailure failure : failures) {
-        List<ValidationFailure.Cause> causes = failure.getCauses();
-        if (causes.isEmpty()) {
-          causes.add(new ValidationFailure.Cause().addAttribute(STAGE, stageName));
-          continue;
-        }
-        for (ValidationFailure.Cause cause : causes) {
-          // stage name is added by the configurer before throwing the validation exception
-          cause.addAttribute(STAGE, stageName);
-        }
-      }
-
-      // throw a validation exception if this configurer has any stage validation failures
-      throw new ValidationException(failures);
-    }
-  }
-
-  public List<ValidationFailure> getValidationFailures() {
-    return failures;
+  public FailureCollector getFailureCollector() {
+    return collector;
   }
 
   public Schema getErrorSchema() {

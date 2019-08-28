@@ -26,6 +26,7 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
@@ -61,7 +62,7 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Schema inputSchema = stageConfigurer.getInputSchema();
 
-    this.outputSchema = getOutputSchema(stageConfigurer, inputSchema, conf.getFields());
+    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema, conf.getFields());
     stageConfigurer.setOutputSchema(outputSchema);
   }
 
@@ -86,19 +87,19 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
     emitter.emit(groupKey);
   }
 
-  private static Schema getOutputSchema(StageConfigurer configurer, Schema inputSchema, Iterable<String> fields) {
+  private static Schema getOutputSchema(FailureCollector collector, Schema inputSchema, Iterable<String> fields) {
     List<Schema.Field> outputFields = new ArrayList<>();
     for (String fieldName : fields) {
       Schema.Field field = inputSchema.getField(fieldName);
       if (field == null) {
-        configurer.addFailure(String.format("Field %s does not exist in input schema.", fieldName),
-                              String.format("Make sure field %s is present in the input schema", fieldName))
+        collector.addFailure(String.format("Field %s does not exist in input schema.", fieldName),
+                             String.format("Make sure field %s is present in the input schema", fieldName))
           .withConfigElement("fields", fieldName);
         continue;
       }
       outputFields.add(field);
     }
-    configurer.throwIfFailure();
+    collector.getOrThrowException();
     return Schema.recordOf(inputSchema.getRecordName() + ".distinct", outputFields);
   }
 

@@ -25,11 +25,13 @@ import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.StageContext;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.common.plugin.Caller;
 import io.cdap.cdap.etl.common.plugin.NoStageLoggingCaller;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 
 import java.net.URL;
 import java.util.Collections;
@@ -52,6 +54,7 @@ public abstract class AbstractStageContext implements StageContext {
   private final Schema inputSchema;
   private final Map<String, Schema> outputPortSchemas;
   private final MacroEvaluator macroEvaluator;
+  private final FailureCollector failureCollector;
   protected final BasicArguments arguments;
 
   protected AbstractStageContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
@@ -69,6 +72,7 @@ public abstract class AbstractStageContext implements StageContext {
     }
     this.outputPortSchemas = Collections.unmodifiableMap(portSchemas);
     this.arguments = pipelineRuntime.getArguments();
+    this.failureCollector = new LoggingFailureCollector(stageSpec.getName());
     this.macroEvaluator = new DefaultMacroEvaluator(arguments, pipelineRuntime.getLogicalStartTime(),
                                                     pipelineRuntime.getSecureStore(), pipelineRuntime.getNamespace());
   }
@@ -251,6 +255,11 @@ public abstract class AbstractStageContext implements StageContext {
       getMetadataWriter().removeTags(metadataEntity, tags);
       return null;
     });
+  }
+
+  @Override
+  public FailureCollector getFailureCollector() {
+    return failureCollector;
   }
 
   private MetadataReader getMetadataReader() {

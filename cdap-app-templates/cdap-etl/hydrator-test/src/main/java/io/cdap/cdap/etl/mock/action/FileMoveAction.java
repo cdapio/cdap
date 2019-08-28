@@ -24,8 +24,8 @@ import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import org.apache.twill.filesystem.Location;
@@ -52,16 +52,16 @@ public class FileMoveAction extends Action {
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     pipelineConfigurer.createDataset(conf.destinationFileset, FileSet.class);
-    StageConfigurer configurer = pipelineConfigurer.getStageConfigurer();
+    FailureCollector collector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     try {
       Pattern.compile(conf.filterRegex);
     } catch (Exception e) {
-      configurer.addFailure("Error encountered while compiling filter regex: " + e.getMessage(),
-                            "Make sure filter regex is valid.").withConfigProperty("filterRegex");
+      collector.addFailure("Error encountered while compiling filter regex: " + e.getMessage(),
+                           "Make sure filter regex is valid.").withConfigProperty("filterRegex");
     }
     if (conf.sourceFileset.equals(conf.destinationFileset)) {
-      configurer.addFailure("Source and destination filesets must be different",
-                            "Make sure source and destination filesets are different")
+      collector.addFailure("Source and destination filesets must be different",
+                           "Make sure source and destination filesets are different")
         .withConfigProperty("sourceFileset").withConfigProperty("destinationFileset");
     }
   }

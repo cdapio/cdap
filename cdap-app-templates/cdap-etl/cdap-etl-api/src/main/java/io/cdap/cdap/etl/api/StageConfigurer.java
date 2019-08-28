@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * the output schema that could be sent to the next stages from this stage.
  */
 @Beta
-public interface StageConfigurer extends FailureCollector {
+public interface StageConfigurer {
 
   /**
    * get the input schema for this stage, or null if its unknown
@@ -51,4 +51,14 @@ public interface StageConfigurer extends FailureCollector {
    * @param errorSchema error schema for this stage
    */
   void setErrorSchema(@Nullable Schema errorSchema);
+
+  /**
+   * Returns a failure collector for the stage.
+   *
+   * @return a failure collector
+   * @throws UnsupportedOperationException if the implementation does not override this method
+   */
+  default FailureCollector getFailureCollector() {
+    throw new UnsupportedOperationException("Getting failure collector is not supported.");
+  }
 }
