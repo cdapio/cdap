@@ -102,6 +102,9 @@
     <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/loginConfig" pattern="/loginConfig">
       <rewrite template="{$frontend[path]}/pdie/loginConfig"/>
     </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/forwardMarketToCdap" pattern="/forwardMarketToCdap">
+      <rewrite template="{$frontend[path]}/pdie/forwardMarketToCdap"/>
+    </rule>
    <!-- filters -->
 
     <filter name="CDAP/cdap/outbound/filter">
@@ -130,6 +133,7 @@
           <apply path="/cdaptoken" rule="CDAP/cdap/outbound/js/filter/cdaptoken"/>
           <apply path="/loginConfig" rule="CDAP/cdap/outbound/js/filter/loginconfig"/>
           <apply path="/login" rule="CDAP/cdap/outbound/html/filter/bashhref"/>
+          <apply path="/forwardMarketToCdap" rule="CDAP/cdap/outbound/js/filter/forwardMarketToCdap"/>
       </content>
     </filter>
 </rules>
