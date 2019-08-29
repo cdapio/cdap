@@ -45,7 +45,7 @@ const uploadData = ({url, fileContents, headers}) => {
       console.info('App Upload in progress');
     }
   });
-  path = url;
+  path = window.knoxPrefix + url;
   xhr.open('POST', path, true);
   xhr.setRequestHeader('Content-type', headers.filetype);
   xhr.setRequestHeader('X-Archive-Name', headers.filename);
