@@ -27,6 +27,8 @@ import {connect, Provider} from 'react-redux';
 import {Label, Input} from 'reactstrap';
 import {getProfiles, resetProfiles} from 'components/Cloud/Profiles/Store/ActionCreator';
 import {SYSTEM_NAMESPACE} from 'services/global-constants';
+import { Theme } from 'services/ThemeHelper';
+
 require('./SystemProfilesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.SystemProfiles';
@@ -109,13 +111,15 @@ class SystemProfilesAccordion extends Component {
 
   render() {
     return (
-      <div className={classnames(
-        "admin-config-container system-profiles-container",
-        {"expanded": this.props.expanded}
-      )}>
-        {this.renderLabel()}
-        {this.renderContent()}
-      </div>
+      Theme.showSystemProfiles ?
+        <div className={classnames(
+          "admin-config-container system-profiles-container",
+          {"expanded": this.props.expanded}
+        )}>
+          {this.renderLabel()}
+          {this.renderContent()}
+        </div>
+      : null
     );
   }
 }
