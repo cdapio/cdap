@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.auth;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -30,6 +29,7 @@ import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.guice.SecurityModules;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -132,8 +133,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     DistributedKeyManager keyManager = getKeyManager(injector1, true);
     TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
     tokenManager.startAndWait();
-    return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager,
-                                                               injector1.getInstance(AccessTokenCodec.class));
+    return new ImmutablePair<>(tokenManager, injector1.getInstance(AccessTokenCodec.class));
   }
 
   private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader) throws Exception {
@@ -146,26 +146,14 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
     keyManager.startAndWait();
     if (expectLeader) {
-      keyManager.waitForLeader(5000, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(true, () -> keyManager.getCurrentKey() != null, 5L, TimeUnit.SECONDS);
     }
     return keyManager;
   }
 
   private static class WaitableDistributedKeyManager extends DistributedKeyManager {
-    public WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zk) {
+    WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zk) {
       super(conf, codec, zk, Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE));
-    }
-
-    public void waitForLeader(long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
-      Stopwatch timer = new Stopwatch().start();
-      do {
-        if (!leader.get()) {
-          unit.sleep(duration / 10);
-        }
-      } while (!leader.get() && timer.elapsedTime(unit) < duration);
-      if (!leader.get()) {
-        throw new TimeoutException("Timed out waiting to become leader");
-      }
     }
 
     public KeyIdentifier getCurrentKey() {
@@ -189,37 +177,19 @@ public class DistributedKeyManagerTest extends TestTokenManager {
       return null;
     }
 
-    public void waitForKey(int keyId, long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
+    void waitForKey(int keyId, long duration,
+                    TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
       if (keyManager instanceof WaitableDistributedKeyManager) {
         WaitableDistributedKeyManager waitKeyManager = (WaitableDistributedKeyManager) keyManager;
-        Stopwatch timer = new Stopwatch().start();
-        boolean hasKey = false;
-        do {
-          hasKey = waitKeyManager.hasKey(keyId);
-          if (!hasKey) {
-            unit.sleep(duration / 10);
-          }
-        } while (!hasKey && timer.elapsedTime(unit) < duration);
-        if (!hasKey) {
-          throw new TimeoutException("Timed out waiting for key " + keyId);
-        }
+        Tasks.waitFor(true, () -> waitKeyManager.hasKey(keyId), duration, unit);
       }
     }
 
-    public void waitForCurrentKey(long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
+    void waitForCurrentKey(long duration,
+                           TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
       if (keyManager instanceof WaitableDistributedKeyManager) {
         WaitableDistributedKeyManager waitKeyManager = (WaitableDistributedKeyManager) keyManager;
-        Stopwatch timer = new Stopwatch().start();
-        boolean hasKey = false;
-        do {
-          hasKey = waitKeyManager.getCurrentKey() != null;
-          if (!hasKey) {
-            unit.sleep(duration / 10);
-          }
-        } while (!hasKey && timer.elapsedTime(unit) < duration);
-        if (!hasKey) {
-          throw new TimeoutException("Timed out waiting for current key to be set");
-        }
+        Tasks.waitFor(true, () -> waitKeyManager.getCurrentKey() != null, duration, unit);
       }
     }
   }
