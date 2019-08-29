@@ -169,7 +169,7 @@ public class KnoxBasicAuthenticator extends BasicAuthenticator
 			    Log.info("host : " + host);
                             String port = handlerProps.get(Constants.Security.KNOX_PORT);
 			    Log.info("port : " + port);
-                            String strAuthURI = "https://" + host + ":" + port + "/gateway/knoxsso/knoxtoken/api/v1/token";;
+                            String strAuthURI = "https://" + host + ":" + port + handlerProps.get(Constants.Security.KNOX_TOKEN_URL_PATH);;
                     	    URI authURI = URI.create(strAuthURI);
                     	    
                     	    HttpRequest knoxRequest = HttpRequest.get(authURI.toURL()).addHeaders(getAuthenticationHeaders(encryptedCredentials)).build();
