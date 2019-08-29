@@ -24,7 +24,7 @@ const UploadFile = ({url, fileContents, headers}) => {
         console.info(`File Upload to '${url}' in progress`);
       }
     });
-    path = url;
+    path = window.knoxPrefix+url;
     xhr.open('POST', path, true);
     if (typeof headers === 'object') {
       Object.keys(headers)
