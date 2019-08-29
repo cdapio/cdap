@@ -32,7 +32,6 @@ import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -57,7 +56,6 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
 
   private final SharedResourceCache<KeyIdentifier> keyCache;
-  private final String parentZNode;
 
   private Timer timer;
   private long lastKeyUpdate;
@@ -72,7 +70,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper, List<ACL> acls) {
     super(conf);
-    this.parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
+    String parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION);
     this.maxTokenExpiration = Math.max(
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
@@ -88,7 +86,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   }
 
   @Override
-  protected void doInit() throws IOException {
+  protected void doInit() {
     this.keyCache.addListener(this);
     try {
       keyCache.init();
@@ -117,6 +115,9 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   @Override
   public void shutDown() {
+    if (timer != null) {
+      timer.cancel();
+    }
     leaderElection.stopAndWait();
   }
 
