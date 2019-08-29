@@ -251,7 +251,7 @@ class Login extends Component {
                         onChange={this.onPasswordUpdate.bind(this)}
                         type="password"
                       />
-                    </div>
+                    </label>
                     <div className="form-group">
                       <div className="clearfix">
                         <div className="float-xs-left">
@@ -280,8 +280,8 @@ class Login extends Component {
                         {T.translate('login.labels.loginbtn')}
                       </button>
                     </div>
-                  </form>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="form-group">
