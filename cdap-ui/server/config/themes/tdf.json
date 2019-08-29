@@ -37,6 +37,7 @@
     "ingest-data": true,
     "add-namespace": true,
     "feature-engineering": false,
-    "EDA": false
+    "EDA": false,
+    "system-profiles": false
   }
 }

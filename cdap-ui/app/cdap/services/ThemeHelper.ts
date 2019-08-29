@@ -84,6 +84,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
     "EDA"?: boolean;
+    "system-profiles"?: boolean;
   };
 }
 
@@ -176,6 +177,7 @@ interface IThemeObj {
   showPipelineCreateButton?: boolean;
   showDataPrepPlusButton?: boolean;
   isCustomerMWC?: boolean;
+  showSystemProfiles?: boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -304,14 +306,6 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'feature-engineering');
       }
 
-      if ('non-unified-modules' in contentJson['feature-names']) {
-        featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'non-unified-modules');
-      }
-
-      if ('EDA' in contentJson['feature-names']) {
-        featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'EDA');
-      }
-
       if ('entities' in contentJson['feature-names']) {
         featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
       }
@@ -353,6 +347,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showIngestData: true,
       showAddNamespace: true,
       showAboutProductModal: true,
+      showSystemProfiles: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -396,6 +391,10 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
 
     if ('about-product' in featuresJson && isBoolean(featuresJson['about-product'])) {
       features.showAboutProductModal = featuresJson['about-product'];
+    }
+
+    if ('system-profiles' in featuresJson && isBoolean(featuresJson['system-profiles'])) {
+      features.showSystemProfiles = featuresJson['system-profiles'];
     }
     return features;
   }

@@ -72,7 +72,7 @@ class KeyValuePair extends Component {
     }
 
     return (
-      <div className={classnames("form-control key-container")}>
+      <div className={classnames("key-container")}>
           <input
           type="text"
           value={this.props.name}
@@ -80,7 +80,7 @@ class KeyValuePair extends Component {
           onKeyDown={this.keyDown}
           onChange={this.props.onChange.bind(null, 'key')}
           placeholder={keyPlaceholder}
-          className={classnames("key-input", {"wider": this.props.disabled})}
+          className={classnames(" form-control key-input", {"wider": this.props.disabled})}
           disabled={this.props.notDeletable || this.props.disabled}
           onPaste={this.handlePaste}
           />
@@ -111,14 +111,14 @@ class KeyValuePair extends Component {
     }
 
     return (
-      <div className={classnames("form-control value-container")}>
+      <div className={classnames("value-container")}>
           <input
           type="text"
           value={this.props.value}
           onKeyDown={this.keyDown}
           onChange={this.props.onChange.bind(null, 'value')}
           placeholder={valuePlaceholder}
-          className={classnames("key-input", {"wider": this.props.disabled})}
+          className={classnames(" form-control key-input", {"wider": this.props.disabled})}
           disabled={this.props.disabled}
           onPaste={this.handlePaste}
           />
@@ -194,3 +194,4 @@ class KeyValuePair extends Component {
 }
 
 export default KeyValuePair;
+
