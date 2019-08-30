@@ -35,11 +35,15 @@ export default class HttpExecutor extends Component {
   }
 
   componentDidMount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    if (document.querySelector('#header-namespace-dropdown')) {
+      document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    }
   }
 
   componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    if (document.querySelector('#header-namespace-dropdown')) {
+      document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    }
   }
 
   render() {

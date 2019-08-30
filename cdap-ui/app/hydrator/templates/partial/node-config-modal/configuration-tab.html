@@ -21,10 +21,10 @@
       <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
 
         <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty !== 0">
-          <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-noconfig-form.html'"></div>
+          <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig" ng-include="HydratorPlusPlusNodeConfigCtrl.state.pluginEditNoConfigForm"></div>
 
           <div ng-if="(HydratorPlusPlusNodeConfigCtrl.state.configfetched && !HydratorPlusPlusNodeConfigCtrl.state.noconfig)">
-            <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-config-form.html'"></div>
+            <div ng-include="HydratorPlusPlusNodeConfigCtrl.state.pluginEditConfigFormUrl"></div>
           </div>
         </div>
 

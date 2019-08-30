@@ -32,7 +32,6 @@ require('./login.scss');
 import T from 'i18n-react';
 T.setTexts(require('./text/text-en.yaml'));
 
-
 class Login extends Component {
   constructor(props) {
     super(props);
@@ -42,8 +41,13 @@ class Login extends Component {
       message: '',
       formState: false,
       rememberUser: false,
-      inputs: this.getValidationState(),
+      isKnoxEnable: true,
+      knoxUrl:'',
+      applicationPrefix:'',
+      inputs: this.getValidationState()
     };
+
+    this.getLoginConfig();
   }
 
   getValidationState = () => {
@@ -138,6 +142,63 @@ class Login extends Component {
       rememberUser: true
     });
   }
+
+
+  // get cdap token
+
+  getLoginConfig = () => {
+    const knoxGatewayElement = document.getElementById('logingateway');
+    let knoxGateway = '';
+    if (knoxGatewayElement) {
+      knoxGateway = document.getElementById('logingateway').innerHTML.replace('/login','');
+    }
+
+    fetch((knoxGateway + '/loginConfig'), {
+      method: 'GET',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    }).then((response) => {
+      if (response.status >= 200 && response.status < 300) {
+        return response.json();
+      } else {
+        return Promise.reject();
+      }
+    })
+    .then((result) => {
+      this.setState({
+        isKnoxEnable: result.knoxEnabled,
+        knoxUrl: result.knoxLoginUrl,
+        applicationPrefix: result.applicationPrefix
+      });
+      if (result.knoxEnabled) {
+        this.getCdapToken(result.applicationPrefix);
+      }
+    });
+  }
+
+
+  getCdapToken = (prefix) => {
+    fetch((prefix+'/cdapToken'), {
+      method: 'GET',
+      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+    })
+      .then((response) => {
+        if (response.status >= 200 && response.status < 300) {
+          return response.json();
+        } else {
+          const url = `${location.protocol}//${location.host}/gateway/knoxsso/api/v1/websso?originalUrl=${location.protocol}//${location.host}${prefix}/cdap`;
+          window.open(url, '_self');
+          return Promise.reject();
+        }
+      })
+      .then((res) => {
+        cookie.save('CDAP_Auth_Token', res.access_token, { path: '/'});
+        cookie.save('CDAP_Auth_User', res.userName);
+        var queryObj = util.getQueryParams(location.search);
+        queryObj.redirectUrl = queryObj.redirectUrl || '/';
+        window.location.href = queryObj.redirectUrl;
+      });
+  }
+
   render() {
     let footer;
     if (this.state.message) {
@@ -212,11 +273,10 @@ class Login extends Component {
     );
   }
 }
-ReactDOM.render(
-  <Login />,
+
+ReactDOM.render(<Login />,
   document.getElementById('login-form')
 );
-ReactDOM.render(
-  <Footer />,
+ReactDOM.render(<Footer />,
   document.getElementById('footer-container')
 );

@@ -47,7 +47,7 @@ class RulesEngineLink extends React.PureComponent<IRulesEngineLinkProps> {
       >
           <NavLinkWrapper
             isNativeLink={isNativeLink}
-            to={isNativeLink ? `/cdap${rulesEngineUrl}` : rulesEngineUrl}
+            to={isNativeLink ? `${window.knoxPrefix}/cdap${rulesEngineUrl}` : rulesEngineUrl}
           >
             {featureName}
           </NavLinkWrapper>

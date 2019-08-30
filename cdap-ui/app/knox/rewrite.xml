@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+             Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+     <rule dir="IN" name="CDAP/cdap/inbound/pdie" pattern="{scheme}://*:*/**/pdie/{**}">
+        <rewrite template="{$serviceUrl[CDAP]}/{**}"/>
+    </rule>
+    <rule dir="IN" name="CDAP/cdap/inbound/pdie/query" pattern="*://*:*/**/pdie/{**}?{**}">
+        <rewrite template="{$serviceUrl[CDAP]}/{**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="CDAP/cdap/inbound/configjs" pattern="*://*:*/**/pdie/config.js">
+        <rewrite template="{$serviceUrl[CDAP]}/config.js"/>
+    </rule>
+    <rule dir="IN" name="CDAP/cdap/inbound/uiconfigjs" pattern="*://*:*/**/pdie/ui-config.js">
+        <rewrite template="{$serviceUrl[CDAP]}/ui-config.js"/>
+    </rule>
+    <rule dir="IN" name="CDAP/cdap/inbound/uithemejs" pattern="*://*:*/**/pdie/ui-theme.js">
+        <rewrite template="{$serviceUrl[CDAP]}/ui-theme.js"/>
+    </rule>
+     <rule dir="IN" name="CDAP/cdap/inbound/dllassets" pattern="*://*:*/**/pdie/dll_assets/{**}">
+        <rewrite template="{$serviceUrl[CDAP]}/dll_assets/{**}"/>
+    </rule>
+    <rule dir="IN" name="CDAP/cdap/inbound/cdapassets" pattern="*://*:*/**/pdie/cdap_assets/{**}">
+        <rewrite template="{$serviceUrl[CDAP]}/cdap_assets/{**}"/>
+    </rule>
+    <rule dir="IN" name="CDAP/cdap/inbound/loginassets" pattern="*://*:*/**/pdie/login_assets/{**}">
+        <rewrite template="{$serviceUrl[CDAP]}/login_assets/{**}"/>
+    </rule>
+   <!-- out rule -->
+
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/configjs" pattern="/config.js">
+      <rewrite template="{$frontend[path]}/pdie/config.js"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/uiconfigjs" pattern="/ui-config.js">
+      <rewrite template="{$frontend[path]}/pdie/ui-config.js"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/uithemejs" pattern="/ui-theme.js">
+      <rewrite template="{$frontend[path]}/pdie/ui-theme.js"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/dllassets" pattern="/dll_assets/{**}">
+      <rewrite template="{$frontend[path]}/pdie/dll_assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/cdapassets" pattern="/cdap_assets/{**}">
+      <rewrite template="{$frontend[path]}/pdie/cdap_assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/cdapassets" pattern="/cdap_assets/">
+       <rewrite template="{$frontend[path]}/pdie/cdap_assets/"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/loginassets" pattern="/login_assets/">
+       <rewrite template="{$frontend[path]}/pdie/login_assets/"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/assets" pattern="/assets/{**}">
+      <rewrite template="{$frontend[path]}/pdie/assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/logviewer" pattern="/logviewer/">
+      <rewrite template="{$frontend[path]}/pdie/logviewer/"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/metadata" pattern="/metadata/">
+      <rewrite template="{$frontend[path]}/pdie/metadata/"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/logviewer/view" pattern="/logviewer/view">
+      <rewrite template="{$frontend[path]}/pdie/logviewer/view"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/assets" pattern="/assets/">
+      <rewrite template="{$frontend[path]}/pdie/assets/"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/commonassets" pattern="/common_assets/{**}">
+      <rewrite template="{$frontend[path]}/pdie/common_assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/pipelines" pattern="/pipelines/">
+       <rewrite template="{$frontend[path]}/pdie/pipelines/"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/loginassets" pattern="/login_assets/{**}">
+      <rewrite template="{$frontend[path]}/pdie/login_assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/html/filter/bashhref" pattern="/login">
+      <rewrite template="{$frontend[path]}/pdie/login"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/cdapns" pattern="/cdap/ns">
+      <rewrite template="{$frontend[path]}/pdie/cdap/ns"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/downloadLogs" pattern="/downloadLogs">
+      <rewrite template="{$frontend[path]}/pdie/downloadLogs"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/cdaptoken" pattern="/cdapToken">
+      <rewrite template="{$frontend[path]}/pdie/cdapToken"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/loginConfig" pattern="/loginConfig">
+      <rewrite template="{$frontend[path]}/pdie/loginConfig"/>
+    </rule>
+    <rule dir="OUT" name="CDAP/cdap/outbound/js/filter/forwardMarketToCdap" pattern="/forwardMarketToCdap">
+      <rewrite template="{$frontend[path]}/pdie/forwardMarketToCdap"/>
+    </rule>
+   <!-- filters -->
+
+    <filter name="CDAP/cdap/outbound/filter">
+       <content type="*/html">
+          <apply path="javascripts/config.js" rule="CDAP/cdap/outbound/html/filter/configjs"/>
+          <apply path="javascripts/ui-config.js" rule="CDAP/cdap/outbound/html/filter/uiconfigjs"/>
+	  <apply path="javascripts/ui-theme.js" rule="CDAP/cdap/outbound/html/filter/uithemejs"/>
+          <apply path="javascripts/dll_assets/*" rule="CDAP/cdap/outbound/html/filter/dllassets"/>
+	  <apply path="javascripts/cdap_assets/*" rule="CDAP/cdap/outbound/html/filter/cdapassets"/>
+          <apply path="javascripts/assets/*" rule="CDAP/cdap/outbound/html/filter/assets"/>
+          <apply path="javascripts/common_assets/*" rule="CDAP/cdap/outbound/html/filter/commonassets"/>
+          <apply path="javascripts/pipelines" rule="CDAP/cdap/outbound/html/filter/pipelines"/>
+          <apply path="javascripts/logviewer" rule="CDAP/cdap/outbound/html/filter/logviewer"/>
+          <apply path="javascripts/metadata" rule="CDAP/cdap/outbound/html/filter/metadata"/>
+          <apply path="javascripts/login_assets/*" rule="CDAP/cdap/outbound/html/filter/loginassets"/>
+          <apply path="javascripts/login" rule="CDAP/cdap/outbound/html/filter/bashhref"/>
+      </content>
+      <content type="*/javascript">
+          <apply path="/cdap_assets/" rule="CDAP/cdap/outbound/js/filter/cdapassets"/>
+          <apply path="/pipelines/" rule="CDAP/cdap/outbound/html/filter/pipelines"/>
+          <apply path="/assets/" rule="CDAP/cdap/outbound/js/filter/assets"/>
+          <apply path="/cdap/ns/" rule="CDAP/cdap/outbound/js/filter/cdapns"/>
+          <apply path="/logviewer/view" rule="CDAP/cdap/outbound/js/filter/logviewer/view"/>
+          <apply path="/downloadLogs" rule="CDAP/cdap/outbound/js/filter/downloadLogs"/>
+          <apply path="/login_assets/" rule="CDAP/cdap/outbound/js/filter/loginassets"/>
+          <apply path="/cdaptoken" rule="CDAP/cdap/outbound/js/filter/cdaptoken"/>
+          <apply path="/loginConfig" rule="CDAP/cdap/outbound/js/filter/loginconfig"/>
+          <apply path="/login" rule="CDAP/cdap/outbound/html/filter/bashhref"/>
+          <apply path="/forwardMarketToCdap" rule="CDAP/cdap/outbound/js/filter/forwardMarketToCdap"/>
+      </content>
+    </filter>
+</rules>

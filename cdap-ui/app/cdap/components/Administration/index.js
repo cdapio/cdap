@@ -41,7 +41,9 @@ class Administration extends Component {
   componentDidMount() {
     this.getUptime();
     this.getPlatformDetails();
-    document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    if (document.querySelector('#header-namespace-dropdown')) {
+      document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -54,7 +56,9 @@ class Administration extends Component {
   }
 
   componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    if (document.querySelector('#header-namespace-dropdown')) {
+      document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    }
   }
 
   getUptime() {

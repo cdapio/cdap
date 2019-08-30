@@ -60,7 +60,7 @@ export default class ResourceCenterButton extends Component {
           <img
             id="resource-center-btn"
             className="button-container"
-            src="/cdap_assets/img/plus_ico.svg"
+            src={window.knoxPrefix + "/cdap_assets/img/plus_ico.svg"}
           />
         </div>
         <PlusButtonModal
