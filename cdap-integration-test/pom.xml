@@ -20,7 +20,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>5.1.206</version>
+    <version>5.1.207</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -59,12 +59,12 @@
       <artifactId>cdap-standalone</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-standalone</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>

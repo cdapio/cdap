@@ -245,41 +245,13 @@ class Login extends Component {
                   <div className="checkbox form-check">
                     <label className="form-check-label">
                       <input
-                        id="password"
-                        className="form-control"
-                        placeholder={T.translate('login.placeholders.password')}
-                        onChange={this.onPasswordUpdate.bind(this)}
-                        type="password"
+                        type="checkbox"
+                        className="form-check-input"
+                        value={this.state.rememberUser}
+                        onClick={this.rememberUser.bind(this)}
                       />
+                    {T.translate('login.labels.rememberme')}
                     </label>
-                    <div className="form-group">
-                      <div className="clearfix">
-                        <div className="float-xs-left">
-                          <div className="checkbox form-check">
-                            <label className="form-check-label">
-                              <input
-                                type="checkbox"
-                                className="form-check-input"
-                                value={this.state.rememberUser}
-                                onClick={this.rememberUser.bind(this)}
-                              />
-                            {T.translate('login.labels.rememberme')}
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <button
-                        id="submit"
-                        type="submit"
-                        className="btn btn-primary btn-block"
-                        disabled={!this.state.formState}
-                        onClick={this.login.bind(this)}
-                      >
-                        {T.translate('login.labels.loginbtn')}
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -298,7 +270,6 @@ class Login extends Component {
           </form>
         </Card>
       </div>
-
     );
   }
 }
