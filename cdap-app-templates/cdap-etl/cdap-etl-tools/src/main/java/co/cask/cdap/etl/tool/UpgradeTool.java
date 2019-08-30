@@ -304,7 +304,7 @@ public class UpgradeTool {
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname(hostname)
       .setPort(port)
-      //.setSSLEnabled(sslEnabled)
+      .setSSLEnabled(sslEnabled)
       .build();
 
     int readTimeout = commandLine.hasOption("t") ?
