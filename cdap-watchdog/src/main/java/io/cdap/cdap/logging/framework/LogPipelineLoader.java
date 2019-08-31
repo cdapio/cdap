@@ -111,6 +111,8 @@ public class LogPipelineLoader {
     for (URL configURL : getPipelineConfigURLs()) {
       try {
         LogPipelineSpecification<T> spec = load(contextProvider, configURL);
+        LOG.info("Loaded logging pipeline specification for {} from {}", spec.getName(), spec.getSource());
+
         LogPipelineSpecification<T> existingSpec = result.get(spec.getName());
         if (existingSpec != null) {
           if (!ignoreOnError) {

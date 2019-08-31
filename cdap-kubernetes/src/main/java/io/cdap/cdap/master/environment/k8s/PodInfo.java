@@ -38,6 +38,7 @@ public final class PodInfo {
   private final Map<String, String> labels;
   private final List<V1OwnerReference> ownerReferences;
   private final String serviceAccountName;
+  private final String runtimeClassName;
   private final List<V1Volume> volumes;
   private final String containerLabelName;
   private final String containerImage;
@@ -46,7 +47,7 @@ public final class PodInfo {
 
   public PodInfo(String podInfoDir, String labelsFile, String nameFile, String namespace,
                  Map<String, String> labels, List<V1OwnerReference> ownerReferences,
-                 String serviceAccountName, List<V1Volume> volumes, String containerLabelName,
+                 String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
                  List<V1EnvVar> containerEnvironments) {
     this.podInfoDir = podInfoDir;
@@ -56,6 +57,7 @@ public final class PodInfo {
     this.labels = labels;
     this.ownerReferences = Collections.unmodifiableList(new ArrayList<>(ownerReferences));
     this.serviceAccountName = serviceAccountName;
+    this.runtimeClassName = runtimeClassName;
     this.volumes = Collections.unmodifiableList(new ArrayList<>(volumes));
     this.containerLabelName = containerLabelName;
     this.containerImage = containerImage;
@@ -89,6 +91,10 @@ public final class PodInfo {
 
   public String getServiceAccountName() {
     return serviceAccountName;
+  }
+
+  public String getRuntimeClassName() {
+    return runtimeClassName;
   }
 
   public List<V1Volume> getVolumes() {

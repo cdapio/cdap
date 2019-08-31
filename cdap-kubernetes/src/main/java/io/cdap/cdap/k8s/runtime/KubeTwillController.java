@@ -179,13 +179,13 @@ class KubeTwillController implements TwillController {
           () -> {
             // when delete deployment finishes successfully, delete the config-map
             try {
-              coreApi.deleteNamespacedConfigMapAsync(name, kubeNamespace, deleteOptions, null, null, null, null,
+              coreApi.deleteNamespacedConfigMapAsync(name, kubeNamespace, null, deleteOptions, null, null, null, null,
                                                      deleteConfigMapCallback);
             } catch (ApiException e) {
               completion.completeExceptionally(e);
             }
           });
-        appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, deleteOptions,
+        appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, deleteOptions,
                                                 null, null, null, null, deleteDeploymentCallback);
       } catch (ApiException e) {
         completion.completeExceptionally(e);

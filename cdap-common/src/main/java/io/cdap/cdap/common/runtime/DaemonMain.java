@@ -34,33 +34,40 @@ public abstract class DaemonMain {
    * as if the program is started by jsvc.
    */
   protected void doMain(final String[] args) throws Exception {
-    init(args);
+    try {
+      init(args);
 
-    final CountDownLatch shutdownLatch = new CountDownLatch(1);
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
+      final CountDownLatch shutdownLatch = new CountDownLatch(1);
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
           try {
-            DaemonMain.this.stop();
-          } finally {
             try {
-              DaemonMain.this.destroy();
+              DaemonMain.this.stop();
             } finally {
-              shutdownLatch.countDown();
+              try {
+                DaemonMain.this.destroy();
+              } finally {
+                shutdownLatch.countDown();
+              }
             }
+          } catch (Throwable t) {
+            LOG.error("Exception when shutting down: " + t.getMessage(), t);
           }
-        } catch (Throwable t) {
-          LOG.error("Exception when shutting down: " + t.getMessage(), t);
         }
-      }
-    });
+      });
 
-    start();
-    // Set uncaught exception handler after startup, this is so that if startup throws exception then we
-    // want it to be logged as error (the handler logs it as debug)
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
-    shutdownLatch.await();
+      start();
+      // Set uncaught exception handler after startup, this is so that if startup throws exception then we
+      // want it to be logged as error (the handler logs it as debug)
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
+      shutdownLatch.await();
+    } catch (Throwable t) {
+      // In case there is exception, log it before the process terminates.
+      // This normally doesn't happen, but when it does, we need the log before process die.
+      LOG.error("Exception raised from main method", t);
+      throw t;
+    }
   }
 
   /**
