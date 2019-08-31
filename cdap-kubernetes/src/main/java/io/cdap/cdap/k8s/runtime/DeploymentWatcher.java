@@ -79,7 +79,7 @@ public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment>
 
   @Override
   protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-    return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, null, labelSelector,
+    return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
                                                      null, null, null, true, null, null);
   }
 

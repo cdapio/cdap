@@ -420,6 +420,10 @@ class KubeTwillPreparer implements TwillPreparer {
     // Set the service for RBAC control for app.
     podSpec.setServiceAccountName(podInfo.getServiceAccountName());
 
+    // Set the runtime class name to be the same as app-fabric
+    // This is for protection against running user code
+    podSpec.setRuntimeClassName(podInfo.getRuntimeClassName());
+
     V1Container container = new V1Container();
     container.setName(CONTAINER_NAME);
     container.setImage(podInfo.getContainerImage());
@@ -466,7 +470,7 @@ class KubeTwillPreparer implements TwillPreparer {
     deployment.setSpec(spec);
 
     LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
-    deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true");
+    deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
     return deployment;
   }
@@ -535,7 +539,7 @@ class KubeTwillPreparer implements TwillPreparer {
     configMap.putBinaryDataItem(APP_SPEC, Files.readAllBytes(new File(appSpec).toPath()));
     configMap.putBinaryDataItem(PROGRAM_OPTIONS, Files.readAllBytes(new File(programOptions).toPath()));
     LOG.trace("Creating config-map {} in Kubernetes", resourceMeta.getName());
-    configMap = api.createNamespacedConfigMap(kubeNamespace, configMap, "true");
+    configMap = api.createNamespacedConfigMap(kubeNamespace, configMap, "true", null, null);
     LOG.trace("Created config-map {} in Kubernetes", resourceMeta.getName());
     return configMap;
   }

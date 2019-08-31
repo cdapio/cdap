@@ -221,7 +221,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    */
   private Optional<V1Service> getV1Service(CoreV1Api api,
                                            String serviceName, String discoveryName) throws ApiException {
-    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null, null,
+    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null,
                                                           "cdap.service=" + namePrefix + discoveryName, 1,
                                                           null, null, null);
     // Find the service with the given name
@@ -262,7 +262,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     service.setSpec(spec);
 
     try {
-      api.createNamespacedService(namespace, service, null);
+      api.createNamespacedService(namespace, service, null, null, null);
       LOG.info("Service created in kubernetes with name {} and port {}", serviceName, port.getPort());
     } catch (ApiException e) {
       // It means the service already exists. In this case we update the port if it is not the same.
@@ -313,7 +313,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     service.getSpec().setSelector(podLabels);
 
     try {
-      api.replaceNamespacedService(service.getMetadata().getName(), namespace, service, null);
+      api.replaceNamespacedService(service.getMetadata().getName(), namespace, service, null, null, null);
       LOG.info("Service updated in kubernetes with name {} and port {}",
                currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
@@ -369,7 +369,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     @Override
     protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
+      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, labelSelector,
                                                     null, null, null, true, null, null);
     }
 
