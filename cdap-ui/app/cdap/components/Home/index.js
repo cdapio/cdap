@@ -18,16 +18,20 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
-import EntityListView from 'components/EntityListView';
 import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import ErrorBoundary from 'components/ErrorBoundary';
+import HomeActions from 'components/Home/HomeActions';
 
 require('./Home.scss');
 
+const EntityListView = Loadable({
+  loader: () => import(/* webpackChunkName: "EntityListView" */ 'components/EntityListView'),
+  loading: LoadingSVGCentered,
+});
 const DataPrepConnections = Loadable({
   loader: () =>
     import(/* webpackChunkName: "DataPrepConnections" */ 'components/DataPrepConnections'),
@@ -108,7 +112,8 @@ export default class Home extends Component {
     return (
       <div>
         <Switch>
-          <Route exact path="/ns/:namespace" component={EntityListView} />
+          <Route exact path="/ns/:namespace" component={HomeActions} />
+          <Route exact path="/ns/:namespace/control" component={EntityListView} />
           <Route path="/ns/:namespace/apps/:appId" component={AppDetailedView} />
           <Route
             exact

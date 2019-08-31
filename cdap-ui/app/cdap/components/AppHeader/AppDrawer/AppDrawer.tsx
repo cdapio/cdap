@@ -131,18 +131,13 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
         />
         <List component="nav" dense={true} className={classes.mainMenu}>
           <DrawerFeatureLink
-            featureName={Theme.featureNames.controlCenter}
-            featureSVGIconName="icon-control_center"
-            featureFlag={true}
+            featureName="Home"
+            featureSVGIconName="icon-home"
             featureUrl={`/${nsurl}`}
             componentDidNavigate={componentDidNavigate}
-            data-cy="navbar-control-center-link"
-            id="navbar-control-center"
-            isActive={
-              location.pathname === `/cdap/${nsurl}` ||
-              location.pathname.startsWith(`/cdap/${nsurl}/dataset`) ||
-              location.pathname.startsWith(`/cdap/${nsurl}/apps`)
-            }
+            data-cy="navbar-home-link"
+            id="navbar-home"
+            isActive={location.pathname === `/cdap/${nsurl}`}
           />
           <DrawerFeatureLink
             featureName={Theme.featureNames.pipelines}
@@ -209,6 +204,19 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           />
         </List>
         <List component="nav" dense={true} className={classes.namespaceAdminMenu}>
+          <DrawerFeatureLink
+            featureName={Theme.featureNames.controlCenter}
+            featureFlag={true}
+            featureUrl={`/${nsurl}/control`}
+            componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-control-center-link"
+            id="navbar-control-center"
+            isActive={
+              location.pathname === `/cdap/${nsurl}/control` ||
+              location.pathname.startsWith(`/cdap/${nsurl}/dataset`) ||
+              location.pathname.startsWith(`/cdap/${nsurl}/apps`)
+            }
+          />
           <DrawerFeatureLink
             featureUrl="/administration/configuration"
             featureName={Theme.featureNames.projectAdmin}

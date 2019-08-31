@@ -19,7 +19,7 @@ import MyUserStoreApi from 'api/userstore';
 import If from 'components/If';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
-import Tour from 'components/EntityListView/Tour';
+import Tour from 'components/Home/Tour';
 import { objectQuery } from 'services/helpers';
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
@@ -40,7 +40,7 @@ interface IWelcomeState {
   showAgain: boolean;
 }
 
-export default class Welcome extends React.PureComponent<void, IWelcomeState> {
+export default class Welcome extends React.PureComponent<{}, IWelcomeState> {
   public state: IWelcomeState = {
     showModal: false,
     showAgain: false,

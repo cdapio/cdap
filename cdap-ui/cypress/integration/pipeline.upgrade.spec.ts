@@ -42,7 +42,7 @@ describe('Pipeline Upgrade should work fine', () => {
 
   it('should not show upgrade modal on uploading pipeline with valid plugin versions', () => {
     // Go to Pipelines studio
-    cy.visit('/');
+    cy.visit('/cdap/ns/default/pipelines');
     cy.get('#resource-center-btn').click();
     cy.get('#create-pipeline-link').click();
     cy.url().should('include', '/studio');
@@ -54,7 +54,7 @@ describe('Pipeline Upgrade should work fine', () => {
   });
 
   it('should show upgrade modal on uploading pipeline invalid plugin versions', () => {
-    cy.visit('/');
+    cy.visit('/cdap/ns/default/pipelines');
     cy.get('#resource-center-btn').click();
     cy.get('#create-pipeline-link').click();
     cy.url().should('include', '/studio');

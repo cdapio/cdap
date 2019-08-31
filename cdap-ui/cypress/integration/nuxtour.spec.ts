@@ -17,9 +17,9 @@
 import * as Helpers from '../helpers';
 
 let headers = {};
-const controlCenterText = 'Control Center';
+const studioText = 'Pipeline Studio';
 
-// Assumes 5 step tour: Control Center, Pipeline Studio, Wrangler, Metadata, Hub
+// Assumes 5 step tour: Pipeline Studio, Wrangler, Metadata, Control Center, Hub
 
 describe('NUX tour tests', () => {
   before(() => {
@@ -58,16 +58,8 @@ describe('NUX tour tests', () => {
     cy.get('[data-cy="welcome-nux-tour"]').should('exist');
     cy.get('[data-cy="start-tour-btn"]').click();
 
-    cy.get('.shepherd-title').then((modalText) => {
-      expect(modalText).to.contain(controlCenterText);
-    });
-
-    cy.get('[data-id="control-center"]').within(() => {
-      cy.get('.next-btn').click();
-    });
-
     cy.get('.shepherd-title').then((modal) => {
-      expect(modal).to.contain('Pipeline Studio');
+      expect(modal).to.contain(studioText);
     });
 
     cy.get('[data-id="pipelines"]').within(() => {
@@ -90,6 +82,14 @@ describe('NUX tour tests', () => {
       cy.get('.next-btn').click();
     });
 
+    cy.get('.shepherd-title').then((modalText) => {
+      expect(modalText).to.contain('Control Center');
+    });
+
+    cy.get('[data-id="control-center"]').within(() => {
+      cy.get('.next-btn').click();
+    });
+
     cy.get('.shepherd-title').then((modal) => {
       expect(modal).to.contain('Hub');
     });
@@ -105,7 +105,7 @@ describe('NUX tour tests', () => {
 
   it('Should not show Welcome modal when user navigates to Angular page (Pipelines) and back', () => {
     cy.get('.icon-close').click();
-    cy.visit('/cdap/pipelines');
+    cy.visit('/cdap/ns/default/pipelines');
     cy.visit('/cdap');
     cy.get('[data-cy="welcome-nux-tour"]').should('not.exist');
   });
@@ -114,19 +114,19 @@ describe('NUX tour tests', () => {
     cy.get('[data-cy="welcome-nux-tour"]').should('exist');
     cy.get('[data-cy="start-tour-btn"]').click();
 
-    cy.get('[data-id="control-center"]').within(() => {
+    cy.get('[data-id="pipelines"]').within(() => {
       cy.get('.next-btn').click();
     });
 
-    cy.get('[data-id="pipelines"]').within(() => {
+    cy.get('[data-id="preparation"]').within(() => {
       cy.get('.prev-btn').click();
     });
 
     cy.get('.shepherd-title').then((modalText) => {
-      expect(modalText).to.contain(controlCenterText);
+      expect(modalText).to.contain(studioText);
     });
 
-    cy.get('[data-id="control-center"]').within(() => {
+    cy.get('[data-id="pipelines"]').within(() => {
       cy.get('.shepherd-cancel-link').click();
     });
 

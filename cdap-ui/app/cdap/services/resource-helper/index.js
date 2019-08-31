@@ -69,7 +69,7 @@ function createApiFromExactPath(dataSrc, method, type, path, options = {}) {
   };
 }
 
-function buildUrl(url, params = {}) {
+export function buildUrl(url, params = {}) {
   let queryParams = {};
   for (let key in params) {
     let val = params[key];
