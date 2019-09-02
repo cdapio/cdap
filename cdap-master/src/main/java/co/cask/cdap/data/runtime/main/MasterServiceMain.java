@@ -1071,9 +1071,19 @@ public class MasterServiceMain extends DaemonMain {
     private TwillPreparer prepareExploreContainer(TwillPreparer preparer) throws IOException {
       // Add all the conf files needed by hive as resources. They will be available in the explore container classpath
       Set<String> addedFiles = Sets.newHashSet();
+      List<String> hiveIgnoreList = null;
+      String hiveIgnoreFiles = cConf.get(Constants.Explore.HIVE_IGNORE_CONF_FILES);
+      if(hiveIgnoreFiles!=null && !hiveIgnoreFiles.trim().equals("")) {
+    	  hiveIgnoreList = Arrays.asList(hiveIgnoreFiles.split(","));
+          LOG.info("hive ignore files list:: " + hiveIgnoreList.toString());
+      }else {
+    	  LOG.info("hive ignore files list is empty :: " + hiveIgnoreFiles);
+      }
+      
+      
       for (File file : ExploreUtils.getExploreConfFiles()) {
         String name = file.getName();
-        if (name.equals("logback.xml") || !name.endsWith(".xml")) {
+        if (name.equals("logback.xml") || !name.endsWith(".xml") || (hiveIgnoreList!=null && hiveIgnoreList.contains(name))) {
           continue;
         }
         if (addedFiles.add(name)) {

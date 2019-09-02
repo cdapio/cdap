@@ -28,7 +28,7 @@ import co.cask.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
 import co.cask.cdap.explore.executor.NamespacedExploreQueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.explore.service.hive.Hive14ExploreService;
+import co.cask.cdap.explore.service.hive.Hive31ExploreService;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Throwables;
@@ -110,8 +110,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      // Current version of hive used in standalone is Hive 14
-      bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive14ExploreService.class);
+      // Current version of hive used in standalone is Hive 3.1
+    	
+      bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive31ExploreService.class);
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
