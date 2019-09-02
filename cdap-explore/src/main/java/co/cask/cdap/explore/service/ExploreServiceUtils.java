@@ -22,6 +22,7 @@ import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
+import co.cask.cdap.explore.service.hive.Hive31ExploreService;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.asm.Classes;
 import com.google.common.base.Objects;
@@ -87,8 +88,9 @@ public class ExploreServiceUtils {
     HIVE_1_0(null, Hive14ExploreService.class),
     HIVE_1_1(null, Hive14ExploreService.class),
     HIVE_1_2(null, Hive14ExploreService.class),
-    // Current latest non-CDH version is HIVE_1_2. Need to update HIVE_LATEST when newer non-CDH version is added.
-    HIVE_LATEST(HIVE_1_2);
+    HIVE_3_1(null, Hive31ExploreService.class),
+    // Current latest non-CDH version is HIVE_3_1. Need to update HIVE_LATEST when newer non-CDH version is added.
+    HIVE_LATEST(HIVE_3_1);
 
     private final Pattern hadoopVersionPattern;
     private final Class<? extends ExploreService> hiveExploreServiceClass;
@@ -199,6 +201,8 @@ public class ExploreServiceUtils {
       return HiveSupport.HIVE_1_2;
     } else if (hiveVersion.startsWith(("2.1"))) {
       return HiveSupport.HIVE_1_2;
+    } else if (hiveVersion.startsWith(("3.1"))) {
+      return HiveSupport.HIVE_3_1;
     }
 
     if (useLatestVersionForUnsupported) {

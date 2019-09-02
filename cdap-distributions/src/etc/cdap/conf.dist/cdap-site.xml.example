@@ -1656,4 +1656,9 @@
       <value>http://market.cask.co</value>
     </property>
 
+    <property>
+      <name>hive.ignore.conf.files</name>
+      <value>hivemetastore-site.xml</value>
+    </property>
+
   </configuration>
