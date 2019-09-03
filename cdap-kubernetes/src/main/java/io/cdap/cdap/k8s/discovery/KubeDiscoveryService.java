@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.k8s.discovery;
 
-import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
@@ -43,7 +42,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +69,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeDiscoveryService.class);
 
-  private static final  String SERVICE_LABEL = "cdap.service";
+  private static final String SERVICE_LABEL = "cdap.service";
+  private static final String PAYLOAD_NAME = "cdap.service.payload";
 
   private static final byte[] EMPTY_PAYLOAD = new byte[0];
 
@@ -244,7 +244,12 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     V1Service service = new V1Service();
     V1ObjectMeta meta = new V1ObjectMeta();
     meta.setName(serviceName);
-    meta.setLabels(ImmutableMap.of(SERVICE_LABEL, namePrefix + discoverable.getName()));
+    meta.setLabels(Collections.singletonMap(SERVICE_LABEL, namePrefix + discoverable.getName()));
+
+    byte[] payload = discoverable.getPayload();
+    if (payload != null && payload.length > 0) {
+      meta.setAnnotations(Collections.singletonMap(PAYLOAD_NAME, Base64.getEncoder().encodeToString(payload)));
+    }
 
     // Set the owner reference for GC
     if (!ownerReferences.isEmpty()) {
@@ -304,16 +309,28 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     port.setPort(discoverable.getSocketAddress().getPort());
 
     V1Service service = new V1ServiceBuilder(currentService).build();
+    V1ObjectMeta meta = service.getMetadata();
+
+    // Update payload
+    byte[] payload = discoverable.getPayload();
+    if (payload != null && payload.length > 0) {
+      meta.putAnnotationsItem(PAYLOAD_NAME, Base64.getEncoder().encodeToString(payload));
+    } else if (meta.getAnnotations() != null) {
+      // Remove the PAYLOAD_NAME key from existing annotations
+      Map<String, String> annotations = new HashMap<>(meta.getAnnotations());
+      annotations.remove(PAYLOAD_NAME);
+      meta.setAnnotations(annotations);
+    }
 
     // Update the owner reference for GC
     if (!ownerReferences.isEmpty()) {
-      service.getMetadata().setOwnerReferences(ownerReferences);
+      meta.setOwnerReferences(ownerReferences);
     }
     service.getSpec().setPorts(Collections.singletonList(port));
     service.getSpec().setSelector(podLabels);
 
     try {
-      api.replaceNamespacedService(service.getMetadata().getName(), namespace, service, null, null, null);
+      api.replaceNamespacedService(meta.getName(), namespace, service, null, null, null);
       LOG.info("Service updated in kubernetes with name {} and port {}",
                currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
@@ -381,9 +398,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     @Override
     public void resourceAdded(V1Service service) {
       getServiceDiscovered(service)
-        .ifPresent(s -> s.setDiscoverables(toDiscoverables(s.getName(),
-                                                           service.getMetadata().getName(),
-                                                           service.getSpec().getPorts())));
+        .ifPresent(s -> s.setDiscoverables(toDiscoverables(s.getName(), service)));
     }
 
     @Override
@@ -412,15 +427,23 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
      * Creates a {@link Set} of {@link Discoverable} for the given service.
      *
      * @param name name of the service
-     * @param hostname the hostname of the service inside the Kubernetes cluster
-     * @param servicePorts the list of service ports exposed by the Kubernetes service
+     * @param service the K8s service object for creating the Discoverable
      * @return a {@link Set} of {@link Discoverable}.
      */
-    private Set<Discoverable> toDiscoverables(String name, String hostname,
-                                              Collection<? extends V1ServicePort> servicePorts) {
+    private Set<Discoverable> toDiscoverables(String name, V1Service service) {
+      V1ObjectMeta meta = service.getMetadata();
+      String hostname = meta.getName();
+      List<V1ServicePort> servicePorts = service.getSpec().getPorts();
+
+      // Decode the payload from annotation. If absent, default to empty payload
+      byte[] payload = Optional.ofNullable(meta.getAnnotations())
+        .map(m -> m.get(PAYLOAD_NAME))
+        .map(Base64.getDecoder()::decode)
+        .orElse(EMPTY_PAYLOAD);
+
       // We don't expect there is more than one service port, hence only pick the first one
       return servicePorts.stream()
-        .map(port -> createDiscoverable(name, hostname, port))
+        .map(port -> createDiscoverable(name, hostname, port, payload))
         .filter(Objects::nonNull)
         .findFirst()
         .map(Collections::singleton)
@@ -436,12 +459,12 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
      * @return a {@link Discoverable}
      */
     @Nullable
-    private Discoverable createDiscoverable(String name, String hostname, V1ServicePort servicePort) {
+    private Discoverable createDiscoverable(String name, String hostname, V1ServicePort servicePort, byte[] payload) {
       Integer port = servicePort.getPort();
       if (port == null) {
         return null;
       }
-      return new Discoverable(name, InetSocketAddress.createUnresolved(hostname, port), EMPTY_PAYLOAD);
+      return new Discoverable(name, InetSocketAddress.createUnresolved(hostname, port), payload);
     }
   }
 }
