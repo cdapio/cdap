@@ -20,7 +20,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.security.tools.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;

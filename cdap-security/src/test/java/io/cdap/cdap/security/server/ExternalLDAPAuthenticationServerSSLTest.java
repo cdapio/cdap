@@ -23,7 +23,7 @@ import com.unboundid.util.ssl.TrustAllTrustManager;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.security.tools.HttpsEnabler;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
