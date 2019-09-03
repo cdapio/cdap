@@ -17,16 +17,15 @@
 package io.cdap.cdap.common.service;
 
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -104,29 +103,11 @@ public final class ServiceDiscoverable {
       return null;
     }
 
-    InetSocketAddress address = discoverable.getSocketAddress();
-    boolean ssl = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload());
-    return createServiceBaseURL(address.getHostName(), address.getPort(), ssl, programId);
-  }
-
-  /**
-   * Creates a base {@link URL} for calling user service.
-   *
-   * @param host hostname of the router
-   * @param port port of the router
-   * @param ssl {@code true} true to use SSL, {@code false} otherwise.
-   * @param programId the program id of the user service.
-   * @return a {@link URL} that serves as the base URL
-   */
-  public static URL createServiceBaseURL(String host, int port, boolean ssl, ProgramId programId) {
-    String scheme = ssl ? Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    String path = String.format("%s%s:%d%s/namespaces/%s/apps/%s/%s/%s/methods/", scheme,
-                                host, port,
-                                Constants.Gateway.API_VERSION_3, programId.getNamespace(),
-                                programId.getApplication(), programId.getType().getCategoryName(),
-                                programId.getProgram());
     try {
-      return new URL(path);
+      return URIScheme.createURI(discoverable, "%s/namespaces/%s/apps/%s/%s/%s/methods/",
+                                 Constants.Gateway.API_VERSION_3_TOKEN, programId.getNamespace(),
+                                 programId.getApplication(), programId.getType().getCategoryName(),
+                                 programId.getProgram()).toURL();
     } catch (MalformedURLException e) {
       // This shouldn't happen
       LOG.error("Got exception while creating serviceURL", e);

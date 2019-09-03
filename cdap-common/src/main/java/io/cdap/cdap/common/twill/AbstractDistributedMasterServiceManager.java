@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Futures;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -36,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -151,14 +151,11 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
 
   @Override
   public boolean isServiceAvailable() {
-    String url = null;
+    URL url = null;
     try {
       Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(getDiscoverableName());
       for (Discoverable discoverable : discoverables) {
-        String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-          Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-        url = String.format("%s%s:%d/ping", scheme, discoverable.getSocketAddress().getHostName(),
-                            discoverable.getSocketAddress().getPort());
+        url = URIScheme.createURI(discoverable, "/ping").toURL();
         //Ping the discovered service to check its status.
         if (checkGetStatus(url).equals(HttpResponseStatus.OK)) {
           return true;
@@ -177,10 +174,10 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
     return serviceName;
   }
 
-  protected final HttpResponseStatus checkGetStatus(String url) throws Exception {
+  private HttpResponseStatus checkGetStatus(URL url) throws Exception {
     HttpURLConnection httpConn = null;
     try {
-      httpConn = (HttpURLConnection) new URL(url).openConnection();
+      httpConn = (HttpURLConnection) url.openConnection();
       httpConn.setConnectTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
       httpConn.setReadTimeout((int) SERVICE_PING_RESPONSE_TIMEOUT);
       return (HttpResponseStatus.valueOf(httpConn.getResponseCode()));

@@ -21,13 +21,13 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -42,7 +42,6 @@ import io.cdap.http.HandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +160,7 @@ public class AppFabricServer extends AbstractIdleService {
       httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_SSL_PORT));
 
       String password = KeyStores.generateRandomPassword();
-      KeyStore ks = KeyStores.generatedCertKeyStore(sConf, password);
+      KeyStore ks = KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password);
       new HttpsEnabler().setKeyStore(ks, password::toCharArray).enable(httpServiceBuilder);
     } else {
       httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
@@ -194,14 +193,14 @@ public class AppFabricServer extends AbstractIdleService {
     LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
 
     // Tag the discoverable's payload to mark it as supporting ssl.
-    byte[] sslPayload = sslEnabled ? Constants.Security.SSL_URI_SCHEME.getBytes() : Bytes.EMPTY_BYTE_ARRAY;
+    URIScheme uriScheme = sslEnabled ? URIScheme.HTTPS : URIScheme.HTTP;
     // TODO accept a list of services, and start them here
     // When it is running, register it with service discovery
 
     final List<Cancellable> cancellables = new ArrayList<>();
     for (final String serviceName : servicesNames) {
-      cancellables.add(discoveryService.register(ResolvingDiscoverable.of(
-        new Discoverable(serviceName, socketAddress, sslPayload))));
+      cancellables.add(discoveryService.register(
+        ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
     }
 
     return new Cancellable() {

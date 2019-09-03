@@ -20,6 +20,7 @@ import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.Channels;
 import io.cdap.cdap.gateway.router.RouterServiceLookup;
 import io.netty.bootstrap.Bootstrap;
@@ -59,7 +60,6 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -76,7 +76,6 @@ import javax.net.ssl.SSLException;
 public class HttpRequestRouter extends ChannelDuplexHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpRequestRouter.class);
-  private static final byte[] HTTPS_SCHEME_BYTES = Constants.Security.SSL_URI_SCHEME.getBytes();
 
   private final CConfiguration cConf;
   private final RouterServiceLookup serviceLookup;
@@ -408,7 +407,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
      */
     @Nullable
     private SslHandler getSslHandler(Discoverable discoverable, ByteBufAllocator alloc) throws SSLException {
-      if (!Arrays.equals(HTTPS_SCHEME_BYTES, discoverable.getPayload())) {
+      if (!URIScheme.HTTPS.isMatch(discoverable)) {
         return null;
       }
       SslContext context = sslContext;

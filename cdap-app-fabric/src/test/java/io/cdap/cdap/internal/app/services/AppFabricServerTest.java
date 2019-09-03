@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.security.server.LDAPLoginModule;
@@ -83,7 +84,7 @@ public class AppFabricServerTest {
         ::get;
       Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
       Assert.assertNotNull(discoverable);
-      Assert.assertArrayEquals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload());
+      Assert.assertTrue(URIScheme.HTTPS.isMatch(discoverable));
       InetSocketAddress addr = discoverable.getSocketAddress();
       // Since the server uses a self signed certificate we need a client that trusts all certificates
       SSLSocket socket = (SSLSocket) LDAPLoginModule.TrustAllSSLSocketFactory.getDefault()

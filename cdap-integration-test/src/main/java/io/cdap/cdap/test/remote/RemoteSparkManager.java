@@ -22,6 +22,7 @@ import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.UnauthenticatedException;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -74,8 +76,11 @@ public class RemoteSparkManager extends AbstractProgramManager<SparkManager> imp
       }, timeout, timeoutUnit);
 
       ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
-      return ServiceDiscoverable.createServiceBaseURL(connectionConfig.getHostname(), connectionConfig.getPort(),
-                                                      connectionConfig.isSSLEnabled(), programId);
+      URIScheme scheme = connectionConfig.isSSLEnabled() ? URIScheme.HTTPS : URIScheme.HTTP;
+
+      return ServiceDiscoverable.createServiceBaseURL(
+        scheme.createDiscoverable("spark", new InetSocketAddress(connectionConfig.getHostname(),
+                                                                 connectionConfig.getPort())), programId);
     } catch (TimeoutException e) {
       return null;
     } catch (Exception e) {

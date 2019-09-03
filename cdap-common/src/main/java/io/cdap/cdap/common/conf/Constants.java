@@ -19,10 +19,14 @@ package io.cdap.cdap.common.conf;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.apache.twill.discovery.Discoverable;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -939,6 +943,8 @@ public final class Constants {
    * Security configuration.
    */
   public static final class Security {
+
+
     /** Enables security. */
     public static final String ENABLED = "security.enabled";
     /** Enables Kerberos authentication. */
@@ -981,9 +987,6 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Key to mark a discoverable which supports ssl */
-    public static final String SSL_URI_SCHEME = "https://";
-    public static final String URI_SCHEME = "http://";
     /** Configuration for specifying keytab location. The location will contain ${name} which will be replaced
      * by the user/owner of the entities name. */
     public static final String KEYTAB_PATH = "security.keytab.path";
