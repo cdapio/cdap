@@ -67,12 +67,12 @@
       <artifactId>cdap-runtime-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>

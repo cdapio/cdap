@@ -127,13 +127,13 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-hbase-compat-base</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-testing-util</artifactId>
@@ -145,7 +145,7 @@
       <scope>test</scope>
     </dependency>
     <!-- This is for bringing in logback-test.xml -->
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
@@ -157,7 +157,7 @@
       <artifactId>cdap-common-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
+    </dependency>-->
   </dependencies>
 
   <build>

@@ -29,7 +29,7 @@ the License.
   <name>CDAP App Fabric Tests</name>
 
   <dependencies>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
@@ -100,7 +100,7 @@ the License.
       <artifactId>cdap-hbase-compat-2.0</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
+    </dependency>-->
     <!-- For DynamicPartitionerWithAvroTest -->
     <dependency>
       <groupId>org.apache.avro</groupId>

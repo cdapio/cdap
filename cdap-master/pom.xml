@@ -196,7 +196,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-hbase-compat-2.0</artifactId>
       <version>${project.version}</version>
@@ -215,7 +215,7 @@
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>
+    </dependency>-->
   </dependencies>
 
   <profiles>

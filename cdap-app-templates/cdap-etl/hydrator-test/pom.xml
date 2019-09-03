@@ -51,11 +51,11 @@
       <artifactId>cdap-formats</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency>-->
   </dependencies>
 
 </project>

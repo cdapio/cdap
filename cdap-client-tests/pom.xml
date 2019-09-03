@@ -55,7 +55,7 @@ the License.
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
@@ -85,7 +85,7 @@ the License.
       <artifactId>cdap-common-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
+    </dependency>-->
     <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-standalone</artifactId>

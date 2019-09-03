@@ -95,7 +95,7 @@
       <version>${spark2.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-unit-test-spark2_2.11</artifactId>
       <version>${project.version}</version>
@@ -110,7 +110,7 @@
           <artifactId>hive-exec</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

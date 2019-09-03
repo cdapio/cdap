@@ -2726,7 +2726,7 @@
     <!--
       This profile contains modules that only has tests.
     -->
-    <profile>
+    <!--<profile>
       <id>unit-tests</id>
       <activation>
         <jdk>[1.7,)</jdk>
@@ -2739,7 +2739,7 @@
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>
       </modules>
-    </profile>
+    </profile>-->
 
     <!--
        This profile defines all default modules and must come as the last profile.
@@ -2787,8 +2787,8 @@
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>
         <module>cdap-explore</module>
-        <module>cdap-unit-test</module>
-        <module>cdap-unit-test-spark2_2.11</module>
+        <!--<module>cdap-unit-test</module>
+        <module>cdap-unit-test-spark2_2.11</module>-->
         <module>cdap-kms</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>
@@ -2804,8 +2804,8 @@
         <module>cdap-standalone</module>
         <module>cdap-distributions</module>
         <module>cdap-archetypes</module>
-        <module>cdap-test</module>
-        <module>cdap-integration-test</module>
+        <!--<module>cdap-test</module>
+        <module>cdap-integration-test</module>-->
         <module>cdap-ui</module>
       </modules>
     </profile>

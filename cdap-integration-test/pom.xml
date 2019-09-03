@@ -38,7 +38,7 @@
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
@@ -48,7 +48,7 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-test</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-gateway</artifactId>
@@ -80,12 +80,12 @@
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-spark-core2_2.11</artifactId>
@@ -98,11 +98,11 @@
       <artifactId>junit</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common-unit-test</artifactId>
       <version>${project.version}</version>
-    </dependency>
+    </dependency>-->
 
   </dependencies>
 
