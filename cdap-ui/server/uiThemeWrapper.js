@@ -18,8 +18,8 @@ const log4js = require('log4js'),
   path = require('path'),
   objectQuery = require('lodash/get'),
   fs = require('fs'),
-  DIST_PATH = path.normalize(__dirname + '/../dist'),
-  CDAP_DIST_PATH = path.normalize(__dirname + '/../cdap_dist');
+  DIST_PATH = path.normalize(__dirname + '/public/dist'),
+  CDAP_DIST_PATH = path.normalize(__dirname + '/public/cdap_dist');
 const log = log4js.getLogger('default');
 const uiThemePropertyName = 'ui.theme.file';
 
@@ -91,7 +91,7 @@ function extractUITheme(cdapConfig, uiThemePath) {
 }
 
 function getFaviconPath(uiThemeConfig) {
-  let faviconPath = DIST_PATH + '/assets/img/favicon.png';
+  let faviconPath = CDAP_DIST_PATH + '/img/favicon.png';
   let themeFaviconPath = objectQuery(uiThemeConfig, ['content', 'favicon-path']);
   if (themeFaviconPath) {
     // If absolute path no need to modify as require'ing absolute path should

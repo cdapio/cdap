@@ -17,7 +17,7 @@
 var session = require('./token');
 function testLocally() {
   const fakeCDAPConfig = {
-    'session.secret.key.path': '/tmp/secret.file',
+    'session.secret.key': 'secret-key-for-encryption',
   };
   const token = session.generateToken(fakeCDAPConfig, console, 'Bearer 1111');
   const isTokenValid = session.validateToken(token, fakeCDAPConfig, console, 'Bearer 1111');

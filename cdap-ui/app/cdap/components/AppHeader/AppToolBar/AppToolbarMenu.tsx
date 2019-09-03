@@ -39,6 +39,7 @@ interface IAppToolbarState {
   anchorEl: EventTarget | null;
   aboutPageOpen: boolean;
   accessTokenModalOpen: boolean;
+  username?: string;
 }
 const styles = (theme) => ({
   root: {
@@ -106,6 +107,7 @@ class AppToolbarMenu extends React.Component<IAppToolbarMenuProps, IAppToolbarSt
     } else {
       this.setState({
         anchorEl: event.currentTarget,
+        username: NamespaceStore.getState().username,
       });
     }
   };
@@ -183,8 +185,7 @@ class AppToolbarMenu extends React.Component<IAppToolbarMenuProps, IAppToolbarSt
                         >
                           <IconSVG name="icon-user" />
                           <a className={`${classes.usernameStyles} ${classes.linkStyles} truncate`}>
-                            {/* {this.state.username} */}
-                            asfjkbsdkljfbsldkjbglkjsdfbgkljsnlkjsnlkjsdnfkjsdngljksf
+                            {this.state.username}
                           </a>
                         </MenuItem>
                         <MenuItem

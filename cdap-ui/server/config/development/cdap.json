@@ -11,5 +11,6 @@
   "enable.preview": "true",
   "dashboard.router.check.timeout.secs": "0",
   "market.base.url": "https://hub.cdap.io/dev/v2",
-  "ui.theme.file": "config/themes/default.json"
+  "ui.theme.file": "config/themes/default.json",
+  "session.secret.key": "sample-secret-key-for-encryption"
 }

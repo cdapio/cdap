@@ -97,6 +97,7 @@ describe('Creating a pipeline', () => {
     cy.url({ timeout: 60000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
     cy.contains(TEST_PIPELINE_NAME);
     cy.contains('FileDelete');
+    cy.wait(5000);
     cy.get('.pipeline-configure-btn', { timeout: 60000 }).click();
     cy.get('[data-cy="tab-head-Pipeline config"]').click();
     cy.get('.label-with-toggle')
