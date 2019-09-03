@@ -34,13 +34,6 @@
 
     <!-- log levels for CDAP classes -->
     <logger name="io.cdap.cdap" level="DEBUG" />
-    <logger name="io.cdap.cdap.app.runtime.spark.SparkProgramRunner" level="TRACE"/>
-    <logger name="io.cdap.cdap.internal.app.runtime.AbstractProgramController" level="TRACE"/>
-    <logger name="io.cdap.cdap.internal.provision.ProvisioningService" level="TRACE"/>
-    <logger name="io.cdap.cdap.metadata" level="TRACE"/>
-    <logger name="io.cdap.cdap.data2.metadata" level="TRACE"/>
-    <logger name="io.cdap.cdap.data2.metadata.lineage" level="DEBUG"/>
-    <logger name="io.cdap.cdap.internal.profile" level="TRACE"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
