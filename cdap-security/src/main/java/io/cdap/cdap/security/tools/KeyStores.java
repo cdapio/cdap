@@ -21,36 +21,35 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.twill.filesystem.Location;
-import sun.security.x509.AlgorithmId;
-import sun.security.x509.CertificateAlgorithmId;
-import sun.security.x509.CertificateIssuerName;
-import sun.security.x509.CertificateSerialNumber;
-import sun.security.x509.CertificateSubjectName;
-import sun.security.x509.CertificateValidity;
-import sun.security.x509.CertificateVersion;
-import sun.security.x509.CertificateX509Key;
-import sun.security.x509.X500Name;
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.security.SignatureException;
+import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.function.Supplier;
@@ -78,7 +77,7 @@ public final class KeyStores {
 
      All fields are not required.
     */
-  static final String DISTINGUISHED_NAME = "CN=CDAP, L=Palo Alto, C=US";
+  static final String DISTINGUISHED_NAME = "CN=CDAP,L=Palo Alto,C=US";
   static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
   static final String CERT_ALIAS = "cert";
   private static final int KEY_SIZE = 2048;
@@ -110,7 +109,7 @@ public final class KeyStores {
       // generate a key pair
       KeyPair pair = keyGen.generateKeyPair();
 
-      X509Certificate cert = getCertificate(DISTINGUISHED_NAME, pair, validityDays, SIGNATURE_ALGORITHM);
+      Certificate cert = getCertificate(DISTINGUISHED_NAME, pair, validityDays, SIGNATURE_ALGORITHM);
 
       KeyStore keyStore = KeyStore.getInstance(SSL_KEYSTORE_TYPE);
       keyStore.load(null, password.toCharArray());
@@ -191,47 +190,35 @@ public final class KeyStores {
    * @param algorithm Name of the signature algorithm used.
    * @return A X.509 certificate
    */
-  private static X509Certificate getCertificate(String dn, KeyPair pair, int days, String algorithm) throws IOException,
-    CertificateException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-    // Calculate the validity interval of the certificate
-    Date from = new Date();
-    Date to = DateUtils.addDays(from, days);
-    CertificateValidity interval = new CertificateValidity(from, to);
-    // Generate a random number to use as the serial number for the certificate
-    BigInteger sn = new BigInteger(64, new SecureRandom());
-    // Create the name of the owner based on the provided distinguished name
-    X500Name owner = new X500Name(dn);
-    // Create an info objects with the provided information, which will be used to create the certificate
-    X509CertInfo info = new X509CertInfo();
-    info.set(X509CertInfo.VALIDITY, interval);
-    info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
-    // In java 7, subject is of type CertificateSubjectName and issuer is of type CertificateIssuerName.
-    // These were changed to X500Name in Java8. So looking at the field type before setting them.
-    // This certificate will be self signed, hence the subject and the issuer are same.
-    Field subjectField = null;
+  private static Certificate getCertificate(String dn, KeyPair pair, int days, String algorithm)
+    throws IOException, OperatorCreationException, CertificateException {
+
+    BouncyCastleProvider provider = new BouncyCastleProvider();
+    int addedIdx = Security.addProvider(provider);
+
     try {
-      subjectField = info.getClass().getDeclaredField("subject");
-      if (subjectField.getType().equals(X500Name.class)) {
-        info.set(X509CertInfo.SUBJECT, owner);
-        info.set(X509CertInfo.ISSUER, owner);
-      } else {
-        info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
-        info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
+      // Calculate the validity interval of the certificate
+      Date from = new Date();
+      Date to = DateUtils.addDays(from, days);
+      // Generate a random number to use as the serial number for the certificate
+      BigInteger sn = new BigInteger(64, new SecureRandom());
+      // Create the name of the owner based on the provided distinguished name
+      X500Name owner = new X500Name(dn);
+      // Create an info objects with the provided information, which will be used to create the certificate
+
+      SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(pair.getPublic().getEncoded());
+      AsymmetricKeyParameter privateKeyParam = PrivateKeyFactory.createKey(pair.getPrivate().getEncoded());
+      AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find(algorithm);
+      AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+      ContentSigner signer = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(privateKeyParam);
+
+      X509CertificateHolder certHolder = new X509v3CertificateBuilder(owner, sn, from, to,
+                                                                      owner, publicKeyInfo).build(signer);
+      return new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+    } finally {
+      if (addedIdx != -1) {
+        Security.removeProvider(provider.getName());
       }
-    } catch (NoSuchFieldException e) {
-      // Trying to set it to Java 8 types. If one of the underlying fields has changed then this will throw a
-      // CertificateException which is handled by the caller.
-      info.set(X509CertInfo.SUBJECT, owner);
-      info.set(X509CertInfo.ISSUER, owner);
     }
-    info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
-    info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-    AlgorithmId algo = new AlgorithmId(AlgorithmId.sha1WithRSAEncryption_oid);
-    info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
-    // Create the certificate and sign it with the private key
-    X509CertImpl cert = new X509CertImpl(info);
-    PrivateKey privateKey = pair.getPrivate();
-    cert.sign(privateKey, algorithm);
-    return cert;
   }
 }
