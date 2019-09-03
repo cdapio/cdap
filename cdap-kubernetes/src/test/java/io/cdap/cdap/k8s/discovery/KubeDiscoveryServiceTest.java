@@ -93,7 +93,7 @@ public class KubeDiscoveryServiceTest {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-test-service", "default", deleteOptions, null, null, null, null);
+      api.deleteNamespacedService("cdap-test-test-service", "default", null, deleteOptions, null, null, null, null);
     }
   }
 }

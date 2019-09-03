@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
 
   <properties>
-    <k8s.version>3.0.0</k8s.version>
+    <k8s.version>6.0.1</k8s.version>
     <!-- Needs to define the gson and guava versions to override the one from dependency management in cdap pom.xml -->
     <gson.version>2.6.2</gson.version>
     <guava.version>25.1-jre</guava.version>
