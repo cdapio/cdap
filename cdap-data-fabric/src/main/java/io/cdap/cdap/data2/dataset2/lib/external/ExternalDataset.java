@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.dataset2.lib.external;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.annotation.ReadOnly;
+import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -82,5 +83,14 @@ public class ExternalDataset implements Dataset, InputFormatProvider, OutputForm
   @ReadOnly
   public void recordRead() {
     // Nothing to do, the platform will record the access based on the @ReadOnly annotation
+  }
+
+  /**
+   * Record write access to this dataset. This method does nothing, but the
+   * @WriteOnly annotation causes recording of a write access to this dataset.
+   */
+  @WriteOnly
+  public void recordWrite() {
+    // Nothing to do, the platform will record the access based on the @WriteOnly annotation
   }
 }

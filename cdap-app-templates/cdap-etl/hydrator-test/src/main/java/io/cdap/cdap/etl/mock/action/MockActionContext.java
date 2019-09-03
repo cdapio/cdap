@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.mock.action;
 
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
@@ -27,11 +28,13 @@ import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
+import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.mock.common.MockArguments;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -226,5 +229,14 @@ public class MockActionContext implements ActionContext {
   public void record(List<FieldOperation> fieldOperations) {
     // no-op
   }
-}
 
+  @Override
+  public void registerLineage(String referenceName, AccessType accessType) {
+    // no-op
+  }
+
+  @Override
+  public void record(Collection<? extends Operation> operations) {
+    // no-op
+  }
+}

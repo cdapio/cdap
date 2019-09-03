@@ -85,6 +85,8 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.BasicMessagingAdmin;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.metadata.FieldLineageAdmin;
+import io.cdap.cdap.metadata.LineageAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataService;
@@ -194,6 +196,8 @@ public class TestBase {
   private static MetadataSubscriberService metadataSubscriberService;
   private static MetadataStorage metadataStorage;
   private static MetadataAdmin metadataAdmin;
+  private static FieldLineageAdmin fieldLineageAdmin;
+  private static LineageAdmin lineageAdmin;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -351,6 +355,8 @@ public class TestBase {
     messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
     previewManager = injector.getInstance(PreviewManager.class);
+    fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
+    lineageAdmin = injector.getInstance(LineageAdmin.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
@@ -952,6 +958,20 @@ public class TestBase {
    */
   protected static PreviewManager getPreviewManager() {
     return previewManager;
+  }
+
+  /**
+   * Returns a {@link FieldLineageAdmin to interact with field lineage.
+   */
+  protected static FieldLineageAdmin getFieldLineageAdmin() {
+    return fieldLineageAdmin;
+  }
+
+  /**
+   * Returns a {@link LineageAdmin to interact with field lineage.
+   */
+  protected static LineageAdmin getLineageAdmin() {
+    return lineageAdmin;
   }
 
   /**

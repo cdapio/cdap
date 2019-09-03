@@ -22,6 +22,7 @@ import io.cdap.cdap.api.SchedulableProgramContext;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.lineage.field.LineageRecorder;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
@@ -34,7 +35,7 @@ import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
  */
 public interface CustomActionContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, Transactional,
   WorkflowInfoProvider, PluginContext, SecureStore, ServiceDiscoverer, MessagingContext, MetadataReader,
-  MetadataWriter {
+  MetadataWriter, LineageRecorder {
 
   /**
    * Return the specification of the custom action.
