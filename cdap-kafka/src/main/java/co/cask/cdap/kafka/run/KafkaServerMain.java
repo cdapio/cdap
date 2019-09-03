@@ -166,7 +166,7 @@ public class KafkaServerMain extends DaemonMain {
   private static int generateBrokerId(InetAddress address) {
     LOG.info("Generating broker ID with address {}", address);
     try {
-      return Math.abs(InetAddresses.coerceToInteger(address));
+      return Math.abs(InetAddresses.coerceToInteger(address)) % 1000;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
