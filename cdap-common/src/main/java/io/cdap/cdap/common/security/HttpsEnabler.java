@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.common.security;
 
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.http.NettyHttpService;
 import io.cdap.http.SSLHandlerFactory;
 import io.netty.buffer.ByteBufAllocator;
@@ -24,6 +27,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -46,6 +50,46 @@ public final class HttpsEnabler {
   private KeyManagerFactory keyManagerFactory;
   private TrustManagerFactory trustManagerFactory;
   private volatile SSLSocketFactory sslSocketFactory;
+
+  /**
+   * Configures keystore to use based on the given configurations. This method is intended for service to use
+   * to enable https server.
+   *
+   * @param cConf the configuration for looking up certificate location
+   * @param sConf the security configuration for looking up certificate password
+   * @return this instance
+   */
+  public synchronized HttpsEnabler configureKeyStore(CConfiguration cConf, SConfiguration sConf) {
+    String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
+
+    String password = path == null
+      ? KeyStores.generateRandomPassword()
+      : sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, "");
+    KeyStore keyStore = path == null
+      ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
+      : KeyStores.createKeyStore(Paths.get(path), password);
+
+    return setKeyStore(keyStore, password::toCharArray);
+  }
+
+  /**
+   * Configures a trust store to use based on the given configuration. This method is intended for client to use
+   * to trust a https service configured with the same configuration. If there is no certificate information
+   * in the given configurations, no trust store will be configured.
+   *
+   * @param cConf the configuration for looking up certificate location
+   * @param sConf the security configuration for looking up certificate password
+   * @return this instance
+   */
+  public synchronized HttpsEnabler configureTrustStore(CConfiguration cConf, SConfiguration sConf) {
+    String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
+    if (path == null) {
+      return this;
+    }
+
+    return setTrustStore(KeyStores.createTrustStore(
+      KeyStores.createKeyStore(Paths.get(path), sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, ""))));
+  }
 
   /**
    * Sets the keystore to use for encryption.

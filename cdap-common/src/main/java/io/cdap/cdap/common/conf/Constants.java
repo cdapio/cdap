@@ -1004,6 +1004,10 @@ public final class Constants {
       public static final String KEYSTORE_PASSWORD = "ssl.internal.keystore.password";
       /** Validity of the self generated certificate in days */
       public static final String CERT_VALIDITY = "ssl.internal.cert.validity";
+      /** File path to certificate file in PEM format. */
+      public static final String INTERNAL_CERT_PATH = "ssl.internal.cert.path";
+      /** Password for the SSL certificate. */
+      public static final String INTERNAL_CERT_PASSWORD = "ssl.internal.cert.password";
     }
 
     /**

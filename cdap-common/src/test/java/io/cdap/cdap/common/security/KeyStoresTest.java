@@ -16,28 +16,48 @@
 
 package io.cdap.cdap.common.security;
 
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.crypto.util.OpenSSHPrivateKeyUtil;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMEncryptor;
+import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
+import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
 
 public class KeyStoresTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final String CERTIFICATE_TYPE = "X.509";
   private static final String SSL_PASSWORD = "pass";
 
   @Test
   public void testGetSSLKeyStore() throws Exception {
     SConfiguration sConf = SConfiguration.create();
-    sConf.set(Constants.Security.SSL.KEYSTORE_PASSWORD, SSL_PASSWORD);
-    KeyStore ks = KeyStores.generatedCertKeyStore(sConf, SSL_PASSWORD);
+    KeyStore ks = KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, SSL_PASSWORD);
     Assert.assertEquals(KeyStores.SSL_KEYSTORE_TYPE, ks.getType());
     Assert.assertEquals(KeyStores.CERT_ALIAS, ks.aliases().nextElement());
     Assert.assertEquals(1, ks.size());
@@ -68,5 +88,55 @@ public class KeyStoresTest {
       Assert.assertNotNull(trustStore.getCertificate(alias));
       Assert.assertNull(trustStore.getKey(alias, password.toCharArray()));
     }
+  }
+
+  /**
+   * Testing creation of {@link KeyStore} from PEM file.
+   */
+  @Test
+  public void testPEMToKeyStore() throws Exception {
+    // Write out PEM file. First without password for the key, then with password
+    for (String password : new String[] { "", "testing" }) {
+      // Generate a keystore and write out PEM blocks
+      KeyStore keystore = KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password);
+      Key key = keystore.getKey(KeyStores.CERT_ALIAS, password.toCharArray());
+
+      File pemFile = writePEMFile(TEMP_FOLDER.newFile(), keystore, KeyStores.CERT_ALIAS, password);
+
+      // Create a keystore from the PEM file
+      KeyStore keystore2 = KeyStores.createKeyStore(pemFile.toPath(), password);
+      Assert.assertEquals(key, keystore2.getKey(KeyStores.CERT_ALIAS, password.toCharArray()));
+      Assert.assertEquals(keystore.getCertificate(KeyStores.CERT_ALIAS),
+                          keystore2.getCertificate(KeyStores.CERT_ALIAS));
+    }
+  }
+
+  /**
+   * Writes a private key and certificate pair from a KeyStore to the given PEM file.
+   */
+  static File writePEMFile(File pemFile, KeyStore keyStore, String alias, String password) throws Exception {
+    Key key = keyStore.getKey(alias, password.toCharArray());
+    Certificate certificate = keyStore.getCertificate(alias);
+
+    try (PemWriter writer = new PemWriter(new FileWriter(pemFile))) {
+      // Write out the key
+      PrivateKeyInfo pki = PrivateKeyInfo.getInstance(new ASN1InputStream(
+        new ByteArrayInputStream(key.getEncoded())).readObject());
+      byte[] encodedKey = OpenSSHPrivateKeyUtil.encodePrivateKey(PrivateKeyFactory.createKey(pki));
+
+      PEMEncryptor encryptor = null;
+      if (!password.isEmpty()) {
+        encryptor = new JcePEMEncryptorBuilder("AES-128-CBC")
+          .setProvider(new BouncyCastleProvider())
+          .setSecureRandom(new SecureRandom())
+          .build(password.toCharArray());
+      }
+      writer.writeObject(new JcaMiscPEMGenerator(key, encryptor));
+
+      // Write out the certificates
+      writer.writeObject(new PemObject("CERTIFICATE", certificate.getEncoded()));
+    }
+
+    return pemFile;
   }
 }
