@@ -33,14 +33,6 @@
 
     <!-- log levels for CDAP classes -->
     <logger name="io.cdap.cdap" level="DEBUG" />
-    <logger name="io.cdap.cdap.app.runtime.spark.SparkProgramRunner" level="TRACE"/>
-    <logger name="io.cdap.cdap.data2.datafabric.dataset.DatasetServiceClient" level="TRACE"/>
-    <logger name="io.cdap.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler" level="TRACE"/>
-    <logger name="io.cdap.cdap.data2.datafabric.dataset.service.DatasetInstanceService" level="TRACE"/>
-    <logger name="io.cdap.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor" level="TRACE"/>
-    <logger name="io.cdap.cdap.explore" level="TRACE"/>
-    <logger name="io.cdap.cdap.hive" level="DEBUG"/>
-    <logger name="io.cdap.cdap.internal.app.runtime.AbstractProgramController" level="TRACE"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
