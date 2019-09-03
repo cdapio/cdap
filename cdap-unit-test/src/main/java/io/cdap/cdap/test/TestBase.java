@@ -61,6 +61,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.utils.OSDetector;
@@ -123,6 +124,9 @@ import io.cdap.cdap.test.internal.ApplicationManagerFactory;
 import io.cdap.cdap.test.internal.ArtifactManagerFactory;
 import io.cdap.cdap.test.internal.DefaultApplicationManager;
 import io.cdap.cdap.test.internal.DefaultArtifactManager;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -968,5 +972,13 @@ public class TestBase {
    */
   protected static void deleteAllApplications(NamespaceId namespaceId) throws Exception {
     getTestManager().deleteAllApplications(namespaceId);
+  }
+
+
+  /**
+   * Executes the given {@link HttpRequest}.
+   */
+  protected final HttpResponse executeHttp(HttpRequest request) throws IOException {
+    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
   }
 }

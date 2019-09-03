@@ -21,6 +21,7 @@ import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.app.PingService;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.MetricsTags;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.MetricQueryResult;
@@ -78,7 +79,8 @@ public class MetricsClientTestRun extends ClientTestBase {
       URL serviceURL = serviceClient.getServiceURL(service);
       URL pingURL = new URL(serviceURL, "ping");
 
-      HttpResponse response = HttpRequests.execute(HttpRequest.get(pingURL).build());
+      HttpResponse response = HttpRequests.execute(HttpRequest.get(pingURL).build(),
+                                                   new DefaultHttpRequestConfig(false));
       Assert.assertEquals(200, response.getResponseCode());
 
       Tasks.waitFor(true, () ->

@@ -26,6 +26,7 @@ import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -151,7 +152,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
     int iterations = 0;
     HttpResponse response;
     do {
-      response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, serviceURL).build());
+      response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, serviceURL).build(),
+                                      new DefaultHttpRequestConfig(false));
       if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
         return response;
       }

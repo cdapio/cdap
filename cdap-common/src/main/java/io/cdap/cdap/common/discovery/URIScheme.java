@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.discovery;
 
+import io.cdap.http.NettyHttpService;
 import org.apache.twill.discovery.Discoverable;
 
 import java.net.InetSocketAddress;
@@ -34,6 +35,9 @@ public enum URIScheme {
   private final String scheme;
   private final byte[] discoverablePayload;
 
+  /**
+   * Returns the {@link URIScheme} based on the given {@link Discoverable} payload.
+   */
   public static URIScheme getScheme(Discoverable discoverable) {
     for (URIScheme scheme : values()) {
       if (scheme.isMatch(discoverable)) {
@@ -45,13 +49,24 @@ public enum URIScheme {
   }
 
   /**
+   * Creates a {@link Discoverable} for the given service name that represents the given {@link NettyHttpService}.
+   */
+  public static Discoverable createDiscoverable(String serviceName, NettyHttpService httpService) {
+    URIScheme scheme = httpService.isSSLEnabled() ? HTTPS : HTTP;
+    return scheme.createDiscoverable(serviceName, httpService.getBindAddress());
+  }
+
+  /**
    * Creates a {@link URI} based on the scheme from the given {@link Discoverable}.
    */
   public static URI createURI(Discoverable discoverable, String pathFmt, Object...objs) {
     String scheme = getScheme(discoverable).scheme;
     InetSocketAddress address = discoverable.getSocketAddress();
-    return URI.create(String.format("%s://%s:%d/%s", scheme, address.getHostName(),
-                                    address.getPort(), String.format(pathFmt, objs)));
+    String path = String.format(pathFmt, objs);
+    if (path.startsWith("/")) {
+      path = path.substring(1);
+    }
+    return URI.create(String.format("%s://%s:%d/%s", scheme, address.getHostName(), address.getPort(), path));
   }
 
 

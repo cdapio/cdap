@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.explore.service;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -26,7 +27,9 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.ExploreProperties;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
+import io.cdap.cdap.explore.jdbc.ExploreConnectionParams;
 import io.cdap.cdap.explore.jdbc.ExploreDriver;
 import io.cdap.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import io.cdap.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
@@ -60,7 +63,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -620,9 +625,15 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
     Assert.assertNotNull(discoverable);
     InetSocketAddress addr = discoverable.getSocketAddress();
-    String serviceUrl = String.format("%s%s:%d?namespace=%s",
+    Map<String, String> params = new HashMap<>();
+    params.put(ExploreConnectionParams.Info.NAMESPACE.getName(), NAMESPACE_ID.getNamespace());
+    params.put(ExploreConnectionParams.Info.SSL_ENABLED.getName(),
+               Boolean.toString(URIScheme.HTTPS.isMatch(discoverable)));
+    params.put(ExploreConnectionParams.Info.VERIFY_SSL_CERT.getName(), Boolean.toString(false));
+
+    String serviceUrl = String.format("%s%s:%d?%s",
                                       Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort(),
-                                      NAMESPACE_ID.getNamespace());
+                                      Joiner.on('&').withKeyValueSeparator("=").join(params));
 
     Connection connection = DriverManager.getConnection(serviceUrl);
     PreparedStatement stmt;

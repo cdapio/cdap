@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -39,6 +40,7 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -73,6 +75,7 @@ import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.Assert;
@@ -83,7 +86,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -259,17 +261,16 @@ public class DatasetOpExecutorServiceTest {
                                 datasetInstanceId.getNamespace(), datasetInstanceId.getEntityName(), opName);
 
     URL targetUrl = resolve(path);
-    HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build());
+    HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build(),
+                                                 new DefaultHttpRequestConfig(false));
     DatasetAdminOpResponse body = getResponse(response.getResponseBody());
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     Assert.assertEquals(expectedResult, body.getResult());
   }
 
   private URL resolve(String path) throws MalformedURLException {
-    @SuppressWarnings("ConstantConditions")
-    InetSocketAddress socketAddress = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress();
-    return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),
-                                 socketAddress.getPort(), Constants.Gateway.API_VERSION_3, path));
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    return URIScheme.createURI(discoverable, "%s%s", Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {

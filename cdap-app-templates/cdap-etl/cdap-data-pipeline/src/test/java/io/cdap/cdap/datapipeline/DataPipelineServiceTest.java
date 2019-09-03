@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
@@ -128,7 +129,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
       .withBody(GSON.toJson(appRequest))
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     Assert.assertEquals(400, response.getResponseCode());
   }
 
@@ -146,7 +147,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
       .withBody(GSON.toJson(appRequest))
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     Assert.assertEquals(404, response.getResponseCode());
   }
 
@@ -339,7 +340,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
       .withBody(GSON.toJson(requestBody))
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), StageValidationResponse.class);
   }

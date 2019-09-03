@@ -75,9 +75,9 @@ public class ExploreDriver implements Driver {
     try {
       exploreClient.ping();
     } catch (UnauthenticatedException e) {
-      throw new SQLException("Cannot connect to " + url + ", not authenticated.");
+      throw new SQLException("Cannot connect to " + url + ", not authenticated.", e);
     } catch (ServiceUnavailableException | ExploreException e) {
-      throw new SQLException("Cannot connect to " + url + ", service not available.");
+      throw new SQLException("Cannot connect to " + url + ", service not available.", e);
     }
     return new ExploreConnection(exploreClient, namespace, params);
   }

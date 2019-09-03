@@ -33,7 +33,6 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -48,7 +47,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -155,15 +153,10 @@ public class AppFabricServer extends AbstractIdleService {
       .setBossThreadPoolSize(cConf.getInt(Constants.AppFabric.BOSS_THREADS,
                                           Constants.AppFabric.DEFAULT_BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.AppFabric.WORKER_THREADS,
-                                            Constants.AppFabric.DEFAULT_WORKER_THREADS));
+                                            Constants.AppFabric.DEFAULT_WORKER_THREADS))
+      .setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
     if (sslEnabled) {
-      httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_SSL_PORT));
-
-      String password = KeyStores.generateRandomPassword();
-      KeyStore ks = KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password);
-      new HttpsEnabler().setKeyStore(ks, password::toCharArray).enable(httpServiceBuilder);
-    } else {
-      httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(httpServiceBuilder);
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
@@ -181,7 +174,7 @@ public class AppFabricServer extends AbstractIdleService {
     provisioningService.stopAndWait();
   }
 
-  private Cancellable startHttpService(final NettyHttpService httpService) throws Exception {
+  private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
     httpService.start();
 
     String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
@@ -203,24 +196,21 @@ public class AppFabricServer extends AbstractIdleService {
         ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
     }
 
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        LOG.debug("Stopping AppFabric HTTP service.");
-        for (Cancellable cancellable : cancellables) {
-          if (cancellable != null) {
-            cancellable.cancel();
-          }
+    return () -> {
+      LOG.debug("Stopping AppFabric HTTP service.");
+      for (Cancellable cancellable : cancellables) {
+        if (cancellable != null) {
+          cancellable.cancel();
         }
-
-        try {
-          httpService.stop();
-        } catch (Exception e) {
-          LOG.warn("Exception raised when stopping AppFabric HTTP service", e);
-        }
-
-        LOG.info("AppFabric HTTP service stopped.");
       }
+
+      try {
+        httpService.stop();
+      } catch (Exception e) {
+        LOG.warn("Exception raised when stopping AppFabric HTTP service", e);
+      }
+
+      LOG.info("AppFabric HTTP service stopped.");
     };
   }
 }

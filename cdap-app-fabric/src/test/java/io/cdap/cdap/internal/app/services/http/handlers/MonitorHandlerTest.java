@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.RestartServiceInstancesStatus;
 import io.cdap.cdap.proto.SystemServiceMeta;
@@ -33,23 +34,26 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Monitor handler tests.
  */
 public class MonitorHandlerTest extends AppFabricTestBase {
 
-  private HttpURLConnection openURL(String path, HttpMethod method) throws IOException, URISyntaxException {
+  private HttpURLConnection openURL(String path, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) createURL(path).openConnection();
+    if (urlConn instanceof HttpsURLConnection) {
+      new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+    }
     urlConn.setRequestMethod(method.name());
     return urlConn;
   }
 
-  private URL createURL(String path) throws URISyntaxException, MalformedURLException {
+  private URL createURL(String path) throws MalformedURLException {
     return getEndPoint(String.format("/v3/%s", path)).toURL();
   }
 

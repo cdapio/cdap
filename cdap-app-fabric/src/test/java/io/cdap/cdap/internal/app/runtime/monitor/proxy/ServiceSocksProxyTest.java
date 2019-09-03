@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -120,7 +121,8 @@ public class ServiceSocksProxyTest {
   @Test
   public void testGet() throws Exception {
     URL url = new URL("http://test-service/ping");
-    HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+    HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build(),
+                                                 new DefaultHttpRequestConfig(false));
     Assert.assertEquals(200, response.getResponseCode());
   }
 
@@ -131,7 +133,8 @@ public class ServiceSocksProxyTest {
     HttpResponse response = HttpRequests.execute(
       io.cdap.common.http.HttpRequest.post(url)
         .withBody(body)
-        .build());
+        .build(),
+      new DefaultHttpRequestConfig(false));
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals(body, response.getResponseBodyAsString());
   }
@@ -172,7 +175,7 @@ public class ServiceSocksProxyTest {
       // Use a different hostname to make sure the connection is not getting reused. Otherwise it may not have auth
       // failure as intended
       URL url = new URL("http://test-auth-failure/ping");
-      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
     } finally {
       cancellable.cancel();
       authPass = oldPass;
@@ -188,7 +191,7 @@ public class ServiceSocksProxyTest {
       // Use a different hostname to make sure the connection is not getting reused. Otherwise it may not have auth
       // failure as intended
       URL url = new URL("http://test-no-auth/ping");
-      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
     } finally {
       cancellable.cancel();
       Authenticator.setDefault(authenticator);

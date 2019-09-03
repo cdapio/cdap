@@ -29,6 +29,14 @@
   </property>
 
   <property>
+    <name>app.ssl.bind.port</name>
+    <value>30443</value>
+    <description>
+      App Fabric service bind port for HTTPS
+    </description>
+  </property>
+
+  <property>
     <name>audit.kafka.topic</name>
     <value>audit</value>
     <description>

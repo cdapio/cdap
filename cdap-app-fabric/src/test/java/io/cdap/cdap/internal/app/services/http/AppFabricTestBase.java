@@ -52,13 +52,13 @@ import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceNotEnabledException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
@@ -132,8 +132,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.net.InetAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -186,11 +186,9 @@ public abstract class AppFabricTestBase {
   protected static final String VERSION1 = "1.0.0";
   protected static final String VERSION2 = "2.0.0";
 
-  private static final String hostname = "127.0.0.1";
-
-  private static int port;
   private static Injector injector;
 
+  private static EndpointStrategy appFabricEndpointStrategy;
   private static MessagingService messagingService;
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
@@ -261,13 +259,8 @@ public abstract class AppFabricTestBase {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+    appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-    Discoverable discoverable = endpointStrategy.pick(5, TimeUnit.SECONDS);
-    if (discoverable == null) {
-      throw new ServiceNotEnabledException("Failed to discover service " + Constants.Service.APP_FABRIC_HTTP);
-    }
-    port = discoverable.getSocketAddress().getPort();
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
@@ -314,7 +307,7 @@ public abstract class AppFabricTestBase {
 
   protected static CConfiguration createBasicCConf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostname);
+    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
@@ -358,12 +351,11 @@ public abstract class AppFabricTestBase {
     return txClient;
   }
 
-  protected static int getPort() {
-    return port;
-  }
-
-  protected static URI getEndPoint(String path) throws URISyntaxException {
-    return new URI("http://" + hostname + ":" + port + path);
+  protected static URI getEndPoint(String path) {
+    Discoverable discoverable = appFabricEndpointStrategy.pick(5, TimeUnit.SECONDS);
+    Assert.assertNotNull("AppFabric endpoint is missing, service may not be running.", discoverable);
+    // The path is literal and we need to escape "%" before passing to createURI, which takes a format string.
+    return URIScheme.createURI(discoverable, path.replace("%", "%%"));
   }
 
   protected static HttpResponse doGet(String resource) throws Exception {
@@ -1345,9 +1337,12 @@ public abstract class AppFabricTestBase {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(service));
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
-    int port = discoverable.getSocketAddress().getPort();
-    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(hostname).setPort(port).build();
-    return ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder()
+      .setHostname(discoverable.getSocketAddress().getHostName())
+      .setPort(discoverable.getSocketAddress().getPort())
+      .setSSLEnabled(URIScheme.HTTPS.isMatch(discoverable))
+      .build();
+    return ClientConfig.builder().setVerifySSLCert(false).setConnectionConfig(connectionConfig).build();
   }
 
   /**

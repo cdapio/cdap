@@ -25,6 +25,7 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -67,11 +68,15 @@ public class MetadataServiceMainTest extends MasterServiceMainTestBase {
     // Try to query the metadata
     InetSocketAddress metadataAddr = metadataEndpoint.getSocketAddress();
     ConnectionConfig connConfig = ConnectionConfig.builder()
+      .setSSLEnabled(URIScheme.HTTPS.isMatch(metadataEndpoint))
       .setHostname(metadataAddr.getHostName())
       .setPort(metadataAddr.getPort())
       .build();
 
-    MetadataClient metadataClient = new MetadataClient(ClientConfig.builder().setConnectionConfig(connConfig).build());
+    MetadataClient metadataClient = new MetadataClient(ClientConfig.builder()
+                                                         .setVerifySSLCert(false)
+                                                         .setConnectionConfig(connConfig)
+                                                         .build());
     MetadataSearchResponse response = metadataClient.searchMetadata(datasetId.getNamespaceId(), "*", (String) null);
 
     Set<MetadataSearchResultRecord> results = response.getResults();

@@ -29,6 +29,7 @@ import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -51,6 +52,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collections;
@@ -159,49 +161,49 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       URI serviceURI = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI();
 
       // dataset nn should not exist
-      HttpResponse response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
+      HttpResponse response = executeHttp(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals("false", response.getResponseBodyAsString());
 
       // create nn as a table
-      response = HttpRequests.execute(HttpRequest.put(serviceURI.resolve("create/nn/table").toURL()).build());
+      response = executeHttp(HttpRequest.put(serviceURI.resolve("create/nn/table").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
 
       // now nn should exist
-      response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
+      response = executeHttp(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals("true", response.getResponseBodyAsString());
 
       // create it again as a fileset -> should fail with conflict
-      response = HttpRequests.execute(HttpRequest.put(serviceURI.resolve("create/nn/fileSet").toURL()).build());
+      response = executeHttp(HttpRequest.put(serviceURI.resolve("create/nn/fileSet").toURL()).build());
       Assert.assertEquals(409, response.getResponseCode());
 
       // get the type for xx -> not found
-      response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("type/xx").toURL()).build());
+      response = executeHttp(HttpRequest.get(serviceURI.resolve("type/xx").toURL()).build());
       Assert.assertEquals(404, response.getResponseCode());
 
       // get the type for nn -> table
-      response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("type/nn").toURL()).build());
+      response = executeHttp(HttpRequest.get(serviceURI.resolve("type/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals("table", response.getResponseBodyAsString());
 
       // update xx's properties -> should get not-found
       Map<String, String> nnProps = TableProperties.builder().setTTL(1000L).build().getProperties();
-      response = HttpRequests.execute(HttpRequest.put(serviceURI.resolve("update/xx").toURL())
+      response = executeHttp(HttpRequest.put(serviceURI.resolve("update/xx").toURL())
                                         .withBody(GSON.toJson(nnProps)).build());
       Assert.assertEquals(404, response.getResponseCode());
 
       // update nn's properties
-      response = HttpRequests.execute(HttpRequest.put(serviceURI.resolve("update/nn").toURL())
+      response = executeHttp(HttpRequest.put(serviceURI.resolve("update/nn").toURL())
                                         .withBody(GSON.toJson(nnProps)).build());
       Assert.assertEquals(200, response.getResponseCode());
 
       // get properties for xx -> not found
-      response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("props/xx").toURL()).build());
+      response = executeHttp(HttpRequest.get(serviceURI.resolve("props/xx").toURL()).build());
       Assert.assertEquals(404, response.getResponseCode());
 
       // get properties for nn and validate
-      response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("props/nn").toURL()).build());
+      response = executeHttp(HttpRequest.get(serviceURI.resolve("props/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
       Map<String, String> returnedProps = GSON.fromJson(response.getResponseBodyAsString(),
                                                         new TypeToken<Map<String, String>>() {
@@ -219,11 +221,11 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       nnManager.flush();
 
       // truncate xx -> not found
-      response = HttpRequests.execute(HttpRequest.post(serviceURI.resolve("truncate/xx").toURL()).build());
+      response = executeHttp(HttpRequest.post(serviceURI.resolve("truncate/xx").toURL()).build());
       Assert.assertEquals(404, response.getResponseCode());
 
       // truncate nn
-      response = HttpRequests.execute(HttpRequest.post(serviceURI.resolve("truncate/nn").toURL()).build());
+      response = executeHttp(HttpRequest.post(serviceURI.resolve("truncate/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
 
       // validate table is empty
@@ -231,19 +233,19 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       nnManager.flush();
 
       // delete nn
-      response = HttpRequests.execute(HttpRequest.delete(serviceURI.resolve("delete/nn").toURL()).build());
+      response = executeHttp(HttpRequest.delete(serviceURI.resolve("delete/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
 
       // delete again -> not found
-      response = HttpRequests.execute(HttpRequest.delete(serviceURI.resolve("delete/nn").toURL()).build());
+      response = executeHttp(HttpRequest.delete(serviceURI.resolve("delete/nn").toURL()).build());
       Assert.assertEquals(404, response.getResponseCode());
 
       // delete xx which never existed -> not found
-      response = HttpRequests.execute(HttpRequest.delete(serviceURI.resolve("delete/xx").toURL()).build());
+      response = executeHttp(HttpRequest.delete(serviceURI.resolve("delete/xx").toURL()).build());
       Assert.assertEquals(404, response.getResponseCode());
 
       // exists should now return false for nn
-      response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
+      response = executeHttp(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals("false", response.getResponseBodyAsString());
 
@@ -251,14 +253,14 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
 
       // test Admin.namespaceExists()
       HttpRequest request = HttpRequest.get(serviceURI.resolve("namespaces/y").toURL()).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       Assert.assertEquals(404, response.getResponseCode());
 
       // test Admin.getNamespaceSummary()
       NamespaceMeta namespaceXMeta = new NamespaceMeta.Builder().setName(namespaceX).setGeneration(10L).build();
       getNamespaceAdmin().create(namespaceXMeta);
       request = HttpRequest.get(serviceURI.resolve("namespaces/" + namespaceX).toURL()).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       NamespaceSummary namespaceSummary = GSON.fromJson(response.getResponseBodyAsString(), NamespaceSummary.class);
       NamespaceSummary expectedX = new NamespaceSummary(namespaceXMeta.getName(), namespaceXMeta.getDescription(),
                                                         namespaceXMeta.getGeneration());
@@ -271,14 +273,14 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       addPluginArtifact(pluginArtifactId, ADMIN_APP_ARTIFACT, DummyPlugin.class);
       // no plugins should be listed in the default namespace, but the app artifact should
       request = HttpRequest.get(serviceURI.resolve("namespaces/default/plugins").toURL()).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       Assert.assertEquals(200, response.getResponseCode());
       Type setType = new TypeToken<Set<ArtifactSummary>>() { }.getType();
       Assert.assertEquals(Collections.singleton(ADMIN_ARTIFACT_SUMMARY),
                           GSON.fromJson(response.getResponseBodyAsString(), setType));
       // the plugin should be listed in namespace X
       request = HttpRequest.get(serviceURI.resolve("namespaces/x/plugins").toURL()).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       Assert.assertEquals(200, response.getResponseCode());
       ArtifactSummary expected = new ArtifactSummary(pluginArtifactId.getArtifact(), pluginArtifactId.getVersion());
       Assert.assertEquals(Collections.singleton(expected), GSON.fromJson(response.getResponseBodyAsString(), setType));
@@ -306,8 +308,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     testAdminBatchProgram(appManager.getMapReduceManager(AdminApp.MAPREDUCE_NAME));
   }
 
-  private <T extends ProgramManager<T>>
-  void testAdminBatchProgram(ProgramManager<T> manager) throws Exception {
+  private <T extends ProgramManager<T>> void testAdminBatchProgram(ProgramManager<T> manager) throws Exception {
 
     addDatasetInstance("keyValueTable", "lines");
     addDatasetInstance("keyValueTable", "counts");

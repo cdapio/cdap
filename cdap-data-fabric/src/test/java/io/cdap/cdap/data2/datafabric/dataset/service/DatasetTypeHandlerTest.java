@@ -283,7 +283,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   private HttpResponse makeTypesRequest(NamespaceId namespaceId) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl(namespaceId.getEntityName(), "/data/types")).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private ObjectResponse<DatasetModuleMeta> getModule(String moduleName) throws IOException {
@@ -297,7 +297,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   private HttpResponse makeModuleInfoRequest(DatasetModuleId module) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl(module.getNamespace(),
                                                  "/data/modules/" + module.getEntityName())).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private ObjectResponse<DatasetTypeMeta> getType(String typeName) throws IOException {
@@ -315,6 +315,6 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   private HttpResponse makeTypeInfoRequest(DatasetTypeId datasetType) throws IOException {
     HttpRequest request = HttpRequest.get(
       getUrl(datasetType.getNamespace(), "/data/types/" + datasetType.getEntityName())).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 }

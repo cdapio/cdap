@@ -28,8 +28,11 @@ import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -45,7 +48,6 @@ import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
 import io.cdap.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 
 import java.util.ArrayList;
@@ -65,6 +67,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class LogBufferService extends AbstractIdleService {
   private final DiscoveryService discoveryService;
   private final CConfiguration cConf;
+  private final SConfiguration sConf;
   private final Provider<AppenderContext> contextProvider;
   private final CheckpointManagerFactory checkpointManagerFactory;
   private final List<Service> pipelines = new ArrayList<>();
@@ -72,14 +75,14 @@ public class LogBufferService extends AbstractIdleService {
 
   private Cancellable cancellable;
   private NettyHttpService httpService;
-  private ConcurrentLogBufferWriter concurrentWriter;
   private LogBufferRecoveryService recoveryService;
 
   @Inject
-  public LogBufferService(CConfiguration cConf, DiscoveryService discoveryService,
+  public LogBufferService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
                           CheckpointManagerFactory checkpointManagerFactory,
                           Provider<AppenderContext> contextProvider) {
     this.cConf = cConf;
+    this.sConf = sConf;
     this.contextProvider = contextProvider;
     this.checkpointManagerFactory = checkpointManagerFactory;
     this.discoveryService = discoveryService;
@@ -101,15 +104,26 @@ public class LogBufferService extends AbstractIdleService {
     recoveryService.startAndWait();
 
     // create concurrent writer
-    concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines,
-                                                     new LogBufferCleaner(cConf, checkpointManagers,
-                                                                          startCleanup));
+    ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines,
+                                                                               new LogBufferCleaner(cConf,
+                                                                                                    checkpointManagers,
+                                                                                                    startCleanup));
 
     // create and start http service
-    httpService = createHttpService();
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_BUFFER_SERVICE)
+      .setHttpHandlers(new LogBufferHandler(concurrentWriter))
+      .setExceptionHandler(new HttpExceptionHandler())
+      .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
+      .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT));
+
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+
+    httpService = builder.build();
     httpService.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService.getBindAddress())));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService)));
   }
 
   @Override
@@ -193,15 +207,6 @@ public class LogBufferService extends AbstractIdleService {
 
     bufferSize = (long) ((Runtime.getRuntime().maxMemory() * bufferRatio) / numberOfPipelines);
     return bufferSize > 0 ? bufferSize : 1L;
-  }
-
-  private NettyHttpService createHttpService() {
-    return new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_BUFFER_SERVICE)
-      .setHttpHandlers(new LogBufferHandler(concurrentWriter))
-      .setExceptionHandler(new HttpExceptionHandler())
-      .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
-      .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT))
-      .build();
   }
 
   private void stopAllServices() throws Exception {

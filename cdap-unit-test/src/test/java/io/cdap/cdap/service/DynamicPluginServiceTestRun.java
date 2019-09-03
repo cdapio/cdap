@@ -94,7 +94,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
       .withBody(GSON.toJson(properties))
       .addHeader(DynamicPluginServiceApp.NAMESPACE_HEADER, "ghost")
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(404, response.getResponseCode());
   }
 
@@ -107,7 +107,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
       .withBody(GSON.toJson(properties))
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("x", response.getResponseBodyAsString());
 
@@ -122,7 +122,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     request = HttpRequest.builder(HttpMethod.POST, url)
       .withBody(GSON.toJson(properties))
       .build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("y", response.getResponseBodyAsString());
   }
@@ -138,13 +138,13 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, producerUrl)
       .withBody(GSON.toJson(requestBody))
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("x", response.getResponseBodyAsString());
 
     URL onFinishUrl = baseURI.resolve("onFinishSuccessful").toURL();
     request = HttpRequest.builder(HttpMethod.GET, onFinishUrl).build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertTrue(Boolean.valueOf(response.getResponseBodyAsString()));
   }
 
@@ -159,7 +159,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
       .withBody(GSON.toJson(requestBody))
       .build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("x", response.getResponseBodyAsString());
 
@@ -171,7 +171,7 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
     request = HttpRequest.builder(HttpMethod.POST, url)
       .withBody(GSON.toJson(requestBody))
       .build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertEquals(400, response.getResponseCode());
     Assert.assertEquals("y", response.getResponseBodyAsString());
   }

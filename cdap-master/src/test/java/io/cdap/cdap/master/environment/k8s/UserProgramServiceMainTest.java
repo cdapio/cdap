@@ -40,6 +40,7 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
@@ -202,7 +203,8 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
       URL callUrl = baseURI.resolve(String.format("apps/%s/services/%s/methods/call",
                                                   programRunId.getApplication(), programRunId.getProgram())).toURL();
       Tasks.waitFor(expectedVal, () -> {
-        HttpResponse callResponse = HttpRequests.execute(HttpRequest.get(callUrl).build());
+        HttpResponse callResponse = HttpRequests.execute(HttpRequest.get(callUrl).build(),
+                                                         new DefaultHttpRequestConfig(false));
         return callResponse.getResponseCode() == 200 ? callResponse.getResponseBodyAsString() : null;
       }, 1, TimeUnit.MINUTES);
     } finally {

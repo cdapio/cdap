@@ -149,13 +149,13 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
 
   private void createPartition(URL serviceUrl, String body, String time) throws IOException {
     HttpResponse response =
-      HttpRequests.execute(HttpRequest.put(new URL(serviceUrl, "lines?time=" + time)).withBody(body).build());
+      executeHttp(HttpRequest.put(new URL(serviceUrl, "lines?time=" + time)).withBody(body).build());
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private Long getCount(URL serviceUrl, String word) throws IOException {
     HttpResponse response =
-      HttpRequests.execute(HttpRequest.get(new URL(serviceUrl, "counts?word=" + word)).build());
+      executeHttp(HttpRequest.get(new URL(serviceUrl, "counts?word=" + word)).build());
     Assert.assertEquals(200, response.getResponseCode());
     return Long.valueOf(response.getResponseBodyAsString());
   }

@@ -19,6 +19,9 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.security.KeyStores;
+import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -33,6 +36,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -48,7 +52,6 @@ public class MasterServiceMainTestBase {
 
   private static InMemoryZKServer zkServer;
   private static Map<Class<?>, ServiceMainManager<?>> serviceManagers = new LinkedHashMap<>();
-  private static CConfiguration originalCConf;
   protected static String[] initArgs;
 
   @BeforeClass
@@ -56,29 +59,39 @@ public class MasterServiceMainTestBase {
     zkServer = InMemoryZKServer.builder().setAutoCleanDataDir(false).setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    originalCConf = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
 
     // Set the HDFS directory as well as we are using DFSLocationModule in the master services
-    originalCConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
-    originalCConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+    cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+
+    // Generate a self-signed cert for internal services SSL
+    String keyPass = "testing";
+    KeyStore keyStore = KeyStores.generatedCertKeyStore(1, keyPass);
+    File pemFile = KeyStoresTest.writePEMFile(TEMP_FOLDER.newFile(),
+                                              keyStore, keyStore.aliases().nextElement(), keyPass);
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
+    cConf.set(Constants.Security.SSL.INTERNAL_CERT_PATH, pemFile.getAbsolutePath());
+    sConf.set(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, keyPass);
 
     // Set all bind address to localhost
     String localhost = InetAddress.getLoopbackAddress().getHostName();
     StreamSupport.stream(CConfiguration.create().spliterator(), false)
       .map(Map.Entry::getKey)
       .filter(s -> s.endsWith(".bind.address"))
-      .forEach(key -> originalCConf.set(key, localhost));
+      .forEach(key -> cConf.set(key, localhost));
 
     // Set router to bind to random port
-    originalCConf.setInt(Constants.Router.ROUTER_PORT, 0);
+    cConf.setInt(Constants.Router.ROUTER_PORT, 0);
 
     // Start the master main services
-    serviceManagers.put(RouterServiceMain.class, runMain(RouterServiceMain.class));
-    serviceManagers.put(MessagingServiceMain.class, runMain(MessagingServiceMain.class));
-    serviceManagers.put(MetricsServiceMain.class, runMain(MetricsServiceMain.class));
-    serviceManagers.put(LogsServiceMain.class, runMain(LogsServiceMain.class));
-    serviceManagers.put(MetadataServiceMain.class, runMain(MetadataServiceMain.class));
-    serviceManagers.put(AppFabricServiceMain.class, runMain(AppFabricServiceMain.class));
+    serviceManagers.put(RouterServiceMain.class, runMain(cConf, sConf, RouterServiceMain.class));
+    serviceManagers.put(MessagingServiceMain.class, runMain(cConf, sConf, MessagingServiceMain.class));
+    serviceManagers.put(MetricsServiceMain.class, runMain(cConf, sConf, MetricsServiceMain.class));
+    serviceManagers.put(LogsServiceMain.class, runMain(cConf, sConf, LogsServiceMain.class));
+    serviceManagers.put(MetadataServiceMain.class, runMain(cConf, sConf, MetadataServiceMain.class));
+    serviceManagers.put(AppFabricServiceMain.class, runMain(cConf, sConf, AppFabricServiceMain.class));
   }
 
   @AfterClass
@@ -111,9 +124,11 @@ public class MasterServiceMainTestBase {
   }
 
 
-  protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(Class<T> serviceMainClass)
+  protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(CConfiguration cConf,
+                                                                                 SConfiguration sConf,
+                                                                                 Class<T> serviceMainClass)
     throws Exception {
-    return runMain(serviceMainClass, serviceMainClass.getSimpleName());
+    return runMain(cConf, sConf, serviceMainClass, serviceMainClass.getSimpleName());
   }
 
   /**
@@ -125,31 +140,35 @@ public class MasterServiceMainTestBase {
    * @return A {@link ServiceMainManager} to interface with the service instance
    * @throws Exception if failed to start the service
    */
-  protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(Class<T> serviceMainClass,
-                                                                                       String dataDir)
-    throws Exception {
+  protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(CConfiguration cConf,
+                                                                                 SConfiguration sConf,
+                                                                                 Class<T> serviceMainClass,
+                                                                                 String dataDir) throws Exception {
 
     // Set a unique local data directory for each service
-    CConfiguration cConf = CConfiguration.copy(originalCConf);
+    CConfiguration serviceCConf = CConfiguration.copy(cConf);
     File dataDirFolder = new File(TEMP_FOLDER.getRoot(), dataDir);
     boolean dataAlreadyExists = true;
     if (!dataDirFolder.exists()) {
       dataDirFolder = TEMP_FOLDER.newFolder(dataDir);
       dataAlreadyExists = false;
     }
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDirFolder.getAbsolutePath());
+    serviceCConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDirFolder.getAbsolutePath());
 
     // Create StructuredTable stores before starting the main.
     // The registry will be preserved and pick by the main class.
     // Also try to create metadata tables.
     if (!dataAlreadyExists) {
-      new StorageMain().createStorage(cConf);
+      new StorageMain().createStorage(serviceCConf);
     }
 
     // Write the "cdap-site.xml" and pass the directory to the main service
     File confDir = TEMP_FOLDER.newFolder();
     try (Writer writer = Files.newBufferedWriter(new File(confDir, "cdap-site.xml").toPath())) {
-      cConf.writeXml(writer);
+      serviceCConf.writeXml(writer);
+    }
+    try (Writer writer = Files.newBufferedWriter(new File(confDir, "cdap-security.xml").toPath())) {
+      sConf.writeXml(writer);
     }
 
     initArgs = new String[] { "--env=mock", "--conf=" + confDir.getAbsolutePath() };

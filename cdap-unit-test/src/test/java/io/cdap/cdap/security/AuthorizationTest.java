@@ -575,7 +575,7 @@ public class AuthorizationTest extends TestBase {
 
     // Try to write data, it should fail as BOB don't have the permission to get system dataset
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
-    HttpResponse response = HttpRequests.execute(HttpRequest.put(url).build());
+    HttpResponse response = executeHttp(HttpRequest.put(url).build());
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("Cannot access dataset store in system namespace"));
 
@@ -616,7 +616,7 @@ public class AuthorizationTest extends TestBase {
 
     // Call to the service would result in failure due to BOB doesn't have permission on the namespace as set in args
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
-    HttpResponse response = HttpRequests.execute(HttpRequest.put(url).build());
+    HttpResponse response = executeHttp(HttpRequest.put(url).build());
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' is not authorized"));
 
@@ -636,7 +636,7 @@ public class AuthorizationTest extends TestBase {
     serviceManager.start(args);
     for (int i = 0; i < 10; i++) {
       url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/" + i);
-      response = HttpRequests.execute(HttpRequest.put(url).build());
+      response = executeHttp(HttpRequest.put(url).build());
       Assert.assertEquals(200, response.getResponseCode());
     }
 
@@ -1133,7 +1133,7 @@ public class AuthorizationTest extends TestBase {
     HttpResponse response;
     try {
       request = HttpRequest.post(url).withBody(text).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       // should fail because bob does not have write privileges on the dataset
       Assert.assertEquals(500, response.getResponseCode());
     } finally {
@@ -1148,17 +1148,17 @@ public class AuthorizationTest extends TestBase {
     url = new URL(pfsURL, apiPath);
     try  {
       request = HttpRequest.post(url).withBody(text).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       // should succeed now because bob was granted write privileges on the dataset
       Assert.assertEquals(200, response.getResponseCode());
       // make sure that the partition was added
       request = HttpRequest.get(url).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals(text, response.getResponseBodyAsString());
       // drop the partition
       request = HttpRequest.delete(url).build();
-      response = HttpRequests.execute(request);
+      response = executeHttp(request);
       Assert.assertEquals(200, response.getResponseCode());
     } finally {
       pfsService.stop();

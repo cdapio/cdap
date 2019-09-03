@@ -34,6 +34,7 @@ import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
@@ -78,6 +79,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * The client implementation of {@link MessagingService}. This client is intended for internal
@@ -87,7 +89,7 @@ import javax.annotation.Nullable;
  */
 public final class ClientMessagingService implements MessagingService {
 
-  private static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig();
+  private static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig(false);
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();
   private static final Gson GSON = new Gson();
   // These types for only for Gson to use, hence using the gson TypeToken instead of guava one
@@ -98,7 +100,7 @@ public final class ClientMessagingService implements MessagingService {
 
   @VisibleForTesting
   @Inject
-  public ClientMessagingService(final DiscoveryServiceClient discoveryServiceClient) {
+  public ClientMessagingService(DiscoveryServiceClient discoveryServiceClient) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.MESSAGING_SERVICE,
                                          HTTP_REQUEST_CONFIG, "/v1/namespaces/");
   }
@@ -399,7 +401,11 @@ public final class ClientMessagingService implements MessagingService {
       // The cask common http library doesn't support read streaming, and we don't want to buffer all messages
       // in memory, hence we use the HttpURLConnection directly instead.
       URL url = remoteClient.resolve(createTopicPath(topicId) + "/poll");
-      final HttpURLConnection urlConn = (HttpURLConnection)  url.openConnection();
+
+      HttpURLConnection urlConn = (HttpURLConnection)  url.openConnection();
+      if (urlConn instanceof HttpsURLConnection) {
+        new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+      }
       urlConn.setConnectTimeout(HTTP_REQUEST_CONFIG.getConnectTimeout());
       urlConn.setReadTimeout(HTTP_REQUEST_CONFIG.getReadTimeout());
       urlConn.setRequestMethod("POST");

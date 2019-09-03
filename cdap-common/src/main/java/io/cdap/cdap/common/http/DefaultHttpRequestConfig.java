@@ -39,11 +39,6 @@ public class DefaultHttpRequestConfig extends HttpRequestConfig {
   public static final String  READ_TIMEOUT_PROPERTY_NAME =
     SYSTEM_PROPERTY_PREFIX + Constants.HTTP_CLIENT_READ_TIMEOUT_MS;
 
-  public DefaultHttpRequestConfig() {
-    super(getTimeoutFromSystemProperties(CONNECTION_TIMEOUT_PROPERTY_NAME),
-          getTimeoutFromSystemProperties(READ_TIMEOUT_PROPERTY_NAME));
-  }
-
   /**
    * @param verifySSLCert false, to disable certificate verifying in SSL connections. By default SSL certificate is
    *                      verified.

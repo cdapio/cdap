@@ -114,7 +114,7 @@ public class KeyStoresTest {
   /**
    * Writes a private key and certificate pair from a KeyStore to the given PEM file.
    */
-  static File writePEMFile(File pemFile, KeyStore keyStore, String alias, String password) throws Exception {
+  public static File writePEMFile(File pemFile, KeyStore keyStore, String alias, String password) throws Exception {
     Key key = keyStore.getKey(alias, password.toCharArray());
     Certificate certificate = keyStore.getCertificate(alias);
 

@@ -100,6 +100,7 @@ public abstract class AbstractClientTest {
     StandaloneTester standalone = getStandaloneTester();
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(standalone.getBaseURI().toString());
     clientConfig = new ClientConfig.Builder()
+      .setVerifySSLCert(false)
       .setDefaultReadTimeout(60 * 1000)
       .setUploadReadTimeout(120 * 1000)
       .setConnectionConfig(connectionConfig).build();

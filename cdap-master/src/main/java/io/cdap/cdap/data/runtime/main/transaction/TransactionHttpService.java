@@ -16,24 +16,26 @@
 
 package io.cdap.cdap.data.runtime.main.transaction;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -48,19 +50,22 @@ public class TransactionHttpService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
 
   @Inject
-  public TransactionHttpService(CConfiguration cConf,
+  public TransactionHttpService(CConfiguration cConf, SConfiguration sConf,
                                 @Named(Constants.Service.TRANSACTION_HTTP) Set<HttpHandler> handlers,
                                 DiscoveryService discoveryService,
                                 MetricsCollectionService metricsCollectionService) {
     // netty http server config
     String address = cConf.get(Constants.Transaction.Container.ADDRESS);
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TRANSACTION_HTTP);
-    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Service.TRANSACTION_HTTP)));
-    builder.setHttpHandlers(handlers);
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.TRANSACTION_HTTP)
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.TRANSACTION_HTTP)))
+      .setHttpHandlers(handlers)
+      .setHost(address);
 
-    builder.setHost(address);
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
@@ -72,7 +77,7 @@ public class TransactionHttpService extends AbstractIdleService {
     httpService.start();
     // Register the service
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.TRANSACTION_HTTP, httpService.getBindAddress())));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TRANSACTION_HTTP, httpService)));
     LOG.info("Transaction HTTP started successfully on {}", httpService.getBindAddress());
   }
 

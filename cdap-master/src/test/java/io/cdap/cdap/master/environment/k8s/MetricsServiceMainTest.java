@@ -27,6 +27,7 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
@@ -74,10 +75,12 @@ public class MetricsServiceMainTest extends MasterServiceMainTestBase {
     // Try to query the metrics
     InetSocketAddress metricsAddr = metricsEndpoint.getSocketAddress();
     ConnectionConfig connConfig = ConnectionConfig.builder()
+      .setSSLEnabled(URIScheme.HTTPS.isMatch(metricsEndpoint))
       .setHostname(metricsAddr.getHostName())
       .setPort(metricsAddr.getPort())
       .build();
-    MetricsClient metricsClient = new MetricsClient(ClientConfig.builder().setConnectionConfig(connConfig).build());
+    MetricsClient metricsClient = new MetricsClient(ClientConfig.builder().setVerifySSLCert(false)
+                                                      .setConnectionConfig(connConfig).build());
 
     // Need to poll because metrics processing is async.
     Tasks.waitFor(10L, () -> {

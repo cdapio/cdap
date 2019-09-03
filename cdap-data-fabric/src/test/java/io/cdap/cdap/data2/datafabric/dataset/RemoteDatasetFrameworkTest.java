@@ -28,6 +28,7 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -151,7 +152,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
-    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+    opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
+                                                     discoveryService, metricsCollectionService, handlers);
     opExecutorService.startAndWait();
 
     DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
@@ -176,7 +178,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                         new NoOpMetadataServiceClient());
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
-    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
+    service = new DatasetService(cConf, SConfiguration.create(),
+                                 discoveryService, discoveryServiceClient, metricsCollectionService,
                                  new HashSet<>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable

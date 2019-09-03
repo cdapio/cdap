@@ -113,7 +113,7 @@ public class RemoteLogAppender extends LogAppender {
       // not using ThreadLocal for datumWriter
       this.datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));
       this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.LOG_BUFFER_SERVICE,
-                                           new DefaultHttpRequestConfig(), "/v1/logs");
+                                           new DefaultHttpRequestConfig(false), "/v1/logs");
     }
 
     @Override

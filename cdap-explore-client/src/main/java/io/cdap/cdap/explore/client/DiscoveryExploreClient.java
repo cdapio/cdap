@@ -17,13 +17,12 @@
 package io.cdap.cdap.explore.client;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.explore.service.Explore;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -43,7 +42,7 @@ import static io.cdap.cdap.common.conf.Constants.Service;
  * and that uses discovery to find the endpoints.
  */
 public class DiscoveryExploreClient extends AbstractExploreClient {
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final AuthenticationContext authenticationContext;
 
@@ -51,13 +50,8 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   @VisibleForTesting
   public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient,
                                 AuthenticationContext authenticationContext) {
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(() -> discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE));
-      }
-    });
-
+    this.endpointStrategy = new RandomEndpointStrategy(
+      () -> discoveryClient.discover(Service.EXPLORE_HTTP_USER_SERVICE));
     this.httpRequestConfig = new DefaultHttpRequestConfig(false);
     this.authenticationContext = authenticationContext;
   }
@@ -69,11 +63,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
 
   @Override
   protected InetSocketAddress getExploreServiceAddress() {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
-    if (discoverable != null) {
-      return discoverable.getSocketAddress();
-    }
-    throw new ServiceUnavailableException(Service.EXPLORE_HTTP_USER_SERVICE);
+    return getDiscoverable().getSocketAddress();
   }
 
   // This class is only used internally.
@@ -86,7 +76,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
 
   @Override
   protected boolean isSSLEnabled() {
-    return false;
+    return URIScheme.HTTPS.isMatch(getDiscoverable());
   }
 
   @Override
@@ -105,5 +95,13 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   protected Map<String, String> addAdditionalSecurityHeaders() {
     return Collections.singletonMap(Constants.Security.Headers.USER_PRINCIPAL,
                                     authenticationContext.getPrincipal().getKerberosPrincipal());
+  }
+
+  private Discoverable getDiscoverable() {
+    Discoverable discoverable = endpointStrategy.pick(3L, TimeUnit.SECONDS);
+    if (discoverable == null) {
+      throw new ServiceUnavailableException(Service.EXPLORE_HTTP_USER_SERVICE);
+    }
+    return discoverable;
   }
 }
