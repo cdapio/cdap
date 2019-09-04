@@ -1,0 +1,10 @@
+.App{
+  height: 100vh;
+}
+.mrdsui-container{
+  height: 100vh;
+  width: 100%;
+}
+.ag-header-cell, .ag-cell, .ag-header-group-cell{
+  line-height: 40px !important;
+}

@@ -1,0 +1,14 @@
+.json-container {
+  width: 100%;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.alert-dialog-title {
+  border-bottom: 1px solid #e2e2e2;
+  padding: 15px !important;
+  .close-button {
+    padding: 0px;
+    float: right;
+  }
+}

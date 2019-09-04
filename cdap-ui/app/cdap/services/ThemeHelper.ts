@@ -76,6 +76,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "reports"?: boolean;
     "data-prep"?: boolean;
     "feature-engineering"?: boolean;
+    "mrds"?: boolean;
     "pipelines"?: boolean;
     "analytics"?: boolean;
     "rules-engine"?: boolean;
@@ -165,6 +166,7 @@ interface IThemeObj {
   showReports?: boolean;
   showDataPrep?: boolean;
   showFeatureEngineering?: boolean;
+  showMRDS?: boolean;
   showEDA?: boolean;
   showPipelines?: boolean;
   showAnalytics?: boolean;
@@ -339,6 +341,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showReports: true,
       showDataPrep: true,
       showFeatureEngineering: false,
+      showMRDS: false,
       showEDA: false,
       showPipelines: true,
       showAnalytics: true,
@@ -364,6 +367,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('feature-engineering' in featuresJson && isBoolean(featuresJson['feature-engineering'])) {
       features.showFeatureEngineering = featuresJson['feature-engineering'];
+    }
+    if ('feature-engineering' in featuresJson && isBoolean(featuresJson.mrds)) {
+      features.showMRDS = featuresJson.mrds;
     }
     if ('EDA' in featuresJson && isBoolean(featuresJson.EDA)) {
       features.showEDA = featuresJson.EDA;

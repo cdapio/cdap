@@ -1,0 +1,160 @@
+.experiment-detail {
+  height: 100%;
+  padding: 2px;
+  .detail-partition {
+    padding-top: 5px;
+    height: 205px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin-bottom: 5px;
+
+    display: flex;
+    .label-name {
+      width: 30%;
+    }
+    .left-partition {
+      width: 49%;
+      overflow-y: auto;
+      .left-header {
+        padding-left: 10px;
+        height: 25px;
+        font-size: 17px;
+        padding-bottom: 10px;
+        font-weight: bold;
+      }
+    }
+    .partition-line {
+      border-left: 1px solid rgba(224, 224, 224, 1);
+      margin: 1%;
+    }
+    .right-partition {
+      width: 49%;
+      overflow-y: auto;
+      .right-header {
+        padding-left: 0px;
+        height: 25px;
+        padding-right: 10px;
+        padding-bottom: 10px;
+        font-weight: bold;
+        .back-btn {
+          float: right;
+          font-size: 14px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+      }
+    }
+    .table-row {
+      height: 40px;
+    }
+  }
+
+  .grid-partition {
+    width: 100%;
+    height: calc(100% - 210px);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1);
+    .dataset-detail {
+      width: 21%;
+      float: left;
+      height: 100%;
+      .legend-box {
+        height: 30px;
+        .legend-key {
+          color: black;
+          font-weight: bold;
+          font-style: italic;
+          padding-left: 10px;
+        }
+        .legend-label {
+          font-size: 12px;
+        }
+      }
+    }
+    .dataset-column-grid {
+      height: calc(100% - 70px);
+    }
+
+    .model-detail-grid {
+      height: calc(100% - 40px);
+    }
+
+    .model-detail {
+      width: 78%;
+      float: right;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1);
+      height: 100%;
+    }
+    .grid-label {
+      text-align: center;
+      padding: 10px;
+      margin: 0 2%;
+      border-bottom: 1px solid rgba(224, 224, 224, 1);
+      font-weight: bold;
+    }
+  }
+
+  .outcome-type,
+  .feature-prediction {
+    background-color: #e2e2e2;
+    color: black;
+    //padding: 2px 11px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-right: 5px;
+    font-weight: bold;
+    font-style: italic;
+  }
+
+  .MuiTableCell-root {
+    padding-left: 10px;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    padding-right: 10px;
+  }
+
+  .inactive-status {
+    color: gray;
+  }
+
+  .running-status {
+    color: green;
+  }
+
+  .active-status {
+    color: blue;
+  }
+
+  .topBox {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    padding-left: 10px;
+
+    .topBoxRow {
+      display: flex;
+      flex-direction: row;
+      padding-bottom: 10px;
+      display: flex;
+      flex-direction: row;
+      padding-bottom: 8px;
+      padding-top: 8px;
+
+      border-bottom: 2px solid #e6dede;
+
+      .row-key {
+        width: 150px;
+        font-weight: bold;
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      .row-value {
+        width: calc(100% - 160px);
+        word-wrap: break-word;
+      }
+
+      .row-value-latest {
+        color: blue;
+      }
+    }
+  }
+}

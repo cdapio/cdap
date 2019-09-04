@@ -28,6 +28,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { Theme } from 'services/ThemeHelper';
+import MRDSComponent from 'components/MRDS/MRDS';
 
 require('./Home.scss');
 
@@ -134,6 +135,9 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           {
             Theme.showFeatureEngineering && <Route path="/ns/:namespace/featureEngineering" component={FeatureUI} />
+          }
+          {
+            Theme.showMRDS && <Route path="/ns/:namespace/mrds" component={MRDSComponent} />
           }
           <Route path="/ns/:namespace/exploredataset" component={ExploreDatasetUI} />
 

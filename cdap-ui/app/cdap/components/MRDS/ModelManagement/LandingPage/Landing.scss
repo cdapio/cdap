@@ -1,0 +1,25 @@
+.landing-page {
+  height: 100%;
+  padding: 2px;
+  .landing-page-grid {
+    height: 100%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+  }
+  .ag-header-group-cell,
+  .ag-header-cell,
+  .ag-cell {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+.view-link {
+  color: #6f7c9d;
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
