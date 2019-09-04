@@ -285,6 +285,7 @@ export default class DataPrepTopPanel extends Component {
     },
     {
       label: T.translate(`${PREFIX}.persistViewSchemaBtnLabel`),
+      shouldRender: () => Theme.showFeatureEngineering,
       iconName: 'icon-upload',
       onClick: this.togglePersistViewSchemaModal
     },

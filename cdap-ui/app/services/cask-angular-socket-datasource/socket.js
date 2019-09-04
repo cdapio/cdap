@@ -40,13 +40,31 @@ angular.module(PKG.name+'.services')
       $log.log('[mySocket] init');
 
       attempt = attempt || 1;
-      socket = new SockJS(self.prefix, {} ,
+
+      // Extend SockJS to enable communication over slow Connection
+      class AngularSockJS extends SockJS {
+        countRTO(rtt) {
+          return rtt > 30000 ? (rtt + 1000) : 30000;
+        }
+        _transportTimeout() {
+          if (this.readyState === SockJS.CONNECTING) {
+            if (this._transport) {
+              this._transport.removeAllListeners();
+            }
+            this._close(2007, 'Transport timed out');
+            this._transportClose(2007, 'Transport timed out');
+          }
+        }
+      }
+
+      socket = new AngularSockJS(self.prefix, {} ,
         {
           transports:[
             'websocket',
             'websocket-raw'
           ]
         });
+
       socket.onmessage = function (event) {
         try {
           var data = JSON.parse(event.data);

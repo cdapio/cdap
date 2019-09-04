@@ -357,17 +357,30 @@ class HydratorPlusPlusHydratorService {
     return flattenedVersion;
   }
 
+  validValue(dirty) {
+    var allowed = {
+      ALLOWED_TAGS: [],
+    };
+
+    const clean = window['DOMPurify'].sanitize(dirty, allowed);
+    return clean === dirty ? true : false;
+  }
+
   convertMapToKeyValuePairs(obj) {
     let keyValuePairs = [];
     keyValuePairs = Object.keys(obj).map(objKey => {
       return {
         key: objKey,
         value: obj[objKey],
+        validKey: this.validValue(objKey),
+        validValue: this.validValue(obj[objKey]),
         uniqueId: 'id-' + this.uuid.v4()
       };
     });
     return keyValuePairs;
   }
+
+
 
   convertKeyValuePairsToMap(keyValues) {
     let map = {};

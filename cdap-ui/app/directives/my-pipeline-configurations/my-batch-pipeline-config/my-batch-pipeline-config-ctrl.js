@@ -53,6 +53,8 @@ class MyBatchPipelineConfigCtrl {
       this.customEngineConfig.pairs.push({
         key: '',
         value: '',
+        validKey: true,
+        validValue: true,
         uniqueId: 'id-' + this.uuid.v4()
       });
     }
