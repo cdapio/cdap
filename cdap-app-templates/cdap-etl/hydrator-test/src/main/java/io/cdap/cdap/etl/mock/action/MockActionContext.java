@@ -25,12 +25,14 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.mock.common.MockArguments;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.net.URL;
@@ -44,11 +46,13 @@ import javax.annotation.Nullable;
  * Mock ActionContext for CustomAction tests.
  */
 public class MockActionContext implements ActionContext {
-
+  private static final String MOCK_STAGE_NAME = "mockstage";
+  private final FailureCollector collector;
   private SettableArguments settableArguments;
 
   public MockActionContext() {
     this.settableArguments = new MockArguments();
+    this.collector = new MockFailureCollector(MOCK_STAGE_NAME);
   }
 
   @Override
@@ -63,7 +67,7 @@ public class MockActionContext implements ActionContext {
 
   @Override
   public String getStageName() {
-    return null;
+    return MOCK_STAGE_NAME;
   }
 
   @Override
@@ -238,5 +242,10 @@ public class MockActionContext implements ActionContext {
   @Override
   public void record(Collection<? extends Operation> operations) {
     // no-op
+  }
+
+  @Override
+  public FailureCollector getFailureCollector() {
+    return collector;
   }
 }
