@@ -124,6 +124,7 @@ export default class AllTabContents extends Component {
             </div>
           </div>
           <input
+            autoFocus
             type="text"
             className="search-input form-control"
             placeholder={T.translate('features.Market.search-placeholder')}
@@ -134,7 +135,7 @@ export default class AllTabContents extends Component {
 
         <div
           className={classnames('body-section text-center', {
-            'empty-section': this.state.entities.length === 0,
+            'empty-section': this.state.filterEntites.length === 0,
           })}
         >
           {error}
