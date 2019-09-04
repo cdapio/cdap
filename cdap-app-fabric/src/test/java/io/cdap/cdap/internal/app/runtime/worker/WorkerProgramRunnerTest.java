@@ -249,18 +249,6 @@ public class WorkerProgramRunnerTest {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    Tasks.waitFor(ProgramController.State.ALIVE, new Callable<ProgramController.State>() {
-      @Override
-      public ProgramController.State call() throws Exception {
-        Throwable t = errorCause.get();
-        if (t != null) {
-          Throwables.propagateIfInstanceOf(t, Exception.class);
-          throw Throwables.propagate(t);
-        }
-        return controller.getState();
-      }
-    }, 30, TimeUnit.SECONDS);
-
     return controller;
   }
 
