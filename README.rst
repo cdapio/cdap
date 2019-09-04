@@ -9,7 +9,7 @@
     :target: https://opensource.org/licenses/Apache-2.0
 
 .. image:: https://travis-ci.org/cdapio/cdap.svg
-    :target: https://travis-ci.org/caskdata/cdap
+    :target: https://travis-ci.org/cdapio/cdap
 
 
 Introduction
