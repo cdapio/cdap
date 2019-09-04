@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +66,9 @@ public class KubeDiscoveryServiceTest {
       Assert.assertTrue(discoverables.isEmpty());
 
       // Then, register the service
-      service.register(new Discoverable("test.service", new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
+      service.register(new Discoverable("test.service",
+                                        new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234),
+                                        "https".getBytes(StandardCharsets.UTF_8)));
 
       // Now there should be a new discoverable
       discoverables = queue.poll(5, TimeUnit.SECONDS);
@@ -75,6 +78,7 @@ public class KubeDiscoveryServiceTest {
       // The discoverable should have hostname the same as the k8s service name and port from the discoverable
       Discoverable discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(1234, discoverable.getSocketAddress().getPort());
+      Assert.assertEquals("https", new String(discoverable.getPayload(), StandardCharsets.UTF_8));
       Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
 
       // Register the service again with different port. This is to simulate config update
@@ -88,12 +92,13 @@ public class KubeDiscoveryServiceTest {
       // The discoverable should have hostname the same as the k8s service name and port from the discoverable
       discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(4321, discoverable.getSocketAddress().getPort());
+      Assert.assertArrayEquals(new byte[0], discoverable.getPayload());
       Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
     } finally {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-test-service", "default", deleteOptions, null, null, null, null);
+      api.deleteNamespacedService("cdap-test-test-service", "default", null, deleteOptions, null, null, null, null);
     }
   }
 }

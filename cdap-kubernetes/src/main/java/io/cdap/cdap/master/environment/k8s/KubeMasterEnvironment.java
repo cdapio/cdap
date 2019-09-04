@@ -232,11 +232,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     List<V1EnvVar> envs = container.getEnv();
 
-    // Use the same service account as the current process for now.
+    // Use the same service account and the runtime class as the current process for now.
     // Ideally we should use a more restricted role.
     String serviceAccountName = pod.getSpec().getServiceAccountName();
+    String runtimeClassName = pod.getSpec().getRuntimeClassName();
     return new PodInfo(podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
-                       podNameFile.getName(), namespace, podLabels, ownerReferences, serviceAccountName,
+                       podNameFile.getName(), namespace, podLabels, ownerReferences,
+                       serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
                        envs == null ? Collections.emptyList() : envs);
   }
