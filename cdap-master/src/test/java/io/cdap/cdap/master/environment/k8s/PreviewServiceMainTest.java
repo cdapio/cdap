@@ -93,6 +93,9 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
       .resolve(String.format("/v3/namespaces/default/previews/%s/status", previewId.getApplication())).toURL();
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, () -> {
       HttpResponse statusResponse = HttpRequests.execute(HttpRequest.get(statusUrl).build(), requestConfig);
+      if (statusResponse.getResponseCode() != 200) {
+        return null;
+      }
       PreviewStatus previewStatus = GSON.fromJson(statusResponse.getResponseBodyAsString(), PreviewStatus.class);
       return previewStatus.getStatus();
     }, 2, TimeUnit.MINUTES);

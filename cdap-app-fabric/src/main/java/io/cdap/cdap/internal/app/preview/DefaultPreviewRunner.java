@@ -112,7 +112,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   private volatile boolean killedByTimer;
   private Timer timer;
-  private long startTimeMillis;
+  private volatile long startTimeMillis;
 
   @Inject
   DefaultPreviewRunner(MessagingService messagingService,
@@ -175,63 +175,85 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
     final PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
     ProgramController controller = programLifecycleService.start(
-      programId, previewConfig == null ? Collections.<String, String>emptyMap() : previewConfig.getRuntimeArgs(),
-      false);
+      programId, previewConfig == null ? Collections.emptyMap() : previewConfig.getRuntimeArgs(), false);
 
+    startTimeMillis = System.currentTimeMillis();
+    CountDownLatch statusLatch = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null, System.currentTimeMillis(), null));
-        // Only have timer if there is a timeout setting.
-        if (previewConfig.getTimeout() != null) {
-          int timeOutMinutes =  previewConfig.getTimeout();
-          timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-              try {
-                LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
-                killedByTimer = true;
-                stopPreview();
-              } catch (Exception e) {
-                killedByTimer = false;
-                LOG.debug("Error shutting down the preview run with id: {}", programId);
+        try {
+          switch (currentState) {
+            case STARTING:
+            case ALIVE:
+            case STOPPING:
+              setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null, startTimeMillis, null));
+              break;
+            case COMPLETED:
+              terminated(PreviewStatus.Status.COMPLETED, null);
+              return;
+            case KILLED:
+              terminated(PreviewStatus.Status.KILLED, null);
+              return;
+            case ERROR:
+              terminated(PreviewStatus.Status.RUN_FAILED, cause);
+              return;
+          }
+
+          // Only have timer if there is a timeout setting.
+          if (previewConfig != null && previewConfig.getTimeout() != null) {
+            int timeOutMinutes = previewConfig.getTimeout();
+            timer.schedule(new TimerTask() {
+              @Override
+              public void run() {
+                try {
+                  LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
+                  killedByTimer = true;
+                  stopPreview();
+                } catch (Exception e) {
+                  killedByTimer = false;
+                  LOG.debug("Error shutting down the preview run with id: {}", programId);
+                }
               }
-            }
-          }, timeOutMinutes * 60 * 1000);
+            }, timeOutMinutes * 60 * 1000);
+          }
+        } finally {
+          statusLatch.countDown();
         }
       }
 
       @Override
       public void completed() {
-        PreviewStatus status = previewStore.getPreviewStatus(programId.getParent());
-        setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null, status.getStartTime(),
-                                    System.currentTimeMillis()));
-        shutDownUnrequiredServices();
+        terminated(PreviewStatus.Status.COMPLETED, null);
       }
 
       @Override
       public void killed() {
-        PreviewStatus status = previewStore.getPreviewStatus(programId.getParent());
-        if (!killedByTimer) {
-          setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null, status.getStartTime(),
-                                      System.currentTimeMillis()));
-        } else {
-          setStatus(new PreviewStatus(PreviewStatus.Status.KILLED_BY_TIMER, null, status.getStartTime(),
-                                      System.currentTimeMillis()));
-        }
-        shutDownUnrequiredServices();
+        terminated(killedByTimer ? PreviewStatus.Status.KILLED_BY_TIMER : PreviewStatus.Status.KILLED, null);
       }
 
       @Override
       public void error(Throwable cause) {
-        PreviewStatus status = previewStore.getPreviewStatus(programId.getParent());
-        setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause), status.getStartTime(),
-                                    System.currentTimeMillis()));
+        terminated(PreviewStatus.Status.RUN_FAILED, cause);;
+      }
+
+      /**
+       * Handle termination of program run.
+       *
+       * @param status the termination status
+       * @param failureCause if the program was terminated due to error, this carries the failure cause
+       */
+      private void terminated(PreviewStatus.Status status, @Nullable Throwable failureCause) {
+        setStatus(new PreviewStatus(status, failureCause == null ? null : new BasicThrowable(failureCause),
+                                    startTimeMillis, System.currentTimeMillis()));
         shutDownUnrequiredServices();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
-    startTimeMillis = System.currentTimeMillis();
+
     previewStore.setProgramId(controller.getProgramRunId());
+
+    // Block until the controller.init is called and have preview status set.
+    statusLatch.await();
   }
 
   private void setStatus(PreviewStatus status) {
