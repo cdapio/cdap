@@ -15,29 +15,32 @@
  */
 
 import React, { Component } from 'react';
-import SearchTextBox from '../../SearchTextBox';
 import MarketPlaceEntity from 'components/MarketPlaceEntity';
 import T from 'i18n-react';
 import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
-require('./AllTabContents.scss');
 import classnames from 'classnames';
+import IconSVG from 'components/IconSVG';
+
+require('./AllTabContents.scss');
 
 export default class AllTabContents extends Component {
   constructor(props) {
     super(props);
+    const filteredEntities = this.getFilteredEntities();
     this.state = {
       searchStr: '',
-      entities: this.getFilteredEntities(),
-      filterEntites: this.getFilteredEntities(),
+      entities: filteredEntities,
+      filterEntites: filteredEntities,
       loading: MarketStore.getState().loading,
       isError: MarketStore.getState().isError,
     };
 
     this.unsub = MarketStore.subscribe(() => {
+      const unSubFilteredEntities = this.getFilteredEntities();
       this.setState({
-        entities: this.getFilteredEntities(),
-        filterEntites: this.getFilteredEntities(),
+        entities: unSubFilteredEntities,
+        filterEntites: unSubFilteredEntities,
         searchStr: '',
       });
       const { loading, isError } = MarketStore.getState();
@@ -73,9 +76,9 @@ export default class AllTabContents extends Component {
     //  it is a ui end filter, it only rerenders the plugins which name contains the string present in search bar.
     var results = this.state.entities;
     if (searchStr != '') {
-      results = this.state.entities.filter(function(value) {
-        return value.label.toLowerCase().indexOf(searchStr.toLowerCase()) >= 0;
-      });
+      results = this.state.entities.filter(
+        (value) => value.label.toLowerCase().indexOf(searchStr.toLowerCase()) >= 0
+      );
     }
     this.setState({ searchStr: changeEvent.target.value, filterEntites: results });
   }
@@ -90,14 +93,14 @@ export default class AllTabContents extends Component {
         <span className="fa fa-spinner fa-spin fa-2x" />
       </h4>
     );
-    const empty = <h3>{T.translate('features.Market.tabs.emptyTab')}</h3>;
+    const empty = <h2>{T.translate('features.Market.tabs.emptyTab')}</h2>;
     const entities = this.state.filterEntites.map((e) => (
       <MarketPlaceEntity key={e.id} entityId={e.id} entity={e} />
     ));
 
     if (this.state.loading) {
       return loadingElem;
-    } else if (this.state.entities.length === 0) {
+    } else if (entities && entities.length === 0) {
       return empty;
     } else {
       return entities;
@@ -114,11 +117,21 @@ export default class AllTabContents extends Component {
 
     return (
       <div className="all-tab-content">
-        <SearchTextBox
-          placeholder={T.translate('features.Market.search-placeholder')}
-          value={this.state.searchStr}
-          onChange={this.onSearch.bind(this)}
-        />
+        <div className="search-box input-group">
+          <div className="input-feedback input-group-prepend">
+            <div className="input-group-text">
+              <IconSVG name="icon-search" />
+            </div>
+          </div>
+          <input
+            type="text"
+            className="search-input form-control"
+            placeholder={T.translate('features.Market.search-placeholder')}
+            value={this.state.searchStr}
+            onChange={this.onSearch.bind(this)}
+          />
+        </div>
+
         <div
           className={classnames('body-section text-center', {
             'empty-section': this.state.entities.length === 0,
