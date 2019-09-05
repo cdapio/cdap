@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -67,5 +68,14 @@ public interface FailureCollector {
    */
   default ValidationException getOrThrowException() throws ValidationException {
     throw new UnsupportedOperationException("Throwing failures is not supported.");
+  }
+
+  /**
+   * Get list of validation failures.
+   *
+   * @return list of validation failures
+   */
+  default List<ValidationFailure> getValidationFailures() {
+    throw new UnsupportedOperationException("Getting failures is not supported.");
   }
 }
