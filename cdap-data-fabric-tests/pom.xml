@@ -112,6 +112,7 @@
       <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-core</artifactId>
       <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
