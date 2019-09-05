@@ -15,7 +15,6 @@
 */
 
 const crypto = require('crypto');
-const fs = require('fs');
 const path = require('path');
 
 const EncryptionConstants = {
@@ -98,25 +97,18 @@ function decrypt(encText, key) {
 }
 
 function getSecretFromCDAPConfig(cdapConfig, logger) {
-  let secretKeyFilePath =
-    cdapConfig['session.secret.key.path'] ||
+  let secretKey =
+    cdapConfig['session.secret.key'] ||
     path.resolve(__dirname, 'config', 'development', 'session_secret.key');
   if (!logger) {
     logger = console;
   }
-  if (!secretKeyFilePath) {
+  if (!secretKey) {
     logger.warn(
       'Secret key missing. This is required to generate a strong time-based token to prevent cswh'
     );
   }
-  let secret;
-  try {
-    secret = fs.readFileSync(secretKeyFilePath, { encoding: 'utf8' });
-  } catch (e) {
-    logger.error('Error in generating key for cswh. ' + e);
-    secret = '';
-  }
-  return secret;
+  return secretKey;
 }
 
 /**

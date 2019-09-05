@@ -23,14 +23,10 @@ module.exports = {
 };
 
 var promise = require('q'),
-  spawn = require('child_process').spawn,
-  StringDecoder = require('string_decoder').StringDecoder,
-  decoder = new StringDecoder('utf8'),
   log4js = require('log4js'),
   cache = {},
-  nodepath = require('path'),
-  path,
-  buffer = '';
+  path;
+const ConfigReader = require('./config-reader');
 
 var log = log4js.getLogger('default');
 
@@ -51,8 +47,7 @@ function extractUISettings() {
  */
 
 function extractConfig(param) {
-  var deferred = promise.defer(),
-    tool;
+  var deferred = promise.defer();
   param = param || 'cdap';
 
   if (cache[param]) {
@@ -61,11 +56,16 @@ function extractConfig(param) {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    buffer = '';
-    tool = spawn(nodepath.join(__dirname, 'bin', 'cdap'), ['config-tool', '--' + param]);
-    tool.stderr.on('data', configReadFail.bind(this));
-    tool.stdout.on('data', configRead.bind(this));
-    tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
+    const configReader = new ConfigReader(param);
+    configReader
+      .getPromise()
+      .then((config) => {
+        cache[param] = config;
+        deferred.resolve(cache[param]);
+      })
+      .catch((error) => {
+        deferred.reject(error);
+      });
   } else {
     try {
       path = getConfigPath(param);
@@ -108,23 +108,4 @@ function getConfigPath(param) {
     }
   }
   return value;
-}
-
-function onConfigReadEnd(deferred, param) {
-  cache[param] = JSON.parse(buffer);
-  deferred.resolve(cache[param]);
-}
-
-function configRead(data) {
-  var textChunk = decoder.write(data);
-  if (textChunk) {
-    buffer += textChunk;
-  }
-}
-
-function configReadFail(data) {
-  var textChunk = decoder.write(data);
-  if (textChunk) {
-    log.error(textChunk);
-  }
 }
