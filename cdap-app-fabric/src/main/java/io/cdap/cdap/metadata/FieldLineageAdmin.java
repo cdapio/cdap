@@ -19,7 +19,6 @@ package io.cdap.cdap.metadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.lineage.field.EndPoint;
@@ -151,8 +150,9 @@ public class FieldLineageAdmin {
    * @return the summary which contains all the field level lineage information about all the fields in a dataset
    * @throws IOException if fails to get teh schema of the dataset
    */
-  DatasetFieldLineageSummary getDatasetFieldLineage(Constants.FieldLineage.Direction direction, EndPoint endPoint,
-                                                    long start, long end) throws IOException {
+  public DatasetFieldLineageSummary getDatasetFieldLineage(Constants.FieldLineage.Direction direction,
+                                                           EndPoint endPoint,
+                                                           long start, long end) throws IOException {
     Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
     Map<DatasetId, Set<FieldRelation>> incomingRelations = new HashMap<>();
     Map<DatasetId, Set<FieldRelation>> outgoingRelations = new HashMap<>();

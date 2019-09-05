@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -92,7 +93,8 @@ public class DatasetFieldLineageSummary {
     private final DatasetId datasetId;
     private final Set<FieldRelation> relations;
 
-    FieldLineageRelations(DatasetId datasetId, Set<FieldRelation> relations) {
+    @VisibleForTesting
+    public FieldLineageRelations(DatasetId datasetId, Set<FieldRelation> relations) {
       this.datasetId = datasetId;
       this.relations = relations;
     }

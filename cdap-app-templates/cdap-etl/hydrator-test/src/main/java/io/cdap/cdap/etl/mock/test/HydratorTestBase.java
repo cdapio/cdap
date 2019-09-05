@@ -24,8 +24,10 @@ import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
+import io.cdap.cdap.etl.mock.action.FieldLineageAction;
 import io.cdap.cdap.etl.mock.action.FileMoveAction;
 import io.cdap.cdap.etl.mock.action.MockAction;
 import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
@@ -82,8 +84,8 @@ public class HydratorTestBase extends TestBase {
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS,
     StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
-    MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
-    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
+    MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
+    StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
     MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
   );
@@ -113,6 +115,7 @@ public class HydratorTestBase extends TestBase {
                    Action.class.getPackage().getName(),
                    Condition.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
+                   AccessType.class.getPackage().getName(),
                    InvalidStageException.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 

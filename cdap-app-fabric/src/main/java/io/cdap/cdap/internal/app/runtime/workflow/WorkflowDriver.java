@@ -306,15 +306,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       return;
     }
 
-    try {
-      Set<Operation> fieldLineageOperations = workflowContext.getFieldLineageOperations();
-      if (!fieldLineageOperations.isEmpty()) {
-        FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
-        fieldLineageWriter.write(workflowRunId, info);
-      }
-    } catch (Throwable t) {
-      LOG.debug("Failed to emit the field lineage operations for Workflow {}", workflowRunId, t);
-    }
+    writeFieldLineage(workflowContext.getFieldLineageOperations());
   }
 
   private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
@@ -445,11 +437,25 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       status.remove(node.getNodeId());
       workflowStateWriter.setWorkflowToken(workflowRunId, token);
       NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
+      if (failureCause == null) {
+        writeFieldLineage(context.getFieldLineageOperations());
+      }
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
       BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
       workflowStateWriter.addWorkflowNodeState(workflowRunId,
                                                new WorkflowNodeStateDetail(node.getNodeId(), status, null,
                                                                            defaultThrowable));
+    }
+  }
+
+  private void writeFieldLineage(Set<Operation> fieldLineageOperations) {
+    try {
+      if (!fieldLineageOperations.isEmpty()) {
+        FieldLineageInfo fieldLineageInfo = new FieldLineageInfo(fieldLineageOperations);
+        fieldLineageWriter.write(workflowRunId, fieldLineageInfo);
+      }
+    } catch (Throwable t) {
+      LOG.debug("Failed to emit the field lineage operations for Workflow {}", workflowRunId, t);
     }
   }
 

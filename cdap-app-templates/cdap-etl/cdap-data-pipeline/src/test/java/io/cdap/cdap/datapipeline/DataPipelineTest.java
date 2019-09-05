@@ -33,6 +33,12 @@ import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetArguments;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.lineage.field.EndPoint;
+import io.cdap.cdap.api.lineage.field.InputField;
+import io.cdap.cdap.api.lineage.field.Operation;
+import io.cdap.cdap.api.lineage.field.ReadOperation;
+import io.cdap.cdap.api.lineage.field.TransformOperation;
+import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -43,8 +49,12 @@ import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.NodeStatus;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.Lineage;
+import io.cdap.cdap.data2.metadata.lineage.Relation;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.datapipeline.mock.NaiveBayesClassifier;
 import io.cdap.cdap.datapipeline.mock.NaiveBayesTrainer;
@@ -58,6 +68,7 @@ import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.mock.action.FieldLineageAction;
 import io.cdap.cdap.etl.mock.action.MockAction;
 import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
 import io.cdap.cdap.etl.mock.alert.TMSAlertPublisher;
@@ -94,6 +105,10 @@ import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.metadata.DatasetFieldLineageSummary;
+import io.cdap.cdap.metadata.FieldLineageAdmin;
+import io.cdap.cdap.metadata.FieldRelation;
+import io.cdap.cdap.metadata.LineageAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
@@ -103,6 +118,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.spi.metadata.Metadata;
@@ -114,6 +130,7 @@ import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -179,6 +196,105 @@ public class DataPipelineTest extends HydratorTestBase {
   @After
   public void cleanupTest() {
     getMetricsManager().resetAll();
+  }
+
+  @Test
+  public void testActionFieldLineage() throws Exception {
+    testActionFieldLineage(Engine.MAPREDUCE);
+    testActionFieldLineage(Engine.SPARK);
+  }
+
+  private void testActionFieldLineage(Engine engine) throws Exception {
+    String readDataset = "ActionReadDataset" + engine;
+    String writeDataset = "ActionWriteDataset" + engine;
+    List<String> srcFields = ImmutableList.of("srcField1", "srcField2", "srcField3");
+    Set<String> destFields = ImmutableSet.of("destField1", "destField2", "destField3");
+
+    List<Operation> operations = new ArrayList<>();
+    /*
+     *          |---------> srcField1 -> destField1----|
+     *          |                                      |
+     * ActionReadDataset -> srcField2 -> destField2 ---|-> ActionWriteDataset
+     *          |                                      |
+     *          |---------> srcField3 -> destField3 ---|
+     */
+    operations.add(new ReadOperation("Read", "1st operation", EndPoint.of("default", readDataset), srcFields));
+    operations.add(new TransformOperation("Transform1", "2nd operation",
+                                          Collections.singletonList(InputField.of("Read", "srcField1")),
+                                          "destField1"));
+    operations.add(new TransformOperation("Transform2", "3rd operation",
+                                          Collections.singletonList(InputField.of("Read", "srcField2")),
+                                          "destField2"));
+    operations.add(new TransformOperation("Transform3", "4th operation",
+                                          Collections.singletonList(InputField.of("Read", "srcField3")),
+                                          "destField3"));
+    operations.add(new WriteOperation("Write", "5th operation", EndPoint.of("default", writeDataset),
+                                      ImmutableList.of(InputField.of("Transform1", "destField1"),
+                                                       InputField.of("Transform2", "destField2"),
+                                                       InputField.of("Transform3", "destField3"))));
+    ETLStage action = new ETLStage("action", FieldLineageAction.getPlugin(readDataset, writeDataset, operations));
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder().addStage(action).setEngine(engine).build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ActionFieldLineage-" + engine);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    FieldLineageAdmin fieldAdmin = getFieldLineageAdmin();
+
+    // get field lineage for dest dataset
+    DatasetFieldLineageSummary summary =
+      fieldAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("default", writeDataset),
+                                        0, System.currentTimeMillis());
+    Assert.assertEquals(NamespaceId.DEFAULT.dataset(writeDataset), summary.getDatasetId());
+    Assert.assertEquals(destFields, summary.getFields());
+    Assert.assertTrue(summary.getOutgoing().isEmpty());
+    Assert.assertEquals(1, summary.getIncoming().size());
+    Set<FieldRelation> fieldRelations = ImmutableSet.of(new FieldRelation("srcField1", "destField1"),
+                                                        new FieldRelation("srcField2", "destField2"),
+                                                        new FieldRelation("srcField3", "destField3"));
+    DatasetFieldLineageSummary.FieldLineageRelations expectedRelations =
+      new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(readDataset), fieldRelations);
+    Assert.assertEquals(expectedRelations, summary.getIncoming().iterator().next());
+
+    // get field lineage for src dataset
+    summary =
+      fieldAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("default", readDataset),
+                                        0, System.currentTimeMillis());
+    Assert.assertEquals(NamespaceId.DEFAULT.dataset(readDataset), summary.getDatasetId());
+    Assert.assertEquals(new HashSet<>(srcFields), summary.getFields());
+    Assert.assertTrue(summary.getIncoming().isEmpty());
+    Assert.assertEquals(1, summary.getOutgoing().size());
+    expectedRelations =
+      new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(writeDataset), fieldRelations);
+    Assert.assertEquals(expectedRelations, summary.getOutgoing().iterator().next());
+
+    LineageAdmin lineageAdmin = getLineageAdmin();
+    ProgramId programId = appId.workflow(SmartWorkflow.NAME);
+    RunId runId = RunIds.fromString(workflowManager.getHistory().iterator().next().getPid());
+
+    // get dataset lineage for src dataset
+    Tasks.waitFor(2, () -> {
+      Lineage lineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(readDataset),
+                                                    0, System.currentTimeMillis(), 1, "workflow");
+      return lineage.getRelations().size();
+    }, 10, TimeUnit.SECONDS);
+
+    Lineage lineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(readDataset),
+                                                  0, System.currentTimeMillis(), 1, "workflow");
+    Set<Relation> expectedLineage =
+      ImmutableSet.of(new Relation(NamespaceId.DEFAULT.dataset(readDataset), programId, AccessType.READ, runId),
+                      new Relation(NamespaceId.DEFAULT.dataset(writeDataset), programId, AccessType.WRITE, runId));
+    Assert.assertEquals(expectedLineage, lineage.getRelations());
+
+    // get dataset lineage for dest dataset, in this test they should be same
+    lineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(writeDataset),
+                                          0, System.currentTimeMillis(), 1, "workflow");
+    Assert.assertEquals(2, lineage.getRelations().size());
+    Assert.assertEquals(expectedLineage, lineage.getRelations());
   }
 
   @Test
