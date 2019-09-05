@@ -32,6 +32,9 @@ public class MockFailureCollector implements FailureCollector {
   private final List<ValidationFailure> failures;
   private final String stageName;
 
+  public MockFailureCollector() {
+    this("mockstage");
+  }
   /**
    * Mock failure collector for tests.
    *
@@ -51,6 +54,10 @@ public class MockFailureCollector implements FailureCollector {
 
   @Override
   public ValidationException getOrThrowException() throws ValidationException {
+    if (failures.isEmpty()) {
+      return new ValidationException(failures);
+    }
+
     for (ValidationFailure failure : failures) {
       List<ValidationFailure.Cause> causes = failure.getCauses();
       if (causes.isEmpty()) {

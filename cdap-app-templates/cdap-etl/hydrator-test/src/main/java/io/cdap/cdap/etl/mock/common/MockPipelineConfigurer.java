@@ -24,8 +24,10 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 
 import java.util.Collections;
 import java.util.Map;
@@ -38,6 +40,7 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   private final Schema inputSchema;
   Schema outputSchema;
   private Map<String, Object> plugins;
+  private final FailureCollector collector;
 
   /**
    * Creates a mock pipeline configurer with a map of plugins to use for validation.
@@ -47,10 +50,11 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   public MockPipelineConfigurer(Schema inputSchema, Map<String, Object> plugins) {
     this.inputSchema = inputSchema;
     this.plugins = plugins;
+    this.collector = new MockFailureCollector();
   }
 
   public MockPipelineConfigurer(Schema inputSchema) {
-    this(inputSchema, Collections.<String, Object>emptyMap());
+    this(inputSchema, Collections.emptyMap());
   }
 
   @Nullable
@@ -75,6 +79,10 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
       @Override
       public void setErrorSchema(@Nullable Schema errorSchema) {
         // no-op
+      }
+
+      public FailureCollector getFailureCollector() {
+        return collector;
       }
     };
   }
