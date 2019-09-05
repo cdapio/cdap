@@ -211,65 +211,67 @@ class Login extends Component {
     }
 
     return (
-      <div>
-        <Card footer={footer}>
-          <div className="cdap-logo"></div>
-          <form
-            role="form"
-            onSubmit={this.login.bind(this)}
-          >
-            <div className="form-group">
-              <ValidatedInput
-                  type="text"
-                  label={this.state.inputs.name.label}
-                  placeholder={T.translate('login.placeholders.username')}
-                  inputInfo={types[this.state.inputs.name.template].getInfo()}
-                  validationError={this.state.inputs.name.error}
-                  value={this.state.username}
-                  onChange={this.onUsernameUpdate.bind(this)}
-                />
-            </div>
-            <div className="form-group">
-              <ValidatedInput
-                    type="password"
-                    label={this.state.inputs.password.label}
-                    placeholder={T.translate('login.placeholders.password')}
-                    inputInfo={types[this.state.inputs.password.template].getInfo()}
-                    validationError={this.state.inputs.password.error}
-                    onChange={this.onPasswordUpdate.bind(this)}
+      !this.state.isKnoxEnable ?
+        <div>
+          <Card footer={footer}>
+            <div className="cdap-logo"></div>
+            <form
+              role="form"
+              onSubmit={this.login.bind(this)}
+            >
+              <div className="form-group">
+                <ValidatedInput
+                    type="text"
+                    label={this.state.inputs.name.label}
+                    placeholder={T.translate('login.placeholders.username')}
+                    inputInfo={types[this.state.inputs.name.template].getInfo()}
+                    validationError={this.state.inputs.name.error}
+                    value={this.state.username}
+                    onChange={this.onUsernameUpdate.bind(this)}
                   />
-            </div>
-            <div className="form-group">
-              <div className="clearfix">
-                <div className="float-xs-left">
-                  <div className="checkbox form-check">
-                    <label className="form-check-label">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        value={this.state.rememberUser}
-                        onClick={this.rememberUser.bind(this)}
-                      />
-                    {T.translate('login.labels.rememberme')}
-                    </label>
+              </div>
+              <div className="form-group">
+                <ValidatedInput
+                      type="password"
+                      label={this.state.inputs.password.label}
+                      placeholder={T.translate('login.placeholders.password')}
+                      inputInfo={types[this.state.inputs.password.template].getInfo()}
+                      validationError={this.state.inputs.password.error}
+                      onChange={this.onPasswordUpdate.bind(this)}
+                    />
+              </div>
+              <div className="form-group">
+                <div className="clearfix">
+                  <div className="float-xs-left">
+                    <div className="checkbox form-check">
+                      <label className="form-check-label">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          value={this.state.rememberUser}
+                          onClick={this.rememberUser.bind(this)}
+                        />
+                      {T.translate('login.labels.rememberme')}
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="form-group">
-              <button
-                id="submit"
-                type="submit"
-                className="btn btn-primary btn-block"
-                disabled={!this.state.formState || this.state.inputs.name.error.length > 0 || this.state.inputs.password.error.length > 0}
-                onClick={this.login.bind(this)}
-              >
-                {T.translate('login.labels.loginbtn')}
-              </button>
-            </div>
-          </form>
-        </Card>
-      </div>
+              <div className="form-group">
+                <button
+                  id="submit"
+                  type="submit"
+                  className="btn btn-primary btn-block"
+                  disabled={!this.state.formState || this.state.inputs.name.error.length > 0 || this.state.inputs.password.error.length > 0}
+                  onClick={this.login.bind(this)}
+                >
+                  {T.translate('login.labels.loginbtn')}
+                </button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      :<div></div>
     );
   }
 }
