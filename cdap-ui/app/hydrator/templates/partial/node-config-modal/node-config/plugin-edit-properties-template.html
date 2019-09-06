@@ -19,7 +19,7 @@
        class="form-group">
     <label class="col-xs-3 control-label">Error(s)</label>
     <pre ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length > 0"
-         class="col-xs-9 text-danger">{{HydratorPlusPlusNodeConfigCtrl.validationErrors | json}}</pre>
+         class="col-xs-9 text-danger" style="padding: 10px; word-break: break-word;">{{HydratorPlusPlusNodeConfigCtrl.validationErrors | json}}</pre>
     <span class="col-xs-9 text-success"
           ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length === 0">No
       Validation Errors.</span>
