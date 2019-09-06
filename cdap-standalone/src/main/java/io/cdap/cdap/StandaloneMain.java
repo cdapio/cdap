@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -46,6 +47,7 @@ import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.startup.ConfigurationLogger;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.OSDetector;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -95,6 +97,7 @@ import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -469,6 +472,7 @@ public class StandaloneMain {
   }
 
   private static List<Module> createPersistentModules(CConfiguration cConf, Configuration hConf) {
+    cConf.setInt(Constants.Master.MAX_INSTANCES, 1);
     cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
@@ -517,7 +521,14 @@ public class StandaloneMain {
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),
-      new OperationalStatsModule()
+      new OperationalStatsModule(),
+      new AbstractModule()  {
+        @Override
+        protected void configure() {
+          // Needed by MonitorHandlerModuler
+          bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+        }
+      }
     );
   }
 }

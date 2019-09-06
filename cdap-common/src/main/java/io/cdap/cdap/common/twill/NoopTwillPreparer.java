@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.master.environment;
+package io.cdap.cdap.common.twill;
 
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.SecureStore;

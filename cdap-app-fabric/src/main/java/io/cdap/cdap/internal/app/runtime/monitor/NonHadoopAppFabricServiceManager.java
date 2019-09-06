@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,32 +14,28 @@
  * the License.
  */
 
-package io.cdap.cdap.logging.run;
+package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.twill.AbstractInMemoryMasterServiceManager;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * In memory explore service manager.
+ * Service for managing app fabric service.
  */
-public class InMemoryExploreServiceManager extends AbstractInMemoryMasterServiceManager {
-
-  private final CConfiguration cConf;
+public class NonHadoopAppFabricServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  public InMemoryExploreServiceManager(CConfiguration cConf) {
-    this.cConf = cConf;
-  }
-
-  @Override
-  public boolean isServiceEnabled() {
-    return cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+  NonHadoopAppFabricServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient,
+                                   TwillRunner twillRunner) {
+    super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP, twillRunner);
   }
 
   @Override
   public String getDescription() {
-    return Constants.Explore.SERVICE_DESCRIPTION;
+    return Constants.AppFabric.SERVICE_DESCRIPTION;
   }
 }

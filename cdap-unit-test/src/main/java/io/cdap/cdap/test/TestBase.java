@@ -64,6 +64,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.TestRunner;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -132,6 +133,7 @@ import io.cdap.common.http.HttpResponse;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -275,6 +277,9 @@ public class TestBase {
                     .build(ArtifactManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(TMP_FOLDER);
           bind(AuthorizationHandler.class).in(Scopes.SINGLETON);
+
+          // Needed by MonitorHandlerModuler
+          bind(TwillRunner.class).to(NoopTwillRunnerService.class);
         }
       }
     );

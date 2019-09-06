@@ -53,10 +53,10 @@ public class AppFabricServiceManager implements MasterServiceManager {
   private final Map<String, LogEntry.Level> oldLogLevels;
 
   @Inject
-  public AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
+  AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
     this.hostname = hostname;
     // this is to remember old log levels, will be used during reset
-    this.oldLogLevels = Collections.synchronizedMap(new HashMap<String, LogEntry.Level>());
+    this.oldLogLevels = Collections.synchronizedMap(new HashMap<>());
   }
 
   @Inject(optional = true)
@@ -70,11 +70,6 @@ public class AppFabricServiceManager implements MasterServiceManager {
   @Override
   public String getDescription() {
     return Constants.AppFabric.SERVICE_DESCRIPTION;
-  }
-
-  @Override
-  public int getMaxInstances() {
-    return 1;
   }
 
   @Override
@@ -101,48 +96,8 @@ public class AppFabricServiceManager implements MasterServiceManager {
   }
 
   @Override
-  public int getInstances() {
-    return 1;
-  }
-
-  @Override
-  public boolean setInstances(int instanceCount) {
-    return false;
-  }
-
-  @Override
-  public int getMinInstances() {
-    return 1;
-  }
-
-  @Override
-  public boolean isLogAvailable() {
-    return true;
-  }
-
-  @Override
-  public boolean canCheckStatus() {
-    return true;
-  }
-
-  @Override
   public boolean isServiceAvailable() {
     return true;
-  }
-
-  @Override
-  public boolean isServiceEnabled() {
-    return true;
-  }
-
-  @Override
-  public void restartAllInstances() {
-    // no-op
-  }
-
-  @Override
-  public void restartInstances(int instanceId, int... moreInstanceIds) {
-    // no-op
   }
 
   /**
@@ -178,6 +133,9 @@ public class AppFabricServiceManager implements MasterServiceManager {
   @Override
   public void resetServiceLogLevels(Set<String> loggerNames) {
     LoggerContext context = getLoggerContext();
+    if (context == null) {
+      return;
+    }
     Iterator<Map.Entry<String, LogEntry.Level>> entryIterator = oldLogLevels.entrySet().iterator();
     while (entryIterator.hasNext()) {
       Map.Entry<String, LogEntry.Level> entry = entryIterator.next();

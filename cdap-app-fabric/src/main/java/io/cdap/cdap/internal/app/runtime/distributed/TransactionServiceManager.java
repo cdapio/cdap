@@ -19,54 +19,48 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Transaction Service Management in Distributed Mode.
  */
-public class TransactionServiceManager extends AbstractDistributedMasterServiceManager {
+public class TransactionServiceManager extends AbstractMasterServiceManager {
+
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceManager.class);
+
   private final TransactionSystemClient txClient;
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private final boolean isTxEnabled;
 
   @Inject
-  public TransactionServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                                   TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.TRANSACTION, twillRunnerService, discoveryServiceClient);
+  TransactionServiceManager(CConfiguration cConf, TwillRunner twillRunner,
+                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.TRANSACTION, twillRunner);
     this.txClient = txClient;
-    this.isTxEnabled = cConf.getBoolean(Constants.Transaction.TX_ENABLED);
-    this.discoveryServiceClient = discoveryServiceClient;
+  }
+
+  @Override
+  public boolean isServiceEnabled() {
+    return getCConf().getBoolean(Constants.Transaction.TX_ENABLED);
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.Transaction.Container.MAX_INSTANCES);
+    return getCConf().getInt(Constants.Transaction.Container.MAX_INSTANCES);
   }
 
   @Override
   public boolean isServiceAvailable() {
-    try {
-      Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName))
-        .pick(discoveryTimeout, TimeUnit.SECONDS);
-      if (discoverable == null && isTxEnabled) {
-        return false;
-      }
-
-      return txClient.status().equals(Constants.Monitor.STATUS_OK);
-    } catch (IllegalArgumentException e) {
+    if (!isServiceEnabled()) {
       return false;
+    }
+    try {
+      return txClient.status().equals(Constants.Monitor.STATUS_OK);
     } catch (Exception e) {
-      LOG.warn("Unable to ping {} : Reason {} ", serviceName, e.getMessage());
+      LOG.warn("Unable to ping {}", Constants.Service.TRANSACTION, e);
       return false;
     }
   }
