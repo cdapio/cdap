@@ -266,7 +266,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         rulesEngine: 'Rules',
         projectAdmin: 'Namespace Admin',
         systemAdmin: 'System Admin',
-        transfers: 'Transfers',
+        transfers: 'Replicator',
       },
     };
     if (isNilOrEmpty(contentJson)) {

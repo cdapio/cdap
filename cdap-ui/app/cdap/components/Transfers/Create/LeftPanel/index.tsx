@@ -17,11 +17,7 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { transfersCreateConnect, Stages } from 'components/Transfers/Create/context';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import StepProgress from '../StepProgress';
-import { StageConfiguration } from 'components/Transfers/Create/Content';
 
 const styles = (theme): StyleRules => {
   return {
@@ -38,41 +34,10 @@ interface IProps extends WithStyles<typeof styles> {
   stage: string;
 }
 
-const LeftPanelView: React.SFC<IProps> = ({ classes, stage }) => {
+const LeftPanelView: React.SFC<IProps> = ({ classes }) => {
   return (
     <div className={classes.root}>
-      <ExpansionPanel square expanded={stage === Stages.CONFIGURE}>
-        <ExpansionPanelSummary>
-          <div>{StageConfiguration[Stages.CONFIGURE].label}</div>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <StepProgress />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
-      <ExpansionPanel
-        square
-        expanded={stage === Stages.ASSESSMENT}
-        disabled={stage === Stages.CONFIGURE}
-      >
-        <ExpansionPanelSummary>
-          <div>{StageConfiguration[Stages.ASSESSMENT].label}</div>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <StepProgress />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
-      <ExpansionPanel
-        square
-        expanded={stage === Stages.PUBLISH}
-        disabled={stage !== Stages.PUBLISH}
-      >
-        <ExpansionPanelSummary>
-          <div>{StageConfiguration[Stages.PUBLISH].label}</div>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <StepProgress />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+      <StepProgress />
     </div>
   );
 };

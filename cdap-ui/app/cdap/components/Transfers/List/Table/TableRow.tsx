@@ -65,7 +65,7 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList }) => {
     {
       label: T.translate(`${PREFIX}.delete`),
       className: 'delete',
-      actionFn: deleteApp.bind(null, transfer, getList),
+      actionFn: deleteApp.bind(null, transfer, getList, getList),
     },
   ];
 
@@ -88,7 +88,7 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList }) => {
       <div>MySQL</div>
       <div>BigQuery</div>
       <div>{moment(transfer.updated * 1000).format('MMM D, YYYY hh:mm A')}</div>
-      <div>
+      <div onClick={(e) => e.preventDefault()}>
         <ActionsPopover actions={actions} />
       </div>
     </Link>

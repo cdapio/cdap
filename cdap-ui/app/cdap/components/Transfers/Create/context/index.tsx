@@ -15,7 +15,6 @@
  */
 
 import * as React from 'react';
-import { any } from 'prop-types';
 
 export enum Stages {
   CONFIGURE = 'configure',
@@ -26,9 +25,9 @@ export enum Stages {
 }
 
 export const defaultContext = {
-  id: null,
+  id: '',
   stage: Stages.CONFIGURE,
-  activeStep: 0,
+  activeStep: 5,
   name: '',
   description: '',
   source: {},

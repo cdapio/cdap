@@ -69,7 +69,8 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes, sourceConfig, setStage
 
   return (
     <div>
-      <h1>Assessment Report</h1>
+      <h1>Assessment summary</h1>
+      <div>Resolve all issues to continue</div>
       <small>{moment().format('MMM D, YYYY [at] hh:mm A')}</small>
       <hr />
       <If condition={showStage > 0}>
@@ -156,7 +157,7 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes, sourceConfig, setStage
       </If>
 
       <br />
-      <StepButtons onComplete={setStage.bind(null, Stages.PUBLISH)} />
+      <StepButtons />
     </div>
   );
 };

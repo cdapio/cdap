@@ -22,10 +22,53 @@ import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
 import Create from 'components/Transfers/Create';
 import Detail from './Detail';
+import { MyDeltaApi } from 'api/delta';
+import If from 'components/If';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import enableSystemApp from 'services/ServiceEnablerUtilities';
 
 const basepath = '/ns/:namespace/transfers';
 
 const Transfers: React.SFC = () => {
+  const [backendUp, setBackendUp] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+
+  // tslint:disable:no-console
+  React.useEffect(() => {
+    // check if backend is up
+    MyDeltaApi.ping().subscribe(
+      () => {
+        setBackendUp(true);
+        setLoading(false);
+      },
+      () => {
+        console.log('DeltaForce service not started. Starting.....');
+        enableSystemApp({
+          shouldStopService: false,
+          artifactName: 'delta-service',
+          api: MyDeltaApi,
+          i18nPrefix: 'features.Transfers',
+          featureName: 'Replicator',
+          MIN_VERSION: '0.0.0',
+        }).subscribe(
+          () => {
+            console.log('DeltaForce started');
+            setBackendUp(true);
+            setLoading(false);
+          },
+          (err) => {
+            console.log('Error', err);
+          }
+        );
+      }
+    );
+  }, []);
+  // tslint:enable:no-console
+
+  if (loading) {
+    return <LoadingSVGCentered />;
+  }
+
   return (
     <div style={{ height: '100%' }}>
       <Helmet
@@ -34,13 +77,15 @@ const Transfers: React.SFC = () => {
           featureName: Theme.featureNames.transfers,
         })}
       />
-      <Switch>
-        <Route exact path={basepath} component={List} />
-        <Route exact path={`${basepath}/create`} component={Create} />
-        <Route exact path={`${basepath}/create/:id`} component={Create} />
-        <Route exact path={`${basepath}/details/:id`} component={Detail} />
-        <Route exact path={`${basepath}/edit/:id`} component={Create} />
-      </Switch>
+      <If condition={backendUp}>
+        <Switch>
+          <Route exact path={basepath} component={List} />
+          <Route exact path={`${basepath}/create`} component={Create} />
+          <Route exact path={`${basepath}/create/:id`} component={Create} />
+          <Route exact path={`${basepath}/details/:id`} component={Detail} />
+          <Route exact path={`${basepath}/edit/:id`} component={Create} />
+        </Switch>
+      </If>
     </div>
   );
 };

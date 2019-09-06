@@ -18,7 +18,9 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/namespaces/system/apps/delta/services/DeltaForce/methods/contexts/:context';
+const appPath = '/namespaces/system/apps/delta';
+const serviceBasepath = `${appPath}/services/DeltaForce`;
+const basepath = `${serviceBasepath}/methods/contexts/:context`;
 const instancePath = `${basepath}/instance/:id`;
 
 export const MyDeltaApi = {
@@ -27,4 +29,13 @@ export const MyDeltaApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', instancePath),
   update: apiCreator(dataSrc, 'PUT', 'REQUEST', instancePath),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', instancePath),
+
+  // Delta service management
+  getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
+  startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/start`),
+  stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/stop`),
+  getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceBasepath}/status`),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceBasepath}/status`),
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceBasepath}/methods/health`),
 };

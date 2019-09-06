@@ -20,6 +20,7 @@ import { fetchPluginInfo } from 'components/Transfers/utilities';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationForm from 'components/ConfigurationForm';
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
+import ConfigurationGroup from 'components/ConfigurationGroup';
 
 interface IPluginConfigurationView {
   artifactName: string;
@@ -80,12 +81,13 @@ const PluginConfigurationView: React.SFC<IPluginConfigurationView> = ({
 
   return (
     <div>
-      <ConfigurationForm
+      <ConfigurationGroup
         pluginProperties={pluginInfo.properties}
         widgetJson={widgetJson}
         values={values}
         onChange={setValues}
       />
+
       <StepButtons onNext={onNext.bind(null, generateStageConfig(), widgetJson)} />
     </div>
   );

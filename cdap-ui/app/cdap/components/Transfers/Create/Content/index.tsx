@@ -28,10 +28,10 @@ import LeftPanel from 'components/Transfers/Create/LeftPanel';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Source from '../Configure/PluginPicker/Source';
 import Target from '../Configure/PluginPicker/Target';
-import GenerateAssessment from '../Assessment/GenerateAssessment';
+// import GenerateAssessment from '../Assessment/GenerateAssessment';
 import ViewAssessment from '../Assessment/ViewAssessment';
 import ViewSummary from '../Publish/ViewSummary';
-import ConfigureSummary from '../Configure/Summary';
+// import ConfigureSummary from '../Configure/Summary';
 import { MyDeltaApi } from 'api/delta';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 
@@ -57,46 +57,87 @@ export const StageConfiguration = {
         component: Source,
       },
       {
-        label: 'Set source configs',
+        label: 'Configure source',
         component: SourceConfig,
       },
+      // {
+      //   label: 'Select tables',
+      //   component:
+      // },
       {
-        label: 'Choose a target',
+        label: 'Select target',
         component: Target,
       },
       {
-        label: 'Set target configs',
+        label: 'Configure target',
         component: TargetConfig,
       },
       {
-        label: `Review configuration`,
-        component: ConfigureSummary,
-      },
-    ],
-  },
-  [Stages.ASSESSMENT]: {
-    label: 'Assessment',
-    steps: [
-      {
-        label: 'Generate assessment',
-        component: GenerateAssessment,
-      },
-      {
-        label: 'View assessment',
+        label: 'Assessment',
         component: ViewAssessment,
       },
-    ],
-  },
-  [Stages.PUBLISH]: {
-    label: 'Publish',
-    steps: [
+      // {
+      //   label: 'Set transformation',
+      //   component:
+      // },
       {
-        label: 'View summary',
+        label: 'Review',
         component: ViewSummary,
       },
     ],
   },
 };
+
+// export const StageConfiguration = {
+//   [Stages.CONFIGURE]: {
+//     label: 'Configure',
+//     steps: [
+//       {
+//         label: 'Set a name and description',
+//         component: NameDescription,
+//       },
+//       {
+//         label: 'Choose a source',
+//         component: Source,
+//       },
+//       {
+//         label: 'Set source configs',
+//         component: SourceConfig,
+//       },
+//       {
+//         label: 'Choose a target',
+//         component: Target,
+//       },
+//       {
+//         label: 'Set target configs',
+//         component: TargetConfig,
+//       },
+//       {
+//         label: `Review configuration`,
+//         component: ConfigureSummary,
+//       },
+//     ],
+//   },
+//   [Stages.ASSESSMENT]: {
+//     label: 'Assessment',
+//     steps: [
+//       {
+//         label: 'Generate assessment',
+//         component: GenerateAssessment,
+//       },
+
+//     ],
+//   },
+//   [Stages.PUBLISH]: {
+//     label: 'Publish',
+//     steps: [
+//       {
+//         label: 'View summary',
+//         component: ViewSummary,
+//       },
+//     ],
+//   },
+// };
 
 interface IContentProps extends WithStyles<typeof styles> {
   id: string;
@@ -135,7 +176,6 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
       name: this.state.name,
       description: this.state.description,
       properties: {
-        stage: this.state.stage,
         activeStep,
         sourceConfig: this.state.sourceConfig,
         source: this.state.source,
@@ -151,23 +191,26 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
     if (!this.state.id) {
       return;
     }
-    const params = {
-      context: getCurrentNamespace(),
-      id: this.state.id,
-    };
+    // const params = {
+    //   context: getCurrentNamespace(),
+    //   id: this.state.id,
+    // };
 
     const requestBody = this.getRequestBody;
 
-    MyDeltaApi.update(params, requestBody).subscribe(
-      (res) => {
-        // tslint:disable-next-line:no-console
-        console.log('res', res);
-      },
-      (err) => {
-        // tslint:disable-next-line:no-console
-        console.log('error', err);
-      }
-    );
+    // MyDeltaApi.update(params, requestBody).subscribe(
+    //   (res) => {
+    //     // tslint:disable-next-line:no-console
+    //     console.log('store update', res);
+    //   },
+    //   (err) => {
+    //     // tslint:disable-next-line:no-console
+    //     console.log('error', err);
+    //   }
+    // );
+
+    // tslint:disable-next-line:no-console
+    console.log('update store', requestBody);
   };
 
   public next = (updateStore = true) => {

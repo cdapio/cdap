@@ -65,6 +65,7 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
 
   return (
     <div className={classes.root}>
+      <hr />
       <If condition={activeStep > 0}>
         <Button color="primary" onClick={previous}>
           Previous
