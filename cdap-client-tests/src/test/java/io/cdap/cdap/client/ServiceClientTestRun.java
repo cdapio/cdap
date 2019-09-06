@@ -25,6 +25,7 @@ import io.cdap.cdap.client.app.PingService;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -132,7 +133,7 @@ public class ServiceClientTestRun extends ClientTestBase {
   public void testGetServiceURL() throws Exception {
     URL url = new URL(serviceClient.getServiceURL(service), "ping");
     HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
     assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
   }
 

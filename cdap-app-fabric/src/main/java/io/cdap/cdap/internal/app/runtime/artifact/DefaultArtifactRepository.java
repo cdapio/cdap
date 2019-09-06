@@ -376,22 +376,25 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
     }
 
-    ExecutorService executorService =
-      Executors.newFixedThreadPool(remainingArtifacts.size(),
-                                   Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
-    try {
-      // loop until there is no change
-      boolean artifactsAdded = true;
-      while (!remainingArtifacts.isEmpty() && artifactsAdded) {
-        artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts, parentToChildren,
-                                             childToParents);
-      }
-    } finally {
-      executorService.shutdownNow();
-    }
-
     if (!remainingArtifacts.isEmpty()) {
-      LOG.warn("Unable to add system artifacts {} due to cyclic dependencies", Joiner.on(",").join(remainingArtifacts));
+      ExecutorService executorService =
+        Executors.newFixedThreadPool(remainingArtifacts.size(),
+                                     Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
+      try {
+        // loop until there is no change
+        boolean artifactsAdded = true;
+        while (!remainingArtifacts.isEmpty() && artifactsAdded) {
+          artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts, parentToChildren,
+                                               childToParents);
+        }
+      } finally {
+        executorService.shutdownNow();
+      }
+
+      if (!remainingArtifacts.isEmpty()) {
+        LOG.warn("Unable to add system artifacts {} due to cyclic dependencies",
+                 Joiner.on(",").join(remainingArtifacts));
+      }
     }
   }
 

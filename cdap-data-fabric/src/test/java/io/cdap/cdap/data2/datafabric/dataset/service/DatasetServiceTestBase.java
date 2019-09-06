@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -33,12 +32,15 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -86,6 +88,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
@@ -93,9 +96,9 @@ import io.cdap.http.HttpHandler;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -110,12 +113,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetService}
@@ -123,6 +126,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class DatasetServiceTestBase {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
+  protected static final HttpRequestConfig REQUEST_CONFIG = new DefaultHttpRequestConfig(false);
 
   protected static LocationFactory locationFactory;
   protected static NamespaceAdmin namespaceAdmin;
@@ -210,7 +215,8 @@ public abstract class DatasetServiceTestBase {
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+    opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
+                                                     discoveryService, metricsCollectionService, handlers);
     opExecutorService.startAndWait();
 
     Map<String, DatasetModule> defaultModules =
@@ -247,7 +253,8 @@ public abstract class DatasetServiceTestBase {
                                                  authenticationContext,
                                                  new NoOpMetadataServiceClient());
 
-    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
+    service = new DatasetService(cConf, SConfiguration.create(),
+                                 discoveryService, discoveryServiceClient, metricsCollectionService,
                                  new HashSet<>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
@@ -264,18 +271,15 @@ public abstract class DatasetServiceTestBase {
                                "%s service is not up after 5 seconds", service);
   }
 
-  private synchronized int getPort() {
-    int attempts = 0;
-    while (port < 0 && attempts++ < 10) {
-      ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER);
-      if (!discovered.iterator().hasNext()) {
-        Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
-        continue;
-      }
-      port = discovered.iterator().next().getSocketAddress().getPort();
-    }
+  @Nullable
+  private synchronized Discoverable getDiscoverable() {
+    Discoverable discoverable = new RandomEndpointStrategy(
+      () -> discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER))
+      .pick(10, TimeUnit.SECONDS);
 
-    return port;
+    Preconditions.checkNotNull(discoverable, "No endpoint discovered for service %s",
+                               Constants.Service.DATASET_MANAGER);
+    return discoverable;
   }
 
   protected static CConfiguration createCConf() throws IOException {
@@ -296,9 +300,8 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String namespace, String path) throws MalformedURLException {
-    return new URL(
-      URI.create(String.format("http://localhost:%d/%s/namespaces/%s%s",
-                               getPort(), Constants.Gateway.API_VERSION_3_TOKEN, namespace, path)).toASCIIString());
+    return URIScheme.createURI(getDiscoverable(), "%s/namespaces/%s%s",
+                               Constants.Gateway.API_VERSION_3_TOKEN, namespace, path).toURL();
   }
 
   protected Location createModuleJar(Class moduleClass, Location...bundleEmbeddedJars) throws IOException {
@@ -332,7 +335,7 @@ public abstract class DatasetServiceTestBase {
     HttpRequest request = HttpRequest.put(getUrl(module.getNamespace(), urlPath))
       .addHeader("X-Class-Name", moduleClass.getName())
       .withBody((ContentProvider<? extends InputStream>) moduleJar::getInputStream).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
@@ -343,7 +346,7 @@ public abstract class DatasetServiceTestBase {
     HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
       .addHeader("X-Class-Name", moduleClassName)
       .withBody((ContentProvider<? extends InputStream>) moduleJar::getInputStream).build();
-    return HttpRequests.execute(request).getResponseCode();
+    return HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode();
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
@@ -357,7 +360,7 @@ public abstract class DatasetServiceTestBase {
 
   protected HttpResponse makeModulesRequest(NamespaceId namespaceId) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl(namespaceId.getEntityName(), "/data/modules")).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   protected HttpResponse deleteModule(String moduleName) throws Exception {
@@ -366,7 +369,8 @@ public abstract class DatasetServiceTestBase {
 
   protected HttpResponse deleteModule(DatasetModuleId module) throws Exception {
     return HttpRequests.execute(
-      HttpRequest.delete(getUrl(module.getNamespace(), "/data/modules/" + module.getEntityName())).build());
+      HttpRequest.delete(getUrl(module.getNamespace(), "/data/modules/" + module.getEntityName())).build(),
+      REQUEST_CONFIG);
   }
 
   protected HttpResponse deleteModules() throws IOException {
@@ -374,7 +378,8 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected HttpResponse deleteModules(NamespaceId namespace) throws IOException {
-    return HttpRequests.execute(HttpRequest.delete(getUrl(namespace.getEntityName(), "/data/modules/")).build());
+    return HttpRequests.execute(HttpRequest.delete(getUrl(namespace.getEntityName(), "/data/modules/")).build(),
+                                REQUEST_CONFIG);
   }
 
   protected void assertNamespaceNotFound(HttpResponse response, NamespaceId namespaceId) {

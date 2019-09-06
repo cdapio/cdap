@@ -24,13 +24,15 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,28 +46,18 @@ import java.util.Set;
 public class MetadataService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataService.class);
 
-  private final CConfiguration cConf;
-  private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryService discoveryService;
-  private final Set<HttpHandler> handlers;
 
-  private NettyHttpService httpService;
+  private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
 
   @Inject
-  MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
+  MetadataService(CConfiguration cConf, SConfiguration sConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
                   @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers) {
-    this.cConf = cConf;
-    this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
-    this.handlers = handlers;
-  }
 
-  @Override
-  protected void startUp() throws Exception {
-    LOG.info("Starting Metadata Service");
-    httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
@@ -74,14 +66,24 @@ public class MetadataService extends AbstractIdleService {
       .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_EXEC_THREADS))
-      .setConnectionBacklog(20000)
-      .build();
+      .setConnectionBacklog(20000);
 
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+
+    httpService = builder.build();
+
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting Metadata Service");
     httpService.start();
     InetSocketAddress socketAddress = httpService.getBindAddress();
     LOG.info("Metadata service running at {}", socketAddress);
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.METADATA_SERVICE, socketAddress)));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.METADATA_SERVICE, httpService)));
 
   }
 

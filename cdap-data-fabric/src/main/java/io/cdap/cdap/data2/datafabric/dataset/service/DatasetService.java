@@ -26,9 +26,12 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.data2.metrics.DatasetMetricsReporter;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -37,7 +40,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -69,7 +71,7 @@ public class DatasetService extends AbstractService {
   private volatile boolean stopping;
 
   @Inject
-  public DatasetService(CConfiguration cConf,
+  public DatasetService(CConfiguration cConf, SConfiguration sConf,
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         MetricsCollectionService metricsCollectionService,
@@ -98,6 +100,11 @@ public class DatasetService extends AbstractService {
         }
       });
     }
+
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+
     this.httpService = builder
       .setHttpHandlers(datasetTypeHandler, datasetInstanceHandler)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
@@ -168,11 +175,12 @@ public class DatasetService extends AbstractService {
       int announcePort = cConf.getInt(Constants.Dataset.Manager.ANNOUNCE_PORT,
                                       httpService.getBindAddress().getPort());
 
-      final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
+      InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
+      URIScheme scheme = httpService.isSSLEnabled() ? URIScheme.HTTPS : URIScheme.HTTP;
       LOG.info("Announcing DatasetService for discovery...");
       // Register the service
       cancelDiscovery = discoveryService.register(
-        ResolvingDiscoverable.of(new Discoverable(Constants.Service.DATASET_MANAGER, socketAddress)));
+        ResolvingDiscoverable.of(scheme.createDiscoverable(Constants.Service.DATASET_MANAGER, socketAddress)));
 
       LOG.info("DatasetService started successfully on {}", socketAddress);
     } catch (Throwable t) {

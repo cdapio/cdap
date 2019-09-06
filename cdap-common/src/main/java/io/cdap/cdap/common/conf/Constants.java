@@ -19,10 +19,14 @@ package io.cdap.cdap.common.conf;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.apache.twill.discovery.Discoverable;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -42,7 +46,6 @@ public final class Constants {
   public static final String[] PORT_PROPS = {
     Router.ROUTER_PORT,
     Router.ROUTER_SSL_PORT,
-    AppFabric.SERVER_SSL_PORT,
     Dashboard.BIND_PORT,
     Dashboard.SSL_BIND_PORT,
     Security.AUTH_SERVER_BIND_PORT,
@@ -178,7 +181,6 @@ public final class Constants {
      */
     public static final String SERVER_PORT = "app.bind.port";
     public static final String SERVER_ANNOUNCE_PORT = "app.announce.port";
-    public static final String SERVER_SSL_PORT = "app.ssl.bind.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -939,6 +941,8 @@ public final class Constants {
    * Security configuration.
    */
   public static final class Security {
+
+
     /** Enables security. */
     public static final String ENABLED = "security.enabled";
     /** Enables Kerberos authentication. */
@@ -981,9 +985,6 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Key to mark a discoverable which supports ssl */
-    public static final String SSL_URI_SCHEME = "https://";
-    public static final String URI_SCHEME = "http://";
     /** Configuration for specifying keytab location. The location will contain ${name} which will be replaced
      * by the user/owner of the entities name. */
     public static final String KEYTAB_PATH = "security.keytab.path";
@@ -1000,10 +1001,12 @@ public final class Constants {
       public static final String EXTERNAL_ENABLED = "ssl.external.enabled";
       /** Enables SSL for internal services. */
       public static final String INTERNAL_ENABLED = "ssl.internal.enabled";
-      /** Password for the java keystore. */
-      public static final String KEYSTORE_PASSWORD = "ssl.internal.keystore.password";
       /** Validity of the self generated certificate in days */
       public static final String CERT_VALIDITY = "ssl.internal.cert.validity";
+      /** File path to certificate file in PEM format. */
+      public static final String INTERNAL_CERT_PATH = "ssl.internal.cert.path";
+      /** Password for the SSL certificate. */
+      public static final String INTERNAL_CERT_PASSWORD = "ssl.internal.cert.password";
     }
 
     /**

@@ -20,9 +20,9 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import io.cdap.cdap.common.ServiceUnavailableException;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -35,10 +35,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -58,7 +57,7 @@ public class RemoteClient {
     // Use a supplier to delay the discovery until the first time it is being used.
     this.endpointStrategySupplier = Suppliers.memoize(
       () -> new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName)));
-    String cleanBasePath = basePath.startsWith("/") ? basePath : "/" + basePath;
+    String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
   }
 
@@ -112,16 +111,14 @@ public class RemoteClient {
     if (discoverable == null) {
       throw new ServiceUnavailableException(discoverableServiceName);
     }
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    String urlStr = String.format("%s%s:%d%s%s", scheme, address.getHostName(), address.getPort(), basePath, resource);
+
+    URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
     try {
-      return new URL(urlStr);
+      return uri.toURL();
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
       throw new IllegalStateException(String.format("Discovered service %s, but it announced malformed URL %s",
-                                                    discoverableServiceName, urlStr), e);
+                                                    discoverableServiceName, uri), e);
     }
   }
 

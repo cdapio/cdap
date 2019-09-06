@@ -21,6 +21,7 @@ import com.google.common.io.ByteStreams;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.common.ssh.TestSSHServer;
@@ -127,7 +128,8 @@ public class MonitorSocksProxyTest {
     // Make 10 requests. With connection keep-alive, there should only be one SSH tunnel created
     URL url = new URL(String.format("http://%s:%d/ping", httpAddr.getHostName(), httpAddr.getPort()));
     for (int i = 0; i < 10; i++) {
-      HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+      HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build(),
+                                                   new DefaultHttpRequestConfig(false));
       Assert.assertEquals(200, response.getResponseCode());
     }
 
@@ -137,7 +139,8 @@ public class MonitorSocksProxyTest {
     HttpResponse response = HttpRequests.execute(
       io.cdap.common.http.HttpRequest.builder(HttpMethod.GET, url)
         .addHeader(HttpHeaderNames.CONNECTION.toString(), HttpHeaderValues.CLOSE.toString())
-        .build());
+        .build(),
+      new DefaultHttpRequestConfig(false));
     Assert.assertEquals(200, response.getResponseCode());
 
     Assert.assertEquals(1, sshSession.portForwardCreated.get());
@@ -173,7 +176,7 @@ public class MonitorSocksProxyTest {
 
     // On proxy failure, IOException will be thrown
     URL url = new URL(String.format("http://%s:%d/ping", httpAddr.getHostName(), httpAddr.getPort()));
-    HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+    HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
   }
 
   /**
@@ -188,7 +191,7 @@ public class MonitorSocksProxyTest {
       // On proxy failure, IOException will be thrown
       InetSocketAddress httpAddr = httpService.getBindAddress();
       URL url = new URL(String.format("http://%s:%d/ping", httpAddr.getHostName(), httpAddr.getPort()));
-      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
     } finally {
       sshSession = oldSession;
     }

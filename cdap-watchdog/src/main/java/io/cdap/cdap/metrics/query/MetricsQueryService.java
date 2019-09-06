@@ -23,16 +23,18 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +53,8 @@ public class MetricsQueryService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
 
   @Inject
-  public MetricsQueryService(CConfiguration cConf, @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
+  public MetricsQueryService(CConfiguration cConf, SConfiguration sConf,
+                             @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
                              DiscoveryService discoveryService,
                              @Nullable MetricsCollectionService metricsCollectionService) {
     // netty http server config
@@ -61,18 +64,19 @@ public class MetricsQueryService extends AbstractIdleService {
     int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
     int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS);
-    builder.setHttpHandlers(handlers);
-    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Service.METRICS)));
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS)
+      .setHttpHandlers(handlers)
+      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService, Constants.Service.METRICS)))
+      .setHost(address)
+      .setPort(cConf.getInt(Constants.Metrics.PORT))
+      .setConnectionBacklog(backlogcnxs)
+      .setExecThreadPoolSize(execthreads)
+      .setBossThreadPoolSize(bossthreads)
+      .setWorkerThreadPoolSize(workerthreads);
 
-    builder.setHost(address);
-    builder.setPort(cConf.getInt(Constants.Metrics.PORT));
-
-    builder.setConnectionBacklog(backlogcnxs);
-    builder.setExecThreadPoolSize(execthreads);
-    builder.setBossThreadPoolSize(bossthreads);
-    builder.setWorkerThreadPoolSize(workerthreads);
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
@@ -96,7 +100,7 @@ public class MetricsQueryService extends AbstractIdleService {
     LOG.info("Started Metrics HTTP Service...");
     // Register the service
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.METRICS, httpService.getBindAddress())));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.METRICS, httpService)));
     LOG.info("Metrics Service started successfully on {}", httpService.getBindAddress());
   }
 

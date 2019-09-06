@@ -23,16 +23,18 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 
 import java.util.Set;
@@ -47,16 +49,22 @@ public class LogQueryService extends AbstractIdleService {
   private Cancellable cancellable;
 
   @Inject
-  LogQueryService(CConfiguration cConf, @Named(Constants.Service.LOG_QUERY) Set<HttpHandler> handlers,
+  LogQueryService(CConfiguration cConf, SConfiguration sConf,
+                  @Named(Constants.Service.LOG_QUERY) Set<HttpHandler> handlers,
                   DiscoveryService discoveryService, MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.httpServer = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_QUERY)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_QUERY)
       .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.LOG_QUERY)))
       .setHost(cConf.get(Constants.LogQuery.ADDRESS))
-      .setPort(cConf.getInt(Constants.LogQuery.PORT))
-      .build();
+      .setPort(cConf.getInt(Constants.LogQuery.PORT));
+
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+
+    this.httpServer = builder.build();
 
   }
 
@@ -67,7 +75,7 @@ public class LogQueryService extends AbstractIdleService {
                                                                        Constants.Service.LOG_QUERY));
     httpServer.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOG_QUERY, httpServer.getBindAddress())));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOG_QUERY, httpServer)));
 
   }
 

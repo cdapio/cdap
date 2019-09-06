@@ -45,6 +45,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -108,6 +109,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final SConfiguration sConf;
   private final DiscoveryService discoveryService;
   private final DatasetFramework datasetFramework;
   private final PreferencesService preferencesService;
@@ -123,7 +125,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
 
   @Inject
-  DefaultPreviewManager(final CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
+  DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
+                        SConfiguration sConf, DiscoveryService discoveryService,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         PreferencesService preferencesService, SecureStore secureStore,
                         TransactionSystemClient transactionSystemClient, ArtifactRepository artifactRepository,
@@ -132,6 +135,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.sConf = sConf;
     this.datasetFramework = datasetFramework;
     this.discoveryService = discoveryService;
     this.preferencesService = preferencesService;
@@ -274,8 +278,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     previewHConf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY,
                      previewDir.resolve("fs").toUri().toString());
 
+    SConfiguration previewSConf = SConfiguration.copy(sConf);
+
     return Guice.createInjector(
-      new ConfigModule(previewCConf, previewHConf),
+      new ConfigModule(previewCConf, previewHConf, previewSConf),
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
       new PreviewSecureStoreModule(secureStore),

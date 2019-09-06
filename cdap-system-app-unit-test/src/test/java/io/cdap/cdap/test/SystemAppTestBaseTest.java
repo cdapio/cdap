@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test;
 
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -114,15 +115,16 @@ public class SystemAppTestBaseTest extends SystemAppTestBase {
     URL url = serviceURI.resolve(key).toURL();
 
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
+    DefaultHttpRequestConfig requestConfig = new DefaultHttpRequestConfig(false);
+    HttpResponse response = HttpRequests.execute(request, requestConfig);
     Assert.assertEquals(404, response.getResponseCode());
 
     request = HttpRequest.put(url).withBody(val).build();
-    response = HttpRequests.execute(request);
+    response = HttpRequests.execute(request, requestConfig);
     Assert.assertEquals(200, response.getResponseCode());
 
     request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
+    response = HttpRequests.execute(request, requestConfig);
     Assert.assertEquals(val, response.getResponseBodyAsString());
   }
 }

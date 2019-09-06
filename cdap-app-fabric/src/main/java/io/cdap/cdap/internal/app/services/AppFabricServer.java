@@ -21,35 +21,32 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
-import io.cdap.cdap.security.tools.HttpsEnabler;
-import io.cdap.cdap.security.tools.KeyStores;
 import io.cdap.http.HandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -156,15 +153,10 @@ public class AppFabricServer extends AbstractIdleService {
       .setBossThreadPoolSize(cConf.getInt(Constants.AppFabric.BOSS_THREADS,
                                           Constants.AppFabric.DEFAULT_BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.AppFabric.WORKER_THREADS,
-                                            Constants.AppFabric.DEFAULT_WORKER_THREADS));
+                                            Constants.AppFabric.DEFAULT_WORKER_THREADS))
+      .setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
     if (sslEnabled) {
-      httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_SSL_PORT));
-
-      String password = KeyStores.generateRandomPassword();
-      KeyStore ks = KeyStores.generatedCertKeyStore(sConf, password);
-      new HttpsEnabler().setKeyStore(ks, password::toCharArray).enable(httpServiceBuilder);
-    } else {
-      httpServiceBuilder.setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(httpServiceBuilder);
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
@@ -182,7 +174,7 @@ public class AppFabricServer extends AbstractIdleService {
     provisioningService.stopAndWait();
   }
 
-  private Cancellable startHttpService(final NettyHttpService httpService) throws Exception {
+  private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
     httpService.start();
 
     String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
@@ -194,34 +186,31 @@ public class AppFabricServer extends AbstractIdleService {
     LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
 
     // Tag the discoverable's payload to mark it as supporting ssl.
-    byte[] sslPayload = sslEnabled ? Constants.Security.SSL_URI_SCHEME.getBytes() : Bytes.EMPTY_BYTE_ARRAY;
+    URIScheme uriScheme = sslEnabled ? URIScheme.HTTPS : URIScheme.HTTP;
     // TODO accept a list of services, and start them here
     // When it is running, register it with service discovery
 
     final List<Cancellable> cancellables = new ArrayList<>();
     for (final String serviceName : servicesNames) {
-      cancellables.add(discoveryService.register(ResolvingDiscoverable.of(
-        new Discoverable(serviceName, socketAddress, sslPayload))));
+      cancellables.add(discoveryService.register(
+        ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
     }
 
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        LOG.debug("Stopping AppFabric HTTP service.");
-        for (Cancellable cancellable : cancellables) {
-          if (cancellable != null) {
-            cancellable.cancel();
-          }
+    return () -> {
+      LOG.debug("Stopping AppFabric HTTP service.");
+      for (Cancellable cancellable : cancellables) {
+        if (cancellable != null) {
+          cancellable.cancel();
         }
-
-        try {
-          httpService.stop();
-        } catch (Exception e) {
-          LOG.warn("Exception raised when stopping AppFabric HTTP service", e);
-        }
-
-        LOG.info("AppFabric HTTP service stopped.");
       }
+
+      try {
+        httpService.stop();
+      } catch (Exception e) {
+        LOG.warn("Exception raised when stopping AppFabric HTTP service", e);
+      }
+
+      LOG.info("AppFabric HTTP service stopped.");
     };
   }
 }

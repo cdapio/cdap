@@ -435,9 +435,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Write data to the table using the service
     URL url = new URL(serviceURL, "write/abcd");
-    Assert.assertEquals(200, HttpRequests.execute(HttpRequest.put(url).build()).getResponseCode());
+    Assert.assertEquals(200, executeHttp(HttpRequest.put(url).build()).getResponseCode());
     url = new URL(serviceURL, "write/xyz");
-    Assert.assertEquals(200, HttpRequests.execute(HttpRequest.put(url).build()).getResponseCode());
+    Assert.assertEquals(200, executeHttp(HttpRequest.put(url).build()).getResponseCode());
 
     DataSetManager<KeyValueTable> dsManager = getDataset(datasetName);
     KeyValueTable table = dsManager.get();
@@ -1536,20 +1536,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Call the ping endpoint
     URL url = new URL(serviceURL, "ping2");
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
 
     // Call the failure endpoint
     url = new URL(serviceURL, "failure");
     request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertEquals(500, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains("Exception"));
 
     // Call the verify ClassLoader endpoint
     url = new URL(serviceURL, "verifyClassLoader");
     request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
 
     RuntimeMetrics serviceMetrics = serviceManager.getMetrics();
@@ -1620,7 +1620,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                                 AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
     url = new URL(serviceURL, path);
     request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
 
     datasetWorker.stop();
@@ -1668,7 +1668,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                                           AppWithServices.DATASET_TEST_VALUE,
                                           10000));
           HttpRequest request = HttpRequest.get(url).build();
-          HttpResponse response = HttpRequests.execute(request);
+          HttpResponse response = executeHttp(request);
           return response.getResponseCode();
         } catch (Exception e) {
           LOG.error("Request thread got exception.", e);
@@ -1681,7 +1681,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // has not been committed yet.
     URL url = new URL(String.format("%s/read/%s", baseUrl, AppWithServices.DATASET_TEST_KEY));
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(204, response.getResponseCode());
 
     // Wait for the transaction to commit.
@@ -1690,7 +1690,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Make the same request again. By now the transaction should've completed.
     request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
+    response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE,
                         new Gson().fromJson(response.getResponseBodyAsString(), String.class));
@@ -1903,14 +1903,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Increment record
     URL url = new URL(serviceURL, "increment/public");
     for (int i = 0; i < 10; i++) {
-      HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build());
+      HttpResponse response = executeHttp(HttpRequest.post(url).build());
       Assert.assertEquals(200, response.getResponseCode());
     }
 
     // Query record
     url = new URL(serviceURL, "query?type=public");
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
 
     long count = Long.parseLong(response.getResponseBodyAsString());

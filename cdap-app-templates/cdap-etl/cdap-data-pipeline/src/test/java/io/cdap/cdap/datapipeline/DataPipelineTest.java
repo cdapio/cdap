@@ -51,6 +51,7 @@ import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.lineage.Lineage;
@@ -3252,7 +3253,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     URL url = new URL(serviceManager.getServiceURL(), "name");
     HttpRequest httpRequest = HttpRequest.post(url).withBody("bob").build();
-    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    HttpResponse httpResponse = HttpRequests.execute(httpRequest, new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_OK, httpResponse.getResponseCode());
 
     url = new URL(serviceManager.getServiceURL(), "name/bob");

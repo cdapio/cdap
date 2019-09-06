@@ -24,12 +24,13 @@ import io.cdap.cdap.common.SecureKeyNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.http.NettyHttpService;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -55,6 +56,7 @@ public class RemoteSecureStoreTest {
   @BeforeClass
   public static void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
+    conf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
     conf.set(Constants.Security.Store.FILE_PATH, TEMP_FOLDER.newFolder().getAbsolutePath());
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
@@ -67,15 +69,17 @@ public class RemoteSecureStoreTest {
 
     FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient);
     // Starts a mock server to handle remote secure store requests
-    httpService = NettyHttpService.builder("remoteSecureStoreTest")
+    httpService = new HttpsEnabler().configureKeyStore(conf, sConf).enable(
+      NettyHttpService.builder("remoteSecureStoreTest")
       .setHttpHandlers(new SecureStoreHandler(fileSecureStoreService, fileSecureStoreService))
-      .setExceptionHandler(new HttpExceptionHandler())
+      .setExceptionHandler(new HttpExceptionHandler()))
       .build();
 
     httpService.start();
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    discoveryService.register(new Discoverable(Constants.Service.SECURE_STORE_SERVICE, httpService.getBindAddress()));
+    discoveryService.register(URIScheme.HTTPS.createDiscoverable(Constants.Service.SECURE_STORE_SERVICE,
+                                                         httpService.getBindAddress()));
 
     remoteSecureStore = new RemoteSecureStore(discoveryService);
   }

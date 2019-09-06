@@ -19,6 +19,7 @@ package io.cdap.cdap.app.services;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.Discoverable;
@@ -26,10 +27,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -79,15 +78,9 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
     if (discoverable == null) {
       return null;
     }
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-
-    String path = String.format("%s%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/", scheme,
-                                address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, namespaceId, applicationId, serviceId);
     try {
-      return new URL(path);
+      return URIScheme.createURI(discoverable, "%s/namespaces/%s/apps/%s/services/%s/methods/",
+                                 Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId).toURL();
     } catch (MalformedURLException e) {
       LOG.error("Got exception while creating serviceURL", e);
       return null;

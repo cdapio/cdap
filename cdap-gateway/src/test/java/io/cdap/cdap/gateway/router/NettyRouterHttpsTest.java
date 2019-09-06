@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AccessTokenTransformer;
 import io.cdap.cdap.security.guice.SecurityModules;
@@ -37,11 +38,15 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.junit.Assert;
+import org.junit.BeforeClass;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.security.KeyStore;
 import java.security.SecureRandom;
 import javax.net.SocketFactory;
 import javax.net.ssl.HttpsURLConnection;
@@ -51,6 +56,19 @@ import javax.net.ssl.SSLContext;
  * Tests Netty Router running on HTTPS.
  */
 public class NettyRouterHttpsTest extends NettyRouterTestBase {
+
+  private static File keyStoreFile;
+
+  @BeforeClass
+  public static void init() throws Exception {
+    SConfiguration sConf = SConfiguration.create();
+
+    KeyStore keyStore = KeyStores.generatedCertKeyStore(1, sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD));
+    keyStoreFile = TEMP_FOLDER.newFile();
+    try (OutputStream os = new FileOutputStream(keyStoreFile)) {
+      keyStore.store(os, sConf.get(Constants.Security.Router.SSL_KEYPASSWORD).toCharArray());
+    }
+  }
 
   @Override
   protected RouterService createRouterService(String hostname, DiscoveryService discoveryService) {
@@ -110,9 +128,6 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       SConfiguration sConf = SConfiguration.create();
       cConf.setBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, true);
 
-      URL certUrl = getClass().getClassLoader().getResource("cert.jks");
-      Assert.assertNotNull(certUrl);
-
       Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
                                                new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
@@ -122,7 +137,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
 
-      sConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
+      sConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, keyStoreFile.getAbsolutePath());
 
       router =
         new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),

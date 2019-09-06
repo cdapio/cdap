@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
@@ -47,7 +48,7 @@ public class AppFabricServiceMainTest extends MasterServiceMainTestBase {
 
     // Query the system services endpoint
     URL url = getRouterBaseURI().resolve("/v3/system/services").toURL();
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build());
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
 
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 

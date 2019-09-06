@@ -25,6 +25,10 @@ public class SConfiguration extends Configuration {
     // Shouldn't be used other than in this class.
   }
 
+  private SConfiguration(SConfiguration other) {
+    super(other);
+  }
+
   /**
    * Creates an instance of {@link SConfiguration}.
    *
@@ -36,5 +40,12 @@ public class SConfiguration extends Configuration {
     SConfiguration conf = new SConfiguration();
     conf.addResource("cdap-security.xml");
     return conf;
+  }
+
+  /**
+   * Creates a new instance which clones all configurations from another {@link SConfiguration}.
+   */
+  public static SConfiguration copy(SConfiguration other) {
+    return new SConfiguration(other);
   }
 }

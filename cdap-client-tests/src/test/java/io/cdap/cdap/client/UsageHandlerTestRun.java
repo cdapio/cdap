@@ -190,7 +190,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
   private <T> T doGet(String path, Type responseType) throws IOException {
     ConnectionConfig connectionConfig = getClientConfig().getConnectionConfig();
-    URL url = new URL(String.format("http://%s:%d%s",
+    URL url = new URL(String.format("%s://%s:%d%s",
+                                    connectionConfig.isSSLEnabled() ? "https" : "http",
                                     connectionConfig.getHostname(),
                                     connectionConfig.getPort(), path));
 

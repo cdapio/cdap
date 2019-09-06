@@ -30,6 +30,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -134,8 +135,10 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     OptionsParser.init(options, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
 
     CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
     if (options.getExtraConfPath() != null) {
       cConf.addResource(new File(options.getExtraConfPath(), "cdap-site.xml").toURI().toURL());
+      sConf.addResource(new File(options.getExtraConfPath(), "cdap-security.xml").toURI().toURL());
     }
 
     Configuration hConf = new Configuration();
@@ -156,7 +159,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     }
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new ConfigModule(cConf, hConf));
+    modules.add(new ConfigModule(cConf, hConf, sConf));
     modules.add(new IOModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new AbstractModule() {

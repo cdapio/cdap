@@ -175,14 +175,14 @@ public class TestAppWithCube extends TestBase {
   private void add(URL serviceUrl, Collection<CubeFact> facts) throws IOException {
     URL url = new URL(serviceUrl, "add");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(facts)).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private Collection<DimensionValue> searchDimensionValue(URL serviceUrl, CubeExploreQuery query) throws IOException {
     URL url = new URL(serviceUrl, "searchDimensionValue");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(query)).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<Collection<DimensionValue>>() { }.getType());
   }
@@ -190,7 +190,7 @@ public class TestAppWithCube extends TestBase {
   private Collection<String> searchMeasure(URL serviceUrl, CubeExploreQuery query) throws IOException {
     URL url = new URL(serviceUrl, "searchMeasure");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(query)).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<Collection<String>>() { }.getType());
   }
@@ -198,7 +198,7 @@ public class TestAppWithCube extends TestBase {
   private Collection<TimeSeries> query(URL serviceUrl, CubeQuery query) throws IOException {
     URL url = new URL(serviceUrl, "query");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(query)).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = executeHttp(request);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<Collection<TimeSeries>>() { }.getType());
   }

@@ -23,6 +23,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.client.app.DatasetWriterService;
 import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ExploreExecutionResult;
 import io.cdap.cdap.explore.client.FixedAddressExploreClient;
@@ -113,7 +114,8 @@ public class QueryClientTest extends AbstractClientTest {
 
       URL writeURL = new URL(serviceClient.getServiceURL(service), "write");
       HttpResponse response = HttpRequests.execute(HttpRequest.post(writeURL)
-                                                     .withBody(new Gson().toJson(data)).build());
+                                                     .withBody(new Gson().toJson(data)).build(),
+                                                   new DefaultHttpRequestConfig(false));
       Assert.assertEquals(200, response.getResponseCode());
 
       executeBasicQuery(namespace, FakeApp.DS_NAME);

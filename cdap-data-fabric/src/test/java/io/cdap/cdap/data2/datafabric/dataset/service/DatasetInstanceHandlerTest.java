@@ -26,6 +26,7 @@ import io.cdap.cdap.api.dataset.table.Get;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
@@ -35,6 +36,7 @@ import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
@@ -407,7 +409,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     }
     HttpRequest request = HttpRequest.put(getUrl(instance.getNamespace(), "/data/datasets/" + instance.getEntityName()))
       .withBody(GSON.toJson(creationProperties)).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private HttpResponse updateInstance(String instanceName, DatasetProperties props) throws IOException {
@@ -418,7 +420,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     HttpRequest request = HttpRequest.put(getUrl(instance.getNamespace(),
                                                  "/data/datasets/" + instance.getEntityName() + "/properties"))
       .withBody(GSON.toJson(props.getProperties())).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances() throws IOException {
@@ -432,7 +434,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private HttpResponse makeInstancesRequest(String namespace) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl(namespace, "/data/datasets")).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstancesWithProperties(String namespace,
@@ -440,7 +442,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     throws IOException {
     HttpRequest request = HttpRequest.post(getUrl(namespace, "/data/datasets"))
       .withBody(GSON.toJson(properties)).build();
-    return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request, REQUEST_CONFIG),
                                        new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
@@ -451,18 +453,18 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private HttpResponse getInstance(DatasetId instance) throws IOException {
     URL instanceUrl = getUrl(instance.getNamespace(), "/data/datasets/" + instance.getEntityName());
     HttpRequest request = HttpRequest.get(instanceUrl).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private ObjectResponse<DatasetMeta> getInstanceObject(String instanceName) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, REQUEST_CONFIG);
     return ObjectResponse.fromJsonBody(response, DatasetMeta.class);
   }
 
   private ObjectResponse<Map<String, String>> getInstanceProperties(String instanceName) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName + "/properties")).build();
-    HttpResponse response = HttpRequests.execute(request);
+    HttpResponse response = HttpRequests.execute(request, REQUEST_CONFIG);
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }.getType());
   }
 
@@ -473,7 +475,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private HttpResponse deleteInstance(DatasetId instance) throws IOException {
     HttpRequest request = HttpRequest.delete(getUrl(instance.getNamespace(),
                                                     "/data/datasets/" + instance.getEntityName())).build();
-    return HttpRequests.execute(request);
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   private void deleteInstances() throws IOException {
@@ -573,22 +575,22 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private void validateGet(URL url, Integer ... expected) throws IOException {
     HttpRequest request = HttpRequest.get(url).build();
-    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+    assertStatus(HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode(), url, expected);
   }
 
   private void validateDelete(URL url, Integer ... expected) throws IOException {
     HttpRequest request = HttpRequest.delete(url).build();
-    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+    assertStatus(HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode(), url, expected);
   }
 
   private void validatePut(URL url, String body, Integer ... expected) throws IOException {
     HttpRequest request = HttpRequest.put(url).withBody(body).build();
-    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+    assertStatus(HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode(), url, expected);
   }
 
   private void validatePost(URL url, String body, Integer ... expected) throws IOException {
     HttpRequest request = HttpRequest.post(url).withBody(body).build();
-    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+    assertStatus(HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode(), url, expected);
   }
 
   private void assertStatus(int status, URL url, Integer ... expected) {

@@ -32,6 +32,7 @@ import com.google.gson.stream.JsonWriter;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -55,12 +56,13 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -70,6 +72,8 @@ import java.util.concurrent.TimeUnit;
  * Unit test for {@link LogsServiceMain}.
  */
 public class LogsServiceMainTest extends MasterServiceMainTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LogsServiceMainTest.class);
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
   private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() { }.getType();
@@ -89,11 +93,13 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     String url = "/v3/namespaces/default/apps/app1/workflows/myworkflow/logs?format=json";
     Tasks.waitFor(true, () -> {
       HttpResponse response = doGet(url, client, Constants.Service.LOG_QUERY);
-      if (response.getResponseCode() == 200) {
-        List<LogDataOffset> list = GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGDATA_OFFSET_TYPE);
-        return list.size() == 6 && list.get(5).log.getMessage().equals("5");
+      if (response.getResponseCode() != 200) {
+        LOG.warn("testLogsService get logs response non 200 response code: {} {} {}",
+                 response.getResponseCode(), response.getResponseMessage(), response.getResponseBodyAsString());
+        return false;
       }
-      return false;
+      List<LogDataOffset> list = GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGDATA_OFFSET_TYPE);
+      return list.size() == 6 && list.get(5).getLog().getMessage().equals("5");
     }, 5, TimeUnit.MINUTES, 500, TimeUnit.MILLISECONDS);
 
     // make sure log saver status service has started
@@ -107,10 +113,8 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     Discoverable discoverable = new RandomEndpointStrategy(
       () -> discoveryServiceClient.discover(serviceName)).pick(10, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
-
-    InetSocketAddress addr = discoverable.getSocketAddress();
-    URL url = new URL("http", addr.getHostName(), addr.getPort(), path);
-    return HttpRequests.execute(HttpRequest.get(url).build());
+    URL url = URIScheme.createURI(discoverable, path).toURL();
+    return HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
   }
 
   private ImmutableList<ILoggingEvent> getLoggingEvents() {
@@ -187,14 +191,14 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     }
   }
 
-  private class TestAppender extends AppenderBase<ILoggingEvent> {
+  private static final class TestAppender extends AppenderBase<ILoggingEvent> {
     private final LoggingEventSerializer loggingEventSerializer;
     private final RemoteClient remoteClient;
     private final DatumWriter<List<ByteBuffer>> datumWriter;
 
     private TestAppender(DiscoveryServiceClient client) {
       this.remoteClient = new RemoteClient(client, Constants.Service.LOG_BUFFER_SERVICE,
-                                           new DefaultHttpRequestConfig(), "/v1/logs");
+                                           new DefaultHttpRequestConfig(false), "/v1/logs");
       this.loggingEventSerializer = new LoggingEventSerializer();
       this.datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));
     }
@@ -210,10 +214,11 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
         HttpResponse response = remoteClient.execute(request);
         // if something went wrong, throw exception to retry
         if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-          throw new IOException("Could not append logs for partition 0");
+          throw new IOException("Append call failed with " + response.getResponseCode()
+                                  + " " + response.getResponseMessage() + " " + response.getResponseBodyAsString());
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        LOG.error("Failed to append log", e);
       }
     }
   }

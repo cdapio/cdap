@@ -15,21 +15,20 @@
  */
 package io.cdap.cdap.internal.app.services.http.handlers;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.client.MetadataClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -37,7 +36,9 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
@@ -53,7 +54,6 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
-import javax.ws.rs.HttpMethod;
 
 /**
  * TestBase for {@link ArtifactHttpHandler}. Contains common setup and other common methods
@@ -63,8 +63,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
   private static String systemArtifactsDir;
-  static ArtifactRepository artifactRepository;
-  static MetadataClient metadataClient;
+  private static ArtifactRepository artifactRepository;
 
   @BeforeClass
   public static void setup() {
@@ -77,9 +76,14 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
     Assert.assertNotNull(discoverable);
     String host = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
-    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    metadataClient = new MetadataClient(clientConfig);
+    ConnectionConfig connectionConfig = ConnectionConfig.builder()
+      .setHostname(host)
+      .setPort(port)
+      .setSSLEnabled(URIScheme.HTTPS.isMatch(discoverable))
+      .build();
+    ClientConfig clientConfig = ClientConfig.builder()
+      .setVerifySSLCert(false)
+      .setConnectionConfig(connectionConfig).build();
   }
 
   @After
@@ -124,18 +128,16 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
    */
   @Nullable
   <T> T getResults(URL endpoint, Type type) throws IOException {
-    HttpURLConnection urlConn = (HttpURLConnection) endpoint.openConnection();
-    urlConn.setRequestMethod(HttpMethod.GET);
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(endpoint).build(),
+                                                 new DefaultHttpRequestConfig(false));
 
-    int responseCode = urlConn.getResponseCode();
-    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       return null;
     }
-    Assert.assertEquals(HttpResponseStatus.OK.code(), responseCode);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, responseCode);
 
-    String responseStr = new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8);
-    urlConn.disconnect();
-    return GSON.fromJson(responseStr, type);
+    return GSON.fromJson(response.getResponseBodyAsString(), type);
   }
 
   /**

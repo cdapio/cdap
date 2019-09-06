@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
@@ -62,7 +63,8 @@ public class TestBundleJarApp extends TestBase {
     URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
     for (int i = 0; i < 5; i++) {
       URL url = new URL(serviceURL, "put/test" + i);
-      HttpResponse response = HttpRequests.execute(HttpRequest.put(url).withBody(Integer.toString(i)).build());
+      HttpResponse response = HttpRequests.execute(HttpRequest.put(url).withBody(Integer.toString(i)).build(),
+                                                   new DefaultHttpRequestConfig(false));
       Assert.assertEquals(200, response.getResponseCode());
     }
     serviceManager.stop();

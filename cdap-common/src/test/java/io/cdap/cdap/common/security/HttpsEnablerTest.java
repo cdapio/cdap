@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,22 @@
  * the License.
  */
 
-package io.cdap.cdap.security.tools;
+package io.cdap.cdap.common.security;
 
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -33,6 +39,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 public class HttpsEnablerTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   /**
    * Testing https server with the client always trust the server.
@@ -82,6 +91,41 @@ public class HttpsEnablerTest {
     testClientAuth(false, true);
   }
 
+  @Test
+  public void testConfigure() throws Exception {
+    String password = "testing";
+    KeyStore keyStore = KeyStores.generatedCertKeyStore(1, password);
+    File pemFile = KeyStoresTest.writePEMFile(TEMP_FOLDER.newFile(), keyStore, KeyStores.CERT_ALIAS, password);
+
+    CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
+
+    cConf.set(Constants.Security.SSL.INTERNAL_CERT_PATH, pemFile.getAbsolutePath());
+    sConf.set(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, password);
+
+    // Start the server with SSL enabled
+    NettyHttpService httpService = new HttpsEnabler()
+      .configureKeyStore(cConf, sConf)
+      .enable(
+        NettyHttpService.builder("test")
+          .setHttpHandlers(new PingHandler()))
+      .build();
+
+    httpService.start();
+
+    try {
+      // Create a client that trust the server
+      InetSocketAddress address = httpService.getBindAddress();
+      URL url = new URL(String.format("https://%s:%d/ping", address.getHostName(), address.getPort()));
+      HttpsURLConnection urlConn = new HttpsEnabler().configureTrustStore(cConf, sConf)
+        .enable((HttpsURLConnection) url.openConnection());
+
+      Assert.assertEquals(200, urlConn.getResponseCode());
+    } finally {
+      httpService.stop();
+    }
+  }
+
   /**
    * Private method to verify https connection.
    *
@@ -111,7 +155,7 @@ public class HttpsEnablerTest {
 
       // Optionally validates the server
       if (useTrustStore) {
-        enabler = enabler.setTrustStore(KeyStores.createTrustStore(keyStore));
+        enabler.setTrustStore(KeyStores.createTrustStore(keyStore));
       }
 
       HttpsURLConnection urlConn = enabler.enable((HttpsURLConnection) url.openConnection());

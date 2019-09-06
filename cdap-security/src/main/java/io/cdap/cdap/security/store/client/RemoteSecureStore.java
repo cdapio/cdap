@@ -56,7 +56,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   @Inject
   RemoteSecureStore(DiscoveryServiceClient discoveryServiceClient) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.SECURE_STORE_SERVICE,
-                                         new DefaultHttpRequestConfig(), "/v3/namespaces/");
+                                         new DefaultHttpRequestConfig(false), "/v3/namespaces/");
   }
 
   @Override

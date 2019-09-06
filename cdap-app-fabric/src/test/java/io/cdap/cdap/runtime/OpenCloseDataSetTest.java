@@ -25,6 +25,8 @@ import io.cdap.cdap.TrackingTable;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
@@ -119,13 +121,9 @@ public class OpenCloseDataSetTest {
     // write some data to the tracking table through the service
     for (int i = 0; i < 4; i++) {
       String msg = "x" + i;
-      URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
-                                      discoverable.getSocketAddress().getHostName(),
-                                      discoverable.getSocketAddress().getPort(),
-                                      "dummy",
-                                      "DummyService",
-                                      msg));
-      HttpRequests.execute(HttpRequest.put(url).build());
+      URL url = URIScheme.createURI(discoverable,
+                                    "v3/namespaces/default/apps/dummy/services/DummyService/methods/%s", msg).toURL();
+      HttpRequests.execute(HttpRequest.put(url).build(), new DefaultHttpRequestConfig(false));
     }
 
     // get the number of writes to the foo table
@@ -137,13 +135,9 @@ public class OpenCloseDataSetTest {
     Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
 
     // now query data from the service
-    URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    "dummy",
-                                    "DummyService",
-                                    "x1"));
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build());
+    URL url = URIScheme.createURI(discoverable,
+                                  "v3/namespaces/default/apps/dummy/services/DummyService/methods/x1").toURL();
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
 
     String responseContent = new Gson().fromJson(response.getResponseBodyAsString(), String.class);
 

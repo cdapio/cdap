@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.monitor;
 
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.TestHandler;
 import io.cdap.common.http.HttpRequest;
@@ -51,12 +52,14 @@ public class TrafficRelayServerTest {
 
         // GET
         URL url = new URL(String.format("http://%s:%d/ping", relayAddr.getHostName(), relayAddr.getPort()));
-        HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build());
+        HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build(),
+                                                     new DefaultHttpRequestConfig(false));
         Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
         // POST
         url = new URL(String.format("http://%s:%d/echo", relayAddr.getHostName(), relayAddr.getPort()));
-        response = HttpRequests.execute(HttpRequest.post(url).withBody("Testing").build());
+        response = HttpRequests.execute(HttpRequest.post(url).withBody("Testing").build(),
+                                        new DefaultHttpRequestConfig(false));
         Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
         Assert.assertEquals("Testing", response.getResponseBodyAsString());
 

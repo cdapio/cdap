@@ -22,17 +22,19 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +54,12 @@ public class PreviewHttpServer extends AbstractIdleService {
   private Cancellable cancelHttpService;
 
   @Inject
-  PreviewHttpServer(CConfiguration cConf, DiscoveryService discoveryService, PreviewHttpHandler previewHttpHandler,
+  PreviewHttpServer(CConfiguration cConf, SConfiguration sConf,
+                    DiscoveryService discoveryService, PreviewHttpHandler previewHttpHandler,
                     MetricsCollectionService metricsCollectionService,
                     PreviewManager previewManager) {
     this.discoveryService = discoveryService;
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.PREVIEW_HTTP)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.PREVIEW_HTTP)
       .setHost(cConf.get(Constants.Preview.ADDRESS))
       .setPort(cConf.getInt(Constants.Preview.PORT))
       .setHttpHandlers(previewHttpHandler)
@@ -65,8 +68,13 @@ public class PreviewHttpServer extends AbstractIdleService {
       .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS))
       .setHandlerHooks(Collections.singletonList(
-        new MetricsReporterHook(metricsCollectionService, Constants.Service.PREVIEW_HTTP)))
-      .build();
+        new MetricsReporterHook(metricsCollectionService, Constants.Service.PREVIEW_HTTP)));
+
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+
+    this.httpService = builder.build();
     this.previewManager = previewManager;
   }
 
@@ -83,8 +91,9 @@ public class PreviewHttpServer extends AbstractIdleService {
     }
 
     httpService.start();
+
     cancelHttpService = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.PREVIEW_HTTP, httpService.getBindAddress())));
+      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.PREVIEW_HTTP, httpService)));
     LOG.info("Preview HTTP server started on {}", httpService.getBindAddress());
   }
 

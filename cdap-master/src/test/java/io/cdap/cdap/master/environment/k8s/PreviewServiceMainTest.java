@@ -18,8 +18,11 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
@@ -75,9 +78,12 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     // have to stop AppFabric so that Preview can share the same leveldb table
     AppFabricServiceMain appFabricServiceMain = getServiceMainInstance(AppFabricServiceMain.class);
     appFabricServiceMain.stop();
-    appFabricServiceMain.getInjector().getInstance(LevelDBTableService.class).close();
+    Injector injector = appFabricServiceMain.getInjector();
+    injector.getInstance(LevelDBTableService.class).close();
+
     // start preview service with the same data dir as app-fabric, so that the artifact info is still there.
-    runMain(PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
+    runMain(injector.getInstance(CConfiguration.class), injector.getInstance(SConfiguration.class),
+            PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
 
     // create a preview run
     url = getRouterBaseURI().resolve("/v3/namespaces/default/previews").toURL();
