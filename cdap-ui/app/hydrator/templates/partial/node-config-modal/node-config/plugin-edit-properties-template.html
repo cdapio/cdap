@@ -15,13 +15,13 @@
 -->
 
 <form plugin-property-edit-view class="form-horizontal">
-  <div ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors" class="form-group">
+  <div ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors"
+       class="form-group">
     <label class="col-xs-3 control-label">Error(s)</label>
-    <ul ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length > 0" class="col-xs-9 validation-errors-list">
-      <li class="col-xs-9 text-danger" ng-repeat="error in HydratorPlusPlusNodeConfigCtrl.validationErrors">{{error}}
-      </li>
-    </ul>
-    <span class="col-xs-9 text-success" ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length === 0">No
+    <pre ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length > 0"
+         class="col-xs-9 text-danger">{{HydratorPlusPlusNodeConfigCtrl.validationErrors | json}}</pre>
+    <span class="col-xs-9 text-success"
+          ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length === 0">No
       Validation Errors.</span>
   </div>
   <div class="form-group">

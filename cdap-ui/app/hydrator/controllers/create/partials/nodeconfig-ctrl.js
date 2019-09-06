@@ -449,7 +449,6 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
   validatePluginProperties() {
     const nodeInfo = this.state.node;
-    let schemaParseError = null;
     let vm = this;
     vm.validating = true;
     const pluginInfo = angular.copy(nodeInfo.plugin);
@@ -457,27 +456,18 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     const requestBody = {
       stage: {
-        name: nodeInfo.name,
-        plugin: pluginInfo,
+        name: this.myHelpers.objectQuery(nodeInfo, "name"),
+        plugin: pluginInfo
       },
-      inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map((input) => {
-        let schema;
-        try {
-          schema = JSON.parse(input.schema);
-        } catch (e) {
-          schemaParseError = e;
-        }
-        return {
-          stage: input.name,
-          schema
-        };
-      })
+      inputSchemas: !nodeInfo.inputSchema
+        ? []
+        : nodeInfo.inputSchema.map(input => {
+            return {
+              stage: this.myHelpers.objectQuery(input, "name"),
+              schema: this.myHelpers.objectQuery(input, "schema")
+            };
+          })
     };
-
-    if (schemaParseError) {
-      vm.validationErrors = [schemaParseError];
-      return;
-    }
 
     const parseResSchema = (res) => {
       if (res.name && res.type && res.fields) {
@@ -503,16 +493,13 @@ class HydratorPlusPlusNodeConfigCtrl {
       .$promise
       .then((res) => {
         vm.validating = false;
-        if (res.errors.length > 0) {
-          vm.validationErrors = res.errors.map(err => err.message);
+        if (res.failures.length > 0) {
+          vm.validationErrors = res.failures;
         } else {
           const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
           const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
           let schemas;
-          if (!outputSchema && !portSchemas) {
-            schemas = [];
-          }
-          else{
+          if (outputSchema || portSchemas) {
             schemas = parseResSchema(outputSchema || portSchemas).map(schema => {
               return {
                 name: schema.name,
@@ -520,12 +507,17 @@ class HydratorPlusPlusNodeConfigCtrl {
               };
             });
           }
-          vm.EventPipe.emit('schema.import', schemas);
+          if(schemas.length) {
+            vm.EventPipe.emit('schema.import', schemas);
+          }
+          else {
+            vm.EventPipe.emit('schema.clear');
+          }
           vm.validationErrors = [];
         }
       }, (err) => {
         vm.validating = false;
-        vm.validationErrors = [err];
+        vm.validationErrors = [err.data];
       });
   }
   hasUniqueFields(schema, error) {
