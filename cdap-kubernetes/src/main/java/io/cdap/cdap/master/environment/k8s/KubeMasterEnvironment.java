@@ -68,6 +68,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
+  private static final String DATA_TX_ENABLED = "data.tx.enabled";
+
   private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
   // Label for the container name
@@ -101,6 +103,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
     // Currently we don't support more than one instance per system service, hence set it to "1".
     conf.put(MASTER_MAX_INSTANCES, "1");
+    // No TX in K8s
+    conf.put(DATA_TX_ENABLED, Boolean.toString(false));
+
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     PodInfo podInfo = getPodInfo(conf);
