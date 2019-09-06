@@ -456,17 +456,22 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     const requestBody = {
       stage: {
-        name: this.myHelpers.objectQuery(nodeInfo, "name"),
+        name: this.myHelpers.objectQuery(nodeInfo, 'name'),
         plugin: pluginInfo
       },
-      inputSchemas: !nodeInfo.inputSchema
-        ? []
-        : nodeInfo.inputSchema.map(input => {
-            return {
-              stage: this.myHelpers.objectQuery(input, "name"),
-              schema: this.myHelpers.objectQuery(input, "schema")
-            };
-          })
+      inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map(input => {
+        let schema;
+        try {
+          schema = JSON.parse(input.schema);
+        } catch (e) {
+          // no-op
+        }
+
+        return {
+          stage: this.myHelpers.objectQuery(input, 'name'),
+          schema,
+        };
+      })
     };
 
     const parseResSchema = (res) => {
