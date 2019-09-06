@@ -94,6 +94,15 @@
           }
         },
         {
+          "widget-type": "textbox",
+          "label": "Image Version",
+          "name": "imageVersion",
+          "description": "The Dataproc image version. If none is given, one will automatically be chosen.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
           "widget-type": "select",
           "label": "Prefer External IP",
           "name": "preferExternalIP",

@@ -58,6 +58,7 @@ final class DataprocConf {
   private final String projectId;
   private final String network;
   private final String subnet;
+  private final String imageVersion;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -86,7 +87,7 @@ final class DataprocConf {
          conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.dataprocProperties);
+         conf.publicKey, conf.imageVersion, conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -96,6 +97,7 @@ final class DataprocConf {
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
+                       @Nullable String imageVersion,
                        Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
@@ -119,6 +121,7 @@ final class DataprocConf {
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
+    this.imageVersion = imageVersion;
     this.dataprocProperties = dataprocProperties;
   }
 
@@ -167,6 +170,11 @@ final class DataprocConf {
 
   String getWorkerMachineType() {
     return getMachineType(workerCPUs, workerMemoryMB);
+  }
+
+  @Nullable
+  public String getImageVersion() {
+    return imageVersion;
   }
 
   long getPollCreateDelay() {
@@ -343,12 +351,14 @@ final class DataprocConf {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
     );
 
+    String imageVersion = getString(properties, "imageVersion");
+
     return new DataprocConf(accountKey, region, zone, projectId, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             preferExternalIP, stackdriverLoggingEnabled,
-                            stackdriverMonitoringEnabled, publicKey, dataprocProps);
+                            stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
