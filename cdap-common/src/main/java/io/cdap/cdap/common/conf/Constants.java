@@ -93,13 +93,13 @@ public final class Constants {
    */
   public static final class Master {
     public static final String EXTENSIONS_DIR = "master.environment.extensions.dir";
+    public static final String MAX_INSTANCES = "master.service.max.instances";
   }
 
   /**
    * Global Service names.
    */
   public static final class Service {
-    public static final String ACL = "acl";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String TRANSACTION_HTTP = "transaction.http";
@@ -1303,6 +1303,8 @@ public final class Constants {
    * Constants for the messaging system
    */
   public static final class MessagingSystem {
+    public static final String SERVICE_DESCRIPTION = "Service for providing messaging system.";
+
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
     public static final String LOCAL_DATA_CLEANUP_FREQUENCY = "messaging.local.data.cleanup.frequency.secs";
 

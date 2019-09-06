@@ -19,24 +19,24 @@ package io.cdap.cdap.metrics.runtime;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
-import org.apache.twill.api.TwillRunnerService;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * CDAP Metrics Processor Service Management in Distributed Mode.
  */
-public class MetricsProcessorStatusServiceManager extends AbstractDistributedMasterServiceManager {
+public class MetricsProcessorStatusServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  public MetricsProcessorStatusServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                                              DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.METRICS_PROCESSOR, twillRunnerService, discoveryServiceClient);
+  MetricsProcessorStatusServiceManager(CConfiguration cConf, TwillRunner twillRunner,
+                                       DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.METRICS_PROCESSOR, twillRunner);
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.MetricsProcessor.MAX_INSTANCES);
+    return getCConf().getInt(Constants.MetricsProcessor.MAX_INSTANCES);
   }
 
   @Override

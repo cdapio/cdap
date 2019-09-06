@@ -19,25 +19,23 @@ package io.cdap.cdap.data2.datafabric.dataset;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
-import org.apache.twill.api.TwillRunnerService;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * CDAP Dataset Service management in distributed mode.
  */
-public class DatasetExecutorServiceManager extends AbstractDistributedMasterServiceManager {
+public class DatasetExecutorServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  public DatasetExecutorServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                                       DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.DATASET_EXECUTOR, twillRunnerService, discoveryServiceClient);
-    this.discoveryServiceClient = discoveryServiceClient;
+  DatasetExecutorServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.DATASET_EXECUTOR, twillRunner);
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.Dataset.Executor.MAX_INSTANCES);
+    return getCConf().getInt(Constants.Dataset.Executor.MAX_INSTANCES);
   }
 
   @Override

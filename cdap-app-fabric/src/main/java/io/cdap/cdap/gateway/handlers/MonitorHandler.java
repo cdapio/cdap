@@ -63,14 +63,12 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
-  private static final String NOTAPPLICABLE = "NA";
 
   private final Map<String, MasterServiceManager> serviceManagementMap;
   private final ServiceStore serviceStore;
 
   @Inject
-  public MonitorHandler(Map<String, MasterServiceManager> serviceMap,
-                        ServiceStore serviceStore) throws Exception {
+  public MonitorHandler(Map<String, MasterServiceManager> serviceMap, ServiceStore serviceStore) {
     this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
   }
@@ -160,7 +158,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     Map<String, String> result = new HashMap<>();
     for (String service : serviceManagementMap.keySet()) {
       MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
-      if (masterServiceManager.isServiceEnabled() && masterServiceManager.canCheckStatus()) {
+      if (masterServiceManager.isServiceEnabled()) {
         String status = masterServiceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
         result.put(service, status);
       }
@@ -170,7 +168,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/system/services")
   @GET
-  public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
+  public void getServiceSpec(HttpRequest request, HttpResponder responder) {
     List<SystemServiceMeta> response = new ArrayList<>();
     SortedSet<String> services = new TreeSet<>(serviceManagementMap.keySet());
     List<String> serviceList = new ArrayList<>(services);
@@ -178,8 +176,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       MasterServiceManager serviceManager = serviceManagementMap.get(service);
       if (serviceManager.isServiceEnabled()) {
         String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
-        String canCheck = serviceManager.canCheckStatus() ? (
-          serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK) : NOTAPPLICABLE;
+        String canCheck = serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
         //TODO: Add metric name for Event Rate monitoring
         response.add(new SystemServiceMeta(service, serviceManager.getDescription(), canCheck, logs,
                                            serviceManager.getMinInstances(), serviceManager.getMaxInstances(),
@@ -277,7 +274,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     try {
       Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
-      masterServiceManager.resetServiceLogLevels(loggerNames == null ? Collections.<String>emptySet() : loggerNames);
+      masterServiceManager.resetServiceLogLevels(loggerNames == null ? Collections.emptySet() : loggerNames);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
       throw new ServiceUnavailableException(String.format("Failed to reset log levels for service %s " +
@@ -287,7 +284,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private int getSystemServiceInstanceCount(String serviceName) throws Exception {
+  private int getSystemServiceInstanceCount(String serviceName) {
     Integer count = serviceStore.getServiceInstance(serviceName);
 
     //In standalone mode, this count will be null. And thus we just return the actual instance count.

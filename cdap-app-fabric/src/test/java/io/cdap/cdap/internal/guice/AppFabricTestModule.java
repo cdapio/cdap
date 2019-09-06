@@ -28,6 +28,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -46,6 +47,7 @@ import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillRunner;
 
 import java.io.File;
 import javax.annotation.Nullable;
@@ -105,5 +107,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new MetadataReaderWriterModules().getInMemoryModules());
     install(new MessagingServerRuntimeModule().getInMemoryModules());
     install(new MockProvisionerModule());
+    // Needed by MonitorHandlerModuler
+    bind(TwillRunner.class).to(NoopTwillRunnerService.class);
   }
 }

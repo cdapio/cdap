@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.master.environment;
+package io.cdap.cdap.common.twill;
 
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
@@ -32,10 +32,9 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A no-op implementation of {@link TwillRunnerService}. It is used for satisfying dependency injection.
- * In k8s, as of now, we don't use twill for launching containers.
+ * A no-op implementation of {@link TwillRunnerService}.
  */
-final class NoopTwillRunnerService implements TwillRunnerService {
+public final class NoopTwillRunnerService implements TwillRunnerService {
 
   @Override
   public void start() {

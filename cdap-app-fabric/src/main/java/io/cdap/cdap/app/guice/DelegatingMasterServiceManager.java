@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,9 @@
  * the License.
  */
 
-package io.cdap.cdap.common.twill;
+package io.cdap.cdap.app.guice;
 
-import com.google.common.collect.ImmutableList;
-import io.cdap.cdap.proto.Containers;
+import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.proto.SystemServiceLiveInfo;
 import org.apache.twill.api.logging.LogEntry;
 
@@ -25,72 +24,82 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * InMemory CDAP Service Management class.
+ * A {@link MasterServiceManager} that delegates all methods to another {@link MasterServiceManager}.
  */
-public abstract class AbstractInMemoryMasterServiceManager implements MasterServiceManager {
+class DelegatingMasterServiceManager implements MasterServiceManager {
 
-  @Override
-  public SystemServiceLiveInfo getLiveInfo() {
-    return new SystemServiceLiveInfo(ImmutableList.<Containers.ContainerInfo>of());
+  private final MasterServiceManager delegate;
+
+  DelegatingMasterServiceManager(MasterServiceManager delegate) {
+    this.delegate = delegate;
   }
 
-  @Override
-  public int getInstances() {
-    return 1;
-  }
-
-  @Override
-  public boolean setInstances(int instanceCount) {
-    return false;
-  }
-
-  @Override
-  public int getMinInstances() {
-    return 1;
-  }
-
-  @Override
-  public int getMaxInstances() {
-    return 1;
-  }
-
-  @Override
-  public boolean isLogAvailable() {
-    return true;
-  }
-
-  @Override
-  public boolean canCheckStatus() {
-    return true;
-  }
-
-  @Override
-  public boolean isServiceAvailable() {
-    return true;
+  MasterServiceManager getDelegate() {
+    return delegate;
   }
 
   @Override
   public boolean isServiceEnabled() {
-    return true;
+    return getDelegate().isServiceEnabled();
+  }
+
+  @Override
+  public String getDescription() {
+    return getDelegate().getDescription();
+  }
+
+  @Override
+  public int getInstances() {
+    return getDelegate().getInstances();
+  }
+
+  @Override
+  public boolean setInstances(int instanceCount) {
+    return getDelegate().setInstances(instanceCount);
+  }
+
+  @Override
+  public int getMinInstances() {
+    return getDelegate().getMinInstances();
+  }
+
+  @Override
+  public int getMaxInstances() {
+    return getDelegate().getMaxInstances();
+  }
+
+  @Override
+  public boolean isLogAvailable() {
+    return getDelegate().isLogAvailable();
+  }
+
+  @Override
+  public boolean isServiceAvailable() {
+    return getDelegate().isServiceAvailable();
+  }
+
+  @Override
+  public SystemServiceLiveInfo getLiveInfo() {
+    return getDelegate().getLiveInfo();
   }
 
   @Override
   public void restartAllInstances() {
-    // No operation for in memory manager.
+    getDelegate().restartAllInstances();
   }
 
   @Override
   public void restartInstances(int instanceId, int... moreInstanceIds) {
-    // No operation for in memory manager.
+    getDelegate().restartInstances(instanceId, moreInstanceIds);
   }
 
   @Override
   public void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels) {
-    // No operation for in memory manager.
+    getDelegate().updateServiceLogLevels(logLevels);
   }
 
   @Override
   public void resetServiceLogLevels(Set<String> loggerNames) {
-    // No operation for in memory manager.
+    getDelegate().resetServiceLogLevels(loggerNames);
   }
 }

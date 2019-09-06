@@ -16,13 +16,27 @@
 
 package io.cdap.cdap.logging.run;
 
+import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.twill.AbstractInMemoryMasterServiceManager;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * InMemory LogSaver Service Management class.
+ * CDAP Log Saver Service Management in Distributed Mode.
  */
-public class InMemoryLogSaverServiceManager extends AbstractInMemoryMasterServiceManager {
+public class LogSaverServiceManager extends AbstractMasterServiceManager {
+
+  @Inject
+  LogSaverServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.LOGSAVER, twillRunner);
+  }
+
+  @Override
+  public int getMaxInstances() {
+    return getCConf().getInt(Constants.LogSaver.MAX_INSTANCES);
+  }
 
   @Override
   public boolean isLogAvailable() {
