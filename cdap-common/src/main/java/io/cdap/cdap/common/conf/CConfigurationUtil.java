@@ -21,14 +21,14 @@ import com.google.common.base.Preconditions;
 import java.io.File;
 import java.net.URI;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Utilities for {@link CConfiguration}.
@@ -38,14 +38,42 @@ public class CConfigurationUtil extends Configuration {
   private CConfigurationUtil() { }
 
   /**
-   * Returns an immutable {@link Map} that is backed by the given {@link CConfiguration}.
+   * Returns a {@link Map} that is backed by the given {@link CConfiguration}. Updates to the returned Map
+   * will be reflected in the {@link CConfiguration}.
    */
   public static Map<String, String> asMap(CConfiguration cConf) {
     return new AbstractMap<String, String>() {
       @Override
       public Set<Entry<String, String>> entrySet() {
-        return Collections.unmodifiableSet(
-          StreamSupport.stream(cConf.spliterator(), false).collect(Collectors.toSet()));
+        return new AbstractSet<Entry<String, String>>() {
+
+          @Override
+          public boolean add(Entry<String, String> entry) {
+            String oldValue = cConf.get(entry.getKey());
+            if (Objects.equals(oldValue, entry.getValue())) {
+              return false;
+            }
+            cConf.set(entry.getKey(), entry.getValue());
+            return true;
+          }
+
+          @Override
+          public Iterator<Entry<String, String>> iterator() {
+            return cConf.iterator();
+          }
+
+          @Override
+          public int size() {
+            return cConf.size();
+          }
+        };
+      }
+
+      @Override
+      public String put(String key, String value) {
+        String oldValue = cConf.get(key);
+        cConf.set(key, value);
+        return oldValue;
       }
 
       @Override
