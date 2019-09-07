@@ -34,6 +34,7 @@ import ViewSummary from '../Publish/ViewSummary';
 // import ConfigureSummary from '../Configure/Summary';
 import { MyDeltaApi } from 'api/delta';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import SelectTable from '../Configure/SelectTable';
 
 const styles = (): StyleRules => {
   return {
@@ -49,21 +50,21 @@ export const StageConfiguration = {
     label: 'Configure',
     steps: [
       {
-        label: 'Set a name and description',
+        label: 'Name replicator',
         component: NameDescription,
       },
       {
-        label: 'Choose a source',
+        label: 'Select source',
         component: Source,
       },
       {
         label: 'Configure source',
         component: SourceConfig,
       },
-      // {
-      //   label: 'Select tables',
-      //   component:
-      // },
+      {
+        label: 'Select tables',
+        component: SelectTable,
+      },
       {
         label: 'Select target',
         component: Target,
@@ -188,15 +189,15 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
   };
 
   private updateStore = (activeStep = this.state.activeStep) => {
-    if (!this.state.id) {
-      return;
-    }
+    // if (!this.state.id) {
+    //   return;
+    // }
     // const params = {
     //   context: getCurrentNamespace(),
     //   id: this.state.id,
     // };
 
-    const requestBody = this.getRequestBody;
+    const requestBody = this.getRequestBody(activeStep);
 
     // MyDeltaApi.update(params, requestBody).subscribe(
     //   (res) => {

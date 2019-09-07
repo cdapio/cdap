@@ -15,33 +15,79 @@
  */
 
 import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
 import { StageConfiguration } from 'components/Transfers/Create/Content';
 import { objectQuery } from 'services/helpers';
+import classnames from 'classnames';
 
-interface IStepProgressProps {
+const styles = (theme): StyleRules => {
+  return {
+    root: {
+      backgroundColor: theme.palette.white[50],
+    },
+    stepRow: {
+      padding: '15px 50px',
+      borderBottom: `1px solid ${theme.palette.grey[300]}`,
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: theme.palette.grey[600],
+      },
+    },
+    disabled: {
+      color: theme.palette.grey[400],
+      cursor: 'not-allowed',
+    },
+    active: {
+      backgroundColor: theme.palette.grey[600],
+      fontStyle: 'italic',
+      paddingLeft: '55px',
+    },
+  };
+};
+
+interface IStepProgressProps extends WithStyles<typeof styles> {
   activeStep: number;
   stage: string;
+  setActiveStep: (step) => void;
 }
 
-const StepProgressView: React.SFC<IStepProgressProps> = ({ activeStep, stage }) => {
+const StepProgressView: React.SFC<IStepProgressProps> = ({
+  activeStep,
+  stage,
+  setActiveStep,
+  classes,
+}) => {
   const steps = objectQuery(StageConfiguration, stage, 'steps');
 
+  function handleStepClick(step) {
+    if (step >= activeStep) {
+      return;
+    }
+
+    setActiveStep(step);
+  }
+
   return (
-    <Stepper activeStep={activeStep} orientation="vertical">
-      {steps.map((step) => {
+    <div className={classes.root}>
+      {steps.map((step, i) => {
         return (
-          <Step key={step.label}>
-            <StepLabel>{step.label}</StepLabel>
-          </Step>
+          <div
+            className={classnames(classes.stepRow, {
+              [classes.disabled]: i > activeStep,
+              [classes.active]: i === activeStep,
+            })}
+            key={step.label}
+            onClick={handleStepClick.bind(null, i)}
+          >
+            {step.label}
+          </div>
         );
       })}
-    </Stepper>
+    </div>
   );
 };
 
-const StepProgress = transfersCreateConnect(StepProgressView);
+const StyledStepProgress = withStyles(styles)(StepProgressView);
+const StepProgress = transfersCreateConnect(StyledStepProgress);
 export default StepProgress;

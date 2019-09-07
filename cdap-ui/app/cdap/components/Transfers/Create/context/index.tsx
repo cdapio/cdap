@@ -27,10 +27,15 @@ export enum Stages {
 export const defaultContext = {
   id: '',
   stage: Stages.CONFIGURE,
-  activeStep: 5,
+  activeStep: 3,
   name: '',
   description: '',
-  source: {},
+  source: {
+    host: 'localhost',
+    port: '3306',
+    user: 'root',
+    password: 'edwingil4',
+  },
   sourceConfig: {},
   target: {},
   targetConfig: {},

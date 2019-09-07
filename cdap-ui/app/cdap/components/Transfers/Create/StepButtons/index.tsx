@@ -59,7 +59,9 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
   classes,
 }) => {
   function handleNextClick() {
-    onNext();
+    if (typeof onNext === 'function') {
+      onNext();
+    }
     next();
   }
 

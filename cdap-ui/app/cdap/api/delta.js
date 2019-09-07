@@ -30,6 +30,16 @@ export const MyDeltaApi = {
   update: apiCreator(dataSrc, 'PUT', 'REQUEST', instancePath),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', instancePath),
 
+  // mysql handler
+  getTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/mysql/database/:database/tables`),
+  sampleData: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${basepath}/mysql/database/:database/tables/:table`
+  ),
+  getDatabaseInfo: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/mysql/database/:database`),
+
   // Delta service management
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/start`),
