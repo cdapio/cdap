@@ -302,6 +302,11 @@ public class DataprocProvisioner implements Provisioner {
       }
     }
 
+    // set some dataproc properties that we know will make program execution more stable
+    contextProperties.put("dataproc:dataproc.conscrypt.provider.enable", "false");
+    contextProperties.put("yarn:yarn.nodemanager.pmem-check-enabled", "false");
+    contextProperties.put("yarn:yarn.nodemanager.vmem-check-enabled", "false");
+
     return contextProperties;
   }
 
