@@ -26,9 +26,10 @@ interface ITable {
 
 interface IAssessmentTableProps {
   tables: ITable[];
+  onTableClick: (table: string) => void;
 }
 
-const AssessmentTableView: React.FC<IAssessmentTableProps> = ({ tables }) => {
+const AssessmentTableView: React.FC<IAssessmentTableProps> = ({ tables, onTableClick }) => {
   return (
     <div>
       <table className="table">
@@ -57,7 +58,7 @@ const AssessmentTableView: React.FC<IAssessmentTableProps> = ({ tables }) => {
                 <td>{row.partialSupport}</td>
                 <td>{row.notSupported}</td>
                 <td>
-                  <span>{label}</span>
+                  <span onClick={onTableClick.bind(null, row.name)}>{label}</span>
                 </td>
               </tr>
             );

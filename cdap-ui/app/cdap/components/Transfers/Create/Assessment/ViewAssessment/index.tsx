@@ -22,12 +22,14 @@ import classnames from 'classnames';
 import If from 'components/If';
 import Button from '@material-ui/core/Button';
 import AssessmentTable from './AssessmentTable';
+import TableInfo from './TableInfo';
 
 const styles = (theme): StyleRules => {
   return {
     tab: {
       display: 'flex',
       marginTop: '15px',
+      marginBottom: '20px',
       '& > div': {
         width: '200px',
         fontSize: '16px',
@@ -125,13 +127,19 @@ interface IProps extends WithStyles<typeof styles> {
 
 const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
   const [activeTab, setActiveTab] = React.useState(0);
+  const [activeTable, setActiveTable] = React.useState('asdfasdfasdf');
 
   function handleTabSwitch(tab) {
     setActiveTab(tab);
   }
 
+  function onTableClick(table) {
+    setActiveTable(table);
+  }
+
   return (
     <div>
+      <TableInfo activeTable={activeTable} onClose={onTableClick.bind(null, null)} />
       <h2>Assessment summary</h2>
       <div>Resolve all issues to continue</div>
 
@@ -159,7 +167,7 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
       <If condition={activeTab === 0}>
         <div>
           <div>7 tables have been assessed with schema issues</div>
-          <AssessmentTable tables={schemaIssues} />
+          <AssessmentTable tables={schemaIssues} onTableClick={onTableClick} />
 
           <div className="text-right">
             <Button variant="outlined" color="primary">
@@ -171,7 +179,7 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
 
           <div>
             <div>3 tables ave been assessed with no schema issues</div>
-            <AssessmentTable tables={goodTables} />
+            <AssessmentTable tables={goodTables} onTableClick={onTableClick} />
           </div>
         </div>
       </If>
