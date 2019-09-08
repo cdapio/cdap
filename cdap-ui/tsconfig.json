@@ -43,7 +43,7 @@
     "app/cdap/**/*.js",
     "app/cdap/**/*.ts",
     "app/cdap/**/*.jsx",
-    "app/cdap/**/*.tsx",
+    "app/cdap/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

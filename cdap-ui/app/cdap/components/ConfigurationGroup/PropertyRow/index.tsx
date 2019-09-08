@@ -21,7 +21,7 @@ import If from 'components/If';
 import { IPluginProperty, IWidgetProperty } from 'components/ConfigurationGroup/types';
 import classnames from 'classnames';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
-import { isMacro } from 'components/ConfigurationGroup/utilities';
+import { isMacro } from 'services/helpers';
 import MacroIndicator from 'components/ConfigurationGroup/MacroIndicator';
 
 const styles = (theme): StyleRules => {

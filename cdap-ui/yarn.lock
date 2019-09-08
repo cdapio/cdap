@@ -9753,6 +9753,10 @@ jest@24.8.0:
     import-local "^2.0.0"
     jest-cli "^24.8.0"
 
+jexl@2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/jexl/-/jexl-2.1.1.tgz#d4f2cb9e488ff737f73acc08c5afed37e07f886b"
+
 js-base64@^2.1.8:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.3.2.tgz#a79a923666372b580f8e27f51845c6f7e8fbfbaf"
