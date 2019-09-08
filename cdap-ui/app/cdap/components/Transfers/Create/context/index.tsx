@@ -27,7 +27,7 @@ export enum Stages {
 export const defaultContext = {
   id: '',
   stage: Stages.CONFIGURE,
-  activeStep: 3,
+  activeStep: 6,
   name: '',
   description: '',
   source: {
