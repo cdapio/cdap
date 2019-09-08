@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import PropTypes from 'prop-types';
+
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
@@ -25,13 +25,10 @@ import MyDataPrepApi from 'api/dataprep';
 import ErrorBanner from 'components/ErrorBanner';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
-import {
-  IPluginNode,
-  IPluginFunctionConfig,
-} from 'components/DataPrepConnections/PluginConnectionBrowser/PluginConnectionBrowserTypes';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import If from 'components/If';
 import ee from 'event-emitter';
+import { IWidgetProps } from 'components/AbstractWidget';
 
 const styles = (theme) => {
   return {
@@ -58,11 +55,15 @@ interface IPluginConnectionState {
   defaultConnectionId: string | null;
   defaultConnectionType: string | null;
 }
-interface IPluginConnectionBrowserProps extends WithStyles<typeof styles> {
-  node: IPluginNode;
-  fnConfig: IPluginFunctionConfig;
-  onBrowseComplete: (properties) => void;
+
+interface IConnectionBrowserWidgetProps {
+  connectionType: string;
+  label: string;
 }
+
+interface IPluginConnectionBrowserProps
+  extends IWidgetProps<IConnectionBrowserWidgetProps>,
+    WithStyles<typeof styles> {}
 
 class PluginConnectionBrowser extends React.PureComponent<
   IPluginConnectionBrowserProps,
@@ -90,8 +91,7 @@ class PluginConnectionBrowser extends React.PureComponent<
       });
       return;
     }
-    const { fnConfig } = this.props;
-    let { connectionType } = fnConfig['widget-attributes'];
+    let { connectionType } = this.props.widgetProps;
     connectionType = connectionType && (connectionType.toUpperCase() as ConnectionType);
     const defaultConnection = connections.values.find(
       (connection) => connection.type === connectionType
@@ -246,7 +246,7 @@ class PluginConnectionBrowser extends React.PureComponent<
   };
 
   private getSpecification = async (workspaceId: string, workspaceInfo) => {
-    let connectionType = this.props.fnConfig['widget-attributes'].connectionType;
+    let connectionType = this.props.widgetProps.connectionType;
     if (connectionType) {
       connectionType = connectionType.toUpperCase() as ConnectionType;
     }
@@ -316,14 +316,12 @@ class PluginConnectionBrowser extends React.PureComponent<
       console.error('Unable to clean up workspace post browse: ', workspaceId, e);
     }
 
-    if (typeof this.props.onBrowseComplete === 'function') {
-      this.props.onBrowseComplete(properties);
-    }
+    this.props.updateAllProperties(properties);
   };
 
   public render() {
-    const { fnConfig, classes } = this.props;
-    const { label } = fnConfig;
+    const { widgetProps, classes } = this.props;
+    const { label = 'Browse' } = widgetProps;
     return (
       <React.Fragment>
         <Button variant="contained" color="primary" onClick={this.toggleConnectionBrowser}>
@@ -374,9 +372,4 @@ function PluginConnectionBrowserWrapper(props) {
   );
 }
 
-(PluginConnectionBrowserWrapper as any).propTypes = {
-  node: PropTypes.object,
-  fnConfig: PropTypes.object,
-  onBrowseComplete: PropTypes.func,
-};
 export default PluginConnectionBrowserWrapper;

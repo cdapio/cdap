@@ -43,6 +43,7 @@ import SqlSelectorWidget from 'components/AbstractWidget/SqlSelectorWidget';
 import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
+import PluginConnectionBrowser from 'components/DataPrepConnections/PluginConnectionBrowser';
 
 /**
  * Please maintain alphabetical order of the widget factory.
@@ -51,6 +52,7 @@ import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
  * and also grouped together all the code editor types.
  */
 export const WIDGET_FACTORY = {
+  'connection-browser': PluginConnectionBrowser,
   csv: CSVWidget,
   'dataset-selector': DatasetSelector,
   'ds-multiplevalues': MultipleValuesWidget,

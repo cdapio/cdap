@@ -41,10 +41,14 @@ const StyledTooltip = withStyles(
 )(Tooltip);
 
 interface IDescriptionTooltipProps extends WithStyles<typeof styles> {
-  description: string;
+  description?: string;
 }
 
 const DescriptionTooltipView: React.FC<IDescriptionTooltipProps> = ({ description, classes }) => {
+  if (!description) {
+    return null;
+  }
+
   return (
     <StyledTooltip title={description} placement="left">
       <Help className={classes.icon} />
