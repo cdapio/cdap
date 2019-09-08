@@ -24,6 +24,7 @@ export default class StateWrapper extends PureComponent {
     comp: PropTypes.any,
     value: PropTypes.oneOfType([PropTypes.array, PropTypes.string, PropTypes.number]),
     onChange: PropTypes.func,
+    updateAllProperties: PropTypes.func,
     widgetProps: PropTypes.object,
     extraConfig: PropTypes.object,
     disabled: PropTypes.bool,
@@ -32,6 +33,12 @@ export default class StateWrapper extends PureComponent {
   state = {
     value: this.props.value || objectQuery(this.props, 'widgetProps', 'default') || '',
   };
+
+  componentWillReceiveProps(nextProps) {
+    if (this.state.value !== nextProps.value) {
+      this.setState({ value: nextProps.value });
+    }
+  }
 
   onChange = (value) => {
     let v = objectQuery(value, 'target', 'value');
@@ -61,11 +68,13 @@ export default class StateWrapper extends PureComponent {
 
         Ways to solve this problem. Use redux or figure out a way to use React context in 16.3+
     */
+
     return (
       <Comp
         widgetProps={widgetProps}
         value={value}
         onChange={this.onChange}
+        updateAllProperties={this.props.updateAllProperties}
         extraConfig={extraConfig}
         disabled={disabled}
       />

@@ -17,27 +17,22 @@
 import React from 'react';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-import withStyles from '@material-ui/core/styles/withStyles';
 import InputBase from '@material-ui/core/InputBase';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import withStyles from '@material-ui/core/styles/withStyles';
 
-const styles = () => {
+const CustomizedInput = withStyles(() => {
   return {
     input: {
-      borderRadius: 4,
-      position: 'relative' as 'relative',
-      border: '1px solid #ced4da',
-      padding: '10px 18px 10px 12px',
+      padding: '7px 18px 7px 12px',
       '&:focus': {
         backgroundColor: 'transparent',
-        borderRadius: 4,
       },
     },
   };
-};
-const CustomizedInput = withStyles(styles)(InputBase);
+})(InputBase);
 
 interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
@@ -74,7 +69,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
       value={value}
       onChange={onChangeHandler}
       input={<CustomizedInput />}
-      disabled={disabled}
+      readOnly={disabled}
     >
       {optionValues.map((opt) => (
         <MenuItem value={opt.value} key={opt.value}>

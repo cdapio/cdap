@@ -17,12 +17,10 @@
 import * as React from 'react';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 
-const styles = (theme) => {
+const styles = () => {
   return {
     multiRowContainer: {
-      padding: '10px',
-      border: `2px solid ${theme.palette.grey['400']}`,
-      borderRadius: `4px`,
+      padding: '10px 5px',
     },
   };
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,6 +98,9 @@ var SqlSelectorWidget = require('../cdap/components/AbstractWidget/SqlSelectorWi
 var KeyValueEncodedWidget = require('../cdap/components/AbstractWidget/KeyValueWidget/KeyValueEncodedWidget')
   .default;
 var SessionTokenStore = require('../cdap/services/SessionTokenStore');
+var ConfigurationGroup = require('../cdap/components/ConfigurationGroup').default;
+var WidgetWrapper = require('../cdap/components/ConfigurationGroup/WidgetWrapper')
+  .WrappedWidgetWrapper;
 
 export {
   Store,
@@ -171,4 +174,6 @@ export {
   SqlSelectorWidget,
   KeyValueEncodedWidget,
   SessionTokenStore,
+  ConfigurationGroup,
+  WidgetWrapper,
 };

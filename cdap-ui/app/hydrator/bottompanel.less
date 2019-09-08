@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -487,15 +487,19 @@ body.theme-cdap.state-hydrator {
       .empty-hidden-properties-message {
         margin: 0 0 5px 0;
       }
+
+      .label-input-container {
+        padding: 10px;
+
+        // to keep consistent with the rest of ConfigurationGroup
+        width: calc(100% - 40px);
+      }
+
       .config-table {
         form[plugin-property-edit-view] {
           .form-group {
             display: flex;
             align-items: center;
-
-            .label-input-container {
-              padding-right: 0;
-            }
 
             .control-label {
               padding-top: 0;

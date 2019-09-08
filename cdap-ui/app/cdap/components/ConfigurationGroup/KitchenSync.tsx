@@ -17,6 +17,7 @@
 import * as React from 'react';
 import ConfigurationGroupView from 'components/ConfigurationGroup';
 import { MyPipelineApi } from 'api/pipeline';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 /**
  * This file is being used as a playground. Will be removed once the configuration group work is complete.
@@ -24,19 +25,25 @@ import { MyPipelineApi } from 'api/pipeline';
 const ConfigurationGroupKitchenSync: React.FC = () => {
   const [pluginProperties, setPluginProperties] = React.useState();
   const [widgetJson, setWidgetJson] = React.useState();
-  const [values, setValues] = React.useState({});
+  const [values, setValues] = React.useState<Record<string, string>>({});
+
+  const pluginName = 'Database';
+  const pluginType = 'batchsource';
+  const artifactName = 'database-plugins';
+  const artifactScope = 'SYSTEM';
+  const artifactVersion = '2.3.0-SNAPSHOT';
 
   React.useEffect(() => {
     // Fetch plugin properties and widget json
     const pluginParams = {
-      namespace: 'default',
+      namespace: getCurrentNamespace(),
       parentArtifact: 'cdap-data-pipeline',
       version: '6.1.0-SNAPSHOT',
-      extension: 'batchsource',
-      pluginName: 'File',
+      extension: pluginType,
+      pluginName,
       scope: 'SYSTEM',
-      artifactName: 'core-plugins',
-      artifactScope: 'SYSTEM',
+      artifactName,
+      artifactScope,
       limit: 1,
       order: 'DESC',
     };
@@ -47,12 +54,12 @@ const ConfigurationGroupKitchenSync: React.FC = () => {
   }, []);
 
   React.useEffect(() => {
-    const widgetKey = `widgets.File-batchsource`;
+    const widgetKey = `widgets.${pluginName}-${pluginType}`;
     const widgetParams = {
-      namespace: 'default',
-      artifactName: 'core-plugins',
-      scope: 'SYSTEM',
-      artifactVersion: '2.3.0-SNAPSHOT',
+      namespace: getCurrentNamespace(),
+      artifactName,
+      scope: artifactScope,
+      artifactVersion,
       keys: widgetKey,
     };
     MyPipelineApi.fetchWidgetJson(widgetParams).subscribe((res) => {
@@ -60,6 +67,19 @@ const ConfigurationGroupKitchenSync: React.FC = () => {
       setWidgetJson(parsedWidget);
     });
   }, []);
+
+  const inputSchema = [
+    {
+      name: 'Projection',
+      schema:
+        '{"type":"record","name":"etlSchemaBody","fields":[{"name":"haha","type":"string"},{"name":"hehe","type":"string"},{"name":"hohoho","type":"string"}]}',
+    },
+    {
+      name: 'JavaScript',
+      schema:
+        '{"type":"record","name":"etlSchemaBody","fields":[{"name":"field1","type":"string"},{"name":"field2","type":"string"},{"name":"field3","type":"string"}]}',
+    },
+  ];
 
   return (
     <div className="container">
@@ -73,6 +93,7 @@ const ConfigurationGroupKitchenSync: React.FC = () => {
         onChange={setValues}
         pluginProperties={pluginProperties}
         widgetJson={widgetJson}
+        inputSchema={inputSchema}
       />
     </div>
   );

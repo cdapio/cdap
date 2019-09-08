@@ -19,24 +19,28 @@ import { processConfigurationGroups } from 'components/ConfigurationGroup/utilit
 const pluginProperties = {
   nonRequiredProperty: {
     name: 'nonRequiredProperty',
+    description: 'description of nonRequiredProperty',
     macroSupported: true,
     required: false,
     type: 'string',
   },
   requiredProperty: {
     name: 'requiredProperty',
+    description: 'description of requiredProperty',
     macroSupported: false,
     required: false,
     type: 'string',
   },
   excludedProperty: {
     name: 'excludedProperty',
+    description: 'description of excludedProperty',
     macroSupported: true,
     required: true,
     type: 'string',
   },
   outputProperty: {
     name: 'outputProperty',
+    description: 'description of outputProperty',
     macroSupported: false,
     required: true,
     type: 'string',

@@ -232,6 +232,7 @@ class SqlConditionsWidgetView extends React.Component<
           {this.state.rules.map((rule, i) => {
             return (
               <Rule
+                key={i}
                 rule={rule}
                 ruleIdx={i}
                 rulesCount={this.state.rules.length}

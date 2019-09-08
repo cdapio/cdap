@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016-2017 Cask Data, Inc.
+  Copyright © 2016-2019 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -13,44 +13,16 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<fieldset
-  ng-if="!WizardConfigureConfirmStepCtrl.loadingPlugin"
-  ng-disabled="WizardConfigureConfirmStepCtrl.isDisabled">
-  <div class="confirm-step-content">
-    <div ng-repeat="group in WizardConfigureConfirmStepCtrl.groupsConfig.groups">
-      <div class="widget-group-container">
-        <div ng-repeat="field in group.fields">
-          <div class="form-group">
-            <label class="control-label">
-              <span>{{::field.label}}</span>
-              <span class="fa fa-info-circle"
-                    uib-tooltip="{{::field.description}}"
-                    tooltip-placement="right"
-                    tooltip-append-to-body="true">
-              </span>
-              <span class="fa fa-asterisk" ng-if="WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required"></span>
-              <small class="text-danger"
-                     ng-if="WizardConfigureConfirmStepCtrl.errorInConfig && WizardConfigureConfirmStepCtrl.action._backendProperties[field.name].required && !WizardConfigureConfirmStepCtrl.action.properties[field.name]">
-                {{::WizardConfigureConfirmStepCtrl.requiredPropertyError}}
-              </small>
-            </label>
 
-            <div>
-              <div data-name="field"
-                   class="my-widget-container"
-                   ng-class="{'select-wrapper': field.widget === 'select'}"
-                   data-model="WizardConfigureConfirmStepCtrl.action.properties[field.name]"
-                   data-myconfig="field"
-                   data-properties="WizardConfigureConfirmStepCtrl.action.properties"
-                   widget-container>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</fieldset>
+<div class="confirm-step-content">
+  <configuration-group
+    plugin-properties="WizardConfigureConfirmStepCtrl.action._backendProperties"
+    widget-json="WizardConfigureConfirmStepCtrl.widgetJson"
+    values="WizardConfigureConfirmStepCtrl.action.properties"
+    on-change="WizardConfigureConfirmStepCtrl.onChangeHandler"
+    disabled="WizardConfigureConfirmStepCtrl.isDisabled"
+  ></configuration-group>
+</div>
 <h3 ng-if="WizardConfigureConfirmStepCtrl.loadingPlugin">
   <span class="fa fa-spinner fa-spin"></span>
   <span>Loading...</span>
@@ -65,16 +37,16 @@
   <div class="btn btn-blue"
        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
-      Next
+    Next
   </div>
   <div class="btn btn-blue"
        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
-      Confirm
+    Confirm
   </div>
   <div class="btn btn-blue"
        ng-if="WizardConfigureConfirmStepCtrl.mode === 'view'"
        ng-click="WizardConfigureConfirmStepCtrl.addAction(true)">
-      Close
+    Close
   </div>
 </div>

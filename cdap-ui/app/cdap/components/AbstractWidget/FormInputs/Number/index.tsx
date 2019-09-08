@@ -15,42 +15,19 @@
 */
 
 import React from 'react';
-import ThemeWrapper from 'components/ThemeWrapper';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import TextField from '@material-ui/core/TextField';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import { objectQuery } from 'services/helpers';
+import InputBase from '@material-ui/core/InputBase';
 
-const styles = (theme) => {
-  return {
-    input: {
-      padding: 10,
-    },
-    root: {
-      '&$focused $notchedOutline': {
-        border: `1px solid ${theme.palette.blue[100]}`,
-      },
-    },
-    focused: {},
-    notchedOutline: {},
-  };
-};
-
-interface INumberWidgetProps extends WithStyles<typeof styles> {
+interface INumberWidgetProps {
   min?: number;
   max?: number;
 }
 
-interface INumberProps extends IWidgetProps<INumberWidgetProps>, WithStyles<typeof styles> {}
+interface INumberProps extends IWidgetProps<INumberWidgetProps> {}
 
-const NumberView: React.FC<INumberProps> = ({
-  value,
-  onChange,
-  disabled,
-  widgetProps,
-  classes,
-}) => {
+const NumberWidget: React.FC<INumberProps> = ({ value, onChange, disabled, widgetProps }) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
@@ -62,32 +39,19 @@ const NumberView: React.FC<INumberProps> = ({
   const max = objectQuery(widgetProps, 'max') || Number.MAX_SAFE_INTEGER;
 
   return (
-    <TextField
-      fullWidth
-      variant="outlined"
+    <InputBase
       type="number"
+      fullWidth
       value={value}
       onChange={onChangeHandler}
-      disabled={disabled}
+      readOnly={disabled}
       inputProps={{
         min,
         max,
-      }}
-      InputProps={{
-        classes,
       }}
     />
   );
 };
 
-const StyledNumber = withStyles(styles)(NumberView);
-
-export default function StyledNumberWrapper(props) {
-  return (
-    <ThemeWrapper>
-      <StyledNumber {...props} />
-    </ThemeWrapper>
-  );
-}
-
-(StyledNumberWrapper as any).propTypes = WIDGET_PROPTYPES;
+export default NumberWidget;
+(NumberWidget as any).propTypes = WIDGET_PROPTYPES;

@@ -36,6 +36,7 @@ export interface IPluginProperty {
   type: string;
   required: boolean;
   macroSupported: boolean;
+  description: string;
 }
 
 export type PluginProperties = Record<string, IPluginProperty>;

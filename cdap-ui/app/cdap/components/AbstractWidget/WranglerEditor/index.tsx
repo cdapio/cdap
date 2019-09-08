@@ -22,8 +22,10 @@ import ThemeWrapper from 'components/ThemeWrapper';
 import If from 'components/If';
 import { Modal, ModalBody } from 'reactstrap';
 import DataPrepHome from 'components/DataPrepHome';
-import { preventPropagation } from 'services/helpers';
+import { preventPropagation, objectQuery } from 'services/helpers';
 import LoadingSVG from 'components/LoadingSVG';
+import { IWidgetProps } from 'components/AbstractWidget';
+import IconSVG from 'components/IconSVG';
 // This artifact will stay until we migrate dataprep to use css-in-js
 require('./wrangler-modal.scss');
 
@@ -31,9 +33,10 @@ const styles = (theme) => {
   return {
     root: {
       width: '100%',
+      paddingTop: '7px',
     },
     wrangleButton: {
-      margin: '0 10px',
+      margin: '10px 0',
     },
     modalBtnClose: {
       height: '50px',
@@ -57,33 +60,10 @@ interface IWranglerEditorWidgetAttributes {
   placeholder?: string;
 }
 
-interface IWranglerEditorWidgetConfig {
-  name: string;
-  label: string;
-  'widget-type': string;
-  'widget-attributes': IWranglerEditorWidgetAttributes;
-}
+interface IWranglerEditorProps
+  extends IWidgetProps<IWranglerEditorWidgetAttributes>,
+    WithStyles<typeof styles> {}
 
-// This is not ideal to hardcode wrangler plugin properties here.
-// but we are modifying these properties and if that changes then this
-// type has to change.
-interface IWranglerEditorProperties {
-  workspaceId: string;
-  schema: string;
-  directives: string;
-}
-
-interface IWranglerEditorProps extends WithStyles<typeof styles> {
-  value: string;
-  config: IWranglerEditorWidgetConfig;
-  properties: IWranglerEditorProperties;
-  disabled: boolean;
-  onChange: (
-    value: string,
-    isChangingMoreThanOnePluginProperty?: boolean,
-    properties?: IWranglerEditorProperties
-  ) => void;
-}
 /**
  * Code editor doesn't play well with prop updates. The wrangler modal
  * updates the directives and we need to update that immediately as soon as
@@ -134,7 +114,11 @@ class WranglerEditor extends React.PureComponent<IWranglerEditorProps, IWrangler
       return;
     }
     directives = Array.isArray(directives) ? directives.join('\n') : directives;
-    this.props.onChange(directives, true, { workspaceId, directives, schema });
+    this.props.updateAllProperties({
+      workspaceId,
+      directives,
+      schema,
+    });
     this.closeDataprepModal();
   };
 
@@ -144,27 +128,40 @@ class WranglerEditor extends React.PureComponent<IWranglerEditorProps, IWrangler
   };
 
   public render() {
-    const { classes, properties, disabled } = this.props;
+    const { classes, widgetProps, disabled, extraConfig } = this.props;
+    const properties = objectQuery(extraConfig, 'properties') || {};
+    const placeholder = objectQuery(widgetProps, 'placeholder');
+    let rows = objectQuery(widgetProps, 'rows');
+
+    if (typeof rows === 'string') {
+      rows = parseInt(rows, 10);
+    }
+
     return (
       <React.Fragment>
-        <If condition={this.state.reloadCodeEditor}>
-          <LoadingSVG />
-        </If>
-        <If condition={!this.state.reloadCodeEditor}>
-          <CodeEditor
-            value={properties.directives}
-            onChange={this.onCodeEditorChange}
+        <div className={classes.root}>
+          <If condition={this.state.reloadCodeEditor}>
+            <LoadingSVG />
+          </If>
+          <If condition={!this.state.reloadCodeEditor}>
+            <CodeEditor
+              value={this.props.value}
+              onChange={this.onCodeEditorChange}
+              placeholder={placeholder}
+              rows={rows}
+              disabled={disabled}
+            />
+          </If>
+          <Button
+            className={classes.wrangleButton}
+            variant="contained"
+            color="primary"
+            onClick={this.toggleDataprepModal}
             disabled={disabled}
-          />
-        </If>
-        <Button
-          className={classes.wrangleButton}
-          variant="contained"
-          color="primary"
-          onClick={this.toggleDataprepModal}
-        >
-          Wrangle
-        </Button>
+          >
+            Wrangle
+          </Button>
+        </div>
         <If condition={this.state.showDataprepModal}>
           <Modal
             isOpen={this.state.showDataprepModal}
@@ -177,15 +174,15 @@ class WranglerEditor extends React.PureComponent<IWranglerEditorProps, IWrangler
             <div className="modal-header">
               <h5 className="modal-title">Wrangle</h5>
               <button className={classes.modalBtnClose} onClick={this.closeDataprepModal}>
-                <span>{String.fromCharCode(215)}</span>
+                <IconSVG name="icon-close" />
               </button>
             </div>
             <ModalBody>
               <DataPrepHome
-                singleWorkspaceMode="true"
+                singleWorkspaceMode={true}
                 workspaceId={properties.workspaceId}
                 onSubmit={this.updateDirectivesAndCloseModal}
-                enableRouting="false"
+                enableRouting={false}
                 disabled={disabled}
               />
             </ModalBody>

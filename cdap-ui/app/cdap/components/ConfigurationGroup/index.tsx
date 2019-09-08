@@ -15,6 +15,7 @@
  */
 
 import * as React from 'react';
+import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IWidgetJson, PluginProperties } from './types';
 import { processConfigurationGroups } from './utilities';
@@ -22,11 +23,15 @@ import { objectQuery } from 'services/helpers';
 import If from 'components/If';
 import PropertyRow from './PropertyRow';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import ThemeWrapper from 'components/ThemeWrapper';
 
 const styles = (): StyleRules => {
   return {
     group: {
-      marginBottom: '35px',
+      marginBottom: '45px',
+    },
+    groupTitle: {
+      marginBottom: '25px',
     },
   };
 };
@@ -36,7 +41,8 @@ interface IConfigurationGroupProps extends WithStyles<typeof styles> {
   pluginProperties: PluginProperties;
   values: Record<string, string>;
   inputSchema?: any;
-  onChange: (values: Record<string, string>) => void;
+  disabled?: boolean;
+  onChange?: (values: Record<string, string>) => void;
 }
 
 const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
@@ -45,6 +51,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   values,
   inputSchema,
   onChange,
+  disabled,
   classes,
 }) => {
   const [configurationGroups, setConfigurationGroups] = React.useState([]);
@@ -72,27 +79,25 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
         ...values,
       };
 
-      onChange(newValues);
+      changeParentHandler(newValues);
     },
     [widgetJson, pluginProperties]
   );
 
-  function handleChange(property) {
-    return (value) => {
-      const newValues = {
-        ...values,
-        [property]: value,
-      };
+  function changeParentHandler(updatedValues) {
+    if (!onChange || typeof onChange !== 'function') {
+      return;
+    }
 
-      // remove empty string values
-      Object.keys(newValues).forEach((propertyName) => {
-        if (typeof newValues[propertyName] === 'string' && newValues[propertyName].length === 0) {
-          delete newValues[propertyName];
-        }
-      });
+    const newValues = { ...updatedValues };
+    // remove empty string values
+    Object.keys(newValues).forEach((propertyName) => {
+      if (typeof newValues[propertyName] === 'string' && newValues[propertyName].length === 0) {
+        delete newValues[propertyName];
+      }
+    });
 
-      onChange(newValues);
-    };
+    onChange(newValues);
   }
 
   const extraConfig = {
@@ -102,11 +107,11 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   };
 
   return (
-    <div>
+    <div data-cy="configuration-group">
       {configurationGroups.map((group, i) => {
         return (
           <div key={`${group.label}-${i}`} className={classes.group}>
-            <div>
+            <div className={classes.groupTitle}>
               <h2>{group.label}</h2>
               <If condition={group.description && group.description.length > 0}>
                 <small>{group.description}</small>
@@ -121,8 +126,9 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
                     widgetProperty={property}
                     pluginProperty={pluginProperties[property.name]}
                     value={values[property.name]}
-                    onChange={handleChange(property.name)}
+                    onChange={changeParentHandler}
                     extraConfig={extraConfig}
+                    disabled={disabled}
                   />
                 );
               })}
@@ -134,5 +140,22 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   );
 };
 
-const ConfigurationGroup = withStyles(styles)(ConfigurationGroupView);
+const StyledConfigurationGroup = withStyles(styles)(ConfigurationGroupView);
+
+function ConfigurationGroup(props) {
+  return (
+    <ThemeWrapper>
+      <StyledConfigurationGroup {...props} />
+    </ThemeWrapper>
+  );
+}
 export default ConfigurationGroup;
+
+(ConfigurationGroup as any).propTypes = {
+  widgetJson: PropTypes.object,
+  pluginProperties: PropTypes.object,
+  values: PropTypes.object,
+  inputSchema: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
+  disabled: PropTypes.bool,
+  onChange: PropTypes.func,
+};

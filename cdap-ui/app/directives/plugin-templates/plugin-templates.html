@@ -96,27 +96,13 @@
               <div ng-if="field.name !== PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperty">
 
                 <div class="form-group">
-                  <label class="control-label">
-                    <span>{{::field.label}}</span>
-                    <span class="fa fa-info-circle"
-                          uib-tooltip="{{::field.description}}"
-                          tooltip-placement="right"
-                          tooltip-append-to-body="true">
-                    </span>
-                    <span class="fa fa-asterisk" ng-if="PluginTemplatesCtrl.pluginConfig._backendProperties[field.name].required"></span>
-                    <small class="text-danger" ng-if="PluginTemplatesCtrl.pluginConfig._backendProperties[field.name].required && !PluginTemplatesCtrl.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
-                  </label>
-
+                  <widget-wrapper
+                    plugin-property="PluginTemplatesCtrl.pluginConfig._backendProperties"
+                    widget-property="field"
+                    value="PluginTemplatesCtrl.pluginConfig.plugin.properties[field.name]"
+                    on-change="field.onChangeHandler"
+                  ></widget-wrapper>
                   <div>
-                    <div data-name="field"
-                         class="my-widget-container"
-                         ng-class="{'select-wrapper': field.widget === 'select'}"
-                         data-model="PluginTemplatesCtrl.pluginConfig.plugin.properties[field.name]"
-                         data-myconfig="field"
-                         data-properties="PluginTemplatesCtrl.pluginConfig.plugin.properties"
-                         widget-container>
-                    </div>
-
                     <label class="label-control">Lock change?</label>
                     <input type="checkbox" ng-model="PluginTemplatesCtrl.pluginConfig.lock[field.name]">
                   </div>

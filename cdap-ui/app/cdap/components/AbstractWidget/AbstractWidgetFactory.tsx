@@ -33,6 +33,7 @@ import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
 import NumberWidget from 'components/AbstractWidget/FormInputs/Number';
 import PasswordWidget from 'components/AbstractWidget/FormInputs/Password';
 import RadioGroupWidget from 'components/AbstractWidget/RadioGroupWidget';
+import RulesEngineEditor from 'components/AbstractWidget/RulesEngineEditor';
 import SecureKeyPassword from 'components/AbstractWidget/SecureKey/SecureKeyPassword';
 import SecureKeyText from 'components/AbstractWidget/SecureKey/SecureKeyText';
 import SecureKeyTextarea from 'components/AbstractWidget/SecureKey/SecureKeyTextarea';
@@ -41,6 +42,7 @@ import SqlConditionsWidget from 'components/AbstractWidget/SqlConditionsWidget';
 import SqlSelectorWidget from 'components/AbstractWidget/SqlSelectorWidget';
 import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
+import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
 
 /**
  * Please maintain alphabetical order of the widget factory.
@@ -98,6 +100,12 @@ export const WIDGET_FACTORY = {
   'join-types': JoinTypeWidget,
   'sql-conditions': SqlConditionsWidget,
   'sql-select-fields': SqlSelectorWidget,
+
+  // Rules Engine
+  'rules-engine-editor': RulesEngineEditor,
+
+  // Wrangler
+  'wrangler-directives': WranglerEditor,
 };
 
 export default new Proxy(WIDGET_FACTORY, {

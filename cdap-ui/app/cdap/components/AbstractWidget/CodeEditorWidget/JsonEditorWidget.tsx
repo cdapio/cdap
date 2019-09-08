@@ -19,17 +19,55 @@ import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import PropTypes from 'prop-types';
 import JSONEditor from 'components/CodeEditor/JSONEditor';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import ThemeWrapper from 'components/ThemeWrapper';
 
-interface IJsonEditorProps extends IWidgetProps<null> {
+const styles = (): StyleRules => {
+  return {
+    root: {
+      paddingTop: '7px',
+    },
+    editorRoot: {
+      border: 0,
+    },
+  };
+};
+
+interface IJsonEditorProps extends IWidgetProps<null>, WithStyles<typeof styles> {
   rows: number;
   value: string;
 }
 
-const JsonEditorWidget: React.FC<IJsonEditorProps> = ({ value, onChange, disabled, rows }) => {
+const JsonEditorWidgetView: React.FC<IJsonEditorProps> = ({
+  value,
+  onChange,
+  disabled,
+  rows,
+  classes,
+}) => {
   return (
-    <JSONEditor mode="json" rows={rows} value={value} onChange={onChange} disabled={disabled} />
+    <div className={classes.root}>
+      <JSONEditor
+        mode="json"
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        classes={{ root: classes.editorRoot }}
+      />
+    </div>
   );
 };
+
+const StyledJsonEditorWidget = withStyles(styles)(JsonEditorWidgetView);
+
+function JsonEditorWidget(props) {
+  return (
+    <ThemeWrapper>
+      <StyledJsonEditorWidget {...props} />
+    </ThemeWrapper>
+  );
+}
 
 (JsonEditorWidget as any).propTypes = {
   ...WIDGET_PROPTYPES,

@@ -15,17 +15,14 @@
  */
 
 import React, { useState } from 'react';
-
 import Paper from '@material-ui/core/Paper';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import IconButton from '@material-ui/core/IconButton';
 import AddIcon from '@material-ui/icons/AddBox';
 import CancelIcon from '@material-ui/icons/Cancel';
-
-import Select from 'components/AbstractWidget/FormInputs/Select';
 import If from 'components/If';
-
 import { IInputSchema, IRule } from 'components/AbstractWidget/SqlConditionsWidget';
+import OutlinedSelect from 'components/OutlinedSelect';
 
 const styles = (theme): StyleRules => {
   return {
@@ -134,10 +131,8 @@ const Rule: React.FC<IRuleProps> = ({
           <div key={`${i}-${stage.stageName}`} className={classes.stageRow}>
             <div className={classes.tableCell}>{stage.stageName}</div>
             <div className={classes.tableCell}>
-              <Select
-                widgetProps={{
-                  options: inputSchema[stage.stageName],
-                }}
+              <OutlinedSelect
+                options={inputSchema[stage.stageName]}
                 disabled={disabled}
                 value={stage.fieldName}
                 onChange={(val) => fieldChange(i, val)}
