@@ -31,7 +31,10 @@ public interface MasterServiceManager {
   /**
    * @return true if the configured to be available, false otherwise.
    */
-  boolean isServiceEnabled();
+  default boolean isServiceEnabled() {
+    // By default all the services are enabled. extending classes can override if the behavior should be different.
+    return true;
+  }
 
   /**
    * @return service description.
@@ -43,7 +46,9 @@ public interface MasterServiceManager {
    *
    * @return the number of instances of the CDAP Service instances alive.
    */
-  int getInstances();
+  default int getInstances() {
+    return 1;
+  }
 
   /**
    * Set the number of instances of the CDAP service.
@@ -51,35 +56,36 @@ public interface MasterServiceManager {
    * @param instanceCount number of instances (should be greater than 0)
    * @return was the operation successful
    */
-  boolean setInstances(int instanceCount);
+  default boolean setInstances(int instanceCount) {
+    throw new UnsupportedOperationException("Setting number of instances is not supported.");
+  }
 
   /**
    * Get the minimum instance count for the service.
    *
    * @return the required minimum number of instances of the CDAP Service.
    */
-  int getMinInstances();
+  default int getMinInstances() {
+    return isServiceEnabled() ? 1 : 0;
+  }
 
   /**
    * Get the maximum instance count for the service.
    *
    * @return the allowed maximum number of instances of the CDAP Service.
    */
-  int getMaxInstances();
+  default int getMaxInstances() {
+    return 1;
+  }
 
   /**
    * Logging availability.
    *
    * @return true if logs are available.
    */
-  boolean isLogAvailable();
-
-  /**
-   * Possible to check the status of the service.
-   *
-   * @return true if the status of the service can be checked.
-   */
-  boolean canCheckStatus();
+  default boolean isLogAvailable() {
+    return true;
+  }
 
   /**
    * Service's availability.
@@ -88,14 +94,18 @@ public interface MasterServiceManager {
    */
   boolean isServiceAvailable();
 
+  /**
+   * Returns information about this system service runtime information. The information may not be available in
+   * all runtime environment.
+   */
   SystemServiceLiveInfo getLiveInfo();
-
-  //TODO: Add method to get the metrics name to get event rate on UI
 
   /**
    * Restart all instances of this service.
    */
-  void restartAllInstances();
+  default void restartAllInstances() {
+    throw new UnsupportedOperationException("Restart all instances is not supported.");
+  }
 
   /**
    * Restart some instances of this service.
@@ -103,14 +113,18 @@ public interface MasterServiceManager {
    * @param instanceId the instance id to be restarted.
    * @param moreInstanceIds optional additional instance ids to be restarted.
    */
-  void restartInstances(int instanceId, int... moreInstanceIds);
+  default void restartInstances(int instanceId, int... moreInstanceIds) {
+    throw new UnsupportedOperationException("Restart instances is not supported.");
+  }
 
   /**
    * Update log levels for this service
    *
    * @param logLevels The {@link Map} contains the requested logger name and log level.
    */
-  void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels);
+  default void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels) {
+    throw new UnsupportedOperationException("Update service log levels is not supported.");
+  }
 
   /**
    * Reset the log levels of the service.
@@ -118,5 +132,7 @@ public interface MasterServiceManager {
    *
    * @param loggerNames The set of logger names to be reset, if empty, all loggers will be reset.
    */
-  void resetServiceLogLevels(Set<String> loggerNames);
+  default void resetServiceLogLevels(Set<String> loggerNames) {
+    throw new UnsupportedOperationException("Reset service log levels is not supported.");
+  }
 }

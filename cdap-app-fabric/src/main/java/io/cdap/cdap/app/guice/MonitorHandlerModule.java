@@ -41,19 +41,11 @@ import io.cdap.cdap.data2.dataset2.lib.kv.InMemoryKVTableDefinition;
 import io.cdap.cdap.explore.service.ExploreServiceManager;
 import io.cdap.cdap.gateway.handlers.DatasetServiceStore;
 import io.cdap.cdap.gateway.handlers.MonitorHandler;
-import io.cdap.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import io.cdap.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import io.cdap.cdap.internal.app.runtime.distributed.TransactionServiceManager;
+import io.cdap.cdap.internal.app.runtime.monitor.NonHadoopAppFabricServiceManager;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.logging.run.InMemoryAppFabricServiceManager;
-import io.cdap.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
-import io.cdap.cdap.logging.run.InMemoryExploreServiceManager;
-import io.cdap.cdap.logging.run.InMemoryLogSaverServiceManager;
-import io.cdap.cdap.logging.run.InMemoryMessagingServiceManager;
-import io.cdap.cdap.logging.run.InMemoryMetadataServiceManager;
-import io.cdap.cdap.logging.run.InMemoryMetricsProcessorServiceManager;
-import io.cdap.cdap.logging.run.InMemoryMetricsServiceManager;
-import io.cdap.cdap.logging.run.LogSaverStatusServiceManager;
+import io.cdap.cdap.logging.run.LogSaverServiceManager;
 import io.cdap.cdap.messaging.distributed.MessagingServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsServiceManager;
@@ -66,7 +58,7 @@ import java.util.Map;
  */
 public class MonitorHandlerModule extends AbstractModule {
 
-  public static final String SERVICE_STORE_DS_MODULES = "service.store.ds.modules";
+  private static final String SERVICE_STORE_DS_MODULES = "service.store.ds.modules";
   private final boolean isHadoop;
 
   public MonitorHandlerModule(boolean isHadoop) {
@@ -112,15 +104,24 @@ public class MonitorHandlerModule extends AbstractModule {
   private void addNonHadoopBindings(Binder binder) {
     MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(binder, String.class,
                                                                                MasterServiceManager.class);
-    mapBinder.addBinding(Constants.Service.LOGSAVER).to(InMemoryLogSaverServiceManager.class);
-    mapBinder.addBinding(Constants.Service.TRANSACTION).to(InMemoryTransactionServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(InMemoryMetricsProcessorServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METRICS).to(InMemoryMetricsServiceManager.class);
-    mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(InMemoryAppFabricServiceManager.class);
-    mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR).to(InMemoryDatasetExecutorServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METADATA_SERVICE).to(InMemoryMetadataServiceManager.class);
-    mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE).to(InMemoryExploreServiceManager.class);
-    mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE).to(InMemoryMessagingServiceManager.class);
+    mapBinder.addBinding(Constants.Service.LOGSAVER)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(LogSaverServiceManager.class));
+    mapBinder.addBinding(Constants.Service.TRANSACTION)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(TransactionServiceManager.class));
+    mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(MetricsProcessorStatusServiceManager.class));
+    mapBinder.addBinding(Constants.Service.METRICS)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(MetricsServiceManager.class));
+    mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(NonHadoopAppFabricServiceManager.class));
+    mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(DatasetExecutorServiceManager.class));
+    mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(MetadataServiceManager.class));
+    mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(ExploreServiceManager.class));
+    mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(MessagingServiceManager.class));
 
     // The ServiceStore uses a special non-TX KV Table.
     bindDatasetModule(binder, new InMemoryKVTableDefinition.Module());
@@ -134,7 +135,7 @@ public class MonitorHandlerModule extends AbstractModule {
   private void addHadoopBindings(Binder binder) {
     MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(binder, String.class,
                                                                                MasterServiceManager.class);
-    mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverStatusServiceManager.class);
+    mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManager.class);
     mapBinder.addBinding(Constants.Service.TRANSACTION).to(TransactionServiceManager.class);
     mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR).to(MetricsProcessorStatusServiceManager.class);
     mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
@@ -153,7 +154,7 @@ public class MonitorHandlerModule extends AbstractModule {
    */
   private void bindDatasetModule(Binder binder, DatasetModule module) {
     MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
-      binder(), String.class, DatasetModule.class, Names.named(SERVICE_STORE_DS_MODULES));
+      binder, String.class, DatasetModule.class, Names.named(SERVICE_STORE_DS_MODULES));
 
     mapBinder.addBinding(module.getClass().getName()).toInstance(module);
   }
@@ -176,6 +177,31 @@ public class MonitorHandlerModule extends AbstractModule {
     @Override
     public DatasetFramework get() {
       return new InMemoryDatasetFramework(new DefaultDatasetDefinitionRegistryFactory(injector), datasetModules);
+    }
+  }
+
+  /**
+   * Provides for {@link MasterServiceManager} used in non-hadoop environment.
+   */
+  private static final class NonHadoopMasterServiceManagerProvider implements Provider<MasterServiceManager> {
+
+    private final Class<? extends MasterServiceManager> serviceManagerClass;
+    @Inject
+    private Injector injector;
+
+    NonHadoopMasterServiceManagerProvider(Class<? extends MasterServiceManager> serviceManagerClass) {
+      this.serviceManagerClass = serviceManagerClass;
+    }
+
+    @Override
+    public MasterServiceManager get() {
+      return new DelegatingMasterServiceManager(injector.getInstance(serviceManagerClass)) {
+        @Override
+        public int getInstances() {
+          // For now it is always just one instance for each master service in non-hadoop environment.
+          return 1;
+        }
+      };
     }
   }
 }

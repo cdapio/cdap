@@ -19,14 +19,10 @@ package io.cdap.cdap.common.conf;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
 import io.cdap.cdap.proto.id.NamespaceId;
-import org.apache.twill.discovery.Discoverable;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Map;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -100,13 +96,13 @@ public final class Constants {
    */
   public static final class Master {
     public static final String EXTENSIONS_DIR = "master.environment.extensions.dir";
+    public static final String MAX_INSTANCES = "master.service.max.instances";
   }
 
   /**
    * Global Service names.
    */
   public static final class Service {
-    public static final String ACL = "acl";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String TRANSACTION_HTTP = "transaction.http";
@@ -1311,6 +1307,8 @@ public final class Constants {
    * Constants for the messaging system
    */
   public static final class MessagingSystem {
+    public static final String SERVICE_DESCRIPTION = "Service for providing messaging system.";
+
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
     public static final String LOCAL_DATA_CLEANUP_FREQUENCY = "messaging.local.data.cleanup.frequency.secs";
 

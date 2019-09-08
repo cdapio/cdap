@@ -19,7 +19,8 @@ package io.cdap.cdap.data2.datafabric.dataset;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import org.apache.twill.api.TwillRunnerService;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
@@ -27,12 +28,16 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
  * container as the dataset executor service, this is same as DatasetExecutorServiceManager, except
  * we use a different discoverable name and description.
  */
-public class MetadataServiceManager extends DatasetExecutorServiceManager {
+public class MetadataServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  public MetadataServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                                DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, twillRunnerService, discoveryServiceClient);
+  MetadataServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.METADATA_SERVICE, twillRunner);
+  }
+
+  @Override
+  public int getMaxInstances() {
+    return getCConf().getInt(Constants.Dataset.Executor.MAX_INSTANCES);
   }
 
   @Override
@@ -41,7 +46,8 @@ public class MetadataServiceManager extends DatasetExecutorServiceManager {
   }
 
   @Override
-  protected String getDiscoverableName() {
-    return Constants.Service.METADATA_SERVICE;
+  protected String getTwillRunnableName() {
+    // Metadata service runs inside the dataset executor YARN container, hence the dataset executor runnable name.
+    return Constants.Service.DATASET_EXECUTOR;
   }
 }

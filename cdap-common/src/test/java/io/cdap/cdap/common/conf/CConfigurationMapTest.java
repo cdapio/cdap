@@ -61,23 +61,35 @@ public class CConfigurationMapTest {
     Assert.assertTrue(CConfigurationUtil.asMap(cConf).isEmpty());
   }
 
-  @Test (expected = UnsupportedOperationException.class)
-  public void testDisallowPut() {
-    CConfigurationUtil.asMap(CConfiguration.create()).put("test.key", "test.value");
+  @Test
+  public void testPut() {
+    Map<String, String> map = CConfigurationUtil.asMap(CConfiguration.create());
+    Assert.assertNull(map.put("test.key", "test.value"));
+    Assert.assertEquals("test.value", map.get("test.key"));
   }
 
-  @Test (expected = UnsupportedOperationException.class)
-  public void testDisallowPutAll() {
-    CConfigurationUtil.asMap(CConfiguration.create()).putAll(Collections.singletonMap("test.key", "test.value"));
+  @Test
+  public void testPutAll() {
+    Map<String, String> map = CConfigurationUtil.asMap(CConfiguration.create());
+    map.putAll(Collections.singletonMap("test.key", "test.value"));
+    Assert.assertEquals("test.value", map.get("test.key"));
   }
 
-  @Test (expected = UnsupportedOperationException.class)
-  public void testDisallowRemove() {
-    CConfigurationUtil.asMap(CConfiguration.create()).remove(Constants.CFG_LOCAL_DATA_DIR);
+  @Test
+  public void testRemove() {
+    Map<String, String> map = CConfigurationUtil.asMap(CConfiguration.create());
+    String oldValue = map.get(Constants.CFG_LOCAL_DATA_DIR);
+    Assert.assertNotNull(oldValue);
+    String removed = map.remove(Constants.CFG_LOCAL_DATA_DIR);
+    Assert.assertEquals(oldValue, removed);
+    Assert.assertNull(map.get(Constants.CFG_LOCAL_DATA_DIR));
   }
 
-  @Test (expected = UnsupportedOperationException.class)
-  public void testDisallowRemoveSet() {
-    CConfigurationUtil.asMap(CConfiguration.create()).entrySet().removeIf(e -> true);
+  @Test
+  public void testIteratorRemove() {
+    Map<String, String> map = CConfigurationUtil.asMap(CConfiguration.create());
+    Assert.assertNotNull(map.get(Constants.CFG_LOCAL_DATA_DIR));
+    map.entrySet().removeIf(e -> e.getKey().equals(Constants.CFG_LOCAL_DATA_DIR));
+    Assert.assertNull(map.get(Constants.CFG_LOCAL_DATA_DIR));
   }
 }

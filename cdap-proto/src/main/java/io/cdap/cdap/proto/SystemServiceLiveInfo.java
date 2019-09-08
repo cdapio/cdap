@@ -28,7 +28,7 @@ public class SystemServiceLiveInfo {
 
   private final List<Containers.ContainerInfo> containers;
 
-  public SystemServiceLiveInfo(List<Containers.ContainerInfo> containers) {
+  private SystemServiceLiveInfo(List<Containers.ContainerInfo> containers) {
     this.containers = Collections.unmodifiableList(new ArrayList<>(containers));
   }
 

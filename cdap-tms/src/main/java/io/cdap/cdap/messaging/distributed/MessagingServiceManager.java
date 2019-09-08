@@ -19,29 +19,28 @@ package io.cdap.cdap.messaging.distributed;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
 import io.cdap.cdap.common.twill.MasterServiceManager;
-import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * A {@link MasterServiceManager} used in distributed mode.
  */
-public class MessagingServiceManager extends AbstractDistributedMasterServiceManager {
+public class MessagingServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  MessagingServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                          DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.MESSAGING_SERVICE, twillRunnerService, discoveryServiceClient);
+  MessagingServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.MESSAGING_SERVICE, twillRunner);
   }
 
   @Override
   public String getDescription() {
-    return Constants.Service.MESSAGING_SERVICE;
+    return Constants.MessagingSystem.SERVICE_DESCRIPTION;
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.MessagingSystem.MAX_INSTANCES);
+    return getCConf().getInt(Constants.MessagingSystem.MAX_INSTANCES);
   }
 }

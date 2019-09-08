@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.environment;
 
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import org.apache.twill.api.TwillRunnerService;

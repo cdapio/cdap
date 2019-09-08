@@ -19,30 +19,23 @@ package io.cdap.cdap.explore.service;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.twill.AbstractDistributedMasterServiceManager;
-import org.apache.twill.api.TwillRunnerService;
+import io.cdap.cdap.common.twill.AbstractMasterServiceManager;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * Service manager for explore service in distributed mode.
  */
-public class ExploreServiceManager extends AbstractDistributedMasterServiceManager {
+public class ExploreServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  public ExploreServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                               DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.EXPLORE_HTTP_USER_SERVICE, twillRunnerService, discoveryServiceClient);
-    this.discoveryServiceClient = discoveryServiceClient;
+  ExploreServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+    super(cConf, discoveryClient, Constants.Service.EXPLORE_HTTP_USER_SERVICE, twillRunner);
   }
 
   @Override
   public boolean isServiceEnabled() {
-    return cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
-  }
-
-  @Override
-  public int getMaxInstances() {
-    return 1; // max explore service container instances is 1 (non-configurable)
+    return getCConf().getBoolean(Constants.Explore.EXPLORE_ENABLED);
   }
 
   @Override
