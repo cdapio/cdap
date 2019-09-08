@@ -24,7 +24,7 @@ import If from 'components/If';
 const styles = (theme): StyleRules => {
   return {
     root: {
-      padding: '15px 50px',
+      padding: '15px 25px',
     },
     headingContainer: {
       marginTop: '15px',
@@ -43,7 +43,7 @@ const styles = (theme): StyleRules => {
     },
     summaryContent: {
       display: 'grid',
-      gridTemplateColumns: '50% 50%',
+      gridTemplateColumns: '1fr 1fr',
       gridColumnGap: '50px',
     },
     table: {
@@ -104,8 +104,11 @@ const SummaryView: React.SFC<ISummaryProps> = ({
         <div>{description}</div>
       </div>
 
+      <hr />
+
       <div className={classes.summaryContent}>
         <div className="source">
+          <span>SOURCE</span>
           <div>
             <h4 className={classes.heading}>MySQL Database</h4>
             <If condition={!disableEdit}>
@@ -128,6 +131,9 @@ const SummaryView: React.SFC<ISummaryProps> = ({
                     </thead>
                     <tbody>
                       {group.properties.map((property) => {
+                        if (property.name === 'password') {
+                          return null;
+                        }
                         const propertyValue =
                           objectQuery(source, 'plugin', 'properties', property.name) || '--';
                         return (
@@ -148,6 +154,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
         </div>
 
         <div className="target">
+          <span>TARGET</span>
           <div>
             <h4 className={classes.heading}>Google BigQuery</h4>
             <If condition={!disableEdit}>
@@ -169,6 +176,10 @@ const SummaryView: React.SFC<ISummaryProps> = ({
                     </thead>
                     <tbody>
                       {group.properties.map((property) => {
+                        if (property.name === 'serviceAccountKey') {
+                          return null;
+                        }
+
                         const propertyValue =
                           objectQuery(target, 'plugin', 'properties', property.name) || '--';
 

@@ -16,28 +16,42 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { transfersCreateConnect, Stages } from 'components/Transfers/Create/context';
+import { transfersCreateConnect } from 'components/Transfers/Create/context';
 import Summary from '../../Summary';
 import StepButtons from '../../StepButtons';
 
 const styles = (): StyleRules => {
-  return {};
+  return {
+    root: {
+      overflowY: 'auto',
+      width: '100%',
+    },
+    btnContainer: {
+      padding: '5px 25px',
+      marginBottom: '35px',
+    },
+  };
 };
 
 interface IConfigureSummary extends WithStyles<typeof styles> {
   setStage: (stage) => void;
 }
 
-const ConfigureSummaryView: React.SFC<IConfigureSummary> = ({ setStage }) => {
+const ConfigureSummaryView: React.SFC<IConfigureSummary> = ({ classes }) => {
   function onComplete() {
-    setStage(Stages.ASSESSMENT);
+    // tslint:disable-next-line:no-console
+    console.log('complete!');
+
+    // Need to create instance and create the CDC worker app
   }
 
   return (
-    <div>
+    <div className={classes.root}>
       <Summary />
       <br />
-      <StepButtons onComplete={onComplete} />
+      <div className={classes.btnContainer}>
+        <StepButtons onComplete={onComplete} />
+      </div>
     </div>
   );
 };

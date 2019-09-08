@@ -28,13 +28,11 @@ import LeftPanel from 'components/Transfers/Create/LeftPanel';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Source from '../Configure/PluginPicker/Source';
 import Target from '../Configure/PluginPicker/Target';
-// import GenerateAssessment from '../Assessment/GenerateAssessment';
 import ViewAssessment from '../Assessment/ViewAssessment';
-import ViewSummary from '../Publish/ViewSummary';
-// import ConfigureSummary from '../Configure/Summary';
 import { MyDeltaApi } from 'api/delta';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import SelectTable from '../Configure/SelectTable';
+import ConfigureSummary from '../Configure/Summary';
 
 const styles = (): StyleRules => {
   return {
@@ -83,62 +81,11 @@ export const StageConfiguration = {
       // },
       {
         label: 'Review',
-        component: ViewSummary,
+        component: ConfigureSummary,
       },
     ],
   },
 };
-
-// export const StageConfiguration = {
-//   [Stages.CONFIGURE]: {
-//     label: 'Configure',
-//     steps: [
-//       {
-//         label: 'Set a name and description',
-//         component: NameDescription,
-//       },
-//       {
-//         label: 'Choose a source',
-//         component: Source,
-//       },
-//       {
-//         label: 'Set source configs',
-//         component: SourceConfig,
-//       },
-//       {
-//         label: 'Choose a target',
-//         component: Target,
-//       },
-//       {
-//         label: 'Set target configs',
-//         component: TargetConfig,
-//       },
-//       {
-//         label: `Review configuration`,
-//         component: ConfigureSummary,
-//       },
-//     ],
-//   },
-//   [Stages.ASSESSMENT]: {
-//     label: 'Assessment',
-//     steps: [
-//       {
-//         label: 'Generate assessment',
-//         component: GenerateAssessment,
-//       },
-
-//     ],
-//   },
-//   [Stages.PUBLISH]: {
-//     label: 'Publish',
-//     steps: [
-//       {
-//         label: 'View summary',
-//         component: ViewSummary,
-//       },
-//     ],
-//   },
-// };
 
 interface IContentProps extends WithStyles<typeof styles> {
   id: string;
@@ -177,6 +124,7 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
       name: this.state.name,
       description: this.state.description,
       properties: {
+        stage: this.state.stage,
         activeStep,
         sourceConfig: this.state.sourceConfig,
         source: this.state.source,
@@ -189,26 +137,17 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
   };
 
   private updateStore = (activeStep = this.state.activeStep) => {
-    // if (!this.state.id) {
-    //   return;
-    // }
-    // const params = {
-    //   context: getCurrentNamespace(),
-    //   id: this.state.id,
-    // };
+    if (!this.state.id) {
+      return;
+    }
+    const params = {
+      context: getCurrentNamespace(),
+      id: this.state.id,
+    };
 
     const requestBody = this.getRequestBody(activeStep);
 
-    // MyDeltaApi.update(params, requestBody).subscribe(
-    //   (res) => {
-    //     // tslint:disable-next-line:no-console
-    //     console.log('store update', res);
-    //   },
-    //   (err) => {
-    //     // tslint:disable-next-line:no-console
-    //     console.log('error', err);
-    //   }
-    // );
+    MyDeltaApi.update(params, requestBody).subscribe();
 
     // tslint:disable-next-line:no-console
     console.log('update store', requestBody);

@@ -18,24 +18,16 @@ import * as React from 'react';
 
 export enum Stages {
   CONFIGURE = 'configure',
-  ASSESSMENT = 'assessment',
-  PUBLISH = 'publish',
-  VALIDATE = 'validate',
   PUBLISHED = 'published',
 }
 
 export const defaultContext = {
   id: '',
   stage: Stages.CONFIGURE,
-  activeStep: 6,
+  activeStep: 0,
   name: '',
   description: '',
-  source: {
-    host: 'localhost',
-    port: '3306',
-    user: 'root',
-    password: 'edwingil4',
-  },
+  source: {},
   sourceConfig: {},
   target: {},
   targetConfig: {},

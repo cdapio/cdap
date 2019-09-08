@@ -41,9 +41,9 @@ const StepContentView: React.SFC<IStepContentProps> = ({ activeStep, classes, st
   const Step = objectQuery(steps, activeStep, 'component');
 
   // don't want the padded container for the Summary view
-  // if (activeStep === steps.length - 1) {
-  //   return <Step />;
-  // }
+  if (activeStep === steps.length - 1) {
+    return <Step />;
+  }
 
   return (
     <div className={classes.root}>

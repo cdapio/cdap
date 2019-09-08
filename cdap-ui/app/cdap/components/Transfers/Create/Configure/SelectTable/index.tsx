@@ -22,6 +22,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyDeltaApi } from 'api/delta';
 import If from 'components/If';
 import { Checkbox } from '@material-ui/core';
+import { objectQuery } from 'services/helpers';
 
 const styles = (theme): StyleRules => {
   return {
@@ -58,10 +59,14 @@ const styles = (theme): StyleRules => {
 
 interface ISelectTable extends WithStyles<typeof styles> {
   source: {
-    host: string;
-    port: string;
-    user: string;
-    password: string;
+    plugin: {
+      properties: {
+        host: string;
+        port: string;
+        user: string;
+        password: string;
+      };
+    };
   };
 }
 
@@ -72,11 +77,13 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes }) => {
   const [activeTable, setActiveTable] = React.useState(null);
   const [selected, setSelected] = React.useState([]);
 
+  const dbInfo = objectQuery(source, 'plugin', 'properties') || {};
+
   const requestBody = {
-    host: source.host,
-    port: source.port,
-    user: source.user,
-    password: source.password,
+    host: dbInfo.host,
+    port: dbInfo.port,
+    user: dbInfo.user,
+    password: dbInfo.password,
   };
 
   React.useEffect(() => {
