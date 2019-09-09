@@ -45,7 +45,8 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
     } catch (ValidationException e) {
       throw new IllegalArgumentException(
         String.format("Failed to configure pipeline: %s",
-                      e.getFailures().isEmpty() ? e.getMessage() : e.getFailures().iterator().next().getMessage()), e);
+                      e.getFailures().isEmpty() ? e.getMessage() :
+                        e.getFailures().iterator().next().getFullMessage()), e);
     }
     addSpark(new DataStreamsSparkLauncher(spec));
   }

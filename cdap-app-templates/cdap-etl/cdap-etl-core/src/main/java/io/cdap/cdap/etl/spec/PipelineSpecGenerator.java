@@ -312,7 +312,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       collector.addFailure("Null error occurred while configuring the stage.", null)
         .withStacktrace(e.getStackTrace());
     } catch (Exception e) {
-      collector.addFailure(String.format("Error encountered while configuring the stage: '%s'.",
+      collector.addFailure(String.format("Error encountered while configuring the stage: '%s'",
                                          e.getMessage()), null);
     }
 

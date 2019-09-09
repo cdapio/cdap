@@ -73,9 +73,6 @@ public class MockFailureCollector implements FailureCollector {
     throw new ValidationException(failures);
   }
 
-  /**
-   * Returns a list of failures.
-   */
   public List<ValidationFailure> getValidationFailures() {
     return failures;
   }

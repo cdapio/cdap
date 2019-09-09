@@ -56,7 +56,7 @@ public class LoggingFailureCollector extends DefaultFailureCollector {
     List<ValidationFailure> failures = validationException.getFailures();
     LOG.error("Encountered '{}' validation failures: {}{}", failures.size(), System.lineSeparator(),
               IntStream.range(0, failures.size())
-                .mapToObj(index -> String.format("%d. '%s'", index + 1, failures.get(index).getMessage()))
+                .mapToObj(index -> String.format("%d. '%s'", index + 1, failures.get(index).getFullMessage()))
                 .collect(Collectors.joining(System.lineSeparator())));
 
     throw validationException;

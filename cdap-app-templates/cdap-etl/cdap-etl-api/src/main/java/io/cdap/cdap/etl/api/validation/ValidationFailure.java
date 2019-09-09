@@ -153,6 +153,16 @@ public class ValidationFailure {
   }
 
   /**
+   * Adds cause attributes that represents invalid input schema field failure cause.
+   *
+   * @param fieldName name of the input schema field
+   * @return validation failure with invalid input schema field cause
+   */
+  public ValidationFailure withInputSchemaField(String fieldName) {
+    return withInputSchemaField(fieldName, null);
+  }
+
+  /**
    * Adds cause attributes that represents invalid output schema field failure cause.
    *
    * @param fieldName name of the output schema field
@@ -164,6 +174,16 @@ public class ValidationFailure {
     cause = outputPort == null ? cause : cause.addAttribute(CauseAttributes.OUTPUT_PORT, outputPort);
     causes.add(cause);
     return this;
+  }
+
+  /**
+   * Adds cause attributes that represents invalid output schema field failure cause.
+   *
+   * @param fieldName name of the output schema field
+   * @return validation failure with invalid output schema field cause
+   */
+  public ValidationFailure withOutputSchemaField(String fieldName) {
+    return withOutputSchemaField(fieldName, null);
   }
 
   /**
@@ -181,6 +201,16 @@ public class ValidationFailure {
    * Returns failure message.
    */
   public String getMessage() {
+    return message;
+  }
+
+  /**
+   * Returns failure message along with corrective action.
+   */
+  public String getFullMessage() {
+    if (correctiveAction != null) {
+      return String.format("%s - %s", message, correctiveAction);
+    }
     return message;
   }
 

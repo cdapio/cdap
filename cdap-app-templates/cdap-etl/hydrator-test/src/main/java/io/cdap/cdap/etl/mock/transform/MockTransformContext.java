@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.Arguments;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.Lookup;
 import io.cdap.cdap.etl.api.LookupProvider;
 import io.cdap.cdap.etl.api.StageMetrics;
@@ -30,6 +31,7 @@ import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.mock.common.MockArguments;
 import io.cdap.cdap.etl.mock.common.MockLookupProvider;
 import io.cdap.cdap.etl.mock.common.MockStageMetrics;
+import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 
 import java.net.URL;
 import java.util.Collections;
@@ -42,14 +44,16 @@ import javax.annotation.Nullable;
  * Mock context for unit tests
  */
 public class MockTransformContext implements TransformContext {
+  private static final String MOCK_STAGE_NAME = "mockstage";
   private final PluginProperties pluginProperties;
   private final MockStageMetrics metrics;
   private final LookupProvider lookup;
   private final String stageName;
   private final Arguments arguments;
+  private final FailureCollector collector;
 
   public MockTransformContext() {
-    this("someStage");
+    this(MOCK_STAGE_NAME);
   }
 
   public MockTransformContext(String stageName) {
@@ -66,6 +70,7 @@ public class MockTransformContext implements TransformContext {
     this.metrics = new MockStageMetrics(stageName);
     this.stageName = stageName;
     this.arguments = new MockArguments(args);
+    this.collector = new MockFailureCollector(stageName);
   }
 
   @Override
@@ -223,5 +228,10 @@ public class MockTransformContext implements TransformContext {
   @Override
   public void record(List<FieldOperation> fieldOperations) {
     // no-op
+  }
+
+  @Override
+  public FailureCollector getFailureCollector() {
+    return collector;
   }
 }
