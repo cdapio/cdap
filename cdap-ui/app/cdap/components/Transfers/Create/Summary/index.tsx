@@ -25,6 +25,9 @@ const styles = (theme): StyleRules => {
   return {
     root: {
       padding: '15px 25px',
+      '& > hr': {
+        borderWidth: '3px',
+      },
     },
     headingContainer: {
       marginTop: '15px',
@@ -86,6 +89,12 @@ const SummaryView: React.SFC<ISummaryProps> = ({
   const sourceGroups = objectQuery(sourceConfig, 'configuration-groups');
   const targetGroups = objectQuery(targetConfig, 'configuration-groups');
 
+  const tables = (objectQuery(source, 'plugin', 'properties', 'tableWhiteList') || '')
+    .split(',')
+    .map((fullTable) => {
+      return fullTable.split('.')[1];
+    });
+
   return (
     <div className={classes.root}>
       <div>Review information and create {Theme.featureNames.transfers.toLowerCase()}</div>
@@ -112,7 +121,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
           <div>
             <h4 className={classes.heading}>MySQL Database</h4>
             <If condition={!disableEdit}>
-              <span onClick={setActiveStep.bind(null, 1)} className={classes.edit}>
+              <span onClick={setActiveStep.bind(null, 2)} className={classes.edit}>
                 Edit
               </span>
             </If>
@@ -131,7 +140,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
                     </thead>
                     <tbody>
                       {group.properties.map((property) => {
-                        if (property.name === 'password') {
+                        if (['hidden', 'password'].indexOf(property['widget-type']) !== -1) {
                           return null;
                         }
                         const propertyValue =
@@ -158,7 +167,7 @@ const SummaryView: React.SFC<ISummaryProps> = ({
           <div>
             <h4 className={classes.heading}>Google BigQuery</h4>
             <If condition={!disableEdit}>
-              <span onClick={setActiveStep.bind(null, 3)} className={classes.edit}>
+              <span onClick={setActiveStep.bind(null, 5)} className={classes.edit}>
                 Edit
               </span>
             </If>
@@ -199,6 +208,30 @@ const SummaryView: React.SFC<ISummaryProps> = ({
             })}
           </div>
         </div>
+      </div>
+
+      <hr />
+
+      <div>
+        <div>{tables.length} tables to be duplicated</div>
+        <br />
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Table name</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {tables.map((table) => {
+              return (
+                <tr key={table}>
+                  <td>{table}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

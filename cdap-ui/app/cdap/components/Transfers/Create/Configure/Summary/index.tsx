@@ -19,6 +19,10 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
 import Summary from '../../Summary';
 import StepButtons from '../../StepButtons';
+import { createReplicator } from 'components/Transfers/utilities';
+import If from 'components/If';
+import { Redirect } from 'react-router';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 const styles = (): StyleRules => {
   return {
@@ -35,23 +39,45 @@ const styles = (): StyleRules => {
 
 interface IConfigureSummary extends WithStyles<typeof styles> {
   setStage: (stage) => void;
+  getRequestBody: () => any;
+  id: string;
 }
 
-const ConfigureSummaryView: React.SFC<IConfigureSummary> = ({ classes }) => {
+const ConfigureSummaryView: React.SFC<IConfigureSummary> = ({ classes, getRequestBody, id }) => {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [redirect, setRedirect] = React.useState(false);
+
   function onComplete() {
+    setLoading(true);
+    setError(null);
+
     // tslint:disable-next-line:no-console
     console.log('complete!');
 
-    // Need to create instance and create the CDC worker app
+    createReplicator(id, getRequestBody()).subscribe(
+      () => {
+        setRedirect(true);
+      },
+      (err) => {
+        setError(JSON.stringify(err));
+        setLoading(false);
+      }
+    );
   }
 
   return (
     <div className={classes.root}>
       <Summary />
       <br />
+      <If condition={error}>
+        <div className="text-danger">{error}</div>
+      </If>
       <div className={classes.btnContainer}>
-        <StepButtons onComplete={onComplete} />
+        <StepButtons onComplete={onComplete} loading={loading} />
       </div>
+
+      {redirect ? <Redirect to={`/ns/${getCurrentNamespace()}/transfers/details/${id}`} /> : null}
     </div>
   );
 };

@@ -127,7 +127,7 @@ interface IProps extends WithStyles<typeof styles> {
 
 const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
   const [activeTab, setActiveTab] = React.useState(0);
-  const [activeTable, setActiveTable] = React.useState('asdfasdfasdf');
+  const [activeTable, setActiveTable] = React.useState(null);
 
   function handleTabSwitch(tab) {
     setActiveTab(tab);

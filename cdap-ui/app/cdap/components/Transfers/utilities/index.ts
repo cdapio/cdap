@@ -20,6 +20,8 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Observable } from 'rxjs/Observable';
 import { MyPipelineApi } from 'api/pipeline';
 import { MyDeltaApi } from 'api/delta';
+import set from 'lodash/set';
+import { Stages } from '../Create/context';
 
 // TODO: modify constants to the correct one once backend app is ready
 const programType = 'workers';
@@ -32,7 +34,7 @@ const scope = 'SYSTEM';
 export function start(transfer, successCb, errorCb) {
   const params = {
     namespace: getCurrentNamespace(),
-    appId: transfer.name,
+    appId: transfer,
     programType,
     programId,
     action: 'start',
@@ -44,7 +46,7 @@ export function start(transfer, successCb, errorCb) {
 export function stop(transfer, successCb, errorCb) {
   const params = {
     namespace: getCurrentNamespace(),
-    appId: transfer.name,
+    appId: transfer,
     programType,
     programId,
     action: 'stop',
@@ -148,6 +150,25 @@ export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginT
   });
 
   return observable$;
+}
+
+export function createReplicator(id, requestBody) {
+  const params = {
+    context: getCurrentNamespace(),
+    id,
+  };
+
+  const body = {
+    ...requestBody,
+  };
+
+  set(body, 'properties.stage', Stages.PUBLISHED);
+
+  const { description, properties = {} } = requestBody;
+
+  return MyDeltaApi.update(params, body).combineLatest(
+    createTransfer(`CDC-${id}`, description, properties.source, properties.target)
+  );
 }
 
 export function createTransfer(name, description, source, target) {

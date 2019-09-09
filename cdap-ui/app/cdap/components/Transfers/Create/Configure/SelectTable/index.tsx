@@ -23,6 +23,7 @@ import { MyDeltaApi } from 'api/delta';
 import If from 'components/If';
 import { Checkbox } from '@material-ui/core';
 import { objectQuery } from 'services/helpers';
+import intersection from 'lodash/intersection';
 
 const styles = (theme): StyleRules => {
   return {
@@ -65,12 +66,15 @@ interface ISelectTable extends WithStyles<typeof styles> {
         port: string;
         user: string;
         password: string;
+        databaseWhiteList: string;
+        tableWhiteList?: string;
       };
     };
   };
+  updateTable: (tables) => void;
 }
 
-const SelectTableView: React.SFC<ISelectTable> = ({ source, classes }) => {
+const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable }) => {
   const [tables, setTables] = React.useState([]);
   const [error, setError] = React.useState(null);
   const [data, setData] = React.useState(null);
@@ -86,19 +90,37 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes }) => {
     password: dbInfo.password,
   };
 
+  // React.useEffect(() => {
+  //   const tableWhiteList = (objectQuery(source, 'plugin', 'properties', 'tableWhiteList') || '')
+  //     .split(',')
+  //     .map((fullTable) => {
+  //       return fullTable.split('.')[1];
+  //     });
+
+  //   setSelected(tableWhiteList);
+  // }, []);
+
   React.useEffect(() => {
     const params = {
       context: getCurrentNamespace(),
-      database: 'demo',
+      database: dbInfo.databaseWhiteList,
     };
 
-    MyDeltaApi.getTables(params, requestBody).subscribe(setTables, setError);
+    MyDeltaApi.getTables(params, requestBody).subscribe((res) => {
+      const tableWhiteList = (objectQuery(source, 'plugin', 'properties', 'tableWhiteList') || '')
+        .split(',')
+        .map((fullTable) => {
+          return fullTable.split('.')[1];
+        });
+      setTables(res);
+      setSelected(intersection(res, tableWhiteList));
+    }, setError);
   }, []);
 
   function fetchData(table) {
     const params = {
       context: getCurrentNamespace(),
-      database: 'demo',
+      database: dbInfo.databaseWhiteList,
       table,
     };
 
@@ -176,6 +198,17 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes }) => {
     }
   }
 
+  function onNext() {
+    const tablesList = selected
+      .filter((table) => table)
+      .map((table) => {
+        return `${dbInfo.databaseWhiteList}.${table}`;
+      })
+      .join(',');
+
+    updateTable(tablesList);
+  }
+
   return (
     <div>
       <If condition={error}>
@@ -233,7 +266,7 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes }) => {
         {renderData()}
       </div>
 
-      <StepButtons />
+      <StepButtons onNext={onNext} />
     </div>
   );
 };

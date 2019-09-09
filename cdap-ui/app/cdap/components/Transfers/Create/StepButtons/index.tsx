@@ -35,6 +35,7 @@ interface IStepButtonsProps extends WithStyles<typeof styles> {
   activeStep: number;
   loading: boolean;
   hideNext?: boolean;
+  nextDisabled?: boolean;
   onNext?: () => void;
   next: () => void;
   previous: () => void;
@@ -50,6 +51,7 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
   onComplete,
   loading,
   classes,
+  nextDisabled,
 }) => {
   function handleNextClick() {
     if (typeof onNext === 'function') {
@@ -67,7 +69,12 @@ const StepButtonsView: React.SFC<IStepButtonsProps> = ({
         </Button>
       </If>
       <If condition={typeof onComplete !== 'function' && hideNext !== true}>
-        <Button variant="contained" color="primary" onClick={handleNextClick}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleNextClick}
+          disabled={nextDisabled}
+        >
           Next
         </Button>
       </If>

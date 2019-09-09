@@ -18,9 +18,10 @@ import * as React from 'react';
 import StepButtons from 'components/Transfers/Create/StepButtons';
 import { fetchPluginInfo } from 'components/Transfers/utilities';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import ConfigurationForm from 'components/ConfigurationForm';
 import { transfersCreateConnect } from 'components/Transfers/Create/context';
 import ConfigurationGroup from 'components/ConfigurationGroup';
+import { objectQuery } from 'services/helpers';
+import intersection from 'lodash/intersection';
 
 interface IPluginConfigurationView {
   artifactName: string;
@@ -43,12 +44,20 @@ const PluginConfigurationView: React.SFC<IPluginConfigurationView> = ({
   const [pluginInfo, setPluginInfo] = React.useState({ artifact: {}, properties: {} });
   const [widgetJson, setWidgetJson] = React.useState({});
   const [values, setValues] = React.useState(initValues);
+  const [required, setRequired] = React.useState([]);
 
   function fetchPluginInformation() {
     fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType).subscribe((res) => {
       setPluginInfo(res.pluginInfo);
       setWidgetJson(res.widgetInfo);
       setLoading(false);
+
+      const properties = objectQuery(res, 'pluginInfo', 'properties') || {};
+      const requiredProperties = Object.keys(properties).filter((propertyName) => {
+        return properties[propertyName].required;
+      });
+
+      setRequired(requiredProperties);
     });
   }
 
@@ -88,7 +97,10 @@ const PluginConfigurationView: React.SFC<IPluginConfigurationView> = ({
         onChange={setValues}
       />
 
-      <StepButtons onNext={onNext.bind(null, generateStageConfig(), widgetJson)} />
+      <StepButtons
+        onNext={onNext.bind(null, generateStageConfig(), widgetJson)}
+        nextDisabled={intersection(required, Object.keys(values)).length !== required.length}
+      />
     </div>
   );
 };

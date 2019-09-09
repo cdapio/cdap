@@ -24,6 +24,9 @@ import Description from '@material-ui/icons/Description';
 import Delete from '@material-ui/icons/Delete';
 import IconSVG from 'components/IconSVG';
 import If from 'components/If';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import moment from 'moment';
+import { start, stop } from 'components/Transfers/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -97,11 +100,22 @@ interface ITopPanel extends WithStyles<typeof styles> {
   name: string;
   status: string;
   description: string;
+  id: string;
+  fetchStatus: () => void;
 }
 
-const TopPanelView: React.SFC<ITopPanel> = ({ classes, name, status, description }) => {
-  const start = <PlayArrow className={`${classes.btnIcon} ${classes.start}`} />;
-  const stop = <Stop className={`${classes.btnIcon} ${classes.stop}`} />;
+const TopPanelView: React.SFC<ITopPanel> = ({
+  classes,
+  name,
+  status,
+  description,
+  id,
+  fetchStatus,
+}) => {
+  const [btnLoading, setBtnLoading] = React.useState(false);
+
+  const startBtn = <PlayArrow className={`${classes.btnIcon} ${classes.start}`} />;
+  const stopBtn = <Stop className={`${classes.btnIcon} ${classes.stop}`} />;
   const loading = (
     <span className={`fa fa-spin ${classes.loading} ${classes.btnIcon}`}>
       <IconSVG name="icon-spinner" />
@@ -112,8 +126,34 @@ const TopPanelView: React.SFC<ITopPanel> = ({ classes, name, status, description
   let btnText = 'Start';
   if (status === 'RUNNING') {
     btnText = 'Stop';
-  } else if (disabled) {
+  } else if (disabled || btnLoading) {
     btnText = 'Loading';
+  }
+
+  const appName = `CDC-${id}`;
+
+  const startTime = moment()
+    .subtract(7, 'days')
+    .format('X');
+  let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${appName}/workers/DeltaWorker/logs`;
+
+  logUrl = `${logUrl}?start=${startTime}`;
+  logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
+
+  React.useEffect(
+    () => {
+      setBtnLoading(false);
+    },
+    [status]
+  );
+
+  function handleClick() {
+    setBtnLoading(true);
+    if (status !== 'RUNNING') {
+      start(appName, fetchStatus, fetchStatus);
+    } else {
+      stop(appName, fetchStatus, fetchStatus);
+    }
   }
 
   return (
@@ -125,14 +165,18 @@ const TopPanelView: React.SFC<ITopPanel> = ({ classes, name, status, description
         <StatusIndicator status={status} />
       </div>
       <div className="text-center">
-        <button className={`btn btn-secondary ${classes.button}`} disabled={disabled}>
-          <If condition={status === 'STOPPED'}>{start}</If>
+        <button
+          className={`btn btn-secondary ${classes.button}`}
+          disabled={disabled || btnLoading}
+          onClick={handleClick}
+        >
+          <If condition={status === 'STOPPED'}>{startBtn}</If>
           <If condition={disabled}>{loading}</If>
-          <If condition={status === 'RUNNING'}>{stop}</If>
+          <If condition={status === 'RUNNING'}>{stopBtn}</If>
           <div className={classes.btnText}>{btnText}</div>
         </button>
 
-        <a href="" className={`${classes.logs} btn`}>
+        <a href={logUrl} target="_tab" className={`${classes.logs} btn`}>
           <Description className={classes.logsBtn} />
           <div className={classes.logsText}>Logs</div>
         </a>

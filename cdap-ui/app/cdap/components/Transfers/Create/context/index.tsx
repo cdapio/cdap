@@ -40,6 +40,7 @@ export const defaultContext = {
   setActiveStep: (step) => {},
   setStage: (stage) => {},
   getRequestBody: (activeStep): any => {},
+  updateTable: (tables) => {},
   // tslint:enable:no-empty
 };
 

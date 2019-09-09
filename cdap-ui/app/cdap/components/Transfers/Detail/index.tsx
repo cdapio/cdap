@@ -26,6 +26,7 @@ import TopPanel from 'components/Transfers/Detail/TopPanel';
 import Charts from './Charts';
 import Statistics from './Statistics';
 import PendingEvents from './PendingEvents';
+import { MyProgramApi } from 'api/program';
 
 const styles = (): StyleRules => {
   return {
@@ -53,6 +54,8 @@ interface IDetailState {
   sourceConfig: any;
   target: any;
   targetConfig: any;
+  status: string;
+  fetchStatus: () => void;
 }
 
 class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
@@ -72,8 +75,43 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
         description: res.description,
         loading: false,
       });
+
+      this.pollStatus();
     });
   }
+
+  public componentWillUnmount() {
+    if (this.status$) {
+      this.status$.unsubscribe();
+    }
+  }
+
+  private getProgramParams = () => {
+    return {
+      namespace: getCurrentNamespace(),
+      appId: `CDC-${this.state.id}`,
+      programType: 'workers',
+      programId: 'DeltaWorker',
+    };
+  };
+
+  private status$ = null;
+
+  private pollStatus = () => {
+    this.status$ = MyProgramApi.pollStatus(this.getProgramParams()).subscribe((res) => {
+      this.setState({
+        status: res.status,
+      });
+    });
+  };
+
+  public fetchStatus = () => {
+    MyProgramApi.status(this.getProgramParams()).subscribe((res) => {
+      this.setState({
+        status: res.status,
+      });
+    });
+  };
 
   public state = {
     name: '',
@@ -86,6 +124,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
     targetConfig: {},
     loading: true,
     status: 'STOPPED',
+    fetchStatus: this.fetchStatus,
   };
 
   public render() {

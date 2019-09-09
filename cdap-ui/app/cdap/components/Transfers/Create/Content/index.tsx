@@ -33,6 +33,7 @@ import { MyDeltaApi } from 'api/delta';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import SelectTable from '../Configure/SelectTable';
 import ConfigureSummary from '../Configure/Summary';
+import set from 'lodash/set';
 
 const styles = (): StyleRules => {
   return {
@@ -209,6 +210,16 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
     );
   };
 
+  public updateTable = (tables) => {
+    const newSource = {
+      ...this.state.source,
+    };
+
+    set(newSource, 'plugin.properties.tableWhiteList', tables);
+
+    this.setState({ source: newSource });
+  };
+
   public state = {
     ...defaultContext,
     next: this.next,
@@ -219,6 +230,7 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
     setActiveStep: this.setActiveStep,
     setStage: this.setStage,
     getRequestBody: this.getRequestBody,
+    updateTable: this.updateTable,
   };
 
   public render() {

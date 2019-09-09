@@ -36,9 +36,9 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList }) => {
     .subtract(7, 'days')
     .format('X');
 
-  let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${
-    transfer.name
-  }/workers/DeltaWorker/logs`;
+  const appName = `CDC-${transfer.id}`;
+
+  let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${appName}/workers/DeltaWorker/logs`;
 
   logUrl = `${logUrl}?start=${startTime}`;
   logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
@@ -46,11 +46,11 @@ const TableRow: React.SFC<ITableRowProps> = ({ transfer, getList }) => {
   const actions = [
     {
       label: T.translate(`${PREFIX}.start`),
-      actionFn: start.bind(null, transfer, getList),
+      actionFn: start.bind(null, appName, getList),
     },
     {
       label: T.translate(`${PREFIX}.stop`),
-      actionFn: stop.bind(null, transfer, getList),
+      actionFn: stop.bind(null, appName, getList),
     },
     {
       label: 'separator',
