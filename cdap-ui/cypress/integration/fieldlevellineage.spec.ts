@@ -51,31 +51,29 @@ describe('Generating and navigating field level lineage for datasets', () => {
     });
     // should see the correct fields for the selected dataset
     cy.get('[data-cy="target-fields"]').within(() => {
-      cy.get('.field-row').should(($fields) => {
-        expect($fields).to.have.length(2);
-        // should see the correct field for the impact dataset, assuming no previous lineage exists
+      cy.get('.grid-row').should(($fields) => {
+        expect($fields).to.have.length(1);
+        // should see only 'body' field for the impact dataset, assuming no previous lineage exists
         expect($fields).to.contain('body');
       });
     });
   });
   it('Should show operations for target field', () => {
     // focus on a field with outgoing operations
-    cy.get('[data-cy="target-fields"] .field-row').within(() => {
-      cy.contains('Incoming operations').click();
+    cy.get('[data-cy="target-fields"]').within(() => {
+      cy.contains('body').click();
+      cy.get('[data-cy="fll-view-dropdown"]').click();
     });
+    cy.get('[data-cy="fll-view-incoming"]').click();
     cy.get('.operations-container').should('exist');
     cy.get('.modal-title .close-section').click();
   });
   it('Should allow user to see field level lineage for a custom date range', () => {
     // click on date picker dropdown and choose custom date range
-    cy.get('.time-picker-dropdown')
-      .find('.dropdown-toggle')
-      .click();
-    cy.get('.dropdown-menu')
-      .find('[data-cy="CUSTOM"]')
-      .click();
-    cy.get('.time-range-selector').should('exist');
-    cy.get('.time-range-selector').within(() => {
+    cy.get('[data-cy="time-picker-dropdown"]').click();
+    cy.get('[data-cy="CUSTOM"]').click();
+    cy.get('[data-cy="time-range-selector"]').should('exist');
+    cy.get('[data-cy="time-range-selector"]').within(() => {
       cy.contains('Start Time').click();
     });
     cy.get('.react-calendar').within(() => {
@@ -93,7 +91,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
         .click();
     });
 
-    cy.get('.time-range-selector').within(() => {
+    cy.get('[data-cy="time-range-selector"]').within(() => {
       cy.contains('End Time').click();
     });
     // end of range: two years and zero months for now, first available day
@@ -112,9 +110,12 @@ describe('Generating and navigating field level lineage for datasets', () => {
       .contains('Done')
       .click();
 
-    // Should see "body" field, which should be disabled since there is no lineage for the date range
-    cy.get('.field-row.disabled').should(($fields) => {
-      expect($fields).to.have.length(1);
-    });
+    // Should see no fields with operations since there is no lineage for the date range
+    cy.get('[data-cy="target-fields"] .grid-row')
+      .first()
+      .click();
+    cy.get('[data-cy="fll-view-dropdown"]').click();
+    cy.get('[data-cy="fll-view-incoming"]').should('have.class', 'Mui-disabled');
+    cy.get('[data-cy="fll-view-outgoing"]').should('have.class', 'Mui-disabled');
   });
 });
