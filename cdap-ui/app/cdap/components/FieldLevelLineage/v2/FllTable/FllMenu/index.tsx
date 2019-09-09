@@ -75,7 +75,7 @@ function FllMenu({ classes }) {
   const hasOutgoingOps = Object.keys(activeImpactSets).length !== 0;
   return (
     <span className={classes.root}>
-      <Button onClick={handleViewClick} className={classes.targetView}>
+      <Button onClick={handleViewClick} className={classes.targetView} data-cy="fll-view-dropdown">
         {T.translate(`${PREFIX}.FllField.viewDropdown`)}
         <KeyboardArrowDownIcon />
       </Button>
@@ -87,20 +87,23 @@ function FllMenu({ classes }) {
         getContentAnchorEl={null}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        data-cy="fll-field-menu"
       >
-        <MenuItem onClick={handleViewCauseImpact}>
+        <MenuItem onClick={handleViewCauseImpact} data-cy="fll-cause-impact">
           {T.translate(`${PREFIX}.FllMenu.causeImpact`)}
         </MenuItem>
         <Divider variant="middle" />
         <MenuItem
           onClick={hasIncomingOps ? handleShowOperations.bind(this, 'incoming') : undefined}
           disabled={!hasIncomingOps}
+          data-cy="fll-view-incoming"
         >
           {T.translate(`${PREFIX}.FllMenu.viewIncoming`)}
         </MenuItem>
         <MenuItem
           onClick={hasOutgoingOps ? handleShowOperations.bind(this, 'outgoing') : undefined}
           disabled={!hasOutgoingOps}
+          data-cy="fll-view-outgoing"
         >
           {T.translate(`${PREFIX}.FllMenu.viewOutgoing`)}
         </MenuItem>
