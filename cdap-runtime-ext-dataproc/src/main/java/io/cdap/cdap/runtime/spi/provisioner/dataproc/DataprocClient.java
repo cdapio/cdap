@@ -236,6 +236,13 @@ final class DataprocClient implements AutoCloseable {
       throw new IllegalArgumentException(String.format("Unable to find any networks in project '%s'. "
                                                          + "Please create a network in the project.", project));
     }
+
+    for (Network network: networks) {
+      if (network.getName().equals("default")){
+        return network.getName();
+      }
+    }
+
     return networks.iterator().next().getName();
   }
 
