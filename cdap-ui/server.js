@@ -64,6 +64,7 @@ function getFullURL(host) {
 }
 async function setAllowedOrigin() {
   const nodejsserver = cdapConfig['dashboard.bind.address'];
+  const whitelistedDomain = cdapConfig['dashboard.domain.name'];
   allowedOrigin = [getFullURL(nodejsserver)];
   try {
     hostname = await getHostName();
@@ -76,6 +77,9 @@ async function setAllowedOrigin() {
   }
   if (hostIP) {
     allowedOrigin.push(getFullURL(hostIP));
+  }
+  if (whitelistedDomain) {
+    allowedOrigin.push(getFullURL(whitelistedDomain));
   }
   if (['localhost', '127.0.0.1', '0.0.0.0'].indexOf(nodejsserver) !== -1) {
     allowedOrigin.push(getFullURL('127.0.0.1'), getFullURL('0.0.0.0'), getFullURL('localhost'));
