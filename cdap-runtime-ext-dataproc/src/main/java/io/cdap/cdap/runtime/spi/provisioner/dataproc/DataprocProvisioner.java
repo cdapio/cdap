@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -185,7 +186,13 @@ public class DataprocProvisioner implements Provisioner {
 
       LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with system labels {}",
                clusterName, conf.getProjectId(), conf.getRegion(), systemLabels);
-      client.createCluster(clusterName, imageVersion, systemLabels);
+      ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion, systemLabels);
+      int numWarnings = createOperationMeta.getWarningsCount();
+      if (numWarnings > 0) {
+        LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
+                 numWarnings, numWarnings > 1 ? "s" : "",
+                 String.join("\n", createOperationMeta.getWarningsList()));
+      }
       return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
     }
   }

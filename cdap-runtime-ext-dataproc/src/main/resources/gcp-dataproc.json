@@ -188,7 +188,7 @@
           "name": "masterDiskGB",
           "description": "The disk size in GB to allocate for a master node",
           "widget-attributes": {
-            "default": 500,
+            "default": 1000,
             "size": "small"
           }
         }
@@ -242,7 +242,7 @@
           "name": "workerDiskGB",
           "description": "The disk size in GB to allocate for a worker node",
           "widget-attributes": {
-            "default": 500,
+            "default": 1000,
             "size": "small"
           }
         }
