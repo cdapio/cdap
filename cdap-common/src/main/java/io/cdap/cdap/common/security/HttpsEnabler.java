@@ -174,25 +174,34 @@ public final class HttpsEnabler {
    * @throws RuntimeException if failed to enable HTTPS
    */
   public <T extends NettyHttpService.Builder> T enable(T builder) {
+    builder.enableSSL(createSSLHandlerFactory());
+    return builder;
+  }
+
+  /**
+   * Returns a {@link SSLHandlerFactory} based on the configuration in this class.
+   *
+   * @throws IllegalArgumentException if no keystore is configured
+   * @throws RuntimeException if failed to create {@link SSLHandlerFactory}.
+   */
+  public SSLHandlerFactory createSSLHandlerFactory() {
+    KeyManagerFactory kmf = keyManagerFactory;
+    if (kmf == null) {
+      throw new IllegalArgumentException("Missing keystore to create SslContext for netty http server.");
+    }
+
+    // Initialize the SslContext to work with our key managers.
+    SslContextBuilder contextBuilder = SslContextBuilder.forServer(kmf);
+    TrustManagerFactory tmf = this.trustManagerFactory;
+    boolean hasTrustManager = tmf != null && tmf != InsecureTrustManagerFactory.INSTANCE;
+    if (hasTrustManager) {
+      contextBuilder.trustManager(tmf);
+    }
+
     try {
-      KeyManagerFactory kmf = keyManagerFactory;
-      if (kmf == null) {
-        throw new IllegalArgumentException("Missing keystore to enable HTTPS for NettyHttpService");
-      }
-
-      // Initialize the SslContext to work with our key managers.
-      SslContextBuilder contextBuilder = SslContextBuilder.forServer(kmf);
-      TrustManagerFactory tmf = this.trustManagerFactory;
-      boolean hasTrustManager = tmf != null && tmf != InsecureTrustManagerFactory.INSTANCE;
-      if (hasTrustManager) {
-        contextBuilder = contextBuilder.trustManager(tmf);
-      }
-
-      builder.enableSSL(new CustomSSLHandlerFactory(contextBuilder.build(), hasTrustManager));
-
-      return builder;
+      return new CustomSSLHandlerFactory(contextBuilder.build(), hasTrustManager);
     } catch (SSLException e) {
-      throw new RuntimeException("Failed to enable HTTPS for NettyHttpService", e);
+      throw new RuntimeException("Failed to create SSLHandlerFactory.", e);
     }
   }
 

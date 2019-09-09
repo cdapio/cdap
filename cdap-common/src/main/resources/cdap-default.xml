@@ -3400,6 +3400,15 @@
     </description>
   </property>
 
+  <property>
+    <name>router.ssl.cert.path</name>
+    <value></value>
+    <description>
+      File path to certificate and private key file in PEM format to use for CDAP Router
+      when ssl.external.enabled is set to true.
+    </description>
+  </property>
+
   <!-- Security Configuration -->
 
   <property>

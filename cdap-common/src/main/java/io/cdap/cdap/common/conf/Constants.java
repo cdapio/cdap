@@ -1071,6 +1071,11 @@ public final class Constants {
       public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
       /** Paths to exclude from authentication, given by a single regular expression */
       public static final String BYPASS_AUTHENTICATION_REGEX = "router.bypass.auth.regex";
+
+      /** File path to certificate file in PEM format. */
+      public static final String SSL_CERT_PATH = "router.ssl.cert.path";
+      /** Password for the SSL certificate. */
+      public static final String SSL_CERT_PASSWORD = "router.ssl.cert.password";
     }
 
     /**

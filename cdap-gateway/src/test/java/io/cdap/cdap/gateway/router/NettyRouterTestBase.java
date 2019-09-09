@@ -81,6 +81,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
@@ -111,16 +112,16 @@ public abstract class NettyRouterTestBase {
   static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
 
-  private static final String HOSTNAME = "127.0.0.1";
+  private static final String HOSTNAME = InetAddress.getLoopbackAddress().getHostAddress();
   private static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
   private static final int CHUNK_SIZE = 1024 * 1024;      // NOTE: MAX_UPLOAD_BYTES % CHUNK_SIZE == 0
 
   private final DiscoveryService discoveryService = new InMemoryDiscoveryService();
-  private final RouterService routerService = createRouterService(HOSTNAME, discoveryService);
   private final ServerService defaultServer1 = new ServerService(HOSTNAME, discoveryService, APP_FABRIC_SERVICE);
   private final ServerService defaultServer2 = new ServerService(HOSTNAME, discoveryService, APP_FABRIC_SERVICE);
   private final List<ServerService> allServers = Lists.newArrayList(defaultServer1, defaultServer2);
+  private RouterService routerService;
 
   protected abstract RouterService createRouterService(String hostname, DiscoveryService discoveryService);
   protected abstract String getProtocol();
@@ -135,6 +136,7 @@ public abstract class NettyRouterTestBase {
 
   @Before
   public void startUp() throws Exception {
+    routerService = createRouterService(HOSTNAME, discoveryService);
     List<ListenableFuture<Service.State>> futures = new ArrayList<>();
     futures.add(routerService.start());
     for (ServerService server : allServers) {

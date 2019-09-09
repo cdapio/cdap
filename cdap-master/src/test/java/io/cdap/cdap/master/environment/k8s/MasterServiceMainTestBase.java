@@ -75,6 +75,14 @@ public class MasterServiceMainTestBase {
     cConf.set(Constants.Security.SSL.INTERNAL_CERT_PATH, pemFile.getAbsolutePath());
     sConf.set(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, keyPass);
 
+    // Generate a self-signed cert for router SSL
+    keyStore = KeyStores.generatedCertKeyStore(1, keyPass);
+    pemFile = KeyStoresTest.writePEMFile(TEMP_FOLDER.newFile(), keyStore,
+                                         keyStore.aliases().nextElement(), keyPass);
+    cConf.setBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, true);
+    cConf.set(Constants.Security.Router.SSL_CERT_PATH, pemFile.getAbsolutePath());
+    sConf.set(Constants.Security.Router.SSL_CERT_PASSWORD, keyPass);
+
     // Set all bind address to localhost
     String localhost = InetAddress.getLoopbackAddress().getHostName();
     StreamSupport.stream(CConfiguration.create().spliterator(), false)
@@ -84,6 +92,7 @@ public class MasterServiceMainTestBase {
 
     // Set router to bind to random port
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
+    cConf.setInt(Constants.Router.ROUTER_SSL_PORT, 0);
 
     // Start the master main services
     serviceManagers.put(RouterServiceMain.class, runMain(cConf, sConf, RouterServiceMain.class));
@@ -107,7 +116,7 @@ public class MasterServiceMainTestBase {
   static URI getRouterBaseURI() {
     NettyRouter router = getServiceMainInstance(RouterServiceMain.class).getInjector().getInstance(NettyRouter.class);
     InetSocketAddress addr = router.getBoundAddress().orElseThrow(IllegalStateException::new);
-    return URI.create(String.format("http://%s:%d/", addr.getHostName(), addr.getPort()));
+    return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
   }
 
   /**
