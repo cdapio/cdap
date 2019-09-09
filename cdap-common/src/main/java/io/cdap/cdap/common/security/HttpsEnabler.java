@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.security;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -62,10 +63,10 @@ public final class HttpsEnabler {
   public synchronized HttpsEnabler configureKeyStore(CConfiguration cConf, SConfiguration sConf) {
     String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
 
-    String password = path == null
+    String password = Strings.isNullOrEmpty(path)
       ? KeyStores.generateRandomPassword()
       : sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, "");
-    KeyStore keyStore = path == null
+    KeyStore keyStore = Strings.isNullOrEmpty(path)
       ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
       : KeyStores.createKeyStore(Paths.get(path), password);
 
@@ -83,7 +84,7 @@ public final class HttpsEnabler {
    */
   public synchronized HttpsEnabler configureTrustStore(CConfiguration cConf, SConfiguration sConf) {
     String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
-    if (path == null) {
+    if (Strings.isNullOrEmpty(path)) {
       return this;
     }
 

@@ -3727,6 +3727,14 @@
     </description>
   </property>
 
+  <property>
+    <name>ssl.internal.cert.path</name>
+    <value></value>
+    <description>
+      File path to certificate and private key file in PEM format to use when ssl.internal.enabled is set to true.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>
