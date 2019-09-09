@@ -173,19 +173,21 @@ public class DataprocProvisioner implements Provisioner {
         return existing.get();
       }
 
-      String imageVersion;
-      switch (context.getSparkCompat()) {
-        case SPARK1_2_10:
-          imageVersion = "1.0";
-          break;
-        case SPARK2_2_11:
-        default:
-          imageVersion = "1.2";
-          break;
+      String imageVersion = conf.getImageVersion();
+      if (imageVersion == null) {
+        switch (context.getSparkCompat()) {
+          case SPARK1_2_10:
+            imageVersion = "1.0";
+            break;
+          case SPARK2_2_11:
+          default:
+            imageVersion = "1.2";
+            break;
+        }
       }
 
-      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with system labels {}",
-               clusterName, conf.getProjectId(), conf.getRegion(), systemLabels);
+      LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with system labels {}",
+               clusterName, conf.getProjectId(), conf.getRegion(), imageVersion, systemLabels);
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion, systemLabels);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
