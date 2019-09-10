@@ -74,9 +74,9 @@ class HydratorPlusPlusTopPanelCtrl {
           ALLOWED_TAGS: [],
         },
         dom_sanitizer: window['DOMPurify'].sanitize,
-        info: 'cannot contain any xml tags.',
+        info: 'cannot contain any xml tags, space required before and after logical operator. like x < y.',
         validate: function(val) {
-          const clean = this.dom_sanitizer(val, this.allowed);
+          const clean = _.unescape(this.dom_sanitizer(val, this.allowed));
           return clean === val ? true : false;
         }
       },
@@ -272,7 +272,7 @@ class HydratorPlusPlusTopPanelCtrl {
     }
 
     const isValid = this.TEMPLATES[config].validate(dirty);
-    const error = isValid ? '' : 'Invalid Input, see input instructions.';
+    const error = isValid ? '' : 'Invalid input, see instructions.';
     return error;
   }
   isSomeInputError() {

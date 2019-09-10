@@ -49,7 +49,7 @@ class SaveFeatureModal extends React.Component {
     const isValid = types['NAME'].validate(e.target.value);
     let errorMsg = '';
     if (e.target.value && !isValid) {
-      errorMsg = 'Invalid Input, cannot contain any xml tag.';
+      errorMsg = types['NAME'].getErrorMsg();
     }
     if (!e.target.value) {
       errorMsg = 'Pipeline Name is required.';

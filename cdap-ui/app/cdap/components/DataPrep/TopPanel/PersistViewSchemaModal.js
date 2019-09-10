@@ -155,7 +155,7 @@ export default class PersistViewSchemaModal extends Component {
     const isValid = types[this.state.inputTemplate].validate(e.target.value);
     let errorMsg = '';
     if (e.target.value && !isValid) {
-      errorMsg = 'Invalid Input, see help.';
+      errorMsg = types[this.state.inputTemplate].getErrorMsg();
     }
     if (!e.target.value) {
       errorMsg = 'Dataset Name is required.';

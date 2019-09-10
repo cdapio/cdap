@@ -361,8 +361,7 @@ class HydratorPlusPlusHydratorService {
     var allowed = {
       ALLOWED_TAGS: [],
     };
-
-    const clean = window['DOMPurify'].sanitize(dirty, allowed);
+    const clean = _.unescape(window['DOMPurify'].sanitize(dirty, allowed));
     return clean === dirty ? true : false;
   }
 

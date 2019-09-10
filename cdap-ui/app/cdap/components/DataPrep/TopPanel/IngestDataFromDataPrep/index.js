@@ -162,7 +162,7 @@ export default class IngestDataFromDataPrep extends Component {
     const isValid = types[this.state.inputTemplate].validate(e.target.value);
     let errorMsg = '';
     if (e.target.value && !isValid) {
-      errorMsg = 'Invalid Input, see help.';
+      errorMsg = types[this.state.inputTemplate].getErrorMsg();
     }
     if (!e.target.value) {
       errorMsg = 'Dataset Name is required.';
@@ -741,7 +741,7 @@ export default class IngestDataFromDataPrep extends Component {
               <ValidatedInput
                 type="text"
                 label="name"
-                inputInfo={ T.translate(`${PREFIX}.Form.datasetTooltip`)+ ',\n and this field cannot contain any xml tags.'}
+                inputInfo={ T.translate(`${PREFIX}.Form.datasetTooltip`)+ ',\n'+types[this.state.inputTemplate].getInfo()}
                 validationError={this.state.inputError}
                 value={this.state.datasetName}
                 onChange={this.handleDatasetNameChange}

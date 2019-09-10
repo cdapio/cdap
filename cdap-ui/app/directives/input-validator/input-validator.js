@@ -26,15 +26,16 @@ function InputValiadtorController($scope) {
 
 
   vm.getInputInfoMessage = () => {
+    var msg = 'cannot contain any xml tags, space required before and after logical operator. like x < y.';
     if(vm.tooltip && vm.tooltip !== undefined) {
-      return vm.tooltip + '\n Cannot  contain any xml tags.';
+      return vm.tooltip + '\n'+msg;
     } else {
-      return 'Cannot  contain any xml tags.';
+      return msg;
     }
   };
 
   vm.getErrorMessage = () => {
-    return 'Invalid Input, see help.';
+    return 'Invalid input, see instructions.';
   };
 
   vm.onValueChange = () => {
@@ -49,23 +50,11 @@ function InputValiadtorController($scope) {
     }
   });
 
-
-  // vm.onValueChange = () => {
-  //   if (vm.isValidValue(vm.value)) {
-  //     vm.inputValue = vm.value;
-  //     vm.showErrorMessage = false;
-  //   } else {
-  //     vm.inputValue = '';
-  //     vm.showErrorMessage = true;
-  //   }
-  // };
-
   vm.isValidValue = (dirty) => {
     var allowed = {
       ALLOWED_TAGS: [],
     };
-
-    const clean = window['DOMPurify'].sanitize(dirty, allowed);
+    const clean = _.unescape(window['DOMPurify'].sanitize(dirty, allowed));
     return clean === dirty ? true : false;
   };
 }

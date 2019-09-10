@@ -259,7 +259,7 @@ export default class KafkaConnection extends Component {
       const isValid = types[this.state.inputs[key]['template']].validate(e.target.value);
       let errorMsg = '';
       if (e.target.value && !isValid) {
-        errorMsg = 'Invalid Input, see help.';
+        errorMsg = types[this.state.inputs[key]['template']].getErrorMsg();
       }
 
       this.setState({

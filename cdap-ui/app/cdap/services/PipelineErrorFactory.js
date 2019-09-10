@@ -16,6 +16,7 @@
 
 import {objectQuery} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
+import types from 'services/inputValidationTemplates';
 
 let countUnFilledRequiredFields = (node) => {
   var requiredFieldCount = 0;
@@ -32,12 +33,7 @@ let countUnFilledRequiredFields = (node) => {
 };
 
 let isValidValue = (dirty) => {
-  var allowed = {
-    ALLOWED_TAGS: [],
-  };
-
-  const clean = window['DOMPurify'].sanitize(dirty, allowed);
-  return clean === dirty ? true : false;
+  return types['NAME'].validate(dirty);
 };
 
 let countInvalidFields = (node) => {

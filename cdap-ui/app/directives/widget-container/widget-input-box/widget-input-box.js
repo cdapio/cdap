@@ -33,27 +33,27 @@ angular.module(PKG.name + '.commons')
             ALLOWED_TAGS: [],
           };
 
-          const clean = window['DOMPurify'].sanitize(dirty, allowed);
+          const clean = _.unescape(window['DOMPurify'].sanitize(dirty, allowed));
           return clean === dirty ? true : false;
         };
 
         $scope.getInputInfoMessage = function() {
+          var msg = 'cannot contain any xml tags, space required before and after logical operator. like x < y.';
           if($scope.tooltip && $scope.tooltip !== undefined) {
-            return $scope.tooltip + '\n Cannot  contain any xml tags.';
+            return $scope.tooltip + '\n'+msg;
           } else {
-            return 'Cannot  contain any xml tags.';
+            return msg;
           }
         };
 
         $scope.getErrorMessage = function() {
-          return 'Invalid Input, see help.';
+          return 'Invalid input, see instructions.';
         };
 
         $scope.onValueChange = function() {
           if($scope.model !== undefined) {
             $scope.showErrorMessage = isValidValue($scope.model) ? false : true;
           }
-          return 'Invalid Input, see help.';
         };
 
         $scope.$watch('model', function() {

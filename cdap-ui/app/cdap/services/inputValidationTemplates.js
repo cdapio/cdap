@@ -15,19 +15,22 @@
 */
 
 import DOMPurify from 'dompurify';
-
+import unescape from 'lodash/unescape';
 const dom_sanitizer = DOMPurify.sanitize;
+
 const isValidUsingDOMPurify = (val, config) => {
-    const clean = dom_sanitizer(val, config);
+    // const clean = dom_sanitizer(val, config);
+    const clean = unescape(dom_sanitizer(val, config));
     return clean === val ? true : false;
 };
 
+
 const NAME = {
     allowed: {
-        ALLOWED_TAGS: [],
+      ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+        "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
@@ -36,7 +39,7 @@ const NAME = {
         return this.info[0];
     },
     getErrorMsg: function() {
-      return 'Invalid Input, see input instructions.';
+      return 'Invalid input, see instructions.';
     }
 };
 
@@ -45,13 +48,16 @@ const FILE_PATH = {
         ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+      "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 
@@ -60,13 +66,16 @@ const AWS_ACCESS_KEY_ID = {
         ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+      "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 const AWS_SECRET_ACCESS_KEY = {
@@ -74,13 +83,16 @@ const AWS_SECRET_ACCESS_KEY = {
         ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+      "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 
@@ -89,13 +101,16 @@ const GCS_PROJECT_ID = {
         ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+      "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 
@@ -104,13 +119,16 @@ const GCS_BUCKET_ID = {
         ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+      "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 
@@ -137,6 +155,9 @@ const HOSTNAME_1123 = {
     },
     getInfo: function(val, useDOM = true) {
         return (useDOM ? this.info[1] : this.info[0]);
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 
@@ -145,13 +166,16 @@ const DEFAULT = {
         ALLOWED_TAGS: [],
     },
     info: [
-        "cannot contain any xml tags."
+      "cannot contain any xml tags, space required before and after logical operator. like x < y."
     ],
     validate: function(val) {
         return isValidUsingDOMPurify(val, this.allowed);
     },
     getInfo: function() {
         return this.info[0];
+    },
+    getErrorMsg: function() {
+      return 'Invalid input, see instructions.';
     }
 };
 

@@ -262,7 +262,7 @@ export default class SpannerConnection extends React.PureComponent<ISpannerConne
       const isValid = types[this.state.inputs[key][templateMap]].validate(e.target.value);
       let errorMsg = '';
       if (e.target.value && !isValid) {
-        errorMsg = 'Invalid Input, see help.';
+        errorMsg = types[this.state.inputs[key][templateMap]].getErrorMsg();
       }
 
       this.setState({
