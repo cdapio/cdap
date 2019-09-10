@@ -30,6 +30,20 @@
   justify-content: space-between;
   display: flex;
   flex-direction: column;
+  .selected-box {
+    padding: 10px 10px 5px 10px;
+    border-bottom: 1px solid grey;
+    .selected-label {
+      padding-right: 15px;
+    }
+    .selected-value {
+      background: #dddddd;
+      padding: 4px 8px;
+      font-weight: 600;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  }
   .model-box {
     border-radius: 10px;
     box-shadow: 3px 3px 5px #888888;
@@ -59,7 +73,7 @@
       padding: 4px 8px;
       font-weight: 600;
       border-radius: 4px;
-      font-size: 16px;
+      font-size: 14px;
     }
   }
 

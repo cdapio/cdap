@@ -100,7 +100,7 @@ const isFeatureComplete = (state) => {
     }
   }
   if (isEmpty(state.sinkConfigurations)) {
-    return false;
+    return true;
   } else {
     for (let property in state.sinkConfigurations) {
       if (property) {

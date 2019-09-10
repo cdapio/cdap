@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import './ModelContainer.scss';
-import { isNil } from 'lodash';
+import { isNil , isEmpty} from 'lodash';
 import PropTypes from 'prop-types';
 
 class ModelContainer extends Component {
@@ -26,19 +26,23 @@ class ModelContainer extends Component {
     { id: 2, name: "ridge" },
     { id: 3, name: "randomForest" }
   ];
-
+  appliedAlgorithm = isEmpty(this.algolist)? null : this.algolist[0];
   constructor(props) {
     super(props);
     this.state = {
       algolist: this.algolist,
       openAlgoDropdown: false,
-      selectedAlgo: { id: -1, name: 'Select' },
+      selectedAlgo: isEmpty(this.algolist)?{ id: -1, name: 'Select' } : this.algolist[0],
       selectedFeature: props.targetVariable,
       activeApplyBtn: false
     };
-
   }
 
+  componentDidMount = () => {
+    if (!isNil(this.state.selectedAlgo) && !isNil(this.state.selectedFeature)) {
+      this.applyModelSelection();
+    }
+  }
 
   toggleAlgoDropDown = () => {
     this.setState(prevState => ({
@@ -78,6 +82,7 @@ class ModelContainer extends Component {
         selectedfeatures: this.state.selectedFeature
       };
       this.props.applyModelSelection(result);
+      this.appliedAlgorithm = this.state.selectedAlgo;
     }
   }
 
@@ -86,8 +91,12 @@ class ModelContainer extends Component {
     return (
       <div className="model-container">
         <div className="model-box">
+          <div className="selected-box">
+                <label className="selected-label">Applied Algorithm:</label>
+                <label className="selected-value">{ this.appliedAlgorithm?this.appliedAlgorithm.name: ""}</label>
+          </div>
           <div className="algo-box">
-            <label className="algo-label">Algorithm: </label>
+            <label className="algo-label">Select Algorithm: </label>
             <Dropdown isOpen={this.state.openAlgoDropdown} toggle={this.toggleAlgoDropDown}>
               <DropdownToggle caret>
                 {this.state.selectedAlgo.name}
