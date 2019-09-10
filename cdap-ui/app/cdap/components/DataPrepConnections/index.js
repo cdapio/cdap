@@ -1134,8 +1134,9 @@ export default class DataPrepConnections extends Component {
     if (backendChecking || loading) {
       return (<LoadingSVGCentered />);
     }
+    const footerClass = !Theme.showFooter ? 'no-footer' : '';
     return (
-      <div className="dataprep-connections-container">
+      <div className={`dataprep-connections-container ${footerClass}`}>
         {
           this.props.enableRouting ?
             <Helmet title={T.translate(`${PREFIX}.pageTitle`, {

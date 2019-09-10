@@ -69,11 +69,34 @@ export default class Version {
     // A special case is no suffix is "greater" than with suffix. This is usually true (e.g. release > snapshot)
     if (this.suffix === null) {
       return other.suffix === null ? 0 : 1;
+    } else if (other.suffix === null) {
+      return -1;
+    } else if (this.suffix !== null && other.suffix !== null) {
+      return this.compareVersion(this.suffix, other.suffix);
     }
-
-    return other.suffix === null ? -1 : 0;
   }
-
+  compareVersion(v1, v2) {
+    if (typeof v1 !== 'string') {
+      return false;
+    }
+    if (typeof v2 !== 'string') {
+      return false;
+    }
+    v1 = v1.split('.');
+    v2 = v2.split('.');
+    const k = Math.min(v1.length, v2.length);
+    for (let i = 0; i < k; ++ i) {
+        v1[i] = parseInt(v1[i], 10);
+        v2[i] = parseInt(v2[i], 10);
+        if (v1[i] > v2[i]) {
+          return 1;
+        }
+        if (v1[i] < v2[i]) {
+          return -1;
+        }
+    }
+    return v1.length == v2.length ? 0: (v1.length < v2.length ? -1 : 1);
+  }
   compare(first, second) {
     if ((first === null && second === null) || first === second) {
       return 0;

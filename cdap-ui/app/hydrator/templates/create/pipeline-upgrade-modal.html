@@ -99,7 +99,9 @@
           </span>
           <span>
             <strong>Available Version:</strong>
-            {{ stage.suggestion.version }}
+            <select ng-model="stage.suggestion" ng-change="PipelineUpgradeController.changeArtifactVersion(stage)">
+              <option ng-repeat="option in stage.versionList" ng-selected="stage.suggestion.version == option.version" value="{{option}}">{{option.version}}</option>
+            </select>
           </span>
         </div>
       </div>

@@ -37,7 +37,7 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.GLOBALS = GLOBALS;
 
     vm.featureName = window.CaskCommon.ThemeHelper.Theme.featureNames.pipelines;
-
+    vm.headerClass = !window.CaskCommon.ThemeHelper.Theme.showHeader ? 'no-header' : '';
     vm.checkForValidPage = (pageNumber) => {
       return (
         !Number.isNaN(pageNumber) &&

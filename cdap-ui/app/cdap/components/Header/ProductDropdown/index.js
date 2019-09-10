@@ -120,12 +120,16 @@ export default class ProductDropdown extends Component {
           >
             <a>{T.translate('features.Navbar.ProductDropdown.accessToken')}</a>
           </DropdownItem>
-          <DropdownItem
-            tag="li"
-            onClick={this.logout}
-          >
-            <a>{T.translate('features.Navbar.ProductDropdown.logout')}</a>
-          </DropdownItem>
+          {
+            !window.CDAP_CONFIG.knoxEnabled ?
+              <DropdownItem
+                tag="li"
+                onClick={this.logout}>
+                <a>{T.translate('features.Navbar.ProductDropdown.logout')}</a>
+              </DropdownItem>
+            :
+              null
+          }
           <AccessTokenModal
             cdapVersion={cdapVersion}
             isOpen={this.state.accessTokenModalOpen}

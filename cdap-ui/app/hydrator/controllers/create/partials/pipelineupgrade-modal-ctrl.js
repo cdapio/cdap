@@ -103,6 +103,12 @@ angular.module(PKG.name + '.feature.hydrator')
         });
     };
 
+    this.changeArtifactVersion = (stage) => {
+      if (stage && stage.suggestion && typeof stage.suggestion === 'string') {
+        stage.suggestion = JSON.parse(stage.suggestion);
+      }
+    };
+
     checkStages();
 
     // This store subscription can cause the fetching of the plugins list to happen twice.

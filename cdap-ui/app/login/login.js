@@ -122,7 +122,7 @@ class Login extends Component {
     const isValid = types[this.state.inputs.password.template].validate(e.target.value);
     let errorMsg = '';
     if (e.target.value && !isValid) {
-      errorMsg = 'Invalid input, can not contain any xml tag';//types[this.state.inputs.password.template].getErrorMsg();
+      errorMsg = 'Invalid input, can not contain any xml tag';// types[this.state.inputs.password.template].getErrorMsg();
     }
     inputsValue.password.error = errorMsg;
 
@@ -271,7 +271,7 @@ class Login extends Component {
             </form>
           </Card>
         </div>
-      :<div></div>
+      : <div></div>
     );
   }
 }
