@@ -43,7 +43,7 @@ import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.SecureStoreServerModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +72,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       new MetricsStoreModule(),
       new MessagingClientModule(),
       new AuditModule(),
-      new SecureStoreServerModule(),
+      new SecureStoreClientModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),
       getDataFabricModule(),
       new DFSLocationModule(),
