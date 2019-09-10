@@ -99,7 +99,7 @@ function decrypt(encText, key) {
 function getSecretFromCDAPConfig(cdapConfig, logger) {
   let secretKey =
     cdapConfig['session.secret.key'] ||
-    path.resolve(__dirname, 'config', 'development', 'session_secret.key');
+    path.resolve(__dirname, 'config', 'development', 'session.secret.key');
   if (!logger) {
     logger = console;
   }
