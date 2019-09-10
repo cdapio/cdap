@@ -36,7 +36,9 @@ describe('Navbar tests', () => {
           return Helpers.getSessionToken(headers);
         });
       })
-      .then(sessionToken => headers = Object.assign({}, headers, { 'Session-Token': sessionToken }));
+      .then(
+        (sessionToken) => (headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
+      );
   });
   after(() => {
     cy.request({

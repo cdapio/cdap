@@ -1535,7 +1535,7 @@ features:
         TargetHeader: 'Select a field to view lineage and operations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       FllTable:
-        fieldsCount: 
+        fieldsCount:
           1: "{context} field"
           _: "{context} fields"
         FllField:
@@ -1561,7 +1561,7 @@ features:
         view: "View"
       TopPanel:
         timePickerCaption: "View"
-          
+
   ADLSBrowser:
     directory: Directory
     EmptyMessage:
@@ -1677,6 +1677,30 @@ features:
       numEventsTitle: Set number of events
       timeRangeTitle: Select time range
       to: To
+
+  Home:
+    Administration:
+      description: Manage system and namespace level settings and preferences.
+      namespaceLabel: Namespace
+      systemLabel: System
+      title: Administration
+    Metadata:
+      description: Search by dataset. View schema, lineage, properties, and tags.
+      linkLabel: Metadata
+      title: Explore metadata
+    Operations:
+      description: Monitor pipeline runs in Dashboard.
+      linkLabel: Dashboard
+      title: Monitor operations
+    Pipeline:
+      description: Build pipelines in Studio. Manage deployed and draft pipelines in List.
+      listLabel: List
+      studioLabel: Studio
+      title: Build and manage data pipelines
+    Wrangler:
+      description: Preview data from external sources. Prototype data transformations in realtime in Wrangler.
+      linkLabel: Wrangler
+      title: Cleanse data
 
   HttpExecutor:
     body: Body

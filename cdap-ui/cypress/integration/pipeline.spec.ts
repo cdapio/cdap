@@ -45,7 +45,7 @@ describe('Creating a pipeline', () => {
 
   it('is configured correctly', () => {
     // Go to Pipelines studio
-    cy.visit('/');
+    cy.visit('/cdap/ns/default/pipelines');
     cy.get('#resource-center-btn').click();
     cy.get('#create-pipeline-link').click();
     cy.url().should('include', '/studio');

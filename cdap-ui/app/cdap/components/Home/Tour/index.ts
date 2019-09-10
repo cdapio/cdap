@@ -27,7 +27,7 @@ const popperOptions = {
   placement: 'right',
   modifiers: {
     preventOverflow: {
-      order: ['right'],
+      priority: ['right', 'bottom'],
       escapeWithReference: false,
       boundariesElement: 'window',
     },
@@ -38,19 +38,6 @@ const popperOptions = {
   },
 };
 const steps: ITourStep[] = [
-  {
-    id: 'control-center',
-    title: featureNames.controlCenter,
-    text: [
-      T.translate(`${PREFIX}.ControlCenter.text`, {
-        featureName: featureNames.controlCenter,
-      }).toString(),
-      '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
-    ],
-    attachTo: '#navbar-control-center > div right',
-    popperOptions,
-    shouldFocus: true,
-  },
   {
     id: 'pipelines',
     title: `${featureNames.pipelines} ${featureNames.pipelineStudio}`,
@@ -84,6 +71,28 @@ const steps: ITourStep[] = [
     ],
     attachTo: '#navbar-metadata > div right',
     popperOptions,
+    shouldFocus: true,
+  },
+  {
+    id: 'control-center',
+    title: featureNames.controlCenter,
+    text: [
+      T.translate(`${PREFIX}.ControlCenter.text`, {
+        featureName: featureNames.controlCenter,
+      }).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
+    ],
+    attachTo: '#navbar-control-center > div right',
+    popperOptions: {
+      placement: 'right',
+      modifiers: {
+        preventOverflow: {
+          escapeWithReference: false,
+          boundariesElement: 'viewport',
+          padding: 10,
+        },
+      },
+    },
     shouldFocus: true,
   },
   {

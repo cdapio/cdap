@@ -93,7 +93,7 @@ function getArtifactsPoll(headers, retries = 0) {
 }
 
 function deployAndTestPipeline(filename, pipelineName, done) {
-  cy.visit('/');
+  cy.visit('/cdap/ns/default/pipelines');
   cy.get('#resource-center-btn').click();
   cy.get('#create-pipeline-link').click();
   cy.url().should('include', '/studio');
