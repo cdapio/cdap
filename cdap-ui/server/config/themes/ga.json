@@ -35,6 +35,8 @@
     "metadata": true,
     "hub": true,
     "ingest-data": true,
-    "add-namespace": true
+    "add-namespace": true,
+    "feature-engineering": true,
+    "mrds": true
   }
 }
