@@ -45,7 +45,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.setDefaults(rPlugin);
     this.tabs = [
       {
-        label: 'Configuration',
+        label: 'Properties',
         templateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/configuration-tab.html'
       },
       {
@@ -53,7 +53,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         templateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/preview-tab.html'
       },
       {
-        label: 'Reference',
+        label: 'Documentation',
         templateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/reference-tab.html'
       },
       {
