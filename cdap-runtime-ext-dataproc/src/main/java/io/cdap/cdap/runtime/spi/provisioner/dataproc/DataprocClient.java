@@ -238,7 +238,7 @@ final class DataprocClient implements AutoCloseable {
     }
 
     for (Network network: networks) {
-      if (network.getName().equals("default")) {
+      if ("default".equals(network.getName())) {
         return network.getName();
       }
     }
