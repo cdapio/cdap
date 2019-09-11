@@ -21,7 +21,7 @@ import StepButtons from '../../StepButtons';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyDeltaApi } from 'api/delta';
 import If from 'components/If';
-import { Checkbox } from '@material-ui/core';
+import { Checkbox, FormControlLabel, Radio } from '@material-ui/core';
 import { objectQuery } from 'services/helpers';
 import intersection from 'lodash/intersection';
 
@@ -40,6 +40,10 @@ const styles = (theme): StyleRules => {
     preview: {
       color: theme.palette.blue[100],
       cursor: 'pointer',
+    },
+    radioLabel: {
+      display: 'inline-block',
+      verticalAlign: 'middle',
     },
     tableContainer: {
       '& .table th': {
@@ -80,6 +84,7 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
   const [data, setData] = React.useState(null);
   const [activeTable, setActiveTable] = React.useState(null);
   const [selected, setSelected] = React.useState([]);
+  const [radio, setRadio] = React.useState('all');
 
   const dbInfo = objectQuery(source, 'plugin', 'properties') || {};
 
@@ -89,16 +94,6 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
     user: dbInfo.user,
     password: dbInfo.password,
   };
-
-  // React.useEffect(() => {
-  //   const tableWhiteList = (objectQuery(source, 'plugin', 'properties', 'tableWhiteList') || '')
-  //     .split(',')
-  //     .map((fullTable) => {
-  //       return fullTable.split('.')[1];
-  //     });
-
-  //   setSelected(tableWhiteList);
-  // }, []);
 
   React.useEffect(() => {
     const params = {
@@ -111,9 +106,16 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
         .split(',')
         .map((fullTable) => {
           return fullTable.split('.')[1];
-        });
+        })
+        .filter((tableName) => tableName);
       setTables(res);
       setSelected(intersection(res, tableWhiteList));
+
+      if (tableWhiteList.length === 0) {
+        setRadio('all');
+      } else {
+        setRadio('individual');
+      }
     }, setError);
   }, []);
 
@@ -151,14 +153,14 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
   }
 
   function renderData() {
-    if (!data) {
+    if (!data || radio === 'all') {
       return null;
     }
 
     return (
       <div>
         <h2>{activeTable} - preview</h2>
-
+        <div>{data.columns.length} columns</div>
         <div>
           <table className="table">
             <thead>
@@ -199,6 +201,11 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
   }
 
   function onNext() {
+    if (radio === 'all') {
+      updateTable(null);
+      return;
+    }
+
     const tablesList = selected
       .filter((table) => table)
       .map((table) => {
@@ -209,60 +216,96 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
     updateTable(tablesList);
   }
 
+  function renderTableList() {
+    if (radio === 'all') {
+      return null;
+    }
+
+    return (
+      <div className={classes.tableContainer}>
+        <h2>Select tables to replicate</h2>
+        <div>
+          {selected.length} of {tables.length} tables selected
+        </div>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>
+                <Checkbox
+                  checked={selected.length === tables.length}
+                  onChange={toggleAll}
+                  color="primary"
+                />
+              </th>
+              <th>Table</th>
+              <th />
+            </tr>
+          </thead>
+
+          <tbody>
+            {tables.map((table) => {
+              return (
+                <tr key={table}>
+                  <td>
+                    <Checkbox
+                      checked={selected.indexOf(table) !== -1}
+                      onChange={toggleTable.bind(null, table)}
+                      color="primary"
+                    />
+                  </td>
+                  <td>{table}</td>
+                  <td>
+                    <span
+                      className={classes.preview}
+                      onClick={handlePreviewClick.bind(null, table)}
+                    >
+                      {activeTable === table ? 'Hide' : 'Preview'}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function handleRadioChange(e) {
+    setRadio(e.target.value);
+  }
+
   return (
     <div>
       <If condition={error}>
         <div className="text-danger">{JSON.stringify(error, null, 2)}</div>
       </If>
 
+      <div>
+        <Radio
+          checked={radio === 'all'}
+          onChange={handleRadioChange}
+          value="all"
+          name="radio-button-demo"
+        />
+        <h4 className={classes.radioLabel}>
+          Replicate all tables in the database (this will replicate new tables created in the
+          database)
+        </h4>
+      </div>
+
+      <div>
+        <Radio
+          checked={radio === 'individual'}
+          onChange={handleRadioChange}
+          value="individual"
+          name="radio-button-demo"
+        />
+        <h4 className={classes.radioLabel}>Choose tables to replicate</h4>
+      </div>
+      <br />
       <div className={classes.contentContainer}>
-        <div className={classes.tableContainer}>
-          <h2>Select tables to replicate</h2>
-          <div>
-            {selected.length} of {tables.length} tables selected
-          </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>
-                  <Checkbox
-                    checked={selected.length === tables.length}
-                    onChange={toggleAll}
-                    color="primary"
-                  />
-                </th>
-                <th>Table</th>
-                <th />
-              </tr>
-            </thead>
-
-            <tbody>
-              {tables.map((table) => {
-                return (
-                  <tr key={table}>
-                    <td>
-                      <Checkbox
-                        checked={selected.indexOf(table) !== -1}
-                        onChange={toggleTable.bind(null, table)}
-                        color="primary"
-                      />
-                    </td>
-                    <td>{table}</td>
-                    <td>
-                      <span
-                        className={classes.preview}
-                        onClick={handlePreviewClick.bind(null, table)}
-                      >
-                        {activeTable === table ? 'Hide' : 'Preview'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
+        {renderTableList()}
         {renderData()}
       </div>
 

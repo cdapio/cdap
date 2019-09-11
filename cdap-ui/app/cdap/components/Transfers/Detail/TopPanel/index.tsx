@@ -26,7 +26,8 @@ import IconSVG from 'components/IconSVG';
 import If from 'components/If';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import moment from 'moment';
-import { start, stop } from 'components/Transfers/utilities';
+import { start, stop, deleteApp } from 'components/Transfers/utilities';
+import { Redirect } from 'react-router';
 
 const styles = (theme): StyleRules => {
   return {
@@ -113,6 +114,7 @@ const TopPanelView: React.SFC<ITopPanel> = ({
   fetchStatus,
 }) => {
   const [btnLoading, setBtnLoading] = React.useState(false);
+  const [redirect, setRedirect] = React.useState(false);
 
   const startBtn = <PlayArrow className={`${classes.btnIcon} ${classes.start}`} />;
   const stopBtn = <Stop className={`${classes.btnIcon} ${classes.stop}`} />;
@@ -156,6 +158,16 @@ const TopPanelView: React.SFC<ITopPanel> = ({
     }
   }
 
+  function handleDelete() {
+    deleteApp(
+      { id },
+      () => {
+        setRedirect(true);
+      },
+      null
+    );
+  }
+
   return (
     <div className={classes.root}>
       <div className={classes.titleSection}>
@@ -182,11 +194,13 @@ const TopPanelView: React.SFC<ITopPanel> = ({
         </a>
       </div>
       <div className="text-right">
-        <button className={`${classes.deleteBtn} btn btn-link`}>
+        <button className={`${classes.deleteBtn} btn btn-link`} onClick={handleDelete}>
           <Delete className={classes.logsBtn} />
           <div>Delete</div>
         </button>
       </div>
+
+      {redirect ? <Redirect to={`/ns/${getCurrentNamespace()}/transfers`} /> : null}
     </div>
   );
 };

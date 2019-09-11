@@ -27,12 +27,33 @@ import Charts from './Charts';
 import Statistics from './Statistics';
 import PendingEvents from './PendingEvents';
 import { MyProgramApi } from 'api/program';
+import classnames from 'classnames';
+import Configuration from './Configuration';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     separator: {
       margin: '25px 25px 10px',
       borderTopWidth: '3px',
+    },
+    tab: {
+      padding: '10px 25px',
+      fontSize: '22px',
+      '& > span:not($tabSeparator)': {
+        cursor: 'pointer',
+      },
+    },
+    tabSeparator: {
+      marginRight: '10px',
+      marginLeft: '10px',
+    },
+    active: {
+      fontWeight: 'bold',
+      textDecoration: 'underline',
+    },
+    disabled: {
+      cursor: 'not-allowed !important',
+      color: theme.palette.grey[400],
     },
   };
 };
@@ -56,6 +77,7 @@ interface IDetailState {
   targetConfig: any;
   status: string;
   fetchStatus: () => void;
+  tab: number;
 }
 
 class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
@@ -101,6 +123,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
     this.status$ = MyProgramApi.pollStatus(this.getProgramParams()).subscribe((res) => {
       this.setState({
         status: res.status,
+        tab: res.status !== 'RUNNING' ? 0 : this.state.tab,
       });
     });
   };
@@ -125,12 +148,48 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
     loading: true,
     status: 'STOPPED',
     fetchStatus: this.fetchStatus,
+    tab: 0,
+  };
+
+  private renderMonitor = () => {
+    if (this.state.tab !== 1) {
+      return null;
+    }
+
+    return (
+      <React.Fragment>
+        <Charts />
+        <hr className={this.props.classes.separator} />
+        <Statistics />
+        <hr className={this.props.classes.separator} />
+        <PendingEvents />
+      </React.Fragment>
+    );
+  };
+
+  private renderConfigure = () => {
+    if (this.state.tab !== 0) {
+      return null;
+    }
+
+    return <Configuration />;
+  };
+
+  private handleTabClick = (tab) => {
+    if (this.state.status !== 'RUNNING') {
+      this.setState({ tab: 0 });
+      return;
+    }
+
+    this.setState({ tab });
   };
 
   public render() {
     if (this.state.loading) {
       return <LoadingSVGCentered />;
     }
+
+    const classes = this.props.classes;
 
     return (
       <TransfersDetailContext.Provider value={this.state}>
@@ -141,11 +200,28 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailState> {
               Last updated {moment(this.state.updated * 1000).format('MMM D, YYYY [at] hh:mm A')}
             </small>
           </div>
-          <Charts />
-          <hr className={this.props.classes.separator} />
-          <Statistics />
-          <hr className={this.props.classes.separator} />
-          <PendingEvents />
+
+          <div className={classes.tab}>
+            <span
+              onClick={this.handleTabClick.bind(this, 0)}
+              className={classnames({ [classes.active]: this.state.tab === 0 })}
+            >
+              Configuration
+            </span>
+            <span className={classes.tabSeparator}>|</span>
+            <span
+              onClick={this.handleTabClick.bind(this, 1)}
+              className={classnames({
+                [classes.active]: this.state.tab === 1,
+                [classes.disabled]: this.state.status !== 'RUNNING',
+              })}
+            >
+              Monitor
+            </span>
+          </div>
+
+          {this.renderConfigure()}
+          {this.renderMonitor()}
         </div>
       </TransfersDetailContext.Provider>
     );

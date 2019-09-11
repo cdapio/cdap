@@ -15,6 +15,16 @@
  */
 
 import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+
+const styles = (theme): StyleRules => {
+  return {
+    labelClick: {
+      cursor: 'pointer',
+      color: theme.palette.blue[100],
+    },
+  };
+};
 
 interface ITable {
   name: string;
@@ -24,12 +34,16 @@ interface ITable {
   notSupported: number;
 }
 
-interface IAssessmentTableProps {
+interface IAssessmentTableProps extends WithStyles<typeof styles> {
   tables: ITable[];
   onTableClick: (table: string) => void;
 }
 
-const AssessmentTableView: React.FC<IAssessmentTableProps> = ({ tables, onTableClick }) => {
+const AssessmentTableView: React.FC<IAssessmentTableProps> = ({
+  tables,
+  onTableClick,
+  classes,
+}) => {
   return (
     <div>
       <table className="table">
@@ -54,11 +68,13 @@ const AssessmentTableView: React.FC<IAssessmentTableProps> = ({ tables, onTableC
               <tr key={row.name}>
                 <td>{row.name}</td>
                 <td>{row.numColumns}</td>
-                <td>{row.schemaIssues}</td>
-                <td>{row.partialSupport}</td>
-                <td>{row.notSupported}</td>
+                <td>{row.schemaIssues || '--'}</td>
+                <td>{row.partialSupport || '--'}</td>
+                <td>{row.notSupported || '--'}</td>
                 <td>
-                  <span onClick={onTableClick.bind(null, row.name)}>{label}</span>
+                  <span onClick={onTableClick.bind(null, row.name)} className={classes.labelClick}>
+                    {label}
+                  </span>
                 </td>
               </tr>
             );
@@ -69,4 +85,5 @@ const AssessmentTableView: React.FC<IAssessmentTableProps> = ({ tables, onTableC
   );
 };
 
-export default AssessmentTableView;
+const AssessmentTable = withStyles(styles)(AssessmentTableView);
+export default AssessmentTable;

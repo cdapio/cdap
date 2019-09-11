@@ -17,24 +17,13 @@
 import * as React from 'react';
 import { StyledSummary } from 'components/Transfers/Create/Summary';
 import { transfersDetailConnect } from 'components/Transfers/Detail/context';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 const Summary = transfersDetailConnect(StyledSummary);
 
 const Configuration: React.SFC = () => {
   return (
     <div>
-      <ExpansionPanel>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-          View configuration
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <Summary disableEdit={true} />
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+      <Summary disableEdit={true} />
     </div>
   );
 };

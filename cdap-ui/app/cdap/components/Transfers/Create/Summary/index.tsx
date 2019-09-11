@@ -86,18 +86,32 @@ const SummaryView: React.SFC<ISummaryProps> = ({
   disableEdit,
   classes,
 }) => {
-  const sourceGroups = objectQuery(sourceConfig, 'configuration-groups');
-  const targetGroups = objectQuery(targetConfig, 'configuration-groups');
+  const sourceGroups = objectQuery(sourceConfig, 'configuration-groups') || [];
+  const targetGroups = objectQuery(targetConfig, 'configuration-groups') || [];
+
+  React.useEffect(() => {
+    if (!sourceGroups || sourceGroups.length === 0) {
+      setActiveStep(1);
+      return;
+    }
+
+    if (!targetGroups || targetGroups.length === 0) {
+      setActiveStep(4);
+    }
+  }, []);
 
   const tables = (objectQuery(source, 'plugin', 'properties', 'tableWhiteList') || '')
     .split(',')
     .map((fullTable) => {
       return fullTable.split('.')[1];
-    });
+    })
+    .filter((tableName) => tableName);
 
   return (
     <div className={classes.root}>
-      <div>Review information and create {Theme.featureNames.transfers.toLowerCase()}</div>
+      <If condition={!disableEdit}>
+        <div>Review information and create {Theme.featureNames.transfers.toLowerCase()}</div>
+      </If>
 
       <div className={classes.headingContainer}>
         <div>
@@ -212,27 +226,29 @@ const SummaryView: React.SFC<ISummaryProps> = ({
 
       <hr />
 
-      <div>
-        <div>{tables.length} tables to be duplicated</div>
-        <br />
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Table name</th>
-            </tr>
-          </thead>
+      <If condition={tables.length > 0}>
+        <div>
+          <div>{tables.length} tables to be duplicated</div>
+          <br />
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Table name</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {tables.map((table) => {
-              return (
-                <tr key={table}>
-                  <td>{table}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+            <tbody>
+              {tables.map((table) => {
+                return (
+                  <tr key={table}>
+                    <td>{table}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </If>
     </div>
   );
 };

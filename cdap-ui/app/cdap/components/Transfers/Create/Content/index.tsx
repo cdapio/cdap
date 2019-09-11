@@ -34,6 +34,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import SelectTable from '../Configure/SelectTable';
 import ConfigureSummary from '../Configure/Summary';
 import set from 'lodash/set';
+import unset from 'lodash/unset';
 
 const styles = (): StyleRules => {
   return {
@@ -214,8 +215,12 @@ class ContentView extends React.PureComponent<IContentProps, typeof defaultConte
     const newSource = {
       ...this.state.source,
     };
-
-    set(newSource, 'plugin.properties.tableWhiteList', tables);
+    const path = 'plugin.properties.tableWhiteList';
+    if (!tables || tables.length === 0) {
+      unset(newSource, path);
+    } else {
+      set(newSource, path, tables);
+    }
 
     this.setState({ source: newSource });
   };
