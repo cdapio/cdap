@@ -255,7 +255,7 @@ public final class DataFrames {
 
     // Some special types in Spark SQL
     if (dataType.equals(DataTypes.TimestampType)) {
-      return Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS);
+      return Schema.of(Schema.LogicalType.TIMESTAMP_MICROS);
     }
     if (dataType.equals(DataTypes.DateType)) {
       return Schema.of(Schema.LogicalType.DATE);
@@ -511,7 +511,7 @@ public final class DataFrames {
               LocalDate lDate = ((Date) fieldValue).toLocalDate();
               fieldValue = Math.toIntExact(lDate.toEpochDay());
             } else if (fieldValue instanceof Timestamp) {
-              fieldValue = ((Timestamp) fieldValue).getTime();
+              fieldValue = TimeUnit.MILLISECONDS.toMicros(((Timestamp) fieldValue).getTime());
             }
             builder.set(field.getName(), fromRowValue(fieldValue, fieldSchema, fieldPath));
           }
