@@ -33,7 +33,13 @@ $custom-entry-height: 35px;
 .secure-key-textarea-widget {
   position: relative;
 
-  .form-control.raw-text-input { padding-left: 25px; }
+  .form-control {
+    border: 0;
+
+    &.raw-text-input {
+      padding-left: 25px;
+    }
+  }
 
   .secure-key {
     position: absolute;

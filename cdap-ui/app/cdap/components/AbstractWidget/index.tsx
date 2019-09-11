@@ -58,10 +58,9 @@ export default class AbstractWidget extends React.PureComponent<IAbstractWidgetP
 
   public render() {
     const Comp = AbstractWidgetFactory[this.props.type];
-    const { size = 'large' } = this.props.widgetProps;
 
     return (
-      <div className={`abstract-widget-wrapper ${size}`}>
+      <div className={`abstract-widget-wrapper`}>
         <StateWrapper
           comp={Comp}
           onChange={this.props.onChange}

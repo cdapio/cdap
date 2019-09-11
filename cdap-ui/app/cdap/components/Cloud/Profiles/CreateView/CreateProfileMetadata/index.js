@@ -17,21 +17,33 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { connect } from 'react-redux';
-import { Input } from 'reactstrap';
 import {
   updateProfileLabel,
   updateProfileDescription,
 } from 'components/Cloud/Profiles/CreateView/CreateProfileActionCreator';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import T from 'i18n-react';
 
 require('./CreateProfileMetadata.scss');
 
+const PREFIX = 'features.Cloud.Profiles.CreateView';
+
 function ProfileName({ profileName }) {
   return (
-    <Input
-      aria-labelledby="profile-name"
+    <WidgetWrapper
+      pluginProperty={{
+        required: true,
+      }}
+      widgetProperty={{
+        'widget-type': 'textbox',
+        label: T.translate(`${PREFIX}.profileName`).toString(),
+        name: 'profileName',
+        'widget-attributes': {
+          placeholder: T.translate(`${PREFIX}.profileNamePlaceholder`).toString(),
+        },
+      }}
       value={profileName}
-      placeholder="Name for compute profile"
-      disabled
+      disabled={true}
     />
   );
 }
@@ -47,11 +59,20 @@ const mapNameStateToProps = (state) => {
 
 function ProfileLabel({ profileLabel }) {
   return (
-    <Input
-      aria-labelledby="profile-label"
+    <WidgetWrapper
+      pluginProperty={{
+        required: true,
+      }}
+      widgetProperty={{
+        'widget-type': 'textbox',
+        label: T.translate(`${PREFIX}.profileLabel`).toString(),
+        name: 'profileLabel',
+        'widget-attributes': {
+          placeholder: T.translate(`${PREFIX}.profileLabelPlaceholder`).toString(),
+        },
+      }}
       value={profileLabel}
-      placeholder="Label the compute profile"
-      onChange={(e) => updateProfileLabel(e.target.value)}
+      onChange={updateProfileLabel}
     />
   );
 }
@@ -69,13 +90,17 @@ const ConnectedProfileName = connect(mapNameStateToProps)(ProfileName);
 const ConnectedProfileLabel = connect(mapLabelStateToProps)(ProfileLabel);
 function ProfileDescription({ profileDescription }) {
   return (
-    <Input
-      type="textarea"
-      aria-labelledby="profile-description"
-      className="create-profile-description"
+    <WidgetWrapper
+      pluginProperty={{
+        required: true,
+      }}
+      widgetProperty={{
+        'widget-type': 'textarea',
+        label: T.translate('commons.descriptionLabel').toString(),
+        name: 'profileDescription',
+      }}
       value={profileDescription}
-      onChange={(e) => updateProfileDescription(e.target.value)}
-      placeholder="Describe the profile that it is being created"
+      onChange={updateProfileDescription}
     />
   );
 }

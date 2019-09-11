@@ -16,8 +16,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Form, FormGroup, Col } from 'reactstrap';
-import AbstractWidget from 'components/AbstractWidget';
+import { Form } from 'reactstrap';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link, Redirect } from 'react-router-dom';
 import { MyCloudApi } from 'api/cloud';
@@ -29,7 +28,6 @@ import { fetchProvisionerSpec } from 'components/Cloud/Store/ActionCreator';
 import { ADMIN_CONFIG_ACCORDIONS } from 'components/Administration/AdminConfigTabContent';
 import EntityTopPanel from 'components/EntityTopPanel';
 import PropertyLock from 'components/Cloud/Profiles/CreateView/PropertyLock';
-import Popover from 'components/Popover';
 import {
   ConnectedProfileName,
   ConnectedProfileDescription,
@@ -48,6 +46,7 @@ import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import { SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
 import { Theme } from 'services/ThemeHelper';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
 
@@ -98,6 +97,7 @@ class ProfileCreateView extends Component {
       creatingProfile: true,
     });
     let { label, name, description, properties } = CreateProfileStore.getState();
+
     /**
      * TODO: https://issues.cask.co/browse/CDAP-15211
      * Today we special case it for projectid alone to minimize the impact of the change
@@ -158,49 +158,25 @@ class ProfileCreateView extends Component {
 
   renderProfileName = () => {
     return (
-      <FormGroup row>
-        <Col xs="3">
-          <strong className="label" id="profile-name">
-            {T.translate(`${PREFIX}.profileName`)}
-          </strong>
-          <span className="required-marker text-danger">*</span>
-        </Col>
-        <Col xs="5">
-          <ConnectedProfileName />
-        </Col>
-      </FormGroup>
+      <div className="property-row">
+        <ConnectedProfileName />
+      </div>
     );
   };
 
   renderProfileLabel = () => {
     return (
-      <FormGroup row>
-        <Col xs="3">
-          <strong className="label" id="profile-label">
-            {T.translate(`${PREFIX}.profileLabel`)}
-          </strong>
-          <span className="required-marker text-danger">*</span>
-        </Col>
-        <Col xs="5">
-          <ConnectedProfileLabel />
-        </Col>
-      </FormGroup>
+      <div className="property-row">
+        <ConnectedProfileLabel />
+      </div>
     );
   };
 
   renderDescription = () => {
     return (
-      <FormGroup row>
-        <Col xs="3">
-          <strong className="label" id="profile-description">
-            {T.translate('commons.descriptionLabel')}
-          </strong>
-          <span className="required-marker text-danger">*</span>
-        </Col>
-        <Col xs="5">
-          <ConnectedProfileDescription />
-        </Col>
-      </FormGroup>
+      <div className="property-row">
+        <ConnectedProfileDescription />
+      </div>
     );
   };
 
@@ -218,43 +194,23 @@ class ProfileCreateView extends Component {
         <div className="fields-container">
           {group.properties.map((property) => {
             let uniqueId = `provisioner-${uuidV4()}`;
-            const LabelComp = () => (
-              <strong className="label" id={uniqueId}>
-                {property.label}
-              </strong>
-            );
+
             return (
-              <FormGroup key={uniqueId} row>
-                <Col xs="3" className="property-description-container">
-                  {property.description ? (
-                    <Popover
-                      target={LabelComp}
-                      showOn="Hover"
-                      placement="right"
-                      className="profile-label-container"
-                    >
-                      {property.description}
-                    </Popover>
-                  ) : (
-                    <LabelComp />
-                  )}
-                  {property.required ? (
-                    <span className="required-marker text-danger">*</span>
-                  ) : null}
-                </Col>
-                <Col xs="5">
-                  {
-                    <AbstractWidget
-                      type={property['widget-type']}
-                      value={objectQuery(properties, property.name, 'value')}
-                      onChange={updateProperty.bind(null, property.name)}
-                      widgetProps={property['widget-attributes']}
-                      extraConfig={extraConfig}
-                    />
-                  }
-                  <PropertyLock propertyName={property.name} />
-                </Col>
-              </FormGroup>
+              <div key={uniqueId} className="property-row">
+                <WidgetWrapper
+                  pluginProperty={{
+                    name: property.name,
+                    required: !!property.required,
+                    description: property.description,
+                  }}
+                  widgetProperty={property}
+                  value={objectQuery(properties, property.name, 'value')}
+                  onChange={updateProperty.bind(null, property.name)}
+                  extraConfig={extraConfig}
+                  size={objectQuery(property, 'widget-attributes', 'size')}
+                />
+                <PropertyLock propertyName={property.name} />
+              </div>
             );
           })}
         </div>
