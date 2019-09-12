@@ -138,7 +138,7 @@ public abstract class ProvisioningTask implements RepeatedTask {
         if (subTaskPollingStrategy == null) {
           subTaskPollingStrategy = provisioner.getPollingStrategy(provisionerContext, taskInfo.getCluster());
         }
-        return Math.max(0, subTaskPollingStrategy.nextPoll(subTaskExecNums, subTaskStartTime));
+        return Math.max(0, subTaskPollingStrategy.nextPoll(subTaskExecNums++, subTaskStartTime));
       }
       // Otherwise, execute the next task immediately.
       subTaskPollingStrategy = null;
