@@ -28,7 +28,7 @@ const styles = (theme): StyleRules => {
       width: '245px',
       border: `2px solid ${theme.palette.grey[500]}`,
       margin: '12px',
-      minHeight: '300px',
+      minHeight: '250px',
     },
     imageContainer: {
       height: '107px',
@@ -46,7 +46,7 @@ const styles = (theme): StyleRules => {
       marginBottom: '10px',
     },
     body: {
-      padding: '23px 15px 14px',
+      padding: '10px 15px',
       height: 'calc(100% - 107px - 48px)',
     },
     description: {
