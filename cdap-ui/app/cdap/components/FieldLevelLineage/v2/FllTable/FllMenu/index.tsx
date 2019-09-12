@@ -28,7 +28,7 @@ const PREFIX = 'features.FieldLevelLineage.v2.FllTable';
 const styles = (theme): StyleRules => {
   return {
     root: {
-      paddingLeft: '20px',
+      paddingLeft: '47px',
     },
     targetView: {
       padding: 0,
