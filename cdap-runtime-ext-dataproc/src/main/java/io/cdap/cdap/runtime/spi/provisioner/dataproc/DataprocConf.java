@@ -49,6 +49,7 @@ final class DataprocConf {
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
+  static final String IMAGE_VERSION = "imageVersion";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
 
@@ -351,7 +352,7 @@ final class DataprocConf {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
     );
 
-    String imageVersion = getString(properties, "imageVersion");
+    String imageVersion = getString(properties, IMAGE_VERSION);
 
     return new DataprocConf(accountKey, region, zone, projectId, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,

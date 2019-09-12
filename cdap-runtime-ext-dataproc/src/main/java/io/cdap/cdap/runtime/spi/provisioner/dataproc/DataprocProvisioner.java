@@ -300,7 +300,8 @@ public class DataprocProvisioner implements Provisioner {
     List<String> keys = Arrays.asList(DataprocConf.PREFER_EXTERNAL_IP,
                                       DataprocConf.NETWORK,
                                       DataprocConf.STACKDRIVER_LOGGING_ENABLED,
-                                      DataprocConf.STACKDRIVER_MONITORING_ENABLED);
+                                      DataprocConf.STACKDRIVER_MONITORING_ENABLED,
+                                      DataprocConf.IMAGE_VERSION);
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);
