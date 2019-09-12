@@ -16,11 +16,6 @@
 
 package io.cdap.cdap.common.security;
 
-import io.cdap.cdap.common.conf.SConfiguration;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.crypto.util.OpenSSHPrivateKeyUtil;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMEncryptor;
 import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
@@ -32,7 +27,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.security.Key;
@@ -56,7 +50,6 @@ public class KeyStoresTest {
 
   @Test
   public void testGetSSLKeyStore() throws Exception {
-    SConfiguration sConf = SConfiguration.create();
     KeyStore ks = KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, SSL_PASSWORD);
     Assert.assertEquals(KeyStores.SSL_KEYSTORE_TYPE, ks.getType());
     Assert.assertEquals(KeyStores.CERT_ALIAS, ks.aliases().nextElement());
@@ -120,10 +113,6 @@ public class KeyStoresTest {
 
     try (PemWriter writer = new PemWriter(new FileWriter(pemFile))) {
       // Write out the key
-      PrivateKeyInfo pki = PrivateKeyInfo.getInstance(new ASN1InputStream(
-        new ByteArrayInputStream(key.getEncoded())).readObject());
-      byte[] encodedKey = OpenSSHPrivateKeyUtil.encodePrivateKey(PrivateKeyFactory.createKey(pki));
-
       PEMEncryptor encryptor = null;
       if (!password.isEmpty()) {
         encryptor = new JcePEMEncryptorBuilder("AES-128-CBC")

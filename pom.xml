@@ -119,7 +119,7 @@
     <asm.version>5.0.3</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
-    <bouncycastle.version>1.62</bouncycastle.version>
+    <bouncycastle.version>1.60</bouncycastle.version>
     <cdap.common.version>0.12.0</cdap.common.version>
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
