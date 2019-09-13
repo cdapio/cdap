@@ -240,7 +240,8 @@ angular.module(PKG.name + '.commons')
         pluginName: '=',
         updateDefaultOutputSchema: '&',
         onChange: '&',
-        isInStudio: '='
+        isInStudio: '=',
+        errors: '='
       },
       controller: ComplexSchemaEditorController,
       controllerAs: 'SchemaEditor'

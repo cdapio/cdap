@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         inputSchema: '@',
         multipleInputs: '@',
-        isInStudio: '='
+        isInStudio: '=',
+        errors: '=',
       },
       templateUrl: 'widget-container/widget-input-schema/widget-input-schema.html',
       controller: 'MyInputSchemaCtrl',

@@ -59,6 +59,7 @@ class MultipleValuesWidgetView extends AbstractMultiRowWidget<IMulipleValuesProp
         valuesDelimiter={valuesDelimiter}
         numValues={numValues}
         forwardedRef={this.values[id].ref}
+        errors={this.props.errors}
       />
     );
   };

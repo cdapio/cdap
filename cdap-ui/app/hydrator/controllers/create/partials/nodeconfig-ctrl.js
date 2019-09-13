@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService, HydratorPlusPlusPreviewActions) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService, HydratorPlusPlusPreviewActions, myAlertOnValium) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -42,7 +42,9 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    this.configurationGroupUtilities = window.CaskCommon.ConfigurationGroupUtilities;
     this.setDefaults(rPlugin);
+    this.myAlertOnValium = myAlertOnValium;
     this.tabs = [
       {
         label: 'Properties',
@@ -497,7 +499,15 @@ class HydratorPlusPlusNodeConfigCtrl {
       .then((res) => {
         vm.validating = false;
         if (res.failures.length > 0) {
-          vm.validationErrors = res.failures;
+          const {propertyErrors, inputSchemaErrors,outputSchemaErrors}=vm.configurationGroupUtilities.constructErrors(res.failures);
+          vm.propertyErrors=propertyErrors;
+          vm.inputSchemaErrors=inputSchemaErrors;
+          vm.outputSchemaErrors=outputSchemaErrors;
+          const errorCount = vm.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
+          this.myAlertOnValium.show({
+            type: 'danger',
+            content: `${errorCount} error${errorCount.length > 1 ? 's': ''} found.`
+          });
         } else {
           const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
           const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
@@ -516,13 +526,25 @@ class HydratorPlusPlusNodeConfigCtrl {
           else {
             vm.EventPipe.emit('schema.clear');
           }
-          vm.validationErrors = [];
+          // Empty existing errors
+          vm.propertyErrors = [];
+          vm.inputSchemaErrors = {};
+          vm.outputSchemaErrors = {};
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: `No validation errors.`
+          });
         }
       }, (err) => {
         vm.validating = false;
-        vm.validationErrors = [err.data];
+        this.myAlertOnValium.show({
+            type: 'danger',
+            content: "Error occured while validating."
+          });
+        vm.propertyErrors = [{msg:err.data}];
       });
   }
+
   hasUniqueFields(schema, error) {
     if (!schema) { return true; }
 

@@ -24,6 +24,7 @@ import classnames from 'classnames';
 import { objectQuery } from 'services/helpers';
 import If from 'components/If';
 import ThemeWrapper from 'components/ThemeWrapper';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -33,6 +34,10 @@ const styles = (theme): StyleRules => {
       borderRadius: '6px',
       position: 'relative',
       padding: '7px 10px 5px',
+    },
+    errorBorder: {
+      border: '2px solid',
+      borderColor: theme.palette.red[50],
     },
     noWrapper: {
       border: 0,
@@ -78,6 +83,7 @@ interface IWidgetWrapperProps extends WithStyles<typeof styles> {
   extraConfig: any;
   disabled: boolean;
   hideDescription?: boolean;
+  errors?: IErrorObj[];
 }
 
 const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
@@ -90,6 +96,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
   disabled,
   hideDescription,
   classes,
+  errors,
 }) => {
   const widgetType = objectQuery(widgetProperty, 'widget-type');
   const [isFocused, setIsFocused] = React.useState<boolean>(false);
@@ -109,6 +116,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
       className={classnames(classes.widgetWrapper, {
         [classes.focus]: isFocused && !disabled,
         [classes.noWrapper]: hideWrapper,
+        [classes.errorBorder]: errors,
       })}
       onFocus={onFocus}
       onBlur={onBlur}
@@ -130,6 +138,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
           widgetProps={widgetProperty['widget-attributes']}
           extraConfig={extraConfig}
           disabled={disabled}
+          errors={errors}
         />
       </div>
       <If condition={!hideDescription}>

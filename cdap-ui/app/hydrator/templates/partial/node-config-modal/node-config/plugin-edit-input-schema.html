@@ -19,7 +19,8 @@
     <my-input-schema
         data-multiple-inputs="{{::(HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.inputs.multipleInputs === true)}}"
         input-schema="{{::HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema}}"
-        is-in-studio="!isDisabled">
+        is-in-studio="!isDisabled"
+        errors="HydratorPlusPlusNodeConfigCtrl.inputSchemaErrors">
     </my-input-schema>
   </div>
 </div>

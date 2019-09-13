@@ -17,6 +17,7 @@
 import * as React from 'react';
 import AbstractWidgetFactory from 'components/AbstractWidget/AbstractWidgetFactory';
 import StateWrapper from 'components/AbstractWidget/StateWrapper';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 require('./AbstractWidget.scss');
 
 export const DEFAULT_WIDGET_PROPS = {
@@ -45,6 +46,7 @@ export interface IWidgetProps<T = any> {
     properties?: Record<string, string>;
   };
   disabled?: boolean;
+  errors?: IErrorObj[];
 }
 
 interface IAbstractWidgetProps extends IWidgetProps {
@@ -68,6 +70,7 @@ export default class AbstractWidget extends React.PureComponent<IAbstractWidgetP
           widgetProps={this.props.widgetProps}
           extraConfig={this.props.extraConfig}
           disabled={this.props.disabled}
+          errors={this.props.errors}
         />
       </div>
     );

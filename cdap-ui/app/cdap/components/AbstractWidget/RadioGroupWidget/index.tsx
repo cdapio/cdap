@@ -26,7 +26,7 @@ import If from 'components/If';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-export const styles = (): StyleRules => {
+export const styles = (theme): StyleRules => {
   return {
     inlineRadio: {
       display: 'flex',
@@ -34,6 +34,9 @@ export const styles = (): StyleRules => {
     },
     labelControl: {
       marginBottom: 0,
+    },
+    errorText: {
+      color: theme.palette.red[50],
     },
   };
 };
@@ -58,6 +61,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
   value,
   disabled,
   onChange,
+  errors,
 }) => {
   const options: IOption[] = objectQuery(widgetProps, 'options') || [];
   const layout = objectQuery(widgetProps, 'layout') || 'block';
@@ -83,15 +87,27 @@ const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
         onChange={updateModel}
       >
         {options.map((option: IOption, i) => {
+          let errorMsg = null;
+          if (errors) {
+            const errorObj = errors.find((obj) => obj.element === option.id);
+            if (errorObj) {
+              errorMsg = errorObj.msg;
+            }
+          }
           return (
-            <FormControlLabel
-              className={classes.labelControl}
-              key={`${i}-${option.id}`}
-              value={option.id}
-              control={<Radio color="primary" />}
-              label={option.label || option.id}
-              disabled={disabled}
-            />
+            <React.Fragment>
+              <FormControlLabel
+                className={classes.labelControl}
+                key={`${i}-${option.id}`}
+                value={option.id}
+                control={<Radio color="primary" />}
+                label={option.label || option.id}
+                disabled={disabled}
+              />
+              <If condition={errorMsg}>
+                <div className={classes.errorText}>{errorMsg}</div>
+              </If>
+            </React.Fragment>
           );
         })}
       </RadioGroup>

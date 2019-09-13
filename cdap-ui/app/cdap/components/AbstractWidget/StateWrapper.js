@@ -28,6 +28,7 @@ export default class StateWrapper extends PureComponent {
     widgetProps: PropTypes.object,
     extraConfig: PropTypes.object,
     disabled: PropTypes.bool,
+    errors: PropTypes.object,
   };
 
   state = {
@@ -52,7 +53,7 @@ export default class StateWrapper extends PureComponent {
   };
 
   render() {
-    let { comp: Comp, widgetProps, extraConfig, disabled } = this.props;
+    let { comp: Comp, widgetProps, extraConfig, disabled, errors } = this.props;
     const value = typeof this.state.value === 'function' ? this.state.value() : this.state.value;
     /*
       TL;DR - Get new value for input widget during each render.
@@ -77,6 +78,7 @@ export default class StateWrapper extends PureComponent {
         updateAllProperties={this.props.updateAllProperties}
         extraConfig={extraConfig}
         disabled={disabled}
+        errors={errors}
       />
     );
   }

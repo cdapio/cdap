@@ -38,7 +38,8 @@
           parent-format-output="SchemaEditor.formatOutput(updateDefault)"
           schema-prefix="SchemaEditor.schemaPrefix"
           derived-dataset-id="SchemaEditor.derivedDatasetId"
-          is-in-studio="SchemaEditor.isInStudio">
+          is-in-studio="SchemaEditor.isInStudio"
+          errors="SchemaEditor.errors[SchemaEditor.schemas.length === 1 ? 'noSchemaSection' : schemaObj.name]">
         </my-complex-schema>
       </div>
     </div>

@@ -15,15 +15,6 @@
 -->
 
 <form class="form-horizontal">
-  <div ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors"
-       class="form-group">
-    <label class="col-xs-3 control-label">Error(s)</label>
-    <pre ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length > 0"
-         class="col-xs-9 text-danger" style="padding: 10px; word-break: break-word;">{{HydratorPlusPlusNodeConfigCtrl.validationErrors | json}}</pre>
-    <span class="col-xs-9 text-success"
-          ng-if="HydratorPlusPlusNodeConfigCtrl.validationErrors.length === 0">No
-      Validation Errors.</span>
-  </div>
 
   <div class="label-input-container">
     <widget-wrapper
@@ -54,5 +45,6 @@
     on-change="HydratorPlusPlusNodeConfigCtrl.onPropertiesChange"
     input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"
     disabled="isDisabled"
+    errors="HydratorPlusPlusNodeConfigCtrl.propertyErrors"
   ></configuration-group>
 </div>
