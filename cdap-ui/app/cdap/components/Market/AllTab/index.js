@@ -25,6 +25,7 @@ import IconSVG from 'components/IconSVG';
 require('./AllTabContents.scss');
 
 export default class AllTabContents extends Component {
+  filterType = '';
   constructor(props) {
     super(props);
     const filteredEntities = this.getFilteredEntities();
@@ -37,13 +38,16 @@ export default class AllTabContents extends Component {
     };
 
     this.unsub = MarketStore.subscribe(() => {
-      const unSubFilteredEntities = this.getFilteredEntities();
-      this.setState({
-        entities: unSubFilteredEntities,
-        filterEntites: unSubFilteredEntities,
-        searchStr: '',
-      });
-      const { loading, isError } = MarketStore.getState();
+      const { loading, isError, filter } = MarketStore.getState();
+      if (this.filterType !== filter) {
+        this.filterType = filter;
+        const unSubFilteredEntities = this.getFilteredEntities();
+        this.setState({
+          entities: unSubFilteredEntities,
+          filterEntites: unSubFilteredEntities,
+          searchStr: '',
+        });
+      }
       this.setState({ loading, isError });
     });
   }
