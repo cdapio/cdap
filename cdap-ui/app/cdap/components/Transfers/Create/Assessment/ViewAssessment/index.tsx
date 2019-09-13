@@ -23,6 +23,9 @@ import If from 'components/If';
 import Button from '@material-ui/core/Button';
 import AssessmentTable from './AssessmentTable';
 import TableInfo from './TableInfo';
+import './Assessment.scss';
+import MissingFeatures from '../MissingFeatures';
+import CheckCircle from '@material-ui/icons/CheckCircle';
 
 const styles = (theme): StyleRules => {
   return {
@@ -41,6 +44,12 @@ const styles = (theme): StyleRules => {
       '& > span': {
         borderBottom: `3px solid ${theme.palette.grey[300]}`,
       },
+    },
+    checkIcon: {
+      marginRight: '10px',
+    },
+    connectionContainer: {
+      margin: '50px 25px',
     },
   };
 };
@@ -138,7 +147,7 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
   }
 
   return (
-    <div>
+    <div className="view-assessment-container">
       <TableInfo activeTable={activeTable} onClose={onTableClick.bind(null, null)} />
       <h2>Assessment summary</h2>
       <div>Resolve all issues to continue</div>
@@ -160,7 +169,7 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
           onClick={handleTabSwitch.bind(null, 2)}
           className={classnames({ [classes.activeTab]: activeTab === 2 })}
         >
-          <span>Connectivity issues (1)</span>
+          <span>Connectivity issues (0)</span>
         </div>
       </div>
 
@@ -181,6 +190,19 @@ const ViewAssessmentView: React.SFC<IProps> = ({ classes }) => {
             <div>3 tables ave been assessed with no schema issues</div>
             <AssessmentTable tables={goodTables} onTableClick={onTableClick} />
           </div>
+        </div>
+      </If>
+
+      <If condition={activeTab === 1}>
+        <MissingFeatures />
+      </If>
+
+      <If condition={activeTab === 2}>
+        <div className={classes.connectionContainer}>
+          <h4>
+            <CheckCircle color="primary" className={classes.checkIcon} />
+            All connections are working
+          </h4>
         </div>
       </If>
 

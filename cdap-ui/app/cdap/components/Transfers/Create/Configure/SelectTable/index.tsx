@@ -59,6 +59,20 @@ const styles = (theme): StyleRules => {
         },
       },
     },
+    thead: {
+      backgroundColor: theme.palette.grey[600],
+      '& th > span': {
+        display: 'block',
+      },
+    },
+    tableName: {
+      fontWeight: 'bold',
+      marginTop: '5px',
+    },
+    type: {
+      fontWeight: 400,
+      fontSize: '11px',
+    },
   };
 };
 
@@ -162,13 +176,14 @@ const SelectTableView: React.SFC<ISelectTable> = ({ source, classes, updateTable
         <h2>{activeTable} - preview</h2>
         <div>{data.columns.length} columns</div>
         <div>
-          <table className="table">
-            <thead>
+          <table className="table table-bordered">
+            <thead className={classes.thead}>
               <tr>
                 {data.columns.map((header) => {
                   return (
                     <th key={header.name}>
-                      {header.name} ({header.type})
+                      <span className={classes.type}>{header.type}</span>
+                      <span className={classes.tableName}>{header.name}</span>
                     </th>
                   );
                 })}
