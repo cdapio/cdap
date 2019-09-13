@@ -66,7 +66,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     String artifactName = PreviewTestApp.class.getSimpleName();
     String artifactVersion = "1.0.0-SNAPSHOT";
 
-    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0);
+    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0, false);
     URL url = getRouterBaseURI().resolve(String.format("/v3/namespaces/default/artifacts/%s", artifactName)).toURL();
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(url)

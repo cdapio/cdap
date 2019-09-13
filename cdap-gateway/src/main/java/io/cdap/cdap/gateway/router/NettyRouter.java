@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -25,6 +26,8 @@ import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
 import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
 import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
@@ -57,6 +60,8 @@ import java.io.File;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +76,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NettyRouter extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouter.class);
 
+  private final CConfiguration cConf;
+  private final SConfiguration sConf;
   private final int serverBossThreadPoolSize;
   private final int serverWorkerThreadPoolSize;
   private final int serverConnectionBacklog;
@@ -80,9 +87,7 @@ public class NettyRouter extends AbstractIdleService {
   private final boolean securityEnabled;
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
-  private final CConfiguration cConf;
   private final boolean sslEnabled;
-  private final SSLHandlerFactory sslHandlerFactory;
   private InetSocketAddress boundAddress;
 
   private DiscoveryServiceClient discoveryServiceClient;
@@ -94,6 +99,7 @@ public class NettyRouter extends AbstractIdleService {
                      AccessTokenTransformer accessTokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
+    this.sConf = sConf;
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS);
     this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS);
     this.serverConnectionBacklog = cConf.getInt(Constants.Router.BACKLOG_CONNECTIONS);
@@ -104,25 +110,9 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
-    if (sslEnabled) {
-      this.port = cConf.getInt(Constants.Router.ROUTER_SSL_PORT);
-      File keystore;
-      try {
-        keystore = new File(sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
-      } catch (Throwable e) {
-        throw new RuntimeException("SSL is enabled but the keystore file could not be read. Please verify that the " +
-                                     "keystore file exists and the path is set correctly : "
-                                     + sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
-      }
-      SSLConfig sslConfig = SSLConfig.builder(keystore, sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD))
-        .setCertificatePassword(sConf.get(Constants.Security.Router.SSL_KEYPASSWORD))
-        .build();
-
-      this.sslHandlerFactory = new SSLHandlerFactory(sslConfig);
-    } else {
-      this.port = cConf.getInt(Constants.Router.ROUTER_PORT);
-      this.sslHandlerFactory = null;
-    }
+    this.port = sslEnabled
+      ? cConf.getInt(Constants.Router.ROUTER_SSL_PORT)
+      : cConf.getInt(Constants.Router.ROUTER_PORT);
   }
 
   /**
@@ -151,7 +141,6 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopped Netty Router.");
   }
 
-  /** @noinspection NullableProblems */
   @Override
   protected Executor executor(final State state) {
     final AtomicInteger id = new AtomicInteger();
@@ -170,6 +159,33 @@ public class NettyRouter extends AbstractIdleService {
     EventLoopGroup bossGroup = createEventLoopGroup(serverBossThreadPoolSize, "router-server-boss-thread-%d");
     EventLoopGroup workerGroup = createEventLoopGroup(serverWorkerThreadPoolSize, "router-server-worker-thread-%d");
 
+    SSLHandlerFactory sslHandlerFactory = null;
+    if (sslEnabled) {
+      // We support both JKS keystore format and PEM cert file.
+      String keyStorePath = sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH);
+      String certFilePath = cConf.get(Constants.Security.Router.SSL_CERT_PATH);
+
+      if (!Strings.isNullOrEmpty(keyStorePath)) {
+        SSLConfig sslConfig = SSLConfig
+          .builder(new File(keyStorePath), sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD))
+          .setCertificatePassword(sConf.get(Constants.Security.Router.SSL_KEYPASSWORD))
+          .build();
+        sslHandlerFactory = new SSLHandlerFactory(sslConfig);
+      } else if (!Strings.isNullOrEmpty(certFilePath)) {
+        String password = sConf.get(Constants.Security.Router.SSL_CERT_PASSWORD, "");
+        KeyStore keyStore = KeyStores.createKeyStore(Paths.get(certFilePath), password);
+        sslHandlerFactory = new HttpsEnabler().setKeyStore(keyStore, password::toCharArray).createSSLHandlerFactory();
+      }
+
+      if (sslHandlerFactory == null) {
+        throw new RuntimeException("SSL is enabled but there is no keystore file nor certificate file being " +
+                                     "configured. Please ensure either '" + Constants.Security.Router.SSL_KEYSTORE_PATH
+                                     + "' is set in cdap-security.xml or '" + Constants.Security.Router.SSL_CERT_PATH
+                                     + "' is set in cdap-site.xml file.");
+      }
+    }
+
+    SSLHandlerFactory finalSSLHandlerFactory = sslHandlerFactory;
     return new ServerBootstrap()
       .group(bossGroup, workerGroup)
       .channel(NioServerSocketChannel.class)
@@ -179,8 +195,8 @@ public class NettyRouter extends AbstractIdleService {
         protected void initChannel(SocketChannel ch) {
           channelGroup.add(ch);
           ChannelPipeline pipeline = ch.pipeline();
-          if (sslEnabled) {
-            pipeline.addLast("ssl", sslHandlerFactory.create(ch.alloc()));
+          if (finalSSLHandlerFactory != null) {
+            pipeline.addLast("ssl", finalSSLHandlerFactory.create(ch.alloc()));
           }
           pipeline.addLast("http-codec", new HttpServerCodec());
           pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
@@ -210,7 +226,7 @@ public class NettyRouter extends AbstractIdleService {
       Channel channel = serverBootstrap.bind(bindAddress).sync().channel();
       channelGroup.add(channel);
       boundAddress = (InetSocketAddress) channel.localAddress();
-      LOG.info("Started Netty Router for service {} on address {}.", boundAddress);
+      LOG.info("Started Netty Router on address {}.", boundAddress);
     } catch (Exception e) {
       if ((Throwables.getRootCause(e) instanceof BindException)) {
         throw new ServiceBindException("Router", hostname.getCanonicalHostName(), port, e);

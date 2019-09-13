@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.security;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -62,10 +63,10 @@ public final class HttpsEnabler {
   public synchronized HttpsEnabler configureKeyStore(CConfiguration cConf, SConfiguration sConf) {
     String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
 
-    String password = path == null
+    String password = Strings.isNullOrEmpty(path)
       ? KeyStores.generateRandomPassword()
       : sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, "");
-    KeyStore keyStore = path == null
+    KeyStore keyStore = Strings.isNullOrEmpty(path)
       ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
       : KeyStores.createKeyStore(Paths.get(path), password);
 
@@ -83,7 +84,7 @@ public final class HttpsEnabler {
    */
   public synchronized HttpsEnabler configureTrustStore(CConfiguration cConf, SConfiguration sConf) {
     String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
-    if (path == null) {
+    if (Strings.isNullOrEmpty(path)) {
       return this;
     }
 
@@ -173,25 +174,34 @@ public final class HttpsEnabler {
    * @throws RuntimeException if failed to enable HTTPS
    */
   public <T extends NettyHttpService.Builder> T enable(T builder) {
+    builder.enableSSL(createSSLHandlerFactory());
+    return builder;
+  }
+
+  /**
+   * Returns a {@link SSLHandlerFactory} based on the configuration in this class.
+   *
+   * @throws IllegalArgumentException if no keystore is configured
+   * @throws RuntimeException if failed to create {@link SSLHandlerFactory}.
+   */
+  public SSLHandlerFactory createSSLHandlerFactory() {
+    KeyManagerFactory kmf = keyManagerFactory;
+    if (kmf == null) {
+      throw new IllegalArgumentException("Missing keystore to create SslContext for netty http server.");
+    }
+
+    // Initialize the SslContext to work with our key managers.
+    SslContextBuilder contextBuilder = SslContextBuilder.forServer(kmf);
+    TrustManagerFactory tmf = this.trustManagerFactory;
+    boolean hasTrustManager = tmf != null && tmf != InsecureTrustManagerFactory.INSTANCE;
+    if (hasTrustManager) {
+      contextBuilder.trustManager(tmf);
+    }
+
     try {
-      KeyManagerFactory kmf = keyManagerFactory;
-      if (kmf == null) {
-        throw new IllegalArgumentException("Missing keystore to enable HTTPS for NettyHttpService");
-      }
-
-      // Initialize the SslContext to work with our key managers.
-      SslContextBuilder contextBuilder = SslContextBuilder.forServer(kmf);
-      TrustManagerFactory tmf = this.trustManagerFactory;
-      boolean hasTrustManager = tmf != null && tmf != InsecureTrustManagerFactory.INSTANCE;
-      if (hasTrustManager) {
-        contextBuilder = contextBuilder.trustManager(tmf);
-      }
-
-      builder.enableSSL(new CustomSSLHandlerFactory(contextBuilder.build(), hasTrustManager));
-
-      return builder;
+      return new CustomSSLHandlerFactory(contextBuilder.build(), hasTrustManager);
     } catch (SSLException e) {
-      throw new RuntimeException("Failed to enable HTTPS for NettyHttpService", e);
+      throw new RuntimeException("Failed to create SSLHandlerFactory.", e);
     }
   }
 

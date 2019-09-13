@@ -58,7 +58,7 @@ public class AppFabricServiceMainTest extends MasterServiceMainTestBase {
 
     URI baseURI = getRouterBaseURI().resolve("/v3/namespaces/default/");
     url = baseURI.resolve("apps").toURL();
-    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0);
+    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0, false);
     response = HttpRequests.execute(
       HttpRequest
         .post(url)

@@ -116,7 +116,7 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
 
     URI baseURI = getRouterBaseURI().resolve("v3/namespaces/default/");
     // deploy app artifact
-    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0);
+    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0, false);
     URL url = baseURI.resolve(String.format("artifacts/%s", appArtifactName)).toURL();
     HttpResponse response = HttpRequests.execute(
       HttpRequest
