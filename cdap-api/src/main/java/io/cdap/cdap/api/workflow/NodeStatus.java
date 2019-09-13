@@ -23,5 +23,12 @@ public enum NodeStatus {
   RUNNING,
   COMPLETED,
   FAILED,
-  KILLED
+  KILLED;
+
+  /**
+   * Returns {@code true} if the status is an end status for an execution.
+   */
+  public boolean isEndState() {
+    return this == COMPLETED || this == FAILED || this == KILLED;
+  }
 }

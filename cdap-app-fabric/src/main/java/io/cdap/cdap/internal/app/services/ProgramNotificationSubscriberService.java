@@ -23,6 +23,11 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -46,6 +51,9 @@ import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.WorkflowNodeStateDetail;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -90,6 +98,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     ProgramRunStatus.KILLED, Constants.Metrics.Program.PROGRAM_KILLED_RUNS,
     ProgramRunStatus.FAILED, Constants.Metrics.Program.PROGRAM_FAILED_RUNS,
     ProgramRunStatus.REJECTED, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS
+  );
+  private static final Map<SchedulableProgramType, ProgramType> WORKFLOW_INNER_PROGRAM_TYPES = ImmutableMap.of(
+    SchedulableProgramType.MAPREDUCE, ProgramType.MAPREDUCE,
+    SchedulableProgramType.SPARK, ProgramType.SPARK
   );
 
   private final String recordedProgramStatusPublishTopic;
@@ -219,7 +231,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     List<Runnable> result = new ArrayList<>();
     if (programRunStatus != null) {
       handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
-                         appMetadataStore, programHeartbeatTable).ifPresent(result::add);
+                         appMetadataStore, programHeartbeatTable, result);
     }
     if (clusterStatus == null) {
       return result;
@@ -230,16 +242,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     return result;
   }
 
-  private Optional<Runnable> handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
-                                                Notification notification, byte[] messageIdBytes,
-                                                AppMetadataStore appMetadataStore,
-                                                ProgramHeartbeatTable programHeartbeatTable) throws Exception {
+  private void handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
+                                  Notification notification, byte[] messageIdBytes,
+                                  AppMetadataStore appMetadataStore,
+                                  ProgramHeartbeatTable programHeartbeatTable,
+                                  List<Runnable> runnables) throws Exception {
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
     RunRecordMeta recordedRunRecord;
-    Optional<Runnable> runnable = Optional.empty();
     switch (programRunStatus) {
       case STARTING:
         String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
@@ -270,7 +282,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         if (logicalStartTimeSecs == -1) {
           LOG.warn("Ignore program running notification for program {} without {} specified, {}",
                    programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
-          return Optional.empty();
+          return;
         }
         recordedRunRecord =
           appMetadataStore.recordProgramRunning(programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
@@ -295,12 +307,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       case COMPLETED:
       case KILLED:
       case FAILED:
-        Optional<RunRecordMeta> optionalRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
-                                                                         programRunId, programRunStatus, notification,
-                                                                         messageIdBytes);
-        runnable = optionalRecord.flatMap(r -> getEmitMetricsRunnable(programRunId, r,
-                                                                      STATUS_METRICS_NAME.get(programRunStatus)));
-        recordedRunRecord = optionalRecord.orElse(null);
+        recordedRunRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
+                                                    programRunId, programRunStatus, notification,
+                                                    messageIdBytes, runnables);
         break;
       case REJECTED:
         ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
@@ -312,15 +321,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord,
                               RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
                               programHeartbeatTable);
-        if (recordedRunRecord != null) {
-          runnable = getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                                            Constants.Metrics.Program.PROGRAM_REJECTED_RUNS);
-        }
+        getEmitMetricsRunnable(programRunId, recordedRunRecord,
+                               Constants.Metrics.Program.PROGRAM_REJECTED_RUNS).ifPresent(runnables::add);
         break;
       default:
         // This should not happen
         LOG.error("Unsupported program status {} for program {}, {}", programRunStatus, programRunId, notification);
-        return Optional.empty();
+        return;
     }
 
     if (recordedRunRecord != null) {
@@ -345,7 +352,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         }
       }
     }
-    return runnable;
   }
 
   /**
@@ -357,30 +363,102 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * @param programRunStatus the status of the completion
    * @param notification the {@link Notification} that carries information about the program completion
    * @param sourceId the source message id of the notification
-   * @return an {@link Optional} {@link RunRecordMeta} that carries the result of updates to {@link AppMetadataStore}
-   * @throws IOException if failed to update program status
+   * @param runnables a {@link List} adding {@link Runnable} to be executed after event handling is completed
+   * @return a {@link RunRecordMeta} that carries the result of updates to {@link AppMetadataStore}. If there
+   *         is no update, {@code null} will be returned
+   * @throws Exception if failed to update program status
    */
-  private Optional<RunRecordMeta> handleProgramCompletion(AppMetadataStore appMetadataStore,
-                                                          ProgramHeartbeatTable programHeartbeatTable,
-                                                          ProgramRunId programRunId,
-                                                          ProgramRunStatus programRunStatus,
-                                                          Notification notification,
-                                                          byte[] sourceId) throws IOException {
+  @Nullable
+  private RunRecordMeta handleProgramCompletion(AppMetadataStore appMetadataStore,
+                                                ProgramHeartbeatTable programHeartbeatTable,
+                                                ProgramRunId programRunId,
+                                                ProgramRunStatus programRunStatus,
+                                                Notification notification,
+                                                byte[] sourceId,
+                                                List<Runnable> runnables) throws Exception {
     Map<String, String> properties = notification.getProperties();
 
     long endTimeSecs = getTimeSeconds(properties, ProgramOptionConstants.END_TIME);
     if (endTimeSecs == -1) {
       LOG.warn("Ignore program {} notification for program {} without end time specified, {}",
                programRunStatus.name().toLowerCase(), programRunId, notification);
-      return Optional.empty();
+      return null;
     }
 
     BasicThrowable failureCause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+
+    // If it is a workflow, process the inner program states first
+    // We expect all inner program states has been received already before receiving the workflow state.
+    // If there is any states missing, it will be handled here.
+    if (programRunId.getType() == ProgramType.WORKFLOW) {
+      processWorkflowOnStop(appMetadataStore, programHeartbeatTable, programRunId,
+                            programRunStatus, notification, sourceId, runnables);
+    }
+
     RunRecordMeta recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
                                                                          failureCause, sourceId);
     writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
 
-    return Optional.ofNullable(recordedRunRecord);
+    getEmitMetricsRunnable(programRunId, recordedRunRecord,
+                           STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+    return recordedRunRecord;
+  }
+
+  /**
+   * On workflow program stop, inspects inner program states and adjust them if they are not in end state already.
+   *
+   * @param appMetadataStore the {@link AppMetadataStore} to write the status to
+   * @param programHeartbeatTable the {@link ProgramHeartbeatTable} to write the status to
+   * @param programRunId the program run of the completed program
+   * @param programRunStatus the status of the completion
+   * @param notification the {@link Notification} that carries information about the workflow completion
+   * @param sourceId the source message id of the notification
+   * @param runnables a {@link List} adding {@link Runnable} to be executed after event handling is completed
+   * @throws Exception if failed to update program status
+   */
+  private void processWorkflowOnStop(AppMetadataStore appMetadataStore,
+                                     ProgramHeartbeatTable programHeartbeatTable,
+                                     ProgramRunId programRunId,
+                                     ProgramRunStatus programRunStatus,
+                                     Notification notification,
+                                     byte[] sourceId, List<Runnable> runnables) throws Exception {
+    ApplicationId appId = programRunId.getParent().getParent();
+    WorkflowSpecification workflowSpec = Optional.ofNullable(appMetadataStore.getApplication(appId))
+      .map(appMeta -> appMeta.getSpec().getWorkflows().get(programRunId.getProgram()))
+      .orElse(null);
+
+    // If cannot find the workflow spec (e.g. app deleted), then there is nothing we can do.
+    if (workflowSpec == null) {
+      return;
+    }
+
+    // Loop over workflow node states and alter program states that are not in end state
+    // We can do this because under normal operation, all inner program should be completed before the workflow
+    // and the message ordering should preserve that.
+    for (WorkflowNodeStateDetail nodeState : appMetadataStore.getWorkflowNodeStates(programRunId)) {
+      WorkflowNode workflowNode = workflowSpec.getNodeIdMap().get(nodeState.getNodeId());
+      if (!(workflowNode instanceof WorkflowActionNode)) {
+        continue;
+      }
+
+      // For MR and Spark, we need to update the states if they are not in end state yet.
+      ScheduleProgramInfo programInfo = ((WorkflowActionNode) workflowNode).getProgram();
+      if (!WORKFLOW_INNER_PROGRAM_TYPES.containsKey(programInfo.getProgramType())
+        || nodeState.getNodeStatus().isEndState()) {
+        continue;
+      }
+      ProgramRunId innerProgramRunId = appId
+        .program(WORKFLOW_INNER_PROGRAM_TYPES.get(programInfo.getProgramType()), programInfo.getProgramName())
+        .run(nodeState.getRunId());
+
+      Map<String, String> notificationProps = new HashMap<>(notification.getProperties());
+      notificationProps.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(innerProgramRunId));
+
+      Notification innerNotification = new Notification(Notification.Type.PROGRAM_STATUS, notificationProps);
+
+      handleProgramEvent(innerProgramRunId, programRunStatus, innerNotification,
+                         sourceId, appMetadataStore, programHeartbeatTable, runnables);
+    }
   }
 
   /**
@@ -393,6 +471,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       programHeartbeatTable.writeRunRecordMeta(recordedRunRecord, timestampInSeconds);
     }
   }
+
+
 
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
@@ -465,8 +545,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     return Optional.empty();
   }
 
-  private Optional<Runnable> getEmitMetricsRunnable(ProgramRunId programRunId, RunRecordMeta recordedRunRecord,
+  private Optional<Runnable> getEmitMetricsRunnable(ProgramRunId programRunId,
+                                                    @Nullable RunRecordMeta recordedRunRecord,
                                                     String metricName) {
+    if (recordedRunRecord == null) {
+      return Optional.empty();
+    }
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
                                                                        recordedRunRecord.getSystemArgs());
     return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName));
