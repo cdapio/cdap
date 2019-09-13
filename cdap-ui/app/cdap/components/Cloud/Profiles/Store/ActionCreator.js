@@ -498,24 +498,41 @@ export const getDefaultProfile = (namespace) => {
 };
 
 export const setDefaultProfile = (namespace, profileName) => {
-  let postBody = {
-    [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY]: profileName,
-  };
-
-  let preferenceApi;
-
-  if (namespace === SYSTEM_NAMESPACE) {
-    preferenceApi = MyPreferenceApi.setSystemPreferences({}, postBody);
-  } else {
-    preferenceApi = MyPreferenceApi.setNamespacePreferences({ namespace }, postBody);
-  }
-
-  preferenceApi.subscribe(() => {
+  function successCallback() {
     ProfilesStore.dispatch({
       type: PROFILES_ACTIONS.SET_DEFAULT_PROFILE,
       payload: { defaultProfile: profileName },
     });
-  }, setError);
+  }
+
+  function createPostBody(existingPreferences = {}) {
+    const postBody = {
+      [CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY]: profileName,
+    };
+
+    return {
+      ...existingPreferences,
+      ...postBody,
+    };
+  }
+
+  if (namespace === SYSTEM_NAMESPACE) {
+    MyPreferenceApi.getSystemPreferences().subscribe((preferences = {}) => {
+      MyPreferenceApi.setSystemPreferences({}, createPostBody(preferences)).subscribe(
+        successCallback,
+        setError
+      );
+    }, setError);
+  } else {
+    const params = { namespace };
+
+    MyPreferenceApi.getNamespacePreferences(params).subscribe((preferences = {}) => {
+      MyPreferenceApi.setNamespacePreferences(params, createPostBody(preferences)).subscribe(
+        successCallback,
+        setError
+      );
+    });
+  }
 };
 
 export const highlightNewProfile = (profileName) => {
