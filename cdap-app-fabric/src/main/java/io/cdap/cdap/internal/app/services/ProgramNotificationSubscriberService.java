@@ -85,6 +85,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final String CDAP_VERSION = "cdap.version";
+  private static final Map<ProgramRunStatus, String> STATUS_METRICS_NAME = ImmutableMap.of(
+    ProgramRunStatus.COMPLETED, Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS,
+    ProgramRunStatus.KILLED, Constants.Metrics.Program.PROGRAM_KILLED_RUNS,
+    ProgramRunStatus.FAILED, Constants.Metrics.Program.PROGRAM_FAILED_RUNS,
+    ProgramRunStatus.REJECTED, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS
+  );
 
   private final String recordedProgramStatusPublishTopic;
   private final ProvisionerNotifier provisionerNotifier;
@@ -231,7 +237,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     LOG.trace("Processing program status notification: {}", notification);
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
-    long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
     RunRecordMeta recordedRunRecord;
     Optional<Runnable> runnable = Optional.empty();
@@ -288,47 +293,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
         break;
       case COMPLETED:
-        if (endTimeSecs == -1) {
-          LOG.warn("Ignore program completed notification for program {} without end time specified, {}",
-                   programRunId, notification);
-          return Optional.empty();
-        }
-        recordedRunRecord =
-          appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, null, messageIdBytes);
-        writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
-        if (recordedRunRecord != null) {
-          runnable = getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                                            Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS);
-        }
-        break;
       case KILLED:
-        if (endTimeSecs == -1) {
-          LOG.warn("Ignore program killed notification for program {} without end time specified, {}",
-                   programRunId, notification);
-          return Optional.empty();
-        }
-        recordedRunRecord =
-          appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, null, messageIdBytes);
-        writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
-        if (recordedRunRecord != null) {
-          runnable = getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                                            Constants.Metrics.Program.PROGRAM_KILLED_RUNS);
-        }
-        break;
       case FAILED:
-        if (endTimeSecs == -1) {
-          LOG.warn("Ignore program failed notification for program {} without end time specified, {}",
-                   programRunId, notification);
-          return Optional.empty();
-        }
-        BasicThrowable cause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
-        recordedRunRecord =
-          appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus, cause, messageIdBytes);
-        writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
-        if (recordedRunRecord != null) {
-          runnable = getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                                            Constants.Metrics.Program.PROGRAM_FAILED_RUNS);
-        }
+        Optional<RunRecordMeta> optionalRecord = handleProgramCompletion(appMetadataStore, programHeartbeatTable,
+                                                                         programRunId, programRunStatus, notification,
+                                                                         messageIdBytes);
+        runnable = optionalRecord.flatMap(r -> getEmitMetricsRunnable(programRunId, r,
+                                                                      STATUS_METRICS_NAME.get(programRunStatus)));
+        recordedRunRecord = optionalRecord.orElse(null);
         break;
       case REJECTED:
         ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
@@ -369,12 +341,46 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
           appMetadataStore.recordProgramDeprovisioned(programRunId, null, messageIdBytes);
         } else {
-          // TODO: CDAP-13295 remove once runtime monitor emits this message
           provisionerNotifier.deprovisioning(programRunId);
         }
       }
     }
     return runnable;
+  }
+
+  /**
+   * Handles a program completion notification.
+   *
+   * @param appMetadataStore the {@link AppMetadataStore} to write the status to
+   * @param programHeartbeatTable the {@link ProgramHeartbeatTable} to write the status to
+   * @param programRunId the program run of the completed program
+   * @param programRunStatus the status of the completion
+   * @param notification the {@link Notification} that carries information about the program completion
+   * @param sourceId the source message id of the notification
+   * @return an {@link Optional} {@link RunRecordMeta} that carries the result of updates to {@link AppMetadataStore}
+   * @throws IOException if failed to update program status
+   */
+  private Optional<RunRecordMeta> handleProgramCompletion(AppMetadataStore appMetadataStore,
+                                                          ProgramHeartbeatTable programHeartbeatTable,
+                                                          ProgramRunId programRunId,
+                                                          ProgramRunStatus programRunStatus,
+                                                          Notification notification,
+                                                          byte[] sourceId) throws IOException {
+    Map<String, String> properties = notification.getProperties();
+
+    long endTimeSecs = getTimeSeconds(properties, ProgramOptionConstants.END_TIME);
+    if (endTimeSecs == -1) {
+      LOG.warn("Ignore program {} notification for program {} without end time specified, {}",
+               programRunStatus.name().toLowerCase(), programRunId, notification);
+      return Optional.empty();
+    }
+
+    BasicThrowable failureCause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+    RunRecordMeta recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
+                                                                         failureCause, sourceId);
+    writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
+
+    return Optional.ofNullable(recordedRunRecord);
   }
 
   /**
@@ -471,7 +477,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
     String debugString = properties.get(ProgramOptionConstants.DEBUG_ENABLED);
 
-    Boolean debug = Boolean.valueOf(debugString);
+    boolean debug = Boolean.parseBoolean(debugString);
     Map<String, String> userArguments = userArgumentsString == null ?
       Collections.emptyMap() : GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
     Map<String, String> systemArguments = systemArgumentsString == null ?

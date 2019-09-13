@@ -140,6 +140,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    *
    * @param e the exception which exhausted retries
    * @return the number of milliseconds to delay until the next iteration of the {@link #runTask} method.
+   * @throws Exception if decided to terminate the retry
    */
   protected long handleRetriesExhausted(Exception e) throws Exception {
     throw e;
