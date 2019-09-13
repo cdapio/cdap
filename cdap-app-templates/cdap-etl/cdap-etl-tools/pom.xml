@@ -87,6 +87,16 @@
                     <include>**</include>
                   </includes>
                 </filter>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/license/*</exclude>
+                    <excludes>META-INF/*.SF</excludes>
+                    <excludes>META-INF/*.DSA</excludes>
+                    <excludes>META-INF/*.RSA</excludes>
+                  </excludes>
+                </filter>
               </filters>
             </configuration>
             <goals>
