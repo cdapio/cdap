@@ -27,7 +27,9 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
+import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.etl.api.Engine;
@@ -38,6 +40,7 @@ import io.cdap.cdap.etl.batch.BatchPipelineSpecGenerator;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
@@ -55,6 +58,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -63,7 +67,7 @@ import javax.ws.rs.PathParam;
 /**
  * Handles validation logic for pipelines.
  */
-public class ValidationHandler extends AbstractHttpServiceHandler {
+public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -114,8 +118,21 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
     DefaultPipelineConfigurer pipelineConfigurer =
       new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
 
+    // evaluate secure macros
+    MacroEvaluator macroEvaluator = new SecureStoreMacroEvaluator(namespace, getContext());
+    Map<String, String> evaluatedProperties = getContext()
+      .evaluateMacros(namespace, stageConfig.getPlugin().getProperties(), macroEvaluator,
+                      MacroParserOptions.builder()
+                        .skipInvalidMacros()
+                        .setEscaping(false)
+                        .setFunctionWhitelist("secure")
+                        .build());
+    ETLPlugin originalConfig = stageConfig.getPlugin();
+    ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),
+                                              evaluatedProperties, originalConfig.getArtifactConfig());
+
     try {
-      StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), stageConfig.getPlugin(),
+      StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), evaluatedConfig,
                                                             pipelineConfigurer).build();
       responder.sendString(GSON.toJson(new StageValidationResponse(spec)));
     } catch (ValidationException e) {

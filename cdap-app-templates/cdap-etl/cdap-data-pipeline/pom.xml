@@ -56,6 +56,12 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-system-app-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
       <version>${project.version}</version>
     </dependency>

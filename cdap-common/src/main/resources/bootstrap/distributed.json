@@ -18,7 +18,7 @@
     {
       "label": "Create pipeline application",
       "type": "CREATE_APPLICATION",
-      "runCondition": "ONCE",
+      "runCondition": "ALWAYS",
       "arguments": {
         "namespace": "system",
         "name": "pipeline",
@@ -29,13 +29,14 @@
         },
         "config": {
           "service": true
-        }
+        },
+        "overwrite": true
       }
     },
     {
       "label": "Start pipeline service",
       "type": "START_PROGRAM",
-      "runCondition": "ONCE",
+      "runCondition": "ALWAYS",
       "arguments": {
         "namespace": "system",
         "application": "pipeline",

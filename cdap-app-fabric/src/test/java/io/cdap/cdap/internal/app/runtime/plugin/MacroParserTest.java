@@ -20,6 +20,7 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -492,7 +493,7 @@ public class MacroParserTest {
   public void testNoEscape() {
     MacroEvaluator evaluator = new TestMacroEvaluator(ImmutableMap.of("\\a\\b\\c\\", "123", "x", "xyz"),
                                                       ImmutableMap.of("xyz", "321"));
-    MacroParser parser = MacroParser.builder(evaluator).disableEscaping().build();
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().setEscaping(false).build());
     Assert.assertEquals("123", parser.parse("${\\a\\b\\c\\}"));
     Assert.assertEquals("321", parser.parse("${test(${x})}"));
     Assert.assertEquals("\\321", parser.parse("\\${test(xyz)}"));
@@ -501,39 +502,48 @@ public class MacroParserTest {
   @Test
   public void testDisableLookups() {
     MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap());
-    MacroParser parser = MacroParser.builder(evaluator).disableLookups().build();
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().disableLookups().build());
     Assert.assertEquals("${key}", parser.parse("${key}"));
   }
 
   @Test
   public void testDisableFunctions() {
     MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap());
-    MacroParser parser = MacroParser.builder(evaluator).disableFunctions().build();
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().disableFunctions().build());
     Assert.assertEquals("${test(key)}", parser.parse("${test(key)}"));
   }
 
   @Test
   public void testFunctionWhitelist() {
     MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), ImmutableMap.of("key", "val"));
-    MacroParser parser = MacroParser.builder(evaluator).whitelistFunctions("t").build();
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().setFunctionWhitelist("t").build());
     // $t(key) should get evaluated, but $test(key) should get skipped.
     Assert.assertEquals("${test(key)}val", parser.parse("${test(key)}${t(key)}"));
     Assert.assertEquals("val${test(key)}", parser.parse("${t(key)}${test(key)}"));
     Assert.assertEquals("${test(val)}", parser.parse("${test(${t(key)})}"));
   }
 
+  @Test
+  public void testSkipInvalidMacros() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap());
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().skipInvalidMacros().build());
+    Assert.assertEquals("${k1}", parser.parse("${k1}"));
+    Assert.assertEquals("${test(key)}", parser.parse("${test(key)}"));
+    Assert.assertEquals("abc${123}", parser.parse("abc${123}"));
+  }
+
   // Testing util methods
 
   private static void assertContainsMacroParsing(String macro, boolean expected) {
     TrackingMacroEvaluator trackingMacroEvaluator = new TrackingMacroEvaluator();
-    MacroParser.builder(trackingMacroEvaluator).build().parse(macro);
+    new MacroParser(trackingMacroEvaluator).parse(macro);
     Assert.assertEquals(trackingMacroEvaluator.hasMacro(), expected);
   }
 
   private static void assertSubstitution(String macro, String expected, Map<String, String> propertySubstitutions,
                                          Map<String, String> macroFunctionSubstitutions) {
     MacroEvaluator macroEvaluator = new TestMacroEvaluator(propertySubstitutions, macroFunctionSubstitutions);
-    MacroParser macroParser = MacroParser.builder(macroEvaluator).build();
+    MacroParser macroParser = new MacroParser(macroEvaluator);
     Assert.assertEquals(expected, macroParser.parse(macro));
   }
 }

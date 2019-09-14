@@ -17,12 +17,12 @@
 
 package io.cdap.cdap.datapipeline.service;
 
-import io.cdap.cdap.api.service.AbstractService;
+import io.cdap.cdap.api.service.AbstractSystemService;
 
 /**
  * Service that handles pipeline studio operations, like validation and schema propagation.
  */
-public class StudioService extends AbstractService {
+public class StudioService extends AbstractSystemService {
   public static final String NAME = "studio";
 
   @Override
