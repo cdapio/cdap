@@ -151,7 +151,10 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     });
   }
 
-  private drawLinks(allLinks: ILinkSet, activeField: IField = null) {
+  private drawLinks = () => {
+    const allLinks = this.context.links;
+    const activeField = this.context.activeField;
+
     const activeFieldId = activeField ? activeField.id : undefined;
     const comboLinks = allLinks.incoming.concat(allLinks.outgoing);
     if (comboLinks.length === 0) {
@@ -163,10 +166,12 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       const isSelected = link.source.id === activeFieldId || link.destination.id === activeFieldId;
       this.drawLineFromLink(link, isSelected);
     });
-  }
+  };
+
+  private debounceRedrawLinks = debounce(this.drawLinks, 200);
 
   public componentDidUpdate() {
-    const { showingOneField, links, activeLinks, activeField } = this.context;
+    const { showingOneField, activeLinks, activeField } = this.context;
 
     // if user has just clicked "View Cause and Impact"
     if (showingOneField) {
@@ -179,18 +184,16 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       d3.select(`#${activeField.id}`).classed('selected', true);
     }
     this.clearCanvas();
-    this.drawLinks(links, activeField);
+    this.drawLinks();
   }
 
   public componentWillUnmount() {
-    window.removeEventListener('resize', debounce(this.drawLinks.bind(this), 1));
+    window.removeEventListener('resize', this.debounceRedrawLinks);
   }
 
   public componentDidMount() {
-    const { links, activeField } = this.context;
-
-    this.drawLinks(links, activeField);
-    window.addEventListener('resize', debounce(this.drawLinks.bind(this, links, activeField), 1));
+    this.drawLinks();
+    window.addEventListener('resize', this.debounceRedrawLinks);
   }
   public render() {
     return (

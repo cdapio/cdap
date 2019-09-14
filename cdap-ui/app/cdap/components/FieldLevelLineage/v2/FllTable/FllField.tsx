@@ -44,9 +44,10 @@ const styles = (theme): StyleRules => {
     },
     hoverText: {
       color: theme.palette.blue[200],
+      paddingLeft: '30px',
     },
     targetView: {
-      paddingLeft: '35px',
+      paddingLeft: '55px',
       color: theme.palette.blue[200],
     },
   };

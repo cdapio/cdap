@@ -28,7 +28,7 @@ import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Conte
 const styles = (theme) => {
   return createStyles({
     table: {
-      width: '170px',
+      width: '225px',
       border: `1px solid ${theme.palette.grey[300]}`,
       fontSize: '0.92rem',
       marginBottom: '10px',
@@ -80,18 +80,20 @@ interface ITableProps extends WithStyles<typeof styles> {
   type?: string;
 }
 
-function renderGridHeader(fields: IField[], showingOneField: boolean, classes) {
+function renderGridHeader(fields: IField[], isTarget: boolean, classes) {
   const count: number = fields.length;
   const tableName = fields[0].dataset;
   return (
     <div className={classes.tableHeader}>
       <div>{tableName}</div>
       <div className={classes.tableSubheader}>
-        {showingOneField
-          ? T.translate('features.FieldLevelLineage.v2.FllTable.relatedFieldsCount', {
+        {isTarget
+          ? T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', {
               context: count,
             })
-          : T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', { context: count })}
+          : T.translate('features.FieldLevelLineage.v2.FllTable.relatedFieldsCount', {
+              context: count,
+            })}
       </div>
     </div>
   );
@@ -114,7 +116,7 @@ function renderGridBody(fields: IField[], tableName: string, classes) {
 
 function FllTable({ tableId, fields, type, classes }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
-  const { showingOneField, target } = useContext<IContextState>(FllContext);
+  const { target } = useContext<IContextState>(FllContext);
   const isTarget = type === 'target';
 
   if (!fields || fields.length === 0) {
@@ -131,7 +133,7 @@ function FllTable({ tableId, fields, type, classes }: ITableProps) {
       entities={fields}
       gridHeaders={GRID_HEADERS}
       className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-      renderGridHeader={renderGridHeader.bind(null, fields, showingOneField, classes)}
+      renderGridHeader={renderGridHeader.bind(null, fields, isTarget, classes)}
       renderGridBody={renderGridBody.bind(this, fields, tableId, classes)}
     />
   );
