@@ -127,6 +127,18 @@ export default class DatasetDetailedView extends Component {
         .subscribe(
           (res) => {
             let appId;
+            // TO DO: Remove this check once backend properly returns a 404 error when dataset does not exist
+            // JIRA to fix backend: CDAP-15909
+            const datasetProps = res[0].properties; // all metadata properties with System scope
+
+            if (datasetProps.length === 0) {
+              this.setState({
+                notFound: true,
+                loading: false,
+              });
+              return;
+            }
+
             let programs = res[1].map((programObj) => {
               programObj.uniqueId = uuidV4();
               appId = programObj.application;
