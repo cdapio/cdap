@@ -2751,7 +2751,7 @@ features:
       success: You have successfully uploaded the driver "{artifactName}".
       subtitle: You can now create a pipeline to extract data from database using the driver.
     DirectiveUpload:
-      callToAction: Go to preparation
+      callToAction: Go to Wrangler
       footertitle: Upload directive artifact
       Step1:
         description: Upload your directive JAR file.
