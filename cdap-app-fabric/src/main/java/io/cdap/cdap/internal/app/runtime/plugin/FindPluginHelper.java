@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
@@ -61,9 +62,10 @@ public final class FindPluginHelper {
                                   "Required property '%s' missing for plugin of type %s, name %s.",
                                   field.getName(), pluginType, pluginName);
       if (field.isMacroSupported()) {
-        MacroParser parser = MacroParser.builder(collectMacroEvaluator)
-          .setEscapingEnabled(field.isMacroEscapingEnabled())
-          .build();
+        MacroParser parser = new MacroParser(collectMacroEvaluator,
+                                             MacroParserOptions.builder()
+                                               .setEscaping(field.isMacroEscapingEnabled())
+                                               .build());
         parser.parse(properties.getProperties().get(field.getName()));
       }
     }

@@ -21,6 +21,7 @@ import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
@@ -237,10 +238,9 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
 
   @Override
   public Map<String, String> evaluateMacros(String namespace, Map<String, String> macros,
-                                            MacroEvaluator evaluator) throws InvalidMacroException {
-    MacroParser macroParser = MacroParser.builder(evaluator)
-      .whitelistFunctions(SECURE_FUNCTION)
-      .build();
+                                            MacroEvaluator evaluator,
+                                            MacroParserOptions options) throws InvalidMacroException {
+    MacroParser macroParser = new MacroParser(evaluator, options);
     Map<String, String> evaluated = new HashMap<>();
 
     for (Map.Entry<String, String> property : macros.entrySet()) {

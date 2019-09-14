@@ -25,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -724,11 +725,12 @@ public class ProvisioningService extends AbstractIdleService {
                                             Map<String, String> properties) {
     // evaluate macros in the provisioner properties
     MacroEvaluator evaluator = new ProvisionerMacroEvaluator(namespace, secureStore);
-    MacroParser macroParser = MacroParser.builder(evaluator)
-      .disableEscaping()
-      .disableLookups()
-      .whitelistFunctions(ProvisionerMacroEvaluator.SECURE_FUNCTION)
-      .build();
+    MacroParser macroParser = new MacroParser(evaluator,
+                                              MacroParserOptions.builder()
+                                                .disableLookups()
+                                                .setFunctionWhitelist(ProvisionerMacroEvaluator.SECURE_FUNCTION)
+                                                .setEscaping(false)
+                                                .build());
     Map<String, String> evaluated = new HashMap<>();
 
     // do secure store lookups as the user that will run the program
