@@ -24,6 +24,10 @@ import If from 'components/If';
 import PropertyRow from './PropertyRow';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import ThemeWrapper from 'components/ThemeWrapper';
+import {
+  filterByCondition,
+  IFilteredConfigurationGroup,
+} from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
 
 const styles = (): StyleRules => {
   return {
@@ -55,6 +59,10 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   classes,
 }) => {
   const [configurationGroups, setConfigurationGroups] = React.useState([]);
+  const referenceValueForUnMount = React.useRef<{
+    configurationGroups?: IFilteredConfigurationGroup[];
+    values?: Record<string, string>;
+  }>({});
 
   React.useEffect(
     () => {
@@ -70,7 +78,22 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
         widgetOutputs
       );
 
-      setConfigurationGroups(processedConfigurationGroup.configurationGroups);
+      let filteredConfigurationGroups;
+
+      try {
+        filteredConfigurationGroups = filterByCondition(
+          processedConfigurationGroup.configurationGroups,
+          widgetJson,
+          pluginProperties,
+          values
+        );
+      } catch (e) {
+        filteredConfigurationGroups = processedConfigurationGroup.configurationGroups;
+        // tslint:disable:no-console
+        console.log('Issue with applying filters: ', e);
+      }
+
+      setConfigurationGroups(filteredConfigurationGroups);
 
       // set default values
       const defaultValues = processedConfigurationGroup.defaultValues;
@@ -80,10 +103,29 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
       };
 
       changeParentHandler(newValues);
+      referenceValueForUnMount.current = {
+        configurationGroups: filteredConfigurationGroups,
+        values: newValues,
+      };
     },
-    [widgetJson, pluginProperties]
+    [values]
   );
 
+  // This onUnMount is to make sure we clear out all properties that are hidden.
+  React.useEffect(() => {
+    return () => {
+      const newValues = { ...referenceValueForUnMount.current.values };
+      const configGroups = referenceValueForUnMount.current.configurationGroups;
+      configGroups.forEach((group) => {
+        group.properties.forEach((property) => {
+          if (property.show === false) {
+            delete newValues[property.name];
+          }
+        });
+      });
+      changeParentHandler(newValues);
+    };
+  }, []);
   function changeParentHandler(updatedValues) {
     if (!onChange || typeof onChange !== 'function') {
       return;
@@ -109,6 +151,9 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   return (
     <div data-cy="configuration-group">
       {configurationGroups.map((group, i) => {
+        if (group.show === false) {
+          return null;
+        }
         return (
           <div key={`${group.label}-${i}`} className={classes.group}>
             <div className={classes.groupTitle}>
@@ -120,6 +165,9 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
 
             <div>
               {group.properties.map((property, j) => {
+                if (property.show === false) {
+                  return null;
+                }
                 return (
                   <PropertyRow
                     key={`${property.name}-${j}`}

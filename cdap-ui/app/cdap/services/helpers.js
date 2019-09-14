@@ -409,6 +409,21 @@ const parseQueryString = () => {
   return queryObj;
 };
 
+/**
+ * Check if a plugin value is a macro.
+ */
+const isMacro = (value) => {
+  if (!value || !value.length) {
+    return false;
+  }
+
+  const beginChar = value.indexOf('${') === 0;
+  const endingChar = value.charAt(value.length - 1) === '}';
+
+  return beginChar && endingChar;
+}
+
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -445,4 +460,5 @@ export {
   isNilOrEmptyString,
   roundDecimalToNDigits,
   parseQueryString,
+  isMacro,
 };

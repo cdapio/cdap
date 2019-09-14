@@ -15,9 +15,21 @@
  */
 
 import { objectQuery } from 'services/helpers';
-import { IConfigurationGroup, PluginProperties, IWidgetProperty } from '../types';
+import {
+  IConfigurationGroup,
+  PluginProperties,
+  IWidgetProperty,
+} from 'components/ConfigurationGroup/types';
 import xor from 'lodash/xor';
 import flatten from 'lodash/flatten';
+
+interface IDefaultValues {
+  [key: string]: string;
+}
+interface IProcessedConfigurationGroups {
+  defaultValues: IDefaultValues;
+  configurationGroups: IConfigurationGroup[];
+}
 
 /**
  * processConfigurationGroups will process the plugin properties and widget json to order and group the properties
@@ -30,7 +42,7 @@ export function processConfigurationGroups(
   pluginProperties: PluginProperties,
   configurationGroups: IConfigurationGroup[] = [],
   widgetOuputs: IWidgetProperty[] = []
-) {
+): IProcessedConfigurationGroups {
   if (!pluginProperties) {
     return {
       defaultValues: {},
@@ -107,15 +119,4 @@ export function processConfigurationGroups(
     defaultValues,
     configurationGroups: filteredConfigurationGroups,
   };
-}
-
-export function isMacro(value) {
-  if (!value || !value.length) {
-    return false;
-  }
-
-  const beginChar = value.indexOf('${') === 0;
-  const endingChar = value.charAt(value.length - 1) === '}';
-
-  return beginChar && endingChar;
 }
