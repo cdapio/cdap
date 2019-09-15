@@ -306,7 +306,7 @@
             ng-if="BatchPipelineConfigCtrl.showPreviewConfig"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
-            <span>Save &amp; Run</span>
+            <span>Run</span>
           </button>
           <button
             class="btn btn-secondary"
@@ -325,13 +325,6 @@
             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">
               <span class="fa fa-spinner fa-spin"></span>
            </span>
-          </button>
-          <button
-            class="btn btn-secondary"
-            ng-if="BatchPipelineConfigCtrl.showPreviewConfig"
-            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
-            ng-click="BatchPipelineConfigCtrl.applyAndClose()">
-            Save
           </button>
           <span class="num-runtime-args"
                 ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
