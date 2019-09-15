@@ -1176,7 +1176,7 @@ features:
           name: Connection name
           password: Password
           Placeholders:
-            connectionString: "E.g. {connectionString}"
+            connectionString: "{connectionString}"
             connectionStringDefault: Specify database connection string
             name: Specify a name to identify this connection
 
