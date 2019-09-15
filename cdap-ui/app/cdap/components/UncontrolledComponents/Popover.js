@@ -63,7 +63,6 @@ export default class UncontrolledPopover extends Component {
     }
   }
   renderPopover() {
-    let tetherOption = this.props.tetherOption || {};
     return (
       <Popover
         toggle={this.togglePopover}
@@ -72,7 +71,7 @@ export default class UncontrolledPopover extends Component {
         target={this.state.id}
         innerClassName="dataprep-toggle-all-dropdown"
         className={this.props.popoverClassName}
-        tether={tetherOption}
+        container="inline"
       >
         <PopoverBody>{this.props.children}</PopoverBody>
       </Popover>
@@ -102,7 +101,6 @@ export default class UncontrolledPopover extends Component {
         })}
         id={this.state.id}
         onClick={this.togglePopover}
-        ref={(ref) => (this.popover = ref)}
         data-cy={this.props['data-cy']}
       >
         {this.renderPopover()}
