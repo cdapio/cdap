@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.1.0-SNAPSHOT</version>
+    <version>6.2.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-tms</artifactId>
@@ -161,7 +161,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-storage-spi</artifactId>
-      <version>6.1.0-SNAPSHOT</version>
+      <version>6.2.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
