@@ -37,6 +37,8 @@
     }
     .group-container {
       margin: 30px;
+      max-width: 800px;
+
       .group-title {
         font-size: 1.3rem;
       }
@@ -65,5 +67,11 @@
     .required-marker {
       font-size: 1.3rem;
     }
+  }
+
+  .property-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
   }
 }

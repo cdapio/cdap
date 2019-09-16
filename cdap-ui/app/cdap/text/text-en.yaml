@@ -254,7 +254,9 @@ features:
           pageTitle: '{productName} | Profiles | Create'
         pageTitle: '{productName} | Profiles | Create | {provisioner_name}'
         profileName: Profile name
+        profileNamePlaceholder: Name for compute profile
         profileLabel: Profile label
+        profileLabelPlaceholder: Label the compute profile
       DetailView:
         Associations:
           Header:
