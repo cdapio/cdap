@@ -86,8 +86,7 @@ const OpsDashboard = Loadable({
   loading: LoadingSVGCentered,
 });
 const FieldLevelLineage = Loadable({
-  loader: () =>
-    import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage/v2'),
+  loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
   loading: LoadingSVGCentered,
 });
 const PipelineList = Loadable({
@@ -118,10 +117,20 @@ export default class Home extends Component {
           <Route
             exact
             path="/ns/:namespace/datasets/:datasetId/fields"
+            component={FieldLevelLineage}
+          />
+          <Route
+            exact
+            path="/ns/:namespace/datasets/:datasetId/fll-experiment"
             render={(props) => {
+              const FllExperiment = Loadable({
+                loader: () =>
+                  import(/* webpackChunkName: "FllExperiment" */ 'components/FieldLevelLineage/v2'),
+                loading: LoadingSVGCentered,
+              });
               return (
                 <ErrorBoundary>
-                  <FieldLevelLineage {...props} />
+                  <FllExperiment {...props} />
                 </ErrorBoundary>
               );
             }}
