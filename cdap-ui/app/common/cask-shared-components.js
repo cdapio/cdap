@@ -101,6 +101,7 @@ var SessionTokenStore = require('../cdap/services/SessionTokenStore');
 var ConfigurationGroup = require('../cdap/components/ConfigurationGroup').default;
 var WidgetWrapper = require('../cdap/components/ConfigurationGroup/WidgetWrapper')
   .WrappedWidgetWrapper;
+var ConfigurationGroupUtilities = require('../cdap/components/ConfigurationGroup/utilities');
 
 export {
   Store,
@@ -176,4 +177,5 @@ export {
   SessionTokenStore,
   ConfigurationGroup,
   WidgetWrapper,
+  ConfigurationGroupUtilities,
 };

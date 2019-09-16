@@ -59,6 +59,7 @@ class KeyValueWidgetView extends AbstractMultiRowWidget<IKeyValueProps> {
         kvDelimiter={kvDelimiter}
         isEncoded={isEncoded}
         forwardedRef={this.values[id].ref}
+        errors={this.props.errors}
       />
     );
   };

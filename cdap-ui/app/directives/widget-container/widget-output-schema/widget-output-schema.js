@@ -23,7 +23,8 @@ angular.module(PKG.name + '.commons')
         node: '=',
         groupsConfig: '=',
         updateDefaultOutputSchema: '&',
-        isDisabled: '='
+        isDisabled: '=',
+        errors: '=',
       },
       templateUrl: 'widget-container/widget-output-schema/widget-output-schema.html',
       controller: 'MyOutputSchemaCtrl',

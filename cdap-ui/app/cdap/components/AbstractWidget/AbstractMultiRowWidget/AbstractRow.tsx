@@ -21,6 +21,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import { KEY_CODE } from 'services/global-constants';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 export const AbstractRowStyles = (theme): StyleRules => {
   return {
@@ -32,6 +33,9 @@ export const AbstractRowStyles = (theme): StyleRules => {
       '& > *:first-child': {
         marginRight: '10px',
       },
+    },
+    errorText: {
+      color: theme.palette.red[50],
     },
   };
 };
@@ -47,6 +51,7 @@ export interface IAbstractRowProps<S extends typeof AbstractRowStyles> extends W
   removeRow: () => void;
   changeFocus: (index: number) => void;
   forwardedRef: () => void;
+  errors: IErrorObj[];
 }
 
 export default class AbstractRow<
@@ -82,22 +87,35 @@ export default class AbstractRow<
   };
 
   public render() {
+    const { errors, value } = this.props;
+    let errorMsg = null;
+    if (errors && value) {
+      const errorObj = errors.find((error: IErrorObj) => error.element === value);
+      if (errorObj) {
+        errorMsg = errorObj.msg;
+      }
+    }
     return (
-      <div className={this.props.classes.root}>
-        {this.renderInput()}
+      <React.Fragment>
+        <div className={this.props.classes.root}>
+          {this.renderInput()}
 
-        <If condition={!this.props.disabled}>
-          <React.Fragment>
-            <IconButton onClick={this.props.addRow}>
-              <AddIcon fontSize="small" />
-            </IconButton>
+          <If condition={!this.props.disabled}>
+            <React.Fragment>
+              <IconButton onClick={this.props.addRow}>
+                <AddIcon fontSize="small" />
+              </IconButton>
 
-            <IconButton color="secondary" onClick={this.props.removeRow}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </React.Fragment>
+              <IconButton color="secondary" onClick={this.props.removeRow}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </React.Fragment>
+          </If>
+        </div>
+        <If condition={errorMsg}>
+          <div className={this.props.classes.errorText}>{errorMsg}</div>
         </If>
-      </div>
+      </React.Fragment>
     );
   }
 }

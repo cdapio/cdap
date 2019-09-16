@@ -57,6 +57,7 @@ class KeyValueDropdownWidgetView extends AbstractMultiRowWidget<IKeyValueDropdow
         kvDelimiter={kvDelimiter}
         dropdownOptions={dropdownOptions}
         forwardedRef={this.values[id].ref}
+        errors={this.props.errors}
       />
     );
   };

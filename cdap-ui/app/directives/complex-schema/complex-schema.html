@@ -57,7 +57,7 @@
         <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
             class="field-row"
             ng-class="{'nested-row': !field.nested}">
-          <div class="clearfix">
+          <div class="clearfix" ng-class="{'error-row': ComplexSchema.errors[field.name]}">
             <div class="input-column"
                 ng-class="{'tab-header': field.nested}">
               <div class="tab-header-inner">
@@ -102,6 +102,9 @@
               </div>
             </div>
           </div>
+          <span class="error">
+            {{ComplexSchema.errors[field.name] }}
+          </span>
 
           <my-embedded-schema-selector
             type="field.type"

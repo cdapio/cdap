@@ -28,6 +28,7 @@ import {
   filterByCondition,
   IFilteredConfigurationGroup,
 } from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 const styles = (): StyleRules => {
   return {
@@ -47,6 +48,9 @@ interface IConfigurationGroupProps extends WithStyles<typeof styles> {
   inputSchema?: any;
   disabled?: boolean;
   onChange?: (values: Record<string, string>) => void;
+  errors: {
+    [property: string]: IErrorObj[];
+  };
 }
 
 const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
@@ -57,6 +61,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   onChange,
   disabled,
   classes,
+  errors,
 }) => {
   const [configurationGroups, setConfigurationGroups] = React.useState([]);
   const referenceValueForUnMount = React.useRef<{
@@ -148,42 +153,123 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     inputSchema,
   };
 
+  // Used to keep track of error messages that found a widget
+  // required to identify errors that did not find a widget,
+  // they will be marked as orphan errors.
+  const [usedErrors, setUsedErrors] = React.useState({});
+  const [groups, setGroups] = React.useState([]);
+  const [orphanErrors, setOrphanErrors] = React.useState([]);
+  React.useEffect(
+    () => {
+      setGroups(constructGroups);
+    },
+    [configurationGroups, errors]
+  );
+  React.useEffect(
+    () => {
+      setOrphanErrors(constructOrphanErrors);
+    },
+    [usedErrors]
+  );
+  function constructGroups() {
+    const newUsedErrors = {};
+    const newGroups = configurationGroups.map((group, i) => {
+      if (group.show === false) {
+        return null;
+      }
+      return (
+        <div key={`${group.label}-${i}`} className={classes.group}>
+          <div className={classes.groupTitle}>
+            <h2>{group.label}</h2>
+            <If condition={group.description && group.description.length > 0}>
+              <small>{group.description}</small>
+            </If>
+          </div>
+
+          <div>
+            {group.properties.map((property, j) => {
+              if (property.show === false) {
+                return null;
+              }
+              // Check if a field is present to display the error contextually
+              const errorObjs =
+                errors && errors.hasOwnProperty(property.name) ? errors[property.name] : null;
+              if (errorObjs) {
+                // Mark error as used
+                newUsedErrors[property.name] = errors[property.name];
+              }
+              return (
+                <PropertyRow
+                  key={`${property.name}-${j}`}
+                  widgetProperty={property}
+                  pluginProperty={pluginProperties[property.name]}
+                  value={values[property.name]}
+                  onChange={changeParentHandler}
+                  extraConfig={extraConfig}
+                  disabled={disabled}
+                  errors={errorObjs}
+                />
+              );
+            })}
+          </div>
+        </div>
+      );
+    });
+    setUsedErrors(newUsedErrors);
+    return newGroups;
+  }
+
+  function constructOrphanErrors() {
+    const orphanedErrors = new Set();
+    // Error messages that are already displayed in a field should not be
+    // displayed in the common area - orphan errors.
+    const usedMessages = new Set();
+    Object.values(usedErrors).forEach((errs: IErrorObj[]) => {
+      errs.forEach((error) => {
+        usedMessages.add(error.msg);
+      });
+    });
+
+    if (errors) {
+      Object.keys(errors).forEach((propName) => {
+        if (propName === 'orphanErrors') {
+          errors.orphanErrors.forEach((orphanError: IErrorObj) => {
+            // Making use the error msg has not been displayed contextually
+            // elsewhere.
+            if (!usedMessages.has(orphanError.msg)) {
+              orphanedErrors.add(orphanError.msg);
+            }
+          });
+        }
+        // If the error is not used and if the message is not used,
+        // add it to orphan errors.
+        else if (!usedErrors.hasOwnProperty(propName)) {
+          errors[propName].forEach((error: IErrorObj) => {
+            if (!usedMessages.has(error.msg)) {
+              // If any error is not displayed contextually, and the error message
+              // is not used by any other field, mark the error as orphan.
+              orphanedErrors.add(error.msg);
+            }
+          });
+        }
+      });
+    }
+    return Array.from(orphanedErrors);
+  }
+
   return (
     <div data-cy="configuration-group">
-      {configurationGroups.map((group, i) => {
-        if (group.show === false) {
-          return null;
-        }
-        return (
-          <div key={`${group.label}-${i}`} className={classes.group}>
-            <div className={classes.groupTitle}>
-              <h2>{group.label}</h2>
-              <If condition={group.description && group.description.length > 0}>
-                <small>{group.description}</small>
-              </If>
-            </div>
-
-            <div>
-              {group.properties.map((property, j) => {
-                if (property.show === false) {
-                  return null;
-                }
-                return (
-                  <PropertyRow
-                    key={`${property.name}-${j}`}
-                    widgetProperty={property}
-                    pluginProperty={pluginProperties[property.name]}
-                    value={values[property.name]}
-                    onChange={changeParentHandler}
-                    extraConfig={extraConfig}
-                    disabled={disabled}
-                  />
-                );
-              })}
-            </div>
+      <If condition={orphanErrors.length > 0}>
+        <div>
+          <h2>Errors</h2>
+          <div className="text-danger">
+            {orphanErrors.map((error: string) => (
+              <li>{error}</li>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      </If>
+      {groups}
     </div>
   );
 };
@@ -206,4 +292,5 @@ export default ConfigurationGroup;
   inputSchema: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
+  errors: PropTypes.object,
 };

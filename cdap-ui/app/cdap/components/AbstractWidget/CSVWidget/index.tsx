@@ -49,6 +49,7 @@ class CSVWidgetView extends AbstractMultiRowWidget<ICSVProps> {
         disabled={this.props.disabled}
         valuePlaceholder={valuePlaceholder}
         forwardedRef={this.values[id].ref}
+        errors={this.props.errors}
       />
     );
   };

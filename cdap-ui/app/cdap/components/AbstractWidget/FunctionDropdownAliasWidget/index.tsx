@@ -52,6 +52,7 @@ class FunctionDropdownAliasWidgetView extends AbstractMultiRowWidget<IFunctionDr
         placeholders={placeholders}
         dropdownOptions={dropdownOptions}
         forwardedRef={this.values[id].ref}
+        errors={this.props.errors}
       />
     );
   };

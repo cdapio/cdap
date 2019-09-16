@@ -48,7 +48,8 @@
           ng-model="inputschema.schema"
           is-disabled="true"
           is-input-schema="true"
-          is-in-studio="MyInputSchemaCtrl.isInStudio">
+          is-in-studio="MyInputSchemaCtrl.isInStudio"
+          errors="errors[inputschema.name]">
         </my-complex-schema>
       </div>
     </div>
@@ -68,7 +69,8 @@
       ng-model="MyInputSchemaCtrl.inputSchemas[0].schema"
       is-disabled="true"
       is-input-schema="true"
-      is-in-studio="MyInputSchemaCtrl.isInStudio">
+      is-in-studio="MyInputSchemaCtrl.isInStudio"
+      errors="errors[MyInputSchemaCtrl.inputSchemas[0].name]">
     </my-complex-schema>
 
     <!-- End of section that shows single input schema table-->

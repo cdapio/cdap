@@ -234,7 +234,8 @@ angular.module(PKG.name+'.commons')
       schemaPrefix: '=',
       derivedDatasetId: '=',
       isInputSchema: '=',
-      isInStudio: '='
+      isInStudio: '=',
+      errors: '=',
     }
   };
 })

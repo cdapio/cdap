@@ -63,8 +63,8 @@ const FieldRow: React.FC<IFieldRowProps> = ({
   classes,
   disabled,
 }: IFieldRowProps) => {
-  const aliasChange = (alias) => {
-    onFieldChange({ ...field, alias });
+  const aliasChange = (event) => {
+    onFieldChange({ ...field, alias: event.target.value });
   };
   const selectedChange = () => {
     onFieldChange({ ...field, selected: !field.selected });
