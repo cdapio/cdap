@@ -475,7 +475,7 @@ export default class DatabaseDetail extends Component {
             <input
               type="text"
               className="form-control"
-              value={this.state.connectionString}
+              value={this.state.connectionString || placeholder}
               onChange={this.handleChange.bind(this, 'connectionString')}
               placeholder={placeholder}
             />
