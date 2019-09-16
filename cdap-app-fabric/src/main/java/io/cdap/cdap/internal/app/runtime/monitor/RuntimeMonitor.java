@@ -167,8 +167,28 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected boolean shouldRetry(Exception ex) {
-    OUTAGE_LOGGER.warn("Failed to fetch monitoring messages for program {}", programRunId, ex);
-    return true;
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
+    Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
+    try {
+      OUTAGE_LOGGER.warn("Failed to fetch monitoring messages for program {}", programRunId, ex);
+      try {
+        // If the program is not running, emit error state for the program run and stop the retry
+        if (!remoteProcessController.isRunning()) {
+          LOG.error("Program runtime terminated abnormally for program {}", programRunId, ex);
+          programStateWriter.error(programRunId,
+                                   new IllegalStateException("Program runtime terminated abnormally. " +
+                                                               "Please inspect logs for root cause.", ex));
+          // Clear all program state after erroring out.
+          clearStates();
+          return false;
+        }
+      } catch (Exception e) {
+        OUTAGE_LOGGER.warn("Failed to check if the remote process is still running for program {}", programRunId, e);
+      }
+      return true;
+    } finally {
+      cancellable.cancel();
+    }
   }
 
   @Override
@@ -178,26 +198,26 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
     Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
-      LOG.error("Failed to monitor the remote process, terminating the run.", e);
+      LOG.error("Failed to monitor the remote process and exhausted retries. Terminating the program {}",
+                programRunId, e);
+      try {
+        remoteProcessController.kill();
+      } catch (Exception e1) {
+        LOG.warn("Failed to kill the remote process controller for program {}. "
+                   + "The remote process may need to be killed manually.", programRunId, e1);
+      }
+
+      // If failed to fetch messages and the remote process is not running, emit a failure program state and
+      // terminates the monitor
+      programStateWriter.error(programRunId,
+                               new IllegalStateException("Program runtime terminated due to too many failures. " +
+                                                           "Please inspect logs for root cause.", e));
+      // Clear all program state
+      clearStates();
+      throw e;
     } finally {
       cancellable.cancel();
     }
-
-    try {
-      remoteProcessController.kill();
-    } catch (Exception e1) {
-      LOG.warn("Failed to kill the remote process controller for program {}. "
-                 + "The remote process may need to be killed manually.", programRunId, e1);
-    }
-
-    // If failed to fetch messages and the remote process is not running, emit a failure program state and
-    // terminates the monitor
-    programStateWriter.error(programRunId,
-                             new IllegalStateException("Program runtime terminated abnormally. " +
-                                                         "Please inspect logs for root cause.", e));
-    clearStates();
-    stop();
-    throw e;
   }
 
   @Override
@@ -241,6 +261,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
       if ((latestPublishTime < 0 && now - (gracefulShutdownMillis >> 1) > programFinishTime)
         || (now - gracefulShutdownMillis > programFinishTime)) {
         triggerRuntimeShutdown();
+        // Clear all program state after program completed
+        clearStates();
         stop();
       }
     }
@@ -391,9 +413,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
         LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
       }
     }
-
-    // Clear all program state
-    clearStates();
   }
 
   /**

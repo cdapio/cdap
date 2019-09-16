@@ -26,12 +26,14 @@ import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
+import io.cdap.cdap.api.workflow.NodeStatus;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
@@ -39,11 +41,13 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -60,6 +64,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,17 +81,20 @@ public class ProgramNotificationSubscriberServiceTest {
   private static final String SYSTEM_METRIC_PREFIX = "system.";
 
   private static Injector injector;
+  private static CConfiguration cConf;
   private static ProgramStateWriter programStateWriter;
+  private static WorkflowStateWriter workflowStateWriter;
   private static TransactionRunner transactionRunner;
 
   @BeforeClass
-  public static void setupClass() throws Exception {
+  public static void setupClass() {
     injector = AppFabricTestHelper.getInjector();
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    cConf = injector.getInstance(CConfiguration.class);
     // we only want to process and check program status messages processed by heart beat store, so set high value
     cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
 
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    workflowStateWriter = injector.getInstance(WorkflowStateWriter.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
@@ -99,6 +107,108 @@ public class ProgramNotificationSubscriberServiceTest {
   public void cleanupTest() {
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore.create(context).deleteAllAppMetadataTables();
+    });
+  }
+
+  @Test
+  public void testWorkflowInnerPrograms() throws Exception {
+    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, ProgramStateWorkflowApp.class, null, cConf);
+
+    ProgramRunId workflowRunId = NamespaceId.DEFAULT
+      .app(ProgramStateWorkflowApp.class.getSimpleName())
+      .workflow(ProgramStateWorkflowApp.ProgramStateWorkflow.class.getSimpleName())
+      .run(RunIds.generate());
+
+    ApplicationSpecification appSpec = TransactionRunners.run(transactionRunner, context -> {
+      return AppMetadataStore.create(context).getApplication(workflowRunId.getParent().getParent()).getSpec();
+    });
+
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(workflowRunId.getParent(), appSpec);
+
+    // Start and run the workflow
+    Map<String, String> systemArgs = new HashMap<>();
+    systemArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    systemArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+
+    programStateWriter.start(workflowRunId, new SimpleProgramOptions(workflowRunId.getParent(),
+                                                                     new BasicArguments(systemArgs),
+                                                                     new BasicArguments()), null, programDescriptor);
+    programStateWriter.running(workflowRunId, null);
+
+    ProgramRunId mrRunId = workflowRunId.getParent().getParent()
+      .mr(ProgramStateWorkflowApp.ProgramStateMR.class.getSimpleName()).run(RunIds.generate());
+    ProgramRunId sparkRunId = workflowRunId.getParent().getParent()
+      .spark(ProgramStateWorkflowApp.ProgramStateSpark.class.getSimpleName()).run(RunIds.generate());
+    ProgramId sparkId2 = workflowRunId.getParent().getParent()
+      .spark(ProgramStateWorkflowApp.ProgramStateSpark2.class.getSimpleName());
+
+    // Start and run the MR and Spark inside
+    for (ProgramRunId programRunId : Arrays.asList(mrRunId, sparkRunId)) {
+      workflowStateWriter.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(programRunId.getProgram(),
+                                                                                          NodeStatus.STARTING));
+      workflowStateWriter.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(programRunId.getProgram(),
+                                                                                          NodeStatus.RUNNING));
+
+      systemArgs = new HashMap<>(systemArgs);
+      systemArgs.put(ProgramOptionConstants.RUN_ID, programRunId.getRun());
+      systemArgs.put(ProgramOptionConstants.WORKFLOW_NAME, workflowRunId.getProgram());
+      systemArgs.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getRun());
+      systemArgs.put(ProgramOptionConstants.WORKFLOW_NODE_ID, programRunId.getProgram());
+      systemArgs.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, programRunId.getProgram());
+      programStateWriter.start(programRunId,
+                               new SimpleProgramOptions(programRunId.getParent(), new BasicArguments(systemArgs),
+                                                        new BasicArguments()), null, programDescriptor);
+      programStateWriter.running(programRunId, null);
+
+      // Wait for the inner program running
+      Tasks.waitFor(ProgramRunStatus.RUNNING, () -> TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+        RunRecordMeta meta = metadataStoreDataset.getRun(programRunId);
+        if (meta == null) {
+          return null;
+        }
+        return meta.getStatus();
+      }), 10, TimeUnit.SECONDS);
+    }
+
+    // Stop the Spark normally
+    programStateWriter.completed(sparkRunId);
+
+    // Error out the Workflow without stopping the MR
+    programStateWriter.error(workflowRunId, new IllegalStateException("Explicitly error out"));
+
+    // Wait for the Workflow state changed to failed
+    Tasks.waitFor(ProgramRunStatus.FAILED, () -> TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      RunRecordMeta meta = metadataStoreDataset.getRun(workflowRunId);
+      if (meta == null) {
+        return null;
+      }
+      return meta.getStatus();
+    }), 10000, TimeUnit.SECONDS);
+
+    // The MR run record should be changed to ERROR state as well (without race)
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      RunRecordMeta meta = metadataStoreDataset.getRun(mrRunId);
+      Assert.assertNotNull(meta);
+      Assert.assertEquals(ProgramRunStatus.FAILED, meta.getStatus());
+    });
+
+    // The Spark run record should stay as COMPLETED
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      RunRecordMeta meta = metadataStoreDataset.getRun(sparkRunId);
+      Assert.assertNotNull(meta);
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, meta.getStatus());
+    });
+
+    // Since the Spark2 program hasn't been executed, there should be no run record
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
+      Map<ProgramRunId, RunRecordMeta> runs = metadataStoreDataset.getRuns(sparkId2, ProgramRunStatus.ALL,
+                                                                           0, Long.MAX_VALUE, 100, null);
+      Assert.assertTrue(runs.isEmpty());
     });
   }
 
