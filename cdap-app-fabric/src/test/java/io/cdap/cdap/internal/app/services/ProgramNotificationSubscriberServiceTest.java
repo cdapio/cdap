@@ -106,6 +106,7 @@ public class ProgramNotificationSubscriberServiceTest {
   @After
   public void cleanupTest() {
     TransactionRunners.run(transactionRunner, context -> {
+      new ProgramHeartbeatTable(context).deleteAll();
       AppMetadataStore.create(context).deleteAllAppMetadataTables();
     });
   }
