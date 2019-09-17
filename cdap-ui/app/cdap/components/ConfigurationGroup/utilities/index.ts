@@ -26,7 +26,7 @@ import flatten from 'lodash/flatten';
 interface IDefaultValues {
   [key: string]: string;
 }
-interface IProcessedConfigurationGroups {
+export interface IProcessedConfigurationGroups {
   defaultValues: IDefaultValues;
   configurationGroups: IConfigurationGroup[];
 }

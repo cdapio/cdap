@@ -43,6 +43,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     this.configurationGroupUtilities = window.CaskCommon.ConfigurationGroupUtilities;
+    this.dynamicFiltersUtilities = window.CaskCommon.DynamicFiltersUtilities;
     this.setDefaults(rPlugin);
     this.myAlertOnValium = myAlertOnValium;
     this.tabs = [
@@ -451,10 +452,8 @@ class HydratorPlusPlusNodeConfigCtrl {
     const nodeInfo = this.state.node;
     let vm = this;
     vm.validating = true;
-    const pluginInfo = angular.copy(nodeInfo.plugin);
-    pluginInfo.type = nodeInfo.type;
-    pluginInfo.properties = window.CaskCommon.CDAPHelpers.removeEmptyJsonValues(pluginInfo.properties);
-
+    const widgetJson = this.myHelpers.objectQuery(this,'widgetJson');
+    const pluginInfo = vm.dynamicFiltersUtilities.getPluginPropertiesForValidation(nodeInfo, widgetJson);
     const requestBody = {
       stage: {
         name: this.myHelpers.objectQuery(nodeInfo, 'name'),
@@ -500,10 +499,10 @@ class HydratorPlusPlusNodeConfigCtrl {
       .then((res) => {
         vm.validating = false;
         if (res.failures.length > 0) {
-          const {propertyErrors, inputSchemaErrors,outputSchemaErrors}=vm.configurationGroupUtilities.constructErrors(res.failures);
-          vm.propertyErrors=propertyErrors;
-          vm.inputSchemaErrors=inputSchemaErrors;
-          vm.outputSchemaErrors=outputSchemaErrors;
+          const {propertyErrors, inputSchemaErrors,outputSchemaErrors} = vm.configurationGroupUtilities.constructErrors(res.failures);
+          vm.propertyErrors = propertyErrors;
+          vm.inputSchemaErrors = inputSchemaErrors;
+          vm.outputSchemaErrors = outputSchemaErrors;
           const errorCount = vm.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
           this.myAlertOnValium.show({
             type: 'danger',
@@ -528,7 +527,7 @@ class HydratorPlusPlusNodeConfigCtrl {
             vm.EventPipe.emit('schema.clear');
           }
           // Empty existing errors
-          vm.propertyErrors = [];
+          vm.propertyErrors = {};
           vm.inputSchemaErrors = {};
           vm.outputSchemaErrors = {};
           this.myAlertOnValium.show({
@@ -538,11 +537,14 @@ class HydratorPlusPlusNodeConfigCtrl {
         }
       }, (err) => {
         vm.validating = false;
+        const callFailureMsg = 'Internal error occurred while validating.';
         this.myAlertOnValium.show({
-          type: 'danger',
-          content: 'Error occured while validating.',
-        });
-        vm.propertyErrors = [{msg:err.data}];
+            type: 'danger',
+            content: callFailureMsg
+          });
+        vm.propertyErrors = {
+          'orphanErrors': [{msg: err.data || callFailureMsg}]
+        };
       });
   }
 
