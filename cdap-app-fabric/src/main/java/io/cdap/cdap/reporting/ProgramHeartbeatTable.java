@@ -67,7 +67,7 @@ public class ProgramHeartbeatTable {
   }
 
   @VisibleForTesting
-  void deleteAll() throws IOException {
+  public void deleteAll() throws IOException {
     table.deleteAll(Range.all());
   }
 
