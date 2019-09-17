@@ -61,10 +61,10 @@
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
-    <repository>
-      <id>snapshot</id>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-    </repository>
+   <repository>
+     <id>snapshot</id>
+     <url>https://repository.apache.org/content/repositories/snapshots/</url>
+   </repository>
   </repositories>
 
 
@@ -1614,9 +1614,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC
-              -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError
-            </argLine>
+            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
@@ -1935,9 +1933,7 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>
-                    https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/
-                  </link>
+                  <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
                   <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
@@ -1998,8 +1994,7 @@
         <package.deb.arch>all</package.deb.arch>
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
-        <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security
-        </package.config.dirs>
+        <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
       </properties>
       <build>
         <pluginManagement>
@@ -2039,8 +2034,7 @@
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
-                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.codehaus.jackson
-                    </excludeGroupIds>
+                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.codehaus.jackson</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
@@ -2218,7 +2212,7 @@
                 </goals>
                 <configuration>
                   <source>
-                    if (project.version.endsWith("-SNAPSHOT")) {
+                    if (project.version.endsWith("-SNAPSHOT")){
                       project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
                     } else {
@@ -2281,8 +2275,7 @@
                   </goals>
                   <configuration>
                     <target>
-                      <copy file="${project.build.directory}/dist/rpm/cdap-service"
-                            tofile="${stage.dir}/etc/rc.d/init.d/cdap-${service.name}"/>
+                      <copy file="${project.build.directory}/dist/rpm/cdap-service" tofile="${stage.dir}/etc/rc.d/init.d/cdap-${service.name}" />
                     </target>
                   </configuration>
                 </execution>
@@ -2385,8 +2378,7 @@
                   </goals>
                   <configuration>
                     <target>
-                      <copy file="${project.build.directory}/dist/deb/cdap-service"
-                            tofile="${stage.dir}-deb/etc/init.d/cdap-${service.name}"/>
+                      <copy file="${project.build.directory}/dist/deb/cdap-service" tofile="${stage.dir}-deb/etc/init.d/cdap-${service.name}" />
                     </target>
                   </configuration>
                 </execution>
@@ -2447,8 +2439,7 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License,
-                      Version 2.0."
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                       --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
@@ -2502,8 +2493,7 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License,
-                      Version 2.0."
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                       --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
