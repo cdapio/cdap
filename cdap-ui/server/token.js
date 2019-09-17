@@ -133,7 +133,7 @@ function generateToken(cdapConfig, logger = console, authToken = '') {
   const salt = getSalt();
   const key = getKeyFromSecret(Buffer.from(secret), salt);
   const creationTime = Date.now();
-  const hash = crypto.createHash('sha1');
+  const hash = crypto.createHash('sha256');
   hash.update(`${creationTime}-${authToken}-${instanceName}`);
   const shasum = hash.digest('hex');
   const payloadInHex = `${creationTime.toString(16)} ${shasum}`;
@@ -156,7 +156,7 @@ function generateToken(cdapConfig, logger = console, authToken = '') {
  *  - AND age of token shouldn't be more than an hour.
  */
 function validateToken(encryptedToken, cdapConfig, logger = console, authToken = '') {
-  let timestamp, shasum, timeinmiilis;
+  let timestamp, shasum, timeinmillis;
   if (!encryptedToken) {
     return false;
   }
@@ -168,17 +168,40 @@ function validateToken(encryptedToken, cdapConfig, logger = console, authToken =
     let payload = decrypt(Buffer.from(cipher, 'base64'), key);
     let payloadInHex = payload.toString('utf8');
     timestamp = payloadInHex.split(' ')[0];
-    shasum = payloadInHex.split(' ')[1];
+    shasum = Buffer.from(payloadInHex.split(' ')[1], "hex");
   } catch (e) {
     logger.error('Validating token failed: ' + e);
     return false;
   }
-  timeinmiilis = parseInt(timestamp, 16);
+  timeinmillis = parseInt(timestamp, 16);
+  if (Date.now() - timeinmillis >= EncryptionConstants.ONE_HOUR_MILLIS) {
+    return false;
+  }
+
   const instanceName = cdapConfig['instance.metadata.id'];
-  const hash = crypto.createHash('sha1');
-  hash.update(`${timeinmiilis}-${authToken}-${instanceName}`);
-  const shasum1 = hash.digest('hex');
-  return shasum == shasum1 && Date.now() - timeinmiilis < EncryptionConstants.ONE_HOUR_MILLIS;
+  const hash = crypto.createHash('sha256');
+  hash.update(`${timeinmillis}-${authToken}-${instanceName}`);
+  const computed = hash.digest();
+  if (computed.length != shasum.length) {
+    return false;
+  }
+
+  // Compare all bytes to avoid timing attack
+  const iter1 = computed.values();
+  const iter2 = shasum.values();
+  let xor = 0;
+
+  // Both iterators should have the same number of values 
+  // as the length are the same
+  let pair1 = iter1.next();
+  let pair2 = iter2.next();
+  while (!pair1.done) {
+    xor += pair1.value ^ pair2.value;
+    pair1 = iter1.next();
+    pair2 = iter2.next();
+  }
+
+  return xor === 0;
 }
 
 module.exports = {

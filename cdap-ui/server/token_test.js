@@ -15,15 +15,29 @@
 */
 
 var session = require('./token');
-function testLocally() {
-  const fakeCDAPConfig = {
-    'session.secret.key': 'secret-key-for-encryption',
-  };
+var assert = require('assert');
+
+const fakeCDAPConfig = {
+  'session.secret.key': 'secret-key-for-encryption',
+};
+function testMatch() {
   const token = session.generateToken(fakeCDAPConfig, console, 'Bearer 1111');
   const isTokenValid = session.validateToken(token, fakeCDAPConfig, console, 'Bearer 1111');
   console.log(`
     encrypted token: ${token}
     isToken valid: ${isTokenValid}
   `);
+  assert(isTokenValid);
 }
-testLocally();
+function testMismatch() {
+  const token = session.generateToken(fakeCDAPConfig, console, 'Bearer 1111');
+  const isTokenValid = session.validateToken(token, fakeCDAPConfig, console, 'Bearer 1112');
+  console.log(`
+    encrypted token: ${token}
+    isToken valid: ${isTokenValid}
+  `);
+  assert(!isTokenValid);
+}
+
+testMatch();
+testMismatch();
