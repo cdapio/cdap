@@ -15,11 +15,14 @@
  */
 
 import React, { Component } from 'react';
+import { Theme } from 'services/ThemeHelper';
 import DataPrepStore from 'components/DataPrep/store';
 import classnames from 'classnames';
 import ColumnsTab from 'components/DataPrep/DataPrepSidePanel/ColumnsTab';
+import TargetTab from 'components/DataPrep/DataPrepSidePanel/TargetTab';
 import DirectivesTab from 'components/DataPrep/DataPrepSidePanel/DirectivesTab';
 import T from 'i18n-react';
+import If from 'components/If';
 
 require('./DataPrepSidePanel.scss');
 const PREFIX = 'features.DataPrep.DataPrepSidePanel';
@@ -84,12 +87,25 @@ export default class DataPrepSidePanel extends Component {
     );
   }
 
+  renderTarget() {
+    return (
+      <If condition={Theme.showWranglerDatamodelViewer}>
+        <div className="tab-content">
+          <TargetTab />
+        </div>
+      </If>
+    );
+  }
+
   renderTabContent() {
     switch (this.state.activeTab) {
       case 1:
         return this.renderColumns();
       case 2:
         return this.renderDirectives();
+      case 3:
+        return this.renderTarget();
+
       default:
         return null;
     }
@@ -116,6 +132,14 @@ export default class DataPrepSidePanel extends Component {
                 directivesCount: this.state.directives.length,
               })}
             </div>
+            <If condition={Theme.showWranglerDatamodelViewer}>
+              <div
+                className={classnames('tab', { active: this.state.activeTab === 3 })}
+                onClick={this.setActiveTab.bind(this, 3)}
+              >
+                {T.translate(`${PREFIX}.targetTabLabel`)}
+              </div>
+            </If>
           </div>
 
           {this.renderTabContent()}

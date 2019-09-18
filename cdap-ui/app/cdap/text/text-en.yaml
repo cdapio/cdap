@@ -393,6 +393,10 @@ features:
           clearAll: Clear All
           selectAll: Select All
       directivesTabLabel: Transformation steps ({directivesCount})
+      targetTabLabel: Target
+      TargetTab:
+        selectDataModel: "Select a target data model to start mapping"
+        targetDataModel: "Target data model"
       DirectivesTab:
         label: Transformations
       noColumns: No columns
