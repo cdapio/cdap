@@ -180,6 +180,7 @@
     <zookeeper.version>3.4.5</zookeeper.version>
     <opentable.version>0.13.1</opentable.version>
     <dbcp.version>2.6.0</dbcp.version>
+    <commons.lang3.version>3.5</commons.lang3.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -1599,6 +1600,13 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <!-- Overriding commons-lang3 for compatibility with Spark 2.2 onwards
+                https://issues.cask.co/browse/CDAP-15920      -->
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${commons.lang3.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
