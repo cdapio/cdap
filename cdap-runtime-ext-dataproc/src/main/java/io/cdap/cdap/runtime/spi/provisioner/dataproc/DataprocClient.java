@@ -187,7 +187,7 @@ final class DataprocClient implements AutoCloseable {
     String systemNetworkPath = String.format("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
                                              systemProjectId, systemNetwork);
 
-    LOG.info(String.format("Self link for the system network is %s", systemNetworkPath));
+    LOG.trace(String.format("Self link for the system network is %s", systemNetworkPath));
     List<NetworkPeering> peerings = networkInfo.getPeerings();
     // if the customer does not has a peering established at all the peering list is null
     if (peerings == null) {
