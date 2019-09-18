@@ -113,7 +113,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
         values: newValues,
       };
     },
-    [values]
+    [values, pluginProperties]
   );
 
   // This onUnMount is to make sure we clear out all properties that are hidden.
@@ -121,13 +121,15 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     return () => {
       const newValues = { ...referenceValueForUnMount.current.values };
       const configGroups = referenceValueForUnMount.current.configurationGroups;
-      configGroups.forEach((group) => {
-        group.properties.forEach((property) => {
-          if (property.show === false) {
-            delete newValues[property.name];
-          }
+      if (configGroups) {
+        configGroups.forEach((group) => {
+          group.properties.forEach((property) => {
+            if (property.show === false) {
+              delete newValues[property.name];
+            }
+          });
         });
-      });
+      }
       changeParentHandler(newValues);
     };
   }, []);
