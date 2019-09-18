@@ -17,18 +17,44 @@
 
 package io.cdap.cdap.api.plugin;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Thrown when a {@link PluginConfig} cannot be created from provided {@link PluginProperties}.
  * This can happen if properties required by the PluginConfig are not in the PluginProperties, or when
  * the property type specified by the PluginConfig is incompatible with the value provided in the PluginProperties.
  */
 public class InvalidPluginConfigException extends RuntimeException {
-
-  public InvalidPluginConfigException(String message) {
-    super(message);
-  }
+  private Set<String> missingProperties;
+  private Set<InvalidPluginProperty> invalidProperties;
 
   public InvalidPluginConfigException(String message, Throwable cause) {
     super(message, cause);
+    this.missingProperties = Collections.emptySet();
+    this.invalidProperties = Collections.emptySet();
+  }
+
+  public InvalidPluginConfigException(String message, Set<String> missingProperties,
+                                      Set<InvalidPluginProperty> invalidProperties) {
+    super(message);
+    this.missingProperties = Collections.unmodifiableSet(new HashSet<>(missingProperties));
+    this.invalidProperties = Collections.unmodifiableSet(new HashSet<>(invalidProperties));
+  }
+
+  /**
+   * @return the set of required properties that were not provided in the PluginProperties.
+   */
+  public Set<String> getMissingProperties() {
+    return missingProperties;
+  }
+
+  /**
+   * @return the set of invalid properties, usually because the value given in the PluginProperties did not match
+   *         the expected type.
+   */
+  public Set<InvalidPluginProperty> getInvalidProperties() {
+    return invalidProperties;
   }
 }

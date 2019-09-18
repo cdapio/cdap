@@ -71,7 +71,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -263,9 +265,14 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
 
     Assert.assertNull(actual.getSpec());
-    Assert.assertEquals(1, actual.getFailures().size());
-    ValidationFailure failure = actual.getFailures().iterator().next();
-    Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
+    Assert.assertEquals(2, actual.getFailures().size());
+    Set<String> properties = new HashSet<>();
+    properties.add(actual.getFailures().get(0).getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
+    properties.add(actual.getFailures().get(1).getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
+    Set<String> expected = new HashSet<>();
+    expected.add("field");
+    expected.add("value");
+    Assert.assertEquals(expected, properties);
   }
 
   @Test

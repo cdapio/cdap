@@ -35,6 +35,7 @@ import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
+import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
@@ -260,8 +261,13 @@ public class PluginInstantiator implements Closeable {
       PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
       Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
-      Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), pluginProperties, macroFields));
+      ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, macroFields);
+      Reflections.visit(config, configFieldType.getType(), fieldSetter);
+
+      if (!fieldSetter.invalidProperties.isEmpty() || !fieldSetter.missingProperties.isEmpty()) {
+        throw new InvalidPluginConfigException("Unable to create plugin config.", fieldSetter.missingProperties,
+                                               fieldSetter.invalidProperties);
+      }
 
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
@@ -497,15 +503,16 @@ public class PluginInstantiator implements Closeable {
   private static final class ConfigFieldSetter extends FieldVisitor {
     private final PluginClass pluginClass;
     private final PluginProperties properties;
-    private final ArtifactId artifactId;
     private final Set<String> macroFields;
+    private final Set<String> missingProperties;
+    private final Set<InvalidPluginProperty> invalidProperties;
 
-    ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
-                      PluginProperties properties, Set<String> macroFields) {
+    ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties, Set<String> macroFields) {
       this.pluginClass = pluginClass;
-      this.artifactId = artifactId;
       this.properties = properties;
       this.macroFields = macroFields;
+      this.missingProperties = new HashSet<>();
+      this.invalidProperties = new HashSet<>();
     }
 
     @Override
@@ -530,12 +537,16 @@ public class PluginInstantiator implements Closeable {
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
       if (pluginPropertyField.isRequired() && !properties.getProperties().containsKey(name)) {
-        throw new IllegalArgumentException("Missing required plugin property " + name
-                                             + " for " + pluginClass.getName() + " in artifact " + artifactId);
+        missingProperties.add(name);
+        return;
       }
       String value = properties.getProperties().get(name);
       if (pluginPropertyField.isRequired() || value != null) {
-        field.set(instance, convertValue(name, declareTypeToken.resolveType(field.getGenericType()), value));
+        try {
+          field.set(instance, convertValue(name, declareTypeToken.resolveType(field.getGenericType()), value));
+        } catch (Exception e) {
+          invalidProperties.add(new InvalidPluginProperty(name, e.getMessage()));
+        }
       }
     }
 
@@ -556,7 +567,7 @@ public class PluginInstantiator implements Closeable {
 
       if (Character.class.equals(rawType)) {
         if (value.length() != 1) {
-          throw new InvalidPluginConfigException(String.format("Property of type char is not length 1: '%s'", value));
+          throw new IllegalArgumentException(String.format("Property of type char is not length 1: '%s'", value));
         } else {
           return value.charAt(0);
         }
@@ -586,7 +597,9 @@ public class PluginInstantiator implements Closeable {
         }
       }
 
-      throw new UnsupportedTypeException("Only primitive and String types are supported");
+      throw new UnsupportedTypeException(String.format("Plugin config property '%s' is of invalid type '%s'. " +
+                                                         "Only primitive and String types are supported",
+                                                       name, rawType.getSimpleName()));
     }
   }
 }

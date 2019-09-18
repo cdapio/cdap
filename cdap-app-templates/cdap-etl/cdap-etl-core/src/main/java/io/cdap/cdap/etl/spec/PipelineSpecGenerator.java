@@ -26,6 +26,8 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
+import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.ErrorTransform;
@@ -353,6 +355,23 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       // This would mean there is a bug in the app and this can not be fixed by user. That is why it is not handled as
       // a ValidationFailure.
       plugin = pluginConfigurer.usePlugin(type, pluginName, stageName, etlPlugin.getPluginProperties(), pluginSelector);
+    } catch (InvalidPluginConfigException e) {
+      int numFailures = 0;
+      for (String missingProperty : e.getMissingProperties()) {
+        collector.addFailure(String.format("Required property '%s' has no value.", missingProperty), null)
+          .withConfigProperty(missingProperty);
+        numFailures++;
+      }
+      for (InvalidPluginProperty invalidProperty : e.getInvalidProperties()) {
+        collector.addFailure(e.getMessage(), null)
+          .withConfigProperty(invalidProperty.getName());
+        numFailures++;
+      }
+      // if plugin instantiation didn't fail because of a missing property or an invalid property,
+      // create a generic failure
+      if (numFailures == 0) {
+        collector.addFailure(e.getMessage(), null);
+      }
     } catch (Exception e) {
       // TODO: Catch specific exceptions when CDAP-15744 is fixed
       collector.addFailure(e.getMessage(), null);
