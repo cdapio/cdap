@@ -254,7 +254,6 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
   }
 
-
   // tests that plugins that cannot be instantiated due to missing required properties are captured
   @Test
   public void testValidateStageMissingRequiredProperty() throws Exception {
