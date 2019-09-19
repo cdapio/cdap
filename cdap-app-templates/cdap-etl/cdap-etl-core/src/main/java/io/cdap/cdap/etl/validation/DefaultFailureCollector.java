@@ -16,12 +16,16 @@
 
 package io.cdap.cdap.etl.validation;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -29,22 +33,25 @@ import javax.annotation.Nullable;
  */
 public class DefaultFailureCollector implements FailureCollector {
   private static final String STAGE = "stage";
-  private final List<ValidationFailure> failures;
   private final String stageName;
+  private final Map<String, Schema> inputSchemas;
+  private final List<ValidationFailure> failures;
 
   /**
    * Default failure collector.
    *
    * @param stageName stage name
+   * @param inputSchemas input schemas
    */
-  public DefaultFailureCollector(String stageName) {
+  public DefaultFailureCollector(String stageName, Map<String, Schema> inputSchemas) {
     this.stageName = stageName;
+    this.inputSchemas = Collections.unmodifiableMap(new HashMap<>(inputSchemas));
     this.failures = new ArrayList<>();
   }
 
   @Override
   public ValidationFailure addFailure(String message, @Nullable String correctiveAction) {
-    ValidationFailure failure = new ValidationFailure(message, correctiveAction);
+    ValidationFailure failure = new ValidationFailure(message, correctiveAction, inputSchemas);
     failures.add(failure);
     return failure;
   }
