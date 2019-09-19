@@ -72,6 +72,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -208,7 +209,39 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     Assert.assertEquals("field", failure.getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
     Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
     Assert.assertEquals("x", failure.getCauses().get(1).getAttribute(CauseAttributes.INPUT_SCHEMA_FIELD));
+    Assert.assertEquals("input", failure.getCauses().get(1).getAttribute(CauseAttributes.INPUT_STAGE));
     Assert.assertEquals(stageName, failure.getCauses().get(1).getAttribute(STAGE));
+  }
+
+  @Test
+  public void testValidateMultiInputInvalidInputField() throws Exception {
+    // StringValueFilterTransform will be configured to filter records where field x has value 'y'
+    // it will be invalid because the type of field x will be an int instead of the required string
+    String stageName = "tx";
+    Map<String, String> properties = new HashMap<>();
+    properties.put("field", "x");
+    properties.put("value", "y");
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
+                                                           properties));
+
+    Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
+    StageValidationRequest requestBody =
+      new StageValidationRequest(stage, ImmutableList.of(new StageSchema("input1", inputSchema),
+                                                         new StageSchema("input2", inputSchema)));
+    StageValidationResponse actual = sendRequest(requestBody);
+
+    List<String> expectedInputs = ImmutableList.of("input1", "input2");
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    // the stage will add 3 causes. Two are related to input field and one is related to config property.
+    Assert.assertEquals(3, failure.getCauses().size());
+    Assert.assertEquals("field", failure.getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
+    Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
+    Assert.assertEquals(stageName, failure.getCauses().get(1).getAttribute(STAGE));
+    Assert.assertEquals(stageName, failure.getCauses().get(2).getAttribute(STAGE));
+    Assert.assertTrue(expectedInputs.contains(failure.getCauses().get(1).getAttribute(CauseAttributes.INPUT_STAGE)));
+    Assert.assertTrue(expectedInputs.contains(failure.getCauses().get(2).getAttribute(CauseAttributes.INPUT_STAGE)));
   }
 
   // test that multiple exceptions set in an InvalidStageException are captured as failures
