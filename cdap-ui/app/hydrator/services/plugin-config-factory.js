@@ -14,12 +14,15 @@
  * the License.
  */
 class HydratorPlusPlusPluginConfigFactory {
-  constructor ($q, myHelpers, myPipelineApi, $state) {
+  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium) {
     this.$q = $q;
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
+    this.myAlertOnValium = myAlertOnValium;
     this.$state = $state;
+    this.configurationGroupUtilities = window.CaskCommon.ConfigurationGroupUtilities;
     this.data = {};
+    this.validatePluginProperties = this.validatePluginProperties.bind(this);
   }
   fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
     let cache = this.data[`${artifactName}-${artifactVersion}-${artifactScope}-${key}`];
@@ -276,8 +279,97 @@ class HydratorPlusPlusPluginConfigFactory {
     }
     return groupConfig;
   }
+
+  validatePluginProperties(nodeInfo, errorCb) {
+    // for post-run plugins, use nodeInfo. For other plugins, get plugin property. 
+    const pluginInfo = nodeInfo.plugin? nodeInfo.plugin : nodeInfo;
+    const plugin = angular.copy(pluginInfo);
+    if (!plugin.type) {
+      plugin.type = nodeInfo.type;
+    }
+    const requestBody = {
+      stage: {
+        name: this.myHelpers.objectQuery(pluginInfo, 'name'),
+        plugin
+      }, 
+      inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map(input => {
+        let schema;
+        try {
+          schema = JSON.parse(input.schema);
+        } catch (e) {
+          // no-op
+        }
+      })
+    };
+
+    const parseResSchema = (res) => {
+      if (res.name && res.type && res.fields) {
+        return [this.getOutputSchemaObj(res)];
+      }
+      let schemaArr = [];
+      angular.forEach(res, (value, key) => {
+        if (value.name && value.type && value.fields) {
+          schemaArr.push(this.getOutputSchemaObj(value, key));
+        }
+      });
+      let recordSchemas = schemaArr.filter(schema => schema.name.substring(0, 6) === 'record');
+      let schemaArrWithoutRecordSchemas = _.difference(schemaArr, recordSchemas);
+      let schemaArrWithSortedRecordSchemas = schemaArrWithoutRecordSchemas.concat(_.sortBy(recordSchemas, 'name'));
+      return schemaArrWithSortedRecordSchemas;
+    };
+
+    const params = {
+      context: this.$state.params.namespace || this.$state.params.nsadmin
+    };
+
+    this.myPipelineApi.validateStage(params, requestBody)
+      .$promise
+      .then((res) => {
+        let errorCount; 
+        if (res.failures.length > 0) {
+          const { propertyErrors, inputSchemaErrors,outputSchemaErrors } = this.configurationGroupUtilities.constructErrors(res.failures);
+          errorCount = this.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
+          this.myAlertOnValium.show({
+            type: 'danger',
+            content: `${errorCount} error${errorCount > 1 ? 's': ''} found.`
+          });
+          errorCb({ errorCount, propertyErrors, inputSchemaErrors, outputSchemaErrors });
+        } else {
+          errorCount = 0;
+          const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
+          const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
+          let schemas;
+          if (outputSchema || portSchemas) {
+            schemas = parseResSchema(outputSchema || portSchemas).map(schema => {
+              return {
+                name: schema.name,
+                schema: JSON.stringify(schema.schema)
+              };
+            });
+          }
+          errorCb({ errorCount });
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: `No validation errors.`
+          });
+          if (schemas.length) {
+            this.EventPipe.emit('schema.import', schemas);
+          }
+          else {
+            this.EventPipe.emit('schema.clear');
+          }
+        }
+      }, (err) => {
+        this.myAlertOnValium.show({
+            type: 'danger',
+            content: 'Error occurred while validating.'
+        });
+        const propertyErrors =  { 'orphanErrors': [{ msg:err.data }]};
+        errorCb({ propertyErrors });
+      });
+  }
 }
 
-HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state'];
+HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state', 'myAlertOnValium'];
 angular.module(PKG.name + '.feature.hydrator')
   .service('HydratorPlusPlusPluginConfigFactory', HydratorPlusPlusPluginConfigFactory);
