@@ -22,7 +22,7 @@ import io.cdap.cdap.api.data.batch.OutputFormatProvider;
  * Validating output format provider.
  */
 public interface ValidatingOutputFormatProvider extends OutputFormatProvider {
-  String PLUGIN_TYPE = "validatingOutputFormatProvider";
+  String PLUGIN_TYPE = "validatingOutputFormat";
 
   /**
    * Validates configurations of output format.

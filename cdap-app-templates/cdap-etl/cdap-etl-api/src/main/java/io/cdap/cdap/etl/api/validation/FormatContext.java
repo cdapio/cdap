@@ -33,7 +33,7 @@ public class FormatContext {
     this.inputSchema = inputSchema;
   }
 
-  public FailureCollector getCollector() {
+  public FailureCollector getFailureCollector() {
     return collector;
   }
 
