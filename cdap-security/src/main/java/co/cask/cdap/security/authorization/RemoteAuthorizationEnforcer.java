@@ -56,6 +56,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -155,14 +156,21 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
       return entityIds;
     }
 
-    Preconditions.checkNotNull(entityIds, "entityIds cannot be null");
+    Set newEntityIds = new HashSet<EntityId>();;
+		entityIds.forEach(x -> {
+			if (!x.toString().startsWith("schedule:")) {
+				newEntityIds.add(x);
+			}
+		});
+
+    Preconditions.checkNotNull(newEntityIds, "entityIds cannot be null");
 
     if (cacheEnabled) {
-      Iterable<VisibilityKey> visibilityKeys = toVisibilityKeys(principal, entityIds);
+      Iterable<VisibilityKey> visibilityKeys = toVisibilityKeys(principal, newEntityIds);
       ImmutableMap<VisibilityKey, Boolean> visibilityMap = visibilityCache.getAll(visibilityKeys);
       return toEntityIds(Maps.filterEntries(visibilityMap, VISIBILITY_KEYS_FILTER).keySet());
     } else {
-      return visibilityCheckCall(new VisibilityRequest(principal, entityIds));
+      return visibilityCheckCall(new VisibilityRequest(principal, newEntityIds));
     }
   }
 
