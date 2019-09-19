@@ -1603,7 +1603,7 @@
       </dependency>
       <dependency>
         <!-- Overriding commons-lang3 for compatibility with Spark 2.2 onwards
-                https://issues.cask.co/browse/CDAP-15920      -->
+                https://issues.cask.co/browse/CDAP-15920 -->
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons.lang3.version}</version>
