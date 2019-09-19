@@ -318,7 +318,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                                          e.getMessage()), null);
     }
 
-    // throw validation exception if there are any errors being carried by stage configurer
+    // throw validation exception if there are any errors being carried by failure collector
     collector.getOrThrowException();
 
     PluginSpec pluginSpec = new PluginSpec(type, pluginName, etlPlugin.getProperties(),

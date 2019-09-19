@@ -52,7 +52,7 @@ public class CauseAttributes {
 
   // Represents input stage
   public static final String INPUT_STAGE = "inputStage";
-  // represents field of input stage schema
+  // Represents field of input stage schema
   public static final String INPUT_SCHEMA_FIELD = "inputField";
 
   // Represents a stage output port
