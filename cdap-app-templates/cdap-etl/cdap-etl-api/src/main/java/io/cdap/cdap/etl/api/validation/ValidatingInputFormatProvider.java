@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.api.validation;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.etl.api.FailureCollector;
 
 import javax.annotation.Nullable;
 
@@ -26,19 +25,20 @@ import javax.annotation.Nullable;
  * Validating input format provider.
  */
 public interface ValidatingInputFormatProvider extends InputFormatProvider {
+  String PLUGIN_TYPE = "validatingInputFormatProvider";
 
   /**
    * Validates configurations of input format.
    *
-   * @param collector failure collector to collect validation failures
+   * @param context format context
    */
-  void validate(FailureCollector collector);
+  void validate(FormatContext context);
 
   /**
-   * Returns validated schema.
+   * Gets validated schema. Also adds
    *
-   * @throws IllegalArgumentException if schema is invalid
+   * @param context format context
    */
   @Nullable
-  Schema getSchema();
+  Schema getSchema(FormatContext context);
 }
