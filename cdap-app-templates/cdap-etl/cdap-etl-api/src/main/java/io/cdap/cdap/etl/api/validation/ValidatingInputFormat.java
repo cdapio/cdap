@@ -16,18 +16,29 @@
 
 package io.cdap.cdap.etl.api.validation;
 
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.api.data.schema.Schema;
+
+import javax.annotation.Nullable;
 
 /**
- * Validating output format provider.
+ * Validating input format provider.
  */
-public interface ValidatingOutputFormatProvider extends OutputFormatProvider {
-  String PLUGIN_TYPE = "validatingOutputFormat";
+public interface ValidatingInputFormat extends InputFormatProvider {
+  String PLUGIN_TYPE = "validatingInputFormat";
 
   /**
-   * Validates configurations of output format.
+   * Validates configurations of input format.
    *
    * @param context format context
    */
   void validate(FormatContext context);
+
+  /**
+   * Gets validated schema. Also adds
+   *
+   * @param context format context
+   */
+  @Nullable
+  Schema getSchema(FormatContext context);
 }
