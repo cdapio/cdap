@@ -34,6 +34,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
 import io.cdap.cdap.api.plugin.InvalidPluginProperty;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -293,16 +294,18 @@ public class PluginInstantiator implements Closeable {
         // TODO: cleanup after endpoint to get plugin details is merged (#6089)
         if (configTime) {
           // parse for syntax check and check if trackingMacroEvaluator finds macro syntax present
-          MacroParser macroParser = MacroParser.builder(trackingMacroEvaluator)
-            .setEscapingEnabled(field.isMacroEscapingEnabled())
-            .build();
+          MacroParser macroParser = new MacroParser(trackingMacroEvaluator,
+                                                    MacroParserOptions.builder()
+                                                      .setEscaping(field.isMacroEscapingEnabled())
+                                                      .build());
           macroParser.parse(propertyValue);
           propertyValue = getOriginalOrDefaultValue(propertyValue, property.getKey(), field.getType(),
                                                     trackingMacroEvaluator);
         } else {
-          MacroParser macroParser = MacroParser.builder(macroEvaluator)
-            .setEscapingEnabled(field.isMacroEscapingEnabled())
-            .build();
+          MacroParser macroParser = new MacroParser(macroEvaluator,
+                                                    MacroParserOptions.builder()
+                                                      .setEscaping(field.isMacroEscapingEnabled())
+                                                      .build());
           propertyValue = macroParser.parse(propertyValue);
         }
       }
@@ -342,9 +345,10 @@ public class PluginInstantiator implements Closeable {
       if (pluginEntry.getValue() != null && pluginField.isMacroSupported()) {
         String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
         if (macroValue != null) {
-          MacroParser macroParser = MacroParser.builder(trackingMacroEvaluator)
-            .setEscapingEnabled(pluginField.isMacroEscapingEnabled())
-            .build();
+          MacroParser macroParser = new MacroParser(trackingMacroEvaluator,
+                                                    MacroParserOptions.builder()
+                                                      .setEscaping(pluginField.isMacroEscapingEnabled())
+                                                      .build());
           macroParser.parse(macroValue);
           if (trackingMacroEvaluator.hasMacro()) {
             macroFields.add(pluginEntry.getKey());

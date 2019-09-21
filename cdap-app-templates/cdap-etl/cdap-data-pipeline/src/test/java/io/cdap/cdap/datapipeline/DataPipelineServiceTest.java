@@ -99,12 +99,12 @@ public class DataPipelineServiceTest extends HydratorTestBase {
 
   @BeforeClass
   public static void setupTest() throws Exception {
-    ArtifactId appArtifactId = NamespaceId.DEFAULT.artifact("app", "1.0.0");
+    ArtifactId appArtifactId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
     setupBatchArtifacts(appArtifactId, DataPipelineApp.class);
 
     ArtifactSummary artifactSummary = new ArtifactSummary(appArtifactId.getArtifact(), appArtifactId.getVersion());
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(artifactSummary, ETLBatchConfig.forSystemService());
-    ApplicationManager appManager = deployApplication(NamespaceId.DEFAULT.app("datapipeline"), appRequest);
+    ApplicationManager appManager = deployApplication(NamespaceId.SYSTEM.app("datapipeline"), appRequest);
     serviceManager = appManager.getServiceManager(StudioService.NAME);
     serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
@@ -114,6 +114,38 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   public static void teardownTests() throws InterruptedException, ExecutionException, TimeoutException {
     serviceManager.stop();
     serviceManager.waitForStopped(2, TimeUnit.MINUTES);
+  }
+
+  @Test
+  public void testSecureMacroSubstitution() throws Exception {
+    // StringValueFilterTransform checks that the field exists in the input schema
+    String stageName = "tx";
+    Map<String, String> properties = new HashMap<>();
+    properties.put("field", "${secure(field)}");
+    properties.put("value", "y");
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
+                                                           properties));
+    Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
+
+    // this call happens when no value for 'field' is in the secure store, which should not result in
+    // any failures because the macro could not be enabled so the check is skipped
+    StageValidationRequest requestBody =
+      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)));
+    StageValidationResponse actual = sendRequest(requestBody);
+    Assert.assertTrue(actual.getFailures().isEmpty());
+
+    // now set the value of 'field' to be 'z', which is not in the input schema
+    // this call should result in a failure
+    getSecureStoreManager().put("default", "field", "z", "desc", Collections.emptyMap());
+    actual = sendRequest(requestBody);
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(1, actual.getFailures().size());
+    ValidationFailure failure = actual.getFailures().iterator().next();
+    // the stage will add 2 causes for invalid input field failure. One is related to input field and the other is
+    // related to config property.
+    Assert.assertEquals(1, failure.getCauses().size());
+    Assert.assertEquals("field", failure.getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
+    Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
   }
 
   @Test
@@ -178,7 +210,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
       .getAttribute(CauseAttributes.REQUESTED_ARTIFACT_VERSION));
     Assert.assertEquals(batchMocksArtifactId.getArtifact(), failure.getCauses().get(0)
       .getAttribute(CauseAttributes.SUGGESTED_ARTIFACT_NAME));
-    Assert.assertEquals(ArtifactScope.USER.name(), failure.getCauses().get(0)
+    Assert.assertEquals(ArtifactScope.SYSTEM.name(), failure.getCauses().get(0)
       .getAttribute(CauseAttributes.SUGGESTED_ARTIFACT_SCOPE));
     Assert.assertEquals(batchMocksArtifactId.getVersion(), failure.getCauses().get(0)
       .getAttribute(CauseAttributes.SUGGESTED_ARTIFACT_VERSION));
