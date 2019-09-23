@@ -520,10 +520,10 @@ class HydratorPlusPlusNodeConfigCtrl {
               };
             });
           }
-          if(schemas.length) {
+          if (schemas.length) {
             vm.EventPipe.emit('schema.import', schemas);
-          }
-          else {
+          } else if (!this.myHelpers.objectQuery(this.state, 'config', 'outputs', 0, 'name')) {
+            // only clear schema if there is no schema property in the plugin being configured.
             vm.EventPipe.emit('schema.clear');
           }
           // Empty existing errors
