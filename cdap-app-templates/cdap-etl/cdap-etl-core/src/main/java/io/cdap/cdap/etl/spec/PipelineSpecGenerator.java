@@ -315,7 +315,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         .withStacktrace(e.getStackTrace());
     } catch (Exception e) {
       collector.addFailure(String.format("Error encountered while configuring the stage: '%s'",
-                                         e.getMessage()), null);
+                                         e.getMessage()), null).withStacktrace(e.getStackTrace());
     }
 
     // throw validation exception if there are any errors being carried by failure collector
@@ -374,7 +374,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       }
     } catch (Exception e) {
       // TODO: Catch specific exceptions when CDAP-15744 is fixed
-      collector.addFailure(e.getMessage(), null);
+      collector.addFailure(e.getMessage(), null).withStacktrace(e.getStackTrace());
     }
 
     // throw validation exception if any error occurred while creating a new instance of the plugin

@@ -51,7 +51,7 @@ public class DefaultFailureCollector implements FailureCollector {
 
   @Override
   public ValidationFailure addFailure(String message, @Nullable String correctiveAction) {
-    ValidationFailure failure = new ValidationFailure(message, correctiveAction, inputSchemas);
+    ValidationFailure failure = new ValidationFailure(message, correctiveAction, stageName, inputSchemas);
     failures.add(failure);
     return failure;
   }
