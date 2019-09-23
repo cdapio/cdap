@@ -27,6 +27,9 @@ import OutlinedSelect from 'components/OutlinedSelect';
 const styles = (theme): StyleRules => {
   return {
     root: {
+      marginBottom: '15px',
+    },
+    ruleContainer: {
       display: 'flex',
       flexAlign: 'row',
       width: '100%',
@@ -34,13 +37,11 @@ const styles = (theme): StyleRules => {
     rule: {
       position: 'relative',
       width: '100%',
-      marginBottom: '15px',
       padding: '15px',
     },
     actionButtons: {
       display: 'flex',
       alignItems: 'flex-end',
-      marginBottom: '15px',
       width: '50px',
       paddingLeft: '10px',
     },
@@ -75,6 +76,10 @@ const styles = (theme): StyleRules => {
       padding: '5px',
       '&:hover': { textDecoration: 'none' },
     },
+    errorText: {
+      marginTop: '5px',
+      color: theme.palette.red[50],
+    },
   };
 };
 
@@ -87,6 +92,7 @@ interface IRuleProps extends WithStyles<typeof styles> {
   addRule: () => void;
   updateRule: (rule: IRule) => void;
   deleteRule: (rule: number) => void;
+  error: string;
 }
 
 const Rule: React.FC<IRuleProps> = ({
@@ -99,6 +105,7 @@ const Rule: React.FC<IRuleProps> = ({
   updateRule,
   deleteRule,
   classes,
+  error,
 }) => {
   const [hovered, setHovered] = useState(false);
   const last = ruleIdx === rulesCount - 1;
@@ -112,50 +119,55 @@ const Rule: React.FC<IRuleProps> = ({
     updateRule(newRule);
   };
   return (
-    <div
-      className={classes.root}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <Paper className={classes.rule}>
-        <If condition={hovered && rulesCount !== 1 && !disabled}>
-          <IconButton
-            size="small"
-            className={classes.deleteButton}
-            onClick={() => deleteRule(ruleIdx)}
-          >
-            <CancelIcon fontSize="large" />
-          </IconButton>
-        </If>
-        {rule.map((stage, i) => (
-          <div key={`${i}-${stage.stageName}`} className={classes.stageRow}>
-            <div className={classes.tableCell}>{stage.stageName}</div>
-            <div className={classes.tableCell}>
-              <OutlinedSelect
-                options={inputSchema[stage.stageName]}
-                disabled={disabled}
-                value={stage.fieldName}
-                onChange={(val) => fieldChange(i, val)}
-              />
-            </div>
-            <If condition={i !== rule.length - 1}>
+    <div className={classes.root}>
+      <div
+        className={classes.ruleContainer}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <Paper className={classes.rule}>
+          <If condition={hovered && rulesCount !== 1 && !disabled}>
+            <IconButton
+              size="small"
+              className={classes.deleteButton}
+              onClick={() => deleteRule(ruleIdx)}
+            >
+              <CancelIcon fontSize="large" />
+            </IconButton>
+          </If>
+          {rule.map((stage, i) => (
+            <div key={`${i}-${stage.stageName}`} className={classes.stageRow}>
+              <div className={classes.tableCell}>{stage.stageName}</div>
               <div className={classes.tableCell}>
-                <span className={classes.fieldEquality}>=</span>
+                <OutlinedSelect
+                  options={inputSchema[stage.stageName]}
+                  disabled={disabled}
+                  value={stage.fieldName}
+                  onChange={(val) => fieldChange(i, val)}
+                />
               </div>
-            </If>
-          </div>
-        ))}
-      </Paper>
-      <div className={classes.actionButtons}>
-        <If condition={!last}>
-          <span className={classes.andBlock}>AND</span>
-        </If>
-        <If condition={last}>
-          <IconButton disabled={disabled} size="small" onClick={addRule}>
-            <AddIcon fontSize="large" />
-          </IconButton>
-        </If>
+              <If condition={i !== rule.length - 1}>
+                <div className={classes.tableCell}>
+                  <span className={classes.fieldEquality}>=</span>
+                </div>
+              </If>
+            </div>
+          ))}
+        </Paper>
+        <div className={classes.actionButtons}>
+          <If condition={!last}>
+            <span className={classes.andBlock}>AND</span>
+          </If>
+          <If condition={last}>
+            <IconButton disabled={disabled} size="small" onClick={addRule}>
+              <AddIcon fontSize="large" />
+            </IconButton>
+          </If>
+        </div>
       </div>
+      <If condition={error !== ''}>
+        <div className={classes.errorText}>{error}</div>
+      </If>
     </div>
   );
 };

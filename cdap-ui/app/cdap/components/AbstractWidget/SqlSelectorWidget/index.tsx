@@ -276,7 +276,7 @@ class SqlSelectorWidgetView extends React.PureComponent<
   };
 
   public render() {
-    const { classes } = this.props;
+    const { classes, errors } = this.props;
     return (
       <div className={classes.root}>
         <If condition={this.state.parsedInputSchemas.length > 0}>
@@ -308,6 +308,7 @@ class SqlSelectorWidgetView extends React.PureComponent<
                   aliases={this.state.aliases}
                   errorCount={this.state.errors.stageCountMap[stage.name]}
                   disabled={this.props.disabled}
+                  errors={errors}
                 />
               );
             })}

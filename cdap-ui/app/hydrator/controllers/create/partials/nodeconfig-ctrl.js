@@ -507,7 +507,7 @@ class HydratorPlusPlusNodeConfigCtrl {
           const errorCount = vm.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
           this.myAlertOnValium.show({
             type: 'danger',
-            content: `${errorCount} error${errorCount.length > 1 ? 's': ''} found.`
+            content: `${errorCount} error${errorCount > 1 ? 's': ''} found.`
           });
         } else {
           const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
@@ -528,7 +528,7 @@ class HydratorPlusPlusNodeConfigCtrl {
             vm.EventPipe.emit('schema.clear');
           }
           // Empty existing errors
-          vm.propertyErrors = [];
+          vm.propertyErrors = {};
           vm.inputSchemaErrors = {};
           vm.outputSchemaErrors = {};
           this.myAlertOnValium.show({
