@@ -343,6 +343,15 @@ public abstract class SparkPipelineRunner {
       emittedRecords.put(stageName, emittedBuilder.build());
     }
 
+    boolean shouldWriteInParallel = Boolean.parseBoolean(
+      sec.getRuntimeArguments().get("pipeline.spark.parallel.sinks.enabled"));
+    if (!shouldWriteInParallel) {
+      for (Runnable runnable : sinkRunnables) {
+        runnable.run();
+      }
+      return;
+    }
+
     Collection<Future> sinkFutures = new ArrayList<>(sinkRunnables.size());
     ExecutorService executorService = Executors.newFixedThreadPool(sinkRunnables.size(), new ThreadFactoryBuilder()
       .setNameFormat("pipeline-sink-task")
