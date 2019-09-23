@@ -93,7 +93,7 @@ export default class DataPrepPlusButton extends Component {
 
   render() {
     return (
-      <div>
+      <div className="plus-button-container">
         {this.renderSuccessAlert()}
         <PlusButton
           mode={PlusButton.MODE.resourcecenter}
