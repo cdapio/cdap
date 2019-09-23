@@ -453,6 +453,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     vm.validating = true;
     const pluginInfo = angular.copy(nodeInfo.plugin);
     pluginInfo.type = nodeInfo.type;
+    pluginInfo.properties = window.CaskCommon.CDAPHelpers.removeEmptyJsonValues(pluginInfo.properties);
 
     const requestBody = {
       stage: {
@@ -538,9 +539,9 @@ class HydratorPlusPlusNodeConfigCtrl {
       }, (err) => {
         vm.validating = false;
         this.myAlertOnValium.show({
-            type: 'danger',
-            content: "Error occured while validating."
-          });
+          type: 'danger',
+          content: 'Error occured while validating.',
+        });
         vm.propertyErrors = [{msg:err.data}];
       });
   }
