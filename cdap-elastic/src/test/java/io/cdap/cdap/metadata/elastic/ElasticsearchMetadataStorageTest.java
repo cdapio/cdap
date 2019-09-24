@@ -436,7 +436,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     MetadataStorage mds = getMetadataStorage();
     List<MetadataRecord> records = createRecordsWithMetadata();
 
-    SearchRequest request = SearchRequest.of("+tags:t0").build();
+    SearchRequest request = SearchRequest.of("+p:v0").build();
     SearchResponse response = mds.search(request);
     Assert.assertEquals(1, response.getResults().size());
     Assert.assertEquals(records.get(0), response.getResults().get(0));
@@ -456,60 +456,13 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     cleanMetadataStorage(records);
   }
 
-  @Test
-  public void testNumericQueries() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-    List<MetadataRecord> records = createRecordsWithMetadata();
-
-    // test each comparison operator
-    SearchRequest request = SearchRequest.of("p:==0").build();
-    SearchResponse response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(0), response.getResults().get(0));
-
-    SearchRequest request2 = SearchRequest.of("p:>0").build();
-    SearchResponse response2 = mds.search(request2);
-    Assert.assertEquals(2, response2.getResults().size());
-    Assert.assertEquals(records.get(1), response2.getResults().get(0));
-    Assert.assertEquals(records.get(2), response2.getResults().get(1));
-
-    SearchRequest request3 = SearchRequest.of("p:>=0").build();
-    SearchResponse response3 = mds.search(request3);
-    Assert.assertEquals(records, response3.getResults());
-
-    SearchRequest request4 = SearchRequest.of("p:<10").build();
-    SearchResponse response4 = mds.search(request4);
-    Assert.assertEquals(records, response4.getResults());
-
-    SearchRequest request5 = SearchRequest.of("p:<=1").build();
-    SearchResponse response5 = mds.search(request5);
-    Assert.assertEquals(2, response5.getResults().size());
-    Assert.assertEquals(records.get(0), response5.getResults().get(0));
-    Assert.assertEquals(records.get(1), response5.getResults().get(1));
-
-    // test multiple numeric bounds
-    SearchRequest request6 = SearchRequest.of("p:>=1 p:<3").build();
-    SearchResponse response6 = mds.search(request6);
-    Assert.assertEquals(2, response6.getResults().size());
-    Assert.assertEquals(records.get(1), response6.getResults().get(0));
-    Assert.assertEquals(records.get(2), response6.getResults().get(1));
-
-    // test that decimal format is supported
-    SearchRequest request7 = SearchRequest.of("p:==0.0").build();
-    SearchResponse response7 = mds.search(request7);
-    Assert.assertEquals(1, response7.getResults().size());
-    Assert.assertEquals(records.get(0), response7.getResults().get(0));
-
-    cleanMetadataStorage(records);
-  }
-
   private List<MetadataRecord> createRecordsWithMetadata() throws IOException {
     MetadataStorage mds = getMetadataStorage();
     MutationOptions options = MutationOptions.builder().setAsynchronous(false).build();
     List<MetadataRecord> records = IntStream.range(0, 3).boxed().map(i -> new MetadataRecord(
         MetadataEntity.ofDataset("ns" + i, "ds" + i),
         new Metadata(MetadataScope.USER, tags("test", "tag", "t" + i),
-            props("p", "" + i)))).collect(Collectors.toList());
+            props("p", "v" + i)))).collect(Collectors.toList());
     mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()),
         options);
 

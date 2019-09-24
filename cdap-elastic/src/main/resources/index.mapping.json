@@ -55,9 +55,6 @@
         "value": {
           "analyzer": "text_analyzer",
           "type": "text"
-        },
-        "numericValue": {
-          "type": "double"
         }
       },
       "type": "nested"

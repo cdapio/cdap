@@ -36,7 +36,6 @@ import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.common.metadata.QueryParser;
 import io.cdap.cdap.common.metadata.QueryTerm;
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
-import io.cdap.cdap.common.metadata.QueryTerm.SearchType;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -158,8 +157,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String NESTED_NAME_FIELD = "props.name"; // contains the property name in nested props
   private static final String NESTED_SCOPE_FIELD = "props.scope"; // contains the scope in nested props
   private static final String NESTED_VALUE_FIELD = "props.value"; // contains the value in nested props
-    // contains all numeric values in nested props
-  private static final String NESTED_NUMERICVALUE_FIELD = "props.numericValue";
   private static final String PROPS_FIELD = "props"; // contains all properties
   private static final String TEXT_FIELD = "text"; // contains all plain text
   private static final String TYPE_FIELD = "type"; // contains the type of the entity
@@ -1018,12 +1015,12 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       return QueryBuilders.matchAllQuery();
     }
     if (queryTerms.size() == 1) {
-      return createTermQuery(queryTerms.get(0), textField, request);
+      return createTermQuery(queryTerms.get(0).getTerm(), textField, request);
     }
 
     BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
     for (QueryTerm queryTerm : queryTerms) {
-      QueryBuilder builder = createTermQuery(queryTerm, textField, request);
+      QueryBuilder builder = createTermQuery(queryTerm.getTerm(), textField, request);
       if (queryTerm.getQualifier() == Qualifier.REQUIRED) {
         boolQuery.must(builder);
       } else {
@@ -1041,18 +1038,18 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   /**
    * Create a sub-query for a single term in the query string.
    *
-   * @param queryTerm the formatted query term, with all relevant search information
+   * @param term the term as it appears in the query, possibly with a field qualifier
    * @param textField the default text field to search if the term does not have a field
    */
-  private QueryBuilder createTermQuery(QueryTerm queryTerm, String textField, SearchRequest request) {
+  private QueryBuilder createTermQuery(String term, String textField, SearchRequest request) {
     // determine if the term has a field qualifier
     String field = null;
-    String term = queryTerm.getTerm().trim().toLowerCase();
+    term = term.trim().toLowerCase();
     // Create a term query on the term as is. This would include a field: prefix if the term hs one.
     // This is important for the case of schema search: If the schema contains a field f of type t,
     // then we index "f:t" in the plain text as well as in the "schema" property. If the query is
     // just "f:t", we must search the plain text field for that.
-    QueryBuilder plainQuery = createTermQuery(queryTerm, textField, term);
+    QueryBuilder plainQuery = createTermQuery(textField, term);
     if (term.contains(MetadataConstants.KEYVALUE_SEPARATOR)) {
       // split the search term in two parts on first occurrence of KEYVALUE_SEPARATOR and trim the key and value
       String[] split = term.split(MetadataConstants.KEYVALUE_SEPARATOR, 2);
@@ -1079,9 +1076,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (request.getScope() != null) {
       boolQuery.must(new TermQueryBuilder(NESTED_SCOPE_FIELD, request.getScope().name()).boost(0.0F));
     }
-    boolQuery.must(queryTerm.getSearchType() == SearchType.NUMERIC
-        ? createTermQuery(queryTerm, NESTED_NUMERICVALUE_FIELD, term)
-        : createTermQuery(queryTerm, NESTED_VALUE_FIELD, term));
+    boolQuery.must(createTermQuery(NESTED_VALUE_FIELD, term));
     QueryBuilder propertyQuery = QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
 
     // match either a plain term of the form "f:t" or the word "t" in property "f"
@@ -1091,33 +1086,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   /**
    * Create a query for a single term in a given field.
    *
-   * @return a range query if the term is a number,
-   * a wildcard query if the term is a string and contains * or ?,
-   * or a match query otherwise
+   * @return a wildcard query is the term contains * or ?, or a match query otherwise
    */
-  private QueryBuilder createTermQuery(QueryTerm queryTerm, String field, String term) {
-    // if attempting to conduct a numeric search
-    if (field.equals(NESTED_NUMERICVALUE_FIELD)) {
-      try {
-        switch (queryTerm.getComparison()) {
-          case GREATER:
-            return QueryBuilders.rangeQuery(field).gt(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case GREATER_OR_EQUAL:
-            return QueryBuilders.rangeQuery(field).gte(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case LESS:
-            return QueryBuilders.rangeQuery(field).lt(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case LESS_OR_EQUAL:
-            return QueryBuilders.rangeQuery(field).lte(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case EQUALS:
-            // run an equality search
-            return QueryBuilders.termQuery(field, Double.parseDouble(QueryParser.extractTermValue(term)));
-          default:
-            throw new IllegalStateException("Invalid comparison type: " + queryTerm.getComparison());
-        }
-      } catch (NumberFormatException e) {
-        // ignore; followup code will search as a string
-      }
-    }
+  private QueryBuilder createTermQuery(String field, String term) {
     return term.contains("*") || term.contains("?")
       ? new WildcardQueryBuilder(field, term)
       // the term should not get split in to multiple words, but in case it does, let's require all words
