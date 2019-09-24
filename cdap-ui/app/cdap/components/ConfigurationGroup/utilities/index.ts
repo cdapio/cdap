@@ -221,11 +221,7 @@ export function constructErrors(failures) {
               }
             }
             // For property-level errors, keep only first property-level error
-            else if (
-              (propertyErrors.hasOwnProperty(stageConfig) &&
-                !propsWithPropErrors.has(stageConfig)) ||
-              !propertyErrors.hasOwnProperty(stageConfig)
-            ) {
+            else if (!propsWithPropErrors.has(stageConfig)) {
               addError(propertyErrors, err, stageConfig);
               propsWithPropErrors.add(stageConfig);
             }
