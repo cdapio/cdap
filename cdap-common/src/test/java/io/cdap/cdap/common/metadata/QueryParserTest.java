@@ -94,12 +94,12 @@ public class QueryParserTest {
 
   @Test
   public void testKeyValueIsNumeric() {
-    Assert.assertEquals(new QueryTerm("key:=10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.EQUALS),
-        QueryParser.parse("key:=10").get(0));
-    Assert.assertEquals(new QueryTerm("key:=10.0", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.EQUALS),
-        QueryParser.parse("key:=10.0").get(0));
-    Assert.assertEquals(new QueryTerm("key:=ten", Qualifier.OPTIONAL, SearchType.STRING, Comparison.EQUALS),
-        QueryParser.parse("key:=ten").get(0));
+    Assert.assertEquals(new QueryTerm("key:==10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.EQUALS),
+        QueryParser.parse("key:==10").get(0));
+    Assert.assertEquals(new QueryTerm("key:==10.0", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.EQUALS),
+        QueryParser.parse("key:==10.0").get(0));
+    Assert.assertEquals(new QueryTerm("key:==ten", Qualifier.OPTIONAL, SearchType.STRING, Comparison.EQUALS),
+        QueryParser.parse("key:==ten").get(0));
   }
 
   @Test

@@ -472,7 +472,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     List<MetadataRecord> records = createRecordsWithMetadata();
 
     // test each comparison operator
-    SearchRequest request = SearchRequest.of("p:=0").build();
+    SearchRequest request = SearchRequest.of("p:==0").build();
     SearchResponse response = mds.search(request);
     Assert.assertEquals(1, response.getResults().size());
     Assert.assertEquals(records.get(0), response.getResults().get(0));
@@ -505,7 +505,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(records.get(2), response6.getResults().get(1));
 
     // test that decimal format is supported
-    SearchRequest request7 = SearchRequest.of("p:=0.0").build();
+    SearchRequest request7 = SearchRequest.of("p:==0.0").build();
     SearchResponse response7 = mds.search(request7);
     Assert.assertEquals(1, response7.getResults().size());
     Assert.assertEquals(records.get(0), response7.getResults().get(0));

@@ -98,10 +98,10 @@ public final class QueryParser {
    */
   public static String extractTermValue(String term) {
     term = lastSubTerm(term);
-    if (term.equals(">") || term.equals(">=") || term.equals("<") || term.equals("<=") || term.equals("=")) {
+    if (term.equals(">") || term.equals(">=") || term.equals("<") || term.equals("<=") || term.equals("==")) {
       return term;
     }
-    if (term.startsWith(">") || term.startsWith("<")) {
+    if (term.startsWith(">") || term.startsWith("<") || term.startsWith("=")) {
       term = term.substring(1);
     }
     if (term.startsWith("=")) {
@@ -184,7 +184,7 @@ public final class QueryParser {
         || t.startsWith(">=")
         || t.startsWith("<")
         || t.startsWith("<=")
-        || t.startsWith("="))) {
+        || t.startsWith("=="))) {
       return SearchType.STRING;
     }
     try {
