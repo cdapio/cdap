@@ -17,7 +17,6 @@
 package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -25,9 +24,7 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.spi.metadata.Metadata;
-import io.cdap.cdap.spi.metadata.MetadataDirective;
 import io.cdap.cdap.spi.metadata.MetadataKind;
-import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataMutation.Drop;
 import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
@@ -46,19 +43,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static io.cdap.cdap.api.metadata.MetadataScope.SYSTEM;
-import static io.cdap.cdap.spi.metadata.MetadataConstants.CREATION_TIME_KEY;
-import static io.cdap.cdap.spi.metadata.MetadataConstants.DESCRIPTION_KEY;
-import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
 
 public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
 
@@ -509,149 +499,6 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     SearchResponse response7 = mds.search(request7);
     Assert.assertEquals(1, response7.getResults().size());
     Assert.assertEquals(records.get(0), response7.getResults().get(0));
-
-    cleanMetadataStorage(records);
-  }
-
-  @Test
-  public void testMidnightCreationDateSearch() throws IOException {
-    //The dates represent (in order) 2019-07-01, 2019-07-02, 2019-07-03
-    List<String> dates = Arrays.asList("1561939200000", "1562025600000", "1562112000000");
-
-    MetadataEntity entity = MetadataEntity.ofDataset("a", "b");
-    MutationOptions options = MutationOptions.builder().setAsynchronous(false).build();
-    Map<ScopedNameOfKind, MetadataDirective> directives = ImmutableMap.of(
-      new ScopedNameOfKind(PROPERTY, SYSTEM, CREATION_TIME_KEY), MetadataDirective.PRESERVE,
-      new ScopedNameOfKind(PROPERTY, SYSTEM, DESCRIPTION_KEY), MetadataDirective.KEEP);
-
-    MetadataStorage mds = getMetadataStorage();
-
-    List<MetadataRecord> records = IntStream.range(0, 3).boxed().map(i -> new MetadataRecord(
-      MetadataEntity.ofDataset("ns" + i, "ds" + i),
-      new MetadataMutation.Create(entity, new Metadata(SYSTEM, tags("batch"), props(
-        CREATION_TIME_KEY, dates.get(i),
-        DESCRIPTION_KEY, "hello",
-        "other", "value")), directives).getMetadata())).collect(Collectors.toList());
-    mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()),
-              options);
-
-    SearchRequest request = SearchRequest.of("DATE:2019-07-02").build();
-    SearchResponse response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(1), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:2019-07-03").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(2), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:>2019-07-02").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(2), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:<2019-07-02").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(0), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:>=2019-07-01").build();
-    response = mds.search(request);
-    Assert.assertEquals(records, response.getResults());
-
-    request = SearchRequest.of("DATE:<=2019-07-03").build();
-    response = mds.search(request);
-    Assert.assertEquals(records, response.getResults());
-
-    cleanMetadataStorage(records);
-  }
-
-  @Test
-  public void testMiddayCreationDateSearch() throws IOException {
-    //The dates represent (in order) 2019-07-01 5:30:05 PM, 2019-07-02 2:16:43 AM, 2019-07-03 11:56:15 PM.
-    List<String> dates = Arrays.asList("1562002205000", "1562033803000", "1562198175000");
-
-    MetadataEntity entity = MetadataEntity.ofDataset("a", "b");
-    MutationOptions options = MutationOptions.builder().setAsynchronous(false).build();
-    Map<ScopedNameOfKind, MetadataDirective> directives = ImmutableMap.of(
-      new ScopedNameOfKind(PROPERTY, SYSTEM, CREATION_TIME_KEY), MetadataDirective.PRESERVE,
-      new ScopedNameOfKind(PROPERTY, SYSTEM, DESCRIPTION_KEY), MetadataDirective.KEEP);
-
-    MetadataStorage mds = getMetadataStorage();
-
-    List<MetadataRecord> records = IntStream.range(0, 3).boxed().map(i -> new MetadataRecord(
-      MetadataEntity.ofDataset("ns" + i, "ds" + i),
-      new MetadataMutation.Create(entity, new Metadata(SYSTEM, tags("batch"), props(
-        CREATION_TIME_KEY, dates.get(i),
-        DESCRIPTION_KEY, "hello",
-        "other", "value")), directives).getMetadata())).collect(Collectors.toList());
-    mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()),
-              options);
-
-    SearchRequest request = SearchRequest.of("DATE:2019-07-02").build();
-    SearchResponse response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(1), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:2019-07-03").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(2), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:>2019-07-02").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(2), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:<2019-07-02").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(0), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:>=2019-07-01").build();
-    response = mds.search(request);
-    Assert.assertEquals(records, response.getResults());
-
-    request = SearchRequest.of("DATE:<=2019-07-03").build();
-    response = mds.search(request);
-    Assert.assertEquals(records, response.getResults());
-
-    cleanMetadataStorage(records);
-  }
-
-  @Test
-  public void testSpecificUserDateSearch() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-    MutationOptions options = MutationOptions.builder().setAsynchronous(false).build();
-
-    List<MetadataRecord> records = IntStream.range(1, 4).boxed().map(i -> new MetadataRecord(
-      MetadataEntity.ofDataset("ns" + i, "ds" + i),
-      new Metadata(MetadataScope.USER, props("user_date", "2019-07-0" + i)))).collect(Collectors.toList());
-    mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()),
-              options);
-
-    SearchRequest request = SearchRequest.of("DATE:user_date:2019-07-02").build();
-    SearchResponse response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(1), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:user_date:>2019-07-02").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(2), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:user_date:<2019-07-02").build();
-    response = mds.search(request);
-    Assert.assertEquals(1, response.getResults().size());
-    Assert.assertEquals(records.get(0), response.getResults().get(0));
-
-    request = SearchRequest.of("DATE:user_date:>=2019-07-01").build();
-    response = mds.search(request);
-    Assert.assertEquals(records, response.getResults());
-
-    request = SearchRequest.of("DATE:user_date:<=2019-07-03").build();
-    response = mds.search(request);
-    Assert.assertEquals(records, response.getResults());
 
     cleanMetadataStorage(records);
   }

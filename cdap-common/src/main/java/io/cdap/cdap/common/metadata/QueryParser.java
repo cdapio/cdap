@@ -20,15 +20,9 @@ import com.google.common.base.Splitter;
 import io.cdap.cdap.common.metadata.QueryTerm.Comparison;
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
 import io.cdap.cdap.common.metadata.QueryTerm.SearchType;
-
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 /**
  * A thread-safe class that provides helper methods for metadata search string interpretation,
@@ -115,71 +109,23 @@ public final class QueryParser {
   }
 
   private static QueryTerm parseQueryTerm(String term) {
-    String parsedTerm = hasRequirementPrefix(term) ? term.substring(1) : term;
-    Qualifier parsedQualifier = hasRequirementPrefix(term) ? Qualifier.REQUIRED : Qualifier.OPTIONAL;
-    if (parsedTerm.startsWith("DATE:")) {
-      return parseDateTerm(parsedTerm, parsedQualifier);
-    }
+    SearchType parsedSearchType = getSearchType(term);
 
-    SearchType parsedSearchType = getSearchType(parsedTerm);
+    Qualifier parsedQualifier = hasRequirementPrefix(term) || parsedSearchType == SearchType.NUMERIC
+        ? Qualifier.REQUIRED : Qualifier.OPTIONAL;
 
-    parsedQualifier = parsedSearchType == SearchType.NUMERIC || parsedSearchType == SearchType.DATE
-      ? Qualifier.REQUIRED : parsedQualifier;
+    String parsedTerm = hasRequirementPrefix(term)
+        ? term.substring(1) : term;
 
     Comparison parsedComparison = parsedSearchType == SearchType.STRING
         ? Comparison.EQUALS : getComparison(term);
 
-    if (parsedSearchType.equals(SearchType.DATE)) {
-      return new QueryTerm(parsedTerm, parsedQualifier, parsedSearchType, parsedComparison, parseDate(parsedTerm));
-    }
-
     return new QueryTerm(parsedTerm, parsedQualifier, parsedSearchType, parsedComparison);
   }
 
-  /**
-   * Parses a user's query when the "DATE" keyword is detected in the beginning of the query.
-   * Extracts the comparison operator and converts the date string into a Unix timestamp and
-   * creates a QueryTerm with this information.
-   * If the date term cannot be converted to a Unix timestamp, creates a regular QueryTerm with the original term input.
-   *
-   * @param term      an individual term from the user's original query
-   * @param qualifier the qualifier that is detected by queryParser
-   * @return a date QueryTerm with the extracted information. If date query is invalid, returns a term-search QueryTerm
-   */
-  private static QueryTerm parseDateTerm(String term, Qualifier qualifier) {
-    String valueTerm = lastSubTerm(term);
-    String dateTerm = extractTermValue(valueTerm);
-    Long date = parseDate(dateTerm);
-    // If the user's date cannot be parsed then create a regular QueryTerm to search for the query as a string.
-    // In this case assume that the DATE: keyword is a part of the user's intended string search.
-    if (date == null) {
-      return new QueryTerm(term, qualifier);
-    }
-    // Remove "DATE:" from the term.
-    term = term.substring(5);
-
-    return new QueryTerm(term, Qualifier.REQUIRED, QueryTerm.SearchType.DATE, getComparison(valueTerm), date);
-  }
-
-  /**
-   * Parses a string into Unix timestamp if the string format is supported.
-   *
-   * @param term potential date string, with no additional syntax (fields, separators, or comparison operators)
-   * @return Unix timestamp in local time as a Long, or null if the term cannot be parsed
-   */
-  @Nullable
-  public static Long parseDate(String term) {
-    // TODO (CDAP-15746): Support more syntaxes for metadata date parsing
-    // such as "dd-MM-yyyy"
-    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-    format.setTimeZone(TimeZone.getTimeZone("UTC"));
-    Date parsedDate = format.parse(term, new ParsePosition(0));
-    return parsedDate == null ? null : parsedDate.getTime();
-  }
-
   private static SearchType getSearchType(String term) {
-    String t = lastSubTerm(term);
     // numeric searches must begin with an explicit comparison operator
+    String t = lastSubTerm(term);
     if (!(t.startsWith(">")
         || t.startsWith(">=")
         || t.startsWith("<")
@@ -222,5 +168,4 @@ public final class QueryParser {
     }
       return Comparison.EQUALS;
   }
-
 }

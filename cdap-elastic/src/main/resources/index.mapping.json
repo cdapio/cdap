@@ -58,9 +58,6 @@
         },
         "numericValue": {
           "type": "double"
-        },
-        "date": {
-          "type": "date"
         }
       },
       "type": "nested"

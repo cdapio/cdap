@@ -22,7 +22,6 @@ import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
 import io.cdap.cdap.common.metadata.QueryTerm.SearchType;
 import org.junit.Assert;
 import org.junit.Test;
-
 import java.util.List;
 
 public class QueryParserTest {
@@ -138,21 +137,5 @@ public class QueryParserTest {
     Assert.assertEquals(">=", QueryParser.extractTermValue(">>="));
     Assert.assertEquals("+", QueryParser.extractTermValue(">+"));
     Assert.assertEquals(">", QueryParser.extractTermValue("+key:>"));
-  }
-
-  @Test
-  public void testDateParser() {
-    String dateString = "2019-08-05";
-    Assert.assertEquals(Long.valueOf(1564963200000L), QueryParser.parseDate(dateString));
-  }
-
-  @Test
-  public void testParseDateQuery() {
-    String query = "DATE:creation_time:<2019-08-05";
-    QueryTerm expected = new QueryTerm("creation_time:<2019-08-05", QueryTerm.Qualifier.REQUIRED,
-                                       QueryTerm.SearchType.DATE, QueryTerm.Comparison.LESS,
-                                       Long.valueOf(1564963200000L));
-    QueryTerm actual = QueryParser.parse(query).get(0);
-    Assert.assertEquals(expected, actual);
   }
 }

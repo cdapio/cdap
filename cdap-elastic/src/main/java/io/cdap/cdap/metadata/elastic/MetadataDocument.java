@@ -21,7 +21,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.SchemaWalker;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.common.metadata.QueryParser;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.ScopedName;
@@ -143,7 +142,6 @@ public class MetadataDocument {
     private final String scope;
     private final String name;
     private final String value;
-    private final Long date;
     // the value field's numeric representation, if applicable
     private final Double numericValue;
 
@@ -151,7 +149,6 @@ public class MetadataDocument {
       this.scope = scope;
       this.name = name;
       this.value = value;
-      this.date = QueryParser.parseDate(value);
       this.numericValue = getNumericValue(value);
     }
 
@@ -176,18 +173,17 @@ public class MetadataDocument {
       return Objects.equals(scope, property.scope) &&
         Objects.equals(name, property.name) &&
         Objects.equals(value, property.value) &&
-        Objects.equals(date, property.date) &&
-        Objects.equals(numericValue, property.numericValue);
+          Objects.equals(numericValue, property.numericValue);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), scope, name, value, date, numericValue);
+      return Objects.hash(super.hashCode(), scope, name, value, numericValue);
     }
 
     @Override
     public String toString() {
-      return scope + ':' + name + '=' + value + '|' + numericValue + '|' + date;
+      return scope + ':' + name + '=' + value + '|' + numericValue;
     }
   }
 

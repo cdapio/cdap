@@ -28,7 +28,6 @@ public class QueryTerm {
   private final Qualifier qualifier;
   private final SearchType searchType;
   private final Comparison comparison;
-  private final Long date;
 
   /**
    * Defines the different types of search operators that can be used.
@@ -46,7 +45,7 @@ public class QueryTerm {
    * Its search type would be considered NUMERIC.
    */
   public enum SearchType {
-    STRING, NUMERIC, DATE
+    STRING, NUMERIC
   }
 
   /**
@@ -66,7 +65,6 @@ public class QueryTerm {
   public QueryTerm(String term, Qualifier qualifier) {
     this(term, qualifier, SearchType.STRING, Comparison.EQUALS);
   }
-
   /**
    * Constructs a QueryTerm using the search term, qualifying information, search type, and comparison type.
    *
@@ -80,24 +78,6 @@ public class QueryTerm {
     this.qualifier = qualifier;
     this.searchType = searchType;
     this.comparison = comparison;
-    this.date = null;
-  }
-
-  /**
-   * Constructs a QueryTerm using search term, qualifying, type, and numeric information.
-   *
-   * @param term the search term
-   * @param qualifier the qualifying information {@link Qualifier}
-   * @param searchType the search method information {@link SearchType}
-   * @param comparison the comparison operator for the numeric value {@link Comparison}
-   * @param number the number which can be associated with a date or a numeric value, depending on the search type
-   */
-  public QueryTerm(String term, Qualifier qualifier, SearchType searchType, Comparison comparison, Long number) {
-    this.term = term;
-    this.qualifier = qualifier;
-    this.searchType = searchType;
-    this.comparison = comparison;
-    this.date = this.searchType.equals(SearchType.DATE) ? number : null;
   }
 
   public String getTerm() {
@@ -116,10 +96,6 @@ public class QueryTerm {
     return comparison;
   }
 
-  public Long getDate() {
-    return date;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (o == this) {
@@ -134,13 +110,12 @@ public class QueryTerm {
     return Objects.equals(term, that.getTerm())
         && Objects.equals(qualifier, that.getQualifier())
         && Objects.equals(searchType, that.getSearchType())
-        && Objects.equals(comparison, that.getComparison())
-        && Objects.equals(date, that.getDate());
+        && Objects.equals(comparison, that.getComparison());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(term, qualifier, searchType, comparison, date);
+    return Objects.hash(term, qualifier, searchType, comparison);
   }
 
   @Override

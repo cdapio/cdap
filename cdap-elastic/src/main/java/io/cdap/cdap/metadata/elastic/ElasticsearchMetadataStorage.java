@@ -159,7 +159,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String NESTED_SCOPE_FIELD = "props.scope"; // contains the scope in nested props
   private static final String NESTED_VALUE_FIELD = "props.value"; // contains the value in nested props
     // contains all numeric values in nested props
-  private static final String NESTED_DATE_FIELD = "props.date"; // contains the date in nested props
   private static final String NESTED_NUMERICVALUE_FIELD = "props.numericValue";
   private static final String PROPS_FIELD = "props"; // contains all properties
   private static final String TEXT_FIELD = "text"; // contains all plain text
@@ -1061,10 +1060,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       term = split[1].trim();
     }
     if (field == null) {
-      if (queryTerm.getSearchType() == QueryTerm.SearchType.DATE) {
-        BoolQueryBuilder dateQuery = createDateQuery(queryTerm, field, request);
-        return new BoolQueryBuilder().should(plainQuery).should(dateQuery).minimumShouldMatch(1);
-      }
       return plainQuery;
     }
     if (MetadataConstants.TTL_KEY.equals(field)
@@ -1089,61 +1084,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         : createTermQuery(queryTerm, NESTED_VALUE_FIELD, term));
     QueryBuilder propertyQuery = QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
 
-    if (queryTerm.getSearchType() == QueryTerm.SearchType.DATE) {
-      BoolQueryBuilder dateQuery = createDateQuery(queryTerm, field, request);
-      return new BoolQueryBuilder().should(plainQuery).should(propertyQuery).should(dateQuery).minimumShouldMatch(1);
-    }
-
     // match either a plain term of the form "f:t" or the word "t" in property "f"
     return new BoolQueryBuilder().should(plainQuery).should(propertyQuery).minimumShouldMatch(1);
-  }
-
-  /**
-   * Creates a bool query for a date search. If there is no field, creation times and user defined dates are queried.
-   * Otherwise, a field refers to a user defined property, which is searched for with a nested query.
-   *
-   * @param queryTerm QueryTerm object containing the term and its search properties
-   * @param field property field to search in. If undefined search all properties and creation times
-   * @param request the search request
-   * @return a structured query for a date search
-   */
-  private BoolQueryBuilder createDateQuery(QueryTerm queryTerm, @Nullable String field, SearchRequest request) {
-    if (field == null) {
-      QueryBuilder creationDateQuery = createDateRangeQuery(queryTerm, CREATED_FIELD).boost(2);
-      QueryBuilder nestedDateQuery = createDateRangeQuery(queryTerm, NESTED_DATE_FIELD);
-      QueryBuilder usersDateQuery = QueryBuilders.nestedQuery(PROPS_FIELD, nestedDateQuery, ScoreMode.Avg);
-      return new BoolQueryBuilder().should(creationDateQuery).should(usersDateQuery).minimumShouldMatch(1);
-    }
-    BoolQueryBuilder dateBoolQuery = buildNestedQuery(field, request);
-    dateBoolQuery.must(createDateRangeQuery(queryTerm, NESTED_DATE_FIELD));
-    QueryBuilder propertyDateQuery = QueryBuilders.nestedQuery(PROPS_FIELD, dateBoolQuery, ScoreMode.Max);
-    return new BoolQueryBuilder().should(propertyDateQuery);
-  }
-
-  /**
-   * Creates a range query for a date search.
-   *
-   * @param queryTerm    QueryTerm object containing the term and its search properties
-   * @param field        property field to search in
-   * @return a structured range query as a QueryBuilder
-   */
-  private QueryBuilder createDateRangeQuery(QueryTerm queryTerm, String field) {
-    Long date = queryTerm.getDate();
-    Long oneDay = TimeUnit.DAYS.toMillis(1);
-    switch (queryTerm.getComparison()) {
-      // +/- oneDay changes the date by 24 hours (1 whole day).
-      // rangeQuery must therefore be gte/lte instead of gt/lt to not exclude midnight dates by accident.
-      case GREATER:
-        return QueryBuilders.rangeQuery(field).gte(date + oneDay);
-      case GREATER_OR_EQUAL:
-        return QueryBuilders.rangeQuery(field).gte(date);
-      case LESS:
-        return QueryBuilders.rangeQuery(field).lt(date);
-      case LESS_OR_EQUAL:
-        return QueryBuilders.rangeQuery(field).lt(date + oneDay);
-      default:
-        return QueryBuilders.rangeQuery(field).gte(date).lt(date + oneDay);
-    }
   }
 
   /**
@@ -1180,22 +1122,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       ? new WildcardQueryBuilder(field, term)
       // the term should not get split in to multiple words, but in case it does, let's require all words
       : new MatchQueryBuilder(field, term).operator(Operator.AND);
-  }
-
-  /**
-   * Sets up the outer layers of a nested query.
-   *
-   * @param field property field to search in
-   * @param request the search request
-   * @return a BoolQueryBuilder that can be utilized for a nested query search
-   */
-  private BoolQueryBuilder buildNestedQuery(String field, SearchRequest request) {
-    BoolQueryBuilder boolQuery = new BoolQueryBuilder();
-    boolQuery.must(new TermQueryBuilder(NESTED_NAME_FIELD, field).boost(0.0F));
-    if (request.getScope() != null) {
-      boolQuery.must(new TermQueryBuilder(NESTED_SCOPE_FIELD, request.getScope().name()).boost(0.0F));
-    }
-    return boolQuery;
   }
 
   /**
