@@ -39,8 +39,6 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.metadata.QueryParser;
-import io.cdap.cdap.common.metadata.QueryTerm;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
@@ -692,7 +690,7 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private SearchResults searchByDefaultIndex(SearchRequest request) {
-    List<MetadataResultEntry> results = new LinkedList<>();
+    List<MetadataEntry> results = new LinkedList<>();
     String column = request.isNamespaced() ?
       DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
 
@@ -711,9 +709,9 @@ public class MetadataDataset extends AbstractDataset {
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          parseRow(next, column, request.getTypes(), request.shouldShowHidden())
-            .map(e -> new MetadataResultEntry(e, searchTerm.getQueryTerm().getTerm()))
-            .ifPresent(results::add);
+          Optional<MetadataEntry> metadataEntry = parseRow(next, column, request.getTypes(),
+                                                           request.shouldShowHidden());
+          metadataEntry.ifPresent(results::add);
         }
       } finally {
         scanner.close();
@@ -730,7 +728,7 @@ public class MetadataDataset extends AbstractDataset {
     int limit = request.getLimit();
     int numCursors = request.getNumCursors();
 
-    List<MetadataResultEntry> results = new LinkedList<>();
+    List<MetadataEntry> results = new LinkedList<>();
     IndexColumn indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     String column = request.isNamespaced() ? indexColumn.getColumn() : indexColumn.getCrossNamespaceColumn();
     // we want to return the first chunk of 'limit' elements after offset
@@ -768,7 +766,10 @@ public class MetadataDataset extends AbstractDataset {
         while ((next = scanner.next()) != null && results.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry =
             parseRow(next, column, request.getTypes(), request.shouldShowHidden());
-          metadataEntry.map(e -> new MetadataResultEntry(e, searchTerm.getTerm())).ifPresent(results::add);
+          if (!metadataEntry.isPresent()) {
+            continue;
+          }
+          results.add(metadataEntry.get());
 
           if (results.size() > limit + offset && (results.size() - offset) % limit == mod) {
             String cursorVal = Bytes.toString(next.get(column));
@@ -822,7 +823,7 @@ public class MetadataDataset extends AbstractDataset {
    * Generate the search terms to use for the query.
    * The search query is split on whitespace into one or more raw terms. Each raw term is cleaned and formatted
    * into a SearchTerm.
-   * See {@link SearchTerm#from(NamespaceId, QueryTerm)} for how cleaning and formatting is done.
+   * See {@link SearchTerm#from(NamespaceId, String)} for how cleaning and formatting is done.
    *
    * @param searchRequest the request to get search terms for
    * @return formatted search query which is namespaced
@@ -831,16 +832,17 @@ public class MetadataDataset extends AbstractDataset {
     Optional<NamespaceId> namespace = searchRequest.getNamespaceId();
     Set<EntityScope> entityScopes = searchRequest.getEntityScopes();
     List<SearchTerm> searchTerms = new LinkedList<>();
-    Consumer<QueryTerm> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
-
-    QueryParser.parse(searchRequest.getQuery()).forEach(queryTerm -> termAdder.accept(queryTerm));
-
+    Consumer<String> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
+    String searchQuery = searchRequest.getQuery();
+    for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
+      termAdder.accept(term);
+    }
     return searchTerms;
   }
 
   @VisibleForTesting
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  static Consumer<QueryTerm> determineSearchFields(Optional<NamespaceId> namespace,
+  static Consumer<String> determineSearchFields(Optional<NamespaceId> namespace,
                                                 Set<EntityScope> entityScopes, List<SearchTerm> searchTerms) {
     if (!namespace.isPresent()) {
       // we can't really represent "any namespace but system", so we just search for any occurrence of the term
@@ -1084,13 +1086,11 @@ public class MetadataDataset extends AbstractDataset {
     private final NamespaceId namespaceId;
     private final String term;
     private final boolean isPrefix;
-    private final QueryTerm queryTerm;
 
-    private SearchTerm(@Nullable NamespaceId namespaceId, String term, boolean isPrefix, QueryTerm queryTerm) {
+    private SearchTerm(@Nullable NamespaceId namespaceId, String term, boolean isPrefix) {
       this.namespaceId = namespaceId;
       this.term = term;
       this.isPrefix = isPrefix;
-      this.queryTerm = queryTerm;
     }
 
     @Nullable
@@ -1104,10 +1104,6 @@ public class MetadataDataset extends AbstractDataset {
 
     boolean isPrefix() {
       return isPrefix;
-    }
-
-    QueryTerm getQueryTerm() {
-      return queryTerm;
     }
 
     @Override
@@ -1136,10 +1132,10 @@ public class MetadataDataset extends AbstractDataset {
      * <p>
      * For example, given raw term ' State : BETA* ', the result will be a prefix search where term = 'state:beta'.
      *
-     * @param queryTerm the query term as determined by the QueryParser
+     * @param rawTerm the raw search term
      */
-    static SearchTerm from(QueryTerm queryTerm) {
-      return from(null, queryTerm);
+    static SearchTerm from(String rawTerm) {
+      return from(null, rawTerm);
     }
 
     /**
@@ -1154,10 +1150,9 @@ public class MetadataDataset extends AbstractDataset {
      * prefix search where term = 'ns1:state:beta'.
      *
      * @param namespaceId the namespace id if it is a within-namespace search, or null if it is cross namespace
-     * @param queryTerm     the query term as determined by the QueryParser
+     * @param rawTerm     the raw search term
      */
-    static SearchTerm from(@Nullable NamespaceId namespaceId, QueryTerm queryTerm) {
-      String rawTerm = queryTerm.getTerm();
+    static SearchTerm from(@Nullable NamespaceId namespaceId, String rawTerm) {
       String formattedTerm = rawTerm.trim().toLowerCase();
 
       if (formattedTerm.contains(MetadataConstants.KEYVALUE_SEPARATOR)) {
@@ -1175,7 +1170,7 @@ public class MetadataDataset extends AbstractDataset {
         formattedTerm = namespaceId.getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR + formattedTerm;
       }
 
-      return new SearchTerm(namespaceId, formattedTerm, isPrefix, queryTerm);
+      return new SearchTerm(namespaceId, formattedTerm, isPrefix);
     }
 
   }
