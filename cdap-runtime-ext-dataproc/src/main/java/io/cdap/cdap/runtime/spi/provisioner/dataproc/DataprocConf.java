@@ -76,6 +76,9 @@ final class DataprocConf {
   private final long pollDeleteDelay;
   private final long pollInterval;
 
+  private final String encryptionKeyName;
+  private final String gcsBucket;
+
   private final boolean preferExternalIP;
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
@@ -87,6 +90,7 @@ final class DataprocConf {
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
          conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
+         conf.encryptionKeyName, conf.gcsBucket,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.publicKey, conf.imageVersion, conf.dataprocProperties);
   }
@@ -96,6 +100,7 @@ final class DataprocConf {
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
                        int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
+                       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion,
@@ -118,6 +123,8 @@ final class DataprocConf {
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
+    this.encryptionKeyName = encryptionKeyName;
+    this.gcsBucket = gcsBucket;
     this.preferExternalIP = preferExternalIP;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
@@ -192,6 +199,16 @@ final class DataprocConf {
 
   long getPollInterval() {
     return pollInterval;
+  }
+
+  @Nullable
+  public String getEncryptionKeyName() {
+    return encryptionKeyName;
+  }
+
+  @Nullable
+  public String getGcsBucket() {
+    return gcsBucket;
   }
 
   boolean isPreferExternalIP() {
@@ -354,10 +371,14 @@ final class DataprocConf {
 
     String imageVersion = getString(properties, IMAGE_VERSION);
 
+    String gcpCmekKeyName = getString(properties, "encryptionKeyName");
+    String gcpCmekBucket = getString(properties, "gcsBucket");
+
     return new DataprocConf(accountKey, region, zone, projectId, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
+                            gcpCmekKeyName, gcpCmekBucket,
                             preferExternalIP, stackdriverLoggingEnabled,
                             stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
   }
