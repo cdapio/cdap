@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IWidgetJson, PluginProperties } from './types';
 import { processConfigurationGroups } from './utilities';
-import { objectQuery } from 'services/helpers';
+import { objectQuery, removeEmptyJsonValues } from 'services/helpers';
 import If from 'components/If';
 import PropertyRow from './PropertyRow';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -138,15 +138,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
       return;
     }
 
-    const newValues = { ...updatedValues };
-    // remove empty string values
-    Object.keys(newValues).forEach((propertyName) => {
-      if (typeof newValues[propertyName] === 'string' && newValues[propertyName].length === 0) {
-        delete newValues[propertyName];
-      }
-    });
-
-    onChange(newValues);
+    onChange(removeEmptyJsonValues(updatedValues));
   }
 
   const extraConfig = {
