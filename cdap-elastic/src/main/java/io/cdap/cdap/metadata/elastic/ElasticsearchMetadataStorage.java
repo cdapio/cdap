@@ -18,6 +18,7 @@ package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -33,9 +34,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataConflictException;
 import io.cdap.cdap.common.metadata.MetadataUtil;
-import io.cdap.cdap.common.metadata.QueryParser;
-import io.cdap.cdap.common.metadata.QueryTerm;
-import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -116,6 +114,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -145,6 +144,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   static final boolean KEEP = true;
   @VisibleForTesting
   static final boolean DISCARD = false;
+
+  // used to tokenize the query string, same as the MetadataDataset
+  private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
 
   // Various fields in a metadata document (indexed in elasticsearch). Beware that these directly
   // correspond to field name in the index settings (index.mapping.json). Any change here must be
@@ -1009,29 +1011,21 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     // all terms must occur in the text field as selected by the scope in the search request.
     String textField = request.getScope() == null ? TEXT_FIELD : request.getScope().name().toLowerCase();
 
-    // split the query into its parsed terms and create corresponding QueryBuilders for each
-    List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
-    if (queryTerms.isEmpty()) {
+    // split the query into its terms and iterate over all terms
+    Iterable<String> terms = Splitter.on(SPACE_SEPARATOR_PATTERN)
+      .omitEmptyStrings().trimResults().split(request.getQuery());
+    List<QueryBuilder> termQueries = new ArrayList<>();
+    for (String term : terms) {
+      termQueries.add(createTermQuery(term, textField, request));
+    }
+    if (termQueries.isEmpty()) {
       return QueryBuilders.matchAllQuery();
     }
-    if (queryTerms.size() == 1) {
-      return createTermQuery(queryTerms.get(0).getTerm(), textField, request);
+    if (termQueries.size() == 1) {
+      return termQueries.get(0);
     }
-
-    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-    for (QueryTerm queryTerm : queryTerms) {
-      QueryBuilder builder = createTermQuery(queryTerm.getTerm(), textField, request);
-      if (queryTerm.getQualifier() == Qualifier.REQUIRED) {
-        boolQuery.must(builder);
-      } else {
-        boolQuery.should(builder);
-      }
-    }
-
-    // if optional terms are the only terms available, require at least one optional term
-    if (boolQuery.must().isEmpty() && !boolQuery.should().isEmpty()) {
-      boolQuery.minimumShouldMatch(1);
-    }
+    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().minimumShouldMatch(1);
+    termQueries.forEach(boolQuery::should);
     return boolQuery;
   }
 
