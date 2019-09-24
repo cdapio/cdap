@@ -17,9 +17,7 @@
 package io.cdap.cdap.common.metadata;
 
 import com.google.common.collect.ImmutableList;
-import io.cdap.cdap.common.metadata.QueryTerm.Comparison;
 import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
-import io.cdap.cdap.common.metadata.QueryTerm.SearchType;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.List;
@@ -50,26 +48,16 @@ public class QueryParserTest {
   }
 
   @Test
-  public void testEmptyQuery() {
-    Assert.assertTrue(QueryParser.parse("").isEmpty());
-  }
+  public void testUnusualQueries() {
+    String emptyQuery = "";
+    String whitespacePlusValidTerm = "        space";
+    String operatorAsSearchTerm = "+";
+    String operatorAsRequiredSearchTerm = "++";
 
-  @Test
-  public void testWhitespacePlusValidTerm() {
-    Assert.assertEquals(QueryParser.parse("        space").get(0),
-        new QueryTerm("space", Qualifier.OPTIONAL));
-  }
-
-  @Test
-  public void testRequiredOperatorAsSearchTerm() {
-    Assert.assertEquals(QueryParser.parse("+").get(0),
-        new QueryTerm("+", Qualifier.OPTIONAL));
-  }
-
-  @Test
-  public void testRequiredOperatorAsRequiredSearchTerm() {
-    Assert.assertEquals(QueryParser.parse("++").get(0),
-        new QueryTerm("+", Qualifier.REQUIRED));
+    Assert.assertTrue(QueryParser.parse(emptyQuery).isEmpty());
+    Assert.assertEquals(QueryParser.parse(whitespacePlusValidTerm).get(0), new QueryTerm("space", Qualifier.OPTIONAL));
+    Assert.assertEquals(QueryParser.parse(operatorAsSearchTerm).get(0), new QueryTerm("+", Qualifier.OPTIONAL));
+    Assert.assertEquals(QueryParser.parse(operatorAsRequiredSearchTerm).get(0), new QueryTerm("+", Qualifier.REQUIRED));
   }
 
   @Test
@@ -83,59 +71,5 @@ public class QueryParserTest {
     Assert.assertEquals(2, QueryParser.parse(newlineSeparatedString).size());
     Assert.assertEquals(2, QueryParser.parse(formFeedSeparatedString).size());
     Assert.assertEquals(2, QueryParser.parse(carriageReturnSeparatedString).size());
-  }
-
-  @Test
-  public void testBareNumberIsString() {
-    Assert.assertEquals(new QueryTerm("1", Qualifier.OPTIONAL, SearchType.STRING, Comparison.EQUALS),
-        QueryParser.parse("1").get(0));
-  }
-
-  @Test
-  public void testKeyValueIsNumeric() {
-    Assert.assertEquals(new QueryTerm("key:==10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.EQUALS),
-        QueryParser.parse("key:==10").get(0));
-    Assert.assertEquals(new QueryTerm("key:==10.0", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.EQUALS),
-        QueryParser.parse("key:==10.0").get(0));
-    Assert.assertEquals(new QueryTerm("key:==ten", Qualifier.OPTIONAL, SearchType.STRING, Comparison.EQUALS),
-        QueryParser.parse("key:==ten").get(0));
-  }
-
-  @Test
-  public void testComparisonOperatorsAreSupported() {
-    Assert.assertEquals(new QueryTerm("key:>10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.GREATER),
-        QueryParser.parse("key:>10").get(0));
-    Assert.assertEquals(new QueryTerm("key:>=10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.GREATER_OR_EQUAL),
-        QueryParser.parse("key:>=10").get(0));
-    Assert.assertEquals(new QueryTerm("key:<10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.LESS),
-        QueryParser.parse("key:<10").get(0));
-    Assert.assertEquals(new QueryTerm("key:<=10", Qualifier.REQUIRED, SearchType.NUMERIC, Comparison.LESS_OR_EQUAL),
-        QueryParser.parse("key:<=10").get(0));
-  }
-
-  @Test
-  public void testExtractTermValueOfNumbers() {
-    Assert.assertEquals("30", QueryParser.extractTermValue("key:>=30"));
-    Assert.assertEquals("30.0", QueryParser.extractTermValue("key:>=30.0"));
-    Assert.assertEquals("30", QueryParser.extractTermValue(">=30"));
-    Assert.assertEquals("30", QueryParser.extractTermValue("30"));
-    Assert.assertEquals("=30", QueryParser.extractTermValue("key:>==30"));
-  }
-
-  @Test
-  public void testExtractTermValueOfStrings() {
-    Assert.assertEquals("thirty", QueryParser.extractTermValue("key:>=thirty"));
-    Assert.assertEquals("thirty", QueryParser.extractTermValue("+thirty"));
-    Assert.assertEquals("thirty", QueryParser.extractTermValue("+>=thirty"));
-    Assert.assertEquals("+", QueryParser.extractTermValue("+"));
-  }
-
-  @Test
-  public void testExtractTermValueOfComparisonOperator() {
-    Assert.assertEquals(">=", QueryParser.extractTermValue(">="));
-    Assert.assertEquals(">=", QueryParser.extractTermValue("+>="));
-    Assert.assertEquals(">=", QueryParser.extractTermValue(">>="));
-    Assert.assertEquals("+", QueryParser.extractTermValue(">+"));
-    Assert.assertEquals(">", QueryParser.extractTermValue("+key:>"));
   }
 }
