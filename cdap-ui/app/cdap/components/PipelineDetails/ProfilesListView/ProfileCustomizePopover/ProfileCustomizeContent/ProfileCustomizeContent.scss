@@ -14,6 +14,8 @@
  * the License.
 */
 
+@import '~styles/colors.scss';
+
 .profile-customize-content {
   height: 100%;
   min-height: inherit;
@@ -38,7 +40,15 @@
   .profile-group-content {
     padding: 0 5px;
     > div {
-      margin-bottom: 5px;
+      margin-bottom: 20px;
+
+      .form-control {
+        background-color: transparent;
+      }
+
+      .widget-wrapper-label {
+        background-color: $grey-08;
+      }
     }
   }
   .btn.btn-primary {
