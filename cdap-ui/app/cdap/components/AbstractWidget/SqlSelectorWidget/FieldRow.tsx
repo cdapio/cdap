@@ -23,6 +23,7 @@ import Typography from '@material-ui/core/Typography';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IFieldSchema } from 'components/AbstractWidget/SqlSelectorWidget';
 import TextField from '@material-ui/core/TextField';
+import If from 'components/If';
 
 const styles = (theme): StyleRules => {
   return {
@@ -43,9 +44,29 @@ const styles = (theme): StyleRules => {
       },
       border: `1px solid ${theme.palette.red[200]}`,
     },
+    innerRowContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    widgetsRow: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    fieldName: {
+      display: 'inline',
+      width: '45%',
+      paddingRight: '10px',
+    },
     selectCell: {
       paddingLeft: 0,
-      paddingRight: 0,
+      paddingRight: '10px',
+      width: '80px',
+    },
+    textFieldCell: {
+      width: '45%',
+    },
+    errorText: {
+      color: theme.palette.red[50],
     },
   };
 };
@@ -54,6 +75,7 @@ interface IFieldRowProps extends WithStyles<typeof styles> {
   field: IFieldSchema;
   error: boolean;
   disabled: boolean;
+  validationError: string;
 }
 
 const FieldRow: React.FC<IFieldRowProps> = ({
@@ -62,6 +84,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
   error,
   classes,
   disabled,
+  validationError,
 }: IFieldRowProps) => {
   const aliasChange = (event) => {
     onFieldChange({ ...field, alias: event.target.value });
@@ -74,30 +97,42 @@ const FieldRow: React.FC<IFieldRowProps> = ({
     <TableRow
       className={classnames({
         [classes.tableRow]: true,
-        [classes.errorRow]: error,
+        [classes.errorRow]: error || validationError,
       })}
     >
       <TableCell>
-        <Typography variant="body1">{field.name}</Typography>
-      </TableCell>
-      <TableCell className={classes.selectCell} align="left" padding="checkbox">
-        <Checkbox
-          disabled={disabled}
-          checked={field.selected}
-          value={field.selected}
-          color="primary"
-          onClick={selectedChange}
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          fullWidth
-          margin="dense"
-          variant="outlined"
-          value={field.alias}
-          onChange={aliasChange}
-          disabled={!field.selected || disabled}
-        />
+        <div className={classes.innerRowContainer}>
+          <div className={classes.widgetsRow}>
+            <Typography
+              className={classnames(classes.fieldName, 'truncate')}
+              variant="body1"
+              display="inline"
+            >
+              {field.name}
+            </Typography>
+            <span className={classes.selectCell}>
+              <Checkbox
+                disabled={disabled}
+                checked={field.selected}
+                value={field.selected}
+                color="primary"
+                onClick={selectedChange}
+              />
+            </span>
+            <TextField
+              fullWidth
+              className={classes.textFieldCell}
+              margin="dense"
+              variant="outlined"
+              value={field.alias}
+              onChange={aliasChange}
+              disabled={!field.selected || disabled}
+            />
+          </div>
+          <If condition={validationError !== ''}>
+            <div className={classes.errorText}>{validationError}</div>
+          </If>
+        </div>
       </TableCell>
     </TableRow>
   );

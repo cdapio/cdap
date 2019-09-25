@@ -23,6 +23,7 @@ import Rule from 'components/AbstractWidget/SqlConditionsWidget/Rule';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 export const styles = (): StyleRules => {
   return {
@@ -111,13 +112,14 @@ class SqlConditionsWidgetView extends React.Component<
       if (ruleCheck.length > 0) {
         return;
       }
-      const ruleArr = rule.map((field) => {
-        return field.stageName + '.' + field.fieldName;
-      });
-      outputArr.push(ruleArr.join(' = '));
+      outputArr.push(this.formatRule(rule));
     });
     this.props.onChange(outputArr.join(' & '));
   };
+
+  private formatRule(rule: IRule) {
+    return rule.map((field) => `${field.stageName}.${field.fieldName}`).join(' = ');
+  }
 
   private addRule = () => {
     if (this.state.stageList.length === 0) {
@@ -219,7 +221,7 @@ class SqlConditionsWidgetView extends React.Component<
   };
 
   public render() {
-    const { classes, disabled } = this.props;
+    const { classes, disabled, errors } = this.props;
     return (
       <div className={classes.root}>
         <If condition={this.state.error && this.state.stageList.length > 0}>
@@ -230,6 +232,13 @@ class SqlConditionsWidgetView extends React.Component<
         </If>
         <div className={classes.rulesContainer}>
           {this.state.rules.map((rule, i) => {
+            const errorObj =
+              errors &&
+              errors.find((err: IErrorObj) => {
+                const ruleStr = this.formatRule(rule);
+                return err.element === ruleStr;
+              });
+            const errorStr = errorObj ? errorObj.msg : '';
             return (
               <Rule
                 key={i}
@@ -239,8 +248,9 @@ class SqlConditionsWidgetView extends React.Component<
                 inputSchema={this.state.mapInputSchema}
                 addRule={this.addRule}
                 disabled={disabled}
-                updateRule={(changedRule) => this.updateRule(changedRule, i)}
+                updateRule={(changedRule: IRule) => this.updateRule(changedRule, i)}
                 deleteRule={this.deleteRule}
+                error={errorStr}
               />
             );
           })}
