@@ -55,12 +55,6 @@
         "value": {
           "analyzer": "text_analyzer",
           "type": "text"
-        },
-        "numericValue": {
-          "type": "double"
-        },
-        "date": {
-          "type": "date"
         }
       },
       "type": "nested"

@@ -49,7 +49,6 @@ import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageTest;
 import io.cdap.cdap.spi.metadata.MutationOptions;
-import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
@@ -242,123 +241,6 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
   }
 
   @Test
-  public void testOneRequiredTerm() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-
-    NamespaceId ns1Id = new NamespaceId("ns1");
-    MetadataEntity dataset1 = ns1Id.dataset("ds1").toMetadataEntity();
-    MetadataEntity dataset2 = ns1Id.dataset("ds2").toMetadataEntity();
-
-    List<MetadataEntity> entities = ImmutableList.of(dataset1, dataset2);
-    for (MetadataEntity entity : entities) {
-      Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(entity)));
-    }
-
-    MetadataRecord dataset1Record = new MetadataRecord(dataset1,
-                                                       new Metadata(USER, tags("tag1", "tag2")));
-    MetadataRecord dataset2Record = new MetadataRecord(dataset2, new Metadata(USER, tags("tag2", "tag3")));
-
-    mds.batch(ImmutableList.of(dataset1Record, dataset2Record)
-                .stream().map(record -> new Update(record.getEntity(), record.getMetadata()))
-                .collect(Collectors.toList()), MutationOptions.DEFAULT);
-
-    SearchResponse response = mds.search(SearchRequest.of("+tag1").build());
-    Assert.assertEquals(ImmutableList.of(dataset1Record), response.getResults());
-
-    response = mds.search(SearchRequest.of("tag2 +tag1").build());
-    Assert.assertEquals(ImmutableList.of(dataset1Record), response.getResults());
-
-    // clean up
-    mds.batch(ImmutableList.of(
-      new Drop(dataset1), new Drop(dataset2)),
-              MutationOptions.DEFAULT);
-  }
-
-  @Test
-  public void testMultipleRequiredTerms() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-
-    NamespaceId ns1Id = new NamespaceId("ns1");
-    MetadataEntity dataset1 = ns1Id.dataset("ds1").toMetadataEntity();
-    MetadataEntity dataset2 = ns1Id.dataset("ds2").toMetadataEntity();
-    MetadataEntity dataset3 = ns1Id.dataset("ds3").toMetadataEntity();
-
-    List<MetadataEntity> entities = ImmutableList.of(dataset1, dataset2, dataset3);
-    for (MetadataEntity entity : entities) {
-      Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(entity)));
-    }
-
-    MetadataRecord dataset1Record = new MetadataRecord(dataset1, new Metadata(USER, tags("tag1", "tag2",
-                                                                                         "tag3", "tag4", "tag5")));
-    MetadataRecord dataset2Record = new MetadataRecord(dataset2, new Metadata(USER, tags("tag1", "tag2", "tag4")));
-    MetadataRecord dataset3Record = new MetadataRecord(dataset3, new Metadata(USER, tags("tag1", "tag5", "tag6")));
-
-    mds.batch(ImmutableList.of(dataset1Record, dataset2Record, dataset3Record)
-                .stream().map(record -> new Update(record.getEntity(), record.getMetadata()))
-                .collect(Collectors.toList()), MutationOptions.DEFAULT);
-
-    SearchResponse response = mds.search(SearchRequest.of("+tag1 tag5 tag6").build());
-    List<MetadataRecord> expected = ImmutableList.of(dataset3Record, dataset1Record, dataset2Record);
-    List<MetadataRecord> actual = response.getResults();
-    Assert.assertEquals(expected, actual);
-
-    response = mds.search(SearchRequest.of("+tag1 +tag2").build());
-    expected = ImmutableList.of(dataset2Record, dataset1Record);
-    actual = response.getResults();
-    Assert.assertEquals(expected, actual);
-
-    response = mds.search(SearchRequest.of("+tag1 +tag2 +tag3 tag4").build());
-    expected = ImmutableList.of(dataset1Record);
-    actual = response.getResults();
-    Assert.assertEquals(expected, actual);
-
-    // clean up
-    mds.batch(ImmutableList.of(
-      new Drop(dataset1), new Drop(dataset2), new Drop(dataset3)),
-              MutationOptions.DEFAULT);
-  }
-
-  @Test
-  public void testRequiredTermWithWildCard() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-
-    NamespaceId ns1Id = new NamespaceId("ns1");
-    MetadataEntity dataset1 = ns1Id.dataset("ds1").toMetadataEntity();
-    MetadataEntity dataset2 = ns1Id.dataset("ds2").toMetadataEntity();
-
-    List<MetadataEntity> entities = ImmutableList.of(dataset1, dataset2);
-    for (MetadataEntity entity : entities) {
-      Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(entity)));
-    }
-
-    MetadataRecord dataset1Record = new MetadataRecord(dataset1, new Metadata(USER, tags("tag1", "tag2")));
-    MetadataRecord dataset2Record = new MetadataRecord(dataset2, new Metadata(USER, tags("tag2", "tag3")));
-
-    mds.batch(ImmutableList.of(dataset1Record, dataset2Record)
-                .stream().map(record -> new Update(record.getEntity(), record.getMetadata()))
-                .collect(Collectors.toList()), MutationOptions.DEFAULT);
-
-    SearchResponse response = mds.search(SearchRequest.of("+tag1*").build());
-    List<MetadataRecord> expected = ImmutableList.of(dataset1Record);
-    List<MetadataRecord> actual = response.getResults();
-    Assert.assertEquals(expected, actual);
-
-    response = mds.search(SearchRequest.of("+tag1* tag2*").build());
-    expected = ImmutableList.of(dataset1Record);
-    actual = response.getResults();
-    Assert.assertEquals(expected, actual);
-
-    response = mds.search(SearchRequest.of("tag2* +tag3*").build());
-    expected = ImmutableList.of(dataset2Record);
-    actual = response.getResults();
-    Assert.assertEquals(expected, actual);
-
-    // clean up
-    mds.batch(ImmutableList.of(
-      new Drop(dataset1), new Drop(dataset2)), MutationOptions.DEFAULT);
-  }
-
-  @Test
   public void testNsScopes() {
     // no namespace
     testNsScopes(null, null, EnumSet.allOf(EntityScope.class), false);
@@ -424,5 +306,6 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
   private static Cursor cursor(int offset, int limit, String actual) {
     return new Cursor(offset, limit, true, null, null, null, null, actual, "*");
   }
+
 
 }

@@ -195,7 +195,7 @@ public abstract class AbstractMetadataClient {
     if (namespaces != null && namespaces.size() == 1) {
       path.append("namespaces/").append(namespaces.get(0).getNamespace()).append("/");
     }
-    path.append("metadata/search?query=").append(URLEncoder.encode(query, "UTF-8"));
+    path.append("metadata/search?query=").append(query);
     if (namespaces != null && namespaces.size() > 1) {
       for (NamespaceId namespace : namespaces) {
         path.append("&namespace=").append(namespace.getNamespace());
