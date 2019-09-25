@@ -185,7 +185,7 @@ export function constructErrors(failures) {
   const propsWithPropErrors = new Set(); // keep track of properties w/property-level errors
 
   // helper for adding an error to error object
-  const addError = (errorObj, newError, key) => {
+  const addError = (errorObj: IPropErrors, newError: IErrorObj, key: string) => {
     if (errorObj.hasOwnProperty(key)) {
       errorObj[key].push(newError);
     } else {
