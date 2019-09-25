@@ -27,7 +27,7 @@ import { objectQuery } from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
 import ee from 'event-emitter';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
-import SecureKeyText from 'components/AbstractWidget/SecureKey/SecureKeyText';
+import { WrappedWidgetWrapper } from 'components/ConfigurationGroup/WidgetWrapper';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -373,12 +373,17 @@ export default class S3Connection extends Component {
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <SecureKeyText
+                <WrappedWidgetWrapper
+                  widgetProperty={{
+                    'widget-type': 'securekey-text',
+                    'widget-attributes': {
+                      placeholder: T.translate(`${PREFIX}.Placeholders.accessKeyId`).toString(),
+                    },
+                  }}
                   value={this.state.accessKeyId}
                   onChange={this.handleAccessSecretChange('accessKeyId')}
-                  widgetProps={{
-                    placeholder: T.translate(`${PREFIX}.Placeholders.accessKeyId`),
-                  }}
+                  hideLabel={true}
+                  hideDescription={true}
                 />
               </div>
             </div>
@@ -391,12 +396,17 @@ export default class S3Connection extends Component {
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <SecureKeyText
+                <WrappedWidgetWrapper
+                  widgetProperty={{
+                    'widget-type': 'securekey-password',
+                    'widget-attributes': {
+                      placeholder: T.translate(`${PREFIX}.Placeholders.accessSecretKey`).toString(),
+                    },
+                  }}
                   value={this.state.accessSecretKey}
                   onChange={this.handleAccessSecretChange('accessSecretKey')}
-                  widgetProps={{
-                    placeholder: T.translate(`${PREFIX}.Placeholders.accessSecretKey`),
-                  }}
+                  hideLabel={true}
+                  hideDescription={true}
                 />
               </div>
             </div>

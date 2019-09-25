@@ -85,7 +85,7 @@ const styles = (theme): StyleRules => {
 
 interface IWidgetWrapperProps extends WithStyles<typeof styles> {
   widgetProperty: IWidgetProperty;
-  pluginProperty: IPluginProperty;
+  pluginProperty?: IPluginProperty;
   value: string;
   onChange: (value: string) => void;
   updateAllProperties: (values) => void;
@@ -94,20 +94,22 @@ interface IWidgetWrapperProps extends WithStyles<typeof styles> {
   hideDescription?: boolean;
   errors?: IErrorObj[];
   size?: 'large' | 'small' | 'medium';
+  hideLabel?: boolean;
 }
 
 const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
   widgetProperty,
-  pluginProperty,
+  pluginProperty = {},
   value,
   onChange,
   updateAllProperties,
   extraConfig,
   disabled,
-  hideDescription,
+  hideDescription = false,
   classes,
   errors,
   size = 'large',
+  hideLabel = false,
 }) => {
   const widgetType = objectQuery(widgetProperty, 'widget-type');
   const [isFocused, setIsFocused] = React.useState<boolean>(false);
@@ -133,7 +135,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
       onFocus={onFocus}
       onBlur={onBlur}
     >
-      <If condition={!hideWrapper}>
+      <If condition={!hideWrapper || hideLabel}>
         <div className={`widget-wrapper-label ${classes.label}`}>
           {widgetProperty.label}
           <If condition={pluginProperty.required}>
