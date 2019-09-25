@@ -17,7 +17,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Instrumentation from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Instrumentation';
-import StageLogging from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/StageLogging';
 import Checkpointing from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Checkpointing';
 import BatchInterval from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/BatchInterval';
 import { connect } from 'react-redux';
@@ -37,7 +36,6 @@ function PipelineConfigTabContent({ isBatch }) {
         </div>
       ) : null}
       <Instrumentation />
-      <StageLogging />
     </div>
   );
 }

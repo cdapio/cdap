@@ -128,7 +128,7 @@ class HydratorPlusPlusConfigStore {
       postActions: [],
       properties: {},
       processTimingEnabled: true,
-      stageLoggingEnabled: true
+      stageLoggingEnabled: this.HYDRATOR_DEFAULT_VALUES.stageLoggingEnabled,
     };
   }
 
