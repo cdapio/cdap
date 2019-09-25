@@ -29,7 +29,11 @@ import {
 } from 'components/ConfigurationGroup/types';
 import flatten from 'lodash/flatten';
 import difference from 'lodash/difference';
-import { objectQuery, isMacro } from 'services/helpers';
+import { objectQuery, isMacro, removeEmptyJsonValues } from 'services/helpers';
+import {
+  IProcessedConfigurationGroups,
+  processConfigurationGroups,
+} from 'components/ConfigurationGroup/utilities';
 
 export interface IFilteredWidgetProperty extends IWidgetProperty {
   show?: boolean;
@@ -256,4 +260,55 @@ export function filterByCondition(
         show: hiddenProperties.length !== group.properties.length,
       };
     });
+}
+
+export function getPluginPropertiesForValidation(nodeInfo: any, widgetJson: IWidgetJson) {
+  const availableProps = new Set();
+  const pluginInfo = Object.assign({}, nodeInfo.plugin);
+  pluginInfo.type = nodeInfo.type;
+  const pluginProperties: PluginProperties = objectQuery(nodeInfo, '_backendProperties');
+  const widgetConfigurationGroup: IConfigurationGroup[] = objectQuery(
+    widgetJson,
+    'configuration-groups'
+  );
+  const widgetOutputs: IWidgetProperty[] = objectQuery(widgetJson, 'outputs');
+  const values: IPropertyValues = objectQuery(nodeInfo, 'plugin', 'properties');
+  const processedConfigurationGroup: IProcessedConfigurationGroups = processConfigurationGroups(
+    pluginProperties,
+    widgetConfigurationGroup,
+    widgetOutputs
+  );
+  const filteredConfigurationGroups: IFilteredConfigurationGroup[] = filterByCondition(
+    processedConfigurationGroup.configurationGroups,
+    widgetJson,
+    pluginProperties,
+    values
+  );
+  filteredConfigurationGroups.forEach((group: IFilteredConfigurationGroup) => {
+    // If the group and properties in that group are set to show
+    // mark them available.
+    if (group.show) {
+      group.properties.forEach((property) => {
+        if (property.show) {
+          availableProps.add(property.name);
+        }
+      });
+    }
+  });
+  // adding properties specified on outputs
+  if (widgetOutputs) {
+    widgetOutputs.forEach((prop) => {
+      if (prop.name) {
+        availableProps.add(prop.name);
+      }
+    });
+  }
+  Object.keys(pluginInfo.properties).forEach((propertyName) => {
+    // If a property is not avaialble i.e hidden, delete it from plugin's props.
+    if (!availableProps.has(propertyName)) {
+      delete pluginInfo.properties[propertyName];
+    }
+  });
+  pluginInfo.properties = removeEmptyJsonValues(pluginInfo.properties);
+  return pluginInfo;
 }
