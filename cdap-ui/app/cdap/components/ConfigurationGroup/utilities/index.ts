@@ -271,7 +271,7 @@ function constructErrorMessage(error: string, correctiveAction: string) {
     message += error;
   }
   if (correctiveAction) {
-    message += ` - ${correctiveAction}`;
+    message += ` ${correctiveAction}`;
   }
   return message;
 }
