@@ -72,7 +72,7 @@
                     "label": "File",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -95,7 +95,7 @@
                     "label": "CSVParser",
                     "artifact": {
                         "name": "transform-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -120,7 +120,7 @@
                     "label": "JavaScript3",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -144,7 +144,7 @@
                     "label": "UnionSplitter",
                     "artifact": {
                         "name": "transform-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -177,7 +177,7 @@
                     "label": "String JavaScript Emitter",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -201,7 +201,7 @@
                     "label": "Conditional",
                     "artifact": {
                         "name": "condition-plugins",
-                        "version": "1.4.0-SNAPSHOT",
+                        "version": "[1.4.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -224,7 +224,7 @@
                     "label": "String Prices",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -251,7 +251,7 @@
                     "label": "CDAP Table Dataset",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -276,7 +276,7 @@
                     "label": "JavaScript2",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -300,7 +300,7 @@
                     "label": "File3",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
