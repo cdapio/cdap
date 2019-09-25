@@ -16,18 +16,22 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.datanucleus.store.types.converters.URIStringConverter;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
@@ -44,29 +48,52 @@ public class RemoteExecutionDiscoveryServiceTest {
     // Without registering, the service discovered should contain one
     // entry with the host name the same as the service name
     ServiceDiscovered serviceDiscovered = discoveryService.discover("test");
-    Assert.assertTrue(
-      StreamSupport.stream(serviceDiscovered.spliterator(), false)
-        .map(Discoverable::getSocketAddress)
-        .allMatch(addr -> InetSocketAddress.createUnresolved("test", 0).equals(addr))
-    );
+    List<Discoverable> discoverables = Lists.newArrayList(serviceDiscovered);
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(InetSocketAddress.createUnresolved("test", 0), discoverables.get(0).getSocketAddress());
 
     // Explicitly register an endpoint, this should override the previous one
     Cancellable cancellable = discoveryService.register(
       new Discoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
-    Assert.assertTrue(
-      StreamSupport.stream(serviceDiscovered.spliterator(), false)
-        .map(Discoverable::getSocketAddress)
-        .allMatch(addr -> InetSocketAddress.createUnresolved("xyz", 12345).equals(addr))
-    );
+    discoverables = Lists.newArrayList(serviceDiscovered);
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(InetSocketAddress.createUnresolved("xyz", 12345), discoverables.get(0).getSocketAddress());
 
     // Cancel the registration,
     // it should resort back to having discoverable with address host the same as the discovery name
     cancellable.cancel();
-    Assert.assertTrue(
-      StreamSupport.stream(serviceDiscovered.spliterator(), false)
-        .map(Discoverable::getSocketAddress)
-        .allMatch(addr -> InetSocketAddress.createUnresolved("test", 0).equals(addr))
-    );
+    discoverables = Lists.newArrayList(serviceDiscovered);
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(InetSocketAddress.createUnresolved("test", 0), discoverables.get(0).getSocketAddress());
+  }
+
+  @Test
+  public void testWithSSL() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
+
+    // Without registering, the service discovered should contain one entry, with the payload indicating HTTPS.
+    ServiceDiscovered serviceDiscovered = discoveryService.discover("test");
+    List<Discoverable> discoverables = Lists.newArrayList(serviceDiscovered);
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(URIScheme.HTTPS, URIScheme.getScheme(discoverables.get(0)));
+
+    // Register one with HTTP, should expect the discovery return the one with HTTP, as it override the previous one.
+    Cancellable cancellable = discoveryService.register(
+      new Discoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
+    discoverables = Lists.newArrayList(serviceDiscovered);
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(URIScheme.HTTP, URIScheme.getScheme(discoverables.get(0)));
+    cancellable.cancel();
+
+    // Override again with HTTPS
+    cancellable = discoveryService.register(
+      URIScheme.HTTPS.createDiscoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
+    discoverables = Lists.newArrayList(serviceDiscovered);
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(URIScheme.HTTPS, URIScheme.getScheme(discoverables.get(0)));
+    cancellable.cancel();
   }
 
   @Test
