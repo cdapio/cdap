@@ -429,6 +429,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       result.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, masterBindAddrConf);
       result.set(Constants.Dataset.Executor.ADDRESS, masterBindAddrConf);
       result.set(Constants.Metadata.SERVICE_BIND_ADDRESS, masterBindAddrConf);
+
+      // Don't try and use the CDAP system certs for SSL
+      result.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
     }
 
     return result;
