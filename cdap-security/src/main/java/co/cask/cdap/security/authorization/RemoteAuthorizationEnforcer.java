@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationPrivilege;
@@ -158,7 +159,7 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
     Set newEntityIds = new HashSet<EntityId>();;
 		entityIds.forEach(x -> {
-			if (!x.toString().startsWith("schedule:")) {
+			if (!x.getEntityType().equals(EntityType.SCHEDULE)) {
 				newEntityIds.add(x);
 			}
 		});
