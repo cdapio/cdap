@@ -20,6 +20,7 @@ import CodeEditorWidget from 'components/AbstractWidget/CodeEditorWidget';
 import CSVWidget from 'components/AbstractWidget/CSVWidget';
 import DatasetSelector from 'components/AbstractWidget/DatasetSelectorWidget';
 import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropdownAliasWidget';
+import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
 import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
 import JoinTypeWidget from 'components/AbstractWidget/JoinTypeWidget';
 import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
@@ -58,6 +59,7 @@ export const WIDGET_FACTORY = {
   'ds-multiplevalues': MultipleValuesWidget,
   dsv: CSVWidget,
   'function-dropdown-with-alias': FunctionDropdownAliasWidget,
+  'get-schema': GetSchemaWidget,
   'input-field-selector': InputFieldDropdown,
   'keyvalue-dropdown': KeyValueDropdownWidget,
   'keyvalue-encoded': KeyValueEncodedWidget,
