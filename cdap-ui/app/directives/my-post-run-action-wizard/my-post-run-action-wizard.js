@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
         mode: '@',
         actionCreator: '=?',
         store: '=',
-        action: '=?'
+        action: '=?',
+        errors: '=',
       },
       templateUrl: 'my-post-run-action-wizard/my-post-run-action-wizard.html',
       bindToController: true,
@@ -38,7 +39,7 @@ angular.module(PKG.name + '.commons')
           rActionCreator: () => actionCreator || {},
           rStore: () => store,
           rAction: () => action || null,
-          rMode: () => mode
+          rMode: () => mode,
         },
         size: 'lg',
         windowClass: 'post-run-actions-modal hydrator-modal',
@@ -47,6 +48,26 @@ angular.module(PKG.name + '.commons')
           $scope.store = rStore;
           $scope.mode = rMode;
           $scope.action = rAction;
+          $scope.validating = false;
+          $scope.showValidateButton = function() {
+            // Hack-y way of showing Validate button on Configure and Confirm pages only
+            if ($scope.action) {
+              return $scope.mode !== 'view' && Object.keys($scope.action).length > 0;
+            }
+          };
+          $scope.validatePluginProperties = function(){
+            $scope.validating = true;
+            const action = angular.copy($scope.action);
+            const errorCb = ({ errorCount, propertyErrors }) => {
+              $scope.validating = false;
+              if ( errorCount > 0 || !errorCount) {
+                $scope.propertyErrors = propertyErrors; 
+              } else {
+                $scope.propertyErrors = {};
+              }
+            };
+            $scope.store.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(action, errorCb);
+            };
         }]
       });
     };
