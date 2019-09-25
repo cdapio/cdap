@@ -37,9 +37,10 @@ import javax.annotation.Nullable;
 public class ValidationFailure {
   private static final Gson GSON = new Gson();
   private final String message;
-  private final String correctiveAction;
-  private final transient Map<String, Schema> inputSchemas;
   private final List<Cause> causes;
+  private final String correctiveAction;
+  private final transient String stageName;
+  private final transient Map<String, Schema> inputSchemas;
 
   /**
    * Creates a validation failure with provided message.
@@ -47,7 +48,7 @@ public class ValidationFailure {
    * @param message validation failure message
    */
   public ValidationFailure(String message) {
-    this(message, null, Collections.emptyMap());
+    this(message, null, null, Collections.emptyMap());
   }
 
   /**
@@ -57,7 +58,7 @@ public class ValidationFailure {
    * @param correctiveAction corrective action
    */
   public ValidationFailure(String message, @Nullable String correctiveAction) {
-    this(message, correctiveAction, Collections.emptyMap());
+    this(message, correctiveAction, null, Collections.emptyMap());
   }
 
   /**
@@ -65,12 +66,15 @@ public class ValidationFailure {
    *
    * @param message validation failure message
    * @param correctiveAction corrective action
+   * @param stageName stage name
    * @param inputSchemas map of stage name to input schemas
    */
-  public ValidationFailure(String message, @Nullable String correctiveAction, Map<String, Schema> inputSchemas) {
+  public ValidationFailure(String message, @Nullable String correctiveAction, @Nullable String stageName,
+                           Map<String, Schema> inputSchemas) {
     this.message = message;
     this.correctiveAction = correctiveAction;
     this.causes = new ArrayList<>();
+    this.stageName = stageName;
     this.inputSchemas = Collections.unmodifiableMap(new HashMap<>(inputSchemas));
   }
 
@@ -230,10 +234,14 @@ public class ValidationFailure {
    * Returns failure message along with corrective action.
    */
   public String getFullMessage() {
-    if (correctiveAction != null) {
-      return String.format("%s - %s", message, correctiveAction);
+    String errorMessage = message;
+    if (stageName != null) {
+      errorMessage = String.format("Stage '%s' encountered : %s", stageName, message);
     }
-    return message;
+    if (correctiveAction != null) {
+      return String.format("%s %s", errorMessage, correctiveAction);
+    }
+    return errorMessage;
   }
 
   /**
