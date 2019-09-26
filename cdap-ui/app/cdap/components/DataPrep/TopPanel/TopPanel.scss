@@ -121,12 +121,18 @@ $success_alert_bg_color: $brand-success;
         }
       }
 
-      .plus-button {
-        margin: 0 15px 51px 0;
-        .popper {
-          margin-right: 20px;
+      .plus-button-container {
+        max-height: 100%;
+        .plus-button {
+          margin: 0;
+          position: relative;
+          bottom: 30px;
+          .popper {
+            margin-right: 20px;
+          }
         }
       }
+
       .more-dropdown {
         margin-right: 20px;
         margin-left: 15px;
