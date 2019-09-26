@@ -14,7 +14,7 @@
  * the License.
  */
 class HydratorPlusPlusPluginConfigFactory {
-  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium) {
+  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium, HydratorPlusPlusNodeService) {
     this.$q = $q;
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
@@ -23,6 +23,7 @@ class HydratorPlusPlusPluginConfigFactory {
     this.configurationGroupUtilities = window.CaskCommon.ConfigurationGroupUtilities;
     this.data = {};
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
+    this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
   }
   fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
     let cache = this.data[`${artifactName}-${artifactVersion}-${artifactScope}-${key}`];
@@ -299,17 +300,18 @@ class HydratorPlusPlusPluginConfigFactory {
         } catch (e) {
           // no-op
         }
+        return schema;
       })
     };
 
     const parseResSchema = (res) => {
       if (res.name && res.type && res.fields) {
-        return [this.getOutputSchemaObj(res)];
+        return [this.HydratorPlusPlusNodeService.getOutputSchemaObj(res)];
       }
       let schemaArr = [];
       angular.forEach(res, (value, key) => {
         if (value.name && value.type && value.fields) {
-          schemaArr.push(this.getOutputSchemaObj(value, key));
+          schemaArr.push(this.HydratorPlusPlusNodeService.getOutputSchemaObj(value, key));
         }
       });
       let recordSchemas = schemaArr.filter(schema => schema.name.substring(0, 6) === 'record');
@@ -336,9 +338,17 @@ class HydratorPlusPlusPluginConfigFactory {
           errorCb({ errorCount, propertyErrors, inputSchemaErrors, outputSchemaErrors });
         } else {
           errorCount = 0;
+
+          errorCb({ errorCount });
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: `No validation errors.`
+          });
+
           const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
           const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
           let schemas;
+
           if (outputSchema || portSchemas) {
             schemas = parseResSchema(outputSchema || portSchemas).map(schema => {
               return {
@@ -347,11 +357,6 @@ class HydratorPlusPlusPluginConfigFactory {
               };
             });
           }
-          errorCb({ errorCount });
-          this.myAlertOnValium.show({
-            type: 'success',
-            content: `No validation errors.`
-          });
           if (schemas.length) {
             this.EventPipe.emit('schema.import', schemas);
           }
@@ -370,6 +375,7 @@ class HydratorPlusPlusPluginConfigFactory {
   }
 }
 
-HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state', 'myAlertOnValium'];
+HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state', 'myAlertOnValium', 
+'HydratorPlusPlusNodeService'];
 angular.module(PKG.name + '.feature.hydrator')
   .service('HydratorPlusPlusPluginConfigFactory', HydratorPlusPlusPluginConfigFactory);
