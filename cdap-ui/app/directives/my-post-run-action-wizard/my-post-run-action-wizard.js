@@ -61,12 +61,12 @@ angular.module(PKG.name + '.commons')
             const errorCb = ({ errorCount, propertyErrors }) => {
               $scope.validating = false;
               if ( errorCount > 0 || !errorCount) {
-                $scope.propertyErrors = propertyErrors; 
+                $scope.propertyErrors = propertyErrors;
               } else {
                 $scope.propertyErrors = {};
               }
             };
-            $scope.store.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(action, errorCb);
+            $scope.store.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(action, null, errorCb);
             };
         }]
       });
