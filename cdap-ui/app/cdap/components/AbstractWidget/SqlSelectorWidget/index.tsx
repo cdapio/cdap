@@ -209,6 +209,7 @@ class SqlSelectorWidgetView extends React.PureComponent<
       },
       this.getStageError
     );
+
     this.props.onChange(outputArr.join(','));
   };
 
@@ -262,7 +263,10 @@ class SqlSelectorWidgetView extends React.PureComponent<
         expanded: false,
       });
     });
-    this.setState({ parsedInputSchemas }, this.formatOutput);
+    this.setState({ parsedInputSchemas }, () => {
+      // there is some timing issue with setting this default value when the modal first open
+      setTimeout(this.formatOutput, 100);
+    });
   };
 
   private onSchemaChange = (newStage) => {
