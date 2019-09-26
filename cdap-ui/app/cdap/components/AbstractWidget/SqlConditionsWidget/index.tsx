@@ -217,7 +217,10 @@ class SqlConditionsWidgetView extends React.Component<
       }
       rules = [...rules, rulesArr];
     });
-    this.setState({ error, warning, rules, stageList, mapInputSchema }, this.formatOutput);
+    this.setState({ error, warning, rules, stageList, mapInputSchema }, () => {
+      // There is timing issue with setting default value
+      setTimeout(this.formatOutput, 100);
+    });
   };
 
   public render() {
