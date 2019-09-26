@@ -46,6 +46,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.dynamicFiltersUtilities = window.CaskCommon.DynamicFiltersUtilities;
     this.setDefaults(rPlugin);
     this.myAlertOnValium = myAlertOnValium;
+    this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.tabs = [
       {
         label: 'Properties',

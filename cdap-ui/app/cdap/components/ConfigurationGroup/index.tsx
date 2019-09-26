@@ -51,6 +51,7 @@ interface IConfigurationGroupProps extends WithStyles<typeof styles> {
   errors: {
     [property: string]: IErrorObj[];
   };
+  validateProperties?: () => void;
 }
 
 const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
@@ -62,6 +63,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   disabled,
   classes,
   errors,
+  validateProperties,
 }) => {
   const [configurationGroups, setConfigurationGroups] = React.useState([]);
   const referenceValueForUnMount = React.useRef<{
@@ -145,6 +147,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     namespace: getCurrentNamespace(),
     properties: values,
     inputSchema,
+    validateProperties,
   };
 
   // Used to keep track of error messages that found a widget
@@ -287,4 +290,5 @@ export default ConfigurationGroup;
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   errors: PropTypes.object,
+  validateProperties: PropTypes.func,
 };

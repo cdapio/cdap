@@ -69,7 +69,7 @@ export function processConfigurationGroups(
   }
 
   // filter out properties that are not listed by pluginProperties
-  const filteredConfigurationGroups = (configurationGroups || []).map((group) => {
+  const filteredConfigurationGroups = addPluginFunctions(configurationGroups || []).map((group) => {
     return {
       ...group,
       properties: group.properties
@@ -137,6 +137,51 @@ export function processConfigurationGroups(
     defaultValues,
     configurationGroups: filteredConfigurationGroups,
   };
+}
+
+function addPluginFunctions(configurationGroups) {
+  const updatedConfigurationGroups = [];
+
+  configurationGroups.forEach((group) => {
+    const newGroup = {
+      label: group.label,
+      description: group.description,
+      properties: [],
+    };
+
+    group.properties.forEach((property) => {
+      const pluginFunction = property['plugin-function'];
+      if (!pluginFunction || (pluginFunction && pluginFunction.widget !== 'outputSchema')) {
+        newGroup.properties.push(property);
+        return;
+      }
+
+      // add plugin function as a separate widget
+      const pluginFunctionWidget = {
+        'widget-type': 'get-schema',
+        'widget-category': 'plugin',
+        'widget-attributes': {
+          'output-property': pluginFunction['output-property'],
+          'omit-properties': pluginFunction['omit-properties'],
+          'add-properties': pluginFunction['add-properties'],
+          'required-fields': pluginFunction['required-fields'],
+          'missing-required-fields-message': pluginFunction['missing-required-fields-message'],
+        },
+      };
+
+      const propertyWidget = {
+        ...property,
+      };
+      delete propertyWidget['plugin-function'];
+
+      newGroup.properties.push(pluginFunctionWidget);
+      newGroup.properties.push(propertyWidget);
+    });
+
+    updatedConfigurationGroups.push(newGroup);
+  });
+
+  return updatedConfigurationGroups;
 }
 
 export function isMacro(value) {
