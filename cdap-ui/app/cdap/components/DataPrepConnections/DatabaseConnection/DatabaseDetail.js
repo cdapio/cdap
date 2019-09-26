@@ -29,7 +29,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import uuidV4 from 'uuid/v4';
 import LoadingSVG from 'components/LoadingSVG';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
-import SecureKeyPassword from 'components/AbstractWidget/SecureKey/SecureKeyPassword';
+import { WrappedWidgetWrapper } from 'components/ConfigurationGroup/WidgetWrapper';
 
 const CONN_TYPE = {
   basic: 'BASIC',
@@ -346,7 +346,15 @@ export default class DatabaseDetail extends Component {
       <div className="form-group row">
         <label className={LABEL_COL_CLASS}>{T.translate(`${PREFIX}.password`)}</label>
         <div className={INPUT_COL_CLASS}>
-          <SecureKeyPassword value={this.state.password} onChange={this.handlePasswordChange} />
+          <WrappedWidgetWrapper
+            widgetProperty={{
+              'widget-type': 'securekey-password',
+            }}
+            value={this.state.password}
+            onChange={this.handlePasswordChange}
+            hideLabel={true}
+            hideDescription={true}
+          />
         </div>
       </div>
     );
@@ -357,7 +365,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="form-group row">
-        <div className="col-8 offset-4 col-offset-4">
+        <div className="col-8 offset-4 col-offset-4 col-xs-offset-4">
           <button className="btn btn-secondary" onClick={this.testConnection} disabled={disabled}>
             {T.translate(`${PREFIX}.testConnection`)}
           </button>
@@ -545,7 +553,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="row">
-        <div className="col-8 offset-4 col-offset-4">
+        <div className="col-8 offset-4 col-offset-4 col-xs-offset-4">
           <button className="btn btn-primary" onClick={onClickFn} disabled={disabled}>
             {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
           </button>
