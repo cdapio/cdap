@@ -470,7 +470,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         vm.propertyErrors = propertyErrors;
       }
     };
-    this.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(nodeInfo, errorCb);
+    this.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(nodeInfo, this.state.config, errorCb);
   }
 
   hasUniqueFields(schema, error) {

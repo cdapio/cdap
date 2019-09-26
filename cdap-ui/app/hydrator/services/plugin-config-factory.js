@@ -282,9 +282,9 @@ class HydratorPlusPlusPluginConfigFactory {
     return groupConfig;
   }
 
-  validatePluginProperties(nodeInfo, errorCb) {
-    // for post-run plugins, use nodeInfo. For other plugins, get plugin property. 
-    const pluginInfo = nodeInfo.plugin? nodeInfo.plugin : nodeInfo;
+  validatePluginProperties(nodeInfo, widgetJson, errorCb) {
+    // for post-run plugins, use nodeInfo. For other plugins, get plugin property.
+    const pluginInfo = nodeInfo.plugin ? nodeInfo.plugin : nodeInfo;
     const plugin = angular.copy(pluginInfo);
     if (!plugin.type) {
       plugin.type = nodeInfo.type;
@@ -293,7 +293,7 @@ class HydratorPlusPlusPluginConfigFactory {
       stage: {
         name: this.myHelpers.objectQuery(pluginInfo, 'name'),
         plugin
-      }, 
+      },
       inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map(input => {
         let schema;
         try {
@@ -304,7 +304,7 @@ class HydratorPlusPlusPluginConfigFactory {
         return {
           schema,
           stage: input.name
-        }
+        };
       })
     };
 
@@ -331,7 +331,7 @@ class HydratorPlusPlusPluginConfigFactory {
     this.myPipelineApi.validateStage(params, requestBody)
       .$promise
       .then((res) => {
-        let errorCount; 
+        let errorCount;
         if (res.failures.length > 0) {
           const { propertyErrors, inputSchemaErrors,outputSchemaErrors } = this.configurationGroupUtilities.constructErrors(res.failures);
           errorCount = this.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
@@ -363,8 +363,7 @@ class HydratorPlusPlusPluginConfigFactory {
           }
           if (schemas.length) {
             this.EventPipe.emit('schema.import', schemas);
-          }
-          else {
+          } else if (!this.myHelpers.objectQuery(widgetJson, 'outputs', 0, 'name')) {
             this.EventPipe.emit('schema.clear');
           }
         }
