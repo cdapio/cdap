@@ -254,7 +254,7 @@ const HYDRATOR_DEFAULT_VALUES = {
   previewTimeoutInMin: 2,
   engine: 'mapreduce',
   processTimingEnabled: true,
-  stageLoggingEnabled: true,
+  stageLoggingEnabled: false,
   disableCheckpoints: false,
   stopGracefully: true,
   backpressure: true,
