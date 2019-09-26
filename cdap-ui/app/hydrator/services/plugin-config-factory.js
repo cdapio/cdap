@@ -14,7 +14,7 @@
  * the License.
  */
 class HydratorPlusPlusPluginConfigFactory {
-  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium, HydratorPlusPlusNodeService) {
+  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium, HydratorPlusPlusNodeService, EventPipe) {
     this.$q = $q;
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
@@ -24,6 +24,7 @@ class HydratorPlusPlusPluginConfigFactory {
     this.data = {};
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
+    this.EventPipe = EventPipe;
   }
   fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
     let cache = this.data[`${artifactName}-${artifactVersion}-${artifactScope}-${key}`];
@@ -300,7 +301,10 @@ class HydratorPlusPlusPluginConfigFactory {
         } catch (e) {
           // no-op
         }
-        return schema;
+        return {
+          schema,
+          stage: input.name
+        }
       })
     };
 
@@ -375,7 +379,5 @@ class HydratorPlusPlusPluginConfigFactory {
   }
 }
 
-HydratorPlusPlusPluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state', 'myAlertOnValium', 
-'HydratorPlusPlusNodeService'];
 angular.module(PKG.name + '.feature.hydrator')
   .service('HydratorPlusPlusPluginConfigFactory', HydratorPlusPlusPluginConfigFactory);
