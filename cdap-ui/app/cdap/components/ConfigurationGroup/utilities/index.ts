@@ -26,7 +26,7 @@ import flatten from 'lodash/flatten';
 interface IDefaultValues {
   [key: string]: string;
 }
-interface IProcessedConfigurationGroups {
+export interface IProcessedConfigurationGroups {
   defaultValues: IDefaultValues;
   configurationGroups: IConfigurationGroup[];
 }
@@ -44,6 +44,9 @@ interface IInputSchemaErrors {
 }
 interface IOutputSchemaErrors {
   [stage: string]: { [field: string]: string };
+}
+interface IPropElements {
+  [propName: string]: Set<string>;
 }
 
 /**
@@ -66,7 +69,7 @@ export function processConfigurationGroups(
   }
 
   // filter out properties that are not listed by pluginProperties
-  const filteredConfigurationGroups = (configurationGroups || []).map((group) => {
+  const filteredConfigurationGroups = addPluginFunctions(configurationGroups || []).map((group) => {
     return {
       ...group,
       properties: group.properties
@@ -136,6 +139,51 @@ export function processConfigurationGroups(
   };
 }
 
+function addPluginFunctions(configurationGroups) {
+  const updatedConfigurationGroups = [];
+
+  configurationGroups.forEach((group) => {
+    const newGroup = {
+      label: group.label,
+      description: group.description,
+      properties: [],
+    };
+
+    group.properties.forEach((property) => {
+      const pluginFunction = property['plugin-function'];
+      if (!pluginFunction || (pluginFunction && pluginFunction.widget !== 'outputSchema')) {
+        newGroup.properties.push(property);
+        return;
+      }
+
+      // add plugin function as a separate widget
+      const pluginFunctionWidget = {
+        'widget-type': 'get-schema',
+        'widget-category': 'plugin',
+        'widget-attributes': {
+          'output-property': pluginFunction['output-property'],
+          'omit-properties': pluginFunction['omit-properties'],
+          'add-properties': pluginFunction['add-properties'],
+          'required-fields': pluginFunction['required-fields'],
+          'missing-required-fields-message': pluginFunction['missing-required-fields-message'],
+        },
+      };
+
+      const propertyWidget = {
+        ...property,
+      };
+      delete propertyWidget['plugin-function'];
+
+      newGroup.properties.push(pluginFunctionWidget);
+      newGroup.properties.push(propertyWidget);
+    });
+
+    updatedConfigurationGroups.push(newGroup);
+  });
+
+  return updatedConfigurationGroups;
+}
+
 export function isMacro(value) {
   if (!value || !value.length) {
     return false;
@@ -178,6 +226,17 @@ export function constructErrors(failures) {
   */
   const inputSchemaErrors: IInputSchemaErrors = {};
   const outputSchemaErrors: IOutputSchemaErrors = {};
+  const elementsWithErrors: IPropElements = {}; // keep track of elements with errors for each property
+  const propsWithPropErrors = new Set(); // keep track of properties w/property-level errors
+
+  // helper for adding an error to error object
+  const addError = (errorObj: IPropErrors, newError: IErrorObj, key: string) => {
+    if (errorObj.hasOwnProperty(key)) {
+      errorObj[key].push(newError);
+    } else {
+      errorObj[key] = [newError];
+    }
+  };
 
   failures.forEach((failure) => {
     const errorMsg = constructErrorMessage(failure.message, failure.correctiveAction);
@@ -190,16 +249,26 @@ export function constructErrors(failures) {
           if (stageConfig) {
             const err: IErrorObj = { msg: errorMsg };
             const { configElement } = cause.attributes;
+            // If configElement is present, it represents that the error is
+            // in a complex widget i.e second row in a multirow widget.
             if (configElement) {
-              // If configElement is present, it represents that the error is
-              // in a complex widget i.e second row in a multirow widget.
               err.element = configElement;
+              if (!elementsWithErrors.hasOwnProperty(stageConfig)) {
+                addError(propertyErrors, err, stageConfig);
+                // mark as an element we've seen errors for
+                elementsWithErrors[stageConfig] = new Set([configElement]);
+              } else if (
+                elementsWithErrors.hasOwnProperty(stageConfig) &&
+                !elementsWithErrors[stageConfig].has(configElement)
+              ) {
+                addError(propertyErrors, err, stageConfig);
+                elementsWithErrors[stageConfig].add(configElement);
+              }
             }
-            // gathering errors in a widget
-            if (propertyErrors.hasOwnProperty(stageConfig)) {
-              propertyErrors[stageConfig].push(err);
-            } else {
-              propertyErrors[stageConfig] = [err];
+            // For property-level errors, keep only first property-level error
+            else if (!propsWithPropErrors.has(stageConfig)) {
+              addError(propertyErrors, err, stageConfig);
+              propsWithPropErrors.add(stageConfig);
             }
           }
           // inputField is the field used to identify that the error occurs in
@@ -217,25 +286,18 @@ export function constructErrors(failures) {
             const errorStage = outputPort ? outputPort : 'noSchemaSection';
             insertIntoObj(outputSchemaErrors, errorStage, outputField, errorMsg);
           } else {
+            const err = { msg: errorMsg };
             // Errors with no specific affiliation - orphan errors.
-            if (propertyErrors.hasOwnProperty('orphanErrors')) {
-              propertyErrors.orphanErrors.push({ msg: errorMsg });
-            } else {
-              propertyErrors.orphanErrors = [{ msg: errorMsg }];
-            }
+            addError(propertyErrors, err, 'orphanErrors');
           }
         } else {
           // Errors with no specific affiliation - orphan errors.
-          if (propertyErrors.hasOwnProperty('orphanErrors')) {
-            propertyErrors.orphanErrors.push({ msg: errorMsg });
-          } else {
-            propertyErrors.orphanErrors = [{ msg: errorMsg }];
-          }
+          const err = { msg: errorMsg };
+          addError(propertyErrors, err, 'orphanErrors');
         }
       });
     }
   });
-
   return { inputSchemaErrors, outputSchemaErrors, propertyErrors };
 }
 
@@ -271,7 +333,7 @@ function constructErrorMessage(error: string, correctiveAction: string) {
     message += error;
   }
   if (correctiveAction) {
-    message += ` - ${correctiveAction}`;
+    message += ` ${correctiveAction}`;
   }
   return message;
 }

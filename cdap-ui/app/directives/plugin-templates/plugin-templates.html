@@ -29,7 +29,7 @@
     </a>
   </div>
 </div>
-<div class="modal-body">
+<div class="modal-body plugin-template-modal-body">
   <div class="form-content">
     <div ng-if="PluginTemplatesCtrl.pluginType">
       <label class="label-control">
@@ -93,7 +93,7 @@
           <div class="widget-group-container">
             <h5>{{::group.display}}</h5>
             <div ng-repeat="field in group.fields">
-              <div ng-if="field.name !== PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperty">
+              <div ng-if="field.name !== PluginTemplatesCtrl.groupsConfig.outputSchema.schemaProperty" class="plugin-template-field-row">
 
                 <div class="form-group">
                   <widget-wrapper

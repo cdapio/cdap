@@ -102,6 +102,7 @@ var ConfigurationGroup = require('../cdap/components/ConfigurationGroup').defaul
 var WidgetWrapper = require('../cdap/components/ConfigurationGroup/WidgetWrapper')
   .WrappedWidgetWrapper;
 var ConfigurationGroupUtilities = require('../cdap/components/ConfigurationGroup/utilities');
+var DynamicFiltersUtilities = require('../cdap/components/ConfigurationGroup/utilities/DynamicPluginFilters');
 
 export {
   Store,
@@ -178,4 +179,5 @@ export {
   ConfigurationGroup,
   WidgetWrapper,
   ConfigurationGroupUtilities,
+  DynamicFiltersUtilities,
 };

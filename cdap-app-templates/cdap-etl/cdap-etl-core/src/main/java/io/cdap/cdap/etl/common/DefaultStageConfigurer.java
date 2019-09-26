@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
  * where we allow multiple input schemas
  */
 public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer, MultiOutputStageConfigurer {
+  private String stageName;
   private Schema outputSchema;
   private Schema outputErrorSchema;
   private boolean errorSchemaSet;
@@ -45,7 +46,7 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
     this.inputSchemas = new HashMap<>();
     this.outputPortSchemas = new HashMap<>();
     this.errorSchemaSet = false;
-    this.collector = new DefaultFailureCollector(stageName);
+    this.stageName = stageName;
   }
 
   @Nullable
@@ -87,6 +88,9 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
 
   @Override
   public FailureCollector getFailureCollector() {
+    if (collector == null) {
+      this.collector = new DefaultFailureCollector(stageName, inputSchemas);
+    }
     return collector;
   }
 

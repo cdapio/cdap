@@ -103,6 +103,24 @@
           }
         },
         {
+          "widget-type": "textbox",
+          "label": "Encryption Key Name",
+          "name": "encryptionKeyName",
+          "description": "The GCP customer managed encryption key(CMEK) name used by Cloud Dataproc",
+          "widget-attributes": {
+            "placeholder": "projects/<gcp-project-id>/locations/<key-location>/keyRings/<key-ring-name>/cryptoKeys/<key-name>"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "GCS Bucket",
+          "name": "gcsBucket",
+          "description": "The Cloud Storage bucket used by Cloud Dataproc to read/write cluster and job data",
+          "widget-attributes": {
+            "placeholder": "Specify your GCS Bucket"
+          }
+        },
+        {
           "widget-type": "select",
           "label": "Prefer External IP",
           "name": "preferExternalIP",

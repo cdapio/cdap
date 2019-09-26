@@ -12,23 +12,33 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *
  */
 
-package io.cdap.cdap.datapipeline.service;
+package io.cdap.cdap.etl.api.validation;
 
-import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
+
+import javax.annotation.Nullable;
 
 /**
- * Service that handles pipeline studio operations, like validation and schema propagation.
+ * Format context.
  */
-public class StudioService extends AbstractSystemService {
-  public static final String NAME = "studio";
+public class FormatContext {
+  private final FailureCollector collector;
+  private final Schema inputSchema;
 
-  @Override
-  protected void configure() {
-    setName(NAME);
-    setDescription("Handles pipeline studio operations, like validation and schema propagation.");
-    addHandler(new ValidationHandler());
+  public FormatContext(FailureCollector collector, @Nullable Schema inputSchema) {
+    this.collector = collector;
+    this.inputSchema = inputSchema;
+  }
+
+  public FailureCollector getFailureCollector() {
+    return collector;
+  }
+
+  @Nullable
+  public Schema getInputSchema() {
+    return inputSchema;
   }
 }

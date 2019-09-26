@@ -12,23 +12,22 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *
  */
 
-package io.cdap.cdap.datapipeline.service;
+package io.cdap.cdap.etl.api.validation;
 
-import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 
 /**
- * Service that handles pipeline studio operations, like validation and schema propagation.
+ * Validating output format provider.
  */
-public class StudioService extends AbstractSystemService {
-  public static final String NAME = "studio";
+public interface ValidatingOutputFormat extends OutputFormatProvider {
+  String PLUGIN_TYPE = "validatingOutputFormat";
 
-  @Override
-  protected void configure() {
-    setName(NAME);
-    setDescription("Handles pipeline studio operations, like validation and schema propagation.");
-    addHandler(new ValidationHandler());
-  }
+  /**
+   * Validates configurations of output format.
+   *
+   * @param context format context
+   */
+  void validate(FormatContext context);
 }

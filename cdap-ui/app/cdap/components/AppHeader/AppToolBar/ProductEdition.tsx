@@ -29,6 +29,7 @@ const styles = (theme) => {
     caption: {
       color: theme.palette.grey[700],
       'line-height': 1.3,
+      display: 'block',
     },
   };
 };

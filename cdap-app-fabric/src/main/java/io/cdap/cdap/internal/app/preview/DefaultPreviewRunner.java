@@ -200,23 +200,22 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
               return;
           }
 
-          // Only have timer if there is a timeout setting.
-          if (previewConfig != null && previewConfig.getTimeout() != null) {
-            int timeOutMinutes = previewConfig.getTimeout();
-            timer.schedule(new TimerTask() {
-              @Override
-              public void run() {
-                try {
-                  LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
-                  killedByTimer = true;
-                  stopPreview();
-                } catch (Exception e) {
-                  killedByTimer = false;
-                  LOG.debug("Error shutting down the preview run with id: {}", programId);
-                }
+          long timeOutMinutes = previewConfig != null && previewConfig.getTimeout() != null ?
+            previewConfig.getTimeout() : PREVIEW_TIMEOUT;
+
+          timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+              try {
+                LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
+                killedByTimer = true;
+                stopPreview();
+              } catch (Exception e) {
+                killedByTimer = false;
+                LOG.debug("Error shutting down the preview run with id: {}", programId);
               }
-            }, timeOutMinutes * 60 * 1000);
-          }
+            }
+          }, timeOutMinutes * 60 * 1000);
         } finally {
           statusLatch.countDown();
         }

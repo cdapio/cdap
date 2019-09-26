@@ -26,6 +26,7 @@
         <input type="text"
           id="{{ symbol.id }}"
           class="form-control"
+          title="{{ symbol.name }}"
           ng-model="symbol.name"
           ng-blur="EnumSchema.formatOutput()"
           ng-keypress="$event.keyCode === 13 && EnumSchema.addSymbol($index)"

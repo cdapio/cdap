@@ -159,19 +159,6 @@
             </i>
           </div>
         </div>
-        <div class="label-with-toggle stage-logging row">
-          <span class="toggle-label col-xs-4">Stage level logging</span>
-          <div class="col-xs-7 toggle-container">
-            <toggle-switch
-              is-on="RealtimePipelineConfigCtrl.stageLogging"
-              on-toggle="RealtimePipelineConfigCtrl.onStageLoggingChange"
-            ></toggle-switch>
-            <i class="fa fa-info-circle"
-                uib-tooltip="Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources."
-                tooltip-placement="right">
-            </i>
-          </div>
-        </div>
       </div>
       <div class="configuration-step-content realtime-content"
             id="resources-tab-content"

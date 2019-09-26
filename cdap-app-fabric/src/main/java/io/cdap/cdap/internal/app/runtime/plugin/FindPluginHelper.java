@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
@@ -44,26 +44,19 @@ public final class FindPluginHelper {
    *                with the first item as the direct parent of the plugin
    * @param pluginEntry artifact and class information for the plugin
    * @param properties plugin properties
-   * @param pluginType plugin type
-   * @param pluginName plugin name
    * @param pluginInstantiator instantiator to add the plugin artifact to
    * @return plugin information
    */
   public static Plugin getPlugin(Iterable<ArtifactId> parents, Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry,
-                                 PluginProperties properties,
-                                 String pluginType, String pluginName, PluginInstantiator pluginInstantiator) {
+                                 PluginProperties properties, PluginInstantiator pluginInstantiator) {
     CollectMacroEvaluator collectMacroEvaluator = new CollectMacroEvaluator();
 
-    // Just verify if all required properties are provided.
-    // No type checking is done for now.
     for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
-      Preconditions.checkArgument(!field.isRequired() || (properties.getProperties().containsKey(field.getName())),
-                                  "Required property '%s' missing for plugin of type %s, name %s.",
-                                  field.getName(), pluginType, pluginName);
-      if (field.isMacroSupported()) {
-        MacroParser parser = MacroParser.builder(collectMacroEvaluator)
-          .setEscapingEnabled(field.isMacroEscapingEnabled())
-          .build();
+      if (field.isMacroSupported() && properties.getProperties().containsKey(field.getName())) {
+        MacroParser parser = new MacroParser(collectMacroEvaluator,
+                                             MacroParserOptions.builder()
+                                               .setEscaping(field.isMacroEscapingEnabled())
+                                               .build());
         parser.parse(properties.getProperties().get(field.getName()));
       }
     }

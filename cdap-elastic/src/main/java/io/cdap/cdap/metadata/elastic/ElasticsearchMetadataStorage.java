@@ -18,6 +18,7 @@ package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -33,10 +34,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataConflictException;
 import io.cdap.cdap.common.metadata.MetadataUtil;
-import io.cdap.cdap.common.metadata.QueryParser;
-import io.cdap.cdap.common.metadata.QueryTerm;
-import io.cdap.cdap.common.metadata.QueryTerm.Qualifier;
-import io.cdap.cdap.common.metadata.QueryTerm.SearchType;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -117,6 +114,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -147,6 +145,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   @VisibleForTesting
   static final boolean DISCARD = false;
 
+  // used to tokenize the query string, same as the MetadataDataset
+  private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
+
   // Various fields in a metadata document (indexed in elasticsearch). Beware that these directly
   // correspond to field name in the index settings (index.mapping.json). Any change here must be
   // reflected there, and vice versa.
@@ -158,9 +159,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String NESTED_NAME_FIELD = "props.name"; // contains the property name in nested props
   private static final String NESTED_SCOPE_FIELD = "props.scope"; // contains the scope in nested props
   private static final String NESTED_VALUE_FIELD = "props.value"; // contains the value in nested props
-    // contains all numeric values in nested props
-  private static final String NESTED_DATE_FIELD = "props.date"; // contains the date in nested props
-  private static final String NESTED_NUMERICVALUE_FIELD = "props.numericValue";
   private static final String PROPS_FIELD = "props"; // contains all properties
   private static final String TEXT_FIELD = "text"; // contains all plain text
   private static final String TYPE_FIELD = "type"; // contains the type of the entity
@@ -1013,47 +1011,39 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     // all terms must occur in the text field as selected by the scope in the search request.
     String textField = request.getScope() == null ? TEXT_FIELD : request.getScope().name().toLowerCase();
 
-    // split the query into its parsed terms and create corresponding QueryBuilders for each
-    List<QueryTerm> queryTerms = QueryParser.parse(request.getQuery());
-    if (queryTerms.isEmpty()) {
+    // split the query into its terms and iterate over all terms
+    Iterable<String> terms = Splitter.on(SPACE_SEPARATOR_PATTERN)
+      .omitEmptyStrings().trimResults().split(request.getQuery());
+    List<QueryBuilder> termQueries = new ArrayList<>();
+    for (String term : terms) {
+      termQueries.add(createTermQuery(term, textField, request));
+    }
+    if (termQueries.isEmpty()) {
       return QueryBuilders.matchAllQuery();
     }
-    if (queryTerms.size() == 1) {
-      return createTermQuery(queryTerms.get(0), textField, request);
+    if (termQueries.size() == 1) {
+      return termQueries.get(0);
     }
-
-    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-    for (QueryTerm queryTerm : queryTerms) {
-      QueryBuilder builder = createTermQuery(queryTerm, textField, request);
-      if (queryTerm.getQualifier() == Qualifier.REQUIRED) {
-        boolQuery.must(builder);
-      } else {
-        boolQuery.should(builder);
-      }
-    }
-
-    // if optional terms are the only terms available, require at least one optional term
-    if (boolQuery.must().isEmpty() && !boolQuery.should().isEmpty()) {
-      boolQuery.minimumShouldMatch(1);
-    }
+    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().minimumShouldMatch(1);
+    termQueries.forEach(boolQuery::should);
     return boolQuery;
   }
 
   /**
    * Create a sub-query for a single term in the query string.
    *
-   * @param queryTerm the formatted query term, with all relevant search information
+   * @param term the term as it appears in the query, possibly with a field qualifier
    * @param textField the default text field to search if the term does not have a field
    */
-  private QueryBuilder createTermQuery(QueryTerm queryTerm, String textField, SearchRequest request) {
+  private QueryBuilder createTermQuery(String term, String textField, SearchRequest request) {
     // determine if the term has a field qualifier
     String field = null;
-    String term = queryTerm.getTerm().trim().toLowerCase();
+    term = term.trim().toLowerCase();
     // Create a term query on the term as is. This would include a field: prefix if the term hs one.
     // This is important for the case of schema search: If the schema contains a field f of type t,
     // then we index "f:t" in the plain text as well as in the "schema" property. If the query is
     // just "f:t", we must search the plain text field for that.
-    QueryBuilder plainQuery = createTermQuery(queryTerm, textField, term);
+    QueryBuilder plainQuery = createTermQuery(textField, term);
     if (term.contains(MetadataConstants.KEYVALUE_SEPARATOR)) {
       // split the search term in two parts on first occurrence of KEYVALUE_SEPARATOR and trim the key and value
       String[] split = term.split(MetadataConstants.KEYVALUE_SEPARATOR, 2);
@@ -1061,10 +1051,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       term = split[1].trim();
     }
     if (field == null) {
-      if (queryTerm.getSearchType() == QueryTerm.SearchType.DATE) {
-        BoolQueryBuilder dateQuery = createDateQuery(queryTerm, field, request);
-        return new BoolQueryBuilder().should(plainQuery).should(dateQuery).minimumShouldMatch(1);
-      }
       return plainQuery;
     }
     if (MetadataConstants.TTL_KEY.equals(field)
@@ -1084,118 +1070,23 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (request.getScope() != null) {
       boolQuery.must(new TermQueryBuilder(NESTED_SCOPE_FIELD, request.getScope().name()).boost(0.0F));
     }
-    boolQuery.must(queryTerm.getSearchType() == SearchType.NUMERIC
-        ? createTermQuery(queryTerm, NESTED_NUMERICVALUE_FIELD, term)
-        : createTermQuery(queryTerm, NESTED_VALUE_FIELD, term));
+    boolQuery.must(createTermQuery(NESTED_VALUE_FIELD, term));
     QueryBuilder propertyQuery = QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
-
-    if (queryTerm.getSearchType() == QueryTerm.SearchType.DATE) {
-      BoolQueryBuilder dateQuery = createDateQuery(queryTerm, field, request);
-      return new BoolQueryBuilder().should(plainQuery).should(propertyQuery).should(dateQuery).minimumShouldMatch(1);
-    }
 
     // match either a plain term of the form "f:t" or the word "t" in property "f"
     return new BoolQueryBuilder().should(plainQuery).should(propertyQuery).minimumShouldMatch(1);
   }
 
   /**
-   * Creates a bool query for a date search. If there is no field, creation times and user defined dates are queried.
-   * Otherwise, a field refers to a user defined property, which is searched for with a nested query.
-   *
-   * @param queryTerm QueryTerm object containing the term and its search properties
-   * @param field property field to search in. If undefined search all properties and creation times
-   * @param request the search request
-   * @return a structured query for a date search
-   */
-  private BoolQueryBuilder createDateQuery(QueryTerm queryTerm, @Nullable String field, SearchRequest request) {
-    if (field == null) {
-      QueryBuilder creationDateQuery = createDateRangeQuery(queryTerm, CREATED_FIELD).boost(2);
-      QueryBuilder nestedDateQuery = createDateRangeQuery(queryTerm, NESTED_DATE_FIELD);
-      QueryBuilder usersDateQuery = QueryBuilders.nestedQuery(PROPS_FIELD, nestedDateQuery, ScoreMode.Avg);
-      return new BoolQueryBuilder().should(creationDateQuery).should(usersDateQuery).minimumShouldMatch(1);
-    }
-    BoolQueryBuilder dateBoolQuery = buildNestedQuery(field, request);
-    dateBoolQuery.must(createDateRangeQuery(queryTerm, NESTED_DATE_FIELD));
-    QueryBuilder propertyDateQuery = QueryBuilders.nestedQuery(PROPS_FIELD, dateBoolQuery, ScoreMode.Max);
-    return new BoolQueryBuilder().should(propertyDateQuery);
-  }
-
-  /**
-   * Creates a range query for a date search.
-   *
-   * @param queryTerm    QueryTerm object containing the term and its search properties
-   * @param field        property field to search in
-   * @return a structured range query as a QueryBuilder
-   */
-  private QueryBuilder createDateRangeQuery(QueryTerm queryTerm, String field) {
-    Long date = queryTerm.getDate();
-    Long oneDay = TimeUnit.DAYS.toMillis(1);
-    switch (queryTerm.getComparison()) {
-      // +/- oneDay changes the date by 24 hours (1 whole day).
-      // rangeQuery must therefore be gte/lte instead of gt/lt to not exclude midnight dates by accident.
-      case GREATER:
-        return QueryBuilders.rangeQuery(field).gte(date + oneDay);
-      case GREATER_OR_EQUAL:
-        return QueryBuilders.rangeQuery(field).gte(date);
-      case LESS:
-        return QueryBuilders.rangeQuery(field).lt(date);
-      case LESS_OR_EQUAL:
-        return QueryBuilders.rangeQuery(field).lt(date + oneDay);
-      default:
-        return QueryBuilders.rangeQuery(field).gte(date).lt(date + oneDay);
-    }
-  }
-
-  /**
    * Create a query for a single term in a given field.
    *
-   * @return a range query if the term is a number,
-   * a wildcard query if the term is a string and contains * or ?,
-   * or a match query otherwise
+   * @return a wildcard query is the term contains * or ?, or a match query otherwise
    */
-  private QueryBuilder createTermQuery(QueryTerm queryTerm, String field, String term) {
-    // if attempting to conduct a numeric search
-    if (field.equals(NESTED_NUMERICVALUE_FIELD)) {
-      try {
-        switch (queryTerm.getComparison()) {
-          case GREATER:
-            return QueryBuilders.rangeQuery(field).gt(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case GREATER_OR_EQUAL:
-            return QueryBuilders.rangeQuery(field).gte(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case LESS:
-            return QueryBuilders.rangeQuery(field).lt(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case LESS_OR_EQUAL:
-            return QueryBuilders.rangeQuery(field).lte(Double.parseDouble(QueryParser.extractTermValue(term)));
-          case EQUALS:
-            // run an equality search
-            return QueryBuilders.termQuery(field, Double.parseDouble(QueryParser.extractTermValue(term)));
-          default:
-            throw new IllegalStateException("Invalid comparison type: " + queryTerm.getComparison());
-        }
-      } catch (NumberFormatException e) {
-        // ignore; followup code will search as a string
-      }
-    }
+  private QueryBuilder createTermQuery(String field, String term) {
     return term.contains("*") || term.contains("?")
       ? new WildcardQueryBuilder(field, term)
       // the term should not get split in to multiple words, but in case it does, let's require all words
       : new MatchQueryBuilder(field, term).operator(Operator.AND);
-  }
-
-  /**
-   * Sets up the outer layers of a nested query.
-   *
-   * @param field property field to search in
-   * @param request the search request
-   * @return a BoolQueryBuilder that can be utilized for a nested query search
-   */
-  private BoolQueryBuilder buildNestedQuery(String field, SearchRequest request) {
-    BoolQueryBuilder boolQuery = new BoolQueryBuilder();
-    boolQuery.must(new TermQueryBuilder(NESTED_NAME_FIELD, field).boost(0.0F));
-    if (request.getScope() != null) {
-      boolQuery.must(new TermQueryBuilder(NESTED_SCOPE_FIELD, request.getScope().name()).boost(0.0F));
-    }
-    return boolQuery;
   }
 
   /**

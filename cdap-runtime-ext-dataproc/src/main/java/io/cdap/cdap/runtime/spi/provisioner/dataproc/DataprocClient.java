@@ -43,6 +43,7 @@ import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
 import com.google.cloud.dataproc.v1.DiskConfig;
+import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
@@ -187,7 +188,7 @@ final class DataprocClient implements AutoCloseable {
     String systemNetworkPath = String.format("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
                                              systemProjectId, systemNetwork);
 
-    LOG.info(String.format("Self link for the system network is %s", systemNetworkPath));
+    LOG.trace(String.format("Self link for the system network is %s", systemNetworkPath));
     List<NetworkPeering> peerings = networkInfo.getPeerings();
     // if the customer does not has a peering established at all the peering list is null
     if (peerings == null) {
@@ -359,31 +360,41 @@ final class DataprocClient implements AutoCloseable {
                         Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
 
+      ClusterConfig.Builder builder = ClusterConfig.newBuilder()
+        .setMasterConfig(InstanceGroupConfig.newBuilder()
+                           .setNumInstances(conf.getMasterNumNodes())
+                           .setMachineTypeUri(conf.getMasterMachineType())
+                           .setDiskConfig(DiskConfig.newBuilder()
+                                            .setBootDiskSizeGb(conf.getMasterDiskGB())
+                                            .setNumLocalSsds(0)
+                                            .build())
+                           .build())
+        .setWorkerConfig(InstanceGroupConfig.newBuilder()
+                           .setNumInstances(conf.getWorkerNumNodes())
+                           .setMachineTypeUri(conf.getWorkerMachineType())
+                           .setDiskConfig(DiskConfig.newBuilder()
+                                            .setBootDiskSizeGb(conf.getWorkerDiskGB())
+                                            .setNumLocalSsds(0)
+                                            .build())
+                           .build())
+        .setGceClusterConfig(clusterConfig.build())
+        .setSoftwareConfig(SoftwareConfig.newBuilder()
+                             .setImageVersion(imageVersion)
+                             .putAllProperties(dataprocProps));
+
+      if (conf.getEncryptionKeyName() != null) {
+        builder.setEncryptionConfig(EncryptionConfig.newBuilder()
+                                      .setGcePdKmsKeyName(conf.getEncryptionKeyName()).build());
+      }
+
+      if (conf.getGcsBucket() != null) {
+        builder.setConfigBucket(conf.getGcsBucket());
+      }
+
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)
         .putAllLabels(labels)
-        .setConfig(ClusterConfig.newBuilder()
-                     .setMasterConfig(InstanceGroupConfig.newBuilder()
-                                        .setNumInstances(conf.getMasterNumNodes())
-                                        .setMachineTypeUri(conf.getMasterMachineType())
-                                        .setDiskConfig(DiskConfig.newBuilder()
-                                                         .setBootDiskSizeGb(conf.getMasterDiskGB())
-                                                         .setNumLocalSsds(0)
-                                                         .build())
-                                        .build())
-                     .setWorkerConfig(InstanceGroupConfig.newBuilder()
-                                        .setNumInstances(conf.getWorkerNumNodes())
-                                        .setMachineTypeUri(conf.getWorkerMachineType())
-                                        .setDiskConfig(DiskConfig.newBuilder()
-                                                         .setBootDiskSizeGb(conf.getWorkerDiskGB())
-                                                         .setNumLocalSsds(0)
-                                                         .build())
-                                        .build())
-                     .setGceClusterConfig(clusterConfig.build())
-                     .setSoftwareConfig(SoftwareConfig.newBuilder()
-                                          .setImageVersion(imageVersion)
-                                          .putAllProperties(dataprocProps))
-                     .build())
+        .setConfig(builder.build())
         .build();
 
       return client.createClusterAsync(projectId, conf.getRegion(), cluster).getMetadata().get();
