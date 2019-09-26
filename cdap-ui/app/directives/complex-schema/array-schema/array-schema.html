@@ -27,6 +27,7 @@
         <div class="tab-header-inner">
           <div class="select-wrapper">
             <select class="form-control"
+                    title="{{ ArraySchema.items.displayType }}"
                     ng-model="ArraySchema.items.displayType"
                     ng-options="option as option for option in ArraySchema.SCHEMA_TYPES"
                     ng-change="ArraySchema.changeType()">
