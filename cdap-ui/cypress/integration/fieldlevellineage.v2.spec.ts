@@ -43,7 +43,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
     // Delete the pipeline to clean up
     cy.cleanup_pipelines(headers, fllPipeline);
   });
-  it('Should show lineage for the default time frame (last 7 days)', () => {
+  it.skip('Should show lineage for the default time frame (last 7 days)', () => {
     cy.visit('cdap/ns/default/datasets/Airport_sink/fll-experiment');
     // should see last 7 days of lineage selected by default
     cy.get('[data-cy="fll-time-picker"]').should(($div) => {
@@ -55,7 +55,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
       expect($fields).to.contain('body');
     });
   });
-  it('Should show operations for target field', () => {
+  it.skip('Should show operations for target field', () => {
     // focus on a field with outgoing operations
     cy.get('[data-cy="target-fields"]').within(() => {
       cy.contains('body').click();
@@ -65,7 +65,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
     cy.get('.operations-container').should('exist');
     cy.get('.modal-title .close-section').click();
   });
-  it('Should allow user to see field level lineage for a custom date range', () => {
+  it.skip('Should allow user to see field level lineage for a custom date range', () => {
     // click on date picker dropdown and choose custom date range
 
     cy.get('[data-cy="time-picker-dropdown"]').click();
