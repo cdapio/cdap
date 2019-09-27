@@ -44,19 +44,6 @@ class KeyValuePair extends Component {
     getResettedKeyValue: () => {},
   };
 
-  handlePaste = (e) => {
-    let data = e.clipboardData.getData('text');
-    try {
-      let dataObj = JSON.parse(data);
-      e.preventDefault();
-      if (typeof this.props.onPaste === 'function') {
-        this.props.onPaste(dataObj, this.props.index);
-      }
-    } catch (e) {
-      return;
-    }
-  };
-
   keyDown = (e) => {
     if (e.keyCode === 13) {
       this.props.addRow();
@@ -80,7 +67,6 @@ class KeyValuePair extends Component {
         placeholder={keyPlaceholder}
         className={classnames('form-control key-input', { wider: this.props.disabled })}
         disabled={this.props.notDeletable || this.props.disabled}
-        onPaste={this.handlePaste}
       />
     );
   }
@@ -112,7 +98,6 @@ class KeyValuePair extends Component {
         placeholder={valuePlaceholder}
         className={classnames('form-control value-input', { wider: this.props.disabled })}
         disabled={this.props.disabled}
-        onPaste={this.handlePaste}
       />
     );
   }

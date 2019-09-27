@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
@@ -35,7 +37,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -60,20 +61,20 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   @Override
   public synchronized Cancellable register(Discoverable discoverable) {
     String serviceName = discoverable.getName();
-    InetSocketAddress discoverableAddr = discoverable.getSocketAddress();
     DefaultServiceDiscovered serviceDiscovered = services.computeIfAbsent(serviceName, DefaultServiceDiscovered::new);
 
     // Add the address to cConf
     String key = Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + serviceName;
-    Networks.addAddress(cConf, key, discoverableAddr);
-    LOG.debug("Discoverable {} added to configuration", discoverable);
+    Networks.addDiscoverable(cConf, key, discoverable);
+    LOG.debug("Discoverable {} with address {} added to configuration with payload {}",
+              discoverable.getName(), discoverable.getSocketAddress(), Bytes.toString(discoverable.getPayload()));
 
     // Update the ServiceDiscovered
     updateServiceDiscovered(serviceDiscovered, cConf, key);
 
     return () -> {
       synchronized (RemoteExecutionDiscoveryService.this) {
-        Networks.removeAddress(cConf, key, discoverableAddr);
+        Networks.removeDiscoverable(cConf, key, discoverable);
         updateServiceDiscovered(serviceDiscovered, cConf, key);
       }
     };
@@ -109,18 +110,24 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
   private void updateServiceDiscovered(DefaultServiceDiscovered serviceDiscovered, CConfiguration cConf, String key) {
     String name = serviceDiscovered.getName();
-    Set<Discoverable> discoverables;
-    Set<InetSocketAddress> addresses = Networks.getAddresses(cConf, key);
+    Set<Discoverable> discoverables = Networks.getDiscoverables(cConf, key);
 
-    if (addresses.isEmpty()) {
+    if (discoverables.isEmpty()) {
       // If there is no address from the configuration, assuming it is using the service proxy,
       // hence the discovery name is the hostname. Also use port == 0 so that the RemoteExecutionProxySelector
-      // knows that it need to use service proxy
-      discoverables = Collections.singleton(new Discoverable(name, InetSocketAddress.createUnresolved(name, 0)));
-    } else {
-      // Otherwise, includes all addresses from the config
-      discoverables = addresses.stream().map(addr -> new Discoverable(name, addr)).collect(Collectors.toSet());
+      // knows that it need to use service proxy.
+      URIScheme scheme = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
+      discoverables = Collections.singleton(scheme.createDiscoverable(name,
+                                                                      InetSocketAddress.createUnresolved(name, 0)));
     }
+
+    if (LOG.isDebugEnabled()) {
+      for (Discoverable d : discoverables) {
+        LOG.debug("Update discoverable {} with address {} and payload {}",
+                  d.getName(), d.getSocketAddress(), Bytes.toString(d.getPayload()));
+      }
+    }
+
     serviceDiscovered.setDiscoverables(discoverables);
   }
 }

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IWidgetJson, PluginProperties } from './types';
 import { processConfigurationGroups } from './utilities';
-import { objectQuery } from 'services/helpers';
+import { objectQuery, removeEmptyJsonValues } from 'services/helpers';
 import If from 'components/If';
 import PropertyRow from './PropertyRow';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -51,6 +51,7 @@ interface IConfigurationGroupProps extends WithStyles<typeof styles> {
   errors: {
     [property: string]: IErrorObj[];
   };
+  validateProperties?: () => void;
 }
 
 const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
@@ -62,13 +63,16 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   disabled,
   classes,
   errors,
+  validateProperties,
 }) => {
   const [configurationGroups, setConfigurationGroups] = React.useState([]);
   const referenceValueForUnMount = React.useRef<{
     configurationGroups?: IFilteredConfigurationGroup[];
     values?: Record<string, string>;
   }>({});
+  const [filteredConfigurationGroups, setFilteredConfigurationGroups] = React.useState([]);
 
+  // Initialize the configurationGroups based on widgetJson and pluginProperties obtained from backend
   React.useEffect(
     () => {
       if (!pluginProperties) {
@@ -83,22 +87,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
         widgetOutputs
       );
 
-      let filteredConfigurationGroups;
-
-      try {
-        filteredConfigurationGroups = filterByCondition(
-          processedConfigurationGroup.configurationGroups,
-          widgetJson,
-          pluginProperties,
-          values
-        );
-      } catch (e) {
-        filteredConfigurationGroups = processedConfigurationGroup.configurationGroups;
-        // tslint:disable:no-console
-        console.log('Issue with applying filters: ', e);
-      }
-
-      setConfigurationGroups(filteredConfigurationGroups);
+      setConfigurationGroups(processedConfigurationGroup.configurationGroups);
 
       // set default values
       const defaultValues = processedConfigurationGroup.defaultValues;
@@ -108,12 +97,36 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
       };
 
       changeParentHandler(newValues);
-      referenceValueForUnMount.current = {
-        configurationGroups: filteredConfigurationGroups,
-        values: newValues,
-      };
     },
-    [values]
+    [widgetJson, pluginProperties]
+  );
+
+  // Watch for changes in values to determine dynamic widget
+  React.useEffect(
+    () => {
+      let newFilteredConfigurationGroup;
+
+      try {
+        newFilteredConfigurationGroup = filterByCondition(
+          configurationGroups,
+          widgetJson,
+          pluginProperties,
+          values
+        );
+      } catch (e) {
+        newFilteredConfigurationGroup = configurationGroups;
+        // tslint:disable:no-console
+        console.log('Issue with applying filters: ', e);
+      }
+
+      referenceValueForUnMount.current = {
+        configurationGroups: newFilteredConfigurationGroup,
+        values,
+      };
+
+      setFilteredConfigurationGroups(newFilteredConfigurationGroup);
+    },
+    [values, configurationGroups]
   );
 
   // This onUnMount is to make sure we clear out all properties that are hidden.
@@ -121,36 +134,32 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     return () => {
       const newValues = { ...referenceValueForUnMount.current.values };
       const configGroups = referenceValueForUnMount.current.configurationGroups;
-      configGroups.forEach((group) => {
-        group.properties.forEach((property) => {
-          if (property.show === false) {
-            delete newValues[property.name];
-          }
+      if (configGroups) {
+        configGroups.forEach((group) => {
+          group.properties.forEach((property) => {
+            if (property.show === false) {
+              delete newValues[property.name];
+            }
+          });
         });
-      });
+      }
       changeParentHandler(newValues);
     };
   }, []);
+
   function changeParentHandler(updatedValues) {
     if (!onChange || typeof onChange !== 'function') {
       return;
     }
 
-    const newValues = { ...updatedValues };
-    // remove empty string values
-    Object.keys(newValues).forEach((propertyName) => {
-      if (typeof newValues[propertyName] === 'string' && newValues[propertyName].length === 0) {
-        delete newValues[propertyName];
-      }
-    });
-
-    onChange(newValues);
+    onChange(removeEmptyJsonValues(updatedValues));
   }
 
   const extraConfig = {
     namespace: getCurrentNamespace(),
     properties: values,
     inputSchema,
+    validateProperties,
   };
 
   // Used to keep track of error messages that found a widget
@@ -159,11 +168,12 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   const [usedErrors, setUsedErrors] = React.useState({});
   const [groups, setGroups] = React.useState([]);
   const [orphanErrors, setOrphanErrors] = React.useState([]);
+  // TODO: Revisit these hooks for errors. These don't seem to be necessary.
   React.useEffect(
     () => {
       setGroups(constructGroups);
     },
-    [configurationGroups, errors]
+    [filteredConfigurationGroups, errors]
   );
   React.useEffect(
     () => {
@@ -171,9 +181,10 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     },
     [usedErrors]
   );
+
   function constructGroups() {
     const newUsedErrors = {};
-    const newGroups = configurationGroups.map((group, i) => {
+    const newGroups = filteredConfigurationGroups.map((group, i) => {
       if (group.show === false) {
         return null;
       }
@@ -293,4 +304,5 @@ export default ConfigurationGroup;
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   errors: PropTypes.object,
+  validateProperties: PropTypes.func,
 };

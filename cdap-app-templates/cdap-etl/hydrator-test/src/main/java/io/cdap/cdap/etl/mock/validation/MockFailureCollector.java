@@ -21,6 +21,7 @@ import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.api.validation.ValidationFailure;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -47,7 +48,7 @@ public class MockFailureCollector implements FailureCollector {
 
   @Override
   public ValidationFailure addFailure(String message, @Nullable String correctiveAction) {
-    ValidationFailure failure = new ValidationFailure(message, correctiveAction);
+    ValidationFailure failure = new ValidationFailure(message, stageName, correctiveAction, Collections.emptyMap());
     failures.add(failure);
     return failure;
   }

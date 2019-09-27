@@ -71,9 +71,11 @@ function FllField({ field, classes }: IFieldProps) {
 
   const timeParams = getTimeQueryParams(selection, start, end);
 
-  const linkPath = `/ns/${field.namespace}/datasets/${field.dataset}/fields${timeParams}&field=${
-    field.name
-  }`;
+  // TO DO: Update linkPath once v1 and v2 FLL UI's are switched
+
+  const linkPath = `/ns/${field.namespace}/datasets/${
+    field.dataset
+  }/fll-experiment${timeParams}&field=${field.name}`;
 
   const toggleHoverState = (nextState) => {
     setHoverState(nextState);

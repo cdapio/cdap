@@ -16,24 +16,36 @@
 package io.cdap.cdap.common.utils;
 
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.zookeeper.coordination.DiscoverableCodec;
+import org.apache.twill.discovery.Discoverable;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
  * Utility class to provide methods for common network related operations.
  */
 public final class Networks {
+
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
+    .create();
+  private static final Type DISCOVERABLE_SET = new TypeToken<Set<Discoverable>>() { }.getType();
 
   /**
    * Resolves the given hostname into {@link InetAddress}.
@@ -86,40 +98,45 @@ public final class Networks {
   }
 
   /**
-   * Adds the {@link InetSocketAddress} into the given {@link CConfiguration} with the given key that stores
-   * a set of addresses. It is expected to be read back by the {@link #getAddresses(CConfiguration, String)} method.
+   * Adds the {@link Discoverable} into the given {@link CConfiguration} with the given key.
+   * It is expected to be read back by the {@link #getDiscoverables(CConfiguration, String)} method.
    *
    * @param cConf the configuration to set to
    * @param key the configuration key
-   * @param addr the {@link InetSocketAddress} to set
+   * @param discoverable the {@link Discoverable} to set
    */
-  public static void addAddress(CConfiguration cConf, String key, InetSocketAddress addr) {
-    Set<String> currentSet = new HashSet<>(cConf.getTrimmedStringCollection(key));
-    currentSet.add(String.format("%s:%d", addr.getHostName(), addr.getPort()));
-    cConf.set(key, currentSet.stream().collect(Collectors.joining(",")));
+  public static void addDiscoverable(CConfiguration cConf, String key, Discoverable discoverable) {
+    Set<Discoverable> currentSet = parseDiscoverables(cConf, key);
+    currentSet.add(discoverable);
+    cConf.set(key, GSON.toJson(currentSet, DISCOVERABLE_SET));
   }
 
   /**
-   * Removes the given {@link InetSocketAddress} from the given {@link CConfiguration} stored with the given key.
+   * Removes the given {@link Discoverable} from the given {@link CConfiguration} stored with the given key.
    *
    * @param cConf the configuration to remove from
    * @param key the configuration key
-   * @param addr the {@link InetSocketAddress} to remove
+   * @param discoverable the {@link Discoverable} to remove
    */
-  public static void removeAddress(CConfiguration cConf, String key, InetSocketAddress addr) {
-    Set<String> currentSet = new HashSet<>(cConf.getTrimmedStringCollection(key));
-    currentSet.remove(String.format("%s:%d", addr.getHostName(), addr.getPort()));
+  public static void removeDiscoverable(CConfiguration cConf, String key, Discoverable discoverable) {
+    Set<Discoverable> currentSet = parseDiscoverables(cConf, key);
+    // TODO: A workaround for TWILL-264. Need to wait for 0.14 release of Twill.
+    currentSet.removeIf(
+      d -> Objects.equals(d.getName(), discoverable.getName())
+        && Objects.equals(d.getSocketAddress(), discoverable.getSocketAddress())
+        && Arrays.equals(d.getPayload(), discoverable.getPayload()));
 
     if (currentSet.isEmpty()) {
       cConf.unset(key);
     } else {
-      cConf.set(key, currentSet.stream().collect(Collectors.joining(",")));
+      cConf.set(key, GSON.toJson(currentSet, DISCOVERABLE_SET));
     }
   }
 
   /**
-   * Gets a set of {@link InetSocketAddress}es from the given {@link CConfiguration} with the given key. It expects
-   * the value in the format of {@code host1:port1,host2:port2,...}. The returned addresses are not resolved.
+   * Gets a set of {@link Discoverable}es from the given {@link CConfiguration} with the given key. It expects
+   * the value is set by the {@link #addDiscoverable(CConfiguration, String, Discoverable)} method.
+   * The returned addresses are not resolved.
    *
    * @param cConf the configuration to read from
    * @param key the configuration key
@@ -127,9 +144,8 @@ public final class Networks {
    * @throws NumberFormatException if failed to parse the port
    * @throws IllegalArgumentException if the value is not in correct format
    */
-  public static Set<InetSocketAddress> getAddresses(CConfiguration cConf, String key) {
-    Set<String> currentSet = new HashSet<>(cConf.getTrimmedStringCollection(key));
-    return Collections.unmodifiableSet(currentSet.stream().map(Networks::parseAddress).collect(Collectors.toSet()));
+  public static Set<Discoverable> getDiscoverables(CConfiguration cConf, String key) {
+    return Collections.unmodifiableSet(parseDiscoverables(cConf, key));
   }
 
   /**
@@ -164,6 +180,14 @@ public final class Networks {
       return null;
     }
     return parseAddress(value);
+  }
+
+  /**
+   * Gets a set of {@link Discoverable} from the value of the given key in the configuration.
+   */
+  private static Set<Discoverable> parseDiscoverables(CConfiguration cConf, String key) {
+    Set<Discoverable> discoverables = GSON.fromJson(cConf.get(key), DISCOVERABLE_SET);
+    return discoverables == null ? new LinkedHashSet<>() : new LinkedHashSet<>(discoverables);
   }
 
   /**

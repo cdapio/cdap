@@ -38,6 +38,7 @@ import If from 'components/If';
 import IconSVG from 'components/IconSVG';
 
 import { IParsedInputSchema } from 'components/AbstractWidget/SqlSelectorWidget';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 const I18N_PREFIX_TABLE = 'features.AbstractWidget.SqlSelectorWidget.table';
 const styles = (theme): StyleRules => {
@@ -50,7 +51,23 @@ const styles = (theme): StyleRules => {
       fontSize: '13px',
       borderBottom: 0,
     },
-    schemaSelectColumnHeader: { paddingLeft: 0, paddingRight: 0 },
+    headerRow: {
+      display: 'flex',
+      width: '100%',
+    },
+    fieldNameHeader: {
+      display: 'inline',
+      width: '45%',
+      paddingRight: '10px',
+    },
+    aliasHeader: {
+      width: '45%',
+    },
+    schemaSelectColumnHeader: {
+      paddingLeft: 0,
+      paddingRight: '10px',
+      width: '80px',
+    },
     tableHeaderSelectIcon: {
       marginLeft: '5px',
     },
@@ -65,7 +82,7 @@ const styles = (theme): StyleRules => {
     // changeborder to red for rows (cell overrides row color). So, we remove
     // any border from table cells, add border to rows
     tableRow: {
-      '& td': {
+      '& th': {
         border: 0,
       },
       borderBottom: `1px solid ${theme.palette.grey[400]}`,
@@ -80,6 +97,7 @@ interface ISchemaContainerProps extends WithStyles<typeof styles> {
   aliases: object;
   errorCount: number;
   disabled: boolean;
+  errors: IErrorObj[];
 }
 
 interface ISchemaContainerState {
@@ -140,8 +158,21 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
     }
   };
 
+  private getValidationError(field) {
+    let validationError = '';
+    if (field.selected && this.props.errors) {
+      // Element format is 'stageName.fieldName as alias'.
+      const curElement = `${this.props.stage.name}.${field.name} as ${field.alias}`;
+      const curError = this.props.errors.find((err: IErrorObj) => err.element === curElement);
+      if (curError) {
+        validationError = curError.msg;
+      }
+    }
+    return validationError;
+  }
+
   public render() {
-    const { classes } = this.props;
+    const { classes, errors } = this.props;
     return (
       <ExpansionPanel
         className={classes.schemaContainer}
@@ -162,44 +193,49 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
           <Table size="small">
             <TableHead>
               <TableRow className={classes.tableRow}>
-                <TableCell className={classes.schemaTableHeaderCell} align="left">
-                  <Typography variant="h6">
-                    {T.translate(`${I18N_PREFIX_TABLE}.stageNameHeader`)}
-                  </Typography>
-                </TableCell>
-                <TableCell
-                  align="left"
-                  className={classnames(
-                    classes.schemaTableHeaderCell,
-                    classes.schemaSelectColumnHeader
-                  )}
-                >
-                  <Button
-                    disabled={this.props.disabled}
-                    size="small"
-                    variant="outlined"
-                    onClick={this.handleMenuOpen}
-                  >
-                    <span>{T.translate(`${I18N_PREFIX_TABLE}.checkboxHeader`)}</span>
-                    <IconSVG name="icon-caret-down" className={classes.tableHeaderSelectIcon} />
-                  </Button>
-                  <Menu
-                    anchorEl={this.state.menuAnchor}
-                    open={Boolean(this.state.menuAnchor)}
-                    onClose={this.handleMenuClose}
-                  >
-                    <MenuItem onClick={() => this.handleMenuClose('All')}>
-                      {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.all`)}
-                    </MenuItem>
-                    <MenuItem onClick={() => this.handleMenuClose('None')}>
-                      {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.none`)}
-                    </MenuItem>
-                  </Menu>
-                </TableCell>
-                <TableCell align="left" className={classes.schemaTableHeaderCell}>
-                  <Typography variant="h6">
-                    {T.translate(`${I18N_PREFIX_TABLE}.aliasHeader`)}
-                  </Typography>
+                <TableCell>
+                  <div className={classes.headerRow}>
+                    <div
+                      className={classnames(classes.schemaTableHeaderCell, classes.fieldNameHeader)}
+                    >
+                      <Typography variant="h6" display="inline">
+                        {T.translate(`${I18N_PREFIX_TABLE}.stageNameHeader`)}
+                      </Typography>
+                    </div>
+                    <div
+                      className={classnames(
+                        classes.schemaTableHeaderCell,
+                        classes.schemaSelectColumnHeader
+                      )}
+                    >
+                      <Button
+                        disabled={this.props.disabled}
+                        size="small"
+                        variant="outlined"
+                        onClick={this.handleMenuOpen}
+                      >
+                        <span>{T.translate(`${I18N_PREFIX_TABLE}.checkboxHeader`)}</span>
+                        <IconSVG name="icon-caret-down" className={classes.tableHeaderSelectIcon} />
+                      </Button>
+                      <Menu
+                        anchorEl={this.state.menuAnchor}
+                        open={Boolean(this.state.menuAnchor)}
+                        onClose={this.handleMenuClose}
+                      >
+                        <MenuItem onClick={() => this.handleMenuClose('All')}>
+                          {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.all`)}
+                        </MenuItem>
+                        <MenuItem onClick={() => this.handleMenuClose('None')}>
+                          {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.none`)}
+                        </MenuItem>
+                      </Menu>
+                    </div>
+                    <div className={classnames(classes.schemaTableHeaderCell, classes.aliasHeader)}>
+                      <Typography variant="h6" display="inline">
+                        {T.translate(`${I18N_PREFIX_TABLE}.aliasHeader`)}
+                      </Typography>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -213,6 +249,7 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
                     field={field}
                     onFieldChange={this.updateField}
                     disabled={this.props.disabled}
+                    validationError={this.getValidationError(field)}
                   />
                 );
               })}

@@ -261,10 +261,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       .filter(s -> s.endsWith(".bind.address"))
       .forEach(key -> previewCConf.set(key, localhost));
 
-    // the preview directory will be <namespace-name>.<app-id>.<program-type>.<program-name>
-    Path previewDir = Files.createDirectories(previewDataDir.resolve(
-      String.format("%s.%s.%s.%s", programId.getNamespace(), programId.getApplication(),
-                    programId.getType().name(), programId.getProgram())));
+    Path previewDir = Files.createDirectories(getPreviewDirPath(programId));
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
@@ -357,13 +354,18 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   private void removePreviewDir(ProgramId programId) {
-    Path previewDirPath = previewDataDir.resolve(programId.toString());
-
+    Path previewDirPath = getPreviewDirPath(programId);
     try {
       DataTracerFactoryProvider.removeDataTracerFactory(programId.getParent());
       DirUtils.deleteDirectoryContents(previewDirPath.toFile());
     } catch (IOException e) {
       LOG.debug("Error deleting the preview directory {}", previewDirPath, e);
     }
+  }
+
+  private Path getPreviewDirPath(ProgramId programId) {
+    // the preview directory will be <namespace-name>.<app-id>.<program-type>.<program-name>
+    return previewDataDir.resolve(String.format("%s.%s.%s.%s", programId.getNamespace(), programId.getApplication(),
+                                                programId.getType().name(), programId.getProgram()));
   }
 }

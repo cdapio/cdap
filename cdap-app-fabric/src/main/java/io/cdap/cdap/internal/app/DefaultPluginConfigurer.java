@@ -137,7 +137,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
                                                                                          pluginType, pluginName,
                                                                                          selector);
         Plugin plugin = FindPluginHelper.getPlugin(Iterables.transform(parents, ArtifactId::toApiArtifactId),
-                                                   pluginEntry, properties, pluginType, pluginName, pluginInstantiator);
+                                                   pluginEntry, properties, pluginInstantiator);
         plugins.put(pluginId, new PluginWithLocation(plugin, pluginEntry.getKey().getLocation()));
         return plugin;
       } catch (PluginNotExistsException e) {

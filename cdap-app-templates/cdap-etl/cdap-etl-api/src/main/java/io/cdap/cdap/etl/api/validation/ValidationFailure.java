@@ -19,10 +19,12 @@ package io.cdap.cdap.etl.api.validation;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.data.schema.Schema;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,8 +37,10 @@ import javax.annotation.Nullable;
 public class ValidationFailure {
   private static final Gson GSON = new Gson();
   private final String message;
-  private final String correctiveAction;
   private final List<Cause> causes;
+  private final String correctiveAction;
+  private final transient String stageName;
+  private final transient Map<String, Schema> inputSchemas;
 
   /**
    * Creates a validation failure with provided message.
@@ -44,7 +48,7 @@ public class ValidationFailure {
    * @param message validation failure message
    */
   public ValidationFailure(String message) {
-    this(message, null);
+    this(message, null, null, Collections.emptyMap());
   }
 
   /**
@@ -54,9 +58,24 @@ public class ValidationFailure {
    * @param correctiveAction corrective action
    */
   public ValidationFailure(String message, @Nullable String correctiveAction) {
+    this(message, correctiveAction, null, Collections.emptyMap());
+  }
+
+  /**
+   * Creates a validation failure with provided message and corrective action.
+   *
+   * @param message validation failure message
+   * @param correctiveAction corrective action
+   * @param stageName stage name
+   * @param inputSchemas map of stage name to input schemas
+   */
+  public ValidationFailure(String message, @Nullable String correctiveAction, @Nullable String stageName,
+                           Map<String, Schema> inputSchemas) {
     this.message = message;
     this.correctiveAction = correctiveAction;
     this.causes = new ArrayList<>();
+    this.stageName = stageName;
+    this.inputSchemas = Collections.unmodifiableMap(new HashMap<>(inputSchemas));
   }
 
   /**
@@ -159,7 +178,14 @@ public class ValidationFailure {
    * @return validation failure with invalid input schema field cause
    */
   public ValidationFailure withInputSchemaField(String fieldName) {
-    return withInputSchemaField(fieldName, null);
+    if (inputSchemas.isEmpty()) {
+      withInputSchemaField(fieldName, null);
+    } else {
+      for (String inputStage : inputSchemas.keySet()) {
+        withInputSchemaField(fieldName, inputStage);
+      }
+    }
+    return this;
   }
 
   /**
@@ -208,10 +234,14 @@ public class ValidationFailure {
    * Returns failure message along with corrective action.
    */
   public String getFullMessage() {
-    if (correctiveAction != null) {
-      return String.format("%s - %s", message, correctiveAction);
+    String errorMessage = message;
+    if (stageName != null) {
+      errorMessage = String.format("Stage '%s' encountered : %s", stageName, message);
     }
-    return message;
+    if (correctiveAction != null) {
+      return String.format("%s %s", errorMessage, correctiveAction);
+    }
+    return errorMessage;
   }
 
   /**
@@ -258,7 +288,7 @@ public class ValidationFailure {
      * Creates a failure cause.
      */
     public Cause() {
-      this.attributes = new HashMap<>();
+      this.attributes = new LinkedHashMap<>();
     }
 
     /**
@@ -286,7 +316,7 @@ public class ValidationFailure {
      * Returns all the attributes of the cause.
      */
     public Map<String, String> getAttributes() {
-      return Collections.unmodifiableMap(new HashMap<>(attributes));
+      return Collections.unmodifiableMap(new LinkedHashMap<>(attributes));
     }
 
     @Override

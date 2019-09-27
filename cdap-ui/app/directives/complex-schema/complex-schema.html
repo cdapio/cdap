@@ -64,6 +64,7 @@
                 <input type="text"
                        id="{{ field.id }}"
                        class="form-control"
+                       title="{{ field.name }}"
                        ng-model="field.name"
                        ng-blur="ComplexSchema.formatOutput()"
                        ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
@@ -77,6 +78,7 @@
               <div class="select-wrapper">
                 <select class="form-control"
                         ng-model="field.displayType"
+                        title="{{ field.displayType }}"
                         ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
                         ng-change="ComplexSchema.changeType(field)">
                 </select>

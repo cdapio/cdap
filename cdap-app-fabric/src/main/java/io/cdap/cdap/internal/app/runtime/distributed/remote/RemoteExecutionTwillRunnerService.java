@@ -33,6 +33,8 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.security.KeyStores;
@@ -134,6 +136,8 @@ import javax.annotation.Nullable;
 public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillRunnerService.class);
+  private static final Logger WARN_LOG = Loggers.sampling(
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(20), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
 
   // Max out the HTTPS certificate validity.
   // We use max int of seconds to compute number of days to avoid overflow.
@@ -708,7 +712,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
           LOG.debug("Remote runtime server for program run {} is running at {}", programRunId, address);
           return address;
         } catch (Exception e) {
-          LOG.warn("Failed to create SSH session for program run {} monitoring. Will be retried.", programRunId);
+          WARN_LOG.warn("Failed to create SSH session for program run {} monitoring. Will be retried.", programRunId);
           return null;
         }
       }

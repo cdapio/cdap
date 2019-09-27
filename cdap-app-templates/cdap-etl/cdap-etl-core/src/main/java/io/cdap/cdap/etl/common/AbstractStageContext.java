@@ -61,8 +61,9 @@ public abstract class AbstractStageContext implements StageContext {
     this.pipelineRuntime = pipelineRuntime;
     this.stageSpec = stageSpec;
     this.stageMetrics = new DefaultStageMetrics(pipelineRuntime.getMetrics(), stageSpec.getName());
+    Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
     // all plugins except joiners have just a single input schema
-    this.inputSchema = stageSpec.getInputSchemas().isEmpty() ?
+    this.inputSchema = inputSchemas.isEmpty() ?
       null : stageSpec.getInputSchemas().values().iterator().next();
     Map<String, Schema> portSchemas = new HashMap<>();
     for (StageSpec.Port outputPort : stageSpec.getOutputPorts().values()) {
@@ -72,7 +73,7 @@ public abstract class AbstractStageContext implements StageContext {
     }
     this.outputPortSchemas = Collections.unmodifiableMap(portSchemas);
     this.arguments = pipelineRuntime.getArguments();
-    this.failureCollector = new LoggingFailureCollector(stageSpec.getName());
+    this.failureCollector = new LoggingFailureCollector(stageSpec.getName(), inputSchemas);
     this.macroEvaluator = new DefaultMacroEvaluator(arguments, pipelineRuntime.getLogicalStartTime(),
                                                     pipelineRuntime.getSecureStore(), pipelineRuntime.getNamespace());
   }

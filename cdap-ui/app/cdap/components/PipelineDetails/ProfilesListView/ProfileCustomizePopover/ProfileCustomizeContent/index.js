@@ -19,12 +19,12 @@ import React, { PureComponent } from 'react';
 import LoadingSVG from 'components/LoadingSVG';
 import Accordion, { AccordionContent, AccordionTitle, AccordionPane } from 'components/Accordion';
 import { MyCloudApi } from 'api/cloud';
-import AbstractWidget from 'components/AbstractWidget';
 import uuidV4 from 'uuid/v4';
 import { extractProfileName } from 'components/Cloud/Profiles/Store/ActionCreator';
 import IconSVG from 'components/IconSVG';
 import cloneDeep from 'lodash/cloneDeep';
 import classnames from 'classnames';
+import { WrappedWidgetWrapper } from 'components/ConfigurationGroup/WidgetWrapper';
 
 require('./ProfileCustomizeContent.scss');
 
@@ -99,8 +99,14 @@ export default class ProfileCustomizeContent extends PureComponent {
     }
     let groups = this.state.provisionerspec['configuration-groups'];
     let editablePropertiesFromProfile = this.props.provisioner.properties.filter(
-      (property) => property.isEditable
+      (property) => property.isEditable !== false
     );
+
+    const propertiesFromProfileMap = {};
+    this.props.provisioner.properties.forEach((property) => {
+      propertiesFromProfileMap[property.name] = property;
+    });
+
     let editablePropertiesMap = {};
     editablePropertiesFromProfile.forEach((property) => {
       if (property.name in this.props.customizations) {
@@ -125,8 +131,12 @@ export default class ProfileCustomizeContent extends PureComponent {
           </div>
           <Accordion size="small" active="0">
             {groups.map((group, i) => {
-              let editableProperties = group.properties
-                .filter((property) => property.name in editablePropertiesMap)
+              const editableProperties = group.properties
+                .filter(
+                  (property) =>
+                    !propertiesFromProfileMap[property.name] ||
+                    propertiesFromProfileMap[property.name].isEditable !== false
+                )
                 .map((property) => ({
                   ...property,
                   value: editablePropertiesMap[property.name],
@@ -144,14 +154,15 @@ export default class ProfileCustomizeContent extends PureComponent {
                       return (
                         <div key={uniqueId} className="profile-group-content">
                           <div>
-                            <strong id={uniqueId}>{property.label}</strong>
-                          </div>
-                          <div>
-                            <AbstractWidget
-                              type={property['widget-type']}
+                            <WrappedWidgetWrapper
+                              pluginProperty={{
+                                name: property.name,
+                                description: property.description,
+                                required: property.required,
+                              }}
+                              widgetProperty={property}
                               value={this.getProfilePropValue.bind(this, property)}
                               onChange={this.onPropertyUpdate.bind(this, property.name)}
-                              widgetProps={property['widget-attributes']}
                             />
                           </div>
                         </div>

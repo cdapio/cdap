@@ -219,7 +219,7 @@ $success_alert_bg_color: $brand-success;
 .add-to-pipeline-dataprep-modal.modal-dialog,
 .dataprep-upgrade-modal.modal-dialog {
 
-  .modal-body {
+  .modal-content .modal-body {
     padding: 0;
 
     .message { padding: 15px; }

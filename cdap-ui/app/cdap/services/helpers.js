@@ -424,6 +424,35 @@ const isMacro = (value) => {
 }
 
 
+/**
+ * This function will remove any empty string values from the JSON object.
+ *
+ * ie.
+ * input = {
+ *    a: 'test',
+ *    b: ''
+ * }
+ *
+ * response:
+ * {
+ *    a: 'test'
+ * }
+ *
+ * @param {*} obj
+ */
+function removeEmptyJsonValues(obj) {
+  const newValues = { ...obj };
+  // remove empty string values
+  Object.keys(newValues).forEach((propertyName) => {
+    if (typeof newValues[propertyName] === 'string' && newValues[propertyName].length === 0) {
+      delete newValues[propertyName];
+    }
+  });
+
+  return newValues;
+}
+
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -461,4 +490,5 @@ export {
   roundDecimalToNDigits,
   parseQueryString,
   isMacro,
+  removeEmptyJsonValues,
 };

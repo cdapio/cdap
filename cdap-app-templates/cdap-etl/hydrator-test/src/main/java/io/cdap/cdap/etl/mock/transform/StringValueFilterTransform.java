@@ -71,7 +71,7 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
       if (fieldType != Schema.Type.STRING) {
         collector.addFailure(String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType),
                              "Make sure provided field is of type string.")
-          .withConfigProperty("field").withInputSchemaField(config.field, null);
+          .withConfigProperty("field").withInputSchemaField(config.field);
       }
     }
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());

@@ -74,7 +74,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   // Skip the first error log, and at most log once per 30 seconds.
   // This helps debugging errors that persist more than 30 seconds.
   private static final Logger OUTAGE_LOGGER = Loggers.sampling(
-    LOG, LogSamplers.all(LogSamplers.skipFirstN(1), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(10), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
 
 
   private static final Gson GSON = new Gson();

@@ -43,8 +43,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     this.configurationGroupUtilities = window.CaskCommon.ConfigurationGroupUtilities;
+    this.dynamicFiltersUtilities = window.CaskCommon.DynamicFiltersUtilities;
     this.setDefaults(rPlugin);
     this.myAlertOnValium = myAlertOnValium;
+    this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.tabs = [
       {
         label: 'Properties',
@@ -447,102 +449,28 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
     return true;
   }
+
   validatePluginProperties() {
     const nodeInfo = this.state.node;
     let vm = this;
     vm.validating = true;
-    const pluginInfo = angular.copy(nodeInfo.plugin);
-    pluginInfo.type = nodeInfo.type;
-
-    const requestBody = {
-      stage: {
-        name: this.myHelpers.objectQuery(nodeInfo, 'name'),
-        plugin: pluginInfo
-      },
-      inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map(input => {
-        let schema;
-        try {
-          schema = JSON.parse(input.schema);
-        } catch (e) {
-          // no-op
-        }
-
-        return {
-          stage: this.myHelpers.objectQuery(input, 'name'),
-          schema,
-        };
-      })
-    };
-
-    const parseResSchema = (res) => {
-      if (res.name && res.type && res.fields) {
-        return [this.HydratorPlusPlusNodeService.getOutputSchemaObj(res)];
+    const errorCb = ({ errorCount, propertyErrors, inputSchemaErrors, outputSchemaErrors }) => {
+      // errorCount can be 0, a positive integer, or undefined (in case of an error thrown)
+      vm.validating = false;
+      if ( errorCount > 0 ){
+        vm.propertyErrors = propertyErrors;
+        vm.inputSchemaErrors = inputSchemaErrors;
+        vm.outputSchemaErrors = outputSchemaErrors;
+      } else if ( errorCount === 0 ){
+        // Empty existing errors
+        vm.propertyErrors = {};
+        vm.inputSchemaErrors = {};
+        vm.outputSchemaErrors = {};
+      } else {
+        vm.propertyErrors = propertyErrors;
       }
-      let schemaArr = [];
-      angular.forEach(res, (value, key) => {
-        if (value.name && value.type && value.fields) {
-          schemaArr.push(this.HydratorPlusPlusNodeService.getOutputSchemaObj(value, key));
-        }
-      });
-      let recordSchemas = schemaArr.filter(schema => schema.name.substring(0, 6) === 'record');
-      let schemaArrWithoutRecordSchemas = _.difference(schemaArr, recordSchemas);
-      let schemaArrWithSortedRecordSchemas = schemaArrWithoutRecordSchemas.concat(_.sortBy(recordSchemas, 'name'));
-      return schemaArrWithSortedRecordSchemas;
     };
-
-    const params = {
-      context: this.$state.params.namespace
-    };
-
-    this.myPipelineApi.validateStage(params, requestBody)
-      .$promise
-      .then((res) => {
-        vm.validating = false;
-        if (res.failures.length > 0) {
-          const {propertyErrors, inputSchemaErrors,outputSchemaErrors}=vm.configurationGroupUtilities.constructErrors(res.failures);
-          vm.propertyErrors=propertyErrors;
-          vm.inputSchemaErrors=inputSchemaErrors;
-          vm.outputSchemaErrors=outputSchemaErrors;
-          const errorCount = vm.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
-          this.myAlertOnValium.show({
-            type: 'danger',
-            content: `${errorCount} error${errorCount.length > 1 ? 's': ''} found.`
-          });
-        } else {
-          const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
-          const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
-          let schemas;
-          if (outputSchema || portSchemas) {
-            schemas = parseResSchema(outputSchema || portSchemas).map(schema => {
-              return {
-                name: schema.name,
-                schema: JSON.stringify(schema.schema)
-              };
-            });
-          }
-          if(schemas.length) {
-            vm.EventPipe.emit('schema.import', schemas);
-          }
-          else {
-            vm.EventPipe.emit('schema.clear');
-          }
-          // Empty existing errors
-          vm.propertyErrors = [];
-          vm.inputSchemaErrors = {};
-          vm.outputSchemaErrors = {};
-          this.myAlertOnValium.show({
-            type: 'success',
-            content: `No validation errors.`
-          });
-        }
-      }, (err) => {
-        vm.validating = false;
-        this.myAlertOnValium.show({
-            type: 'danger',
-            content: "Error occured while validating."
-          });
-        vm.propertyErrors = [{msg:err.data}];
-      });
+    this.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(nodeInfo, this.state.config, errorCb);
   }
 
   hasUniqueFields(schema, error) {

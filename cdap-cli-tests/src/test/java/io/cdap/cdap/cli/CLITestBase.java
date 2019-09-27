@@ -29,7 +29,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URI;
-import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -73,36 +72,6 @@ public class CLITestBase {
     });
   }
 
-  protected static void testCommandOutputContainsAll(CLI cli, String command,
-      final String ... expectedOutput) throws Exception {
-    testCommand(cli, command, new Function<String, Void>() {
-      @Nullable
-      @Override
-      public Void apply(@Nullable String output) {
-        Arrays.stream(expectedOutput).forEach(s -> {
-          Assert.assertTrue(String.format("Expected output '%s' to contain '%s'", output, s),
-              output != null && output.contains(s));
-        });
-        return null;
-      }
-    });
-  }
-
-  protected static void testCommandOutputContainsNone(CLI cli, String command,
-      final String ... expectedOutput) throws Exception {
-    testCommand(cli, command, new Function<String, Void>() {
-      @Nullable
-      @Override
-      public Void apply(@Nullable String output) {
-        Arrays.stream(expectedOutput).forEach(s -> {
-          Assert.assertTrue(String.format("Expected output '%s' to not contain '%s'", output, s),
-              output != null && !output.contains(s));
-        });
-        return null;
-      }
-    });
-  }
-
   protected static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
     String output = getCommandOutput(cli, command);
     outputValidator.apply(output);
@@ -115,5 +84,4 @@ public class CLITestBase {
       return outputStream.toString();
     }
   }
-
 }

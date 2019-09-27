@@ -20,10 +20,8 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroParserOptions;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -39,15 +37,20 @@ public class MacroParser {
   private final boolean escapingEnabled;
   private final boolean lookupsEnabled;
   private final boolean functionsEnabled;
+  private final boolean skipInvalid;
   private final Set<String> functionWhitelist;
 
-  private MacroParser(MacroEvaluator macroEvaluator, boolean escapingEnabled, boolean evaluateLookups,
-                      boolean functionsEnabled, Set<String> functionWhitelist) {
+  public MacroParser(MacroEvaluator macroEvaluator) {
+    this(macroEvaluator, MacroParserOptions.DEFAULT);
+  }
+
+  public MacroParser(MacroEvaluator macroEvaluator, MacroParserOptions options) {
     this.macroEvaluator = macroEvaluator;
-    this.escapingEnabled = escapingEnabled;
-    this.lookupsEnabled = evaluateLookups;
-    this.functionsEnabled = functionsEnabled;
-    this.functionWhitelist = functionWhitelist;
+    this.escapingEnabled = options.isEscapingEnabled();
+    this.lookupsEnabled = options.shouldEvaluateLookups();
+    this.functionsEnabled = options.shouldEvaluateFunctions();
+    this.functionWhitelist = options.getFunctionWhitelist();
+    this.skipInvalid = options.shouldSkipInvalid();
   }
 
   /**
@@ -137,12 +140,19 @@ public class MacroParser {
     } else {
       macroStr = replaceEscapedSyntax(macroStr);
       if (lookupsEnabled) {
-        return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex, true);
-      } else {
-        // if we are not evaluating lookups, return the original string with the surrounding ${},
-        // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
-        return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+        try {
+          return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex, true);
+        } catch (InvalidMacroException e) {
+          if (!skipInvalid) {
+            throw e;
+          }
+        }
       }
+
+      // if we are not evaluating lookups and are not skipping invalid macros,
+      // return the original string with the surrounding ${},
+      // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
+      return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
     }
   }
 
@@ -165,12 +175,18 @@ public class MacroParser {
     // if function evaluation is disabled, or this is not a whitelisted function, don't perform any evaluation.
     // if the whitelist is empty, that means no whitelist was set, so every function should be evaluated.
     if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(macroFunction))) {
-      return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
-    } else {
-      // if we are not evaluating this function, return the original string with the surrounding ${},
-      // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
-      return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+      try {
+        return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+      } catch (InvalidMacroException e) {
+        if (!skipInvalid) {
+          throw e;
+        }
+      }
     }
+    // if we are not evaluating this function or are skipping invalid macros,
+    // return the original string with the surrounding ${},
+    // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
+    return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
   }
 
   /**
@@ -253,73 +269,6 @@ public class MacroParser {
       this.startIndex = startIndex;
       this.endIndex = endIndex;
       this.evaluateRecursively = evaluateRecursively;
-    }
-  }
-
-  /**
-   * @return builder for a MacroParser.
-   */
-  public static Builder builder(MacroEvaluator macroEvaluator) {
-    return new Builder(macroEvaluator);
-  }
-
-  /**
-   * Builds a {@link MacroParser}.
-   */
-  public static class Builder {
-    private final MacroEvaluator macroEvaluator;
-    private boolean escapingEnabled;
-    private boolean lookupsEnabled;
-    private boolean functionsEnabled;
-    private Set<String> functionWhitelist;
-
-    private Builder(MacroEvaluator macroEvaluator) {
-      this.macroEvaluator = macroEvaluator;
-      this.escapingEnabled = true;
-      this.lookupsEnabled = true;
-      this.functionsEnabled = true;
-      this.functionWhitelist = new HashSet<>();
-    }
-
-    public Builder disableEscaping() {
-      return setEscapingEnabled(false);
-    }
-
-    public Builder setEscapingEnabled(boolean escapingEnabled) {
-      this.escapingEnabled = escapingEnabled;
-      return this;
-    }
-
-    public Builder disableLookups() {
-      return setLookupsEnabled(false);
-    }
-
-    public Builder setLookupsEnabled(boolean lookupsEnabled) {
-      this.lookupsEnabled = lookupsEnabled;
-      return this;
-    }
-
-    public Builder disableFunctions() {
-      return setFunctionsEnabled(false);
-    }
-
-    public Builder setFunctionsEnabled(boolean functionsEnabled) {
-      this.functionsEnabled = functionsEnabled;
-      return this;
-    }
-
-    public Builder whitelistFunctions(Collection<String> functions) {
-      this.functionWhitelist.addAll(functions);
-      return this;
-    }
-
-    public Builder whitelistFunctions(String... functions) {
-      Collections.addAll(functionWhitelist, functions);
-      return this;
-    }
-
-    public MacroParser build() {
-      return new MacroParser(macroEvaluator, escapingEnabled, lookupsEnabled, functionsEnabled, functionWhitelist);
     }
   }
 

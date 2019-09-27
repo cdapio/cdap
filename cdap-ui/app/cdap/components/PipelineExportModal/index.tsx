@@ -34,13 +34,20 @@ const PipelineExportModal: React.SFC<IProps> = ({ isOpen, onClose, pipelineConfi
     const url = URL.createObjectURL(blob);
     const exportFileName =
       (pipelineConfig.name ? pipelineConfig.name : 'noname') + '-' + pipelineConfig.artifact.name;
-    const aElement = document.getElementById('pipeline-export-config-link') as HTMLAnchorElement;
-    aElement.href = url;
-    aElement.download = exportFileName + '.json';
-    aElement.click();
-    if (typeof onClose === 'function') {
-      onClose();
-    }
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${exportFileName}.json`;
+
+    const clickHandler = (event) => {
+      event.stopPropagation();
+      setTimeout(() => {
+        onClose();
+      }, 300);
+    };
+
+    a.addEventListener('click', clickHandler, false);
+    a.click();
   };
 
   return (
@@ -75,7 +82,6 @@ const PipelineExportModal: React.SFC<IProps> = ({ isOpen, onClose, pipelineConfi
       <ModalFooter>
         <div className="btn btn-primary" onClick={exportPipeline}>
           {T.translate(`${PREFIX}.export`)}
-          <a id="pipeline-export-config-link" />
         </div>
         <div className="btn btn-secondary close-button" onClick={onClose}>
           {T.translate('commons.close')}
