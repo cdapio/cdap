@@ -63,7 +63,7 @@ export interface IPropertyFilterCondition {
   property?: string;
   expression?: string;
   operator?: IPropertyFilterOperator;
-  value?: string;
+  value?: string | boolean | number;
 }
 
 /**
