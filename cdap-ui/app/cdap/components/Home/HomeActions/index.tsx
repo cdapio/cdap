@@ -16,8 +16,6 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import EntityTopPanel from 'components/EntityTopPanel';
-import { getCurrentNamespace } from 'services/NamespaceStore';
 import { ActionConfig } from 'components/Home/HomeActions/ActionConfig';
 import ActionCard from 'components/Home/HomeActions/ActionCard';
 import Welcome from 'components/Home/Welcome';
@@ -28,7 +26,7 @@ const styles = (): StyleRules => {
       height: '100%',
     },
     scrollContainer: {
-      height: 'calc(100% - 50px)', // 50px height of EntityTopPanel
+      height: '100%',
       overflowY: 'auto',
     },
     cardsContainer: {
@@ -46,8 +44,6 @@ const styles = (): StyleRules => {
 const HomeActionsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.root}>
-      <EntityTopPanel title={`Things you can do in namespace '${getCurrentNamespace()}'`} />
-
       <div className={classes.scrollContainer}>
         <div className={classes.cardsContainer}>
           {ActionConfig.map((action) => {

@@ -1685,24 +1685,24 @@ features:
       description: Manage system and namespace level settings and preferences.
       namespaceLabel: Namespace
       systemLabel: System
-      title: Administration
+      title: Manage
     Metadata:
-      description: Search by dataset. View schema, lineage, properties, and tags.
+      description: Discover data using metadata. Perform root cause and impact analysis using lineage.
       linkLabel: Metadata
-      title: Explore metadata
+      title: Discover and govern
     Operations:
-      description: Monitor pipeline runs in Dashboard.
+      description: Centrally monitor applications for better operations.
       linkLabel: Dashboard
-      title: Monitor operations
+      title: Monitor
     Pipeline:
-      description: Build pipelines in Studio. Manage deployed and draft pipelines in List.
+      description: Ingest and integrate data from on-prem, SaaS, or cloud sources using pipelines.
       listLabel: List
       studioLabel: Studio
-      title: Build and manage data pipelines
+      title: Integrate
     Wrangler:
-      description: Preview data from external sources. Prototype data transformations in realtime in Wrangler.
+      description: Explore, transform, cleanse, and enrich data using a code-free environment.
       linkLabel: Wrangler
-      title: Cleanse data
+      title: Wrangle
 
   HttpExecutor:
     body: Body
