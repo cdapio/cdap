@@ -207,7 +207,7 @@ export default function enableSystemApp({
     let servicePoll = api.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'STOPPED') {
-          enableService(observer);
+          startService(observer);
 
           servicePoll.unsubscribe();
         }
@@ -225,6 +225,8 @@ export default function enableSystemApp({
         (res) => {
           if (res.status === PROGRAM_STATUSES.RUNNING) {
             observer.next();
+          } else if (res.status === 'STOPPED') {
+            startService(observer);
           } else {
            pingService(subject);
           }
