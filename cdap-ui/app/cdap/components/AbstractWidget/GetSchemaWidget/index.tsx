@@ -15,14 +15,48 @@
  */
 
 import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
+import IconSVG from 'components/IconSVG';
 
-interface IGetSchemaProps extends IWidgetProps<null> {}
+const styles = (): StyleRules => {
+  return {
+    button: {
+      width: '105px',
+      height: '30px',
+    },
+    spinner: {
+      fontSize: '16px',
+    },
+  };
+};
 
-const GetSchemaWidget: React.FC<IGetSchemaProps> = ({ extraConfig }) => {
+interface IGetSchemaProps extends IWidgetProps<null>, WithStyles<typeof styles> {}
+
+const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes }) => {
   const validateProperties = objectQuery(extraConfig, 'validateProperties');
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  function onClickHander() {
+    if (loading) {
+      return;
+    }
+
+    if (validateProperties && typeof validateProperties === 'function') {
+      setLoading(true);
+      validateProperties(() => {
+        setLoading(false);
+      });
+    }
+  }
+
+  const loadingIcon = (
+    <span className={`fa fa-spin ${classes.spinner}`}>
+      <IconSVG name="icon-spinner" />
+    </span>
+  );
 
   return (
     <div>
@@ -30,12 +64,14 @@ const GetSchemaWidget: React.FC<IGetSchemaProps> = ({ extraConfig }) => {
         variant="contained"
         color="primary"
         disabled={typeof validateProperties !== 'function'}
-        onClick={validateProperties}
+        onClick={onClickHander}
+        className={classes.button}
       >
-        Get Schema
+        {loading ? loadingIcon : 'Get Schema'}
       </Button>
     </div>
   );
 };
 
+const GetSchemaWidget = withStyles(styles)(GetSchemaWidgetView);
 export default GetSchemaWidget;
