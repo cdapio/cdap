@@ -30,7 +30,12 @@
     <button class="btn btn-primary validate-btn" type="button"
             ng-if="!isDisabled"
             ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.validating}"
-            ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()">Validate</button>
+            ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()">
+      <span ng-if="HydratorPlusPlusNodeConfigCtrl.validating">
+        <span class="fa fa-spinner fa-spin"></span>
+      </span>
+      <span ng-if="!HydratorPlusPlusNodeConfigCtrl.validating">Validate</span>
+    </button>
     <my-link-button
       class="btn"
       ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length"

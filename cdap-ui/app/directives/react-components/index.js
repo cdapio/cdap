@@ -127,7 +127,7 @@ angular
   .directive('sqlConditionsWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.SqlConditionsWidget);
   })
-  .directive('functionDropdownAliasWidget', function (reactDirective) {
+  .directive('functionDropdownAliasWidget', function(reactDirective) {
     return reactDirective(window.CaskCommon.FunctionDropdownAlias);
   })
   .directive('sqlSelectorWidget', function(reactDirective) {
@@ -141,4 +141,7 @@ angular
   })
   .directive('widgetWrapper', function(reactDirective) {
     return reactDirective(window.CaskCommon.WidgetWrapper);
+  })
+  .directive('loadingSvg', function(reactDirective) {
+    return reactDirective(window.CaskCommon.LoadingSVG);
   });

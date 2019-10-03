@@ -450,7 +450,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     return true;
   }
 
-  validatePluginProperties() {
+  validatePluginProperties(callback) {
     const nodeInfo = this.state.node;
     let vm = this;
     vm.validating = true;
@@ -468,6 +468,10 @@ class HydratorPlusPlusNodeConfigCtrl {
         vm.outputSchemaErrors = {};
       } else {
         vm.propertyErrors = propertyErrors;
+      }
+
+      if (callback && typeof callback === 'function') {
+        callback();
       }
     };
     this.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(nodeInfo, this.state.config, errorCb);
