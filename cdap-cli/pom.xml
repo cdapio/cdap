@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>5.1.204</version>
+    <version>5.1.2041</version>
   </parent>
 
   <artifactId>cdap-cli</artifactId>
