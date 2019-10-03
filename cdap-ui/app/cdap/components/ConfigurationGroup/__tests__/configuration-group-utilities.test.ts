@@ -278,6 +278,7 @@ describe('Error parser', () => {
   });
   it('should mark errors with no affiliation as orphan errors', () => {
     const { propertyErrors } = constructErrors(failures);
+    expect(propertyErrors.orphanErrors.length).toBe(1);
     expect(propertyErrors.orphanErrors[0].msg).toBe('Orphan error message.');
   });
 });
