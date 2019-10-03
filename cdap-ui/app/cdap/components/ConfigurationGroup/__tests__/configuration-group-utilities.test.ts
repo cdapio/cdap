@@ -14,7 +14,10 @@
  * the License.
  */
 
-import { processConfigurationGroups } from 'components/ConfigurationGroup/utilities';
+import {
+  processConfigurationGroups,
+  constructErrors,
+} from 'components/ConfigurationGroup/utilities';
 
 const pluginProperties = {
   nonRequiredProperty: {
@@ -95,6 +98,114 @@ const widgetJson = {
   ],
 };
 
+const failures = [
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          stageConfig: 'connectionString',
+        },
+      },
+    ],
+    message: "Required property 'connectionString' has no value.",
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          stacktrace: 'stacktrace',
+        },
+      },
+    ],
+    message: 'Orphan error message.',
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          stageConfig: 'connectionString',
+        },
+      },
+    ],
+    message: 'Second error for connectionString. Should be discarded.',
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          inputStage: 'source1',
+          inputField: 'id',
+        },
+      },
+    ],
+    message: 'Error with input schema.',
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          outputPort: 'source1',
+          outputField: 'id',
+        },
+      },
+    ],
+    message: 'Error with output schema.',
+    correctiveAction: 'Fix the error.',
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          outputField: 'noPorts',
+        },
+      },
+    ],
+    message: 'Error with output schema when there are no ports in op schema.',
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          configElement: 'd:c:b',
+          stageConfig: 'mapping',
+        },
+      },
+    ],
+    message: "Map key 'd' must be present in the input schema.",
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          configElement: 'd:c:b',
+          stageConfig: 'mapping',
+        },
+      },
+    ],
+    message: 'Error 2 for configElement d:c:b.',
+  },
+  {
+    causes: [
+      {
+        attributes: {
+          stage: 'Stage1',
+          configElement: 'e:b:c',
+          stageConfig: 'mapping',
+        },
+      },
+    ],
+    message: "Map key 'e' must be present in the input schema.",
+  },
+];
+
 describe('Configuration Group Parser', () => {
   it('should put all properties under Generic group when widget json does not exist', () => {
     const { defaultValues, configurationGroups } = processConfigurationGroups(
@@ -132,5 +243,41 @@ describe('Configuration Group Parser', () => {
     expect(configurationGroups[2].properties[0].name).toBe('excludedProperty');
     expect(configurationGroups[2].properties[0].label).toBe('excludedProperty');
     expect(configurationGroups[2].properties[0]['widget-type']).toBe('textbox');
+  });
+});
+
+describe('Error parser', () => {
+  it('should return inputSchemaErrors, outputSchemaErrors, and propertyErrors when failures is empty', () => {
+    const noFailures = [];
+    const { inputSchemaErrors, outputSchemaErrors, propertyErrors } = constructErrors(noFailures);
+
+    expect(Object.keys(inputSchemaErrors).length).toBe(0);
+    expect(Object.keys(outputSchemaErrors).length).toBe(0);
+    expect(Object.keys(propertyErrors).length).toBe(0);
+  });
+  it('should correctly parse errors and keep only first property-level and element-level error', () => {
+    const { inputSchemaErrors, outputSchemaErrors, propertyErrors } = constructErrors(failures);
+    expect(Object.keys(propertyErrors).length).toBe(3);
+    expect(Object.keys(inputSchemaErrors).length).toBe(1);
+    expect(Object.keys(outputSchemaErrors).length).toBe(2);
+
+    expect(propertyErrors.connectionString.length).toBe(1);
+    expect(propertyErrors.connectionString[0].msg).toBe(
+      "Required property 'connectionString' has no value."
+    );
+
+    expect(propertyErrors.mapping.length).toBe(2);
+    expect(outputSchemaErrors.source1.id).toBe(
+      `${failures[4].message} ${failures[4].correctiveAction}`
+    );
+    expect(outputSchemaErrors.noSchemaSection.noPorts).toBe(
+      'Error with output schema when there are no ports in op schema.'
+    );
+
+    expect(inputSchemaErrors.source1.id).toBe('Error with input schema.');
+  });
+  it('should mark errors with no affiliation as orphan errors', () => {
+    const { propertyErrors } = constructErrors(failures);
+    expect(propertyErrors.orphanErrors[0].msg).toBe('Orphan error message.');
   });
 });
