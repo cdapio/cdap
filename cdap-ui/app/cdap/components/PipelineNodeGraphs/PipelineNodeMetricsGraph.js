@@ -32,6 +32,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CopyableID from 'components/CopyableID';
 import { humanReadableDuration, isPluginSource, isPluginSink } from 'services/helpers';
 import NodeMetricsSingleDatapoint from 'components/PipelineNodeGraphs/NodeMetricsSingleDatapoint';
+import { objectQuery } from 'services/helpers';
 
 require('./PipelineNodeMetricsGraph.scss');
 const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph`;
@@ -73,6 +74,7 @@ export default class PipelineNodeMetricsGraph extends Component {
       runRecord: PropTypes.shape({
         runid: PropTypes.string,
         start: PropTypes.number,
+        starting: PropTypes.number,
         end: PropTypes.number,
       }),
       runs: PropTypes.arrayOf(PropTypes.object),
@@ -343,8 +345,8 @@ export default class PipelineNodeMetricsGraph extends Component {
           run: runRecord.runid,
         },
         timeRange: {
-          start: 0,
-          end: 'now',
+          start: objectQuery(this.props, 'runContext', 'runRecord', 'starting') || 0,
+          end: objectQuery(this.props, 'runContext', 'runRecord', 'end') || 'now',
         },
       },
     };
