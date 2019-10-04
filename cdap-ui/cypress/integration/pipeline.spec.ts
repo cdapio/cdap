@@ -73,7 +73,7 @@ describe('Creating a pipeline', () => {
 
     cy.get('[data-testid=close-config-popover]').click();
 
-    // Click on Configure, toggle Instrumentation value, then Save
+    // Click on Configure, toggle Instrumentation value, set up email alert, then Save
     cy.contains('Configure').click();
     cy.get('.label-with-toggle')
       .contains('Instrumentation')
@@ -84,6 +84,15 @@ describe('Creating a pipeline', () => {
       .find('.toggle-switch')
       .click();
     cy.get('@instrumentationDiv').contains('Off');
+    cy.contains('Pipeline alert').click();
+    cy.contains('+').click();
+    cy.contains('Send Email').click();
+    // enter sender, recipients, subject, message
+    // validate
+    // click next
+    // click confirm
+    // See success banner
+
     cy.get('[data-testid=config-apply-close]').click();
 
     // Name pipeline then deploy pipeline
