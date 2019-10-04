@@ -26,6 +26,9 @@ $info-font-color: $grey-03;
 .dataprep-connections-container {
   height: calc(100vh - 104px);
   border-right: 1px solid $connections-panel-border-color;
+  &.no-footer {
+    height: 100vh;
+  }
 
   .connections-panel,
   .connections-content {

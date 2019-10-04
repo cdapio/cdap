@@ -33,7 +33,7 @@
 
 <body ng-class="bodyClass" class="cdap-body-container" ng-controller="BodyCtrl" ng-keyup="onSearch($event)">
   <my-global-navbar></my-global-navbar>
-  <main class="container" id="app-container">
+  <main class="container" ng-class="headerClass" id="app-container">
     <div ui-view></div>
   </main>
 

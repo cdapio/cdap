@@ -275,7 +275,7 @@ angular
     var dataSource = new MyCDAPDataSource($scope);
     getVersion();
     $scope.copyrightYear = new Date().getFullYear();
-
+    $scope.headerClass = !window.CaskCommon.ThemeHelper.Theme.showHeader ? 'no-header' : '';
     function getVersion() {
       dataSource.request({
         _cdapPath: '/version'
