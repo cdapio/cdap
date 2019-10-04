@@ -170,8 +170,11 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
       errors && errors.length === 1 && !errors[0].element ? errors[0].msg : '';
     // Fix styling of error here.
     return (
-      <div className={classnames(classes.root, { [classes.macroRow]: this.state.isMacroTextbox })}>
-        <div className={classes.row}>
+      <div className={classes.root}>
+        <div
+          data-cy={widgetProperty.name}
+          className={classnames(classes.row, { [classes.macroRow]: this.state.isMacroTextbox })}
+        >
           <WidgetWrapper
             widgetProperty={updatedWidgetProperty}
             pluginProperty={pluginProperty}
@@ -192,7 +195,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
           </If>
         </div>
         <If condition={propertyLevelErrorMsg !== ''}>
-          <div className={classnames(classes.errorText, classes.errorRow)}>
+          <div className={classnames(classes.errorText, classes.errorRow, 'propertyError')}>
             {propertyLevelErrorMsg}
           </div>
         </If>
