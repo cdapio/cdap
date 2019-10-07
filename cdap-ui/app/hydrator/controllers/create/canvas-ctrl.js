@@ -77,6 +77,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
           bindToController: true,
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
           animation: false,
+          backdrop: 'static',
           resolve: {
             rIsStudioMode: function () {
               return true;

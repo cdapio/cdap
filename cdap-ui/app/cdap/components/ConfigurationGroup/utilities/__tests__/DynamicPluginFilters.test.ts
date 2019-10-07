@@ -18,7 +18,7 @@ import {
   filterByCondition,
   IFilteredWidgetProperty,
 } from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
-import { PropertyShowConfigTypeEnums } from 'components/ConfigurationGroup/types';
+import { PropertyShowConfigTypeEnums, CustomOperator } from 'components/ConfigurationGroup/types';
 import { processConfigurationGroups } from 'components/ConfigurationGroup/utilities';
 
 const pluginProperties = {
@@ -81,6 +81,48 @@ const pluginProperties = {
   property9: {
     name: 'property9',
     description: 'property9',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property10: {
+    name: 'property10',
+    description: 'property10',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property11: {
+    name: 'property11',
+    description: 'property11',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property12: {
+    name: 'property12',
+    description: 'property12',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property13: {
+    name: 'property13',
+    description: 'property13',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property14: {
+    name: 'property14',
+    description: 'property14',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property15: {
+    name: 'property15',
+    description: 'property15',
     macroSupported: true,
     required: false,
     type: 'string',
@@ -181,6 +223,57 @@ const widgetJson = {
         },
       ],
     },
+    {
+      label: 'Group with simple condition object',
+      description: 'Group with properties to test simple condition object',
+      properties: [
+        {
+          name: 'property10',
+          label: 'Property 10',
+          'widget-type': 'textbox',
+          'widget-attributes': {
+            default: 'property10',
+          },
+        },
+        {
+          name: 'property11',
+          label: 'Property 11',
+          'widget-type': 'textbox',
+          'widget-attributes': {
+            default: 'property11',
+          },
+        },
+        {
+          name: 'property12',
+          label: 'Property 12',
+          'widget-type': 'textbox',
+        },
+        {
+          name: 'property13',
+          label: 'Property 13',
+          'widget-type': 'textbox',
+          'widget-attributes': {
+            default: 'property13',
+          },
+        },
+        {
+          name: 'property14',
+          label: 'Property 14',
+          'widget-type': 'number',
+          'widget-attributes': {
+            default: '10',
+          },
+        },
+        {
+          name: 'property15',
+          label: 'Property 15',
+          'widget-type': 'number',
+          'widget-attributes': {
+            default: 'property15',
+          },
+        },
+      ],
+    },
   ],
   filters: [
     {
@@ -272,6 +365,44 @@ const widgetJson = {
         {
           name: 'property9',
           type: PropertyShowConfigTypeEnums.PROPERTY,
+        },
+      ],
+    },
+    {
+      name: 'Filter for simple condition objects - 1',
+      condition: {
+        property: 'property10',
+        operator: CustomOperator.EQUALTO,
+        value: 'property10',
+      },
+      show: [
+        {
+          name: 'property11',
+        },
+      ],
+    },
+    {
+      name: 'Filter for simple condition objects - 2',
+      condition: {
+        property: 'property12',
+        operator: CustomOperator.EXISTS,
+      },
+      show: [
+        {
+          name: 'property13',
+        },
+      ],
+    },
+    {
+      name: 'Filter for simple condition objects - 3',
+      condition: {
+        property: 'property14',
+        operator: CustomOperator.EQUALTO,
+        value: 10,
+      },
+      show: [
+        {
+          name: 'property15',
         },
       ],
     },
@@ -471,5 +602,62 @@ describe('Unit tests for Dynamic Plugin Filters', () => {
       (group) => group.label === 'Group with complex filters'
     );
     expect(groupWithComplexProperties.show).toBe(false);
+  });
+
+  describe('Test simple condition object - 1', () => {
+    const filteredConfigObj = getFilteredConfigurationGroups();
+    const defaultValues = filteredConfigObj.defaultValues;
+    let filteredConfigurationGroups = filteredConfigObj.filteredConfigurationGroups;
+    const configurationGroups = filteredConfigObj.configurationGroups;
+    it('Should correctly show/hide properties satisfying basic condition - EQUAL TO', () => {
+      const properties = getPropertieObj(filteredConfigurationGroups);
+      const property11 = properties.property11;
+      expect(property11.show).toBe(true);
+
+      defaultValues.property10 = 'newproperty10';
+      filteredConfigurationGroups = filterByCondition(
+        configurationGroups,
+        widgetJson,
+        pluginProperties,
+        defaultValues
+      );
+      const newProperties = getPropertieObj(filteredConfigurationGroups);
+      const newproperty11 = newProperties.property11;
+      expect(newproperty11.show).toBe(false);
+    });
+
+    it('Should correctly show/hide properties satisfying basic condition - EQUAL TO', () => {
+      const properties = getPropertieObj(filteredConfigurationGroups);
+      const property15 = properties.property15;
+      expect(property15.show).toBe(true);
+
+      defaultValues.property14 = 'property14';
+      filteredConfigurationGroups = filterByCondition(
+        configurationGroups,
+        widgetJson,
+        pluginProperties,
+        defaultValues
+      );
+      const newProperties = getPropertieObj(filteredConfigurationGroups);
+      const newproperty15 = newProperties.property15;
+      expect(newproperty15.show).toBe(false);
+    });
+
+    it('Should correctly show/hide properties satisfying basic condition - EXISTS', () => {
+      const properties = getPropertieObj(filteredConfigurationGroups);
+      const property13 = properties.property13;
+      expect(property13.show).toBe(false);
+
+      defaultValues.property12 = 'property12';
+      filteredConfigurationGroups = filterByCondition(
+        configurationGroups,
+        widgetJson,
+        pluginProperties,
+        defaultValues
+      );
+      const newProperties = getPropertieObj(filteredConfigurationGroups);
+      const newproperty13 = newProperties.property13;
+      expect(newproperty13.show).toBe(true);
+    });
   });
 });

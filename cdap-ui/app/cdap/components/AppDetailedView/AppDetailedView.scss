@@ -28,33 +28,36 @@
   // Top panel, metadata section and tab content
   grid-template-rows: auto auto 1fr;
 
-  @media (min-width: 1701px) {
-    .entity-cards {
-      width: calc((100% - 20px - 10px - (6 * 10px)) / 7);
+  // beating specificity
+  .overview-tab {
+    @media (min-width: 1701px) {
+      .entity-cards {
+        width: calc((100% - 20px - 10px - (6 * 10px)) / 7);
+      }
     }
-  }
 
-  @media (min-width: 1601px) and (max-width: 1700px) {
-    .entity-cards {
-      width: calc((100% - 20px - 10px - (5 * 10px)) / 6);
+    @media (min-width: 1601px) and (max-width: 1700px) {
+      .entity-cards {
+        width: calc((100% - 20px - 10px - (5 * 10px)) / 6);
+      }
     }
-  }
 
-  @media (min-width: 1201px) and (max-width: 1600px) {
-    .entity-cards {
-      width: calc((100% - 20px - 10px - (4 * 10px)) / 5);
+    @media (min-width: 1201px) and (max-width: 1600px) {
+      .entity-cards {
+        width: calc((100% - 20px - 10px - (4 * 10px)) / 5);
+      }
     }
-  }
 
-  @media (min-width: 993px) and (max-width: 1200px) {
-    .entity-cards {
-      width: calc((100% - 20px - 10px - (3 * 10px)) / 4);
+    @media (min-width: 993px) and (max-width: 1200px) {
+      .entity-cards {
+        width: calc((100% - 20px - 10px - (3 * 10px)) / 4);
+      }
     }
-  }
 
-  @media(min-width: 768px) and (max-width: 992px) {
-    .entity-cards {
-      width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
+    @media(min-width: 768px) and (max-width: 992px) {
+      .entity-cards {
+        width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
+      }
     }
   }
 
