@@ -157,7 +157,7 @@ export default class DatasetDetailedView extends Component {
 
             let entityDetail = {
               programs,
-              schema: res[0].schema,
+              schema: properties.schema,
               name: appId, // FIXME: Finalize on entity detail for fast action
               app: appId,
               id: datasetId,

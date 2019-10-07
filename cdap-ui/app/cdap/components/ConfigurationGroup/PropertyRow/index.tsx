@@ -32,10 +32,9 @@ const styles = (theme): StyleRules => {
       display: 'flex',
       flexDirection: 'column',
       marginBottom: '5px',
-      padding: '10px',
+      padding: '15px 10px 10px',
     },
     row: {
-      marginBottom: '10px',
       display: 'grid',
       gridTemplateColumns: '1fr 40px',
       alignItems: 'center',
@@ -44,7 +43,10 @@ const styles = (theme): StyleRules => {
       backgroundColor: theme.palette.grey[500],
     },
     label: {
-      backgroundColor: theme.palette.grey[500],
+      borderRadius: '4px',
+    },
+    widgetWrapper: {
+      backgroundColor: theme.palette.white[50],
     },
     errorText: {
       color: theme.palette.red[50],
@@ -158,6 +160,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
 
       widgetClasses = {
         label: classes.label,
+        widgetWrapper: classes.widgetWrapper,
       };
     }
 
@@ -167,8 +170,8 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
       errors && errors.length === 1 && !errors[0].element ? errors[0].msg : '';
     // Fix styling of error here.
     return (
-      <div className={classes.root}>
-        <div className={classnames(classes.row, { [classes.macroRow]: this.state.isMacroTextbox })}>
+      <div className={classnames(classes.root, { [classes.macroRow]: this.state.isMacroTextbox })}>
+        <div className={classes.row}>
           <WidgetWrapper
             widgetProperty={updatedWidgetProperty}
             pluginProperty={pluginProperty}

@@ -126,6 +126,7 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: uuidV4(),
         tag: MarkAsError,
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),
@@ -194,6 +195,7 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: uuidV4(),
         tag: MaskData,
+        requiredColCount: 1,
       },
       {
         id: uuidV4(),

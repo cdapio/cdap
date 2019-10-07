@@ -34,6 +34,7 @@ import {
   IProcessedConfigurationGroups,
   processConfigurationGroups,
 } from 'components/ConfigurationGroup/utilities';
+import isPlainObject from 'lodash/isPlainObject';
 
 export interface IFilteredWidgetProperty extends IWidgetProperty {
   show?: boolean;
@@ -46,28 +47,30 @@ export interface IFilteredConfigurationGroup extends IConfigurationGroup {
 
 /**
  * CDAP UI provides some simple operations like @{ICustomOperators}
- * This is to convert those simple operators to jexl expressions
+ * This is to evaluate the condition object for simpler cases.
  */
-function getExpressionFromConditionObj(filter) {
-  const { property, value, operator } = filter.condition;
-  let expression;
+function evaluateConditionObj(filter: IPropertyFilter, propertyValues: IPropertyValues) {
+  const { property, operator } = filter.condition;
+  let { value } = filter.condition;
+  if (typeof value !== 'undefined' && value !== null) {
+    if (isPlainObject(value)) {
+      value = JSON.stringify(value);
+    } else {
+      value = value.toString();
+    }
+  }
   switch (operator) {
     case CustomOperator.EQUALTO:
-      expression = `${property} == ${value}`;
-      break;
+      return propertyValues[property] === value;
     case CustomOperator.NOTEQUALTO:
-      expression = `${property} != ${value}`;
-      break;
+      return propertyValues[property] !== value;
     case CustomOperator.EXISTS:
-      expression = `${property}`;
-      break;
+      return propertyValues[property];
     case CustomOperator.DOESNOTEXISTS:
-      expression = `!${property}`;
-      break;
+      return !propertyValues[property];
     default:
-      expression = null;
+      return false;
   }
-  return expression;
 }
 
 /**
@@ -199,10 +202,14 @@ export function filterByCondition(
   // condition is not true.
   let propertiesToHide = flatten(
     filters.map((filter) => {
-      let { expression } = filter.condition;
-      expression = expression || getExpressionFromConditionObj(filter);
+      const { expression } = filter.condition;
+      const mapPropertyToShow = (f: IPropertyFilter) =>
+        f.show.map((showConfig) => ({
+          property: showConfig.name,
+          filterName: f.name,
+        }));
       if (!expression) {
-        return [];
+        return !evaluateConditionObj(filter, propertyValues) ? mapPropertyToShow(filter) : [];
       }
 
       const typedPropertyValues = {
@@ -217,12 +224,7 @@ export function filterByCondition(
 
       // If the condition is not true then that means the property has to be hidden.
       if (!jexl.evalSync(`${filter.condition.expression}`, typedPropertyValues)) {
-        return filter.show.map((showConfig) => {
-          return {
-            property: showConfig.name,
-            filterName: filter.name,
-          };
-        });
+        return mapPropertyToShow(filter);
       }
       return [];
     })

@@ -25,10 +25,15 @@
     </p>
   </h5>
   <div class="btn-group pull-right">
-    <button class="btn btn-primary validate-btn" 
-      type="button"
-      ng-if="showValidateButton()"
-      ng-click="!validating && validatePluginProperties()">Validate</button>
+    <button class="btn btn-primary validate-btn"
+            type="button"
+            ng-if="showValidateButton()"
+            ng-click="!validating && validatePluginProperties()">
+      <span ng-if="validating">
+        <span class="fa fa-spinner fa-spin"></span>
+      </span>
+      <span ng-if="!validating">Validate</span>
+    </button>
     <a class="btn" ng-click="$close()">
       <span class="fa fa-remove"></span>
       <span class="sr-only"> Close </span>
