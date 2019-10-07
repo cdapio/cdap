@@ -18,6 +18,10 @@ import * as Helpers from '../helpers';
 
 const TEST_PIPELINE_NAME = '__UI_test_pipeline';
 const TEST_PATH = '__UI_test_path';
+const TEST_SENDER = '__UI_test_sender';
+const TEST_RECIPIENT = '__UI_test@test.com';
+const TEST_SUBJECT = '__UI_test_subject';
+
 let headers = {};
 describe('Creating a pipeline', () => {
   // Uses API call to login instead of logging in manually through UI
@@ -88,10 +92,40 @@ describe('Creating a pipeline', () => {
     cy.contains('+').click();
     cy.contains('Send Email').click();
     // enter sender, recipients, subject, message
+
+    cy.get('[data-cy="sender"').within(() => {
+      cy.get('input').type(TEST_SENDER);
+    });
+    cy.get('[data-cy="recipients"').within(() => {
+      cy.get('input').type(TEST_RECIPIENT);
+    });
+    cy.get('[data-cy="subject"').within(() => {
+      cy.get('input').type(TEST_SUBJECT);
+    });
+    // validate and see error
+    cy.get('[data-cy="validate-btn"]').click();
+
+    cy.get('.propertyError').should('exist');
+
+    // Fix missing field to resolve error
+    cy.get('[data-cy="message"').within(() => {
+      cy.get('button').click();
+    });
     // validate
+    cy.get('[data-cy="validate-btn"]').click();
+
+    cy.get('.propertyError').should('not.exist');
+
     // click next
+    cy.get('[data-cy="next-btn"]').click();
+
     // click confirm
-    // See success banner
+    cy.get('[data-cy="confirm-btn"]').click();
+
+    // See email alert
+    cy.get('[data-cy="saved-alerts"]').within(() => {
+      cy.contains('Email').should('exist');
+    });
 
     cy.get('[data-testid=config-apply-close]').click();
 
