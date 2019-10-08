@@ -264,7 +264,7 @@ export function getFieldLineage(
       showingOneField: false,
       showOperations: false,
       activeOpsIndex: 0,
-      loading: false,
+      loadingOps: false,
     };
     cb(targetInfo);
   });
