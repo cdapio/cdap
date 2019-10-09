@@ -481,7 +481,17 @@ final class DataprocClient implements AutoCloseable {
         OperationsClient.ListOperationsPagedResponse operationsResponse =
           client.getOperationsClient().listOperations(resourceName, filter);
         OperationsClient.ListOperationsPage page = operationsResponse.getPage();
-        if (page != null && page.getPageElementCount() > 0) {
+        if (page == null) {
+          LOG.warn("Unable to get the cause of the cluster creation failure.");
+          return status;
+        }
+
+        if (page.getPageElementCount() > 1) {
+          // shouldn't be possible
+          LOG.warn("Multiple create operations found for cluster {}, may not be able to find the failure message.",
+                   name);
+        }
+        if (page.getPageElementCount() > 0) {
           Operation operation = page.getValues().iterator().next();
           Status operationError = operation.getError();
           if (operationError != null) {
