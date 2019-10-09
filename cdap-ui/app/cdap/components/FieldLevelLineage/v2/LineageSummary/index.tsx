@@ -225,7 +225,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
           return (
             <div className={this.props.classes.wrapper}>
-              <TopPanel datasetId={target} />
+              <TopPanel />
               <div className={this.props.classes.root} id="fll-container">
                 <svg id="links-container" className={this.props.classes.container}>
                   <g>
@@ -242,15 +242,8 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     <FllTable type="cause" />
                   </If>
                   {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
-                    const isActive = tableId in activeCauseSets;
                     return (
-                      <FllTable
-                        key={tableId}
-                        tableId={tableId}
-                        fields={fields}
-                        type="cause"
-                        isActive={isActive}
-                      />
+                      <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />
                     );
                   })}
                 </div>
@@ -264,15 +257,8 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     <FllTable type="impact" />
                   </If>
                   {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
-                    const isActive = tableId in activeImpactSets;
                     return (
-                      <FllTable
-                        key={tableId}
-                        tableId={tableId}
-                        fields={fields}
-                        type="impact"
-                        isActive={isActive}
-                      />
+                      <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />
                     );
                   })}
                 </div>

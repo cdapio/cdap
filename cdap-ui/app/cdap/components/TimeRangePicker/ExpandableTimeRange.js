@@ -108,7 +108,7 @@ export default class ExpandableTimeRange extends Component {
     return (
       <div
         className={classnames('done-button text-center', {
-          disabled: !this.state.start || !this.state.end,
+          disabled: !this.state.start || !this.state.end || this.state.start >= this.state.end,
         })}
         onClick={this.done}
       >
