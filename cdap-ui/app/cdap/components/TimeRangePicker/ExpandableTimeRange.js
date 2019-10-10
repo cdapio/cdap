@@ -28,10 +28,8 @@ export default class ExpandableTimeRange extends Component {
     end: PropTypes.number,
     onDone: PropTypes.func,
     inSeconds: PropTypes.bool,
-  };
-
-  static defaultProps = {
-    inSeconds: false,
+    showRange: PropTypes.bool,
+    disabled: PropTypes.bool,
   };
 
   state = {
@@ -75,13 +73,12 @@ export default class ExpandableTimeRange extends Component {
       start,
       end,
     });
+    if (typeof this.props.onChange === 'function') {
+      this.props.onChange({ start, end });
+    }
   };
 
   done = () => {
-    if (!this.state.start || !this.state.end) {
-      return;
-    }
-
     if (typeof this.props.onDone === 'function') {
       let start = parseInt(this.state.start, 10),
         end = parseInt(this.state.end, 10);
@@ -108,7 +105,7 @@ export default class ExpandableTimeRange extends Component {
     return (
       <div
         className={classnames('done-button text-center', {
-          disabled: !this.state.start || !this.state.end || this.state.start >= this.state.end,
+          disabled: !this.state.start || (!this.state.end && this.props.showRange),
         })}
         onClick={this.done}
       >
@@ -131,6 +128,7 @@ export default class ExpandableTimeRange extends Component {
           start={this.state.start}
           end={this.state.end}
           onTimeClick={this.onTimeClick}
+          showRange={this.props.showRange}
         />
 
         {this.renderDoneButton()}
