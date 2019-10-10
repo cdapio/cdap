@@ -135,7 +135,6 @@
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
-    <scala2.10.version>2.10.4</scala2.10.version>
     <scala2.11.version>2.11.8</scala2.11.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
@@ -2668,7 +2667,7 @@
     <!--
       This profile contains modules that only has tests.
     -->
-    <profile>
+    <!--profile>
       <id>unit-tests</id>
       <activation>
         <jdk>[1.7,)</jdk>
@@ -2681,7 +2680,7 @@
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>
       </modules>
-    </profile>
+    </profile-->
 
     <!--
        This profile defines all default modules and must come as the last profile.
@@ -2718,7 +2717,7 @@
         <module>cdap-data-fabric</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
-        <module>cdap-spark-core</module>
+        <!--module>cdap-spark-core</module-->
         <module>cdap-spark-core2_2.11</module>
         <module>cdap-spark-python</module>
         <module>cdap-security-spi</module>
@@ -2728,8 +2727,8 @@
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>
         <module>cdap-explore</module>
-        <module>cdap-unit-test</module>
-        <module>cdap-unit-test-spark2_2.11</module>
+        <!--module>cdap-unit-test</module>
+        <module>cdap-unit-test-spark2_2.11</module-->
         <module>cdap-kms</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>
@@ -2745,8 +2744,8 @@
         <module>cdap-standalone</module>
         <module>cdap-distributions</module>
         <module>cdap-archetypes</module>
-        <module>cdap-test</module>
-        <module>cdap-integration-test</module>
+        <!--module>cdap-test</module>
+        <module>cdap-integration-test</module-->
         <module>cdap-ui</module>
       </modules>
     </profile>
