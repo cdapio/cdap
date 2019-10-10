@@ -57,7 +57,7 @@ public class ETLPlugin {
   }
 
   public Map<String, String> getProperties() {
-    return Collections.unmodifiableMap(properties == null ? new HashMap<String, String>() : properties);
+    return Collections.unmodifiableMap(properties == null ? new HashMap<>() : properties);
   }
 
   public PluginProperties getPluginProperties() {
@@ -67,6 +67,7 @@ public class ETLPlugin {
     return PluginProperties.builder().addAll(properties).build();
   }
 
+  @Nullable
   public ArtifactSelectorConfig getArtifactConfig() {
     return artifact;
   }
