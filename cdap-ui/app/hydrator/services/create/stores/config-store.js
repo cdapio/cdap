@@ -583,14 +583,8 @@ class HydratorPlusPlusConfigStore {
   }
 
   setNodes(nodes) {
-    this.state.__ui__.nodes = nodes;
+    this.state.__ui__.nodes = nodes || [];
     let listOfPromises = [];
-    // Prepopulate nodes with backend properties;
-    // This will be used for cases where we import/use a predefined app and when we render the entire
-    // dag we need to show #of errors in each node (badge on the top right corner of each node).
-    let nodesWOutBackendProps = this.state.__ui__.nodes.filter(
-      node => !angular.isObject(node._backendProperties)
-    );
     let parseNodeConfig = (node, res) => {
       let nodeConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(node._backendProperties, res);
       node.implicitSchema = nodeConfig.outputSchema.implicitSchema;
@@ -611,11 +605,11 @@ class HydratorPlusPlusConfigStore {
         node.plugin.properties[node.outputSchemaProperty] = node.outputSchema;
       }
     };
-    if (nodesWOutBackendProps.length) {
-      nodesWOutBackendProps.forEach( n => {
+
+    if (this.state.__ui__.nodes && this.state.__ui__.nodes.length) {
+      this.state.__ui__.nodes.forEach( n => {
         listOfPromises.push(this.HydratorPlusPlusHydratorService.fetchBackendProperties(n, this.getAppType()));
       });
-
     } else {
       listOfPromises.push(this.$q.when(true));
     }
@@ -631,7 +625,7 @@ class HydratorPlusPlusConfigStore {
             // This will be used for schema propagation where we import/use a predefined app/open a published pipeline
             // the user should directly click on the last node and see what is the incoming schema
             // without having to open the subsequent nodes.
-            nodesWOutBackendProps.forEach( n => {
+            this.state.__ui__.nodes.forEach( n => {
               // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
               // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
               if (!n.plugin.artifact) { return; }
