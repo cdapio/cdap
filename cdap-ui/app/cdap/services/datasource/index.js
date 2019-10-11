@@ -52,17 +52,28 @@ export default class Datasource {
       genericResponseHandlers.forEach((handler) => handler(data));
 
       if (data.statusCode > 299 || data.warning) {
-        /*
-            There is an issue here. When backend goes down we stop all the poll
-            and inspite of stopping all polling calls and unsubscribing all subscribers
-            we still get the rx.error call which tries to set the observers length to 0
-            and errors out. This doesn't harm us today as when system comes up we refresh
-            the UI and everything loads.
-          */
-        this.bindings[hash].rx.error({
-          statusCode: data.statusCode,
-          response: data.response || data.body || data.error,
-        });
+        /**
+         * There is an issue here. When backend goes down we stop all the poll
+         * and inspite of stopping all polling calls and unsubscribing all subscribers
+         * we still get the rx.error call which tries to set the observers length to 0
+         * and errors out. This doesn't harm us today as when system comes up we refresh
+         * the UI and everything loads.
+         *
+         * This is being wrapped in a try catch block in case the subscriber do not define
+         * an error callback. Without this, the error will bubble up as an uncaught error
+         * and terminate the socketData subscriber.
+         */
+        try {
+          this.bindings[hash].rx.error({
+            statusCode: data.statusCode,
+            response: data.response || data.body || data.error,
+          });
+        } catch (e) {
+          console.groupCollapsed('Error: ' + data.resource.url);
+          console.log('Resource', data.resource);
+          console.log('Error', e);
+          console.groupEnd();
+        }
       } else {
         this.bindings[hash].rx.next(data.response);
       }
@@ -193,7 +204,14 @@ export default class Datasource {
           obs.next(data);
         },
         (err) => {
-          obs.error(err);
+          try {
+            obs.error(err);
+          } catch (e) {
+            console.groupCollapsed('Error: ' + data.resource.url);
+            console.log('Resource', data.resource);
+            console.log('Error', e);
+            console.groupEnd();
+          }
         }
       );
 
