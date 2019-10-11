@@ -109,14 +109,15 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     vm.configOptions[key] = value;
   });
 
-  vm.logEvents = {ERROR: 'ERROR', WARN: 'WARN', INFO: 'INFO', DEBUG: 'DEBUG', TRACE: 'TRACE'};
+  vm.logEvents = {ERROR: 'ERROR', WARN: 'WARN', INFO: 'INFO', DEBUG: 'DEBUG', TRACE: 'TRACE', TOTAL: 'TOTAL'};
 
   vm.activeLogLevels = {
     'ERROR' : true,
     'WARN' : true,
     'INFO' : true,
     'DEBUG' : false,
-    'TRACE' : false
+    'TRACE' : false,
+    'TOTAL' : false
   };
 
   // dynamically sets the default log level filter
@@ -651,7 +652,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       'WARN' : false,
       'INFO' : false,
       'DEBUG' : false,
-      'TRACE' : false
+      'TRACE' : false,
+      'TOTAL' : false
     };
 
     switch (eventType) {
@@ -669,6 +671,9 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
         /* falls through */
       case 'ERROR':
         vm.activeLogLevels['ERROR'] = true;
+        /* falls through */
+      case 'TOTAL':
+        vm.activeLogLevels['TOTAL'] = true;
     }
 
     // Whenever we change the log level filter, the data needs
