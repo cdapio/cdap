@@ -252,7 +252,7 @@ const HYDRATOR_DEFAULT_VALUES = {
   },
   numOfRecordsPreview: 100,
   previewTimeoutInMin: 2,
-  engine: 'mapreduce',
+  engine: 'spark',
   processTimingEnabled: true,
   stageLoggingEnabled: false,
   disableCheckpoints: false,

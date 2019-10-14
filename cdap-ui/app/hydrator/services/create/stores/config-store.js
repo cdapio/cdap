@@ -411,10 +411,10 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setEngine(engine) {
-    this.state.config.engine = engine || 'mapreduce';
+    this.state.config.engine = engine || this.HYDRATOR_DEFAULT_VALUES.engine;
   }
   getEngine() {
-    return this.state.config.engine || 'mapreduce';
+    return this.state.config.engine || this.HYDRATOR_DEFAULT_VALUES.engine;
   }
   getProperties() {
     return this.getConfig().properties;
