@@ -133,7 +133,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
          * the delegation token from the Timeline server to the Explore container.
          * https://guavus-jira.atlassian.net/browse/RAFD-1962
          */
-//        JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);	
+//        JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       } 
 
       if (secureStore instanceof DelegationTokensUpdater) {
