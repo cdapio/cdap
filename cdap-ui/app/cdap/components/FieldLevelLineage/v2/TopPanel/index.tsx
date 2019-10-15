@@ -17,22 +17,32 @@
 import * as React from 'react';
 import withStyles from '@material-ui/core/styles/withStyles';
 import TimeRangePicker from 'components/FieldLevelLineage/v2/TimeRangePicker';
+import EntityTopPanel from 'components/EntityTopPanel';
+import T from 'i18n-react';
 
-const styles = () => {
+const styles = (theme) => {
   return {
     root: {
       height: 60,
-      marginTop: 10,
+      background: theme.palette.white[50],
     },
   };
 };
 
-const FllTopPanel = ({ classes }) => {
+const FllTopPanel = ({ datasetId, classes }) => {
   return (
     <div className={classes.root}>
-      <div>
+      <EntityTopPanel
+        breadCrumbAnchorLabel="Results"
+        title={datasetId}
+        entityType={T.translate(`commons.entity.dataset.singular`)}
+        entityIcon="icon-datasets"
+        historyBack={true}
+        inheritBackground={true}
+      />
+      <span>
         <TimeRangePicker />
-      </div>
+      </span>
     </div>
   );
 };

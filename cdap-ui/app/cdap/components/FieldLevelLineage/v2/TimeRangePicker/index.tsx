@@ -38,7 +38,9 @@ const styles = (): StyleRules => {
       width: 400,
     },
     timePickerContainer: {
-      paddingLeft: 50,
+      position: 'relative',
+      top: -30,
+      left: 230,
     },
   };
 };

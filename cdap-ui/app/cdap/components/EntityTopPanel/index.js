@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { Link } from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
+import classnames from 'classnames';
 
 require('./EntityTopPanel.scss');
 
@@ -30,6 +31,7 @@ export default class EntityTopPanel extends PureComponent {
     entityType: PropTypes.string,
     closeBtnAnchorLink: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     historyBack: PropTypes.bool,
+    inheritBackground: PropTypes.bool,
   };
 
   renderBreadCrumnAnchorLink = () => {
@@ -105,7 +107,7 @@ export default class EntityTopPanel extends PureComponent {
 
   render() {
     return (
-      <div className="entity-top-panel">
+      <div className={classnames('entity-top-panel', { background: this.props.inheritBackground })}>
         <div className="toppanel-title-container">
           {this.renderBreadCrumnAnchorLink()}
           {this.renderTitle()}
