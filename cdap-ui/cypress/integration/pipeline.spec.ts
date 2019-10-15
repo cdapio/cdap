@@ -113,7 +113,7 @@ describe('Creating a pipeline', () => {
     });
     // validate
     cy.get('[data-cy="validate-btn"]').click();
-
+    cy.wait(2000);
     cy.get('.propertyError').should('not.exist');
 
     // click next
