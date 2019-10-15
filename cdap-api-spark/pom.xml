@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>cdap-api-spark</artifactId>
-  <name>CDAP Spark1 API Scala 2.11</name>
+  <name>CDAP Spark1 API Scala 2.10</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -37,34 +37,34 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
+    <!--dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>${scala2.11.version}</version>
-    </dependency>
+      <version>${scala2.10.version}</version>
+    </dependency-->
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.11</artifactId>
+      <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.11</artifactId>
+      <artifactId>spark-sql_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming_2.11</artifactId>
+      <artifactId>spark-streaming_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.11</artifactId>
+      <artifactId>spark-mllib_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-repl_2.11</artifactId>
+      <artifactId>spark-repl_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
