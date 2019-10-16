@@ -385,8 +385,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       String correctiveAction = String.format("Make sure plugin '%s' of type '%s' is already deployed.",
                                               pluginName, type);
       ArtifactSelectorConfig requested = etlPlugin.getArtifactConfig();
-      ArtifactId requestedArtifactId = new ArtifactId(requested.getName(), new ArtifactVersion(requested.getVersion()),
-                                                      ArtifactScope.valueOf(requested.getScope()));
+      ArtifactId requestedArtifactId = requested == null ? null :
+        new ArtifactId(requested.getName(), new ArtifactVersion(requested.getVersion()),
+                       ArtifactScope.valueOf(requested.getScope()));
 
       ArtifactSelectorConfig suggestion = pluginSelector.getSuggestion();
       ArtifactId suggestedArtifactId = null;

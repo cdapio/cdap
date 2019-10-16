@@ -25,7 +25,7 @@ import { findHighestVersion } from 'services/VersionRange/VersionUtilities';
 import T from 'i18n-react';
 import { Subject } from 'rxjs/Subject';
 import find from 'lodash/find';
-import { SCOPES } from 'services/global-constants';
+import { SCOPES, HYDRATOR_DEFAULT_VALUES } from 'services/global-constants';
 
 const PREFIX = 'features.DataPrep.PipelineError';
 
@@ -644,12 +644,12 @@ function constructProperties(workspaceInfo, pluginVersion) {
                 batchInterval: '10s',
                 connections,
                 resources: {
-                  memoryMB: 1024,
-                  virtualCores: 1,
+                  memoryMB: HYDRATOR_DEFAULT_VALUES.resources.memoryMB,
+                  virtualCores: HYDRATOR_DEFAULT_VALUES.resources.virtualCores,
                 },
                 driverResources: {
-                  memoryMB: 1024,
-                  virtualCores: 1,
+                  memoryMB: HYDRATOR_DEFAULT_VALUES.resources.memoryMB,
+                  virtualCores: HYDRATOR_DEFAULT_VALUES.resources.virtualCores,
                 },
               },
             };
@@ -665,12 +665,12 @@ function constructProperties(workspaceInfo, pluginVersion) {
                 stages: batchStages,
                 connections,
                 resources: {
-                  memoryMB: 1024,
-                  virtualCores: 1,
+                  memoryMB: HYDRATOR_DEFAULT_VALUES.resources.memoryMB,
+                  virtualCores: HYDRATOR_DEFAULT_VALUES.resources.virtualCores,
                 },
                 driverResources: {
-                  memoryMB: 1024,
-                  virtualCores: 1,
+                  memoryMB: HYDRATOR_DEFAULT_VALUES.resources.memoryMB,
+                  virtualCores: HYDRATOR_DEFAULT_VALUES.resources.virtualCores,
                 },
               },
             };

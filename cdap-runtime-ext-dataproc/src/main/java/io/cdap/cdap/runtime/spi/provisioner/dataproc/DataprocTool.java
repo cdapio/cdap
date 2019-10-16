@@ -46,7 +46,8 @@ public class DataprocTool {
   private static final String PROVISION = "provision";
   private static final String DETAILS = "details";
   private static final String DEPROVISION = "deprovision";
-  private static final Set<String> COMMANDS = ImmutableSet.of(PROVISION, DETAILS, DEPROVISION);
+  private static final String STATUS = "status";
+  private static final Set<String> COMMANDS = ImmutableSet.of(PROVISION, DETAILS, DEPROVISION, STATUS);
 
   public static void main(String[] args) throws Exception {
 
@@ -121,6 +122,8 @@ public class DataprocTool {
         if (deleteOp.isPresent()) {
           System.out.println(GSON.toJson(deleteOp));
         }
+      } else if (STATUS.equalsIgnoreCase(command)) {
+        System.out.println(client.getClusterStatus(name));
       }
     }
   }
@@ -128,7 +131,7 @@ public class DataprocTool {
   private static void printUsage(Options options) {
     HelpFormatter helpFormatter = new HelpFormatter();
     helpFormatter.printHelp(
-      DataprocTool.class.getSimpleName() + " provision|details|deprovision",
+      DataprocTool.class.getSimpleName() + " provision|details|status|deprovision",
       "Provisions, deprovisions, or gets the status of a cluster. Basic provisioner settings can be passed in as " +
         "options. Advanced provisioner settings can be specified in a file, in which case every setting must be " +
         "given.",
