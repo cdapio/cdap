@@ -23,6 +23,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Throwables;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.NotFoundException;
@@ -48,6 +49,9 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.longrunning.Operation;
+import com.google.longrunning.OperationsClient;
+import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -397,7 +401,9 @@ final class DataprocClient implements AutoCloseable {
         .setConfig(builder.build())
         .build();
 
-      return client.createClusterAsync(projectId, conf.getRegion(), cluster).getMetadata().get();
+      OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        client.createClusterAsync(projectId, conf.getRegion(), cluster);
+      return operationFuture.getMetadata().get();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
@@ -463,8 +469,42 @@ final class DataprocClient implements AutoCloseable {
    */
   io.cdap.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
     throws RetryableProvisionException {
-    return getDataprocCluster(name).map(cluster -> convertStatus(cluster.getStatus()))
+    io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status = getDataprocCluster(name)
+      .map(cluster -> convertStatus(cluster.getStatus()))
       .orElse(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
+
+    // if it failed, try to get the create operation and log the error message
+    try {
+      if (status == io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.FAILED) {
+        String resourceName = String.format("projects/%s/regions/%s/operations", projectId, conf.getRegion());
+        String filter = String.format("clusterName=%s AND operationType=CREATE", name);
+        OperationsClient.ListOperationsPagedResponse operationsResponse =
+          client.getOperationsClient().listOperations(resourceName, filter);
+        OperationsClient.ListOperationsPage page = operationsResponse.getPage();
+        if (page == null) {
+          LOG.warn("Unable to get the cause of the cluster creation failure.");
+          return status;
+        }
+
+        if (page.getPageElementCount() > 1) {
+          // shouldn't be possible
+          LOG.warn("Multiple create operations found for cluster {}, may not be able to find the failure message.",
+                   name);
+        }
+        if (page.getPageElementCount() > 0) {
+          Operation operation = page.getValues().iterator().next();
+          Status operationError = operation.getError();
+          if (operationError != null) {
+            LOG.warn("Failed to create cluster {}: {}", name, operationError.getMessage());
+          }
+        }
+      }
+    } catch (Exception e) {
+      // if we failed to get the operations list, log an error and proceed with normal execution
+      LOG.warn("Unable to get the cause of the cluster creation failure.", e);
+    }
+
+    return status;
   }
 
   /**
