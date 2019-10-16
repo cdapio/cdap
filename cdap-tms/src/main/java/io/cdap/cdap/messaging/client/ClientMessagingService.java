@@ -288,7 +288,7 @@ public final class ClientMessagingService implements MessagingService {
       case HttpURLConnection.HTTP_UNAVAILABLE:
         throw new ServiceUnavailableException(Constants.Service.MESSAGING_SERVICE);
       default:
-        throw new IOException(errorPrefix + ". Reason: " + responseBodySupplier.get());
+        throw new IOException(errorPrefix + ". Http response code: " + responseCode + " .Reason: " + responseBodySupplier.get());
     }
   }
 
