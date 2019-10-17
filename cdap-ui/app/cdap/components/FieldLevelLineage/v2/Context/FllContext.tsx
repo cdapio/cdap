@@ -185,15 +185,21 @@ export class Provider extends React.Component<{ children }, IContextState> {
   private fetchFieldLineage(qParams, timeParams, dataset = this.state.target) {
     const namespace = getCurrentNamespace();
     const updateState = (newState: IContextState) => {
-      // if there is an active field, get active links and active sets
-      if (newState.activeField.id) {
-        const activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
-        const activeSets = this.getActiveSets(activeLinks);
-
-        newState.activeLinks = activeLinks;
-        newState.activeCauseSets = activeSets.activeCauseSets;
-        newState.activeImpactSets = activeSets.activeImpactSets;
+      // If no field selected, grab the first field with lineage
+      if (!newState.activeField.id && newState.targetFields.length > 0) {
+        newState.activeField = {
+          id: newState.targetFields[0].id,
+          name: newState.targetFields[0].name,
+        };
       }
+
+      const activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
+      const activeSets = this.getActiveSets(activeLinks);
+
+      newState.activeLinks = activeLinks;
+      newState.activeCauseSets = activeSets.activeCauseSets;
+      newState.activeImpactSets = activeSets.activeImpactSets;
+
       this.setState(newState);
     };
     getFieldLineage(namespace, dataset, qParams, timeParams, updateState);

@@ -1488,17 +1488,17 @@ features:
     noSearchFields: No fields matching the search query
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
-      summaryText: "Operations between {sources} and {targets}"
+      summaryText: "Transformations between {sources} and {targets}"
       Table:
         description: Description
         input: Input
         inputFields: Input fields
-        operation: Operation
+        operation: Transformation
         outputFields: Output fields
         output: Output
       Title:
-        incoming: "Cause operations for field '{fieldName}'"
-        outgoing: "Impact operations for field '{fieldName}'"
+        incoming: "Cause for field '{fieldName}'"
+        outgoing: "Impact for field '{fieldName}'"
     outgoingOperations: Outgoing operations
     searchPlaceholder: Search by field name
     SectionTitle:
@@ -1534,7 +1534,7 @@ features:
         NoRelatedSubheader: "0 datasets"
         RelatedHeader: "Datasets used as {type} by {target}"
         RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
-        TargetHeader: 'Select a field to view lineage and operations'
+        TargetHeader: 'Select a field to view lineage and transformations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       FllTable:
         fieldsCount:
@@ -1545,9 +1545,9 @@ features:
           viewDropdown: "View"
           resetLineage: "Reset"
         FllMenu:
-          causeImpact: "Cause and impact"
-          viewIncoming: "Incoming operations"
-          viewOutgoing: "Outgoing operations"
+          causeImpact: "Pin field"
+          viewIncoming: "View cause"
+          viewOutgoing: "View impact"
         noRelatedTables: "There is no {type} for {target}"
         relatedFieldsCount:
           1: "{context} related field"

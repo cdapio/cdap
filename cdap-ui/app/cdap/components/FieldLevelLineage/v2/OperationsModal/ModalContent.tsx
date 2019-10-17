@@ -25,7 +25,21 @@ import T from 'i18n-react';
 const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 function formatDatasets(datasets) {
-  return datasets.map((dataset) => `'${dataset}'`).join('; ');
+  // return in form 'dataset1, dataset2, and dataset3'
+  switch (datasets.length) {
+    case 0:
+      return '';
+    case 1:
+      return `'${datasets[0]}'`;
+    case 2:
+      return `'${datasets[0]}' and ${datasets[1]}`;
+
+    default: {
+      const last = datasets[-1];
+      const rest = datasets.slice(0, -1);
+      return `${rest.map((dataset) => `'${dataset}'`).join(', ')}, and '${last}'`;
+    }
+  }
 }
 
 function getDatasets(operations) {
