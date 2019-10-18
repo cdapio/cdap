@@ -85,7 +85,14 @@ Aggregator.prototype.validateSession = function(message) {
      * Closes the connection if the session is not valid.
      */
     messageJSON = JSON.parse(message);
-    let authToken = messageJSON.resource.headers.Authorization || '';
+    let authToken = '';
+    if (
+      messageJSON.resource &&
+      messageJSON.resource.headers &&
+      messageJSON.resource.headers.Authorization
+    ) {
+      authToken = messageJSON.resource.headers.Authorization;
+    }
     if (!sessionToken.validateToken(messageJSON.sessionToken, this.cdapConfig, log, authToken)) {
       log.error('Found invalid session token. Closing websocket connection');
       this.connection.end();
