@@ -56,8 +56,12 @@ angular.module(PKG.name+'.services')
 
       socket.onopen = function () {
         if (!firstTime) {
-          EventPipe.emit(MYSOCKET_EVENT.reconnected);
-          attempt = 1;
+          window.CaskCommon.SessionTokenStore.fetchSessionToken().then(() => {
+            EventPipe.emit(MYSOCKET_EVENT.reconnected);
+            attempt = 1;
+          }, () => {
+            console.log('Failed to fetch session token');
+          });
         }
         firstTime = false;
 
