@@ -46,6 +46,7 @@ final class DataprocConf {
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String NETWORK = "network";
+  static final String NETWORK_HOST_PROJECT_ID = "networkHostProjectId";
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
@@ -58,6 +59,7 @@ final class DataprocConf {
   private final String zone;
   private final String projectId;
   private final String network;
+  private final String networkHostProjectID;
   private final String subnet;
   private final String imageVersion;
 
@@ -86,7 +88,7 @@ final class DataprocConf {
   private final Map<String, String> dataprocProperties;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
-    this(conf.accountKey, conf.region, conf.zone, conf.projectId, network, subnet,
+    this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
          conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
@@ -96,7 +98,7 @@ final class DataprocConf {
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
-                       @Nullable String network, @Nullable String subnet,
+                       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
                        int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
@@ -109,6 +111,7 @@ final class DataprocConf {
     this.region = region;
     this.zone = zone;
     this.projectId = projectId;
+    this.networkHostProjectID = networkHostProjectId;
     this.network = network;
     this.subnet = subnet;
     this.masterNumNodes = masterNumNodes;
@@ -152,6 +155,11 @@ final class DataprocConf {
   }
 
   @Nullable
+  String getNetworkHostProjectID() {
+    return networkHostProjectID;
+  }
+
+  @Nullable
   String getSubnet() {
     return subnet;
   }
@@ -181,7 +189,7 @@ final class DataprocConf {
   }
 
   @Nullable
-  public String getImageVersion() {
+  String getImageVersion() {
     return imageVersion;
   }
 
@@ -202,12 +210,12 @@ final class DataprocConf {
   }
 
   @Nullable
-  public String getEncryptionKeyName() {
+  String getEncryptionKeyName() {
     return encryptionKeyName;
   }
 
   @Nullable
-  public String getGcsBucket() {
+  String getGcsBucket() {
     return gcsBucket;
   }
 
@@ -322,7 +330,7 @@ final class DataprocConf {
         throw new IllegalArgumentException("Provided zone " + zone + " is not in the region " + region);
       }
     }
-
+    String networkHostProjectID = getString(properties, NETWORK_HOST_PROJECT_ID);
     String network = getString(properties, NETWORK);
     if (network == null || AUTO_DETECT.equals(network)) {
       network = null;
@@ -374,7 +382,7 @@ final class DataprocConf {
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
-    return new DataprocConf(accountKey, region, zone, projectId, network, subnet,
+    return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
