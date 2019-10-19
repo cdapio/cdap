@@ -33,16 +33,6 @@
       "label": "General Settings",
       "properties": [
         {
-          "widget-type": "textbox",
-          "label": "Network",
-          "name": "network",
-          "description": "Select a VPC network in the specified project to use when creating clusters with this profile. If this is left blank or set to 'auto-detect', a network from the project will be chosen.",
-          "widget-attributes": {
-            "default": "default",
-            "size": "medium"
-          }
-        },
-        {
           "widget-type": "select",
           "label": "Region",
           "name": "region",
@@ -80,6 +70,25 @@
           "label": "Zone",
           "name": "zone",
           "description": "A zone is an isolated location within a region. The fully-qualified name for a zone is made up of <region>-<zone>. For example, the fully-qualified name for zone a in region us-central1 is us-central1-a. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/. If the system is running on Google Cloud Platform, this can be set to 'auto-detect' and the system's zone will be used.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Network",
+          "name": "network",
+          "description": "Select a VPC network in the specified project to use when creating clusters with this profile. If this is left blank or set to 'auto-detect', a network from the project will be chosen.",
+          "widget-attributes": {
+            "default": "default",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Network Host Project ID",
+          "name": "networkHostProjectId",
+          "description": "Google Cloud Project ID, which uniquely identifies the project where the network resides. This can be left blank if the network resides in the same project as specified in the Project ID. In case of Shared VPC this must be set to the host project ID where the network resides.",
           "widget-attributes": {
             "size": "medium"
           }

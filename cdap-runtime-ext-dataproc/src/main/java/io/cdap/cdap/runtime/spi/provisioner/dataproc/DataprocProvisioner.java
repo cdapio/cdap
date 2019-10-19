@@ -299,6 +299,7 @@ public class DataprocProvisioner implements Provisioner {
     // Default settings from the system context
     List<String> keys = Arrays.asList(DataprocConf.PREFER_EXTERNAL_IP,
                                       DataprocConf.NETWORK,
+                                      DataprocConf.NETWORK_HOST_PROJECT_ID,
                                       DataprocConf.STACKDRIVER_LOGGING_ENABLED,
                                       DataprocConf.STACKDRIVER_MONITORING_ENABLED,
                                       DataprocConf.IMAGE_VERSION);
