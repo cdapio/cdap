@@ -73,7 +73,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
         var re = {};
         if (!resource.url) {
           re = resource;
-        }else {
+        } else {
           re = {
             id: resource.id,
             url: resource.url,
@@ -151,9 +151,9 @@ var socketDataSource = angular.module(PKG.name+'.services');
           var isPoll;
           hash = data.resource.id;
 
-          if(data.statusCode>299 || data.warning) {
+          if (data.statusCode>299 || data.warning) {
             if (self.bindings[hash]) {
-              if(self.bindings[hash].errorCallback) {
+              if (self.bindings[hash].errorCallback) {
                 $rootScope.$apply(self.bindings[hash].errorCallback.bind(null, data.error || data.response));
               } else if (self.bindings[hash].reject) {
                 $rootScope.$apply(self.bindings[hash].reject.bind(null, {data: data.error || data.response, statusCode: data.statusCode }));
