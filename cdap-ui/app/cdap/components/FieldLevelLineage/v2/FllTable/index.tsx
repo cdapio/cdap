@@ -34,10 +34,11 @@ const styles = (theme) => {
       marginBottom: '10px',
       '& .grid.grid-container': {
         maxHeight: 'none',
+        background: theme.palette.white[50],
       },
     },
     targetTable: {
-      border: `2px solid #3cc801`,
+      border: `2px solid ${theme.palette.green[100]}`,
     },
     // had to add this in to fix styling after adding custom renderGridBody method...
     gridBody: {
@@ -63,9 +64,8 @@ const styles = (theme) => {
       fontSize: '1rem',
     },
     tableSubheader: {
+      color: theme.palette.grey[100],
       fontWeight: 'normal',
-      color: theme.palette.grey[200],
-      fontSize: '0.92rem',
     },
     viewLineage: {
       visibility: 'hidden',
