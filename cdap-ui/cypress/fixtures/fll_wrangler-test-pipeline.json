@@ -39,7 +39,7 @@
                     "label": "Airport_source",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -76,7 +76,7 @@
                     "label": "Wrangler",
                     "artifact": {
                         "name": "wrangler-transform",
-                        "version": "4.1.0-SNAPSHOT",
+                        "version": "[4.1.0-SNAPSHOT, 6.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
@@ -106,7 +106,7 @@
                     "label": "Airport_sink",
                     "artifact": {
                         "name": "core-plugins",
-                        "version": "2.3.0-SNAPSHOT",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
                         "scope": "SYSTEM"
                     },
                     "properties": {
