@@ -165,6 +165,7 @@ window.getTrackerUrl = function(navigationObj = {}) {
     'tracker.detail.entity': '/entity/:entityType/:entityId',
     'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata',
     'tracker.detail.entity.lineage': '/entity/:entityType/:entityId/lineage',
+    'tracker.detail.entity.summary': '/entity/:entityType/:entityId/summary',
   };
   let url = baseUrl + stateToUrlMap[stateName || 'tracker'];
   url = buildCustomUrl(url, stateParams);
