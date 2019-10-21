@@ -40,6 +40,9 @@ const styles = (theme) => {
     targetTable: {
       border: `2px solid ${theme.palette.green[100]}`,
     },
+    activeTable: {
+      border: `2px solid ${theme.palette.grey[100]}`,
+    },
     // had to add this in to fix styling after adding custom renderGridBody method...
     gridBody: {
       '& .grid-row': {
@@ -78,6 +81,7 @@ interface ITableProps extends WithStyles<typeof styles> {
   tableId?: string;
   fields?: IField[];
   type?: string;
+  isActive?: boolean;
 }
 
 function renderGridHeader(fields: IField[], isTarget: boolean, classes) {
@@ -99,7 +103,7 @@ function renderGridHeader(fields: IField[], isTarget: boolean, classes) {
   );
 }
 
-function renderGridBody(fields: IField[], tableName: string, classes) {
+function renderGridBody(fields: IField[], tableName: string, activeFields = new Set(), classes) {
   return (
     <div
       className={classes.gridBody}
@@ -108,16 +112,33 @@ function renderGridBody(fields: IField[], tableName: string, classes) {
       data-namespace={fields[0].namespace}
     >
       {fields.map((field) => {
-        return <FllField key={field.id} field={field} />;
+        const isActiveField = activeFields.has(field.id);
+        return <FllField key={field.id} field={field} isActive={isActiveField} />;
       })}
     </div>
   );
 }
 
-function FllTable({ tableId, fields, type, classes }: ITableProps) {
+function FllTable({ tableId, fields, type, isActive, classes }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
-  const { target } = useContext<IContextState>(FllContext);
+  const { target, activeCauseSets, activeImpactSets } = useContext<IContextState>(FllContext);
   const isTarget = type === 'target';
+
+  // get fields that are a direct cause or impact to selected field
+  let activeFields = [];
+  if (isActive && !isTarget) {
+    if (type === 'cause') {
+      activeFields = activeCauseSets[tableId];
+    } else {
+      activeFields = activeImpactSets[tableId];
+    }
+  }
+
+  const activeFieldIds = new Set(
+    activeFields.map((field) => {
+      return field.id;
+    })
+  );
 
   if (!fields || fields.length === 0) {
     return (
@@ -132,9 +153,13 @@ function FllTable({ tableId, fields, type, classes }: ITableProps) {
       key={`cause ${tableId}`}
       entities={fields}
       gridHeaders={GRID_HEADERS}
-      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
+      className={classnames(
+        classes.table,
+        { [classes.targetTable]: isTarget },
+        { [classes.activeTable]: isActive }
+      )}
       renderGridHeader={renderGridHeader.bind(null, fields, isTarget, classes)}
-      renderGridBody={renderGridBody.bind(this, fields, tableId, classes)}
+      renderGridBody={renderGridBody.bind(this, fields, tableId, activeFieldIds, classes)}
     />
   );
 }
