@@ -38,10 +38,16 @@ class MyLinkButtonCtrl {
         let macroName = datasetId.substring(datasetId.lastIndexOf('${') + 2, datasetId.lastIndexOf('}'));
         datasetId = runtimeargs[macroName];
       }
-      entity.url = window.getAbsUIUrl({
-        namespaceId: $stateParams.namespace,
+
+      const stateParams = {
+        namespace: $stateParams.namespace,
         entityType: entity.entityType,
-        entityId: datasetId
+        entityId: datasetId,
+      };
+
+      entity.url = window.getTrackerUrl({
+        stateParams, 
+        stateName: 'tracker.detail.entity.summary',
       });
     });
   }

@@ -33,18 +33,13 @@ const styles = (theme): StyleRules => {
       paddingLeft: '10px',
       paddingRight: '10px',
       borderTop: `1px solid ${theme.palette.grey[500]}`,
-      ' & .grid-row:hover': {
-        backgroundColor: theme.palette.grey[700],
-      },
-      ' & .grid-row:selected': {
+      '&.grid-row.activeField': {
         backgroundColor: theme.palette.yellow[200],
-        color: theme.palette.orange[50],
-        fontWeight: 'bold',
       },
     },
     hoverText: {
       color: theme.palette.blue[200],
-      paddingLeft: '30px',
+      paddingLeft: '28px',
     },
     targetView: {
       paddingLeft: '55px',
@@ -55,9 +50,10 @@ const styles = (theme): StyleRules => {
 
 interface IFieldProps extends WithStyles<typeof styles> {
   field: IField;
+  isActive?: boolean;
 }
 
-function FllField({ field, classes }: IFieldProps) {
+function FllField({ field, isActive, classes }: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
   const {
     activeField,
@@ -86,7 +82,7 @@ function FllField({ field, classes }: IFieldProps) {
       onClick={isTarget && !showingOneField ? handleFieldClick : undefined}
       onMouseEnter={toggleHoverState.bind(this, true)}
       onMouseLeave={toggleHoverState.bind(this, false)}
-      className={classnames('grid-row', 'grid-link', classes.root)}
+      className={classnames('grid-row', 'grid-link', classes.root, { activeField: isActive })}
       id={field.id}
       data-fieldname={field.name}
       data-hovering={isHovering}

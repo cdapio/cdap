@@ -31,14 +31,17 @@ import { grey, orange } from 'components/ThemeWrapper/colors';
 import If from 'components/If';
 import TopPanel from 'components/FieldLevelLineage/v2/TopPanel';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     wrapper: {
       overflowY: 'scroll',
+      background: theme.palette.grey[700],
+      height: 'inherit',
     },
     root: {
       paddingLeft: '100px',
       paddingRight: '100px',
+      paddingTop: '5px',
       display: 'flex',
       justifyContent: 'space-between',
       position: 'relative',
@@ -72,7 +75,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     const destEl = d3.select(`#${destId}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -48 + window.pageYOffset - 70; // From the FllHeader and TopPanel
+    const offsetY = -48 + window.pageYOffset - 65; // From the FllHeader and TopPanel
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
@@ -222,7 +225,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
           return (
             <div className={this.props.classes.wrapper}>
-              <TopPanel />
+              <TopPanel datasetId={target} />
               <div className={this.props.classes.root} id="fll-container">
                 <svg id="links-container" className={this.props.classes.container}>
                   <g>
@@ -239,8 +242,15 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     <FllTable type="cause" />
                   </If>
                   {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
+                    const isActive = tableId in activeCauseSets;
                     return (
-                      <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />
+                      <FllTable
+                        key={tableId}
+                        tableId={tableId}
+                        fields={fields}
+                        type="cause"
+                        isActive={isActive}
+                      />
                     );
                   })}
                 </div>
@@ -254,8 +264,15 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     <FllTable type="impact" />
                   </If>
                   {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
+                    const isActive = tableId in activeImpactSets;
                     return (
-                      <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />
+                      <FllTable
+                        key={tableId}
+                        tableId={tableId}
+                        fields={fields}
+                        type="impact"
+                        isActive={isActive}
+                      />
                     );
                   })}
                 </div>

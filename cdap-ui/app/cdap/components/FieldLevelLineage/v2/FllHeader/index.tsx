@@ -16,7 +16,8 @@
 
 import React, { useContext } from 'react';
 import T from 'i18n-react';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import classnames from 'classnames';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 interface IHeaderProps extends WithStyles<typeof styles> {
@@ -24,13 +25,14 @@ interface IHeaderProps extends WithStyles<typeof styles> {
   total: number;
 }
 
-const styles = (theme) => {
+const styles = (theme): StyleRules => {
   return {
     root: {
-      color: `${theme.palette.grey[200]}`,
+      color: `${theme.palette.grey[50]}`,
       height: 70, // this is closer to 75 in the design
       '& .target': {
-        fontSize: '1.25rem',
+        fontSize: '14px',
+        fontWeight: 'bold',
       },
     },
     subHeader: {
@@ -46,6 +48,8 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
   let last;
   let first;
 
+  const isTarget = type === 'target';
+
   if (type === 'impact') {
     first = firstImpact;
   } else {
@@ -54,17 +58,16 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
 
   last = first + numTables - 1 <= total ? first + numTables - 1 : total;
 
-  if (type === 'target') {
+  if (isTarget) {
     last = total;
   }
 
-  const header =
-    type === 'target'
-      ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetHeader')
-      : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedHeader', {
-          type,
-          target,
-        });
+  const header = isTarget
+    ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetHeader')
+    : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedHeader', {
+        type,
+        target,
+      });
   const options = { first, last, total };
   let subHeader;
 
@@ -72,14 +75,14 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
     subHeader = T.translate('features.FieldLevelLineage.v2.FllHeader.NoRelatedSubheader');
   } else {
     subHeader =
-      type === 'target' && total > 0
+      isTarget && total > 0
         ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetSubheader', options)
         : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedSubheader', options);
   }
 
   return (
     <div className={classes.root}>
-      <div>{header}</div>
+      <div className={classnames({ target: isTarget })}>{header}</div>
       <div className={classes.subHeader}>{subHeader}</div>
     </div>
   );

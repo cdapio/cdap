@@ -28,6 +28,9 @@ $link-color: $blue-02;
   .toppanel-title-container {
     display: flex;
   }
+  &.background {
+    background: inherit;
+  }
   .arrow-left {
     margin-right: 5px;
   }

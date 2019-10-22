@@ -26,6 +26,7 @@ import T from 'i18n-react';
 const PREFIX = 'features.FieldLevelLineage.OperationsModal';
 
 function formatDatasets(datasets) {
+  // return in form 'dataset1; dataset2; dataset3'
   return datasets.map((dataset) => `'${dataset}'`).join('; ');
 }
 
