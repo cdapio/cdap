@@ -19,24 +19,17 @@ import PipelineTableRow from 'components/PipelineList/DeployedPipelineView/Pipel
 import { connect } from 'react-redux';
 import T from 'i18n-react';
 import { PROGRAM_STATUSES } from 'services/global-constants';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 import { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
 import orderBy from 'lodash/orderBy';
-import {
-  getLatestRun,
-  getProgram,
-  getProgramRuns,
-} from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 import './PipelineTable.scss';
 import { objectQuery } from 'services/helpers';
 
 interface IProps {
-  pipelines: IApplicationRecord[];
-  pipelinesLoading: boolean;
+  pipelines: IPipeline[];
   search: string;
   onClear: () => void;
   pageLimit: number;
@@ -56,13 +49,11 @@ function getOrderColumnFunction(sortColumn, sortOrder) {
       return (pipeline) => pipeline.artifact.name;
     case 'status':
       return (pipeline) => {
-        const latestRun = getLatestRun(pipeline) || { status: PROGRAM_STATUSES.DEPLOYED };
-        return latestRun.status;
+        return objectQuery(pipeline, 'runs', 0, 'status') || PROGRAM_STATUSES.DEPLOYED;
       };
     case 'lastStartTime':
       return (pipeline) => {
-        const latestRun = getLatestRun(pipeline);
-        const lastStarting = objectQuery(latestRun, 'starting');
+        const lastStarting = objectQuery(pipeline, 'runs', 0, 'starting');
 
         if (!lastStarting) {
           return sortOrder === SORT_ORDER.asc ? Infinity : -1;
@@ -71,15 +62,13 @@ function getOrderColumnFunction(sortColumn, sortOrder) {
       };
     case 'runs':
       return (pipeline) => {
-        const program = getProgram(pipeline);
-        return objectQuery(program, 'totalRuns') || 0;
+        return pipeline.totalRuns || 0;
       };
   }
 }
 
 const PipelineTableView: React.SFC<IProps> = ({
   pipelines,
-  pipelinesLoading,
   search,
   onClear,
   pageLimit,
@@ -89,10 +78,6 @@ const PipelineTableView: React.SFC<IProps> = ({
   refetch,
 }) => {
   function renderBody() {
-    if (pipelinesLoading) {
-      return <LoadingSVGCentered />;
-    }
-
     if (pipelines.length === 0) {
       return <EmptyList type={VIEW_TYPES.deployed} />;
     }
@@ -106,9 +91,15 @@ const PipelineTableView: React.SFC<IProps> = ({
         return name.indexOf(searchFilter) !== -1;
       });
     } else {
+      filteredList = orderBy(
+        filteredList,
+        [getOrderColumnFunction(sortColumn, sortOrder)],
+        [sortOrder]
+      );
+
       const startIndex = (currentPage - 1) * pageLimit;
       const endIndex = startIndex + pageLimit;
-      filteredList = pipelines.slice(startIndex, endIndex);
+      filteredList = filteredList.slice(startIndex, endIndex);
     }
 
     if (filteredList.length === 0) {
@@ -127,12 +118,6 @@ const PipelineTableView: React.SFC<IProps> = ({
         </EmptyMessageContainer>
       );
     }
-
-    filteredList = orderBy(
-      filteredList,
-      [getOrderColumnFunction(sortColumn, sortOrder)],
-      [sortOrder]
-    );
 
     return (
       <div className="grid-body">
@@ -167,7 +152,6 @@ const PipelineTableView: React.SFC<IProps> = ({
 
 const mapStateToProps = (state) => {
   return {
-    pipelinesLoading: state.deployed.pipelinesLoading,
     search: state.deployed.search,
     pageLimit: state.deployed.pageLimit,
     currentPage: state.deployed.currentPage,

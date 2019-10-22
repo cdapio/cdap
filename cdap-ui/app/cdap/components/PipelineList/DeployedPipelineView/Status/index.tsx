@@ -17,17 +17,16 @@
 import * as React from 'react';
 import IconSVG from 'components/IconSVG';
 import StatusMapper from 'services/StatusMapper';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
-import { getLatestRun } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import { PROGRAM_STATUSES } from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
 
 interface IProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
 }
 
-const StatusView: React.SFC<IProps> = ({ pipeline }) => {
-  const latestRun = getLatestRun(pipeline) || { status: PROGRAM_STATUSES.DEPLOYED };
-  const pipelineStatus = latestRun.status;
+const Status: React.SFC<IProps> = ({ pipeline }) => {
+  const pipelineStatus = objectQuery(pipeline, 'runs', 0, 'status') || PROGRAM_STATUSES.DEPLOYED;
   const displayStatus = StatusMapper.statusMap[pipelineStatus];
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
@@ -40,7 +39,5 @@ const StatusView: React.SFC<IProps> = ({ pipeline }) => {
     </div>
   );
 };
-
-const Status = StatusView;
 
 export default Status;

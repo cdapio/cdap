@@ -14,10 +14,34 @@
  * the License.
  */
 
-const { programRecordTypeTotalRunsResolver } = require('../ProgramRecord/totalRunsResolver');
+const { PIPELINE_PROGRAMS_MAP } = require('./common');
 
-const workflowTypeTotalRunsResolver = programRecordTypeTotalRunsResolver.bind(null, 'workflow');
+async function pipelineRunsResolver(parent, args, context) {
+  const namespace = context.namespace;
+  const name = parent.name;
+
+  const pipelineType = parent.artifact.name || 'cdap-data-pipeline';
+
+  const { programType, programId } = PIPELINE_PROGRAMS_MAP[pipelineType];
+
+  const program = {
+    appId: name,
+    programType: programType,
+    programId: programId,
+  };
+
+  const runInfo = await context.loaders.programRuns.load({
+    namespace,
+    program,
+  });
+
+  if (runInfo.length === 0) {
+    return [];
+  }
+
+  return runInfo.runs;
+}
 
 module.exports = {
-  workflowTypeTotalRunsResolver,
+  pipelineRunsResolver,
 };

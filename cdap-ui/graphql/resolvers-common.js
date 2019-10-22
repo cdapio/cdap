@@ -15,6 +15,7 @@
  */
 
 const request = require('request');
+const { ApolloError } = require('apollo-server');
 
 function getGETRequestOptions() {
   return {
@@ -30,7 +31,7 @@ function getPOSTRequestOptions() {
   };
 }
 
-function requestPromiseWrapper(options, token) {
+function requestPromiseWrapper(options, token, bodyModifiersFn) {
   if (token) {
     options.headers = {
       Authorization: token,
@@ -40,21 +41,23 @@ function requestPromiseWrapper(options, token) {
   return new Promise((resolve, reject) => {
     request(options, (err, response, body) => {
       if (err) {
-        return reject(err);
+        const error =  new ApolloError(err, '500');
+        return reject(error);
       }
 
       const statusCode = response.statusCode;
 
       if (typeof statusCode === 'undefined' || statusCode != 200) {
-        const error = {
-          statusCode: statusCode,
-          body: body,
-        };
-
+        const error = new ApolloError(body, statusCode.toString());
         return reject(error);
       }
 
-      return resolve(body);
+      let resultBody = body;
+      if (typeof bodyModifiersFn === 'function') {
+        resultBody = bodyModifiersFn(body);
+      }
+
+      return resolve(resultBody);
     });
   });
 }

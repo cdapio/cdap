@@ -18,37 +18,13 @@ const path = require('path');
 const { ApolloServer } = require('apollo-server-express');
 const { importSchema } = require('graphql-import');
 const log4js = require('log4js');
-const { queryTypeApplicationsResolver } = require('./Query/applicationsResolver');
-const { queryTypeApplicationResolver } = require('./Query/applicationResolver');
-const { queryTypeNamespacesResolver } = require('./Query/namespacesResolver');
-const { queryTypeStatusResolver } = require('./Query/statusResolver');
-const {
-  applicationRecordTypeApplicationDetailResolver,
-} = require('./types/ApplicationRecord/applicationDetailResolver');
-const {
-  applicationDetailTypeMetadataResolver,
-} = require('./types/ApplicationDetail/metadataResolver');
-const {
-  applicationDetailTypeProgramsResolver,
-} = require('./types/ApplicationDetail/programsResolver');
-const {
-  programRecordTypeResolveTypeResolver,
-} = require('./types/ProgramRecord/resolveTypeResolver');
-const { workflowTypeRunsResolver } = require('./types/Workflow/runsResolver');
-const { workflowTypeSchedulesResolver } = require('./types/Workflow/schedulesResolver');
-const { workflowTypeTotalRunsResolver } = require('./types/Workflow/totalRunsResolver');
-const { sparkTypeRunsResolver } = require('./types/Spark/runsResolver');
-const { sparkTypeTotalRunsResolver } = require('./types/Spark/totalRunsResolver');
-const { mapReduceTypeRunsResolver } = require('./types/MapReduce/runsResolver');
-const { mapReduceTypeTotalRunsResolver } = require('./types/MapReduce/totalRunsResolver');
-const {
-  scheduleDetailTypeNextRuntimesResolver,
-} = require('./types/ScheduleDetail/nextRuntimesResolver');
+const { resolvers } = require('./resolvers');
 const sessionToken = require('../server/token');
+const { createLoaders } = require('./helpers/createLoaders');
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
-let rootSchemaPath;
+
 /**
  * This will happen when we build SDK by running node server through ncc compiler.
  * This will flatten our directory structure and the __dirname will be cdap-sdk/ui
@@ -68,43 +44,15 @@ if (typeof typeDefs === 'undefined') {
   throw new Error(errorMessage);
 }
 
-const resolvers = {
-  Query: {
-    applications: queryTypeApplicationsResolver,
-    application: queryTypeApplicationResolver,
-    namespaces: queryTypeNamespacesResolver,
-    status: queryTypeStatusResolver,
-  },
-  ApplicationRecord: {
-    applicationDetail: applicationRecordTypeApplicationDetailResolver,
-  },
-  ApplicationDetail: {
-    metadata: applicationDetailTypeMetadataResolver,
-    programs: applicationDetailTypeProgramsResolver,
-  },
-  ProgramRecord: { __resolveType: programRecordTypeResolveTypeResolver },
-  Workflow: {
-    runs: workflowTypeRunsResolver,
-    schedules: workflowTypeSchedulesResolver,
-    totalRuns: workflowTypeTotalRunsResolver,
-  },
-  Spark: {
-    runs: sparkTypeRunsResolver,
-    totalRuns: sparkTypeTotalRunsResolver,
-  },
-  MapReduce: {
-    runs: mapReduceTypeRunsResolver,
-    totalRuns: mapReduceTypeTotalRunsResolver,
-  },
-  ScheduleDetail: { nextRuntimes: scheduleDetailTypeNextRuntimesResolver },
-};
 const getApolloServer = (cdapConfig, logger = console) =>
   new ApolloServer({
     typeDefs,
     resolvers,
     context: ({ req }) => {
       if (!req || !req.headers || !req.headers.authorization) {
-        return {};
+        return {
+          loaders: createLoaders(),
+        };
       }
       const sToken = req.headers['session-token'];
       const auth = req.headers.authorization;
@@ -113,7 +61,10 @@ const getApolloServer = (cdapConfig, logger = console) =>
         throw new Error('Invalid Sesion Token');
       }
 
-      return { auth };
+      return {
+        auth,
+        loaders: createLoaders(auth),
+      };
     },
     introspection: env === 'production' ? false : true,
     playground: env === 'production' ? false : true,
@@ -125,6 +76,4 @@ function applyMiddleware(app, cdapConfig, logger) {
 
 module.exports = {
   applyMiddleware,
-  resolvers,
-  typeDefs,
 };

@@ -14,10 +14,17 @@
  * the License.
  */
 
-const { programRecordTypeRunsResolver } = require('../ProgramRecord/runsResolver');
+const DataLoader = require('dataloader');
+const { batchProgramRuns } = require('./BatchEndpoints/programRuns');
+const { batchTotalRuns } = require('./BatchEndpoints/totalRuns');
 
-const mapReduceTypeRunsResolver = programRecordTypeRunsResolver.bind(null, 'mapreduce');
+function createLoaders(auth) {
+  return {
+    programRuns: new DataLoader((req) => batchProgramRuns(req, auth), { cache: false }),
+    totalRuns: new DataLoader((req) => batchTotalRuns(req, auth), { cache: false }),
+  };
+}
 
 module.exports = {
-  mapReduceTypeRunsResolver,
+  createLoaders,
 };

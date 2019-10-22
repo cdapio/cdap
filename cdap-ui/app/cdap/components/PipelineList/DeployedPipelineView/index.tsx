@@ -16,10 +16,7 @@
 
 import * as React from 'react';
 import PipelineTable from 'components/PipelineList/DeployedPipelineView/PipelineTable';
-import {
-  fetchPipelineList,
-  reset,
-} from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
+import { reset } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import PipelineCount from 'components/PipelineList/DeployedPipelineView/PipelineCount';
 import SearchBox from 'components/PipelineList/DeployedPipelineView/SearchBox';
 import Pagination from 'components/PipelineList/DeployedPipelineView/Pagination';
@@ -27,81 +24,76 @@ import { Provider } from 'react-redux';
 import Store from 'components/PipelineList/DeployedPipelineView/store';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { gql } from 'apollo-boost';
+import { useQuery } from '@apollo/react-hooks';
 
 import './DeployedPipelineView.scss';
+import { objectQuery } from 'services/helpers';
 
-import { Query } from 'react-apollo';
-import { gql } from 'apollo-boost';
-
-export default class DeployedPipelineView extends React.PureComponent {
-  public componentDidMount() {
-    fetchPipelineList();
-  }
-
-  public componentWillUnmount() {
-    reset();
-  }
-
-  public render() {
-    return <DeployedPipelinesView />;
-  }
-}
-
-const currentNamespace = getCurrentNamespace();
-
-const DeployedPipelinesView = () => (
-  <Query
-    query={gql`
-      {
-        applications(namespace: "${currentNamespace}", artifactName: "cdap-data-pipeline,cdap-data-streams") {
+const DeployedPipeline: React.FC = () => {
+  const QUERY = gql`
+    {
+      pipelines(namespace: "${getCurrentNamespace()}") {
+        name,
+        artifact {
           name
-          artifact {
-            name
-          }
-          applicationDetail {
-            programs {
-              name
-              runs {
-                status
-                starting
-              }
-              totalRuns
-              ... on Workflow {
-                schedules {
-                  name
-                  status
-                  nextRuntimes
-                }
-              }
-            }
-          }
-        }
+        },
+        runs {
+          status,
+          starting
+        },
+        totalRuns
       }
-    `}
-  >
-    {({ loading, error, data, refetch }) => {
-      if (loading) {
-        return <LoadingSVGCentered />;
-      }
-      if (error) {
-        return <p>Error! {error.message}</p>;
-      }
+    }
+  `;
 
-      const pipelines = data.applications;
+  // on unmount
+  React.useEffect(() => {
+    return () => {
+      reset();
+    };
+  });
 
-      return (
-        <Provider store={Store}>
-          <div className="pipeline-deployed-view pipeline-list-content">
-            <div className="deployed-header">
-              <PipelineCount pipelines={pipelines} pipelinesLoading={loading} />
-              <SearchBox />
-              <Pagination numPipelines={pipelines.length} />
-            </div>
+  const { loading, error, data, refetch } = useQuery(QUERY, { errorPolicy: 'all' });
 
-            <PipelineTable pipelines={pipelines} refetch={refetch} />
-          </div>
-        </Provider>
-      );
-    }}
-  </Query>
-);
+  if (loading) {
+    return <LoadingSVGCentered />;
+  }
+
+  if (error) {
+    // tslint:disable-next-line: no-console
+    console.log('error', JSON.stringify(error, null, 2));
+    const graphQLErrors = objectQuery(error, 'graphQLErrors') || [];
+    const networkErrors = objectQuery(error, 'networkError') || [];
+
+    let errors = graphQLErrors
+      .concat(networkErrors)
+      .map((err) => err.message)
+      .join('\n');
+
+    if (!errors || errors.length === 0) {
+      const prefix = /^GraphQL error\:/;
+      errors = error.message.replace(prefix, '').trim();
+    }
+
+    return <div className="pipeline-deployed-view error-container">{errors}</div>;
+  }
+
+  const pipelines = data.pipelines;
+
+  return (
+    <Provider store={Store}>
+      <div className="pipeline-deployed-view pipeline-list-content">
+        <div className="deployed-header">
+          <PipelineCount pipelines={pipelines} pipelinesLoading={loading} />
+          <SearchBox />
+          <Pagination numPipelines={pipelines.length} />
+        </div>
+
+        <PipelineTable pipelines={pipelines} refetch={refetch} />
+      </div>
+    </Provider>
+  );
+};
+
+export default DeployedPipeline;

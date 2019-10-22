@@ -14,10 +14,17 @@
  * the License.
  */
 
-const { programRecordTypeRunsResolver } = require('../ProgramRecord/runsResolver');
-
-const sparkTypeRunsResolver = programRecordTypeRunsResolver.bind(null, 'spark');
+const PIPELINE_PROGRAMS_MAP = {
+  'cdap-data-pipeline': {
+    programType: 'Workflow',
+    programId: 'DataPipelineWorkflow',
+  },
+  'cdap-data-streams': {
+    programType: 'Spark',
+    programId: 'DataStreamsSparkStreaming',
+  },
+};
 
 module.exports = {
-  sparkTypeRunsResolver,
+  PIPELINE_PROGRAMS_MAP,
 };

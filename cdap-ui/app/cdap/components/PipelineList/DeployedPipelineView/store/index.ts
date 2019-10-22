@@ -25,7 +25,6 @@ enum SORT_ORDER {
 }
 
 interface IState {
-  pipelinesLoading: boolean;
   deleteError?: string;
   sortColumn: string;
   sortOrder: SORT_ORDER;
@@ -39,7 +38,6 @@ interface IStore {
 }
 
 const Actions = {
-  setPipeline: 'DEPLOYED_PIPELINE_SET_LIST',
   setSearch: 'DEPLOYED_SET_SEARCH',
   setDeleteError: 'DEPLOYED_PIPELINE_SET_DELETE_ERROR',
   clearDeleteError: 'DEPLOYED_PIPELINE_CLEAR_DELETE_ERROR',
@@ -49,7 +47,6 @@ const Actions = {
 };
 
 const defaultInitialState: IState = {
-  pipelinesLoading: true,
   deleteError: null,
   sortColumn: 'name',
   sortOrder: SORT_ORDER.asc,
@@ -60,15 +57,6 @@ const defaultInitialState: IState = {
 
 const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction) => {
   switch (action.type) {
-    case Actions.setPipeline:
-      return {
-        ...state,
-        sortColumn: 'name',
-        sortOrder: SORT_ORDER.asc,
-        pipelinesLoading: false,
-        deleteError: null,
-        currentPage: 1,
-      };
     case Actions.setDeleteError:
       return {
         ...state,
