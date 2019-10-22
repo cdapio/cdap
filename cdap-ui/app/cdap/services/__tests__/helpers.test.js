@@ -63,4 +63,11 @@ describe('Unit Tests for Helpers: "getArtifactNameAndVersion"', () => {
     expect(version).toBe('1.2.3');
   });
 
+  it('Usecase 8: Should return filename for name and version when filename ends with a version i.e ojdbc8.jar', () => {
+    const FILE_NAME = 'ojdbc8';
+    let {name, version} = getArtifactNameAndVersion(FILE_NAME);
+    expect(name).toBe(FILE_NAME);
+    expect(version).toBe('8');
+  });
+
 });
