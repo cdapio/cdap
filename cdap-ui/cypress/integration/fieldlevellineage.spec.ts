@@ -39,6 +39,15 @@ describe('Generating and navigating field level lineage for datasets', () => {
       cy.get('[data-cy="Succeeded"]', { timeout: 360000 }).should('contain', 'Succeeded');
     });
   });
+  before(() => {
+    // make sure cookies are set to see v2 UI
+    cy.getCookie('CDAP_enable_experiments').then((cookie) => {
+      if (cookie && cookie.value === 'on') {
+        // toggle experiments off by clearing cookie
+        cy.setCookie('CDAP_enable_experiments', 'off');
+      }
+    });
+  });
   after(() => {
     // Delete the pipeline to clean up
     cy.cleanup_pipelines(headers, fllPipeline);

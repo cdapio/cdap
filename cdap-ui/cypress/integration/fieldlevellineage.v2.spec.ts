@@ -39,12 +39,21 @@ describe('Generating and navigating field level lineage for datasets', () => {
       cy.get('[data-cy="Succeeded"]', { timeout: 360000 }).should('contain', 'Succeeded');
     });
   });
+  before(() => {
+    // toggle experiments on to see v2 lineage
+    cy.getCookie('CDAP_enable_experiments').then((cookie) => {
+      if (!cookie || cookie.value === 'off') {
+        // toggle experiments on
+        cy.setCookie('CDAP_enable_experiments', 'on');
+      }
+    });
+  });
   after(() => {
     // Delete the pipeline to clean up
     cy.cleanup_pipelines(headers, fllPipeline);
   });
   it('Should show lineage for the default time frame (last 7 days)', () => {
-    cy.visit('cdap/ns/default/datasets/Airport_sink/fll-experiment');
+    cy.visit('cdap/ns/default/datasets/Airport_sink/fields');
     // should see last 7 days of lineage selected by default
     cy.get('[data-cy="fll-time-picker"]').should(($div) => {
       expect($div).to.contain('Last 7 days');

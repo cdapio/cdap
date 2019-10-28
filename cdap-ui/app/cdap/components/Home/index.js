@@ -23,8 +23,8 @@ import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
-import ErrorBoundary from 'components/ErrorBoundary';
 import HomeActions from 'components/Home/HomeActions';
+import ExperimentWrapper from 'components/ExperimentWrapper';
 
 require('./Home.scss');
 
@@ -85,16 +85,28 @@ const OpsDashboard = Loadable({
   loader: () => import(/* webpackChunkName: "OpsDashboard" */ 'components/OpsDashboard'),
   loading: LoadingSVGCentered,
 });
-const FieldLevelLineage = Loadable({
-  loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
-  loading: LoadingSVGCentered,
-});
 const PipelineList = Loadable({
   loader: () => import(/* webpackChunkName: "PipelineList" */ 'components/PipelineList'),
   loading: LoadingSVGCentered,
 });
 const SecureKeys = Loadable({
   loader: () => import(/* webpackChunkName: "SecureKeys" */ 'components/SecureKeys'),
+  loading: LoadingSVGCentered,
+});
+
+const FllExperiment = Loadable({
+  loader: () => import(/* webpackChunkName: "FllExperiment" */ 'components/FieldLevelLineage/v2'),
+  loading: LoadingSVGCentered,
+});
+
+const FieldLevelLineage = Loadable({
+  loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
+  loading: LoadingSVGCentered,
+});
+
+const ExperimentToggle = Loadable({
+  loader: () =>
+    import(/* webpackChunkMame: "ExperimentToggle" */ 'components/ExperimentWrapper/ExperimentToggle'),
   loading: LoadingSVGCentered,
 });
 
@@ -117,21 +129,12 @@ export default class Home extends Component {
           <Route
             exact
             path="/ns/:namespace/datasets/:datasetId/fields"
-            component={FieldLevelLineage}
-          />
-          <Route
-            exact
-            path="/ns/:namespace/datasets/:datasetId/fll-experiment"
             render={(props) => {
-              const FllExperiment = Loadable({
-                loader: () =>
-                  import(/* webpackChunkName: "FllExperiment" */ 'components/FieldLevelLineage/v2'),
-                loading: LoadingSVGCentered,
-              });
               return (
-                <ErrorBoundary>
-                  <FllExperiment {...props} />
-                </ErrorBoundary>
+                <ExperimentWrapper
+                  defaultComponent={<FieldLevelLineage {...props} />}
+                  experimentComponent={<FllExperiment {...props} />}
+                />
               );
             }}
           />
@@ -162,6 +165,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
+          <Route path="/ns/:namespace/experimentToggle" component={ExperimentToggle} />
           <Route component={Page404} />
         </Switch>
       </div>
