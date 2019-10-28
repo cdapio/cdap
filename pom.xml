@@ -141,7 +141,7 @@
     <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
     <hbase11.version>1.1.1</hbase11.version>
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
-    <hive.version>1.2.1</hive.version>
+    <hive.version>3.1.2</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <javamail.version>1.4.1</javamail.version>
     <jsch.version>0.1.54</jsch.version>
