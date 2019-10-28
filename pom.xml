@@ -169,7 +169,7 @@
     <spark1.artifacts.dir>spark1_2.10</spark1.artifacts.dir>
     <spark2.artifacts.dir>spark2_2.11</spark2.artifacts.dir>
     <spark1.version>1.6.1</spark1.version>
-    <spark2.version>2.1.3</spark2.version>
+    <spark2.version>2.4.4</spark2.version>
     <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.15.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
