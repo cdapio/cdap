@@ -368,8 +368,12 @@ public class FieldLineageInfo {
     // for transform we traverse backward in graph further through the inputs of the transform
     if (currentOperation.getType() == OperationType.TRANSFORM) {
       TransformOperation transform = (TransformOperation) currentOperation;
-      for (InputField inputField : transform.getInputs()) {
-        computeIncomingSummaryHelper(field, operationsMap.get(inputField.getOrigin()), currentOperation, summary);
+      // optimization to avoid repeating work if there are input fields with the same origin
+      Set<String> transformOrigins = transform.getInputs().stream()
+        .map(InputField::getOrigin)
+        .collect(Collectors.toSet());
+      for (String transformOrigin : transformOrigins) {
+        computeIncomingSummaryHelper(field, operationsMap.get(transformOrigin), currentOperation, summary);
       }
     }
   }
