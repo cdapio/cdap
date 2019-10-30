@@ -65,6 +65,12 @@ const styles = (theme) => {
       paddingLeft: '10px',
       fontWeight: 'bold',
       fontSize: '1rem',
+      overflow: 'hidden',
+      ' & .table-name': {
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+      },
     },
     tableSubheader: {
       color: theme.palette.grey[100],
@@ -89,7 +95,7 @@ function renderGridHeader(fields: IField[], isTarget: boolean, classes) {
   const tableName = fields[0].dataset;
   return (
     <div className={classes.tableHeader}>
-      <div>{tableName}</div>
+      <div className="table-name">{tableName}</div>
       <div className={classes.tableSubheader}>
         {isTarget
           ? T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', {

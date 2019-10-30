@@ -56,6 +56,9 @@ const styles = (theme): StyleRules => {
       pointerEvents: 'none',
       overflow: 'visible',
     },
+    summaryCol: {
+      maxWidth: '30%',
+    },
   };
 };
 
@@ -256,29 +259,43 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     </g>
                     <g id="selected-links" />
                   </svg>
-                  <div data-cy="cause-fields">
+                  <div data-cy="cause-fields" className={this.props.classes.summaryCol}>
                     <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
                     <If condition={Object.keys(visibleCauseSets).length === 0}>
                       <FllTable type="cause" />
                     </If>
                     {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
+                      const isActive = tableId in activeCauseSets;
                       return (
-                        <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />
+                        <FllTable
+                          key={tableId}
+                          tableId={tableId}
+                          fields={fields}
+                          type="cause"
+                          isActive={isActive}
+                        />
                       );
                     })}
                   </div>
-                  <div data-cy="target-fields">
+                  <div data-cy="target-fields" className={this.props.classes.summaryCol}>
                     <FllHeader type="target" total={Object.keys(targetFields).length} />
                     <FllTable tableId={target} fields={targetFields} type="target" />
                   </div>
-                  <div data-cy="impact-fields">
+                  <div data-cy="impact-fields" className={this.props.classes.summaryCol}>
                     <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
                     <If condition={Object.keys(visibleImpactSets).length === 0}>
                       <FllTable type="impact" />
                     </If>
                     {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
+                      const isActive = tableId in activeImpactSets;
                       return (
-                        <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />
+                        <FllTable
+                          key={tableId}
+                          tableId={tableId}
+                          fields={fields}
+                          type="impact"
+                          isActive={isActive}
+                        />
                       );
                     })}
                   </div>
