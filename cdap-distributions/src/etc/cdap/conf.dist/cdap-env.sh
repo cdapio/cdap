@@ -43,10 +43,10 @@ export TEMP_DIR="/tmp"
 # export HEAPDUMP_ON_OOM=true
 
 # Service-specific Java heap settings (overrides defaults)
-# export AUTH_JAVA_HEAPMAX="-Xmx1024m"
-# export KAFKA_JAVA_HEAPMAX="-Xmx1024m"
-# export MASTER_JAVA_HEAPMAX="-Xmx1024m"
-# export ROUTER_JAVA_HEAPMAX="-Xmx1024m"
+# export AUTH_JAVA_HEAPMAX="-Xmx4096m"
+# export KAFKA_JAVA_HEAPMAX="-Xmx4096m"
+# export MASTER_JAVA_HEAPMAX="-Xmx4096m"
+# export ROUTER_JAVA_HEAPMAX="-Xmx4096m"
 
 # Service-specific Java options (added to OPTS, before other options)
 # export AUTH_JAVA_OPTS=""

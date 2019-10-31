@@ -850,7 +850,7 @@
 
   <property>
     <name>data.tx.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>4096</value>
     <description>
       Memory in megabytes for each transaction service instance
     </description>
@@ -858,7 +858,7 @@
 
   <property>
     <name>data.tx.num.cores</name>
-    <value>${master.service.num.cores}</value>
+    <value>4</value>
     <description>
       Number of virtual cores for the transaction service
     </description>
@@ -1025,7 +1025,7 @@
 
   <property>
     <name>dataset.executor.container.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>2048</value>
     <description>
       Memory in megabytes for each dataset executor instance
     </description>
@@ -1033,7 +1033,7 @@
 
   <property>
     <name>dataset.executor.container.num.cores</name>
-    <value>1</value>
+    <value>4</value>
     <description>
       Number of virtual cores for each dataset executor instance
     </description>
@@ -1608,7 +1608,7 @@
 
   <property>
     <name>log.saver.container.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>2048</value>
     <description>
       Memory in megabytes for each log saver instance to run in YARN.
     </description>
@@ -1761,7 +1761,7 @@
 
   <property>
     <name>master.service.num.cores</name>
-    <value>2</value>
+    <value>4</value>
     <description>
       Number of virtual cores for each master service instance
     </description>
@@ -1814,7 +1814,7 @@
 
   <property>
     <name>messaging.container.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>4096</value>
     <description>
       Memory in megabytes for each messaging service instance
     </description>
@@ -1822,7 +1822,7 @@
 
   <property>
     <name>messaging.container.num.cores</name>
-    <value>${master.service.num.cores}</value>
+    <value>2</value>
     <description>
       Number of virtual cores for each messaging service instance
     </description>
@@ -2222,7 +2222,7 @@
 
   <property>
     <name>metrics.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>2048</value>
     <description>
       Memory in megabytes for each metrics service instance
     </description>
@@ -2250,7 +2250,7 @@
 
   <property>
     <name>metrics.num.cores</name>
-    <value>${master.service.num.cores}</value>
+    <value>2</value>
     <description>
       Number of virtual cores for the metrics service
     </description>
@@ -2275,7 +2275,7 @@
 
   <property>
     <name>metrics.processor.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>1536</value>
     <description>
       Memory in megabytes for each metrics processor service Apache Twill
       runnable instance
@@ -3618,7 +3618,7 @@
 
   <property>
     <name>stream.container.memory.mb</name>
-    <value>${master.service.memory.mb}</value>
+    <value>1024</value>
     <description>
       Memory in megabytes for each YARN container that runs the stream
       handler
