@@ -25,7 +25,7 @@
           {{LogViewerPreview.programStatus}}
         </span>
       </div>
-      <div class="log-stats-total log-stats text-center">
+      <div class="log-stats-total log-stats text-center" ng-click="LogViewerPreview.includeEvent($event, LogViewerPreview.logEvents.TOTAL)">
           <span class="stat-name">Total Messages</span>
           <div class="stat-count total-num">
             <span class="stat-count-number">{{LogViewerPreview.totalCount}}</span></div>
