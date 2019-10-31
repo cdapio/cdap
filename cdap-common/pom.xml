@@ -207,6 +207,12 @@
       <version>1.8.2</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.twosigma</groupId>
+      <artifactId>flint</artifactId>
+      <version>0.6.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

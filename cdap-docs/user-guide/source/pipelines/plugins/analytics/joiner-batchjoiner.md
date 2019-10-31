@@ -23,7 +23,7 @@ The syntax for specifying alias for each selected field is similar to sql.
 For example: customers.id as customer_id, customer.name as customer_name, item.id as item_id, <stageName>.inputFieldName as alias. 
 The output will have same order of fields as selected in selectedFields. There must not be any duplicate fields in output.
 
-**requiredInputs:** Comma-separated list of stages. Required input stages decide the type of the join. 
+**leftInput:** Comma-separated list of stages. Required input stages decide the type of the join.
 If all the input stages are present in required inputs, inner join will be performed. 
 Otherwise, outer join will be performed considering non-required inputs as optional.
 
@@ -40,6 +40,7 @@ This example inner joins records from ``customers`` and ``purchases`` inputs on 
         "properties": {
             "selectedFields": "customers.id as customer_id,customers.first_name as name,purchases.item,purchases.price",
             "requiredInputs": "customers, purchases",
+            "leftInput": "customers, purchases",
             "joinKeys": "customers.id = purchases.customer_id"
         }
     }

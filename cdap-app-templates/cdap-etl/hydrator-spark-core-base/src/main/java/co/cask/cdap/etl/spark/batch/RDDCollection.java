@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
+import co.cask.cdap.etl.api.batch.SparkJoiner;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;

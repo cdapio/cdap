@@ -27,6 +27,9 @@ import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
+import co.cask.cdap.etl.api.batch.SparkJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
@@ -39,17 +42,17 @@ import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.SparkPipelineRunner;
+import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.SparkStageStatisticsCollector;
-import co.cask.cdap.etl.spark.function.BatchSourceFunction;
-import co.cask.cdap.etl.spark.function.JoinMergeFunction;
-import co.cask.cdap.etl.spark.function.JoinOnFunction;
-import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import co.cask.cdap.etl.spark.function.*;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -105,6 +108,35 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return joinedInputs.flatMap(Compat.convert(new JoinMergeFunction<>(pluginFunctionContext)));
+  }
+
+  @Override
+  protected SparkCollection<Object> computeJoin(
+      StageSpec stageSpec,
+      Map<String, SparkCollection<Object>> inputs,
+      StageStatisticsCollector collector) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+
+
+    SparkJoiner<Object> sparkJoiner = pluginFunctionContext.createPlugin();
+
+    SparkPipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    SparkExecutionPluginContext pluginContext = new BasicSparkExecutionPluginContext(sec, jsc, datasetContext,
+        pipelineRuntime, stageSpec);
+
+    sparkJoiner.initialize(pluginContext);
+
+    Map<String, JavaRDD<?>> data = new HashMap<>();
+    for (Map.Entry<String, SparkCollection<Object>> entry : inputs.entrySet()) {
+      JavaRDD<?> rdd = entry.getValue().getUnderlying();
+      data.put(entry.getKey(), rdd.map(new CountingFunction<>(stageSpec.getName(), sec.getMetrics(),
+          "records.in", null)).cache());
+    }
+    JavaRDD<?> joinedRDD = sparkJoiner.join(pluginContext, data)
+        .map(new CountingFunction<>(stageSpec.getName(), sec.getMetrics(),
+            "records.out", sec.getDataTracer(stageSpec.getName())));
+    return new RDDCollection<Object>(sec, jsc, datasetContext, sinkFactory, (JavaRDD<Object>) joinedRDD);
+
   }
 
   @Override
