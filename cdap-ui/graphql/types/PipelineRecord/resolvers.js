@@ -14,10 +14,16 @@
  * the License.
  */
 
-const { programRecordTypeTotalRunsResolver } = require('../ProgramRecord/totalRunsResolver');
+const { pipelineRunsResolver } = require('./pipelineRunsResolver');
+const { totalRunsResolvers } = require('./totalRunsResolver');
 
-const sparkTypeTotalRunsResolver = programRecordTypeTotalRunsResolver.bind(null, 'spark');
+const resolvers = {
+  PipelineRecord: {
+    runs: pipelineRunsResolver,
+    totalRuns: totalRunsResolvers,
+  },
+};
 
 module.exports = {
-  sparkTypeTotalRunsResolver,
+  PipelineRecord: resolvers,
 };

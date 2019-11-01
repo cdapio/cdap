@@ -18,20 +18,26 @@ const urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../server/cdap-config.js'),
   resolversCommon = require('../resolvers-common.js');
 
+
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-async function queryTypeApplicationResolver(parent, args, context) {
+async function queryTypePipelinesResolver(parent, args, context) {
   const namespace = args.namespace;
-  const name = args.name;
   const options = resolversCommon.getGETRequestOptions();
-  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
+
+  const pipelineArtifacts = ['cdap-data-pipeline', 'cdap-data-streams'];
+
+  let path = `/v3/namespaces/${namespace}/apps?artifactName=${pipelineArtifacts.join(',')}`;
+
+  options.url = urlHelper.constructUrl(cdapConfig, path);
+  context.namespace = namespace;
 
   return await resolversCommon.requestPromiseWrapper(options, context.auth);
 }
 
 module.exports = {
-  queryTypeApplicationResolver,
+  queryTypePipelinesResolver,
 };

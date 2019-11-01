@@ -14,10 +14,18 @@
  * the License.
  */
 
-const { programRecordTypeTotalRunsResolver } = require('../ProgramRecord/totalRunsResolver');
+const { queryTypeStatusResolver } = require('./Query/statusResolver');
+const { queryTypePipelinesResolver } = require('./Query/pipelinesResolver');
+const { PipelineRecord } = require('./types/PipelineRecord/resolvers');
 
-const mapReduceTypeTotalRunsResolver = programRecordTypeTotalRunsResolver.bind(null, 'mapreduce');
+const resolvers = {
+  Query: {
+    status: queryTypeStatusResolver,
+    pipelines: queryTypePipelinesResolver,
+  },
+  ...PipelineRecord,
+};
 
 module.exports = {
-  mapReduceTypeTotalRunsResolver,
+  resolvers,
 };

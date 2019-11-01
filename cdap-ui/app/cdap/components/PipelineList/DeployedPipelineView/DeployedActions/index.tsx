@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { deletePipeline } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import ActionsPopover, { IAction } from 'components/ActionsPopover';
 import { duplicatePipeline, getPipelineConfig } from 'services/PipelineUtils';
 import PipelineExportModal from 'components/PipelineExportModal';
@@ -31,7 +31,7 @@ import T from 'i18n-react';
 const PREFIX = 'features.PipelineList.DeleteConfirmation';
 
 interface IProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
   deleteError?: string;
   clearDeleteError: () => void;
   refetch: () => void;

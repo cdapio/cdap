@@ -23,10 +23,10 @@ import Status from 'components/PipelineList/DeployedPipelineView/Status';
 import LastStart from 'components/PipelineList/DeployedPipelineView/LastStart';
 import RunsCount from 'components/PipelineList/DeployedPipelineView/RunsCount';
 import DeployedActions from 'components/PipelineList/DeployedPipelineView/DeployedActions';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 interface IProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
   refetch: () => void;
 }
 

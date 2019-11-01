@@ -19,19 +19,30 @@ const urlHelper = require('../../../server/url-helper'),
   resolversCommon = require('../../resolvers-common.js');
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig().then(function(value) {
+cdapConfigurator.getCDAPConfig().then(function (value) {
   cdapConfig = value;
 });
 
-async function applicationRecordTypeApplicationDetailResolver(parent, args, context) {
-  const namespace = context.namespace;
-  const name = parent.name;
-  const options = resolversCommon.getGETRequestOptions();
-  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/apps/${name}`);
+async function batchProgramRuns(req, auth) {
+  const namespace = req[0].namespace;
+  const options = resolversCommon.getPOSTRequestOptions();
+  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
+  options.body = req.map((reqObj) => reqObj.program);
 
-  return await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const runInfo = await resolversCommon.requestPromiseWrapper(options, auth);
+
+  const runsMap = {};
+  runInfo.forEach((run) => {
+    runsMap[run.appId] = run;
+  });
+
+  // DataLoader requires the response to be in the same order as the request. However, the backend
+  // do not guarantee this, therefore we are creating a map for lookup to maintain the order.
+  return options.body.map((program) => {
+    return runsMap[program.appId];
+  });
 }
 
 module.exports = {
-  applicationRecordTypeApplicationDetailResolver,
+  batchProgramRuns,
 };
