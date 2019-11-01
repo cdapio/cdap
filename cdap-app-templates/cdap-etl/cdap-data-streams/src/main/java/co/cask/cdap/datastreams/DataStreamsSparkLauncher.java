@@ -101,9 +101,6 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
 
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
-    for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
-      sparkConf.set(property.getKey(), property.getValue());
-    }
 
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
@@ -157,6 +154,11 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
           String.format("Unable to create checkpoint directory '%s' for the pipeline.", pipelineCheckpointDir));
       }
     }
+
+    for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
+      sparkConf.set(property.getKey(), property.getValue());
+    }
+   
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
