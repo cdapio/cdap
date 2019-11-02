@@ -74,6 +74,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -147,6 +148,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     Arguments arguments = options.getArguments();
+    Map<String, String> userArgs = options.getUserArguments().asMap();
     RunId runId = ProgramRunners.getRunId(options);
 
     WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
@@ -193,7 +195,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // Set the job queue to hConf if it is provided
       Configuration hConf = new Configuration(this.hConf);
-      String schedulerQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+      String schedulerQueue = userArgs.getOrDefault("spark.yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE)); 
+      //String schedulerQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
       if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueue);
       }

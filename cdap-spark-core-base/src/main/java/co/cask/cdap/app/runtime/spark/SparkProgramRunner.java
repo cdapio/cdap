@@ -78,6 +78,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -201,11 +202,13 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         throw Throwables.propagate(e);
       }
 
+      Map<String, String> userArgs = options.getUserArguments().asMap();
+      String schedulerQueue = userArgs.getOrDefault("spark.yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
       SparkSubmitter submitter = isLocal
         ? new LocalSparkSubmitter()
         : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
-                                        options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+                                        schedulerQueue);
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,

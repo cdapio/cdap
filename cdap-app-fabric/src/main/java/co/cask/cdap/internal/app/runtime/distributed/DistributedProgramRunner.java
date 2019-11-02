@@ -294,7 +294,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                    program.getId(), options.isDebug(), logbackURI);
 
           // Add scheduler queue name if defined
-          String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+          LOG.info("user args : " + userArgs);
+          String schedulerQueueName = userArgs.getOrDefault("spark.yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+          LOG.info("schedulerQueueName : " + schedulerQueueName);
+          //String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
           if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
             LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
             twillPreparer.setSchedulerQueue(schedulerQueueName);
