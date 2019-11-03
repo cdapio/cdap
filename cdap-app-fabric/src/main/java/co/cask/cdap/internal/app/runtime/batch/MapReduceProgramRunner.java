@@ -195,7 +195,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // Set the job queue to hConf if it is provided
       Configuration hConf = new Configuration(this.hConf);
-      String schedulerQueue = userArgs.getOrDefault("spark.yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE)); 
+      String schedulerQueue = userArgs.getOrDefault("yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE)); 
       //String schedulerQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
       if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueue);

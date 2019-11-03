@@ -203,7 +203,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
 
       Map<String, String> userArgs = options.getUserArguments().asMap();
-      String schedulerQueue = userArgs.getOrDefault("spark.yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+      String schedulerQueue = userArgs.getOrDefault("yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
       SparkSubmitter submitter = isLocal
         ? new LocalSparkSubmitter()
