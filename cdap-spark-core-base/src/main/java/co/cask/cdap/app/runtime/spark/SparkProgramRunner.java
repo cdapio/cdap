@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
@@ -78,6 +79,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -201,11 +203,13 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         throw Throwables.propagate(e);
       }
 
+      Map<String, String> userArgs = options.getUserArguments().asMap();
+      String schedulerQueue = userArgs.getOrDefault(SystemArguments.YARN_QUEUE_NAME, options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
       SparkSubmitter submitter = isLocal
         ? new LocalSparkSubmitter()
         : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
-                                        options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+                                        schedulerQueue);
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter, locationFactory, isLocal,
