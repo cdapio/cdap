@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
@@ -195,7 +196,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // Set the job queue to hConf if it is provided
       Configuration hConf = new Configuration(this.hConf);
-      String schedulerQueue = userArgs.getOrDefault("yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE)); 
+      String schedulerQueue = userArgs.getOrDefault(SystemArguments.YARN_QUEUE_NAME, options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE)); 
       //String schedulerQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
       if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueue);

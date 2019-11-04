@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
@@ -203,7 +204,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
 
       Map<String, String> userArgs = options.getUserArguments().asMap();
-      String schedulerQueue = userArgs.getOrDefault("yarn.queue", options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+      String schedulerQueue = userArgs.getOrDefault(SystemArguments.YARN_QUEUE_NAME, options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       boolean isLocal = SparkRuntimeContextConfig.isLocal(options);
       SparkSubmitter submitter = isLocal
         ? new LocalSparkSubmitter()
