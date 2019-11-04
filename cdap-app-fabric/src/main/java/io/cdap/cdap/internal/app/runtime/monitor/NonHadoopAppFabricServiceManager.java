@@ -38,4 +38,10 @@ public class NonHadoopAppFabricServiceManager extends AbstractMasterServiceManag
   public String getDescription() {
     return Constants.AppFabric.SERVICE_DESCRIPTION;
   }
+
+  @Override
+  public boolean isServiceAvailable() {
+    // App-Fabric is always considered as available since call to this method comes from app-fabric itself.
+    return true;
+  }
 }
