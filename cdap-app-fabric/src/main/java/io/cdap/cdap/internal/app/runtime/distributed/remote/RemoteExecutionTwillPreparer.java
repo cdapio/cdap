@@ -108,6 +108,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
@@ -390,6 +391,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
+    long startTime = System.currentTimeMillis();
+
     Callable<Void> startupTask = () -> {
       Path tempDir = java.nio.file.Paths.get(
         cConf.get(io.cdap.cdap.common.conf.Constants.CFG_LOCAL_DATA_DIR),
@@ -408,6 +411,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
         createApplicationJar(createBundler(classAcceptor, stagingDir), localFiles);
         createResourcesJar(createBundler(classAcceptor, stagingDir), localFiles, stagingDir);
 
+        throwIfTimeout(startTime, timeout, timeoutUnit);
+
         TwillRuntimeSpecification twillRuntimeSpec;
         Path runtimeConfigDir = Files.createTempDirectory(stagingDir, Constants.Files.RUNTIME_CONFIG_JAR);
         try {
@@ -422,6 +427,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
         } finally {
           Paths.deleteRecursively(runtimeConfigDir);
         }
+
+        throwIfTimeout(startTime, timeout, timeoutUnit);
 
         RuntimeSpecification runtimeSpec = twillRuntimeSpec.getTwillSpecification().getRunnables().values()
           .stream().findFirst().orElseThrow(IllegalStateException::new);
@@ -453,6 +460,8 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
           session.copy(new ByteArrayInputStream(scriptContent),
                        targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
+          throwIfTimeout(startTime, timeout, timeoutUnit);
+
           LOG.info("Starting runnable {} for runId {} with SSH", runnableName, programRunId);
           session.executeAndWait(targetPath + "/launcher.sh");
         }
@@ -464,6 +473,17 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     };
 
     return controllerFactory.create(startupTask, timeout, timeoutUnit);
+  }
+
+  /**
+   * Throws a {@link TimeoutException} if time passed since the given start time has exceeded the given timeout value.
+   */
+  private void throwIfTimeout(long startTime, long timeout, TimeUnit timeoutUnit) throws TimeoutException {
+    long timeoutMillis = timeoutUnit.toMillis(timeout);
+    if (System.currentTimeMillis() - startTime >= timeoutMillis) {
+      throw new TimeoutException(String.format("Aborting startup of program run %s due to timeout after %d %s",
+                                               programRunId, timeout, timeoutUnit.name().toLowerCase()));
+    }
   }
 
   /**

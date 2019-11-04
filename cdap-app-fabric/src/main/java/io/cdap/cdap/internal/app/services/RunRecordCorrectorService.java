@@ -203,10 +203,11 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         return false;
       }
 
-      // Don't fix ClusterMode.ISOLATED runs. The runtime monitor system should handle it.
+      // Don't fix ClusterMode.ISOLATED runs that are not in STARTING state, since the runtime monitor should handle it.
+      // For programs in STARTING state, if it doesn't transit to other state, we should consider it as stuck.
       String clusterMode = record.getSystemArgs().get(ProgramOptionConstants.CLUSTER_MODE);
       // Use equals instead of valueOf to handle null for old records and also potential future name change
-      if (ClusterMode.ISOLATED.name().equals(clusterMode)) {
+      if (record.getStatus() != ProgramRunStatus.STARTING && ClusterMode.ISOLATED.name().equals(clusterMode)) {
         return false;
       }
 
