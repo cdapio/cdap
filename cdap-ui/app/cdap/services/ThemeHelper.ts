@@ -95,6 +95,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'namespace-security'?: boolean;
     'create-profile'?: boolean;
     'reload-system-artifacts'?: boolean;
+    'sql-pipeline'?: boolean;
   };
 }
 
@@ -207,6 +208,7 @@ interface IThemeObj {
   showCreateProfile?: boolean;
   showReloadSystemArtifacts?: boolean;
   featureNames?: IFeatureNames;
+  showSqlPipeline?: boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -384,6 +386,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showNamespaceSecurity: true,
       showCreateProfile: true,
       showReloadSystemArtifacts: true,
+      showSqlPipeline: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -465,6 +468,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       isBoolean(featuresJson['reload-system-artifacts'])
     ) {
       features.showReloadSystemArtifacts = featuresJson['reload-system-artifacts'];
+    }
+    if ('sql-pipeline' in featuresJson && isBoolean(featuresJson['sql-pipeline'])) {
+      features.showSqlPipeline = featuresJson['sql-pipeline'];
     }
     return features;
   }

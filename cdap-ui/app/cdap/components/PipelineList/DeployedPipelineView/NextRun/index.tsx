@@ -41,7 +41,7 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   };
 
   public componentDidMount() {
-    if (this.props.pipeline.artifact.name === GLOBALS.etlDataStreams) {
+    if (this.props.pipeline.artifact.name !== GLOBALS.etlDataPipeline) {
       return;
     }
 

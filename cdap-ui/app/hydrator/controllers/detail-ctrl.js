@@ -22,9 +22,9 @@ angular.module(PKG.name + '.feature.hydrator')
     const pipelineConfigurationsActionCreator = window.CaskCommon.PipelineConfigurationsActionCreator;
 
     this.pipelineType = rPipelineDetail.artifact.name;
-    let programType = this.pipelineType === GLOBALS.etlDataPipeline ? 'workflows' : 'spark';
-    let programTypeForRunsCount = this.pipelineType === GLOBALS.etlDataPipeline ? 'Workflow' : 'Spark';
-    let programName = this.pipelineType === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'DataStreamsSparkStreaming';
+    let programType = GLOBALS.programType[this.pipelineType];
+    let programTypeForRunsCount = GLOBALS.programTypeForRunsCount[this.pipelineType];
+    let programName = GLOBALS.programId[this.pipelineType];
     let scheduleId = GLOBALS.defaultScheduleId;
 
     let currentRun, metricsObservable, runsPoll;

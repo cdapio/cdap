@@ -26,6 +26,10 @@ angular.module(PKG.name + '.feature.hydrator')
       uiSupportedArtifacts.push(GLOBALS.etlDataStreams);
     }
 
+    if (theme.showSqlPipeline !== false) {
+      uiSupportedArtifacts.push(GLOBALS.eltSqlPipeline);
+    }
+
     $stateProvider
       .state('home', {
         url: '/',
