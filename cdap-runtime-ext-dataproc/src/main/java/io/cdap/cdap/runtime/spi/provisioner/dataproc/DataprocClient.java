@@ -341,6 +341,11 @@ final class DataprocClient implements AutoCloseable {
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
         .putAllMetadata(metadata);
+
+      if (conf.getServiceAccount() != null) {
+        clusterConfig.setServiceAccount(conf.getServiceAccount());
+      }
+
       if (conf.getZone() != null) {
         clusterConfig.setZoneUri(conf.getZone());
       }

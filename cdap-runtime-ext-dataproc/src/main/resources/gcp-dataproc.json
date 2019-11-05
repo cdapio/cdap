@@ -112,6 +112,15 @@
           }
         },
         {
+          "widget-type": "textbox",
+          "label": "Service Account",
+          "name": "serviceAccount",
+          "description": "The service account of the Dataproc virtual machine (VM). If none is given, the default Compute Engine service account will be used.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
           "widget-type": "select",
           "label": "Prefer External IP",
           "name": "preferExternalIP",

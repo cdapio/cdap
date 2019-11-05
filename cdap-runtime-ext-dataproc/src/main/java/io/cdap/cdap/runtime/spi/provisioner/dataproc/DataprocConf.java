@@ -81,6 +81,7 @@ final class DataprocConf {
   private final String encryptionKeyName;
   private final String gcsBucket;
 
+  private final String serviceAccount;
   private final boolean preferExternalIP;
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
@@ -92,7 +93,7 @@ final class DataprocConf {
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
          conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
-         conf.encryptionKeyName, conf.gcsBucket,
+         conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.publicKey, conf.imageVersion, conf.dataprocProperties);
   }
@@ -103,7 +104,7 @@ final class DataprocConf {
                        int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
-                       boolean preferExternalIP, boolean stackdriverLoggingEnabled,
+                       @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion,
                        Map<String, String> dataprocProperties) {
@@ -128,6 +129,7 @@ final class DataprocConf {
     this.pollInterval = pollInterval;
     this.encryptionKeyName = encryptionKeyName;
     this.gcsBucket = gcsBucket;
+    this.serviceAccount = serviceAccount;
     this.preferExternalIP = preferExternalIP;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
@@ -217,6 +219,11 @@ final class DataprocConf {
   @Nullable
   String getGcsBucket() {
     return gcsBucket;
+  }
+
+  @Nullable
+  String getServiceAccount() {
+    return serviceAccount;
   }
 
   boolean isPreferExternalIP() {
@@ -364,6 +371,7 @@ final class DataprocConf {
     long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
     long pollInterval = getLong(properties, "pollInterval", 2);
 
+    String serviceAccount = getString(properties, "serviceAccount");
     boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
     // By default stackdriver is enabled. This is for backward compatibility
     boolean stackdriverLoggingEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_LOGGING_ENABLED,
@@ -386,8 +394,7 @@ final class DataprocConf {
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            gcpCmekKeyName, gcpCmekBucket,
-                            preferExternalIP, stackdriverLoggingEnabled,
+                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP, stackdriverLoggingEnabled,
                             stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
   }
 
