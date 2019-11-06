@@ -14,719 +14,743 @@
  * the License.
  */
 
-@import '../styles/variables.less';
-@import '../../bower_components/bootstrap/less/mixins.less';
-@import '../styles/themes/cdap/mixins.less';
-@height-of-toppanel: 43px;
-@btn-border-color: #999999;
+ @import '../styles/variables.less';
+ @import '../../bower_components/bootstrap/less/mixins.less';
+ @import '../styles/themes/cdap/mixins.less';
+ @height-of-toppanel: 43px;
+ @btn-border-color: #999999;
 
-body.theme-cdap {
-  &.state-hydrator {
-    div.side-panel.top {
-      background-color: white;
-      border-bottom: 1px solid @table-border-color;
-      position: fixed;
-      top: 50px;
-      right: 0;
-      z-index: 999;
-      border-left: 0;
-      border-top: 0;
-      &.no-header, &.no-header-footer{
-        top: 0px !important;
-      }
+ body.theme-cdap {
+   &.state-hydrator {
+     div.side-panel.top {
+       background-color: white;
+       border-bottom: 1px solid @table-border-color;
+       position: fixed;
+       top: 50px;
+       right: 0;
+       z-index: 999;
+       border-left: 0;
+       border-top: 0;
+       &.no-header, &.no-header-footer{
+         top: 0px !important;
+       }
 
-      .text-light-running {
-        background-color: @cdap-blue;
-        border-radius: 50%;
-        height: 20px;
-        width: 20px;
-        margin: -2px;
-        margin-right: 10px;
-      }
+       .text-light-running {
+         background-color: @cdap-blue;
+         border-radius: 50%;
+         height: 20px;
+         width: 20px;
+         margin: -2px;
+         margin-right: 10px;
+       }
 
-      .text-outline-grey {
-        color: white;
-        border: 3px solid @cdap-light-grey;
-        border-radius: 50%;
-        height: 20px;
-        width: 20px;
-        margin: -2px;
-        margin-right: 10px;
-      }
+       .text-outline-grey {
+         color: white;
+         border: 3px solid @cdap-light-grey;
+         border-radius: 50%;
+         height: 20px;
+         width: 20px;
+         margin: -2px;
+         margin-right: 10px;
+       }
 
-      div.pipeline-type {
-        color: #397cf1;
-        text-decoration: none;
-        span {
-          display: inline-block;
-          font-size: 1.8em;
+       div.pipeline-type {
+         color: #397cf1;
+         text-decoration: none;
+         span {
+           display: inline-block;
+           font-size: 1.8em;
 
-          @media (min-width: @screen-sm-min) {
-            font-size: 20px;
-          }
-        }
-      }
+           @media (min-width: @screen-sm-min) {
+             font-size: 20px;
+           }
+         }
+       }
 
-      div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 3px 0);
-        border-right: 1px solid transparent;
-        transition: all 0.2s ease;
-        width: 60px;
-        margin-left: 0;
+       div.btn {
+         .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 3px 0);
+         border-right: 1px solid transparent;
+         transition: all 0.2s ease;
+         width: 60px;
+         margin-left: 0;
 
-        .btn-container {
-          border-left: 1px solid @btn-border-color;
-        }
+         .btn-container {
+           border-left: 1px solid @btn-border-color;
+         }
 
-        &.border-right {
-          .btn-container {
-            border-right: 1px solid @btn-border-color;
-          }
-        }
+         &.border-right {
+           .btn-container {
+             border-right: 1px solid @btn-border-color;
+           }
+         }
 
-        &.margin-left {
-          margin-left: 2px;
-        }
+         &.margin-left {
+           margin-left: 2px;
+         }
 
-        &[disabled] {
-          opacity: 1;
+         &[disabled] {
+           opacity: 1;
 
-          span.fa,
-          .button-label {
-            opacity: 0.65;
-          }
-        }
+           span.fa,
+           .button-label {
+             opacity: 0.65;
+           }
+         }
 
-        > span:first-child {
-          line-height: 15px;
-        }
-        span {
-          &.fa-play,
-          &.fa-stop {
-            font-size: 18px;
-          }
+         > span:first-child {
+           line-height: 15px;
+         }
+         span {
+           &.fa-play,
+           &.fa-stop {
+             font-size: 18px;
+           }
 
-          &.fa-info-circle {
-            color: #666666;
-          }
+           &.fa-info-circle {
+             color: #666666;
+           }
 
-          &.fa-spinner {
-            line-height: 30px;
-          }
-        }
-        &:hover,
-        &:focus,
-        &.btn-select {
-          background-color: #ebebeb;
-        }
-        &:active {
-          background-color: #828da0;
-          border-top: 1px solid #828da0;
-          border-right: 1px solid #828da0;
-          border-bottom: 1px solid #828da0;
-          color: white;
-          box-shadow: inset 0 0 20px 0 rgba(0, 0, 0, 0.25);
-        }
+           &.fa-spinner {
+             line-height: 30px;
+           }
+         }
+         &:hover,
+         &:focus,
+         &.btn-select {
+           background-color: #ebebeb;
+         }
+         &:active {
+           background-color: #828da0;
+           border-top: 1px solid #828da0;
+           border-right: 1px solid #828da0;
+           border-bottom: 1px solid #828da0;
+           color: white;
+           box-shadow: inset 0 0 20px 0 rgba(0, 0, 0, 0.25);
+         }
 
-        [class*="fa-"] { font-size: 16px; }
-        .fa-sliders { transform: rotate(90deg); }
+         [class*="fa-"] { font-size: 16px; }
+         .fa-sliders { transform: rotate(90deg); }
 
-        &.active {
-          background-color: #cdcdcd;
-          border-top-color: #cdcdcd;
-          border-bottom-color: #cdcdcd;
-          border-right-color: #cdcdcd;
-        }
+         &.active {
+           background-color: #cdcdcd;
+           border-top-color: #cdcdcd;
+           border-bottom-color: #cdcdcd;
+           border-right-color: #cdcdcd;
+         }
 
-        &.run-time {
-          cursor: default;
+         &.run-time {
+           cursor: default;
 
-          .btn-container {
-            > span {
-              font-size: 18px;
-              line-height: 15px;
-              font-weight: 500;
-              color: @hydrator-blue;
-            }
-          }
+           .btn-container {
+             > span {
+               font-size: 18px;
+               line-height: 15px;
+               font-weight: 500;
+               color: @hydrator-blue;
+             }
+           }
 
-          &:hover { background-color: white; }
-          &:active,
-          &:focus {
-            box-shadow: none;
-            border-top-color: transparent;
-            border-bottom-color: transparent;
-            border-right-color: transparent;
-            background-color: white;
-          }
-        }
+           &:hover { background-color: white; }
+           &:active,
+           &:focus {
+             box-shadow: none;
+             border-top-color: transparent;
+             border-bottom-color: transparent;
+             border-right-color: transparent;
+             background-color: white;
+           }
+         }
 
-        div.button-label {
-          font-size: 11px;
-        }
+         div.button-label {
+           font-size: 11px;
+         }
 
-        @media (max-width: @screen-xs-max) {
-          display: none;
-        }
-      }
-    }
-    .toppanel-tooltip {
-      &.in { opacity: 1; }
-      &.top {
-        .tooltip-arrow { border-top: 5px solid #666666; }
-      }
-      &.right {
-        width: 100%;
-        .tooltip-arrow { border-right: 5px solid #666666; }
-      }
-      &.bottom {
-        .tooltip-arrow { border-bottom: 5px solid #666666; }
-      }
-      &.icon-tooltip { width: auto; }
-      .tooltip-inner {
-        background-color: #666666;
-        border: 1px solid #666666;
-        padding-right: 10px;
-        padding-left: 10px;
-      }
-    }
+         @media (max-width: @screen-xs-max) {
+           display: none;
+         }
+       }
+     }
+     .toppanel-tooltip {
+       &.in { opacity: 1; }
+       &.top {
+         .tooltip-arrow { border-top: 5px solid #666666; }
+       }
+       &.right {
+         width: 100%;
+         .tooltip-arrow { border-right: 5px solid #666666; }
+       }
+       &.bottom {
+         .tooltip-arrow { border-bottom: 5px solid #666666; }
+       }
+       &.icon-tooltip { width: auto; }
+       .tooltip-inner {
+         background-color: #666666;
+         border: 1px solid #666666;
+         padding-right: 10px;
+         padding-left: 10px;
+       }
+     }
 
-    .error-tooltip {
-      z-index: 999;
-      &.error-node-config {
-        z-index: 1061;
-      }
-      &.top {
-        .tooltip-arrow { border-top: 5px solid @brand-danger; }
-      }
-      &.right {
-        width: 100%;
-        .tooltip-arrow { border-right: 5px solid @brand-danger; }
-      }
-      &.bottom {
-        .tooltip-arrow { border-bottom: 5px solid @brand-danger; }
-      }
+     .error-tooltip {
+       z-index: 999;
+       &.error-node-config {
+         z-index: 1061;
+       }
+       &.top {
+         .tooltip-arrow { border-top: 5px solid @brand-danger; }
+       }
+       &.right {
+         width: 100%;
+         .tooltip-arrow { border-right: 5px solid @brand-danger; }
+       }
+       &.bottom {
+         .tooltip-arrow { border-bottom: 5px solid @brand-danger; }
+       }
 
-      .tooltip-inner {
-        background-color: @brand-danger;
-        border: 1px solid @brand-danger;
-      }
-    }
+       .tooltip-inner {
+         background-color: @brand-danger;
+         border: 1px solid @brand-danger;
+       }
+     }
 
-    .pipeline-settings {
-      background: lightgray;
-      position: fixed;
-      top: 93px;
-      max-height: ~"calc(100vh - 143px)";
-      max-height: ~"-moz-calc(100vh - 143px)";
-      max-height: ~"-webkit-calc(100vh - 143px)";
-      overflow: auto;
-      right: 0;
-      z-index: 999;
-      box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
-      h5 { margin: 10px 10px 0; }
-      .arguments-container {
-        padding: 5px 10px;
-        width: 100%;
-        // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
-        max-height: ~"calc(100vh - 216px)";
-        max-height: ~"-moz-calc(100vh - 216px)";
-        max-height: ~"-webkit-calc(100vh - 216px)";
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-      .clearfix { padding: 0 10px 5px 10px; }
-    }
-    .pipeline-settings-backdrop {
-      position: fixed;
-      height: 100vh;
-      width: 100vw;
-      background: black;
-      top: 0;
-      left: 0;
-      opacity: 0;
-      z-index: 999;
-    }
+     .pipeline-settings {
+       background: lightgray;
+       position: fixed;
+       top: 93px;
+       max-height: ~"calc(100vh - 143px)";
+       max-height: ~"-moz-calc(100vh - 143px)";
+       max-height: ~"-webkit-calc(100vh - 143px)";
+       overflow: auto;
+       right: 0;
+       z-index: 999;
+       box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+       h5 { margin: 10px 10px 0; }
+       .arguments-container {
+         padding: 5px 10px;
+         width: 100%;
+         // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
+         max-height: ~"calc(100vh - 216px)";
+         max-height: ~"-moz-calc(100vh - 216px)";
+         max-height: ~"-webkit-calc(100vh - 216px)";
+         overflow-y: auto;
+         overflow-x: hidden;
+       }
+       .clearfix { padding: 0 10px 5px 10px; }
+     }
+     .pipeline-settings-backdrop {
+       position: fixed;
+       height: 100vh;
+       width: 100vw;
+       background: black;
+       top: 0;
+       left: 0;
+       opacity: 0;
+       z-index: 999;
+     }
 
-    .pipeline-configurations {
-      height: 0;
-    }
-  }
-  &.state-hydrator-create {
-    div.pipeline-type {
-      span {
-        line-height: 35px;
+     .pipeline-configurations {
+       height: 0;
+     }
+   }
+   &.state-hydrator-create {
+     div.pipeline-type {
+       span {
+         line-height: 35px;
 
-        @media (min-width: @screen-sm-min) {
-          font-size: 20px;
-        }
-      }
-    }
-    .pipeline-settings {
-      // Right now we don't have the height of the top panel to be the same
-      // in both studio and published view.
-      top: 91px;
-      max-height: ~"calc(100vh - 143px)";
-      max-height: ~"-moz-calc(100vh - 143px)";
-      max-height: ~"-webkit-calc(100vh - 143px)";
-      overflow: auto;
-      > div {
-        width: 100%;
-        padding: 10px;
-      }
-    }
-    div.side-panel.top,
-    .pipeline-settings {
-      max-width: ~"-moz-calc(100% - 130px)";
-      max-width: ~"-webkit-calc(100% - 130px)";
-      max-width: ~"calc(100% - 130px)";
-      left: 130px;
-      transition: all 0.2s ease;
-      display: flex;
-    }
-    .side-panel.top {
-      div.hydrator-metadata {
-        flex-wrap: wrap;
-        display: flex;
-        background-color: transparent;
-        z-index: 999;
-        box-shadow: none;
-        &:hover,
-        &:focus { cursor: pointer; }
-        div.pipeline-type {
-          display: inline-block;
-          padding-left: 7px;
-        }
-        div.metadata {
-          margin-left: 10px;
-          width: ~"calc(100% - 50px)";
-          width: ~"-moz-calc(100% - 50px)";
-          width: ~"-webkit-calc(100% - 50px)";
-          > div {
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
+         @media (min-width: @screen-sm-min) {
+           font-size: 20px;
+         }
+       }
+     }
+     .pipeline-settings {
+       // Right now we don't have the height of the top panel to be the same
+       // in both studio and published view.
+       top: 91px;
+       max-height: ~"calc(100vh - 143px)";
+       max-height: ~"-moz-calc(100vh - 143px)";
+       max-height: ~"-webkit-calc(100vh - 143px)";
+       overflow: auto;
+       > div {
+         width: 100%;
+         padding: 10px;
+       }
+     }
+     div.side-panel.top,
+     .pipeline-settings {
+       max-width: ~"-moz-calc(100% - 130px)";
+       max-width: ~"-webkit-calc(100% - 130px)";
+       max-width: ~"calc(100% - 130px)";
+       left: 130px;
+       transition: all 0.2s ease;
+       display: flex;
+     }
+     .side-panel.top {
+       div.hydrator-metadata {
+         flex-wrap: wrap;
+         display: flex;
+         background-color: transparent;
+         z-index: 999;
+         box-shadow: none;
+         &:hover,
+         &:focus { cursor: pointer; }
+         div.pipeline-type {
+           display: inline-block;
+           padding-left: 7px;
+         }
+         div.metadata {
+           margin-left: 10px;
+           width: ~"calc(100% - 50px)";
+           width: ~"-moz-calc(100% - 50px)";
+           width: ~"-webkit-calc(100% - 50px)";
+           > div {
+             text-overflow: ellipsis;
+             white-space: nowrap;
+             overflow: hidden;
 
-            &:before {
-              content: none;
-              color: gray;
-            }
+             &:before {
+               content: none;
+               color: gray;
+             }
 
-            &:first-child {
-              font-size: 14px;
-              margin-top: 5px;
-              line-height: 17px;
+             &:first-child {
+               font-size: 14px;
+               margin-top: 5px;
+               line-height: 17px;
 
-              &.placeholder {
-                &:before { content: "Name your pipeline"; }
-              }
-            }
-            &:last-child {
-              font-size: 12px;
-              &.placeholder {
-                &:before { content: "Enter a description for your pipeline"; }
-              }
-            }
-          }
-          .pipeline-name {
-            &.error {
-              color: @brand-danger;
-              &:before {
-                color: @brand-danger;
-                font-weight: bold;
-              }
-            }
-          }
-        }
-        input,
-        textarea {
-          background-color: transparent;
-          display: inline-block;
-          font-size: 12px;
-          border: 1px solid @table-border-color;
-          padding: 10px 12px;
-          width: 100%;
-          max-width: 100%;
-          border-radius: 6px;
-          .placeholder-color(@color: gray);
-          &:hover,
-          &:focus { cursor: auto; }
-          &:focus { outline: 0; }
-        }
-        input { height: @height-of-toppanel; }
-        textarea {
-          font-weight: 400;
-          resize: none;
-          margin-bottom: 7px;
-          margin-top: 10px;
-          min-height: 65px;
-        }
-        button {
-          font-weight: 500;
-          text-decoration: none;
-          &.btn {
-            width: 0;
-            height: 0;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.5s ease;
-          }
-        }
-        &.expanded {
-          background-color: white;
-          height: 185px;
-          cursor: auto;
-          padding: 10px;
-          width: 100%;
-          position: absolute;
-          box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+               &.placeholder {
+                 &:before { content: "Name your pipeline"; }
+               }
+             }
+             &:last-child {
+               font-size: 12px;
+               &.placeholder {
+                 &:before { content: "Enter a description for your pipeline"; }
+               }
+             }
+           }
+           .pipeline-name {
+             &.error {
+               color: @brand-danger;
+               &:before {
+                 color: @brand-danger;
+                 font-weight: bold;
+               }
+             }
+           }
+           .error-message {
+             color: @brand-danger;
+             font-size: 12px;
+           }
+           .info-message {
+             white-space: normal;
+             margin-bottom: 10px;
+           }
+           .pipeline-input {
+             display: flex;
+             flex-direction: row;
+             align-items: center;
+             span {
+               color: #098cf9;
+               cursor: pointer;
+               font-size: 1.3em;
+               margin-left: 5px;
+             }
+           }
+         }
+         input,
+         textarea {
+           background-color: transparent;
+           display: inline-block;
+           font-size: 12px;
+           border: 1px solid @table-border-color;
+           padding: 10px 12px;
+           width: 100%;
+           max-width: 100%;
+           border-radius: 6px;
+           .placeholder-color(@color: gray);
+           &:hover,
+           &:focus { cursor: auto; }
+           &:focus { outline: 0; }
+         }
+         input { height: @height-of-toppanel; }
+         textarea {
+           font-weight: 400;
+           resize: none;
+           margin-bottom: 7px;
+           margin-top: 10px;
+           min-height: 65px;
+         }
+         button {
+           font-weight: 500;
+           text-decoration: none;
+           &.btn {
+             width: 0;
+             height: 0;
+             opacity: 0;
+             visibility: hidden;
+             transition: all 0.5s ease;
+           }
+         }
+         &.expanded {
+           background-color: white;
+           cursor: auto;
+           padding: 10px;
+           width: 100%;
+           position: absolute;
+           box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
 
-          div.pipeline-type {
-            span { line-height: 1; }
-          }
-          div.pipeline-name {
-            padding: 10px;
+           div.pipeline-type {
+             span { line-height: 1; }
+           }
+           div.pipeline-name {
+             padding: 10px;
 
-            &:after { content: none; }
-          }
-          div.btn-group {
-            .btn {
-              display: inline-block;
-              width: auto;
-              height: 32px;
-              padding: 0 10px;
-              border-radius: 4px;
-              opacity: 1;
-              transition: all 0.2s ease;
-              visibility: visible;
+             &:after { content: none; }
+           }
+           div.btn-group {
+             .btn {
+               display: inline-block;
+               width: auto;
+               height: 32px;
+               padding: 0 10px;
+               border-radius: 4px;
+               opacity: 1;
+               transition: all 0.2s ease;
+               visibility: visible;
 
-              &.save-button,
-              &.cancel-button {
-                font-weight: initial;
-              }
+               &.save-button,
+               &.cancel-button {
+                 font-weight: initial;
+               }
 
-              &.save-button {
-                margin-right: 10px;
-              }
-            }
-          }
-        }
-      }
-      cask-resource-center-button {
-        width: 58px;
-        display: inline-block;
-        margin-left: 20px;
-        .cask-resourcecenter-button {
-          top: 64px;
-        }
-      }
-      .btn-group {
-        .btn {
-          .fa-caret-down {
-            position: absolute;
-            top: 25px;
-            left: 32px;
-            line-height: 1;
-          }
+               &.save-button {
+                 margin-right: 10px;
+                 // Disable on this Button acting inversely in dev mode for some reason.
+                 // This runs correctly in prod.
+                 background-color: #255ddb !important;
+                 &[disabled] {
+                   background-color: #5a84e4 !important;
+                 }
+               }
+             }
+           }
+         }
+       }
+       cask-resource-center-button {
+         width: 58px;
+         display: inline-block;
+         margin-left: 20px;
+         .cask-resourcecenter-button {
+           top: 64px;
+         }
+       }
+       .btn-group {
+         .btn {
+           .fa-caret-down {
+             position: absolute;
+             top: 25px;
+             left: 32px;
+             line-height: 1;
+           }
 
-          span.icon-runtimestarttime {
-            font-size: 21px;
-            line-height: 11px;
-            transform: translateY(3px);
-          }
-        }
-      }
-    }
-    .action-buttons {
-      min-width: 430px;
-      .btn {
-        &.ng-animate.ng-leave {
-          display: none;
-        }
-      }
-    }
+           span.icon-runtimestarttime {
+             font-size: 21px;
+             line-height: 11px;
+             transform: translateY(3px);
+           }
+         }
+       }
+     }
+     .action-buttons {
+       min-width: 430px;
+       .btn {
+         &.ng-animate.ng-leave {
+           display: none;
+         }
+       }
+     }
 
-    .pipeline-scheduler-content,
-    .pipeline-configurations-content {
-      position: fixed;
-      top: 95px;
-      right: 15px;
-    }
-  }
-  &.state-hydrator-detail {
-    div.side-panel.top {
-      left: 0;
-      display: flex;
-      justify-content: space-between;
-      .run-specific-section {
-        display: flex;
-        width: ~"calc(100vw - 428px)"; // 100vw - (pipeline-specifiction(370px) + resource center button (58px))
-        width: ~"-moz-calc(100vw - 428px)";
-        width: ~"-webkit-calc(100vw - 428px)";
-        border-right: 0;
-        .hydrator-detail-metadata {
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-          padding: 0 10px;
+     .pipeline-scheduler-content,
+     .pipeline-configurations-content {
+       position: fixed;
+       top: 95px;
+       right: 15px;
+     }
+   }
+   &.state-hydrator-detail {
+     div.side-panel.top {
+       left: 0;
+       display: flex;
+       justify-content: space-between;
+       .run-specific-section {
+         display: flex;
+         width: ~"calc(100vw - 428px)"; // 100vw - (pipeline-specifiction(370px) + resource center button (58px))
+         width: ~"-moz-calc(100vw - 428px)";
+         width: ~"-webkit-calc(100vw - 428px)";
+         border-right: 0;
+         .hydrator-detail-metadata {
+           display: flex;
+           align-items: center;
+           overflow: hidden;
+           padding: 0 10px;
 
-          /*
-            - Two buttons for schedule & start now
-            - App status container
-            - Right side pipeline specific section (6 buttons)
-            - 20px of padding for metadata section
-            48 * 2 + 275 + 288 (48 * 6) + 20 = 679;
-            FIXME: This is not scalable.
-            Flexbox has a growth and shrink factor but that is not based on the content,
-            but based on the browser size. We need to dynamically have more space for description
-            and still be able to have run specific section stick to metadata section.
-          */
-          max-width: ~"calc(100% - 412px)";
-          max-width: ~"-moz-calc(100% - 412px)";
-          max-width: ~"-webkit-calc(100% - 412px)";
-          min-width: 200px;
+           /*
+             - Two buttons for schedule & start now
+             - App status container
+             - Right side pipeline specific section (6 buttons)
+             - 20px of padding for metadata section
+             48 * 2 + 275 + 288 (48 * 6) + 20 = 679;
+             FIXME: This is not scalable.
+             Flexbox has a growth and shrink factor but that is not based on the content,
+             but based on the browser size. We need to dynamically have more space for description
+             and still be able to have run specific section stick to metadata section.
+           */
+           max-width: ~"calc(100% - 412px)";
+           max-width: ~"-moz-calc(100% - 412px)";
+           max-width: ~"-webkit-calc(100% - 412px)";
+           min-width: 200px;
 
-          div.pipeline-type {
-            line-height: 1;
-            text-decoration: none;
-            padding: 0 10px 0 0;
-          }
-          div.pipeline-name {
-            text-align: left;
-            overflow: hidden;
-            width: 100%;
-            height: 42px;
-          }
-          h1,
-          p {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-            height: 21px;
-          }
-          h1 {
-            font-size: 16px;
-            font-weight: 500;
-            margin: 0;
-            &.name-only {
-              height: 42px;
-              line-height: 2.5;
-            }
-            &:not(.name-only) { padding-top: 2px; }
-          }
-          p {
-            color: #666666;
-            font-size: 12px;
-            font-weight: 400;
-            margin: 0;
-          }
-        }
+           div.pipeline-type {
+             line-height: 1;
+             text-decoration: none;
+             padding: 0 10px 0 0;
+           }
+           div.pipeline-name {
+             text-align: left;
+             overflow: hidden;
+             width: 100%;
+             height: 42px;
+           }
+           h1,
+           p {
+             white-space: nowrap;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             max-width: 100%;
+             height: 21px;
+           }
+           h1 {
+             font-size: 16px;
+             font-weight: 500;
+             margin: 0;
+             &.name-only {
+               height: 42px;
+               line-height: 2.5;
+             }
+             &:not(.name-only) { padding-top: 2px; }
+           }
+           p {
+             color: #666666;
+             font-size: 12px;
+             font-weight: 400;
+             margin: 0;
+           }
+         }
 
 
-        .app-status-container {
-          display: flex;
-          min-width: 425px; // To accomadate the long datetime we show for pipeline run start time.
-          position: relative;
+         .app-status-container {
+           display: flex;
+           min-width: 425px; // To accomadate the long datetime we show for pipeline run start time.
+           position: relative;
 
-          .btn.scheduler {
-            width: 70px; // to accomadate Unscheduled. 0-0
-          }
-        }
-      }
-      div.btn {
-        align-items: center;
-        height: 45px;
+           .btn.scheduler {
+             width: 70px; // to accomadate Unscheduled. 0-0
+           }
+         }
+       }
+       div.btn {
+         align-items: center;
+         height: 45px;
 
-        .fa.fa-caret-down {
-          position: absolute;
-          top: 17px;
-          left: 18px;
-        }
+         .fa.fa-caret-down {
+           position: absolute;
+           top: 17px;
+           left: 18px;
+         }
 
-        &.scheduler {
+         &.scheduler {
 
-          .icon-runtimestarttime {
-            // This is because the schedule icon is not filling up its content which leads to some empty space around the font.
-            // This will cause this icon alone to be rendered differently compared to the icons from font-awesome which occupies
-            // its full width. So to compensate that this hack.
-            font-size: 24px;
-            line-height: 20px;
-          }
+           .icon-runtimestarttime {
+             // This is because the schedule icon is not filling up its content which leads to some empty space around the font.
+             // This will cause this icon alone to be rendered differently compared to the icons from font-awesome which occupies
+             // its full width. So to compensate that this hack.
+             font-size: 24px;
+             line-height: 20px;
+           }
 
-          .button-label {
-            line-height: 10px;
-            margin-top: -2px;
-          }
+           .button-label {
+             line-height: 10px;
+             margin-top: -2px;
+           }
 
-          .fa-spinner {
-            line-height: 34px;
-          }
-        }
-      }
-      .pipeline-specific-section {
-        border-left: 0;
-        display: flex;
-        width: 370px;
-        justify-content: flex-end;
-        span.metric-value {
-          color: #636363;
-          font-size: 13px;
-          font-weight: 500;
-          margin-right: 5px;
-        }
-        span.metric-label {
-          color: rgba(0, 0, 0, 0.4);
-          font-weight: 600;
-        }
-        .btn.disabled {
-          color: #cccccc;
-        }
-      }
-      .pipeline-settings {
-        width: 100%;
-        &.pipeline-summary {
-          > div {
-            padding: 0;
-          }
-        }
-        > div {
-          width: 100%;
-          padding: 10px;
-        }
-        &.pipeline-run-section {
-          position: absolute;
-          left: 0;
-          top: 43px;
-          background: #ebebeb;
-          width: 700px;
-          z-index: 1000;
-          .macro-error-container { width: 70%; }
-        }
-        &.pipeline-logs-section {
-          height: ~"calc(100vh - 146px)";
-          height: ~"-moz-calc(100vh - 146px)";
-          height: ~"-webkit-calc(100vh - 146px)";
-          box-shadow: none;
+           .fa-spinner {
+             line-height: 34px;
+           }
+         }
+       }
+       .pipeline-specific-section {
+         border-left: 0;
+         display: flex;
+         width: 370px;
+         justify-content: flex-end;
+         span.metric-value {
+           color: #636363;
+           font-size: 13px;
+           font-weight: 500;
+           margin-right: 5px;
+         }
+         span.metric-label {
+           color: rgba(0, 0, 0, 0.4);
+           font-weight: 600;
+         }
+         .btn.disabled {
+           color: #cccccc;
+         }
+       }
+       .pipeline-settings {
+         width: 100%;
+         &.pipeline-summary {
+           > div {
+             padding: 0;
+           }
+         }
+         > div {
+           width: 100%;
+           padding: 10px;
+         }
+         &.pipeline-run-section {
+           position: absolute;
+           left: 0;
+           top: 43px;
+           background: #ebebeb;
+           width: 700px;
+           z-index: 1000;
+           .macro-error-container { width: 70%; }
+         }
+         &.pipeline-logs-section {
+           height: ~"calc(100vh - 146px)";
+           height: ~"-moz-calc(100vh - 146px)";
+           height: ~"-webkit-calc(100vh - 146px)";
+           box-shadow: none;
 
-          .logs-table {
-            height: ~"calc(100vh - 263px)";
-            height: ~"-moz-calc(100vh - 263px)";
-            height: ~"-webkit-calc(100vh - 263px)";
+           .logs-table {
+             height: ~"calc(100vh - 263px)";
+             height: ~"-moz-calc(100vh - 263px)";
+             height: ~"-webkit-calc(100vh - 263px)";
 
-            tbody {
-              .message-holder {
-                td {
-                  border-bottom: 0;
-                }
-              }
-            }
-          }
-          .fa.fa-expand { display: none; }
-        }
-      }
-      cask-resource-center-button {
-        width: 58px;
-        display: inline-block;
-        margin-left: 20px;
-        .cask-resourcecenter-button {
-          top: 65px;
-        }
-      }
-    }
-  }
-  &.state-hydrator-list {
-    div.side-panel.top {
-      font-weight: 500;
-      left: 0;
-      z-index: 999;
-      height: 60px;
-      box-shadow: 0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%);
-      h1:not(.fa) {
-        border-right: 1px solid @table-border-color;
-        display: inline-block;
-        font-size: 20px;
-        line-height: 60px;
-        margin: 0;
-        padding: 0 15px;
-      }
-      > div {
-        padding: 7px 15px;
-        span {
-          display: block;
-          &:first-child { font-size: 15px; }
-          &:last-child { font-size: 18px; }
-        }
-      }
-      ul {
-        line-height: 60px;
-        margin: 0;
-        li {
-          padding: 0 15px;
-          i {
-            font-size: 22px;
-            margin-right: 10px;
-            vertical-align: sub;
-          }
-          span {
-            font-size: 15px;
-            &:first-child { padding-right: 5px; }
-          }
-        }
-      }
-      a.btn-primary {
-        position: absolute;
-        right: 40px;
-        top: 35px;
-        padding: 12px 16px;
-        border-radius: 50%;
-        span.fa {
-          font-size: 24px;
-          vertical-align: middle;
-        }
-      }
-      cask-resource-center-button {
-        width: 58px;
-        display: inline-block;
-        margin-left: 20px;
-        .cask-resourcecenter-button {
-          top: 78px;
-        }
-      }
-    }
-  }
-  .pipeline-run-section {
-    position: absolute;
-    right: 80px;
-    top: 94px;
-    background: #ebebeb;
-    width: 700px;
-    z-index: 999;
-    box-shadow: 0 7px 7px rgba(0,0,0,.1),0 19px 59px rgba(0,0,0,.2);
-    .macro-error-container { width: 70%; }
+             tbody {
+               .message-holder {
+                 td {
+                   border-bottom: 0;
+                 }
+               }
+             }
+           }
+           .fa.fa-expand { display: none; }
+         }
+       }
+       cask-resource-center-button {
+         width: 58px;
+         display: inline-block;
+         margin-left: 20px;
+         .cask-resourcecenter-button {
+           top: 65px;
+         }
+       }
+     }
+   }
+   &.state-hydrator-list {
+     div.side-panel.top {
+       font-weight: 500;
+       left: 0;
+       z-index: 999;
+       height: 60px;
+       box-shadow: 0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%);
+       h1:not(.fa) {
+         border-right: 1px solid @table-border-color;
+         display: inline-block;
+         font-size: 20px;
+         line-height: 60px;
+         margin: 0;
+         padding: 0 15px;
+       }
+       > div {
+         padding: 7px 15px;
+         span {
+           display: block;
+           &:first-child { font-size: 15px; }
+           &:last-child { font-size: 18px; }
+         }
+       }
+       ul {
+         line-height: 60px;
+         margin: 0;
+         li {
+           padding: 0 15px;
+           i {
+             font-size: 22px;
+             margin-right: 10px;
+             vertical-align: sub;
+           }
+           span {
+             font-size: 15px;
+             &:first-child { padding-right: 5px; }
+           }
+         }
+       }
+       a.btn-primary {
+         position: absolute;
+         right: 40px;
+         top: 35px;
+         padding: 12px 16px;
+         border-radius: 50%;
+         span.fa {
+           font-size: 24px;
+           vertical-align: middle;
+         }
+       }
+       cask-resource-center-button {
+         width: 58px;
+         display: inline-block;
+         margin-left: 20px;
+         .cask-resourcecenter-button {
+           top: 78px;
+         }
+       }
+     }
+   }
+   .pipeline-run-section {
+     position: absolute;
+     right: 80px;
+     top: 94px;
+     background: #ebebeb;
+     width: 700px;
+     z-index: 999;
+     box-shadow: 0 7px 7px rgba(0,0,0,.1),0 19px 59px rgba(0,0,0,.2);
+     .macro-error-container { width: 70%; }
 
-    h5 {
-      margin: 10px 10px 0;
-    }
-    .arguments-container {
-      padding: 10px;
-      width: 100%;
-      // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
-      max-height: ~"calc(100vh - 216px)";
-      max-height: ~"-moz-calc(100vh - 216px)";
-      max-height: ~"-webkit-calc(100vh - 216px)";
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    .clearfix { padding: 10px; }
+     h5 {
+       margin: 10px 10px 0;
+     }
+     .arguments-container {
+       padding: 10px;
+       width: 100%;
+       // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
+       max-height: ~"calc(100vh - 216px)";
+       max-height: ~"-moz-calc(100vh - 216px)";
+       max-height: ~"-webkit-calc(100vh - 216px)";
+       overflow-y: auto;
+       overflow-x: hidden;
+     }
+     .clearfix { padding: 10px; }
 
-    .preview-start-section {
-      display: flex;
-      align-items: center;
+     .preview-start-section {
+       display: flex;
+       align-items: center;
 
-      .preview-start-button {
-        margin-left: auto;
-      }
-    }
-  }
-}
+       .preview-start-button {
+         margin-left: auto;
+       }
+     }
+   }
+ }

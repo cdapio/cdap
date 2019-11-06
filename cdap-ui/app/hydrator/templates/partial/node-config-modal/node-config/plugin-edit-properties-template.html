@@ -20,10 +20,14 @@
       <span class="required">Label</span>
       <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
     </label>
-    <div class="col-xs-8 label-input-container">
-      <input type="text" class="form-control"
+    <div class="col-xs-8">
+      <!-- <input type="text" class="form-control"
            ng-disabled="isDisabled"
-           ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+           ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label"> -->
+      <input-validator
+        disabled="isDisabled"
+        model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+      </input-validator>
     </div>
   </div>
 

@@ -1,0 +1,36 @@
+<!--
+  Copyright © 2017 - 2018 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div  style="display: flex;flex-direction: column; padding-top: 0px; padding-left: 0px;
+    padding-right: 0px;background-color: white; border: none;">
+  <div style="display: flex;align-items: center;">
+      <input type="text" class="form-control"
+         placeholder="InputValidate.placeholder"
+         ng-disabled="InputValidate.disabled"
+         ng-model="InputValidate.model"
+         ng-keyup="InputValidate.onValueChange($event)" />
+      <!-- <span  style="padding-left: 8px">
+          <span class="fa fa-info-circle help"
+            uib-tooltip="{{ InputValidate.getInputInfoMessage() }}"
+            tooltip-placement="bottom">
+          </span>
+      </span> -->
+  </div>
+
+  <div  style="color: red;" ng-if="InputValidate.showErrorMessage" >
+      {{ InputValidate.getErrorMessage() }}
+      </div>
+</div>

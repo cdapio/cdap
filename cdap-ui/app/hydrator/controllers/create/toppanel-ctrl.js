@@ -68,6 +68,30 @@ class HydratorPlusPlusTopPanelCtrl {
     this.showIcon = window.CaskCommon.ThemeHelper.Theme.showPipelineCreateButton;
     $scope.getClassName = window.CaskCommon.Util.getClassNameForHeaderFooter();
 
+    this.TEMPLATES = {
+      'NAME': {
+        allowed: {
+          ALLOWED_TAGS: [],
+        },
+        dom_sanitizer: window['DOMPurify'].sanitize,
+        info: 'cannot contain any xml tags, space required before and after logical operator. like x < y.',
+        validate: function(val) {
+          const clean = _.unescape(this.dom_sanitizer(val, this.allowed));
+          return clean === val ? true : false;
+        }
+      },
+    };
+    this.inputs = {
+      'name': {
+        required: false,
+        error: ''
+      },
+      'description': {
+        required: false,
+        error: ''
+      }
+    };
+
     if ($stateParams.isClone) {
       this.openMetadata();
     }
@@ -199,6 +223,7 @@ class HydratorPlusPlusTopPanelCtrl {
   resetMetadata(event) {
     this.setState();
     this.metadataExpanded = false;
+    Object.keys(this.inputs).map(x => this.inputs[x].error = '');
     event.preventDefault();
     event.stopPropagation();
   }
@@ -216,14 +241,45 @@ class HydratorPlusPlusTopPanelCtrl {
     event.stopPropagation();
   }
   onEnterOnMetadata(event) {
+    this.inputs['name'].error = this.inputError(this.state.metadata.name, 'name');
     // Save when user hits ENTER key.
     if (event.keyCode === 13) {
+      if (this.isSomeInputError()) {
+        return;
+      }
       this.saveMetadata(event);
       this.metadataExpanded = false;
     } else if (event.keyCode === 27) {
       // Reset if the user hits ESC key.
       this.resetMetadata(event);
     }
+  }
+  onEnterOnMetadataDescription(event) {
+    this.inputs['description'].error = this.inputError(this.state.metadata.description, 'description');
+    if (event.keyCode === 27) {
+      // Reset if the user hits ESC key.
+      this.resetMetadata(event);
+    }
+  }
+
+  inputError(dirty, inputName, config = 'NAME') {
+    if (inputName && !this.state.metadata[inputName]) {
+      if (!this.inputs[inputName].required) {
+        return '';
+      } else {
+        return 'This is a required field.';
+      }
+    }
+
+    const isValid = this.TEMPLATES[config].validate(dirty);
+    const error = isValid ? '' : 'Invalid input. Cannot contain any xml tags, space required before and after logical operator. like x < y.';
+    return error;
+  }
+  isSomeInputError() {
+    return Object.keys(this.inputs).some(x => this.inputs[x].error !== '');
+  }
+  getInputInfoMessage(key) {
+    return (key === 'name' ? 'Pipeline Name ' : 'Pipeline Description ') + this.TEMPLATES['NAME'].info;
   }
 
   onImport() {

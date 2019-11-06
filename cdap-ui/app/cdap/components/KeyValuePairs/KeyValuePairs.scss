@@ -13,30 +13,51 @@
 * License for the specific language governing permissions and limitations under
 * the License.
 */
+@import '~styles/variables.scss';
 
 $reset-button-color: #0275d8;
 
 .key-value-pair-preference {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   margin-right: -25px;
+  margin-bottom: 10px !important;
 
   input:focus {
     outline: 0;
+  }
+
+  .key-container {
+    border: none;
+    border: none;
+    width: 40%;
+    margin-right: 10px;
+
+  }
+  .value-container {
+    border: none;
+    border: none;
+    width: 40%;
+    margin-right: 10px;
   }
   .key-input,
   .value-input {
     border: none;
     border-bottom: 1px solid lightgrey;
     border-radius: 0;
-    width: 40%;
-    margin-right: 10px;
+    width: 100%;
 
     &.wider {
       width: 50%;
     }
   }
+
+  .invalid-feedback {
+    display: block;
+    color: $red-02;
+  }
+
   .add-row-btn,
   .remove-row-btn {
     background-color: transparent;

@@ -27,6 +27,8 @@ import {objectQuery} from 'services/helpers';
 import BtnWithLoading from 'components/BtnWithLoading';
 import ee from 'event-emitter';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 const PREFIX = 'features.DataPrepConnections.AddConnections.S3';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
@@ -112,6 +114,26 @@ export default class S3Connection extends Component {
       connectionResult: {
         type: null,
         message: null
+      },
+      inputs: {
+        'name': {
+          'error': '',
+          'label': 'Connection name',
+          'template': 'NAME',
+          'required': true,
+        },
+        'accessKeyId': {
+          'error': '',
+          'label': 'Access key ID',
+          'template': 'AWS_ACCESS_KEY_ID',
+          'required': true,
+        },
+        'accessSecretKey': {
+          'error': '',
+          'label': 'Secret access key',
+          'template': 'AWS_SECRET_ACCESS_KEY',
+          'required': true,
+        },
       }
     };
 
@@ -263,14 +285,40 @@ export default class S3Connection extends Component {
       });
   }
 
+  /** Return true if there is some input error. */
+  testInputs() {
+    const isSomeError = Object.keys(this.state.inputs).some(key => this.state.inputs[key]['error'] !== '');
+    return (isSomeError ? true : false);
+  }
+
   handleChange(key, e) {
-    this.setState({
-      [key]: e.target.value
-    });
+    if (Object.keys(this.state.inputs).includes(key)) {
+      // validate input
+      const isValid = types[this.state.inputs[key]['template']].validate(e.target.value);
+      let errorMsg = '';
+      if (e.target.value && !isValid) {
+        errorMsg = types[this.state.inputs[key]['template']].getErrorMsg();
+      }
+
+      this.setState({
+        [key]: e.target.value,
+        inputs: {
+          ...this.state.inputs,
+          [key]: {
+            ...this.state.inputs[key],
+            'error': errorMsg
+          }
+        }
+      });
+    } else {
+      this.setState({
+        [key]: e.target.value
+      });
+    }
   }
 
   renderTestButton() {
-    let disabled = !this.state.name ||
+    let disabled = this.testInputs() || !this.state.name ||
       !this.state.accessKeyId ||
       !this.state.accessSecretKey ||
       !this.state.region;
@@ -288,7 +336,7 @@ export default class S3Connection extends Component {
   }
 
   renderAddConnectionButton() {
-    let disabled = !this.state.name ||
+    let disabled = this.testInputs() || !this.state.name ||
       !this.state.accessKeyId ||
       !this.state.accessSecretKey ||
       !this.state.region;
@@ -330,13 +378,17 @@ export default class S3Connection extends Component {
         <div className="form">
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
-              {T.translate(`${PREFIX}.name`)}
-              <span className="asterisk">*</span>
+                {T.translate(`${PREFIX}.name`)}
+                { this.state.inputs['name']['required'] &&
+                    <span className="asterisk">*</span>
+                }
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <input
+                <ValidatedInput
                   type="text"
+                  label={this.state.inputs['name']['label']}
+                  validationError={this.state.inputs['name']['error']}
                   className="form-control"
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
@@ -350,12 +402,16 @@ export default class S3Connection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.accessKeyId`)}
-              <span className="asterisk">*</span>
+              { this.state.inputs['accessKeyId']['required'] &&
+                  <span className="asterisk">*</span>
+              }
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <input
+                <ValidatedInput
                   type="text"
+                  label={this.state.inputs['accessKeyId']['label']}
+                  validationError={this.state.inputs['accessKeyId']['error']}
                   className="form-control"
                   value={this.state.accessKeyId}
                   onChange={this.handleChange.bind(this, 'accessKeyId')}
@@ -368,12 +424,16 @@ export default class S3Connection extends Component {
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.accessSecretKey`)}
-              <span className="asterisk">*</span>
+              { this.state.inputs['accessSecretKey']['required'] &&
+                  <span className="asterisk">*</span>
+              }
             </label>
             <div className={INPUT_COL_CLASS}>
               <div className="input-text">
-                <input
+                <ValidatedInput
                   type="text"
+                  label={this.state.inputs['accessSecretKey']['label']}
+                  validationError={this.state.inputs['accessSecretKey']['error']}
                   className="form-control"
                   value={this.state.accessSecretKey}
                   onChange={this.handleChange.bind(this, 'accessSecretKey')}

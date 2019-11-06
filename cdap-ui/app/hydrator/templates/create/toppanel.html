@@ -44,26 +44,54 @@
            tooltip-placement="bottom-left"
            tooltip-append-to-body="true"
            tooltip-class="error-tooltip"></div>
-      <input type="text"
-             id="pipeline-name-input"
-             ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"
-             ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
-             placeholder="Name your pipeline"
-             ng-keyup="HydratorPlusPlusTopPanelCtrl.onEnterOnMetadata($event)" />
+      <div class="pipeline-input"
+        ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+        >
+          <input type="text"
+          id="pipeline-name-input"
+          ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['name']"
+          placeholder="Name your pipeline"
+          ng-keyup="HydratorPlusPlusTopPanelCtrl.onEnterOnMetadata($event)" />
+          <!-- <span>
+              <span class="fa fa-info-circle"
+                uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.getInputInfoMessage('name') }}"
+                tooltip-placement="bottom"
+              >
+              </span>
+          </span> -->
+      </div>
+
+      <div class="error-message" ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded">
+      {{ HydratorPlusPlusTopPanelCtrl.inputs['name'].error }}
+      </div>
       <div class="pipeline-description"
            ng-class="{'placeholder': !HydratorPlusPlusTopPanelCtrl.state.metadata['description'].length}"
            ng-if="!HydratorPlusPlusTopPanelCtrl.metadataExpanded"
            ng-bind="HydratorPlusPlusTopPanelCtrl.parsedDescription"
            uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.parsedDescription }}"
-           tooltip-placement="bottom-left"
+           tooltip-placement="left"
            tooltip-append-to-body="true"
            tooltip-class="toppanel-tooltip"
            ></div>
-      <textarea ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['description']"
-                placeholder="Enter a description for your pipeline."
-                ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"></textarea>
+      <div class="pipeline-input"
+        ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+        >
+        <textarea ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['description']"
+                  ng-keyup="HydratorPlusPlusTopPanelCtrl.onEnterOnMetadataDescription($event)"
+                  placeholder="Enter a description for your pipeline."></textarea>
+        <!-- <span>
+            <span class="fa fa-info-circle"
+              uib-tooltip="{{ HydratorPlusPlusTopPanelCtrl.getInputInfoMessage('description') }}"
+              tooltip-placement="left"
+            >
+            </span>
+        </span> -->
+      </div>
+      <div class="error-message" ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded">
+        {{ HydratorPlusPlusTopPanelCtrl.inputs['description'].error }}
+      </div>
       <div class="btn-group pull-left" ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded">
-        <button type="button" class="btn btn-primary save-button" ng-click="HydratorPlusPlusTopPanelCtrl.saveMetadata($event)">Save</button>
+        <button type="button" class="btn btn-primary save-button" ng-click="HydratorPlusPlusTopPanelCtrl.saveMetadata($event)" ng-disabled="HydratorPlusPlusTopPanelCtrl.isSomeInputError()">Save</button>
         <button type="button" class="btn btn-secondary cancel-button" ng-click="HydratorPlusPlusTopPanelCtrl.resetMetadata($event)">Cancel</button>
       </div>
     </div>

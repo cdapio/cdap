@@ -16,6 +16,7 @@
 
 import {objectQuery} from 'services/helpers';
 import {GLOBALS} from 'services/global-constants';
+import types from 'services/inputValidationTemplates';
 
 let countUnFilledRequiredFields = (node) => {
   var requiredFieldCount = 0;
@@ -31,6 +32,31 @@ let countUnFilledRequiredFields = (node) => {
   return requiredFieldCount;
 };
 
+let isValidValue = (dirty) => {
+  return types['NAME'].validate(dirty);
+};
+
+let countInvalidFields = (node) => {
+  var invalidFieldCount = 0;
+  // check the label value of the plugins
+  if (node.plugin && node.plugin.label) {
+    if (!isValidValue(node.plugin.label)) {
+      invalidFieldCount++;
+    }
+  }
+
+  if (typeof node._backendProperties === 'object' && Object.keys(node._backendProperties).length) {
+    for (let key in node._backendProperties) {
+      if (node._backendProperties.hasOwnProperty(key) && (node._backendProperties[key].type ==='string' || node._backendProperties[key]['widget-type'] === 'textbox')) {
+        if (node.plugin.properties && node.plugin.properties[key] &&  !isValidValue(node.plugin.properties[key])) {
+          invalidFieldCount++;
+        }
+      }
+    }
+  }
+  return invalidFieldCount;
+};
+
 let isRequiredFieldsFilled = (nodes, cb) => {
   if (!objectQuery(nodes, 'length')) {
     return;
@@ -42,6 +68,21 @@ let isRequiredFieldsFilled = (nodes, cb) => {
       cb(error, node, unFilledRequiredFieldsCount);
     } else {
       cb(false, node, unFilledRequiredFieldsCount);
+    }
+  });
+};
+
+let isInvalidFields = (nodes, cb) => {
+  if (!objectQuery(nodes, 'length')) {
+    return;
+  }
+  nodes.forEach( node => {
+    let invalidFieldsCount = countInvalidFields(node);
+    let error = 'INVALID-VALUE-FIELDS';
+    if (invalidFieldsCount > 0) {
+      cb(error, node, invalidFieldsCount);
+    } else {
+      cb(false, node, invalidFieldsCount);
     }
   });
 };
@@ -352,6 +393,7 @@ let validateImportJSON = (configString) => {
 export {
   isUniqueNodeNames,
   isRequiredFieldsFilled,
+  isInvalidFields,
   countUnFilledRequiredFields,
   hasValidName,
   hasValidResources,

@@ -810,6 +810,13 @@ class HydratorPlusPlusConfigStore {
         setErrorWarningFlagOnNode(node);
       }
     });
+    errorFactory.isInvalidFields(nodes, (err, node, invalidFieldsCount) => {
+      if (err) {
+        isStateValid = false;
+        node.errorCount += invalidFieldsCount;
+        setErrorWarningFlagOnNode(node);
+      }
+    });
     errorFactory.isUniqueNodeNames(nodes, (err, node) => {
       if (err) {
         isStateValid = false;

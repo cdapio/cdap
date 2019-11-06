@@ -37,6 +37,8 @@ import isEmpty from 'lodash/isEmpty';
 import cloneDeep from 'lodash/cloneDeep';
 import {Observable} from 'rxjs/Observable';
 import CardActionFeedback from 'components/CardActionFeedback';
+import ValidatedInput from 'components/ValidatedInput';
+import types from 'services/inputValidationTemplates';
 
 require('./IngestDataFromDataPrep.scss');
 
@@ -87,6 +89,8 @@ export default class IngestDataFromDataPrep extends Component {
       sinkPluginsForDataset: {},
       batchPipelineConfig: {},
       datasetName: '',
+      inputError: '',
+      inputTemplate: 'NAME',
       copyingSteps: [...copyingSteps],
       copyInProgress: false,
       // This is to enable closing the modal on workflow start.
@@ -155,8 +159,17 @@ export default class IngestDataFromDataPrep extends Component {
   }
 
   handleDatasetNameChange = (e) => {
+    const isValid = types[this.state.inputTemplate].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = types[this.state.inputTemplate].getErrorMsg();
+    }
+    if (!e.target.value) {
+      errorMsg = 'Dataset Name is required.';
+    }
     this.setState({
-      datasetName: e.target.value
+      datasetName: e.target.value,
+      inputError: errorMsg
     });
   }
 
@@ -725,17 +738,14 @@ export default class IngestDataFromDataPrep extends Component {
                 {T.translate(`${PREFIX}.Form.requiredLabel`)}
                 <span className="text-danger">*</span>
               </p>
-              <Input
+              <ValidatedInput
+                type="text"
+                label="name"
+                inputInfo={ T.translate(`${PREFIX}.Form.datasetTooltip`)}
+                validationError={this.state.inputError}
                 value={this.state.datasetName}
                 onChange={this.handleDatasetNameChange}
               />
-              <IconSVG
-                id="dataset-name-info-icon"
-                name="icon-info-circle"
-              />
-              <UncontrolledTooltip target="dataset-name-info-icon" delay={{show: 250, hide: 0}}>
-                {T.translate(`${PREFIX}.Form.datasetTooltip`)}
-              </UncontrolledTooltip>
             </Col>
           </FormGroup>
           {this.renderDatasetSpecificContent()}
@@ -760,7 +770,7 @@ export default class IngestDataFromDataPrep extends Component {
           <button
             className="btn btn-primary"
             onClick={this.submitForm}
-            disabled={isEmpty(this.state.datasetName)}
+            disabled={this.state.inputError || isEmpty(this.state.datasetName)}
           >
             {T.translate(`${PREFIX}.createBtnLabel`)}
           </button>

@@ -29,7 +29,7 @@ import {defaultAction, composeEnhancers} from 'services/helpers';
 import {createStore} from 'redux';
 import {HYDRATOR_DEFAULT_VALUES} from 'services/global-constants';
 import range from 'lodash/range';
-import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues} from 'components/KeyValuePairs/KeyValueStoreActions';
+import {convertMapToKeyValuePairsObj, keyValuePairsHaveMissingValues, keyValuePairsHaveInvalidValues} from 'components/KeyValuePairs/KeyValueStoreActions';
 import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
 import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
@@ -105,6 +105,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   maxConcurrentRuns: 1,
   isMissingKeyValues: false,
   modelessOpen: false,
+  isInvalidKeyValues:false,
 
   pipelineVisualConfiguration: {
     isBatch: false,
@@ -216,6 +217,10 @@ const checkIfMissingKeyValues = (runtimeArguments, customConfig) => {
   return keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig);
 };
 
+const checkIfInvalidKeyValues = (keyValues, customConfig) => {
+  return keyValuePairsHaveInvalidValues(keyValues) || keyValuePairsHaveInvalidValues(customConfig);
+};
+
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
   switch (action.type) {
     case ACTIONS.INITIALIZE_CONFIG:
@@ -228,7 +233,8 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
-        isMissingKeyValues: checkIfMissingKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs)
+        isMissingKeyValues: checkIfMissingKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs),
+        isInvalidKeyValues:checkIfInvalidKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs),
       };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
@@ -322,7 +328,9 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         customConfigKeyValuePairs: action.payload.keyValues,
-        isMissingKeyValues: checkIfMissingKeyValues(state.runtimeArgs, action.payload.keyValues)
+        isMissingKeyValues: checkIfMissingKeyValues(state.runtimeArgs, action.payload.keyValues),
+        isInvalidKeyValues:checkIfInvalidKeyValues(state.runtimeArgs, action.payload.keyValues),
+
       };
     case ACTIONS.SET_CUSTOM_CONFIG: {
       // Need to remove previous custom configs from config.properties before setting new ones

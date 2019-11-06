@@ -40,7 +40,8 @@ function getEs6Directives(isNegate) {
     'timeline',
     'widget-container',
     'plugin-functions',
-    'my-link-button'
+    'my-link-button',
+    'input-validator'
   ];
 
   return es6directives.map(function (directive) {
@@ -225,6 +226,7 @@ gulp.task('js:lib', function() {
       './bower_components/marked/marked.min.js',
       './bower_components/angular-marked/dist/angular-marked.min.js',
 
+      './bower_components/DOMPurify/dist/purify.min.js',
       './bower_components/js-beautify/js/lib/beautify.js',
       './bower_components/angular-file-saver/dist/angular-file-saver.bundle.js',
       './bower_components/ngInfiniteScroll/build/ng-infinite-scroll.min.js',

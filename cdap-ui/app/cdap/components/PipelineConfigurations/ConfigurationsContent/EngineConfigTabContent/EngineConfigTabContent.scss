@@ -63,12 +63,12 @@ $input-label-color: $grey-03;
         margin-right: -25px;
       }
       .key-value-pair-preference {
-        margin-bottom: 15px;
         justify-content: initial;
         display: grid;
         grid-template-columns: 1fr 1fr auto 100px;
         grid-gap: 10px;
-        input {
+        .value-container,
+        .key-container {
           width: 100%;
         }
       }

@@ -33,7 +33,8 @@
     "ngInfiniteScroll": "1.2.1",
     "d3-timeline": "0.0.5",
     "angular-inview": "1.5.7",
-    "node-uuid": "1.4.3"
+    "node-uuid": "1.4.3",
+    "DOMPurify": "dompurify#^1.0.11"
   },
   "resolutions": {
     "angular": "1.4.3",

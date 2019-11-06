@@ -91,6 +91,7 @@
       height: calc(100% + 40px);
       background: rgba(0, 0, 0, 0.8);
       color: white;
+      z-index: 100;
 
       .close-section {
         cursor: pointer;

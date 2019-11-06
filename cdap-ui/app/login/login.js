@@ -24,12 +24,13 @@ import CardActionFeedback from 'components/CardActionFeedback';
 
 import * as util from './utils';
 import Footer from '../cdap/components/Footer';
+import ValidatedInput from '../cdap/components/ValidatedInput';
+import types from '../cdap/services/inputValidationTemplates';
 
 require('./styles/lib-styles.scss');
 require('./login.scss');
 import T from 'i18n-react';
 T.setTexts(require('./text/text-en.yaml'));
-
 
 class Login extends Component {
   constructor(props) {
@@ -39,9 +40,28 @@ class Login extends Component {
       password: '',
       message: '',
       formState: false,
-      rememberUser: false
+      rememberUser: false,
+      inputs: this.getValidationState()
     };
   }
+
+  getValidationState = () => {
+    return {
+      name: {
+        error: '',
+        required: true,
+        template: 'NAME',
+        label: 'userName',
+      },
+      password: {
+        error: '',
+        required: false,
+        template: 'NAME',
+        label: 'password',
+      },
+    };
+  }
+
   login(e) {
     e.preventDefault();
     if (this.state.rememberUser) {
@@ -67,31 +87,54 @@ class Login extends Component {
       })
       .then((res) => {
         cookie.save('CDAP_Auth_Token', res.access_token, { path: '/'});
-        cookie.save('CDAP_Auth_User', this.state.username);
+        cookie.save('CDAP_Auth_User', this.state.username, { path: '/'});
         var queryObj = util.getQueryParams(location.search);
-        queryObj.redirectUrl = queryObj.redirectUrl || '/';
+        queryObj.redirectUrl = queryObj.redirectUrl || (location.pathname.endsWith('/login') ? '/': location.pathname);
         window.location.href = queryObj.redirectUrl;
       });
   }
+
   onUsernameUpdate(e) {
+
+    let inputsValue = {...this.state.inputs};
+    const isValid = types[this.state.inputs.name.template].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = 'Invalid input, can not contain any xml tag';// types[this.state.inputs.name.template].getErrorMsg();
+    }
+    inputsValue.name.error = errorMsg;
+
     this.setState({
       username: e.target.value,
       formState: e.target.value.length && this.state.password.length,
       message: '',
+      inputs: inputsValue,
     });
   }
+
   onPasswordUpdate(e) {
+    let inputsValue = {...this.state.inputs};
+    const isValid = types[this.state.inputs.password.template].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = 'Invalid input, can not contain any xml tag';// types[this.state.inputs.password.template].getErrorMsg();
+    }
+    inputsValue.password.error = errorMsg;
+
     this.setState({
       password: e.target.value,
       formState: this.state.username.length && e.target.value.length,
       message: '',
+      inputs: inputsValue,
     });
   }
+
   rememberUser() {
     this.setState({
       rememberUser: true
     });
   }
+
   render() {
     let footer;
     if (this.state.message) {
@@ -112,23 +155,23 @@ class Login extends Component {
             onSubmit={this.login.bind(this)}
           >
             <div className="form-group">
-              <input
-                id="username"
-                className="form-control"
-                name="username"
-                value={this.state.username}
-                placeholder={T.translate('login.placeholders.username')}
-                onChange={this.onUsernameUpdate.bind(this)}
-              />
+              <ValidatedInput
+                  type="text"
+                  label={this.state.inputs.name.label}
+                  placeholder={T.translate('login.placeholders.username')}
+                  validationError={this.state.inputs.name.error}
+                  value={this.state.username}
+                  onChange={this.onUsernameUpdate.bind(this)}
+                />
             </div>
             <div className="form-group">
-              <input
-                id="password"
-                className="form-control"
-                placeholder={T.translate('login.placeholders.password')}
-                onChange={this.onPasswordUpdate.bind(this)}
-                type="password"
-              />
+              <ValidatedInput
+                    type="password"
+                    label={this.state.inputs.password.label}
+                    placeholder={T.translate('login.placeholders.password')}
+                    validationError={this.state.inputs.password.error}
+                    onChange={this.onPasswordUpdate.bind(this)}
+                  />
             </div>
             <div className="form-group">
               <div className="clearfix">
@@ -152,7 +195,7 @@ class Login extends Component {
                 id="submit"
                 type="submit"
                 className="btn btn-primary btn-block"
-                disabled={!this.state.formState}
+                disabled={!this.state.formState || this.state.inputs.name.error.length > 0 || this.state.inputs.password.error.length > 0}
                 onClick={this.login.bind(this)}
               >
                 {T.translate('login.labels.loginbtn')}
@@ -164,11 +207,10 @@ class Login extends Component {
     );
   }
 }
-ReactDOM.render(
-  <Login />,
+
+ReactDOM.render(<Login />,
   document.getElementById('login-form')
 );
-ReactDOM.render(
-  <Footer />,
+ReactDOM.render(<Footer />,
   document.getElementById('footer-container')
 );

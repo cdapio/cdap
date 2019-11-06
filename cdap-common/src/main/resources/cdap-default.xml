@@ -1659,6 +1659,14 @@
     </description>
   </property>
 
+  <property>
+    <name>local.market.base.url</name>
+    <value>http://artifacts.ggn.in.guavus.com/ggn-archive/marketplace/v2</value>
+    <description>
+      Guavus MarketPlace
+    </description>
+  </property>
+
 
   <!-- Master Configuration -->
 
@@ -3787,4 +3795,12 @@
     </description>
   </property>
 
+ <property>
+    <name>default.white.list.ips</name>
+    <value>http://market.cask.co,http://artifacts.ggn.in.guavus.com</value>
+    <description>
+      App will allow to acess the ohter urls if they are define in this proprety by comma seperated.
+      e.g http://abc.com,https://xyz.com.
+    </description>
+  </property>
 </configuration>

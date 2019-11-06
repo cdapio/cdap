@@ -22,6 +22,7 @@ var request = require('request'),
 
 var log = log4js.getLogger('default');
 var hash = require('object-hash');
+var UrlValidator = require('./urlValidator.js');
 
 /**
  * Default Poll Interval used by the backend.
@@ -39,7 +40,10 @@ var POLL_INTERVAL = 10*1000;
  *
  * @param {Object} SockJS connection
  */
-function Aggregator (conn) {
+
+function Aggregator (conn, cdapConfig) {
+
+  this.urlValidator = new UrlValidator(cdapConfig);
   // make 'new' optional
   if ( !(this instanceof Aggregator) ) {
     return new Aggregator(conn);
@@ -54,8 +58,8 @@ function Aggregator (conn) {
   // as send from the backend. The FE has to guarantee that the
   // the resource id is unique within a websocket connection.
   this.polledResources = {};
-}
 
+}
 /**
  * Checks if the 'id' received from the client is already registered -- This
  * check was added because for whatever reason 'Safari' was sending multiple
@@ -316,8 +320,18 @@ function onSocketData (message) {
   try {
     message = JSON.parse(message);
     var r = message.resource;
-
-    switch(message.action) {
+    if (!this.urlValidator.isValidURL(r.url) || !this.urlValidator.isValidRequest(r.url, r.body)) {
+      var err = {
+        statusCode: 400,
+      };
+      var body = {
+        message: 'Bad Request'
+      };
+      emitResponse.call(this, r, false, err, body);
+      log.error('Bad Socket Request');
+      return;
+    }
+    switch (message.action) {
       case 'template-config':
         log.debug('ETL application config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
         this.pushConfiguration(r);
