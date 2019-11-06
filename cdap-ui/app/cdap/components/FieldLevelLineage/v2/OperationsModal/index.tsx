@@ -37,7 +37,7 @@ const styles = () => {
 };
 
 function OperationsModalView() {
-  const { showOperations, toggleOperations, activeField, direction, loading } = useContext<
+  const { showOperations, toggleOperations, activeField, direction, loadingOps } = useContext<
     IContextState
   >(FllContext);
 
@@ -72,7 +72,7 @@ function OperationsModalView() {
         </div>
       </ModalHeader>
 
-      <ModalBody>{loading ? loadingIndicator : <ModalContent />}</ModalBody>
+      <ModalBody>{loadingOps ? loadingIndicator : <ModalContent />}</ModalBody>
     </Modal>
   );
 }

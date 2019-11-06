@@ -30,6 +30,7 @@ import debounce from 'lodash/debounce';
 import { grey, orange } from 'components/ThemeWrapper/colors';
 import If from 'components/If';
 import TopPanel from 'components/FieldLevelLineage/v2/TopPanel';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 const styles = (theme): StyleRules => {
   return {
@@ -37,6 +38,7 @@ const styles = (theme): StyleRules => {
       overflowY: 'scroll',
       background: theme.palette.grey[700],
       height: 'inherit',
+      minHeight: '480px', // to avoid cutting off date picker calendar
     },
     root: {
       paddingLeft: '100px',
@@ -155,6 +157,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   }
 
   private drawLinks = () => {
+    if (this.context.loadingLineage) {
+      return;
+    }
     const allLinks = this.context.links;
     const activeField = this.context.activeField;
 
@@ -211,6 +216,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
           activeCauseSets,
           activeImpactSets,
           showingOneField,
+          loadingLineage,
         }) => {
           let visibleLinks = links;
           let visibleCauseSets = causeSets;
@@ -222,62 +228,63 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
             visibleImpactSets = activeImpactSets;
           }
           const allLinks = visibleLinks.incoming.concat(visibleLinks.outgoing);
+          const loadingIndicator = (
+            <div className="loading-container text-center">
+              <LoadingSVGCentered />
+            </div>
+          );
 
+          if (loadingLineage) {
+            return (
+              <div className={this.props.classes.wrapper}>
+                <TopPanel datasetId={target} />
+                {loadingIndicator}
+              </div>
+            );
+          }
           return (
             <div className={this.props.classes.wrapper}>
               <TopPanel datasetId={target} />
-              <div className={this.props.classes.root} id="fll-container">
-                <svg id="links-container" className={this.props.classes.container}>
-                  <g>
-                    {allLinks.map((link) => {
-                      const id = `${link.source.id}_${link.destination.id}`;
-                      return <svg id={id} key={id} className="fll-link" />;
+              <If condition={!loadingLineage}>
+                <div className={this.props.classes.root} id="fll-container">
+                  <svg id="links-container" className={this.props.classes.container}>
+                    <g>
+                      {allLinks.map((link) => {
+                        const id = `${link.source.id}_${link.destination.id}`;
+                        return <svg id={id} key={id} className="fll-link" />;
+                      })}
+                    </g>
+                    <g id="selected-links" />
+                  </svg>
+                  <div data-cy="cause-fields">
+                    <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
+                    <If condition={Object.keys(visibleCauseSets).length === 0}>
+                      <FllTable type="cause" />
+                    </If>
+                    {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
+                      return (
+                        <FllTable key={tableId} tableId={tableId} fields={fields} type="cause" />
+                      );
                     })}
-                  </g>
-                  <g id="selected-links" />
-                </svg>
-                <div data-cy="cause-fields">
-                  <FllHeader type="cause" total={Object.keys(visibleCauseSets).length} />
-                  <If condition={Object.keys(visibleCauseSets).length === 0}>
-                    <FllTable type="cause" />
-                  </If>
-                  {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
-                    const isActive = tableId in activeCauseSets;
-                    return (
-                      <FllTable
-                        key={tableId}
-                        tableId={tableId}
-                        fields={fields}
-                        type="cause"
-                        isActive={isActive}
-                      />
-                    );
-                  })}
+                  </div>
+                  <div data-cy="target-fields">
+                    <FllHeader type="target" total={Object.keys(targetFields).length} />
+                    <FllTable tableId={target} fields={targetFields} type="target" />
+                  </div>
+                  <div data-cy="impact-fields">
+                    <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
+                    <If condition={Object.keys(visibleImpactSets).length === 0}>
+                      <FllTable type="impact" />
+                    </If>
+                    {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
+                      return (
+                        <FllTable key={tableId} tableId={tableId} fields={fields} type="impact" />
+                      );
+                    })}
+                  </div>
+                  <OperationsModal />
                 </div>
-                <div data-cy="target-fields">
-                  <FllHeader type="target" total={Object.keys(targetFields).length} />
-                  <FllTable tableId={target} fields={targetFields} type="target" />
-                </div>
-                <div data-cy="impact-fields">
-                  <FllHeader type="impact" total={Object.keys(visibleImpactSets).length} />
-                  <If condition={Object.keys(visibleImpactSets).length === 0}>
-                    <FllTable type="impact" />
-                  </If>
-                  {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
-                    const isActive = tableId in activeImpactSets;
-                    return (
-                      <FllTable
-                        key={tableId}
-                        tableId={tableId}
-                        fields={fields}
-                        type="impact"
-                        isActive={isActive}
-                      />
-                    );
-                  })}
-                </div>
-                <OperationsModal />
-              </div>
+              </If>
             </div>
           );
         }}
