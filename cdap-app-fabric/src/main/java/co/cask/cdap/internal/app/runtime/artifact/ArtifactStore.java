@@ -101,6 +101,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -745,6 +749,12 @@ public class ArtifactStore {
          OutputStream destinationStream = destination.getOutputStream()) {
       ByteStreams.copy(artifactContents, destinationStream);
     }
+
+    Configuration conf = new Configuration();
+    Path path = new Path(destination.toString());
+    FileSystem fs = path.getFileSystem(conf);
+    fs.setPermission(path, new FsPermission("755"));
+
     return destination;
   }
 
