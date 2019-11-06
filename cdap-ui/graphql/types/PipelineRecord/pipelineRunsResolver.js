@@ -14,22 +14,34 @@
  * the License.
  */
 
-const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('../resolvers-common.js');
+const { PIPELINE_PROGRAMS_MAP } = require('./common');
 
-let cdapConfig;
-cdapConfigurator.getCDAPConfig().then(function(value) {
-  cdapConfig = value;
-});
+async function pipelineRunsResolver(parent, args, context) {
+  const namespace = context.namespace;
+  const name = parent.name;
 
-async function queryTypeNamespacesResolver(parent, args, context) {
-  const options = resolversCommon.getGETRequestOptions();
-  options.url = urlHelper.constructUrl(cdapConfig, '/v3/namespaces');
+  const pipelineType = parent.artifact.name || 'cdap-data-pipeline';
 
-  return await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const { programType, programId } = PIPELINE_PROGRAMS_MAP[pipelineType];
+
+  const program = {
+    appId: name,
+    programType: programType,
+    programId: programId,
+  };
+
+  const runInfo = await context.loaders.programRuns.load({
+    namespace,
+    program,
+  });
+
+  if (runInfo.length === 0) {
+    return [];
+  }
+
+  return runInfo.runs;
 }
 
 module.exports = {
-  queryTypeNamespacesResolver,
+  pipelineRunsResolver,
 };

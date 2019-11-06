@@ -16,12 +16,12 @@
 
 import * as React from 'react';
 import Tags from 'components/Tags';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 import './PipelineTags.scss';
 
 interface IProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
 }
 
 const PipelineTags: React.SFC<IProps> = ({ pipeline }) => {

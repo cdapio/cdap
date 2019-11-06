@@ -18,23 +18,42 @@ const urlHelper = require('../../../server/url-helper'),
   cdapConfigurator = require('../../../server/cdap-config.js'),
   resolversCommon = require('../../resolvers-common.js');
 
+const chunk = require('lodash/chunk');
+
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-async function applicationDetailTypeMetadataResolver(parent, args, context) {
-  const namespace = context.namespace;
-  const name = parent.name;
-  const options = resolversCommon.getGETRequestOptions();
-  options.url = urlHelper.constructUrl(
-    cdapConfig,
-    `/v3/namespaces/${namespace}/apps/${name}/metadata/tags\?responseFormat=v6`
+async function batchTotalRuns(req, auth) {
+  const namespace = req[0].namespace;
+  const options = resolversCommon.getPOSTRequestOptions();
+  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
+  const body = req.map((reqObj) => reqObj.program);
+  const chunkedBody = chunk(body, 100);
+
+  let runInfo = await Promise.all(
+    chunkedBody.map((reqBody) => {
+      const reqOptions = {
+        ...options,
+        body: reqBody,
+      };
+      return resolversCommon.requestPromiseWrapper(reqOptions, auth);
+    })
   );
 
-  return await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const runsMap = {};
+  runInfo.forEach((chunk) => {
+    chunk.forEach((run) => {
+      runsMap[run.appId] = run;
+    });
+  });
+
+  return body.map((program) => {
+    return runsMap[program.appId];
+  });
 }
 
 module.exports = {
-  applicationDetailTypeMetadataResolver,
+  batchTotalRuns,
 };

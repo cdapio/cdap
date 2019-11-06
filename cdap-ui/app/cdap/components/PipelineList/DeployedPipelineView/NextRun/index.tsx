@@ -19,12 +19,12 @@ import IconSVG from 'components/IconSVG';
 import { Observable } from 'rxjs/Observable';
 import Duration from 'components/Duration';
 import { GLOBALS } from 'services/global-constants';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
-import { objectQuery } from 'services/helpers';
-import { getProgram } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { MyPipelineApi } from 'api/pipeline';
 
 interface IProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
 }
 
 interface IState {
@@ -58,17 +58,20 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   }
 
   private getNextRun() {
-    const nextRuntime = objectQuery(
-      getProgram(this.props.pipeline),
-      'schedules',
-      0,
-      'nextRuntimes',
-      0
-    );
+    const namespace = getCurrentNamespace();
+    const pipeline = this.props.pipeline;
 
-    this.setState({
-      loading: false,
-      nextRun: nextRuntime ? parseInt(nextRuntime, 10) : null,
+    const params = {
+      ...GLOBALS.programInfo[GLOBALS.etlDataPipeline],
+      namespace,
+      appId: pipeline.name,
+    };
+
+    MyPipelineApi.getNextRun(params).subscribe((res) => {
+      this.setState({
+        loading: false,
+        nextRun: res.length ? res[0].time : null,
+      });
     });
   }
 

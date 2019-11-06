@@ -18,10 +18,10 @@ import * as React from 'react';
 import T from 'i18n-react';
 
 import './PipelineCount.scss';
-import { IApplicationRecord } from '../types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 interface IProps {
-  pipelines: IApplicationRecord[];
+  pipelines: IPipeline[];
   pipelinesLoading: boolean;
 }
 

@@ -218,11 +218,11 @@ function getArtifactNameAndVersion(nameWithVersion) {
   if (version && Array.isArray(version)) {
     version = version[0].slice(1);
   } else {
-    // when version is the filename i.e 1.2.3.jar
+    // when version is the filename i.e 1.2.3.jar or ojdbc8.jar
     let nameIsVersionRegEx = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
     let validVersion = nameIsVersionRegEx.exec(nameWithVersion);
     if (validVersion && Array.isArray(validVersion)) {
-      return { name: nameWithVersion, version: nameWithVersion };
+      return { name: nameWithVersion, version: validVersion[0] };
     }
   }
   let name = version

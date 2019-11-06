@@ -15,27 +15,16 @@
  */
 
 import * as React from 'react';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
-import { getProgram } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
-import { objectQuery } from 'services/helpers';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 interface IProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
 }
 
-const RunsCountView: React.SFC<IProps> = ({ pipeline }) => {
-  const runsCount = getRunsCount(pipeline);
+const RunsCount: React.SFC<IProps> = ({ pipeline }) => {
+  const runsCount = pipeline.totalRuns || 0;
 
   return <div className="runs">{runsCount}</div>;
 };
-
-function getRunsCount(pipeline) {
-  const program = getProgram(pipeline);
-  const totalRuns = objectQuery(program, 'totalRuns');
-
-  return totalRuns || 0;
-}
-
-const RunsCount = RunsCountView;
 
 export default RunsCount;

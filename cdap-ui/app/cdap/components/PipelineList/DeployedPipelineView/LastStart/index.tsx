@@ -16,21 +16,17 @@
 
 import * as React from 'react';
 import { humanReadableDate } from 'services/helpers';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import { objectQuery } from 'services/helpers';
-import { getLatestRun } from 'components/PipelineList/DeployedPipelineView/graphqlHelper';
 
 interface ILastStartViewProps {
-  pipeline: IApplicationRecord;
+  pipeline: IPipeline;
 }
 
-const LastStartView: React.SFC<ILastStartViewProps> = ({ pipeline }) => {
-  const latestRun = getLatestRun(pipeline);
-  const lastStarting = objectQuery(latestRun, 'starting');
+const LastStart: React.SFC<ILastStartViewProps> = ({ pipeline }) => {
+  const lastStarting = objectQuery(pipeline, 'runs', 0, 'starting');
 
   return <div className="last-start">{humanReadableDate(lastStarting)}</div>;
 };
-
-const LastStart = LastStartView;
 
 export default LastStart;

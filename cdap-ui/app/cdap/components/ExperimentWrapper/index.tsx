@@ -12,12 +12,26 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-const { programRecordTypeTotalRunsResolver } = require('../ProgramRecord/totalRunsResolver');
+import React from 'react';
+import cookie from 'react-cookie';
 
-const workflowTypeTotalRunsResolver = programRecordTypeTotalRunsResolver.bind(null, 'workflow');
+interface IExptWrapperProps {
+  defaultComponent: React.ReactElement<any>;
+  experimentComponent: React.ReactElement<any>;
+}
 
-module.exports = {
-  workflowTypeTotalRunsResolver,
+const ExperimentWrapper: React.FC<IExptWrapperProps> = ({
+  defaultComponent,
+  experimentComponent,
+}: IExptWrapperProps) => {
+  const showExperiment = cookie.load('CDAP_enable_experiments');
+  if (showExperiment === 'on') {
+    return experimentComponent;
+  } else {
+    return defaultComponent;
+  }
 };
+
+export default ExperimentWrapper;

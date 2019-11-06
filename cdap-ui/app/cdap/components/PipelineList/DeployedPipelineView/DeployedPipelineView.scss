@@ -15,10 +15,17 @@
  */
 
 @import './DeployedPipelineViewVariables.scss';
+@import '~styles/colors.scss';
 
 .pipeline-deployed-view {
   padding-left: $padding-size;
   padding-right: $padding-size;
+
+  &.error-container {
+    color: $red-02;
+    font-size: 14px;
+    padding-top: 25px;
+  }
 
   .deployed-header {
     height: $header-height;

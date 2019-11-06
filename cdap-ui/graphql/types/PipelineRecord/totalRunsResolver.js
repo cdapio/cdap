@@ -14,19 +14,34 @@
  * the License.
  */
 
-const programRecordTypeResolveTypeResolver = async function __resolveType(parent) {
-  switch (parent.type) {
-    case 'Mapreduce':
-      return 'MapReduce';
-    case 'Workflow':
-      return 'Workflow';
-    case 'Spark':
-      return 'Spark';
-    default:
-      return null;
+const { PIPELINE_PROGRAMS_MAP } = require('./common');
+
+async function totalRunsResolvers(parent, args, context) {
+  const namespace = context.namespace;
+  const name = parent.name;
+
+  const pipelineType = parent.artifact.name || 'cdap-data-pipeline';
+
+  const { programType, programId } = PIPELINE_PROGRAMS_MAP[pipelineType];
+
+  const program = {
+    appId: name,
+    programType: programType,
+    programId: programId,
+  };
+
+  const runInfo = await context.loaders.totalRuns.load({
+    namespace,
+    program,
+  });
+
+  if (!runInfo || !runInfo.runCount) {
+    return 0;
   }
-};
+
+  return runInfo.runCount;
+}
 
 module.exports = {
-  programRecordTypeResolveTypeResolver,
+  totalRunsResolvers,
 };

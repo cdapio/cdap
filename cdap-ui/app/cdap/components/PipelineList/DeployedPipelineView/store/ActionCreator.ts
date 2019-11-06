@@ -17,15 +17,9 @@
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyPipelineApi } from 'api/pipeline';
 import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
-import { IApplicationRecord } from 'components/PipelineList/DeployedPipelineView/types';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
-export function fetchPipelineList() {
-  Store.dispatch({
-    type: Actions.setPipeline,
-  });
-}
-
-export function deletePipeline(pipeline: IApplicationRecord, refetch: () => void) {
+export function deletePipeline(pipeline: IPipeline, refetch: () => void) {
   const namespace = getCurrentNamespace();
 
   const params = {
@@ -36,7 +30,7 @@ export function deletePipeline(pipeline: IApplicationRecord, refetch: () => void
   MyPipelineApi.delete(params).subscribe(
     () => {
       refetch();
-      fetchPipelineList();
+      reset();
     },
     (err) => {
       Store.dispatch({
