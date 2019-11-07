@@ -406,10 +406,10 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setEngine(engine) {
-    this.state.config.engine = engine || 'mapreduce';
+    this.state.config.engine = engine || 'spark';
   }
   getEngine() {
-    return this.state.config.engine || 'mapreduce';
+    return this.state.config.engine || 'spark';
   }
   getProperties() {
     return this.getConfig().properties;
