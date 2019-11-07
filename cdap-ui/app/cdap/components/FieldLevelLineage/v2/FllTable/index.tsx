@@ -49,6 +49,7 @@ const styles = (theme) => {
         paddingLeft: '10px',
         paddingRight: '10px',
         borderTop: `1px solid ${theme.palette.grey[500]}`,
+        height: '21px',
       },
       ' & .grid-row:hover': {
         backgroundColor: theme.palette.grey[700],
