@@ -21,7 +21,7 @@ import {ACTIONS as PipelineConfigurationsActions} from 'components/PipelineConfi
 const mapStateToProps = (state, ownProps) => {
   return {
     type: 'radio',
-    checked: state.engine === ownProps.value,
+    checked: state.engine.toLowerCase() === ownProps.value.toLowerCase(),
     value: ownProps.value
   };
 };
