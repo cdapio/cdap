@@ -31,6 +31,7 @@ const GLOBALS = {
   etlDataPipeline: 'cdap-data-pipeline',
   etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
   etlPipelineTypes: ['cdap-data-streams', 'cdap-data-pipeline'],
+  eltSqlPipeline: 'cdap-sql-pipeline',
 
   // program types for etl app
   programInfo: {
@@ -41,11 +42,20 @@ const GLOBALS = {
     'cdap-data-streams': {
       programType: 'spark',
       programName: 'DataStreamsSparkStreaming'
+    },
+    'cdap-sql-pipeline': {
+      programType: 'workflows',
+      programName: 'SQLWorkflow'
     }
   },
 
   // Map defines what plugin types to surface for each artifact in UI.
   pluginTypes: {
+    'cdap-sql-pipeline': {
+      source: 'sqlsource',
+      sink: 'sqlsink',
+      transform: 'sqltransform',
+    },
     'cdap-etl-batch': {
       source: 'batchsource',
       sink: 'batchsink',
@@ -109,6 +119,9 @@ const GLOBALS = {
     alertpublisher: pluginLabels['erroralert'],
     condition: pluginLabels['action'],
     splittertransform: pluginLabels['transform'],
+    sqlsource: pluginLabels['source'],
+    sqlsink: pluginLabels['sink'],
+    sqltransform: pluginLabels['transform']
   },
   pluginLabels: pluginLabels,
   // understand what plugin type is what.
@@ -131,6 +144,9 @@ const GLOBALS = {
     alertpublisher: 'sink',
     condition: 'condition',
     splittertransform: 'transform',
+    sqlsource: 'source',
+    sqlsink: 'sink',
+    sqltransform: 'transform'
   },
 
   artifactConvert: {
@@ -138,6 +154,7 @@ const GLOBALS = {
     'cdap-etl-realtime': 'Realtime (Deprecated)',
     'cdap-data-pipeline': 'Data Pipeline - Batch',
     'cdap-data-streams': 'Data Pipeline - Realtime',
+    'cdap-sql-pipeline': 'Data Pipeline - SQL'
   },
 
   iconArtifact: {
@@ -145,6 +162,7 @@ const GLOBALS = {
     'cdap-etl-realtime': 'ETLRealtime',
     'cdap-data-pipeline': 'ETLBatch',
     'cdap-data-streams': 'sparkstreaming',
+    'cdap-sql-pipeline': 'SQL'
   },
 
   defaultSchemaName: 'etlSchemaBody',
@@ -153,11 +171,19 @@ const GLOBALS = {
   programType: {
     'cdap-data-pipeline': 'workflows',
     'cdap-data-streams': 'spark',
+    'cdap-sql-pipeline': 'workflows'
   },
 
   programId: {
     'cdap-data-pipeline': 'DataPipelineWorkflow',
     'cdap-data-streams': 'DataStreamsSparkStreaming',
+    'cdap-sql-pipeline': 'SQLWorkflow'
+  },
+
+  programTypeForRunsCount: {
+    'cdap-data-pipeline': 'Workflow',
+    'cdap-data-streams': 'Spark',
+    'cdap-sql-pipeline': 'Workflow'
   },
 
   wrangler: {

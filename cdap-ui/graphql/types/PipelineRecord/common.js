@@ -23,6 +23,10 @@ const PIPELINE_PROGRAMS_MAP = {
     programType: 'Spark',
     programId: 'DataStreamsSparkStreaming',
   },
+  'cdap-sql-pipeline': {
+    programType: 'Workflow',
+    programId: 'SQLWorkflow',
+  },
 };
 
 module.exports = {
