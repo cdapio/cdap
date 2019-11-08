@@ -83,7 +83,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "hub"?: boolean;
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
-    "enable-jio"?:boolean
+    "enable-jio"?: boolean
   };
 }
 
@@ -175,7 +175,7 @@ interface IThemeObj {
   showPipelineCreateButton?: boolean;
   showDataPrepPlusButton?: boolean;
   isCustomerMWC?: boolean;
-  isCustomerJIO?:boolean;
+  isCustomerJIO?: boolean;
 }
 
 function getTheme(): IThemeObj {

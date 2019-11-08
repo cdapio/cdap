@@ -29,6 +29,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import debounce from 'lodash/debounce';
 import {setPopoverOffset} from 'components/DataPrep/helper';
+import { Theme } from 'services/ThemeHelper';
 
 const SUFFIX = 'features.DataPrep.Directives.Parse';
 
@@ -71,7 +72,7 @@ export default class ParseDirective extends Component {
       'FIXEDLENGTH',
       'HL7'
     ];
-
+    this.PARSE_OPTIONS = Theme.isCustomerJIO ? ['CSV', 'EXCEL', 'XML', 'JSON', 'SIMPLEDATE', 'NATURALDATE'] : this.PARSE_OPTIONS;
     window.addEventListener('resize', this.offsetCalcDebounce);
   }
 
