@@ -83,6 +83,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "hub"?: boolean;
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
+    "enable-jio"?:boolean
   };
 }
 
@@ -174,6 +175,7 @@ interface IThemeObj {
   showPipelineCreateButton?: boolean;
   showDataPrepPlusButton?: boolean;
   isCustomerMWC?: boolean;
+  isCustomerJIO?:boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -341,6 +343,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showIngestData: true,
       showAddNamespace: true,
       showAboutProductModal: true,
+      isCustomerJIO: false,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -381,6 +384,10 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
 
     if ('about-product' in featuresJson && isBoolean(featuresJson['about-product'])) {
       features.showAboutProductModal = featuresJson['about-product'];
+    }
+
+    if ('enable-jio' in featuresJson && isBoolean(featuresJson['enable-jio'])) {
+      features.isCustomerJIO = featuresJson['enable-jio'];
     }
     return features;
   }

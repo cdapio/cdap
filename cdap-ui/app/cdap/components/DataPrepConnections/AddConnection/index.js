@@ -29,6 +29,7 @@ import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
 import T from 'i18n-react';
 import find from 'lodash/find';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { Theme } from 'services/ThemeHelper';
 require('./AddConnection.scss');
 
 const PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -178,7 +179,12 @@ export default class AddConnection extends Component {
   render() {
     return (
       <div className="add-connection-container text-xs-center">
-        {this.renderPopover()}
+        {
+          !Theme.isCustomerJIO ?
+           this.renderPopover()
+          :
+            null
+        }
         {this.renderModal()}
       </div>
     );

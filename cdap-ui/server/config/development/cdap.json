@@ -12,7 +12,7 @@
   "dashboard.router.check.timeout.secs": "0",
   "market.base.url": "http://market.cask.co/dev/v2",
   "local.market.base.url": "http://artifacts.ggn.in.guavus.com/ggn-archive/marketplace/v2",
-  "ui.theme.file": "cdap-ui/server/config/themes/afe.json",
+  "ui.theme.file": "cdap-ui/server/config/themes/jio.json",
   "default.white.list.ips": "http://market.cask.co,http://artifacts.ggn.in.guavus.com",
   "white.list.ips": ""
 }

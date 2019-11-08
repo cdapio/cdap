@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import DirectiveUploadWizard from 'components/CaskWizards/PluginArtifactUpload/DirectiveUploadWizard';
 import T from 'i18n-react';
 import PlusButton from 'components/PlusButton';
+import { Theme } from 'services/ThemeHelper';
 
 export default class DataPrepPlusButton extends Component {
   constructor(props) {
@@ -36,12 +37,13 @@ export default class DataPrepPlusButton extends Component {
     this.setState({showCustomDirective: !this.state.showCustomDirective});
   }
 
-  PLUSBUTTONCONTEXTMENUITEMS = [
-    {
-      label: 'Add directive',
-      onClick: this.onDirectiveClick
-    }
-  ];
+  PLUSBUTTONCONTEXTMENUITEMS = Theme.isCustomerJIO ? [] :
+                                [
+                                  {
+                                    label: 'Add directive',
+                                    onClick: this.onDirectiveClick
+                                  }
+                                ];
 
   onDirectiveSubmit() {
     this.setState({

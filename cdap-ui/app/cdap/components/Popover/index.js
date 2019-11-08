@@ -166,7 +166,7 @@ export default class Popover extends PureComponent {
     if (this.props.showOn === 'Click') {
       targetProps[`on${this.props.showOn}`] = this.togglePopover;
     } else if (this.props.showOn === 'Hover') {
-      // We can debounce this by 100ms as the mouse move events are 
+      // We can debounce this by 100ms as the mouse move events are
       // triggered way too often.
       targetProps['onMouseOver'] = debounce(this.onMouseOverToggle, 100);
       targetProps['onMouseOut'] = debounce(this.onMouseOutToggle, 100);
@@ -196,7 +196,7 @@ export default class Popover extends PureComponent {
             :
               this.props.children
           }
-          <Arrow className="popper__arrow" />
+          {this.props.children? <Arrow className="popper__arrow" />: null}
         </Popper>
       </Manager>
     );

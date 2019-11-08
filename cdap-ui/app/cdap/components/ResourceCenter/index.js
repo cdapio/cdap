@@ -20,6 +20,7 @@ import ResourceCenterEntity from 'components/ResourceCenterEntity';
 import ResourceCenterPipelineEntity from 'components/ResourceCenterEntity/ResourceCenterPipelineEntity';
 import AbstractWizard from 'components/AbstractWizard';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 require('./ResourceCenter.scss');
 
@@ -52,48 +53,60 @@ export default class ResourceCenter extends Component {
     this.state = {
       error: null,
       activeWizard: null,
-      entities: [
-        {
-          // Application
-          title: T.translate('features.Resource-Center.Application.label'),
-          description: T.translate('features.Resource-Center.Application.description'),
-          actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
-          iconClassName: 'icon-app',
-          wizardId: 'createApplicationWizard'
-        },
-        {
-          // Plugin
-          title: T.translate('features.Resource-Center.Plugins.label'),
-          description: T.translate('features.Resource-Center.Plugins.description'),
-          actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
-          iconClassName: 'icon-plug',
-          wizardId: 'createPluginArtifactWizard'
-        },
-        {
-          // Driver
-          title: T.translate('features.Resource-Center.Artifact.label'),
-          description: T.translate('features.Resource-Center.Artifact.description'),
-          actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
-          iconClassName: 'icon-artifacts',
-          wizardId: 'createArtifactWizard'
-        },
-        {
-          // Library
-          title: T.translate('features.Resource-Center.Library.label'),
-          description: T.translate('features.Resource-Center.Library.description'),
-          actionLabel: T.translate('features.Resource-Center.Library.actionbtn0'),
-          iconClassName: 'icon-library',
-          wizardId: 'createLibraryWizard'
-        },
-        {
-          // Directives
-          title: T.translate('features.Resource-Center.Directive.label'),
-          description: T.translate('features.Resource-Center.Directive.description'),
-          actionLabel: T.translate('features.Resource-Center.Directive.actionbtn0'),
-          iconClassName: 'icon-directives',
-          wizardId: 'createDirectiveArtifactWizard'
-        }
-      ]
+      entities: Theme.isCustomerJIO ?
+                    [
+                      {
+                        // Plugin
+                        title: T.translate('features.Resource-Center.Plugins.label'),
+                        description: T.translate('features.Resource-Center.Plugins.description'),
+                        actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
+                        iconClassName: 'icon-plug',
+                        wizardId: 'createPluginArtifactWizard'
+                      }
+                    ]
+                  :
+                    [
+                      {
+                        // Application
+                        title: T.translate('features.Resource-Center.Application.label'),
+                        description: T.translate('features.Resource-Center.Application.description'),
+                        actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
+                        iconClassName: 'icon-app',
+                        wizardId: 'createApplicationWizard'
+                      },
+                      {
+                        // Plugin
+                        title: T.translate('features.Resource-Center.Plugins.label'),
+                        description: T.translate('features.Resource-Center.Plugins.description'),
+                        actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
+                        iconClassName: 'icon-plug',
+                        wizardId: 'createPluginArtifactWizard'
+                      },
+                      {
+                        // Driver
+                        title: T.translate('features.Resource-Center.Artifact.label'),
+                        description: T.translate('features.Resource-Center.Artifact.description'),
+                        actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
+                        iconClassName: 'icon-artifacts',
+                        wizardId: 'createArtifactWizard'
+                      },
+                      {
+                        // Library
+                        title: T.translate('features.Resource-Center.Library.label'),
+                        description: T.translate('features.Resource-Center.Library.description'),
+                        actionLabel: T.translate('features.Resource-Center.Library.actionbtn0'),
+                        iconClassName: 'icon-library',
+                        wizardId: 'createLibraryWizard'
+                      },
+                      {
+                        // Directives
+                        title: T.translate('features.Resource-Center.Directive.label'),
+                        description: T.translate('features.Resource-Center.Directive.description'),
+                        actionLabel: T.translate('features.Resource-Center.Directive.actionbtn0'),
+                        iconClassName: 'icon-directives',
+                        wizardId: 'createDirectiveArtifactWizard'
+                      }
+                    ]
     };
   }
   toggleWizard(wizardName) {

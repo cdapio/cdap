@@ -22,6 +22,7 @@ import Loadable from 'react-loadable';
 import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import { Theme } from 'services/ThemeHelper';
 
 var PlusButtonModal = Loadable({
   loader: () => import(/* webpackChunkName: "PlusButtonModal" */ 'components/PlusButtonModal'),
@@ -48,6 +49,10 @@ export default class CaskMarketButton extends Component {
   }
 
   onClickHandler() {
+    if (Theme.isCustomerJIO && !navigator.onLine) {
+      alert("Can’t reach the network. Please check your internet connection for accessing Hub!");
+      return;
+    }
     let newState = !this.state.showMarketPlace;
 
     if (newState === false) {

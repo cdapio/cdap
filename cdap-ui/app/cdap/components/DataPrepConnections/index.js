@@ -62,7 +62,6 @@ const PREFIX = 'features.DataPrepConnections';
 const DATAPREP_I18N_PREFIX = 'features.DataPrep.pageTitle';
 
 export default class DataPrepConnections extends Component {
-
   static propTypes = {
     match: PropTypes.object,
     location: PropTypes.object,
@@ -265,9 +264,12 @@ export default class DataPrepConnections extends Component {
       })
       .subscribe(
         res => {
+          let respObj = Theme.isCustomerJIO ? [{type: "UPLOAD"},{type: "FILE"}] : res;
+
           this.setState({
-            connectionTypes: res
+            connectionTypes: respObj
           });
+
           this.fetchConnectionsList();
           // TODO get default connection from backend and integrate.
         },
@@ -275,8 +277,9 @@ export default class DataPrepConnections extends Component {
           // If the user happens to use older dataprep artifact `/connectionTypes` won't exist.
           // So just query connections list instead of showing a spinner.
           if (err && err.statusCode === 404) {
+            let connectionType = Theme.isCustomerJIO ? {UPLOAD: "UPLOAD",FILE: "FILE"} : ConnectionType;
             this.setState({
-              connectionTypes: Object.keys(ConnectionType).map((conn) => ({ type: conn }))
+              connectionTypes: Object.keys(connectionType).map((conn) => ({ type: conn }))
             }, this.fetchConnectionsList);
           }
           console.log(err);
