@@ -20,6 +20,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.etl.api.AlertPublisher;
+import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
@@ -94,7 +95,7 @@ public abstract class PipelinePhasePreparer {
         isConnectorSink) {
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSink(batchSink, stageSpec);
-      } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
+      } else if (Transform.PLUGIN_TYPE.equals(pluginType) || ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
         Transform<?, ?> transform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createTransform(transform, stageSpec);
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
