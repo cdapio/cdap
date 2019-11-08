@@ -25,6 +25,14 @@ const styles = (theme) => {
     root: {
       height: 60,
       background: theme.palette.white[50],
+      display: 'flex',
+    },
+    entity: {
+      flex: '2 42%',
+    },
+    picker: {
+      flex: '1',
+      marginTop: '2px',
     },
   };
 };
@@ -32,15 +40,17 @@ const styles = (theme) => {
 const FllTopPanel = ({ datasetId, classes }) => {
   return (
     <div className={classes.root}>
-      <EntityTopPanel
-        breadCrumbAnchorLabel="Results"
-        title={datasetId}
-        entityType={T.translate(`commons.entity.dataset.singular`)}
-        entityIcon="icon-datasets"
-        historyBack={true}
-        inheritBackground={true}
-      />
-      <span>
+      <div className={classes.entity}>
+        <EntityTopPanel
+          breadCrumbAnchorLabel="Results"
+          title={datasetId}
+          entityType={T.translate(`commons.entity.dataset.singular`)}
+          entityIcon="icon-datasets"
+          historyBack={true}
+          inheritBackground={true}
+        />
+      </div>
+      <span className={classes.picker}>
         <TimeRangePicker />
       </span>
     </div>
