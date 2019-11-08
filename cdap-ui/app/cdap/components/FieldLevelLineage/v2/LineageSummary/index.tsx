@@ -39,6 +39,8 @@ const styles = (theme): StyleRules => {
       background: theme.palette.grey[700],
       height: 'inherit',
       minHeight: '480px', // to avoid cutting off date picker calendar
+      width: '100%',
+      overflowX: 'hidden',
     },
     root: {
       paddingLeft: '100px',
@@ -47,7 +49,7 @@ const styles = (theme): StyleRules => {
       display: 'flex',
       justifyContent: 'space-between',
       position: 'relative',
-      overflowX: 'hidden',
+      overflow: 'hidden',
     },
     container: {
       position: 'absolute',

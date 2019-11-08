@@ -30,9 +30,6 @@ import FllMenu from 'components/FieldLevelLineage/v2/FllTable/FllMenu';
 const styles = (theme): StyleRules => {
   return {
     root: {
-      paddingLeft: '10px',
-      paddingRight: '10px',
-      borderTop: `1px solid ${theme.palette.grey[500]}`,
       '&.grid-row.activeField': {
         backgroundColor: theme.palette.yellow[200],
       },
