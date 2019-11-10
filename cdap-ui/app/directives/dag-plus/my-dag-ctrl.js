@@ -357,8 +357,11 @@ angular.module(PKG.name + '.commons')
       if (vm.isDisabled) {
         endpointObj.enabled = false;
       }
-      let endpoint = vm.instance.addEndpoint(endpointDOMEl, endpointObj);
-      addListenersForEndpoint(endpoint, endpointDOMEl);
+
+      if(endpointDOMEl!==null && endpointDOMEl!== undefined) {
+        let endpoint = vm.instance.addEndpoint(endpointDOMEl, endpointObj);
+        addListenersForEndpoint(endpoint, endpointDOMEl);
+      }
     }
 
     function addEndpointForConditionNode(endpointDOMId, endpointStyle, overlayLabel) {
