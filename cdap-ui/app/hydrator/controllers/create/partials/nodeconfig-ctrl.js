@@ -450,13 +450,16 @@ class HydratorPlusPlusNodeConfigCtrl {
     return true;
   }
 
-  validatePluginProperties(callback) {
+  validatePluginProperties(callback, validationFromGetSchema) {
     const nodeInfo = this.state.node;
     let vm = this;
-    vm.validating = true;
+    if(!validationFromGetSchema){
+      vm.validating = true;
+    }
     const errorCb = ({ errorCount, propertyErrors, inputSchemaErrors, outputSchemaErrors }) => {
       // errorCount can be 0, a positive integer, or undefined (in case of an error thrown)
       vm.validating = false;
+      vm.errorCount = errorCount;
       if ( errorCount > 0 ){
         vm.propertyErrors = propertyErrors;
         vm.inputSchemaErrors = inputSchemaErrors;
@@ -466,6 +469,10 @@ class HydratorPlusPlusNodeConfigCtrl {
         vm.propertyErrors = {};
         vm.inputSchemaErrors = {};
         vm.outputSchemaErrors = {};
+        // Do not show success validation message for validation via get schema.
+        if (validationFromGetSchema === true) {
+          vm.errorCount = undefined;
+        }
       } else {
         vm.propertyErrors = propertyErrors;
       }

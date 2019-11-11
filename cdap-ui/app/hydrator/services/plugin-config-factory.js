@@ -335,20 +335,10 @@ class HydratorPlusPlusPluginConfigFactory {
         if (res.failures.length > 0) {
           const { propertyErrors, inputSchemaErrors,outputSchemaErrors } = this.configurationGroupUtilities.constructErrors(res.failures);
           errorCount = this.configurationGroupUtilities.countErrors(propertyErrors, inputSchemaErrors, outputSchemaErrors);
-          this.myAlertOnValium.show({
-            type: 'danger',
-            content: `${errorCount} error${errorCount > 1 ? 's': ''} found.`
-          });
           errorCb({ errorCount, propertyErrors, inputSchemaErrors, outputSchemaErrors });
         } else {
           errorCount = 0;
-
           errorCb({ errorCount });
-          this.myAlertOnValium.show({
-            type: 'success',
-            content: `No validation errors.`
-          });
-
           const outputSchema = this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
           const portSchemas = this.myHelpers.objectQuery(res, 'spec', 'portSchemas');
           let schemas;

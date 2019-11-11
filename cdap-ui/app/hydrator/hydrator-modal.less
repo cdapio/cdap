@@ -51,10 +51,11 @@
       justify-content: space-between;
       .modal-title {
         padding-left: 15px;
-        // 240px for all the buttons
-        max-width: ~"calc(100% - 240px)";
-        max-width: ~"-moz-calc(100% - 240px)";
-        max-width: ~"-webkit-calc(100% - 240px)";
+        // 340px for all the buttons and error validation message
+        width: 100%;
+        max-width: ~"calc(100% - 340px)";
+        max-width: ~"-moz-calc(100% - 340px)";
+        max-width: ~"-webkit-calc(100% - 340px)";
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
@@ -64,9 +65,9 @@
 
         // Adjust max-width of modal title when my-jump-link is present
         &.with-jump {
-          max-width: ~"calc(100% - 340px)";
-          max-width: ~"-moz-calc(100% - 340px)";
-          max-width: ~"-webkit-calc(100% - 340px)";
+          max-width: ~"calc(100% - 440px)";
+          max-width: ~"-moz-calc(100% - 440px)";
+          max-width: ~"-webkit-calc(100% - 440px)";
         }
 
         p {
@@ -119,7 +120,7 @@
           box-shadow: none;
         }
       }
-      div.btn-group { margin-left: auto; }
+
       a.btn {
         background: transparent;
         border: 0;
