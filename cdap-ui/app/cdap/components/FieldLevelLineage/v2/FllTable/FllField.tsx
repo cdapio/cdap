@@ -41,6 +41,8 @@ const styles = (theme): StyleRules => {
     targetView: {
       paddingLeft: '55px',
       color: theme.palette.blue[200],
+      cursor: 'pointer',
+      height: '20px',
     },
   };
 };

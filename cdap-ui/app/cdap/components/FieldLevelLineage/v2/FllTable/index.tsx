@@ -53,11 +53,13 @@ const styles = (theme) => {
       },
       ' & .grid-row:hover': {
         backgroundColor: theme.palette.grey[700],
+        cursor: 'pointer',
       },
       ' & .grid-row.selected': {
         backgroundColor: theme.palette.yellow[200],
         color: theme.palette.orange[50],
         fontWeight: 'bold',
+        cursor: 'unset',
       },
     },
     tableHeader: {
