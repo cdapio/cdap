@@ -136,12 +136,13 @@ UrlValidator.prototype.isValidRequest = function (url, req) {
   // check request body
   if(req !== undefined && req !==  null){
     const dirty = JSON.stringify(req);
-    // log.info ('\nRequest Body::  ' +dirty);
     const clean = unescape(DOMPurify.sanitize(dirty, { ALLOWED_TAGS: []}));
     validrequest =  clean === dirty ? true : false;
   }
 
-  return validUrl && validrequest;
+  // TODO need to work on the parsing part to skip the description content.
+  // return validUrl && validrequest;
+  return validUrl;
 };
 
 
