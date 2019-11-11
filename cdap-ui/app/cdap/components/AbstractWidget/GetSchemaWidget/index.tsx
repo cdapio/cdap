@@ -48,7 +48,7 @@ const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes }
       setLoading(true);
       validateProperties(() => {
         setLoading(false);
-      });
+      }, true);
     }
   }
 

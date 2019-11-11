@@ -49,6 +49,7 @@ angular.module(PKG.name + '.commons')
           $scope.mode = rMode;
           $scope.action = rAction;
           $scope.validating = false;
+          $scope.errorCount = null;
           $scope.showValidateButton = function() {
             // Hack-y way of showing Validate button on Configure and Confirm pages only
             if ($scope.action) {
@@ -60,6 +61,7 @@ angular.module(PKG.name + '.commons')
             const action = angular.copy($scope.action);
             const errorCb = ({ errorCount, propertyErrors }) => {
               $scope.validating = false;
+              $scope.errorCount = errorCount;
               if ( errorCount > 0 || !errorCount) {
                 $scope.propertyErrors = propertyErrors;
               } else {
