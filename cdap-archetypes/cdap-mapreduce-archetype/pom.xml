@@ -21,7 +21,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-archetypes</artifactId>
-    <version>5.1.2044</version>
+    <version>5.1.2045</version>
   </parent>
 
   <artifactId>cdap-mapreduce-archetype</artifactId>
