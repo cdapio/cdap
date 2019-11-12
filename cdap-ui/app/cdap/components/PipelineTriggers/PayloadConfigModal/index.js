@@ -62,6 +62,7 @@ export default class PayloadConfigModal extends Component {
         modalClassName="payload-config-modal"
         size="lg"
         zIndex="1061"
+        backdrop="static"
       >
         <ModalHeader className="clearfix">
           <span className="pull-left">{T.translate(`${PREFIX}.title`)}</span>
