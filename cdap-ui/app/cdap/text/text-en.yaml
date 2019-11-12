@@ -2093,6 +2093,7 @@ features:
       confirm: Delete
       confirmDraftPrompt: 'Are you sure you want to delete the draft '
       confirmPrompt: 'Are you sure you want to delete the pipeline '
+      deleteError: 'There was a problem with the pipeline you were trying to delete'
       pipeline: 'Pipeline '
       proceedPrompt: ' is deleted. Are you sure you want to proceed?'
       title: Delete pipeline
