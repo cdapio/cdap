@@ -44,6 +44,11 @@ const styles = (theme): StyleRules => {
       cursor: 'pointer',
       height: '20px',
     },
+    fieldname: {
+      pointerEvents: 'none',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
   };
 };
 
@@ -85,7 +90,7 @@ function FllField({ field, isActive, classes }: IFieldProps) {
       data-hovering={isHovering}
       data-target={isTarget}
     >
-      {field.name}
+      <span className={classes.fieldname}>{field.name}</span>
       <If condition={isHovering && !isTarget}>
         <span data-cy="view-lineage">
           <Link to={linkPath} className={classes.hoverText} title={field.name}>

@@ -1541,7 +1541,7 @@ features:
           1: "{context} field"
           _: "{context} fields"
         FllField:
-          viewLineage: "View lineage"
+          viewLineage: "View"
           viewDropdown: "View"
           resetLineage: "Reset"
         FllMenu:

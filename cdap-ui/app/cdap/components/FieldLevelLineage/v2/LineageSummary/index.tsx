@@ -15,6 +15,7 @@
 */
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
 import OperationsModal from 'components/FieldLevelLineage/v2/OperationsModal';
@@ -37,7 +38,7 @@ const styles = (theme): StyleRules => {
     wrapper: {
       overflowY: 'scroll',
       background: theme.palette.grey[700],
-      height: 'inherit',
+      height: '100%',
       minHeight: '480px', // to avoid cutting off date picker calendar
       width: '100%',
       overflowX: 'hidden',
@@ -72,7 +73,8 @@ interface ILineageState {
 }
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
-  // TO DO: This currently breaks when the window is scrolled before drawing
+  private myRef;
+
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
     const sourceId = source.id.replace(/\./g, '\\.');
@@ -82,16 +84,16 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     const destEl = d3.select(`#${destId}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -48 + window.pageYOffset - 65; // From the FllHeader and TopPanel
+    const offsetY =
+      -(this.myRef as HTMLElement).getBoundingClientRect().top - 65 + this.myRef.scrollTop; // From TopPanel, FllHeader, and scroll
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
 
     const sourceX1 = sourceXY.right + offsetX;
-    const sourceY1 = sourceXY.top + offsetY + 0.5 * sourceXY.height;
+    const sourceY1 = sourceXY.top + 0.5 * sourceXY.height + offsetY;
     const sourceX2 = destXY.left + offsetX;
-    const sourceY2 = destXY.top + offsetY + 0.5 * sourceXY.height;
-
+    const sourceY2 = destXY.top + 0.5 * sourceXY.height + offsetY;
     // draw an edge from line start to line end
     const linkContainer = isSelected
       ? d3.select('#selected-links')
@@ -206,6 +208,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
   public componentDidMount() {
     this.drawLinks();
+    this.myRef = ReactDOM.findDOMNode(this);
     window.addEventListener('resize', this.debounceRedrawLinks);
   }
   public render() {
