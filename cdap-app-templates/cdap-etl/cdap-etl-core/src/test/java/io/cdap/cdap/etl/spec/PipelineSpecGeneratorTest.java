@@ -226,6 +226,7 @@ public class PipelineSpecGeneratorTest {
       .addConnection("t2", "sink2")
       .addConnection("t2", "t3")
       .addConnection("t3", "sink1")
+      .setNumOfRecordsPreview(100)
       .build();
     // test the spec generated is correct, with the right input and output schemas and artifact information.
     BatchPipelineSpec actual = specGenerator.generateSpec(etlConfig);
@@ -269,6 +270,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(new Resources(1024, 1))
       .setClientResources(new Resources(1024, 1))
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
       .build();
     Assert.assertEquals(expected, actual);
   }
@@ -296,6 +298,7 @@ public class PipelineSpecGeneratorTest {
       .addConnection("tB", "sinkB")
       .addConnection("sinkA", "action")
       .addConnection("sinkB", "action")
+      .setNumOfRecordsPreview(100)
       .build();
     PipelineSpec actual = specGenerator.generateSpec(config);
 
@@ -339,6 +342,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .build();
 
     Assert.assertEquals(expected, actual);
@@ -389,6 +393,7 @@ public class PipelineSpecGeneratorTest {
       .addConnection("split", "sinkA", "portA")
       .addConnection("split", "sinkB", "portB")
       .addConnection("split", "sinkC", "portC")
+      .setNumOfRecordsPreview(100)
       .build();
 
     PipelineSpec expected = BatchPipelineSpec.builder()
@@ -423,6 +428,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -441,6 +447,7 @@ public class PipelineSpecGeneratorTest {
       .addStage(new ETLStage("sink", MOCK_SINK))
       .addConnection("source", "cond")
       .addConnection("cond", "sink", true)
+      .setNumOfRecordsPreview(100)
       .build();
 
     PipelineSpec expected = BatchPipelineSpec.builder()
@@ -464,6 +471,7 @@ public class PipelineSpecGeneratorTest {
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
@@ -610,6 +618,7 @@ public class PipelineSpecGeneratorTest {
       .addStage(new ETLStage("a2", new ETLPlugin("action2", Action.PLUGIN_TYPE, empty)))
       .addConnection("a1", "a2")
       .setEngine(Engine.MAPREDUCE)
+      .setNumOfRecordsPreview(100)
       .build();
 
     PipelineSpec actual = new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
@@ -630,6 +639,7 @@ public class PipelineSpecGeneratorTest {
       .setResources(new Resources(1024))
       .setDriverResources(new Resources(1024))
       .setClientResources(new Resources(1024))
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
       .build();
     Assert.assertEquals(expected, actual);
   }

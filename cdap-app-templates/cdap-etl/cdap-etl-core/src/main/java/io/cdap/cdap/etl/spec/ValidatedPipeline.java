@@ -37,6 +37,7 @@ public class ValidatedPipeline {
   private final Map<String, Map<String, String>> connectionTable;
   private final boolean stageLoggingEnabled;
   private final boolean processTimingEnabled;
+  private final int maxPreviewRecords;
 
   public ValidatedPipeline(List<ETLStage> traversalOrder, ETLConfig config) {
     this.traversalOrder = ImmutableList.copyOf(traversalOrder);
@@ -50,6 +51,7 @@ public class ValidatedPipeline {
     }
     this.stageLoggingEnabled = config.isStageLoggingEnabled();
     this.processTimingEnabled = config.isProcessTimingEnabled();
+    this.maxPreviewRecords = config.getNumOfRecordsPreview();
   }
 
   public List<ETLStage> getTraversalOrder() {
@@ -72,5 +74,9 @@ public class ValidatedPipeline {
 
   public boolean isProcessTimingEnabled() {
     return processTimingEnabled;
+  }
+
+  public int getMaxPreviewRecords() {
+    return maxPreviewRecords;
   }
 }

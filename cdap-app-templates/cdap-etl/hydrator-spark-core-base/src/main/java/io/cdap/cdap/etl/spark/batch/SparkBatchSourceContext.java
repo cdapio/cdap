@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark.batch;
 
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
@@ -26,6 +27,7 @@ import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
+import io.cdap.cdap.etl.batch.preview.LimitingInputFormatProvider;
 import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -53,7 +55,15 @@ public class SparkBatchSourceContext extends AbstractBatchContext
 
   @Override
   public void setInput(Input input) {
-    Input trackableInput = ExternalDatasets.makeTrackable(admin, suffixInput(input));
+    Input trackableInput = input;
+    if (isPreviewEnabled && trackableInput instanceof Input.InputFormatProviderInput) {
+      InputFormatProvider inputFormatProvider =
+        ((Input.InputFormatProviderInput) trackableInput).getInputFormatProvider();
+      LimitingInputFormatProvider wrapper =
+        new LimitingInputFormatProvider(inputFormatProvider, getMaxPreviewRecords());
+      trackableInput = Input.of(trackableInput.getName(), wrapper).alias(trackableInput.getAlias());
+    }
+    trackableInput = ExternalDatasets.makeTrackable(admin, suffixInput(trackableInput));
     sourceFactory.addInput(getStageName(), trackableInput);
   }
 
