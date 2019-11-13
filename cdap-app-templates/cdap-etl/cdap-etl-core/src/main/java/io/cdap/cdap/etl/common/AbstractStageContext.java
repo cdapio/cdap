@@ -93,6 +93,10 @@ public abstract class AbstractStageContext implements StageContext {
     return pipelineRuntime.getLogicalStartTime();
   }
 
+  protected int getMaxPreviewRecords() {
+    return stageSpec.getMaxPreviewRecords();
+  }
+
   @Override
   public final PluginProperties getPluginProperties(final String pluginId) {
     return CALLER.callUnchecked(

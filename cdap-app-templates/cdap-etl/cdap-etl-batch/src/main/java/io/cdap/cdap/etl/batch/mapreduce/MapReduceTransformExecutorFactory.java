@@ -39,7 +39,6 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
-import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.batch.ConnectorSourceEmitter;
 import io.cdap.cdap.etl.batch.DirectOutputPipeStage;
 import io.cdap.cdap.etl.batch.MultiOutputTransformPipeStage;
@@ -64,7 +63,6 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
-import io.cdap.cdap.etl.common.preview.LimitingTransform;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
@@ -94,7 +92,6 @@ public class MapReduceTransformExecutorFactory<T> {
   private final MapReduceTaskContext taskContext;
   private final String mapOutputKeyClassName;
   private final String mapOutputValClassName;
-  private final int numberOfRecordsPreview;
   private final BasicArguments arguments;
   private final boolean isPipelineContainsCondition;
   private boolean isMapPhase;
@@ -104,10 +101,8 @@ public class MapReduceTransformExecutorFactory<T> {
                                            Metrics metrics,
                                            BasicArguments arguments,
                                            String sourceStageName,
-                                           int numberOfRecordsPreview,
                                            boolean isPipelineContainsCondition) {
     this.taskContext = taskContext;
-    this.numberOfRecordsPreview = numberOfRecordsPreview;
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
     this.sourceStageName = sourceStageName;
@@ -187,9 +182,6 @@ public class MapReduceTransformExecutorFactory<T> {
     }
 
     Transformation transformation = getInitializedTransformation(stageSpec);
-    boolean isLimitingSource =
-      taskContext.getDataTracer(stageName).isEnabled() && BatchSource.PLUGIN_TYPE.equals(pluginType) && isMapPhase;
-    transformation = isLimitingSource ? new LimitingTransform(transformation, numberOfRecordsPreview) : transformation;
     // we emit metrics for records into alert publishers when the actual alerts are published,
     // not when we write the alerts to the temporary dataset
     String recordsInMetric = AlertPublisher.PLUGIN_TYPE.equals(pluginType) ? null : Constants.Metrics.RECORDS_IN;

@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.batch.mapreduce;
 
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.Input;
+import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.messaging.MessageFetcher;
@@ -29,6 +30,7 @@ import io.cdap.cdap.etl.api.batch.BatchContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
+import io.cdap.cdap.etl.batch.preview.LimitingInputFormatProvider;
 import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
 import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.PipelineRuntime;
@@ -42,7 +44,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
@@ -67,29 +68,30 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   @Override
-  public void setInput(final Input input) {
-    Input trackableInput = CALLER.callUnchecked(new Callable<Input>() {
-      @Override
-      public Input call() throws Exception {
-        Input trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(input));
-        mrContext.addInput(trackableInput);
-        return trackableInput;
+  public void setInput(Input input) {
+    Input wrapped = CALLER.callUnchecked(() -> {
+      Input trackableInput = input;
+      if (isPreviewEnabled && input instanceof Input.InputFormatProviderInput) {
+        InputFormatProvider inputFormatProvider = ((Input.InputFormatProviderInput) input).getInputFormatProvider();
+        LimitingInputFormatProvider wrapper =
+          new LimitingInputFormatProvider(inputFormatProvider, getMaxPreviewRecords());
+        trackableInput = Input.of(input.getName(), wrapper).alias(input.getAlias());
       }
+      trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(trackableInput));
+      mrContext.addInput(trackableInput);
+      return trackableInput;
     });
-    inputNames.add(trackableInput.getAlias());
+    inputNames.add(wrapped.getAlias());
   }
 
   @Override
-  public void addOutput(final Output output) {
-    final Output actualOutput = suffixOutput(getOutput(output));
-    Output trackableOutput = CALLER.callUnchecked(new Callable<Output>() {
-      @Override
-      public Output call() throws Exception {
-        Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),
-                                                                                                  actualOutput);
-        mrContext.addOutput(trackableOutput);
-        return trackableOutput;
-      }
+  public void addOutput(Output output) {
+    Output actualOutput = suffixOutput(getOutput(output));
+    Output trackableOutput = CALLER.callUnchecked(() -> {
+      Output trackableOutput1 = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),
+                                                                                                 actualOutput);
+      mrContext.addOutput(trackableOutput1);
+      return trackableOutput1;
     });
     outputNames.add(trackableOutput.getAlias());
   }

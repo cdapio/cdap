@@ -45,10 +45,11 @@ public class StageSpec implements Serializable {
   private final Schema errorSchema;
   private final boolean stageLoggingEnabled;
   private final boolean processTimingEnabled;
+  private final int maxPreviewRecords;
 
   private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas, @Nullable Schema outputSchema,
                     Schema errorSchema, Map<String, Schema> portSchemas, Map<String, Port> outputPorts,
-                    boolean stageLoggingEnabled, boolean processTimingEnabled) {
+                    boolean stageLoggingEnabled, boolean processTimingEnabled, int maxPreviewRecords) {
     this.name = name;
     this.plugin = plugin;
     this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
@@ -58,6 +59,7 @@ public class StageSpec implements Serializable {
     this.outputSchema = outputSchema;
     this.outputPorts = Collections.unmodifiableMap(outputPorts);
     this.portSchemas = Collections.unmodifiableMap(portSchemas);
+    this.maxPreviewRecords = maxPreviewRecords;
   }
 
   public String getName() {
@@ -98,6 +100,10 @@ public class StageSpec implements Serializable {
     return processTimingEnabled;
   }
 
+  public int getMaxPreviewRecords() {
+    return maxPreviewRecords;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -122,7 +128,7 @@ public class StageSpec implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(name, plugin, inputSchemas, outputPorts,
-                        outputSchema, errorSchema, stageLoggingEnabled, processTimingEnabled);
+                        outputSchema, errorSchema, stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
   }
 
   @Override
@@ -132,10 +138,12 @@ public class StageSpec implements Serializable {
       ", plugin=" + plugin +
       ", inputSchemas=" + inputSchemas +
       ", outputPorts=" + outputPorts +
+      ", portSchemas=" + portSchemas +
       ", outputSchema=" + outputSchema +
       ", errorSchema=" + errorSchema +
       ", stageLoggingEnabled=" + stageLoggingEnabled +
       ", processTimingEnabled=" + processTimingEnabled +
+      ", maxPreviewRecords=" + maxPreviewRecords +
       '}';
   }
 
@@ -157,6 +165,7 @@ public class StageSpec implements Serializable {
     private Schema errorSchema;
     private boolean stageLoggingEnabled;
     private boolean processTimingEnabled;
+    private int maxPreviewRecords;
 
     public Builder(String name, PluginSpec plugin) {
       this.name = name;
@@ -167,6 +176,7 @@ public class StageSpec implements Serializable {
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.isSplitter = plugin.getType().equals(SplitterTransform.PLUGIN_TYPE);
+      this.maxPreviewRecords = 100;
     }
 
     public Builder addInputSchema(String stageName, Schema schema) {
@@ -223,9 +233,14 @@ public class StageSpec implements Serializable {
       return this;
     }
 
+    public Builder setMaxPreviewRecords(int maxPreviewRecords) {
+      this.maxPreviewRecords = maxPreviewRecords;
+      return this;
+    }
+
     public StageSpec build() {
       return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, portSchemas, outputs,
-                           stageLoggingEnabled, processTimingEnabled);
+                           stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
     }
 
   }
