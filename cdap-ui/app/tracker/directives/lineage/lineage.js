@@ -111,6 +111,18 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
     return link;
   };
 
+  vm.getAppLink = (node) => {
+    let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
+    let link = window.getHydratorUrl({
+      stateName: 'hydrator.detail',
+      stateParams: {
+        namespace: nodeInfo.namespace,
+        pipelineId: nodeInfo.applicationId
+      }
+    });
+    return link;
+  };
+
   vm.closePopover = (event, node) => {
     event.stopPropagation();
     node.showPopover = false;
