@@ -20,6 +20,7 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.ErrorRecord;
 import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 
@@ -48,6 +49,14 @@ public class WrappedErrorTransform<IN, OUT> extends ErrorTransform<IN, OUT> {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       transform.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void prepareRun(StageSubmitterContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      transform.prepareRun(context);
       return null;
     });
   }

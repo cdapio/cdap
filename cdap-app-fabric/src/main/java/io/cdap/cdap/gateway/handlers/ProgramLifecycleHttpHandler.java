@@ -429,10 +429,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
 
     ProgramId program = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    if (!lifecycleService.programExists(program)) {
-      throw new NotFoundException(program);
-    }
-
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 

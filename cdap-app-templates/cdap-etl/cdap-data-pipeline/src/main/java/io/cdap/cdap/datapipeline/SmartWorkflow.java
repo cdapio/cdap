@@ -480,6 +480,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       stageSpecs.put(stageName, StageSpec.builder(stageName, actionSpec.getPluginSpec())
         .setStageLoggingEnabled(spec.isStageLoggingEnabled())
         .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+        .setMaxPreviewRecords(spec.getNumOfRecordsPreview())
         .build());
     }
 

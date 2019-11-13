@@ -44,12 +44,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
 /**
@@ -96,6 +99,90 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     Set<String> columnFields = new HashSet<>(columns);
     columnFields.addAll(keys.stream().map(Field::getName).collect(Collectors.toSet()));
     return readRow(keys, columnFields);
+  }
+
+  @Override
+  public Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Read with multiple keys {}", tableSchema.getTableId(), multiKeys);
+
+    for (Collection<Field<?>> keys : multiKeys) {
+      fieldValidator.validatePrimaryKeys(keys, false);
+    }
+
+    // Collapse values of each key
+    Map<String, Set<Field<?>>> keyFields = new LinkedHashMap<>();
+    multiKeys.stream().flatMap(Collection::stream).forEach(field -> {
+      keyFields.computeIfAbsent(field.getName(), k -> new LinkedHashSet<>()).add(field);
+    });
+
+    try (PreparedStatement statement = prepareMultiReadQuery(keyFields)) {
+      LOG.trace("SQL statement: {}", statement);
+      Collection<StructuredRow> result = new ArrayList<>();
+      try (ResultSet resultSet = statement.executeQuery()) {
+        while (resultSet.next()) {
+          result.add(resultSetToRow(resultSet));
+        }
+        return result;
+      }
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to read from table %s with multi keys %s",
+                                          tableSchema.getTableId().getName(), multiKeys), e);
+    }
+  }
+
+  /**
+   * Creates a SELECT query that fetches rows from a given set of keys.
+   *
+   * @param keyFields a map from field name to set of field values to query
+   * @return a SELECT query ready to be used for creating prepared statement
+   */
+  private PreparedStatement prepareMultiReadQuery(Map<String, Set<Field<?>>> keyFields) throws SQLException {
+    StringBuilder queryString =
+      new StringBuilder("SELECT ")
+        .append("*")
+        .append(" FROM ")
+        .append(tableSchema.getTableId().getName())
+        .append(" WHERE ");
+
+    Joiner.on(" AND ").appendTo(
+      queryString, keyFields.entrySet().stream()
+        .map(e -> {
+          StringBuilder fieldBuilder = new StringBuilder(e.getKey()).append(" IN (");
+          Joiner.on(',').appendTo(fieldBuilder, IntStream.range(0, e.getValue().size()).mapToObj(i -> "?").iterator());
+          return fieldBuilder.append(")").toString();
+        }).iterator()
+    );
+    queryString.append(";");
+
+    PreparedStatement preparedStatement = connection.prepareStatement(queryString.toString());
+
+    // Set fields to the statement
+    int index = 1;
+    for (Map.Entry<String, Set<Field<?>>> entry : keyFields.entrySet()) {
+      for (Field<?> keyField : entry.getValue()) {
+        setField(preparedStatement, keyField, index);
+        index++;
+      }
+    }
+    return preparedStatement;
+  }
+
+  /**
+   * Creates a {@link StructuredRow} from the given {@link ResultSet}.
+   *
+   * @param resultSet the result set containing query result of a row
+   * @return a {@link StructuredRow}
+   * @throws SQLException if failed to get row from the given {@link ResultSet}
+   */
+  private StructuredRow resultSetToRow(ResultSet resultSet) throws SQLException {
+    ResultSetMetaData metaData = resultSet.getMetaData();
+    int numCols = metaData.getColumnCount();
+    Map<String, Object> row = new HashMap<>();
+    for (int i = 1; i <= numCols; i++) {
+      row.put(metaData.getColumnName(i), resultSet.getObject(i));
+    }
+    return new SqlStructuredRow(tableSchema, row);
   }
 
   @Override
@@ -331,7 +418,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Read with keys {} and columns {}", tableSchema.getTableId(), keys, columns);
     fieldValidator.validatePrimaryKeys(keys, false);
     String readQuery = getReadQuery(keys, columns, false);
-    try (PreparedStatement statement = connection.prepareStatement(readQuery);) {
+    try (PreparedStatement statement = connection.prepareStatement(readQuery)) {
       int index = 1;
       for (Field<?> key : keys) {
         setField(statement, key, index);
@@ -342,14 +429,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
         if (!resultSet.next()) {
           return Optional.empty();
         }
-
-        ResultSetMetaData metaData = resultSet.getMetaData();
-        int numCols = metaData.getColumnCount();
-        Map<String, Object> row = new HashMap<>();
-        for (int i = 1; i <= numCols; i++) {
-          row.put(metaData.getColumnName(i), resultSet.getObject(i));
-        }
-        return Optional.of(new SqlStructuredRow(tableSchema, row));
+        return Optional.of(resultSetToRow(resultSet));
       }
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to read from table %s with keys %s",

@@ -36,11 +36,9 @@ const styles = (): StyleRules => {
       position: 'relative',
       marginLeft: 10,
       width: 400,
-    },
-    timePickerContainer: {
-      position: 'relative',
-      top: -30,
-      left: 230,
+      '& .expandable-time-range-picker': {
+        width: '330px',
+      },
     },
   };
 };
@@ -67,7 +65,7 @@ function TimeRangePicker({ classes }) {
   };
 
   return (
-    <div className={classes.timePickerContainer} data-cy="fll-time-picker">
+    <div data-cy="fll-time-picker">
       <span className={classes.view}>{T.translate(`${PREFIX}.view`)}</span>
       <Select
         value={selection}

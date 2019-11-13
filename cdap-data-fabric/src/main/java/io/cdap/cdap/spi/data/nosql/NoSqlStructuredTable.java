@@ -21,6 +21,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.dataset.lib.IndexedTable;
+import io.cdap.cdap.api.dataset.table.Get;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,6 +86,19 @@ public final class NoSqlStructuredTable implements StructuredTable {
     Row row = table.get(convertKeyToBytes(keys, false),
                         convertColumnsToBytes(columns));
     return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
+  }
+
+  @Override
+  public Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
+    throws InvalidFieldException {
+    List<Get> gets = multiKeys.stream()
+      .map(k -> convertKeyToBytes(k, false))
+      .map(Get::new)
+      .collect(Collectors.toList());
+    return table.get(gets).stream()
+      .filter(r -> !r.isEmpty())
+      .map(r -> new NoSqlStructuredRow(r, schema))
+      .collect(Collectors.toList());
   }
 
   @Override

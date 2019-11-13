@@ -157,10 +157,8 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     vm.schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj('')];
     reRenderComplexSchema();
   }
-  eventEmitter.on('schema.clear', clearSchema);
-  EventPipe.on('schema.clear', clearSchema);
 
-  EventPipe.on('schema.import', (schemas) => {
+  function onSchemaImport(schemas) {
     vm.clearDOM = true;
     vm.error = '';
     if (typeof schemas === 'string') {
@@ -210,7 +208,12 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     });
 
     reRenderComplexSchema();
-  });
+  }
+  eventEmitter.on('schema.clear', clearSchema);
+  EventPipe.on('schema.clear', clearSchema);
+
+  eventEmitter.on('schema.import', onSchemaImport);
+  EventPipe.on('schema.import', onSchemaImport);
 
   $scope.$on('$destroy', () => {
     eventEmitter.off('dataset.selected', handleDatasetSelected);

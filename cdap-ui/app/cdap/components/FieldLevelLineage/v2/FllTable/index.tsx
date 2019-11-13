@@ -49,6 +49,10 @@ const styles = (theme) => {
         paddingLeft: '10px',
         paddingRight: '10px',
         borderTop: `1px solid ${theme.palette.grey[500]}`,
+        height: '21px',
+        alignItems: 'center',
+        padding: '0',
+        gridTemplateColumns: '1fr auto !important', // To override styles for .grid-row from common.less
       },
       ' & .grid-row:hover': {
         backgroundColor: theme.palette.grey[700],
@@ -57,6 +61,7 @@ const styles = (theme) => {
         backgroundColor: theme.palette.yellow[200],
         color: theme.palette.orange[50],
         fontWeight: 'bold',
+        cursor: 'unset',
       },
     },
     tableHeader: {
@@ -65,6 +70,12 @@ const styles = (theme) => {
       paddingLeft: '10px',
       fontWeight: 'bold',
       fontSize: '1rem',
+      overflow: 'hidden',
+      ' & .table-name': {
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+      },
     },
     tableSubheader: {
       color: theme.palette.grey[100],
@@ -89,7 +100,7 @@ function renderGridHeader(fields: IField[], isTarget: boolean, classes) {
   const tableName = fields[0].dataset;
   return (
     <div className={classes.tableHeader}>
-      <div>{tableName}</div>
+      <div className="table-name">{tableName}</div>
       <div className={classes.tableSubheader}>
         {isTarget
           ? T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', {

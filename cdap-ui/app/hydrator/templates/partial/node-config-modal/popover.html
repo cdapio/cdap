@@ -26,6 +26,15 @@
       <small>{{HydratorPlusPlusNodeConfigCtrl.state.node.description}}</small>
     </p>
   </h5>
+  <span class="text-success"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.errorCount === 0">No errors found.</span>
+  <span class="text-danger"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.errorCount > 0">
+    <ng-pluralize count="HydratorPlusPlusNodeConfigCtrl.errorCount"
+                  when="{'1': '1 error found',
+                         'other': '{} errors found.'}">
+    </ng-pluralize>
+  </span>
   <div class="btn-group pull-right">
     <button class="btn btn-primary validate-btn" type="button"
             ng-if="!isDisabled"

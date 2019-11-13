@@ -251,6 +251,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     StageSpec stageSpec = specBuilder
       .setProcessTimingEnabled(validatedPipeline.isProcessTimingEnabled())
       .setStageLoggingEnabled(validatedPipeline.isStageLoggingEnabled())
+      .setMaxPreviewRecords(validatedPipeline.getMaxPreviewRecords())
       .build();
     return new ConfiguredStage(stageSpec, pluginConfigurer.getPipelineProperties());
   }

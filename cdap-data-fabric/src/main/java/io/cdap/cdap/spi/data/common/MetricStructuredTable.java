@@ -108,6 +108,25 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
+  public Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
+    throws InvalidFieldException, IOException {
+    try {
+      if (!emitTimeMetrics) {
+        return structuredTable.multiRead(multiKeys);
+      }
+      long curTime = System.nanoTime();
+      Collection<StructuredRow> result = structuredTable.multiRead(multiKeys);
+      long duration = System.nanoTime() - curTime;
+      metricsCollector.increment(metricPrefix + "multi.read.time", duration);
+      metricsCollector.increment(metricPrefix + "multi.read.count", 1L);
+      return result;
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "multi.read.error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException {
     try {
       CloseableIterator<StructuredRow> result;

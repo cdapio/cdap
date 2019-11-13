@@ -19,7 +19,6 @@ import { objectQuery, parseQueryString } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import {
   IField,
-  ILink,
   ITableFields,
   ITimeParams,
   getTableId,
@@ -49,7 +48,8 @@ const defaultContext: IContextState = {
   selection: TIME_OPTIONS[1],
   showOperations: false,
   activeOpsIndex: 0,
-  loading: false,
+  loadingOps: false,
+  loadingLineage: true,
 };
 
 export const FllContext = React.createContext<IContextState>(defaultContext);
@@ -68,7 +68,8 @@ export interface IContextState {
   selection: string;
   showOperations: boolean;
   activeOpsIndex: number;
-  loading: boolean;
+  loadingOps: boolean;
+  loadingLineage?: boolean;
   operations?: IOperationSummary[];
   direction?: string;
   handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -183,6 +184,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
   };
 
   private fetchFieldLineage(qParams, timeParams, dataset = this.state.target) {
+    this.setState({ loadingLineage: true });
     const namespace = getCurrentNamespace();
     const updateState = (newState: IContextState) => {
       // If no field selected, grab the first field with lineage
@@ -200,6 +202,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
       newState.activeCauseSets = activeSets.activeCauseSets;
       newState.activeImpactSets = activeSets.activeImpactSets;
 
+      newState.loadingLineage = false;
       this.setState(newState);
     };
     getFieldLineage(namespace, dataset, qParams, timeParams, updateState);
@@ -210,6 +213,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
       selection,
       start: null,
       end: null,
+      loadingLineage: true,
     };
     // start and end are only set for custom date range
     if (selection === TIME_OPTIONS[0]) {
@@ -258,15 +262,18 @@ export class Provider extends React.Component<{ children }, IContextState> {
   };
 
   private toggleOperations = (direction?: string) => {
-    this.setState({ showOperations: !this.state.showOperations, loading: true, direction }, () => {
-      if (this.state.showOperations && direction) {
-        const timeParams = { start: this.state.start, end: this.state.end };
-        const cb = (operations) => {
-          this.setState({ operations, loading: false, activeOpsIndex: 0 });
-        };
-        getOperations(this.state.target, timeParams, this.state.activeField.name, direction, cb);
+    this.setState(
+      { showOperations: !this.state.showOperations, loadingOps: true, direction },
+      () => {
+        if (this.state.showOperations && direction) {
+          const timeParams = { start: this.state.start, end: this.state.end };
+          const cb = (operations) => {
+            this.setState({ operations, loadingOps: false, activeOpsIndex: 0 });
+          };
+          getOperations(this.state.target, timeParams, this.state.activeField.name, direction, cb);
+        }
       }
-    });
+    );
   };
 
   private nextOperation = () => {
@@ -295,7 +302,8 @@ export class Provider extends React.Component<{ children }, IContextState> {
     activeCauseSets: {},
     activeImpactSets: {},
     activeLinks: null,
-    loading: false,
+    loadingOps: false,
+    loadingLineage: true,
     direction: null,
     // for handling pagination
     numTables: 4,

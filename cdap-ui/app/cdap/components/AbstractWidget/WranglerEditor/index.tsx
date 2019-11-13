@@ -26,6 +26,7 @@ import { preventPropagation, objectQuery } from 'services/helpers';
 import LoadingSVG from 'components/LoadingSVG';
 import { IWidgetProps } from 'components/AbstractWidget';
 import IconSVG from 'components/IconSVG';
+import ee from 'event-emitter';
 // This artifact will stay until we migrate dataprep to use css-in-js
 require('./wrangler-modal.scss');
 
@@ -85,6 +86,7 @@ class WranglerEditor extends React.PureComponent<IWranglerEditorProps, IWrangler
     reloadCodeEditor: false,
   };
 
+  private eventEmitter = ee(ee);
   public toggleDataprepModal = () => {
     this.setState({
       showDataprepModal: !this.state.showDataprepModal,
@@ -120,6 +122,7 @@ class WranglerEditor extends React.PureComponent<IWranglerEditorProps, IWrangler
       schema,
     });
     this.closeDataprepModal();
+    this.eventEmitter.emit('schema.import', schema);
   };
 
   public onCodeEditorChange = (value) => {

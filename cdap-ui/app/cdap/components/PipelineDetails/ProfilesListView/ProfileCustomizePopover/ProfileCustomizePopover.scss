@@ -18,9 +18,12 @@
   .popper {
     min-width: 350px;
     min-height: 300px;
+    max-height: 360px;
     z-index: 1;
     padding: 20px;
     text-align: left;
+    overflow-y: auto;
+    overflow-x: hidden;
     &[data-x-out-of-boundaries] {
       visibility: hidden;
     }

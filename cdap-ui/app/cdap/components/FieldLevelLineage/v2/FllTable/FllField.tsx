@@ -30,9 +30,6 @@ import FllMenu from 'components/FieldLevelLineage/v2/FllTable/FllMenu';
 const styles = (theme): StyleRules => {
   return {
     root: {
-      paddingLeft: '10px',
-      paddingRight: '10px',
-      borderTop: `1px solid ${theme.palette.grey[500]}`,
       '&.grid-row.activeField': {
         backgroundColor: theme.palette.yellow[200],
       },
@@ -44,6 +41,13 @@ const styles = (theme): StyleRules => {
     targetView: {
       paddingLeft: '55px',
       color: theme.palette.blue[200],
+      cursor: 'pointer',
+      height: '20px',
+    },
+    fieldname: {
+      pointerEvents: 'none',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     },
   };
 };
@@ -86,7 +90,7 @@ function FllField({ field, isActive, classes }: IFieldProps) {
       data-hovering={isHovering}
       data-target={isTarget}
     >
-      {field.name}
+      <span className={classes.fieldname}>{field.name}</span>
       <If condition={isHovering && !isTarget}>
         <span data-cy="view-lineage">
           <Link to={linkPath} className={classes.hoverText} title={field.name}>

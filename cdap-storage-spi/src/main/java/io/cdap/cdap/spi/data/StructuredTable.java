@@ -24,7 +24,9 @@ import io.cdap.cdap.spi.data.table.field.Range;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -72,6 +74,25 @@ public interface StructuredTable extends Closeable {
    */
   Optional<StructuredRow> read(Collection<Field<?>> keys,
                                Collection<String> columns) throws InvalidFieldException, IOException;
+
+  /**
+   * Reads multiple rows with all the columns from the table. The default implementation is to call
+   * {@link #read(Collection)} one by one. Implementations of this interface can provide an optimized version.
+   *
+   * @param multiKeys a collection of keys to read
+   * @return a {@link Collection} of {@link StructuredRow} that are present in the table
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
+   *                               do not match
+   * @throws IOException if there is an error reading from the table
+   */
+  default Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
+    throws InvalidFieldException, IOException {
+    List<StructuredRow> result = new ArrayList<>();
+    for (Collection<Field<?>> keys : multiKeys) {
+      read(keys).ifPresent(result::add);
+    }
+    return result;
+  }
 
   /**
    * Read a set of rows from the table matching the key range.

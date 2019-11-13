@@ -35,6 +35,11 @@ const styles = (theme): StyleRules => {
         fontWeight: 'bold',
       },
     },
+    header: {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
     subHeader: {
       borderBottom: `2px solid ${theme.palette.grey[200]}`,
     },
@@ -82,7 +87,7 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
 
   return (
     <div className={classes.root}>
-      <div className={classnames({ target: isTarget })}>{header}</div>
+      <div className={classnames(classes.header, { target: isTarget })}>{header}</div>
       <div className={classes.subHeader}>{subHeader}</div>
     </div>
   );
