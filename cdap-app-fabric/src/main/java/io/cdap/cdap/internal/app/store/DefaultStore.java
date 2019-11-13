@@ -776,9 +776,10 @@ public class DefaultStore implements Store {
         }
       }
 
-      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCounts(existingPrograms);
-      for (Map.Entry<ProgramId, Long> entry : runCounts.entrySet()) {
-        result.add(new RunCountResult(entry.getKey(), entry.getValue(), null));
+      if (!existingPrograms.isEmpty()) {
+        for (Map.Entry<ProgramId, Long> entry : appMetadataStore.getProgramRunCounts(existingPrograms).entrySet()) {
+          result.add(new RunCountResult(entry.getKey(), entry.getValue(), null));
+        }
       }
       return result;
     });

@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -219,12 +220,10 @@ public class AppMetadataStore {
   public ApplicationMeta getApplication(String namespaceId, String appId, String versionId)
     throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
-    Optional<StructuredRow> row = getApplicationSpecificationTable().read(fields);
-    if (!row.isPresent()) {
-      return null;
-    }
-    return GSON.fromJson(
-      row.get().getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD), ApplicationMeta.class);
+    return getApplicationSpecificationTable().read(fields)
+      .map(r -> GSON.fromJson(r.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
+                              ApplicationMeta.class))
+      .orElse(null);
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) throws IOException {
@@ -263,15 +262,35 @@ public class AppMetadataStore {
    return appIds;
   }
 
+  /**
+   * Gets the {@link ApplicationMeta} for the given set of {@link ApplicationId}.
+   *
+   * @param appIds set of application id to read
+   * @return a {@link Map} from {@link ApplicationId} to the corresponding {@link ApplicationMeta}. There will be
+   *         no entry for application that doesn't exist
+   * @throws IOException if failed to read metadata
+   */
   public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds)
     throws IOException {
-    Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
-    for (ApplicationId appId: appIds) {
-      ApplicationMeta applicationMeta = getApplication(appId);
-      if (applicationMeta != null) {
-        result.put(appId, getApplication(appId));
-      }
+    if (appIds.isEmpty()) {
+      return Collections.emptyMap();
     }
+
+    Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
+    List<List<Field<?>>> multiKeys = new ArrayList<>();
+    for (ApplicationId appId: appIds) {
+      multiKeys.add(getApplicationPrimaryKeys(appId.getNamespace(), appId.getApplication(), appId.getVersion()));
+    }
+
+    for (StructuredRow row : getApplicationSpecificationTable().multiRead(multiKeys)) {
+      ApplicationId appId =
+        new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
+          .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
+               row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD));
+      result.put(appId, GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
+                                      ApplicationMeta.class));
+    }
+
     return result;
   }
 
@@ -391,7 +410,7 @@ public class AppMetadataStore {
     long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
     if (startTs == -1L) {
       LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have " +
-                  "a timestamp in the run id.");
+                  "a timestamp in the run id.", programRunId);
       return null;
     }
 
@@ -1391,15 +1410,30 @@ public class AppMetadataStore {
    */
   public Map<ProgramId, Long> getProgramRunCounts(Collection<ProgramId> programIds)
     throws BadRequestException, IOException {
-    Map<ProgramId, Long> result = new LinkedHashMap<>();
     if (programIds.size() > 100) {
       throw new BadRequestException(String.format("%d programs found, the maximum number supported is 100",
                                                   programIds.size()));
     }
-    for (ProgramId programId : programIds) {
-      List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, programId);
-      Optional<StructuredRow> row = getProgramCountsTable().read(countKey);
-      result.put(programId, row.isPresent() ? row.get().getLong(StoreDefinition.AppMetadataStore.COUNTS) : 0);
+
+    Map<ProgramId, Long> result = programIds.stream()
+      .collect(Collectors.toMap(id -> id, id -> 0L, (v1, v2) -> 0L, LinkedHashMap::new));
+    if (programIds.isEmpty()) {
+      return result;
+    }
+
+    List<List<Field<?>>> multiKeys = programIds.stream()
+      .map(id -> getProgramCountPrimaryKeys(TYPE_COUNT, id))
+      .collect(Collectors.toList());
+
+    for (StructuredRow row : getProgramCountsTable().multiRead(multiKeys)) {
+      ProgramId programId =
+        new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
+          .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
+               row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD))
+          .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
+                   row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
+
+      result.put(programId, row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
     }
     return result;
   }

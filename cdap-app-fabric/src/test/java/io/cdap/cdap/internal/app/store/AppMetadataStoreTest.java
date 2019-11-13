@@ -20,9 +20,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -688,6 +691,35 @@ public abstract class AppMetadataStoreTest {
       store.deleteProgramHistory(programId.getNamespace(), programId.getApplication(), programId.getVersion());
       Assert.assertEquals(0, store.getProgramRunCount(programId));
     });
+  }
+
+  @Test
+  public void testBatchApplications() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 20 application specs
+    for (int i = 0; i < 20; i++) {
+      String appName = "test" + i;
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+    }
+
+    // Batch read 30, expect to get back 20
+    List<ApplicationId> appIds = new ArrayList<>();
+    for (int i = 0; i < 30; i++) {
+      appIds.add(NamespaceId.DEFAULT.app("test" + i));
+    }
+    Map<ApplicationId, ApplicationMeta> result = TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      return store.getApplicationsForAppIds(appIds);
+    });
+
+    Assert.assertEquals(20, result.size());
+    for (int i = 0; i < 20; i++) {
+      Assert.assertTrue("Missing application test" + i, result.containsKey(NamespaceId.DEFAULT.app("test" + i)));
+    }
   }
 
   @Test
