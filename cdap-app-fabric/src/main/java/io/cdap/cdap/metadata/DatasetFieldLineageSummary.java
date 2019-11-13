@@ -43,6 +43,7 @@ public class DatasetFieldLineageSummary {
 
   public DatasetFieldLineageSummary(Constants.FieldLineage.Direction direction, long startTs, long endTs,
                                     DatasetId datasetId, Set<String> fields,
+                                    Map<DatasetId, Integer> fieldCounts,
                                     Map<DatasetId, Set<FieldRelation>> incoming,
                                     Map<DatasetId, Set<FieldRelation>> outgoing) {
     this.direction = direction;
@@ -51,9 +52,11 @@ public class DatasetFieldLineageSummary {
     this.datasetId = datasetId;
     this.fields = fields;
     this.incoming = incoming.entrySet().stream().map(
-      entry -> new FieldLineageRelations(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
+      entry -> new FieldLineageRelations(entry.getKey(), fieldCounts.getOrDefault(entry.getKey(), 0),
+                                         entry.getValue())).collect(Collectors.toSet());
     this.outgoing = outgoing.entrySet().stream().map(
-      entry -> new FieldLineageRelations(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
+      entry -> new FieldLineageRelations(entry.getKey(), fieldCounts.getOrDefault(entry.getKey(), 0),
+                                         entry.getValue())).collect(Collectors.toSet());
   }
 
   public Constants.FieldLineage.Direction getDirection() {
@@ -91,11 +94,13 @@ public class DatasetFieldLineageSummary {
   public static class FieldLineageRelations {
     @SerializedName("entityId")
     private final DatasetId datasetId;
+    private final int fieldCount;
     private final Set<FieldRelation> relations;
 
     @VisibleForTesting
-    public FieldLineageRelations(DatasetId datasetId, Set<FieldRelation> relations) {
+    public FieldLineageRelations(DatasetId datasetId, int fieldCount, Set<FieldRelation> relations) {
       this.datasetId = datasetId;
+      this.fieldCount = fieldCount;
       this.relations = relations;
     }
 
@@ -111,16 +116,21 @@ public class DatasetFieldLineageSummary {
 
       DatasetFieldLineageSummary.FieldLineageRelations that = (DatasetFieldLineageSummary.FieldLineageRelations) o;
       return Objects.equals(datasetId, that.datasetId) &&
-        Objects.equals(relations, that.relations);
+        Objects.equals(relations, that.relations) &&
+        Objects.equals(fieldCount, that.fieldCount);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(datasetId, relations);
+      return Objects.hash(datasetId, fieldCount, relations);
     }
 
     public DatasetId getDatasetId() {
       return datasetId;
+    }
+
+    public int getFieldCount() {
+      return fieldCount;
     }
 
     public Set<FieldRelation> getRelations() {
