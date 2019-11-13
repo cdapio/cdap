@@ -1131,7 +1131,7 @@ public final class Constants {
 
     public static final String UGI_CACHE_EXPIRATION_MS = "cdap.ugi.cache.expiration.ms";
     
-    public static final String CDAP_RANGER_LDAP_USESYNC_CASECENVERSION = "cdap-ranger.usersync.ldap.username.caseconversion";
+    public static final String CDAP_RANGER_LDAP_USESYNC_CASECENVERSION = "security.authentication.username.caseconversion";
   }
 
   /**
