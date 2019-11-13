@@ -64,6 +64,12 @@ export default class ProfileCustomizePopover extends PureComponent {
         bubbleEvent={false}
         showPopover={this.state.showPopover}
         onTogglePopover={this.onTogglePopover}
+        modifiers={{
+          offset: {
+            enabled: true,
+            offset: '70,0',
+          },
+        }}
       >
         <ProfileCustomizeContent
           profileName={profileName}
