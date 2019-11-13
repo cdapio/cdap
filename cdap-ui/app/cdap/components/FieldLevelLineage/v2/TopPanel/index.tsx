@@ -25,13 +25,10 @@ const styles = (theme) => {
     root: {
       height: 60,
       background: theme.palette.white[50],
-      display: 'flex',
-    },
-    entity: {
-      flex: '2 42%',
+      display: 'grid',
+      gridTemplateColumns: 'auto 342px',
     },
     picker: {
-      flex: '1',
       marginTop: '2px',
     },
   };
@@ -40,7 +37,7 @@ const styles = (theme) => {
 const FllTopPanel = ({ datasetId, classes }) => {
   return (
     <div className={classes.root}>
-      <div className={classes.entity}>
+      <div>
         <EntityTopPanel
           breadCrumbAnchorLabel="Results"
           title={datasetId}

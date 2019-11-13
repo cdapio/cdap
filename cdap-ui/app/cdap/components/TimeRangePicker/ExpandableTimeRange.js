@@ -37,7 +37,7 @@ export default class ExpandableTimeRange extends Component {
   state = {
     start: this.props.inSeconds ? this.props.start * 1000 : this.props.start,
     end: this.props.inSeconds ? this.props.end * 1000 : this.props.end,
-    displayOnly: true,
+    displayOnly: this.props.start ? true : false,
   };
 
   onTimeClick = () => {

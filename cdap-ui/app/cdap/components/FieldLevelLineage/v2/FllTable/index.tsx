@@ -50,10 +50,12 @@ const styles = (theme) => {
         paddingRight: '10px',
         borderTop: `1px solid ${theme.palette.grey[500]}`,
         height: '21px',
+        alignItems: 'center',
+        padding: '0',
+        gridTemplateColumns: '1fr auto !important', // To override styles for .grid-row from common.less
       },
       ' & .grid-row:hover': {
         backgroundColor: theme.palette.grey[700],
-        cursor: 'pointer',
       },
       ' & .grid-row.selected': {
         backgroundColor: theme.palette.yellow[200],

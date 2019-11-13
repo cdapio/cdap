@@ -36,6 +36,9 @@ const styles = (): StyleRules => {
       position: 'relative',
       marginLeft: 10,
       width: 400,
+      '& .expandable-time-range-picker': {
+        width: '330px',
+      },
     },
   };
 };

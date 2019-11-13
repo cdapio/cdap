@@ -59,7 +59,7 @@ $contrast: 0;
     top: -30px;
 
     .time-range-selector {
-      padding: 10px;
+      padding: 9px;
       margin-bottom: 10px;
     }
   }
@@ -94,19 +94,25 @@ $contrast: 0;
     }
 
     .separator {
-      width: 36px;
+      width: 28px;
       font-weight: bold;
       line-height: 32px;
     }
 
+    .time-display {
+      .time {
+        width: calc(50% - 10px);
+      }
+    }
+
     .time {
-      // 18px = separator width divided by 2
-      width: calc(50% - 18px);
+      // 14px = separator width divided by 2
+      width: calc(50% - 14px);
 
       .time-wrapper {
         line-height: 32px;
         border: 2px solid $border-color;
-        padding: 0 10px;
+        padding-left: 3px;
         border-radius: 6px;
         background-color: white;
         cursor: pointer;
@@ -138,7 +144,7 @@ $contrast: 0;
       display: inline-block;
       width: 50%;
       vertical-align: top;
-      padding: 0 15px;
+      padding: 0 5px;
     }
 
     .time-display {
