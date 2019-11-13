@@ -236,7 +236,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
       }
       
       //login success
-      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(getUserName(callbackHandler), subject, loginContext);
+      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(userNameCH, subject, loginContext);
       subject.getPrincipals().add(userPrincipal);
 
       return identityService.newUserIdentity(subject, userPrincipal, getGroups(subject));
