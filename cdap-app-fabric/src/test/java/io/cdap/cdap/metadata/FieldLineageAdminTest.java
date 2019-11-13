@@ -207,6 +207,7 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
   public void testDatasetFieldLineageSummary() throws Exception {
     // the dataset fields
     Set<String> fields = ImmutableSet.of("field1", "field2", "field3");
+    ImmutableMap.Builder<EndPoint, Set<String>> allFields = ImmutableMap.builder();
 
     /*
       Incoming fields
@@ -232,6 +233,9 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
                                       new EndPointField(src3, "src3f1")),
                       "field3",
                       ImmutableSet.of(new EndPointField(src3, "src3f2")));
+    allFields.put(src1, ImmutableSet.of("src1f1", "src1f2", "src1f3"));
+    allFields.put(src2, ImmutableSet.of("src2f1", "src2f2"));
+    allFields.put(src3, ImmutableSet.of("src3f1", "src3f2"));
 
     /*
       Outgoing fields
@@ -254,12 +258,15 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
                                       new EndPointField(dest2, "dest2f1")),
                       "field3",
                       ImmutableSet.of(new EndPointField(dest2, "dest2f2")));
+    allFields.put(dest1, ImmutableSet.of("dest1f1", "dest1f2", "dest1f3", "dest1f4"));
+    allFields.put(dest2, ImmutableSet.of("dest2f1", "dest2f2"));
 
 
     FieldLineageAdmin fieldLineageAdmin = new FieldLineageAdmin(new FakeFieldLineageReader(fields,
                                                                                            Collections.emptySet(),
                                                                                            incomings, outgoings,
-                                                                                           Collections.emptySet()),
+                                                                                           Collections.emptySet(),
+                                                                                           allFields.build()),
                                                                 metadataAdmin);
     // input dataset name does not matter since we use a mocked reader
     DatasetFieldLineageSummary summary =
@@ -273,22 +280,22 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
     Assert.assertEquals(new DatasetId("ns1", "ds1"), summary.getDatasetId());
 
     Set<DatasetFieldLineageSummary.FieldLineageRelations> expectedIncomings = ImmutableSet.of(
-      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src1"),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src1"), 3,
                                                            ImmutableSet.of(new FieldRelation("src1f1", "field1"),
                                                                            new FieldRelation("src1f2", "field1"))),
-      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src2"),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src2"), 2,
                                                            ImmutableSet.of(new FieldRelation("src2f1", "field1"),
                                                 new FieldRelation("src2f2", "field2"))),
-      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src3"),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "src3"), 2,
                                                            ImmutableSet.of(new FieldRelation("src3f1", "field2"),
                                                 new FieldRelation("src3f2", "field3"))));
     Assert.assertEquals(expectedIncomings, summary.getIncoming());
 
     Set<DatasetFieldLineageSummary.FieldLineageRelations> expectedOutgoings = ImmutableSet.of(
-      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "dest1"),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "dest1"), 4,
                                                            ImmutableSet.of(new FieldRelation("field1", "dest1f1"),
                                                 new FieldRelation("field2", "dest1f2"))),
-      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "dest2"),
+      new DatasetFieldLineageSummary.FieldLineageRelations(new DatasetId("ns1", "dest2"), 2,
                                                            ImmutableSet.of(new FieldRelation("field1", "dest2f1"),
                                                                            new FieldRelation("field2", "dest2f1"),
                                                                            new FieldRelation("field3", "dest2f2"))));
