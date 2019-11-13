@@ -53,7 +53,7 @@ export default class UsecaseTab extends Component {
             key={entity.id}
             entity={entity}
             entityId={entity.id}
-            beta={entity.beta}
+            beta={entity.preview || entity.beta}
           />
         ))}
       </div>

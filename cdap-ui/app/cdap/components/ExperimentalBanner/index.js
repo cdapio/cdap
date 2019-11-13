@@ -18,5 +18,5 @@ import React from 'react';
 require('./ExperimentalBanner.scss');
 
 export default function ExperimentalBanner() {
-  return <div className="experimental-banner">BETA</div>;
+  return <div className="experimental-banner">PREVIEW</div>;
 }
