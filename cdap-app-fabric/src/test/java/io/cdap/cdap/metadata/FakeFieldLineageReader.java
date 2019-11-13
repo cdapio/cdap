@@ -34,32 +34,36 @@ import java.util.Set;
  */
 public class FakeFieldLineageReader implements FieldLineageReader {
 
+  // this is the default fields if a field is not in the map of all fields
   private final Set<String> fields;
   // this is the default summary if a field is not in the map of the incoming/outgoing summary
   private final Set<EndPointField> summary;
   private final Map<String, Set<EndPointField>> incomingSummary;
   private final Map<String, Set<EndPointField>> outgoingSummary;
   private final List<ProgramRunOperations> programRunOperations;
+  private final Map<EndPoint, Set<String>> allFields;
 
   FakeFieldLineageReader(Set<String> fields, Set<EndPointField> summary,
                          Set<ProgramRunOperations> programRunOperations) {
-    this(fields, summary, Collections.emptyMap(), Collections.emptyMap(), programRunOperations);
+    this(fields, summary, Collections.emptyMap(), Collections.emptyMap(), programRunOperations, Collections.emptyMap());
   }
 
   FakeFieldLineageReader(Set<String> fields, Set<EndPointField> summary,
                          Map<String, Set<EndPointField>> incomingSummary,
                          Map<String, Set<EndPointField>> outgoingSummary,
-                         Set<ProgramRunOperations> programRunOperations) {
+                         Set<ProgramRunOperations> programRunOperations,
+                         Map<EndPoint, Set<String>> allFields) {
     this.fields = Collections.unmodifiableSet(new HashSet<>(fields));
     this.summary = Collections.unmodifiableSet(new HashSet<>(summary));
     this.incomingSummary = Collections.unmodifiableMap(new HashMap<>(incomingSummary));
     this.outgoingSummary = Collections.unmodifiableMap(new HashMap<>(outgoingSummary));
     this.programRunOperations = Collections.unmodifiableList(new ArrayList<>(programRunOperations));
+    this.allFields = Collections.unmodifiableMap(new HashMap<>(allFields));
   }
 
   @Override
   public Set<String> getFields(EndPoint endPoint, long start, long end) {
-    return fields;
+    return allFields.getOrDefault(endPoint, fields);
   }
 
   @Override
