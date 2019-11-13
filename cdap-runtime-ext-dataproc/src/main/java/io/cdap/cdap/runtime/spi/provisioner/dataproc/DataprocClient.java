@@ -604,14 +604,12 @@ final class DataprocClient implements AutoCloseable {
       for (Firewall.Allowed allowed : firewall.getAllowed()) {
         String protocol = allowed.getIPProtocol();
         boolean addTag = false;
-        if ("ALL".equals(protocol)) {
+        if ("all".equalsIgnoreCase(protocol)) {
           requiredPorts.clear();
           addTag = true;
-        } else if ("tcp".equals(protocol)) {
-          if (allowed.getPorts() == null || allowed.getPorts().contains(String.valueOf(FirewallPort.SSH.port))) {
-            requiredPorts.remove(FirewallPort.SSH);
-            addTag = true;
-          }
+        } else if ("tcp".equalsIgnoreCase(protocol) && isPortAllowed(allowed.getPorts(), FirewallPort.SSH.port)) {
+          requiredPorts.remove(FirewallPort.SSH);
+          addTag = true;
         }
         if (addTag && firewall.getTargetTags() != null && !firewall.getTargetTags().isEmpty()) {
           tags.add(firewall.getTargetTags().iterator().next());
@@ -627,6 +625,34 @@ final class DataprocClient implements AutoCloseable {
         network, networkHostProjectId, portList));
     }
     return tags;
+  }
+
+  /**
+   * Returns if the given port is allowed by the list of allowed ports. The allowed ports is in format as allowed by
+   * GCP firewall rule.
+   */
+  private boolean isPortAllowed(@Nullable List<String> allowedPorts, int port) {
+    if (allowedPorts == null) {
+      return true;
+    }
+    for (String allowedPort : allowedPorts) {
+      int idx = allowedPort.lastIndexOf('-');
+      try {
+        // This is a port range specification in format of "startPort-endPort" (e.g. 0-65535)
+        if (idx > 0) {
+          int fromPort = Integer.parseInt(allowedPort.substring(0, idx));
+          int toPort = Integer.parseInt(allowedPort.substring(idx + 1));
+          if (port >= fromPort && port <= toPort) {
+            return true;
+          }
+        } else if (port == Integer.parseInt(allowedPort)) {
+          return true;
+        }
+      } catch (NumberFormatException e) {
+        LOG.warn("Ignoring firewall allowed port value '{}' due to parse error.", allowedPort, e);
+      }
+    }
+    return false;
   }
 
   private Node getNode(Compute compute, Node.Type type, String zone, String nodeName) throws IOException {
