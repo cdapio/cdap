@@ -41,7 +41,7 @@ const styles = (): StyleRules => {
   };
 };
 
-interface IConfigurationGroupProps extends WithStyles<typeof styles> {
+export interface IConfigurationGroupProps extends WithStyles<typeof styles> {
   widgetJson?: IWidgetJson;
   pluginProperties: PluginProperties;
   values: Record<string, string>;

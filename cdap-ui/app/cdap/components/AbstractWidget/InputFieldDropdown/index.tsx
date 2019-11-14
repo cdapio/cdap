@@ -65,15 +65,23 @@ function containsType(types: string[], allowedTypes: string[]) {
     return true;
   }
 
-  for (const allowedType of allowedTypes) {
-    if (types.length === 1 && types[0] === allowedType) {
-      return true;
-    } else if (types.length === 2 && types.includes(allowedType) && types.includes('null')) {
-      return true;
+  return allowedTypes.includes(extractType(types));
+}
+
+function extractType(types) {
+  let value = types;
+  if (types instanceof Array) {
+    if (types.length === 1) {
+      value = types[0];
+    } else if (types.length === 2 && types.includes('null')) {
+      value = types.indexOf('null') === 0 ? types[1] : types[0];
     }
   }
 
-  return false;
+  if (typeof value === 'object') {
+    value = value.logicalType || value;
+  }
+  return value;
 }
 
 const InputFieldDropdown: React.FC<IInputFieldProps> = ({
@@ -110,6 +118,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
     const multiSelectWidgetProps = {
       delimiter,
       options: fieldValues.map((field) => ({ id: field, label: field })),
+      showSelectionCount: true,
     };
 
     return (

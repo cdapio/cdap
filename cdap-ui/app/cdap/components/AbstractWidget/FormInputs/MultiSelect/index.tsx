@@ -29,6 +29,7 @@ export interface IOption {
 interface IMultiSelectWidgetProps {
   delimiter?: string;
   options: IOption[];
+  showSelectionCount?: boolean;
 }
 
 interface IMultiSelectProps extends IWidgetProps<IMultiSelectWidgetProps> {}
@@ -36,6 +37,7 @@ interface IMultiSelectProps extends IWidgetProps<IMultiSelectWidgetProps> {}
 export default function MultiSelect({ value, widgetProps, disabled, onChange }: IMultiSelectProps) {
   const delimiter = objectQuery(widgetProps, 'delimiter') || ',';
   const options = objectQuery(widgetProps, 'options') || [];
+  const showSelectionCount = objectQuery(widgetProps, 'showSelectionCount') || false;
 
   const initSelection = value.toString().split(delimiter);
   const [selections, setSelections] = useState<string[]>(initSelection);
@@ -56,8 +58,38 @@ export default function MultiSelect({ value, widgetProps, disabled, onChange }: 
     [value]
   );
 
+  function renderValue(values: any) {
+    if (selections.length === 0 || (selections.length === 1 && selections[0] === '')) {
+      return '';
+    }
+
+    if (!showSelectionCount) {
+      return selections
+        .map((sel) => {
+          const element = options.find((op) => op.id === sel);
+          return element ? element.label : '';
+        })
+        .join(', ');
+    }
+    const selectionID = selections.find((el) => el !== '');
+    const firstSelection = options.find((op) => op.id === selectionID);
+    const selectionLabel = firstSelection ? firstSelection.label : '';
+
+    let additionalSelectionCount = '';
+    if (selections.length > 1) {
+      additionalSelectionCount = `+${selections.length - 1}`;
+    }
+    return `${selectionLabel} ${additionalSelectionCount}`;
+  }
+
   return (
-    <Select multiple value={selections} onChange={onChangeHandler} disabled={disabled}>
+    <Select
+      multiple
+      value={selections}
+      onChange={onChangeHandler}
+      disabled={disabled}
+      renderValue={renderValue}
+    >
       {options.map((opt) => (
         <MenuItem value={opt.id} key={opt.id}>
           {opt.label}
