@@ -120,7 +120,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ProgramDescriptor loadProgram(ProgramId id) throws IOException, ApplicationNotFoundException,
+  public ProgramDescriptor loadProgram(ProgramId id) throws ApplicationNotFoundException,
     ProgramNotFoundException {
     ApplicationMeta appMeta = TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
@@ -621,7 +621,7 @@ public class DefaultStore implements Store {
   }
 
   @VisibleForTesting
-  void clear() throws Exception {
+  void clear() {
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).deleteAllAppMetadataTables();
       getWorkflowTable(context).deleteAll();
