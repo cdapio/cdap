@@ -16,7 +16,7 @@
 
 const PipelineTriggersActions = {
   changeNamespace: 'TRIGGERS_CHANGE_NAMESPACE',
-  setPipelineName: 'TRIGGERS_SET_PIPELINE_NAME',
+  setPipeline: 'TRIGGERS_SET_PIPELINE',
   setExpandedPipeline: 'TRIGGERS_SET_EXPANDED_PIPELINE',
   setExpandedTrigger: 'TRIGGERS_SET_EXPANDED_TRIGGER',
   setTriggersAndPipelineList: 'TRIGGERS_SET_TRIGGERS_PIPELINE',

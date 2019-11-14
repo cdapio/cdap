@@ -19,9 +19,9 @@ import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTri
 import NamespaceStore from 'services/NamespaceStore';
 import { MyAppApi } from 'api/app';
 import { MyScheduleApi } from 'api/schedule';
+import { GLOBALS } from 'services/global-constants';
 
-const DATA_PIPELINE_WORKFLOW = 'DataPipelineWorkflow';
-const DATA_PIPELINE_ARTIFACT = 'cdap-data-pipeline';
+const WORKFLOW_TYPE = 'workflows';
 
 export function changeNamespace(namespace) {
   let currentNamespace = NamespaceStore.getState().selectedNamespace;
@@ -50,7 +50,13 @@ export function changeNamespace(namespace) {
   });
 }
 
-export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespace, config) {
+export function enableSchedule(
+  pipelineTrigger,
+  workflowName,
+  activePipeline,
+  selectedNamespace,
+  config
+) {
   let namespace = NamespaceStore.getState().selectedNamespace;
   let scheduleName = `${activePipeline}.${namespace}.${pipelineTrigger.id}.${selectedNamespace}`;
 
@@ -58,7 +64,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
     name: scheduleName,
     description: '',
     program: {
-      programName: DATA_PIPELINE_WORKFLOW,
+      programName: workflowName,
       programType: 'WORKFLOW',
     },
     properties: Object.assign({}, config.properties),
@@ -69,7 +75,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
         version: pipelineTrigger.version || '-SNAPSHOT', // FIXME: This is a temporary hack and is not required
         type: 'WORKFLOW',
         entity: 'PROGRAM',
-        program: DATA_PIPELINE_WORKFLOW,
+        program: pipelineTrigger.workflowName,
       },
       programStatuses: config.eventTriggers,
       type: 'PROGRAM_STATUS',
@@ -99,7 +105,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
           MyScheduleApi.enableTrigger(scheduleParams).subscribe(
             () => {
               // fetch list triggers
-              fetchTriggersAndApps(activePipeline);
+              fetchTriggersAndApps(activePipeline, workflowName);
             },
             () => {}
           );
@@ -116,7 +122,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
           MyScheduleApi.enableTrigger(scheduleParams).subscribe(
             () => {
               // fetch list triggers
-              fetchTriggersAndApps(activePipeline);
+              fetchTriggersAndApps(activePipeline, workflowName);
             },
             (err) => {
               console.log('error enable', err);
@@ -131,7 +137,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
   );
 }
 
-export function fetchTriggersAndApps(pipeline, activeNamespace) {
+export function fetchTriggersAndApps(pipeline, workflowName, activeNamespace) {
   let namespace = NamespaceStore.getState().selectedNamespace;
   let activeNamespaceView =
     activeNamespace || PipelineTriggersStore.getState().triggers.selectedNamespace;
@@ -139,7 +145,7 @@ export function fetchTriggersAndApps(pipeline, activeNamespace) {
   let params = {
     namespace,
     appId: pipeline,
-    workflowId: DATA_PIPELINE_WORKFLOW,
+    workflowId: workflowName,
     'trigger-type': 'program-status',
     'schedule-status': 'SCHEDULED',
   };
@@ -169,7 +175,7 @@ export function fetchTriggersAndApps(pipeline, activeNamespace) {
     });
 }
 
-export function disableSchedule(schedule, activePipeline) {
+export function disableSchedule(schedule, activePipeline, workflowName) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
@@ -180,7 +186,7 @@ export function disableSchedule(schedule, activePipeline) {
 
   MyScheduleApi.delete(params).subscribe(
     () => {
-      fetchTriggersAndApps(activePipeline);
+      fetchTriggersAndApps(activePipeline, workflowName);
     },
     (err) => {
       console.log('Error deleting schedule', err);
@@ -231,13 +237,13 @@ function _filterPipelineList(
     });
 
   let pipelineList = appsList.filter((app) => {
-    let isPipeline = app.artifact.name === DATA_PIPELINE_ARTIFACT;
+    let isWorkflow = GLOBALS.programType[app.artifact.name] === WORKFLOW_TYPE;
 
     let isCurrentNamespace = namespace === activeNamespaceView ? app.name !== activePipeline : true;
 
     let isExistingTrigger = triggersPipelineName.indexOf(app.name) === -1;
 
-    return isPipeline && isCurrentNamespace && isExistingTrigger;
+    return isWorkflow && isCurrentNamespace && isExistingTrigger;
   });
 
   return pipelineList;

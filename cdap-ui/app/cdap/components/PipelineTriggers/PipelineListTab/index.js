@@ -23,6 +23,7 @@ import { connect } from 'react-redux';
 import PipelineTriggersActions from 'components/PipelineTriggers/store/PipelineTriggersActions';
 import PipelineTriggersRow from 'components/PipelineTriggers/PipelineListTab/PipelineTriggersRow';
 import T from 'i18n-react';
+import { GLOBALS } from 'services/global-constants';
 
 const TRIGGER_PREFIX = 'features.PipelineTriggers';
 const PREFIX = `${TRIGGER_PREFIX}.SetTriggers`;
@@ -35,6 +36,7 @@ const mapStateToProps = (state) => {
     selectedNamespace: state.triggers.selectedNamespace,
     pipelineName: state.triggers.pipelineName,
     expandedPipeline: state.triggers.expandedPipeline,
+    workflowName: state.triggers.workflowName,
   };
 };
 
@@ -55,6 +57,7 @@ function PipelineListTabView({
   selectedNamespace,
   expandedPipeline,
   toggleExpandPipeline,
+  workflowName,
 }) {
   let namespaceList = NamespaceStore.getState().namespaces;
   let { selectedNamespace: namespace } = NamespaceStore.getState();
@@ -107,6 +110,7 @@ function PipelineListTabView({
               id: pipeline.name,
               namespace: selectedNamespace,
               description: pipeline.description,
+              workflowName: GLOBALS.programId[pipeline.artifact.name],
             };
             return (
               <PipelineTriggersRow
@@ -117,6 +121,7 @@ function PipelineListTabView({
                 triggeringPipelineInfo={triggeringPipelineInfo}
                 triggeredPipelineInfo={triggeredPipelineInfo}
                 selectedNamespace={selectedNamespace}
+                workflowName={workflowName}
               />
             );
           })}
@@ -132,6 +137,7 @@ PipelineListTabView.propTypes = {
   pipelineName: PropTypes.string,
   expandedPipeline: PropTypes.string,
   toggleExpandPipeline: PropTypes.bool,
+  workflowName: PropTypes.string,
 };
 
 const PipelineListTab = connect(

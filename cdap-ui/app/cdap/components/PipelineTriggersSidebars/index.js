@@ -21,14 +21,18 @@ import PipelineTriggers from 'components/PipelineTriggers';
 import TriggeredPipelines from 'components/TriggeredPipelines';
 import { Theme } from 'services/ThemeHelper';
 
-export default function PipelineTriggersSidebars({ pipelineName, namespace }) {
+export default function PipelineTriggersSidebars({ pipelineName, namespace, pipelineType }) {
   if (Theme.showTriggers === false) {
     return null;
   }
 
   return (
     <div className="pipeline-triggers-sidebar-container">
-      <PipelineTriggers pipelineName={pipelineName} namespace={namespace} />
+      <PipelineTriggers
+        pipelineName={pipelineName}
+        namespace={namespace}
+        pipelineType={pipelineType}
+      />
       <TriggeredPipelines pipelineName={pipelineName} />
     </div>
   );
@@ -37,4 +41,5 @@ export default function PipelineTriggersSidebars({ pipelineName, namespace }) {
 PipelineTriggersSidebars.propTypes = {
   pipelineName: PropTypes.string,
   namespace: PropTypes.string,
+  pipelineType: PropTypes.string,
 };

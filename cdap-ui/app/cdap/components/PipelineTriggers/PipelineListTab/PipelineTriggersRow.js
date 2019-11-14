@@ -45,6 +45,7 @@ export default class PipelineTriggersRow extends Component {
   constructor(props) {
     super(props);
     this.pipelineName = PipelineTriggersStore.getState().triggers.pipelineName;
+    this.workflowName = PipelineTriggersStore.getState().triggers.workflowName;
   }
 
   toggleKey(key) {
@@ -73,6 +74,7 @@ export default class PipelineTriggersRow extends Component {
     let config = this.getConfig();
     enableSchedule(
       this.props.triggeringPipelineInfo,
+      this.workflowName,
       this.pipelineName,
       this.props.selectedNamespace,
       config
@@ -115,6 +117,7 @@ export default class PipelineTriggersRow extends Component {
     };
     enableSchedule(
       this.props.triggeringPipelineInfo,
+      this.workflowName,
       this.pipelineName,
       this.props.selectedNamespace,
       config

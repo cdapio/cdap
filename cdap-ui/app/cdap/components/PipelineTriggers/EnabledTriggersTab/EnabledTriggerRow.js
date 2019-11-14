@@ -36,11 +36,12 @@ export default class EnabledTriggerRow extends Component {
     super(props);
 
     this.pipelineName = PipelineTriggersStore.getState().triggers.pipelineName;
+    this.workflowName = PipelineTriggersStore.getState().triggers.workflowName;
     this.disableTriggerClick = this.disableTriggerClick.bind(this);
   }
 
   disableTriggerClick() {
-    disableSchedule(this.props.schedule, this.pipelineName);
+    disableSchedule(this.props.schedule, this.pipelineName, this.workflowName);
   }
 
   renderLoading() {

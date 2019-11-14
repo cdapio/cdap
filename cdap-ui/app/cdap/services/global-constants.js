@@ -55,6 +55,7 @@ const GLOBALS = {
       source: 'sqlsource',
       sink: 'sqlsink',
       transform: 'sqltransform',
+      sqljoiner: 'sqljoiner'
     },
     'cdap-etl-batch': {
       source: 'batchsource',
@@ -121,7 +122,8 @@ const GLOBALS = {
     splittertransform: pluginLabels['transform'],
     sqlsource: pluginLabels['source'],
     sqlsink: pluginLabels['sink'],
-    sqltransform: pluginLabels['transform']
+    sqltransform: pluginLabels['transform'],
+    sqljoiner: pluginLabels['analytics']
   },
   pluginLabels: pluginLabels,
   // understand what plugin type is what.
@@ -146,7 +148,8 @@ const GLOBALS = {
     splittertransform: 'transform',
     sqlsource: 'source',
     sqlsink: 'sink',
-    sqltransform: 'transform'
+    sqltransform: 'transform',
+    sqljoiner: 'transform'
   },
 
   artifactConvert: {
