@@ -1130,6 +1130,8 @@ public final class Constants {
     public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
 
     public static final String UGI_CACHE_EXPIRATION_MS = "cdap.ugi.cache.expiration.ms";
+    
+    public static final String CDAP_RANGER_LDAP_USESYNC_CASECENVERSION = "security.authentication.username.caseconversion";
   }
 
   /**

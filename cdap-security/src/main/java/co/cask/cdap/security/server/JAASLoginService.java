@@ -45,6 +45,9 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.CConfiguration;
+
 /* ---------------------------------------------------- */
 /** JAASLoginService
  *
@@ -63,6 +66,8 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   protected JAASUserPrincipal defaultUser = new JAASUserPrincipal(null, null, null);
   protected IdentityService identityService;
   protected Configuration configuration;
+  protected CConfiguration cConfiguration;
+  protected String ldap_caseconversion;
 
     /* ---------------------------------------------------- */
   /**
@@ -70,6 +75,8 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
    *
    */
   public JAASLoginService() {
+    cConfiguration = CConfiguration.create();
+    ldap_caseconversion = cConfiguration.get(Constants.Security.CDAP_RANGER_LDAP_USESYNC_CASECENVERSION);
   }
 
 
@@ -220,9 +227,16 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
       LoginContext loginContext = new LoginContext(loginModuleName, subject, callbackHandler, configuration);
 
       loginContext.login();
-
+      
+      String userNameCH = getUserName(callbackHandler);
+      if(ldap_caseconversion !=null && ldap_caseconversion.equalsIgnoreCase("lower")){
+        userNameCH = userNameCH.toLowerCase();
+      } else if (ldap_caseconversion !=null && ldap_caseconversion.equalsIgnoreCase("upper")){
+        userNameCH = userNameCH.toUpperCase();
+      }
+      
       //login success
-      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(getUserName(callbackHandler), subject, loginContext);
+      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(userNameCH, subject, loginContext);
       subject.getPrincipals().add(userPrincipal);
 
       return identityService.newUserIdentity(subject, userPrincipal, getGroups(subject));
