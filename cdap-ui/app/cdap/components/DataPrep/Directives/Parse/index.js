@@ -72,7 +72,7 @@ export default class ParseDirective extends Component {
       'FIXEDLENGTH',
       'HL7'
     ];
-    this.PARSE_OPTIONS = Theme.isCustomerJIO ? ['CSV', 'EXCEL', 'XML', 'JSON', 'SIMPLEDATE', 'NATURALDATE'] : this.PARSE_OPTIONS;
+    this.PARSE_OPTIONS = Theme.isCustomerJIO ? ['CSV', 'AVRO', 'EXCEL', 'XML', 'JSON', 'XMLTOJSON','SIMPLEDATE', 'NATURALDATE'] : this.PARSE_OPTIONS;
     window.addEventListener('resize', this.offsetCalcDebounce);
   }
 
