@@ -105,6 +105,7 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
+               data-cy="plugin-node-{{node.plugin.name}}-{{node.type}}-{{$index}}"
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
@@ -121,7 +122,8 @@
                   ng-attr-id="{{node.type === 'condition' ? 'endpoint_' + node.name + '_condition_true' : 'endpoint_' + node.name}}"
                   data-nodeid="{{node.name}}"
                   data-nodetype="{{node.type === 'condition' ? 'condition-true' : 'regular'}}"
-                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
+                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
+                  data-cy="plugin-endpoint-{{node.plugin.name}}-{{node.type}}-right">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div class="endpoint-circle node-splitter-endpoint"
@@ -148,7 +150,8 @@
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
                   ng-attr-id="{{'endpoint_' + node.name + '_condition_false'}}"
                   data-nodeid="{{node.name}}"
-                  data-nodetype="condition-false">
+                  data-nodetype="condition-false"
+                  data-cy="plugin-endpoint-{{node.plugin.name}}-{{node.type}}-false">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
