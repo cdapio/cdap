@@ -16,8 +16,24 @@
 
 const wp = require('@cypress/webpack-preprocessor');
 const wpconfig = require('../../webpack.config.cdap');
+const path = require('path');
 module.exports = (on) => {
-  wpconfig.module.rules = wpconfig.module.rules.filter((rule) => rule.loader !== 'eslint-loader');
+  wpconfig.module.rules = wpconfig.module.rules.filter(
+    (rule) => rule.loader !== 'eslint-loader' && String(rule.test) !== String(/\.tsx?$/)
+  );
+  wpconfig.module.rules.push({
+    test: /\.ts?$/,
+    use: [
+      {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true,
+        },
+      },
+    ],
+    exclude: [/node_modules/, /lib/],
+    include: [path.join(__dirname, '..'), path.join(__dirname, '..', '..', 'app')],
+  });
   const options = {
     webpackOptions: {
       resolve: wpconfig.resolve,
