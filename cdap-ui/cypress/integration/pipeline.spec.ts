@@ -94,7 +94,10 @@ describe('Creating a pipeline', () => {
     // enter sender, recipients, subject, message
 
     cy.get('[data-cy="sender"]').within(() => {
-      cy.get('input').type(TEST_SENDER);
+      cy.get('input')
+        .scrollIntoView()
+        .focus()
+        .type(TEST_SENDER);
     });
     cy.get('[data-cy="recipients"]').within(() => {
       cy.get('input').type(TEST_RECIPIENT);

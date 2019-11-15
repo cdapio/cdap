@@ -380,7 +380,10 @@ angular.module(PKG.name + '.commons')
 
     function addEndpointForNormalNode(endpointDOMId, customConfig) {
       let endpointDOMEl = document.getElementById(endpointDOMId);
-      let endpointObj = Object.assign({}, { isSource: true }, customConfig);
+      let endpointObj = Object.assign({}, {
+        isSource: true,
+        cssClass: `plugin-${endpointDOMId}-right`
+      }, customConfig);
       if (vm.isDisabled) {
         endpointObj.enabled = false;
       }
@@ -390,6 +393,7 @@ angular.module(PKG.name + '.commons')
 
     function addEndpointForConditionNode(endpointDOMId, endpointStyle, overlayLabel) {
       let endpointDOMEl = document.getElementById(endpointDOMId);
+      endpointStyle.cssClass += ` plugin-${endpointDOMId}`;
       let newEndpoint = vm.instance.addEndpoint(endpointDOMEl, endpointStyle);
       newEndpoint.hideOverlay(overlayLabel);
       addListenersForEndpoint(newEndpoint, endpointDOMEl, overlayLabel);
@@ -400,6 +404,7 @@ angular.module(PKG.name + '.commons')
       endpointDOMEl = endpointDOMEl[endpointDOMEl.length - 1];
 
       let splitterEndpointStyleWithUUID = Object.assign({}, vm.splitterEndpointStyle, { uuid: endpointDOMId });
+      splitterEndpointStyleWithUUID.cssClass += `plugin-${endpointDOMId}`;
       let splitterEndpoint = vm.instance.addEndpoint(endpointDOMEl, splitterEndpointStyleWithUUID);
       addListenersForEndpoint(splitterEndpoint, endpointDOMEl);
     }

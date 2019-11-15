@@ -115,4 +115,15 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .then(() => done());
 }
 
-export { loginIfRequired, getArtifactsPoll, deployAndTestPipeline, getSessionToken };
+function getGenericEndpoint(options, id) { return `.plugin-endpoint_${id}-right` }
+
+function getConditionNodeEndpoint(options, id) { return `.plugin-endpoint_${id}_condition_${options.condition}` }
+
+export {
+  loginIfRequired,
+  getArtifactsPoll,
+  deployAndTestPipeline,
+  getSessionToken,
+  getGenericEndpoint,
+  getConditionNodeEndpoint
+};

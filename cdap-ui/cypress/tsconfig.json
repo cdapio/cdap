@@ -9,9 +9,8 @@
     "module": "commonjs",
     "types": [
       "cypress",
-      "node",
-      "./typings"
-    ],
+      "node"
+    ]
   },
   "include": [
     "../node_modules/cypress/*/*.ts",
