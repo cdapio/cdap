@@ -298,24 +298,21 @@ public class AppMetadataStore {
     getApplicationSpecificationTable().deleteAll(getNamespaceRange(namespaceId));
   }
 
-  // todo: do we need appId? may be use from appSpec?
-  public void updateAppSpec(String namespaceId, String appId, String versionId,
-                            ApplicationSpecification spec) throws IOException {
-    ApplicationId applicationId = new NamespaceId(namespaceId).app(appId, versionId);
+  public void updateAppSpec(ApplicationId appId, ApplicationSpecification spec) throws IOException {
     if (LOG.isTraceEnabled()) {
-      LOG.trace("App spec to be updated: id: {}: spec: {}", applicationId, GSON.toJson(spec));
+      LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
     }
-    ApplicationMeta existing = getApplication(applicationId);
+    ApplicationMeta existing = getApplication(appId);
 
     if (existing == null) {
-      throw new IllegalArgumentException("Application " + applicationId + " does not exist");
+      throw new IllegalArgumentException("Application " + appId + " does not exist");
     }
 
     if (LOG.isTraceEnabled()) {
-      LOG.trace("Application {} exists in mds with specification {}", applicationId, GSON.toJson(existing));
+      LOG.trace("Application {} exists in mds with specification {}", appId, GSON.toJson(existing));
     }
     ApplicationMeta updated = ApplicationMeta.updateSpec(existing, spec);
-    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(updated));
+    writeApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(), GSON.toJson(updated));
   }
 
   /**

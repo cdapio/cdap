@@ -456,7 +456,7 @@ public class DefaultStore implements Store {
                                                                      workerSpec.getResources(),
                                                                      instances, workerSpec.getPlugins());
       ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-      metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
+      metaStore.updateAppSpec(id.getParent(), newAppSpec);
 
     });
 
@@ -478,7 +478,7 @@ public class DefaultStore implements Store {
                                              serviceSpec.getResources(), instances, serviceSpec.getPlugins());
 
       ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(), serviceSpec);
-      metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
+      metaStore.updateAppSpec(id.getParent(), newAppSpec);
     });
 
     LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
