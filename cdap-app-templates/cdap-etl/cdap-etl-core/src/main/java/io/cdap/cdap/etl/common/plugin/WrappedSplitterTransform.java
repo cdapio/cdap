@@ -80,9 +80,4 @@ public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
       operationTimer.reset();
     }
   }
-
-  @Override
-  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
-    // no-op
-  }
 }

@@ -69,11 +69,6 @@ public class NullFieldSplitterTransform extends SplitterTransform<StructuredReco
     emitter.emit(port, input);
   }
 
-  @Override
-  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
-    // no-op
-  }
-
   /**
    * Config for the transform.
    */

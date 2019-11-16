@@ -44,6 +44,11 @@ public abstract class SplitterTransform<T, E>
   }
 
   @Override
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
+
+  }
+
+  @Override
   public void destroy() {
     // no-op
   }
