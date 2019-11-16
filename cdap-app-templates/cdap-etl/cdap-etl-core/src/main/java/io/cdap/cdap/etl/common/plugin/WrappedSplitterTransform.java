@@ -19,18 +19,20 @@ package io.cdap.cdap.etl.common.plugin;
 import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
 import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.TransformContext;
 
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around a {@link SplitterTransform} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around a {@link SplitterTransform} that makes sure logging, classloading, and other pipeline capabilities are
+ * setup correctly.
  *
  * @param <T> type of input record
  * @param <E> type of error records emitted. Usually the same as the input record type
  */
 public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
+
   private final SplitterTransform<T, E> transform;
   private final Caller caller;
   private final OperationTimer operationTimer;
@@ -77,5 +79,10 @@ public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
+    // no-op
   }
 }

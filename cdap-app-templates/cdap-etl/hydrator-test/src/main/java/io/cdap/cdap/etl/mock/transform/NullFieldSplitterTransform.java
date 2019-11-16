@@ -28,18 +28,20 @@ import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import io.cdap.cdap.etl.api.MultiOutputPipelineConfigurer;
 import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.SplitterTransform;
+import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Splitter transform that sends all records that have a null value for a configurable field to one output port and
- * all other records to another port.
+ * Splitter transform that sends all records that have a null value for a configurable field to one output port and all
+ * other records to another port.
  */
 @Plugin(type = SplitterTransform.PLUGIN_TYPE)
 @Name("NullFieldSplitter")
 public class NullFieldSplitterTransform extends SplitterTransform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 
@@ -67,10 +69,16 @@ public class NullFieldSplitterTransform extends SplitterTransform<StructuredReco
     emitter.emit(port, input);
   }
 
+  @Override
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
+    // no-op
+  }
+
   /**
    * Config for the transform.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private String field;
   }
