@@ -17,6 +17,7 @@
 <!-- Control Buttons -->
 <div class="btn-group-vertical btn-group-sm zoom-control">
   <button class="btn btn-default"
+          data-cy="pipeline-zoom-in-control"
           ng-click="DAGPlusPlusCtrl.zoomIn()"
           uib-tooltip="Zoom In"
           ng-if="!DAGPlusPlusCtrl.disableNodeClick"
@@ -28,6 +29,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.zoomOut()"
+          data-cy="pipeline-zoom-out-control"
           ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           uib-tooltip="Zoom Out"
           tooltip-append-to-body="true"
@@ -38,6 +40,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.fitToScreen()"
+          data-cy="pipeline-fit-to-screen-control"
           ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           uib-tooltip="Fit to screen"
           tooltip-append-to-body="true"
@@ -48,6 +51,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.cleanUpGraph()"
+          data-cy="pipeline-clean-up-graph-control"
           ng-if="!DAGPlusPlusCtrl.isDisabled"
           uib-tooltip="Align"
           tooltip-append-to-body="true"

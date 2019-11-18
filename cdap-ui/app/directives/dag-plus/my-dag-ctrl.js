@@ -393,7 +393,7 @@ angular.module(PKG.name + '.commons')
 
     function addEndpointForConditionNode(endpointDOMId, endpointStyle, overlayLabel) {
       let endpointDOMEl = document.getElementById(endpointDOMId);
-      endpointStyle.cssClass += `plugin-${endpointDOMId}`;
+      endpointStyle.cssClass += ` plugin-${endpointDOMId}`;
       let newEndpoint = vm.instance.addEndpoint(endpointDOMEl, endpointStyle);
       newEndpoint.hideOverlay(overlayLabel);
       addListenersForEndpoint(newEndpoint, endpointDOMEl, overlayLabel);
