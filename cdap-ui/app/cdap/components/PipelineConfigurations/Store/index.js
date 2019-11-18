@@ -34,6 +34,7 @@ import {getDefaultKeyValuePair} from 'components/KeyValuePairs/KeyValueStore';
 import uuidV4 from 'uuid/v4';
 import cloneDeep from 'lodash/cloneDeep';
 import {SPARK_EXECUTOR_INSTANCES, SPARK_BACKPRESSURE_ENABLED, ENGINE_OPTIONS} from 'components/PipelineConfigurations/PipelineConfigConstants';
+import isNil from 'lodash/isNil';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
@@ -106,6 +107,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   isMissingKeyValues: false,
   modelessOpen: false,
   isInvalidKeyValues:false,
+  isInvalidConfigKeyValues:false,
 
   pipelineVisualConfiguration: {
     isBatch: false,
@@ -184,6 +186,8 @@ const resetRuntimeArgToResolvedValue = (index, runtimeArgs, resolvedMacros) => {
 const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
   let providedMacros = {};
   let runtimeArgsMap = {};
+  let keyValidMap = {};
+  let valueValidMap = {};
 
   // holds provided macros in an object here even though we don't need the value,
   // because object hash is faster than Array.indexOf
@@ -194,6 +198,10 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
       if (currentPair.notDeletable && currentPair.provided) {
         providedMacros[key] = currentPair.value;
       }
+      // keep status of key and value field for create macro object
+      keyValidMap[key] = isNil(currentPair['validKey']) ? true :  currentPair['validKey'];
+      valueValidMap[key] = isNil(currentPair['validValue']) ? true :  currentPair['validValue'];
+
     });
     currentRuntimeArgs.pairs = currentRuntimeArgs.pairs.filter(keyValuePair => {
       return Object.keys(macrosMap).indexOf(keyValuePair.key) === -1;
@@ -202,7 +210,9 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
   let macros = Object.keys(macrosMap).map(macroKey => {
     return {
       key: macroKey,
+      validKey: keyValidMap[macroKey],
       value: runtimeArgsMap[macroKey] || '',
+      validValue: valueValidMap[macroKey],
       showReset: macrosMap[macroKey].showReset,
       uniqueId: 'id-' + uuidV4(),
       notDeletable: true,
@@ -217,8 +227,8 @@ const checkIfMissingKeyValues = (runtimeArguments, customConfig) => {
   return keyValuePairsHaveMissingValues(runtimeArguments) || keyValuePairsHaveMissingValues(customConfig);
 };
 
-const checkIfInvalidKeyValues = (keyValues, customConfig) => {
-  return keyValuePairsHaveInvalidValues(keyValues) || keyValuePairsHaveInvalidValues(customConfig);
+const checkIfInvalidKeyValues = (keyValues) => {
+  return keyValuePairsHaveInvalidValues(keyValues);
 };
 
 const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) => {
@@ -234,7 +244,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         runtimeArgs: checkForReset(action.payload.runtimeArgs, state.resolvedMacros),
         isMissingKeyValues: checkIfMissingKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs),
-        isInvalidKeyValues:checkIfInvalidKeyValues(action.payload.runtimeArgs, state.customConfigKeyValuePairs),
+        isInvalidKeyValues:checkIfInvalidKeyValues(action.payload.runtimeArgs),
       };
     case ACTIONS.SET_RESOLVED_MACROS: {
       let resolvedMacros = action.payload.resolvedMacros;
@@ -329,7 +339,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         ...state,
         customConfigKeyValuePairs: action.payload.keyValues,
         isMissingKeyValues: checkIfMissingKeyValues(state.runtimeArgs, action.payload.keyValues),
-        isInvalidKeyValues:checkIfInvalidKeyValues(state.runtimeArgs, action.payload.keyValues),
+        isInvalidConfigKeyValues:checkIfInvalidKeyValues(action.payload.keyValues),
 
       };
     case ACTIONS.SET_CUSTOM_CONFIG: {

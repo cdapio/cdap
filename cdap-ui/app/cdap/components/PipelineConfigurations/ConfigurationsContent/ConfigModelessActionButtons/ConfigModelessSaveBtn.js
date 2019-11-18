@@ -26,19 +26,18 @@ const mapStateToProps = (state, ownProps) => {
   return {
     saveLoading: ownProps.saveLoading,
     saveConfig: ownProps.saveConfig,
-    invalidVaues: state.isInvalidKeyValues,
-    missingValues: state.isMissingKeyValues,
+    invalidVaues: state.isInvalidConfigKeyValues,
   };
 };
 
-const ConfigModelessSaveBtn = ({saveLoading, saveConfig, invalidVaues, missingValues}) => {
+const ConfigModelessSaveBtn = ({saveLoading, saveConfig, invalidVaues}) => {
   return (
     <BtnWithLoading
       loading={saveLoading}
       className="btn btn-primary"
       onClick={saveConfig}
       label={T.translate(`${PREFIX}.save`)}
-      disabled={missingValues || invalidVaues || saveLoading }
+      disabled={invalidVaues || saveLoading }
     />
   );
 };
@@ -47,8 +46,8 @@ ConfigModelessSaveBtn.propTypes = {
   saveLoading: PropTypes.bool,
   saveConfig: PropTypes.func,
   invalidVaues: PropTypes.bool,
-  missingValues: PropTypes.bool,
 };
 
 const ConnectedConfigModelessSaveBtn = connect(mapStateToProps)(ConfigModelessSaveBtn);
 export default ConnectedConfigModelessSaveBtn;
+
