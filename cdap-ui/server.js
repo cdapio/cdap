@@ -26,6 +26,14 @@ var express = require('./server/express.js'),
     log4js = require('log4js'),
     https = require('https');
 
+/**
+ * Increasing max scocket from default 5 to higher number
+ */
+
+http.globalAgent.maxSockets = 25;
+https.globalAgent.maxSockets = 25;
+
+
 var cdapConfig, securityConfig;
 
 /**

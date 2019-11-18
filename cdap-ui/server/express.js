@@ -136,6 +136,56 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     next(err);
   });
 
+  app.use('/old_assets', [
+    express.static(OLD_DIST_PATH + '/assets', getExpressStaticConfig()),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+  // serve static assets
+  app.use('/assets', [
+    express.static(DIST_PATH + '/assets',{setHeaders: _headers}),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+  app.use('/cdap_assets', [
+    express.static(CDAP_DIST_PATH + '/cdap_assets', getExpressStaticConfig()),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+  app.use('/dll_assets', [
+    express.static(DLL_PATH, getExpressStaticConfig()),
+    function(req, res) {
+      finalhandler(req, res)(false);
+    }
+  ]);
+  app.use('/login_assets', [
+    express.static(LOGIN_DIST_PATH + '/login_assets', getExpressStaticConfig()),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+  app.use('/common_assets', [
+    express.static(MARKET_DIST_PATH, {
+      index: false,
+      setHeaders: _headers
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+
+  app.get('/robots.txt', [
+    function (req, res) {
+      res.header({
+        'Connection': 'close'
+      });
+      res.type('text/plain');
+      res.send('User-agent: *\nDisallow: /');
+    }
+  ]);
 
   // serve the config file
   app.get('/config.js', function (req, res) {
@@ -341,7 +391,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     This is only for semantic differntiation. In the future ideally
     these endpoints will vary based on success failure conditions.
     (A 404 vs warning for login vs token)
-
   */
   app.post('/login', authentication);
 
@@ -404,55 +453,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         });
   });
 
-  app.use('/old_assets', [
-    express.static(OLD_DIST_PATH + '/assets', getExpressStaticConfig()),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    }
-  ]);
-  // serve static assets
-  app.use('/assets', [
-    express.static(DIST_PATH + '/assets',{setHeaders: _headers}),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    }
-  ]);
-  app.use('/cdap_assets', [
-    express.static(CDAP_DIST_PATH + '/cdap_assets', getExpressStaticConfig()),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    }
-  ]);
-  app.use('/dll_assets', [
-    express.static(DLL_PATH, getExpressStaticConfig()),
-    function(req, res) {
-      finalhandler(req, res)(false);
-    }
-  ]);
-  app.use('/login_assets', [
-    express.static(LOGIN_DIST_PATH + '/login_assets', getExpressStaticConfig()),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    }
-  ]);
-  app.use('/common_assets', [
-    express.static(MARKET_DIST_PATH, {
-      index: false,
-      setHeaders: _headers
-    }),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    }
-  ]);
-  app.get('/robots.txt', [
-    function (req, res) {
-      res.header({
-        'Connection': 'close'
-      });
-      res.type('text/plain');
-      res.send('User-agent: *\nDisallow: /');
-    }
-  ]);
+  
+ 
 
   function authentication(req, res) {
     var opts = {
@@ -512,7 +514,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     This is only for semantic differntiation. In the future ideally
     these endpoints will vary based on success failure conditions.
     (A 404 vs warning for login vs token)
-
+    
   */
   app.post('/login', authentication);
 
