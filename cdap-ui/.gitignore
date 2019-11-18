@@ -6,7 +6,6 @@ node_modules/
 bower_components/
 dist/
 cdap_dist/
-cypress/screenshots/
 login_dist/
 wrangler_dist/
 plusbutton_dist
@@ -21,3 +20,7 @@ coverage/
 server_dist/
 server/public/*
 !server/public/dll
+.vscode/
+cypress/screenshots
+cypress/snapshots/actual/
+cypress/snapshots/diff/
