@@ -16,7 +16,7 @@
 
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
-import { INodeIdentifier, INodeInfo } from '../typings';
+import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
 /**
  * Uploads a pipeline json from fixtures to input file element.
  *
@@ -306,14 +306,23 @@ Cypress.Commands.add('move_node', (node: INodeIdentifier | string, toX: number, 
     .trigger('mouseup', { force: true });
 });
 
-Cypress.Commands.add('connect_two_nodes', (sourceNode: INodeIdentifier, targetNode: INodeIdentifier, sourceEndpoint: (s: string) => string) => {
+Cypress.Commands.add('connect_two_nodes', (
+  sourceNode: INodeIdentifier,
+  targetNode: INodeIdentifier,
+  sourceEndpoint: (options: IgetNodeIDOptions, s: string) => string,
+  options: IgetNodeIDOptions = {},
+) => {
   cy.get_node(sourceNode).then(sourceEl => {
     cy.get_node(targetNode).then(targetEl => {
       let sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
       let targetCoOrdinates = targetEl[0].getBoundingClientRect();
-      console.log(targetCoOrdinates.top - sourceCoOrdinates.bottom);
-      cy.move_node(sourceEndpoint(sourceEl[0].id), targetCoOrdinates.left - sourceCoOrdinates.right, 0);
-    })
+      // connect from source endpoint to midway between the target node
+      cy.move_node(
+        sourceEndpoint(options, sourceEl[0].id),
+        (targetCoOrdinates.left - sourceCoOrdinates.right + (targetCoOrdinates.width / 2)),
+        (targetCoOrdinates.top - sourceCoOrdinates.bottom + (targetCoOrdinates.height / 2))
+      );
+    });
   });
 });
 

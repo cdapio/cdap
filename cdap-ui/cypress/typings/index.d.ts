@@ -6,6 +6,10 @@ export interface INodeInfo {
 export interface INodeIdentifier extends INodeInfo {
   nodeId: string;
 }
+export interface IgetNodeIDOptions {
+  [key: string]: any
+}
+
 declare global {
   namespace Cypress {
     // tslint:disable-next-line: interface-name
@@ -46,7 +50,7 @@ declare global {
        * - bottom for condition node or error/alert ports
        * - in a popover for splitter plugins
        */
-      connect_two_nodes: (sourceNode: INodeIdentifier, targetNode: INodeIdentifier, getSourceNodeId: (s: string) => string) => Chainable<any>;
+      connect_two_nodes: (sourceNode: INodeIdentifier, targetNode: INodeIdentifier, getSourceNodeId: (options: IgetNodeIDOptions, s: string) => string, options?: IgetNodeIDOptions) => Chainable<any>;
       /**
        * Moves a node based on selector to X,Y co-ordinates
        *
