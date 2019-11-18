@@ -133,6 +133,7 @@ declare global {
        */
 
       create_SPANNER_connection: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
+      compareSnapshot: (s: string) => any;
     }
     // tslint:disable-next-line: interface-name
     interface Window {
