@@ -28,7 +28,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
-import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.LogLevelUpdater;
@@ -55,7 +54,6 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -83,7 +81,6 @@ import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
-import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -111,7 +108,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import javax.security.auth.kerberos.KerberosPrincipal;
 
 /**
  * Service that manages lifecycle of Programs.
@@ -416,8 +412,10 @@ public class ProgramLifecycleService {
   public Set<RunId> restart(ApplicationId applicationId, long startTimeSeconds, long endTimeSeconds) throws Exception {
     Set<RunId> runs = new HashSet<>();
     Map<ProgramRunId, RunRecordMeta> runMap =
-      store.getRuns(applicationId, ProgramRunStatus.KILLED, Integer.MAX_VALUE,
-                    meta -> meta.getStopTs() >= startTimeSeconds && meta.getStopTs() < endTimeSeconds);
+      store.getRuns(applicationId, ProgramRunStatus.KILLED, Integer.MAX_VALUE, meta -> {
+        Long stopTime = meta.getStopTs();
+        return stopTime != null && stopTime >= startTimeSeconds && stopTime < endTimeSeconds;
+      });
 
     for (ProgramRunId programRunId : runMap.keySet()) {
       ProgramId programId = programRunId.getParent();
@@ -1119,7 +1117,7 @@ public class ProgramLifecycleService {
     if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME)) &&
             (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
       String principal = userArgs.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
-      LOG.debug("Checking authorisation for user: %s, using runtime config principal: %s",
+      LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
                 authenticationContext.getPrincipal(), principal);
       KerberosPrincipalId kid = new KerberosPrincipalId(principal);
       authorizationEnforcer.enforce(kid, authenticationContext.getPrincipal(), Action.ADMIN);
