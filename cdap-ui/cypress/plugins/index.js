@@ -15,6 +15,7 @@
 */
 
 const wp = require('@cypress/webpack-preprocessor');
+const getCompareSnapshotsPlugin = require('cypress-visual-regression/dist/plugin');
 const wpconfig = require('../../webpack.config.cdap');
 const path = require('path');
 module.exports = (on) => {
@@ -40,5 +41,6 @@ module.exports = (on) => {
       module: wpconfig.module,
     },
   };
+  getCompareSnapshotsPlugin(on);
   on('file:preprocessor', wp(options));
 };
