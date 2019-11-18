@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,12 @@
  * the License.
  */
 
-const { pipelineRunsResolver } = require('./pipelineRunsResolver');
-const { totalRunsResolvers } = require('./totalRunsResolver');
+import { pipelineRunsResolver } from 'gql/types/PipelineRecord/pipelineRunsResolver';
+import { totalRunsResolvers } from 'gql/types/PipelineRecord/totalRunsResolver';
 
-const resolvers = {
+export const PipelineRecord = {
   PipelineRecord: {
     runs: pipelineRunsResolver,
     totalRuns: totalRunsResolvers,
   },
-};
-
-module.exports = {
-  PipelineRecord: resolvers,
 };

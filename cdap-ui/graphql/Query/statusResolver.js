@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,20 @@
  * the License.
  */
 
-const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('../resolvers-common.js');
+import { constructUrl } from 'server/url-helper';
+import { getCDAPConfig } from 'server/cdap-config';
+import { getGETRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig().then(function(value) {
+getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-async function queryTypeStatusResolver(parent, args, context) {
-  const options = resolversCommon.getGETRequestOptions();
-  options.url = urlHelper.constructUrl(cdapConfig, '/ping');
+export async function queryTypeStatusResolver(parent, args, context) {
+  const options = getGETRequestOptions();
+  options.url = constructUrl(cdapConfig, '/ping');
 
-  const status = await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const status = await requestPromiseWrapper(options, context.auth);
 
   return status.trim();
 }
-
-module.exports = {
-  queryTypeStatusResolver,
-};

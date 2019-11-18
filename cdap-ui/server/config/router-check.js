@@ -1,6 +1,6 @@
 // @ts-nocheck
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,27 +15,21 @@
  * the License.
  */
 
-/* global require, module */
+import request from 'request';
+import log4js from 'log4js';
+import q from 'q';
+import { extractConfig } from 'server/config/parser';
 
 // router check also fetches the auth server address if security is enabled
+export function ping() {
+  return extractConfig('cdap').then(function(cdapConfig) {
+    return new AuthAddress().doPing(cdapConfig);
+  });
+}
 
-module.exports = {
-  ping: function() {
-    return require('./parser.js')
-      .extractConfig('cdap')
-      .then(function(cdapConfig) {
-        return new AuthAddress().doPing(cdapConfig);
-      });
-  },
-};
+const log = log4js.getLogger('default');
 
-var request = require('request'),
-  log4js = require('log4js'),
-  promise = require('q');
-
-var log = log4js.getLogger('default');
-
-var PING_INTERVAL = 1000,
+const PING_INTERVAL = 1000,
   PING_MAX_RETRIES = 1000,
   PING_PATH = '/ping';
 
@@ -51,7 +45,7 @@ function AuthAddress() {
 AuthAddress.prototype.doPing = function(cdapConfig) {
   var self = this,
     startTime,
-    deferred = promise.defer(),
+    deferred = q.defer(),
     attempts = 0,
     url = cdapConfig['router.server.address'],
     checkTimeout = cdapConfig['dashboard.router.check.timeout.secs'];

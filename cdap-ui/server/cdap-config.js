@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,14 @@
  * the License.
  */
 
-const parser = require('./config/parser.js');
-const memoize = require('lodash/memoize');
+import { extractConfig } from 'server/config/parser';
+import memoize from 'lodash/memoize';
 
 async function extractCDAPConfig() {
   let cdapConfig;
 
   try {
-    cdapConfig = await parser.extractConfig('cdap');
+    cdapConfig = await extractConfig('cdap');
   } catch (e) {
     return Promise.reject(e);
   }
@@ -29,8 +29,4 @@ async function extractCDAPConfig() {
   return cdapConfig;
 }
 
-const getCDAPConfig = memoize(extractCDAPConfig);
-
-module.exports = {
-  getCDAPConfig,
-};
+export const getCDAPConfig = memoize(extractCDAPConfig);

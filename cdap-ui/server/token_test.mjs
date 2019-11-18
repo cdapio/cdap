@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,17 +12,19 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-var session = require('./token');
-var assert = require('assert');
+// Execute this file with "node --experimental-modules"
+
+import { generateToken, validateToken } from './token.mjs';
+import assert from 'assert';
 
 const fakeCDAPConfig = {
   'session.secret.key': 'secret-key-for-encryption',
 };
 function testMatch() {
-  const token = session.generateToken(fakeCDAPConfig, console, 'Bearer 1111');
-  const isTokenValid = session.validateToken(token, fakeCDAPConfig, console, 'Bearer 1111');
+  const token = generateToken(fakeCDAPConfig, console, 'Bearer 1111');
+  const isTokenValid = validateToken(token, fakeCDAPConfig, console, 'Bearer 1111');
   console.log(`
     encrypted token: ${token}
     isToken valid: ${isTokenValid}
@@ -30,8 +32,8 @@ function testMatch() {
   assert(isTokenValid);
 }
 function testMismatch() {
-  const token = session.generateToken(fakeCDAPConfig, console, 'Bearer 1111');
-  const isTokenValid = session.validateToken(token, fakeCDAPConfig, console, 'Bearer 1112');
+  const token = generateToken(fakeCDAPConfig, console, 'Bearer 1111');
+  const isTokenValid = validateToken(token, fakeCDAPConfig, console, 'Bearer 1112');
   console.log(`
     encrypted token: ${token}
     isToken valid: ${isTokenValid}

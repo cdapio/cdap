@@ -21,14 +21,6 @@ import { dataCy } from '../helpers';
 let headers = {};
 
 describe('CSV Widgets', () => {
-  const property = 'drop';
-  const projection: INodeInfo = { nodeName: 'Projection', nodeType: 'transform' };
-  const projectionId: INodeIdentifier = { ...projection, nodeId: '0' };
-
-  const propertySelector = dataCy(property);
-  const row1Selector = `${propertySelector} ${dataCy(0)}`;
-  const row2Selector = `${propertySelector} ${dataCy(1)}`;
-
   // Uses API call to login instead of logging in manually through UI
   before(() => {
     loginIfRequired().then(() => {
@@ -43,19 +35,25 @@ describe('CSV Widgets', () => {
     });
   });
 
-  before(() => {
-    cy.visit('/pipelines/ns/default/studio');
+  const property = 'drop';
+  const projection: INodeInfo = { nodeName: 'Projection', nodeType: 'transform' };
+  const projectionId: INodeIdentifier = { ...projection, nodeId: '0' };
 
-    // add plugin to canvas
-    cy.open_transform_panel();
-    cy.add_node_to_canvas(projection);
-  });
+  const propertySelector = dataCy(property);
+  const row1Selector = `${propertySelector} ${dataCy(0)}`;
+  const row2Selector = `${propertySelector} ${dataCy(1)}`;
 
   beforeEach(() => {
     getArtifactsPoll(headers);
   });
 
   it('Should render csv row', () => {
+    cy.visit('/pipelines/ns/default/studio');
+
+    // add plugin to canvas
+    cy.open_transform_panel();
+    cy.add_node_to_canvas(projection);
+
     cy.open_node_property(projectionId);
 
     cy.get(propertySelector).should('exist');

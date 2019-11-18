@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,20 @@
  * the License.
 */
 
-const q = require('q');
-const spawn = require('child_process').spawn;
-const StringDecoder = require('string_decoder').StringDecoder;
-const decoder = new StringDecoder('utf8');
-const log4js = require('log4js');
-const nodepath = require('path');
-var log = log4js.getLogger('default');
+import q from 'q';
+import { spawn } from 'child_process';
+import { StringDecoder } from 'string_decoder';
+import log4js from 'log4js';
+import path from 'path';
 
-class ConfigReader {
+const decoder = new StringDecoder('utf8');
+const log = log4js.getLogger('default');
+
+export default class ConfigReader {
   constructor(param) {
     this.buffer = '';
     this.deferred = q.defer();
-    this.tool = spawn(nodepath.join(__dirname, 'bin', 'cdap'), ['config-tool', '--' + param]);
+    this.tool = spawn(path.join(__dirname, '..', 'bin', 'cdap'), ['config-tool', '--' + param]);
     this.tool.stderr.on('data', this.configReadFail.bind(this));
     this.tool.stdout.on('data', this.configRead.bind(this));
     this.tool.stdout.on('end', this.onConfigReadEnd.bind(this, param));
@@ -61,5 +62,3 @@ class ConfigReader {
     return this.deferred.promise;
   }
 }
-
-module.exports = ConfigReader;

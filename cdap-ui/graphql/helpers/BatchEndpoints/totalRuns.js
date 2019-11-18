@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,20 @@
  * the License.
  */
 
-const urlHelper = require('../../../server/url-helper'),
-  cdapConfigurator = require('../../../server/cdap-config.js'),
-  resolversCommon = require('../../resolvers-common.js');
-
-const chunk = require('lodash/chunk');
+import { constructUrl } from 'server/url-helper';
+import { getCDAPConfig } from 'server/cdap-config';
+import { getPOSTRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
+import chunk from 'lodash/chunk';
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig().then(function(value) {
+getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-async function batchTotalRuns(req, auth) {
+export async function batchTotalRuns(req, auth) {
   const namespace = req[0].namespace;
-  const options = resolversCommon.getPOSTRequestOptions();
-  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
+  const options = getPOSTRequestOptions();
+  options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
   const body = req.map((reqObj) => reqObj.program);
   const chunkedBody = chunk(body, 100);
 
@@ -38,7 +37,7 @@ async function batchTotalRuns(req, auth) {
         ...options,
         body: reqBody,
       };
-      return resolversCommon.requestPromiseWrapper(reqOptions, auth);
+      return requestPromiseWrapper(reqOptions, auth);
     })
   );
 
@@ -53,7 +52,3 @@ async function batchTotalRuns(req, auth) {
     return runsMap[program.appId];
   });
 }
-
-module.exports = {
-  batchTotalRuns,
-};

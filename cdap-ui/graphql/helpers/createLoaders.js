@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,13 @@
  * the License.
  */
 
-const DataLoader = require('dataloader');
-const { batchProgramRuns } = require('./BatchEndpoints/programRuns');
-const { batchTotalRuns } = require('./BatchEndpoints/totalRuns');
+import DataLoader from 'dataloader';
+import { batchProgramRuns } from 'gql/helpers/BatchEndpoints/programRuns';
+import { batchTotalRuns } from 'gql/helpers/BatchEndpoints/totalRuns';
 
-function createLoaders(auth) {
+export function createLoaders(auth) {
   return {
     programRuns: new DataLoader((req) => batchProgramRuns(req, auth), { cache: false }),
     totalRuns: new DataLoader((req) => batchTotalRuns(req, auth), { cache: false }),
   };
 }
-
-module.exports = {
-  createLoaders,
-};

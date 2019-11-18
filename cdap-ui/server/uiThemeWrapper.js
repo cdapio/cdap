@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,21 @@
  * the License.
 */
 
-const log4js = require('log4js'),
-  path = require('path'),
-  objectQuery = require('lodash/get'),
-  fs = require('fs'),
-  DIST_PATH = path.normalize(__dirname + '/public/dist'),
-  CDAP_DIST_PATH = path.normalize(__dirname + '/public/cdap_dist');
+import log4js from 'log4js';
+import path from 'path';
+import get from 'lodash/get';
+import fs from 'fs';
+
+const CDAP_DIST_PATH = path.normalize(__dirname + '/../public/cdap_dist');
 const log = log4js.getLogger('default');
 const uiThemePropertyName = 'ui.theme.file';
 
-function extractUIThemeWrapper(cdapConfig) {
+export function extractUIThemeWrapper(cdapConfig) {
   const uiThemePath = cdapConfig[uiThemePropertyName];
   return extractUITheme(cdapConfig, uiThemePath);
 }
 
-function extractUITheme(cdapConfig, uiThemePath) {
+export function extractUITheme(cdapConfig, uiThemePath) {
   const DEFAULT_CONFIG = {};
 
   if (!(uiThemePropertyName in cdapConfig)) {
@@ -75,8 +75,8 @@ function extractUITheme(cdapConfig, uiThemePath) {
       }
       themePath = path.join(__dirname, themePath);
 
-      if (require.resolve(themePath)) {
-        uiThemeConfig = require(themePath);
+      if (__non_webpack_require__.resolve(themePath)) {
+        uiThemeConfig = __non_webpack_require__(themePath);
         log.info(`UI using theme file: ${themePath}`);
         return uiThemeConfig;
       }
@@ -84,15 +84,17 @@ function extractUITheme(cdapConfig, uiThemePath) {
       // This will show the user what the full path is.
       // This should help them give proper relative path
       log.info('UI Theme file not found at: ', themePath);
+
+      console.log('e', e);
       throw e;
     }
   }
   return uiThemeConfig;
 }
 
-function getFaviconPath(uiThemeConfig) {
-  let faviconPath = CDAP_DIST_PATH + '/img/favicon.png';
-  let themeFaviconPath = objectQuery(uiThemeConfig, ['content', 'favicon-path']);
+export function getFaviconPath(uiThemeConfig) {
+  let faviconPath = CDAP_DIST_PATH + '/cdap_assets/img/favicon.png';
+  let themeFaviconPath = get(uiThemeConfig, ['content', 'favicon-path']);
   if (themeFaviconPath) {
     // If absolute path no need to modify as require'ing absolute path should
     // be fine.
@@ -111,9 +113,3 @@ function getFaviconPath(uiThemeConfig) {
   }
   return faviconPath;
 }
-
-module.exports = {
-  extractUIThemeWrapper,
-  extractUITheme,
-  getFaviconPath,
-};

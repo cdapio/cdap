@@ -42,19 +42,17 @@ describe('KeyValueDropdown Widgets', () => {
     });
   });
 
-  before(() => {
-    cy.visit('/pipelines/ns/default/studio');
-
-    // add plugin to canvas
-    cy.open_transform_panel();
-    cy.add_node_to_canvas(projection);
-  });
-
   beforeEach(() => {
     getArtifactsPoll(headers);
   });
 
   it('Should render KeyValueDropdown row', () => {
+    cy.visit('/pipelines/ns/default/studio');
+
+    // add plugin to canvas
+    cy.open_transform_panel();
+    cy.add_node_to_canvas(projection);
+
     cy.open_node_property(projectionId);
 
     cy.get(propertySelector).should('exist');

@@ -27,7 +27,7 @@ const processEnv = {
 
 const getWebpackOutputObj = (mode) => {
   var output = {
-    path: path.join(__dirname, 'server', 'public', 'dll'),
+    path: path.join(__dirname, 'packaged', 'public', 'dll'),
     filename: 'dll.cdap.[name].js',
     library: 'cdap_[name]',
     globalObject: 'window',
@@ -44,9 +44,9 @@ const getWebpackDLLPlugin = (mode) => {
     manifestFileName = 'cdap-[name]-development-manifest.json';
   }
   return new webpack.DllPlugin({
-    path: path.join(__dirname, 'server', 'public', 'dll', manifestFileName),
+    path: path.join(__dirname, 'packaged', 'public', 'dll', manifestFileName),
     name: 'cdap_[name]',
-    context: path.resolve(__dirname, 'server', 'public', 'dll'),
+    context: path.resolve(__dirname, 'packaged', 'public', 'dll'),
   });
 };
 
@@ -61,7 +61,6 @@ var webpackConfig = {
   mode,
   entry: {
     vendor: [
-      'whatwg-fetch',
       'uuid',
       'sockjs-client',
       'fuse.js',

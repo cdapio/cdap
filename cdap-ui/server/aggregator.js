@@ -1,6 +1,6 @@
 // @ts-nocheck
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,15 @@
  * the License.
  */
 
-/* global require, module */
+import request from 'request';
+import fs from 'fs';
+import log4js from 'log4js';
+import hash from 'object-hash';
+import * as urlHelper from 'server/url-helper';
+import { extractConfig } from 'server/config/parser';
+import * as sessionToken from 'server/token';
 
-const request = require('request'),
-  fs = require('fs'),
-  log4js = require('log4js'),
-  log = log4js.getLogger('default'),
-  hash = require('object-hash'),
-  urlHelper = require('./url-helper'),
-  parser = require('./config/parser.js'),
-  sessionToken = require('./token');
+const log = log4js.getLogger('default');
 
 /**
  * Default Poll Interval used by the backend.
@@ -109,8 +108,8 @@ Aggregator.prototype.validateSession = function(message) {
 Aggregator.prototype.populateCdapConfig = async function() {
   let cdapConfig, securityConfig;
   try {
-    cdapConfig = await parser.extractConfig('cdap');
-    securityConfig = await parser.extractConfig('security');
+    cdapConfig = await extractConfig('cdap');
+    securityConfig = await extractConfig('security');
     this.cdapConfig = { ...cdapConfig, ...securityConfig };
   } catch (e) {
     log.error(
@@ -479,4 +478,4 @@ function onSocketClose() {
   this.polledResources = {};
 }
 
-module.exports = Aggregator;
+export default Aggregator;

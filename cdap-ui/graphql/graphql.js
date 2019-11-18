@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,29 +14,18 @@
  * the License.
  */
 
-const path = require('path');
-const { ApolloServer } = require('apollo-server-express');
-const { importSchema } = require('graphql-import');
-const log4js = require('log4js');
-const { resolvers } = require('./resolvers');
-const sessionToken = require('../server/token');
-const { createLoaders } = require('./helpers/createLoaders');
+import path from 'path';
+import { ApolloServer } from 'apollo-server-express';
+import log4js from 'log4js';
+import { resolvers } from 'gql/resolvers';
+import { importSchema } from 'graphql-import';
+import sessionToken from 'server/token';
+import { createLoaders } from 'gql/helpers/createLoaders';
 
 const log = log4js.getLogger('graphql');
 const env = process.env.NODE_ENV || 'production';
 
-/**
- * This will happen when we build SDK by running node server through ncc compiler.
- * This will flatten our directory structure and the __dirname will be cdap-sdk/ui
- * instead of cdap-sdk/ui/graphql. So when we start from sdk we need to append
- * graphql to the path for accessing schema.
- */
-let typeDefs;
-if (!__dirname.endsWith('/graphql')) {
-  typeDefs = importSchema(path.join(__dirname, '/graphql/schema/rootSchema.graphql'));
-} else {
-  typeDefs = importSchema(path.join(__dirname, '/schema/rootSchema.graphql'));
-}
+const typeDefs = importSchema(path.join(__dirname, '/graphql/schema/rootSchema.graphql'));
 
 if (typeof typeDefs === 'undefined') {
   const errorMessage = 'The GraphQL type definitions are undefined';
@@ -70,10 +59,6 @@ const getApolloServer = (cdapConfig, logger = console) =>
     playground: env === 'production' ? false : true,
   });
 
-function applyMiddleware(app, cdapConfig, logger) {
+export function applyGraphQLMiddleware(app, cdapConfig, logger) {
   getApolloServer(cdapConfig, logger).applyMiddleware({ app });
 }
-
-module.exports = {
-  applyMiddleware,
-};

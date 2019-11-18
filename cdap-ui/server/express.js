@@ -1,6 +1,6 @@
 // @ts-nocheck
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,32 +15,38 @@
  * the License.
  */
 
-/* global require, module, process, __dirname */
-const urlhelper = require('./url-helper'),
-  url = require('url'),
-  csp = require('helmet-csp'),
-  proxy = require('express-http-proxy'),
-  path = require('path'),
-  express = require('express'),
-  cookieParser = require('cookie-parser'),
-  compression = require('compression'),
-  finalhandler = require('finalhandler'),
-  serveFavicon = require('serve-favicon'),
-  request = require('request'),
-  uuidV4 = require('uuid/v4'),
-  log4js = require('log4js'),
-  bodyParser = require('body-parser'),
-  ejs = require('ejs'),
-  DLL_PATH = path.normalize(__dirname + '/public/dll'),
-  DIST_PATH = path.normalize(__dirname + '/public/dist'),
-  LOGIN_DIST_PATH = path.normalize(__dirname + '/public/login_dist'),
-  CDAP_DIST_PATH = path.normalize(__dirname + '/public/cdap_dist'),
-  MARKET_DIST_PATH = path.normalize(__dirname + '/public/common_dist'),
-  fs = require('fs'),
-  hsts = require('hsts'),
-  uiThemeWrapper = require('./uiThemeWrapper'),
-  frameguard = require('frameguard'),
-  sessionToken = require('./token');
+import { ping } from 'server/config/router-check';
+import { extractUISettings } from 'server/config/parser';
+import q from 'q';
+import { constructUrl, REQUEST_ORIGIN_MARKET } from 'server/url-helper';
+import url from 'url';
+import csp from 'helmet-csp';
+import proxy from 'express-http-proxy';
+import path from 'path';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
+import finalhandler from 'finalhandler';
+import serveFavicon from 'serve-favicon';
+import request from 'request';
+import uuidV4 from 'uuid/v4';
+import bodyParser from 'body-parser';
+import ejs from 'ejs';
+import fs from 'fs';
+import hsts from 'hsts';
+import * as uiThemeWrapper from 'server/uiThemeWrapper';
+import frameguard from 'frameguard';
+import * as sessionToken from 'server/token';
+import log4js from 'log4js';
+
+/* global process, __dirname */
+
+const DLL_PATH = path.normalize(__dirname + '/../public/dll'),
+  DIST_PATH = path.normalize(__dirname + '/../public/dist'),
+  LOGIN_DIST_PATH = path.normalize(__dirname + '/../public/login_dist'),
+  CDAP_DIST_PATH = path.normalize(__dirname + '/../public/cdap_dist'),
+  MARKET_DIST_PATH = path.normalize(__dirname + '/../public/common_dist'),
+  CONFIG_PATH = path.normalize(__dirname + '/server/config');
 
 ejs.delimiter = '_';
 const log = log4js.getLogger('default');
@@ -83,6 +89,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     // We can ignore this as the extract theme takes care of it.
   }
   const faviconPath = uiThemeWrapper.getFaviconPath(uiThemeConfig);
+
   // middleware
   try {
     app.use(serveFavicon(faviconPath));
@@ -93,7 +100,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   app.use(compression());
   app.use(
     '/api',
-    proxy(urlhelper.constructUrl.bind(null, cdapConfig), {
+    proxy(constructUrl.bind(null, cdapConfig), {
       parseReqBody: false,
       limit: '500gb',
     })
@@ -179,7 +186,8 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   });
 
   app.get('/ui-config.js', function(req, res) {
-    var path = __dirname + '/config/cdap-ui-config.json';
+    // var path = __dirname + '/config/cdap-ui-config.json';
+    var path = CONFIG_PATH + '/cdap-ui-config.json';
 
     var fileConfig = {};
 
@@ -222,8 +230,8 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     ) {
       return res.status(500).send('Unable to validate session');
     }
-    sourceLink = urlhelper.constructUrl(cdapConfig, sourceLink, urlhelper.REQUEST_ORIGIN_MARKET);
-    targetLink = urlhelper.constructUrl(cdapConfig, targetLink);
+    sourceLink = constructUrl(cdapConfig, sourceLink, REQUEST_ORIGIN_MARKET);
+    targetLink = constructUrl(cdapConfig, targetLink);
     var forwardRequestObject = {
       url: targetLink,
       method: targetMethod,
@@ -245,7 +253,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   });
 
   app.get('/downloadLogs', function(req, res) {
-    var url = urlhelper.constructUrl(cdapConfig, decodeURIComponent(req.query.backendPath));
+    var url = constructUrl(cdapConfig, decodeURIComponent(req.query.backendPath));
     var method = req.query.method || 'GET';
     log.info('Download Logs Start: ', url);
     var customHeaders;
@@ -331,7 +339,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     const constructedPath = `/v3/namespaces/${req.param('namespace')}/${req.param('path')}`;
     var opts = {
       method: 'POST',
-      url: urlhelper.constructUrl(cdapConfig, constructedPath),
+      url: constructUrl(cdapConfig, constructedPath),
       headers: {
         'Content-Type': headers['content-type'],
       },
@@ -672,15 +680,13 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   return app;
 }
 
-module.exports = {
-  getApp: function(cdapConfig) {
-    return require('q')
-      .all([
-        // router check also fetches the auth server address if security is enabled
-        require('./config/router-check.js').ping(),
-        Promise.resolve(cdapConfig),
-        require('./config/parser.js').extractUISettings(),
-      ])
-      .spread(makeApp);
-  },
-};
+export function getApp(cdapConfig) {
+  return q
+    .all([
+      // router check also fetches the auth server address if security is enabled
+      ping(),
+      Promise.resolve(cdapConfig),
+      extractUISettings(),
+    ])
+    .spread(makeApp);
+}
