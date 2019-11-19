@@ -260,6 +260,25 @@ class CDAP extends Component {
                       );
                     }}
                   />
+                  <Route
+                    exact
+                    path="/contextmenu"
+                    render={(props) => {
+                      if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                        return <Page404 {...props} />;
+                      }
+                      const ContextMenu = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "MarkdownImplExample" */ 'components/ContextMenu'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <ContextMenu {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
                   {/*
                     Eventually handling 404 should move to the error boundary and all container components will have the error object.
                   */}
