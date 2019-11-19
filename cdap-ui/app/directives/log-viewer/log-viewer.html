@@ -193,7 +193,7 @@
               <span ng-bind-html="LogViewer.highlight(entry.log.message)"></span>
             </td>
             <td class="stack-trace" ng-if="entry.stackTrace" colspan="4">
-              <pre ng-bind="entry.log.stackTrace"></pre>
+              <pre ng-bind-html="LogViewer.highlight(entry.log.stackTrace)" ></pre>
             </td>
           </tr>
 

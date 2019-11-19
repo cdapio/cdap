@@ -223,27 +223,34 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
     }
 
     let searchResults = [];
-
-    vm.displayData = vm.displayData.filter( data => {
-      if (data.log.message.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1) {
+    vm.displayData =  vm.displayData.reduce((displayData, data, index)  => {
+      let checkInStackTrace = (data.log.stackTrace !== '' && data.log.stackTrace.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1);
+      if ((data.log && data.log.message && (data.log.message.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1)) || checkInStackTrace) {
         searchResults.push(data.log.timestamp);
-        return true;
+        if (checkInStackTrace) {
+          this.toggleStackTrace(index, checkInStackTrace);
+        }
+        displayData.push(data);
       }
-      return false;
-    });
+      return displayData;
+    }, []);
 
     vm.updateSearchResultsInStore(searchResults);
   };
 
-  vm.toggleStackTrace = (index) => {
+  vm.toggleStackTrace = (index, checkInStackTrace=false) => {
     // If the currently clicked row is a stack trace itself, do nothing
     if (vm.displayData[index].stackTrace) {
       return;
     }
 
-    if ((index+1 < vm.displayData.length) && vm.displayData[index+1].stackTrace) {
-      vm.displayData.splice(index+1, 1);
-      vm.displayData[index].selected = false;
+    if ((index + 1 < vm.displayData.length) && vm.displayData[index + 1].stackTrace) {
+      if (!checkInStackTrace){
+        vm.displayData.splice(index + 1, 1);
+        vm.displayData[index].selected = false;
+      } else {
+        vm.displayData[index].selected = true;
+      }
       return;
     }
     if (vm.displayData[index].log.stackTrace) {
@@ -258,7 +265,9 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
       vm.displayData.splice(index+1, 0, stackTraceObj);
     } else {
       // otherwise, it does not have stack trace but has been selected
-      vm.displayData[index].selected = !vm.displayData[index].selected;
+      if (!checkInStackTrace) {
+        vm.displayData[index].selected = !vm.displayData[index].selected;
+      }
     }
     checkForScrollbar();
   };
@@ -639,7 +648,7 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
       displayData to the data list we get from backend
     */
     // Clean slate
-    vm.displayData = vm.data;
+    vm.displayData = _.cloneDeep(vm.data);
     checkForScrollbar();
   };
 
