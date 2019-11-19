@@ -27,6 +27,7 @@ const defaultInitialState = {
   selectedNamespace: '',
   enabledTriggers: [],
   pipelineName: '',
+  pipelineType: '',
   expandedPipeline: null,
   expandedTrigger: null,
 };
@@ -40,9 +41,10 @@ const triggers = (state = defaultInitialState, action = defaultAction) => {
   let stateCopy;
 
   switch (action.type) {
-    case PipelineTriggersActions.setPipelineName:
+    case PipelineTriggersActions.setPipeline:
       stateCopy = Object.assign({}, state, {
         pipelineName: action.payload.pipelineName,
+        workflowName: action.payload.workflowName,
       });
       break;
     case PipelineTriggersActions.changeNamespace:

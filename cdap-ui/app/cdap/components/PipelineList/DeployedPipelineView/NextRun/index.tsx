@@ -41,7 +41,7 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   };
 
   public componentDidMount() {
-    if (this.props.pipeline.artifact.name !== GLOBALS.etlDataPipeline) {
+    if (this.props.pipeline.artifact.name === GLOBALS.etlDataStreams) {
       return;
     }
 
@@ -62,7 +62,7 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
     const pipeline = this.props.pipeline;
 
     const params = {
-      ...GLOBALS.programInfo[GLOBALS.etlDataPipeline],
+      ...GLOBALS.programInfo[this.props.pipeline.artifact.name],
       namespace,
       appId: pipeline.name,
     };

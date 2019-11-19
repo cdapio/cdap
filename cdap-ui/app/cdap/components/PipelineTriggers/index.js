@@ -27,6 +27,7 @@ import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTri
 import NamespaceStore from 'services/NamespaceStore';
 import { Provider } from 'react-redux';
 import T from 'i18n-react';
+import { GLOBALS } from 'services/global-constants';
 
 const PREFIX = 'features.PipelineTriggers';
 
@@ -76,14 +77,19 @@ export default class PipelineTriggers extends Component {
 
   componentWillMount() {
     PipelineTriggersStore.dispatch({
-      type: PipelineTriggersActions.setPipelineName,
+      type: PipelineTriggersActions.setPipeline,
       payload: {
         pipelineName: this.props.pipelineName,
+        workflowName: GLOBALS.programId[this.props.pipelineType],
       },
     });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
-    fetchTriggersAndApps(this.props.pipelineName, namespace);
+    fetchTriggersAndApps(
+      this.props.pipelineName,
+      GLOBALS.programId[this.props.pipelineType],
+      namespace
+    );
   }
 
   componentWillUnmount() {
@@ -151,4 +157,5 @@ export default class PipelineTriggers extends Component {
 PipelineTriggers.propTypes = {
   pipelineName: PropTypes.string.isRequired,
   namespace: PropTypes.string.isRequired,
+  pipelineType: PropTypes.string.isRequired,
 };
