@@ -388,7 +388,13 @@ public class ProgramLifecycleService {
     }
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
+    if (checkUserIdentityPropagationPreference(programId)) {
+        LOG.debug("user identity propagation is enabled");
+        sysArgs.put(ProgramOptionConstants.LOGGED_IN_USER, authenticationContext.getPrincipal().getName());
+    }
+    
     Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
+    
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
@@ -501,6 +507,10 @@ public class ProgramLifecycleService {
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    if (checkUserIdentityPropagationPreference(programId)) {
+        sysArgs.put(ProgramOptionConstants.LOGGED_IN_USER, authenticationContext.getPrincipal().getName());
+    }
+    
     Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
     if (overrides != null) {
       userArgs.putAll(overrides);
@@ -1100,5 +1110,16 @@ public class ProgramLifecycleService {
                                                     plugin.getPluginClass().getType(),
                                                     plugin.getPluginClass().getRequirements()))
       .collect(Collectors.toSet());
+  }
+  
+  private boolean checkUserIdentityPropagationPreference(ProgramId programId) {
+    Map<String, String> prefs = preferencesService.getResolvedProperties(programId);
+    String key = SystemArguments.USER_IMPERSONATION_ENABLED;
+    if (prefs.containsKey(key)) {
+      if (prefs.get(key).equalsIgnoreCase("true")) {
+        return true;
+      }
+    }
+    return false;
   }
 }
