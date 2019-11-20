@@ -17,6 +17,7 @@
 import * as React from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import withStyles from '@material-ui/core/styles/withStyles';
 
 interface IContextMenuOption {
   name: string;
@@ -35,9 +36,44 @@ const initialMousePosition = {
   mouseY: null,
 };
 
+const StyledMenuItem = withStyles(() => ({
+  root: {
+    minHeight: 'auto',
+  },
+}))(MenuItem);
+
 export const ContextMenu = ({ selector, element, options }: IContextMenuProps) => {
   const [mousePosition, setMousePosition] = React.useState(initialMousePosition);
-  const menuRef = React.useRef(null);
+
+  // state to capture children of context menu to disable right click on them.
+  const [children, setChildren] = React.useState(null);
+  // we don't use 'useRef' but a 'useCallback' is because 'ref.current' state is not
+  // tracked. So a useEffect(() => {...}, [ref.current]) won't get called back if
+  // the dom node changes.
+  const measuredRef = React.useCallback((node) => {
+    if (node !== null) {
+      setChildren(Array.prototype.slice.call(node.children));
+    }
+  }, []);
+
+  React.useEffect(
+    () => {
+      const defaultEventHandler = (e) => e.preventDefault();
+      if (children) {
+        children.forEach((child) => child.addEventListener('contextmenu', defaultEventHandler));
+      }
+      return () => {
+        if (children) {
+          children.forEach((child) =>
+            child.removeEventListener('contextmenu', defaultEventHandler)
+          );
+        }
+      };
+    },
+    [children]
+  );
+
+  // on mount determine the position of the mouse pointer and place the menu right there.
   React.useEffect(() => {
     let el: HTMLElement;
     if (selector) {
@@ -62,54 +98,54 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
     return () => el.removeEventListener('contextmenu', toggleMenu);
   }, []);
 
-  React.useEffect(
-    () => {
-      const defaultEventHandler = (e) => e.preventDefault();
-      if (menuRef.current) {
-        Array.prototype
-          .slice(menuRef.current.children)
-          .forEach((child) => child.addEventListener('contextmenu', defaultEventHandler));
-      }
-      return () => {
-        if (menuRef.current) {
-          Array.prototype
-            .slice(menuRef.current.children)
-            .forEach((child) => child.removeEventListener('contextmenu', defaultEventHandler));
-        }
-      };
-    },
-    [menuRef.current]
-  );
-
-  const handleClose = () => {
+  const handleClose = (option: IContextMenuOption, e: React.SyntheticEvent) => {
     setMousePosition(initialMousePosition);
+    option.onClick(e);
   };
 
   return (
     <Menu
       open={mousePosition.mouseY !== null}
-      onClose={handleClose}
+      onClose={() => setMousePosition(initialMousePosition)}
       anchorReference="anchorPosition"
       anchorPosition={
         mousePosition.mouseY !== null && mousePosition.mouseX !== null
           ? { top: mousePosition.mouseY, left: mousePosition.mouseX }
           : undefined
       }
-      ref={menuRef}
+      ref={measuredRef}
     >
-      <MenuItem onClick={handleClose}>Copy</MenuItem>
-      <MenuItem onClick={handleClose}>Print</MenuItem>
-      <MenuItem onClick={handleClose}>Highlight</MenuItem>
-      <MenuItem onClick={handleClose}>Email</MenuItem>
+      {options.map((option) => (
+        <StyledMenuItem key={option.name} onClick={handleClose.bind(null, option)}>
+          {option.label}
+        </StyledMenuItem>
+      ))}
     </Menu>
   );
 };
 
 export default function ContextMenuWrapper() {
+  const options: IContextMenuOption[] = [
+    {
+      name: 'option1',
+      label: 'Option One',
+      onClick: (e) => console.log('option 1 clicked'),
+    },
+    {
+      name: 'option2',
+      label: 'Option Two',
+      onClick: (e) => console.log('option2 clicked'),
+    },
+    {
+      name: 'option3',
+      label: 'Option Three',
+      onClick: (e) => console.log('option3 clicked'),
+    },
+  ];
   return (
     <React.Fragment>
       <h1 id="right-click-item">Right click here</h1>
-      <ContextMenu selector="#right-click-item" />
+      <ContextMenu selector="#right-click-item" options={options} />
     </React.Fragment>
   );
 }
