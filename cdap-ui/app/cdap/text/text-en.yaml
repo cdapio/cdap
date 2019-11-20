@@ -1197,8 +1197,12 @@ features:
           kerberosPrincipal: Specify a Kerberos Principal to this connection
           keytabLocation: Specify a Keytab Location to this connection
           kafkaProducerProperties:
-            key: Enter Key
-            value: Enter Value
+            0:
+              key: Enter Key
+              value: Enter Value
+            1:
+              key: Enter Key
+              value: Enter Value
         port: Port
         required: Required
         testConnection: Test Connection

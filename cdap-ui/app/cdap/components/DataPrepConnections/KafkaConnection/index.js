@@ -90,26 +90,30 @@ export default class KafkaConnection extends Component {
         'kafkaProducerProperties': [
           [
             {
+              'id':0,
               'error': '',
               'template': 'KAFKA_PRODUCER_PROPERTIES0_KEY',
-              'label': T.translate(`${PREFIX}.kafkaProducerProperties[0].key`)
+              'label': T.translate(`${PREFIX}.kafkaProducerProperties.0.key`)
             },
             {
+              'id':1,
               'error': '',
               'template': 'KAFKA_PRODUCER_PROPERTIES0_VALUE',
-              'label': T.translate(`${PREFIX}.kafkaProducerProperties[0].value`)
+              'label': T.translate(`${PREFIX}.kafkaProducerProperties.0.value`)
             }
           ],
           [
             {
+              'id':2,
               'error': '',
               'template': 'KAFKA_PRODUCER_PROPERTIES1_KEY',
-              'label': T.translate(`${PREFIX}.kafkaProducerProperties[1].key`)
+              'label': T.translate(`${PREFIX}.kafkaProducerProperties.1.key`)
             },
             {
+              'id':3,
               'error': '',
               'template': 'KAFKA_PRODUCER_PROPERTIES1_VALUE',
-              'label': T.translate(`${PREFIX}.kafkaProducerProperties[1].value`)
+              'label': T.translate(`${PREFIX}.kafkaProducerProperties.1.value`)
             }
           ]
         ]
@@ -441,6 +445,44 @@ export default class KafkaConnection extends Component {
     );
   }
 
+  renderKafkaProducerProperties() {
+    const items = []
+
+    for (let i = 0; i < this.state.inputs['kafkaProducerProperties'][0].length; i++) {
+      const elem = this.state.inputs['kafkaProducerProperties'][i];
+      items.push(
+        <div className='item-container' key={`kafkaProducerProperties_${i}`}>
+          <div className="col-xs-6 property-input" key={elem[0].id}>
+            <ValidatedInput
+              type="text"
+              validationError={elem[0]['error']}
+              className="form-control"
+              value={this.state.kafkaProducerProperties[i].key}
+              onChange={this.handleChange.bind(this, 'kafkaProducerProperties[0][i].key')}
+              placeholder={T.translate(`${PREFIX}.Placeholders.kafkaProducerProperties.${i}.key`)}
+            />
+          </div>
+          <div className="col-xs-6 property-input" key={elem[1].id}>
+            <ValidatedInput
+              type="text"
+              validationError={elem[1]['error']}
+              className="form-control"
+              value={this.state.kafkaProducerProperties[i].value}
+              onChange={this.handleChange.bind(this, 'kafkaProducerProperties[0][i].value')}
+              placeholder={T.translate(`${PREFIX}.Placeholders.kafkaProducerProperties.${i}.value`)}
+            />
+          </div>
+        </div>
+      )
+    }
+
+
+    return (
+      <div className={`${INPUT_COL_CLASS} kafka-producer-prop-container`}>
+        {items}
+      </div>
+    )
+  }
   renderContent() {
     if (this.state.loading) {
       return (
@@ -520,24 +562,13 @@ export default class KafkaConnection extends Component {
             </div>
           </div>
 
-
           <div className="form-group row">
             <label className={LABEL_COL_CLASS}>
               {T.translate(`${PREFIX}.kafkaProducerProperties`)}
             </label>
-            <div className={INPUT_COL_CLASS}>
-              <div className="input-name">
-                <ValidatedInput
-                  type="text"
-                  validationError={this.state.inputs['kafkaProducerProperties'][0]['key']['error']}
-                  className="form-control"
-                  value={this.state.kafkaProducerProperties[0]['key']}
-                  onChange={this.handleChange.bind(this, "['kafkaProducerProperties'][0]['key']")}
-                  placeholder={T.translate(`${PREFIX}.Placeholders.kafkaProducerProperties[0]['key']`)}
-                />
-              </div>
-            </div>
+            {this.renderKafkaProducerProperties()}
           </div>
+
 
         </div>
       </div>
