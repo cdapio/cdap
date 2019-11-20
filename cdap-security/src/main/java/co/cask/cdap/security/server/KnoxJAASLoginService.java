@@ -19,12 +19,10 @@ import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
-import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.server.AbstractHttpConnection;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.Loader;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
@@ -52,7 +50,7 @@ import javax.security.auth.login.LoginException;
  *
  * Creates a UserRealm suitable for use with JAAS
  */
-public class KnoxJAASLoginService extends AbstractLifeCycle implements LoginService {
+public class KnoxJAASLoginService extends AbstractLoginService {
   private static final Logger LOG = Log.getLogger(KnoxJAASLoginService.class);
 
   public static String defaultRoleClassName = "org.eclipse.jetty.plus.jaas.JAASRole";
@@ -224,7 +222,8 @@ public class KnoxJAASLoginService extends AbstractLifeCycle implements LoginServ
       //loginContext.login();
 
       //login success
-      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(username, subject, null);
+      String username_caseconvert = usernameCaseConvert(username);
+      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(username_caseconvert, subject, null);
       subject.getPrincipals().add(userPrincipal);
 
       return identityService.newUserIdentity(subject, userPrincipal, null);
@@ -287,6 +286,11 @@ public class KnoxJAASLoginService extends AbstractLifeCycle implements LoginServ
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public String serverCaseConvert(String username) {
+    throw new UnsupportedOperationException("server type is not supported for KnoxLoginService");
   }
 
 }
