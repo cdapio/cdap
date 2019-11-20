@@ -311,7 +311,8 @@ public class UpgradeTool {
       Integer.parseInt(commandLine.getOptionValue("t")) : DEFAULT_READ_TIMEOUT_MILLIS;
     ClientConfig.Builder clientConfigBuilder = ClientConfig.builder()
       .setDefaultReadTimeout(readTimeout)
-      .setConnectionConfig(connectionConfig);
+      .setConnectionConfig(connectionConfig)
+      .setVerifySSLCert(false);
 
     if (commandLine.hasOption("a")) {
       String tokenFilePath = commandLine.getOptionValue("a");
