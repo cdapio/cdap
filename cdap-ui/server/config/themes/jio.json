@@ -33,7 +33,7 @@
     "analytics": false,
     "rules-engine": false,
     "metadata": false,
-    "hub": true,
+    "hub": false,
     "ingest-data": true,
     "add-namespace": true,
     "enable-jio": true
