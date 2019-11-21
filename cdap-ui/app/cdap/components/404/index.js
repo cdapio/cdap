@@ -48,7 +48,9 @@ export default function Page404({ entityName, entityType, children }) {
           <div className="navigation-section">
             <div>
               {T.translate(`${I18N_PREFIX}.subtitleMessage2`)}
-              <Link to={`/ns/${namespace}/`}>{T.translate(`${I18N_PREFIX}.overviewLabel`)}</Link>
+              <Link to={`/ns/${namespace}/control`}>
+                {T.translate(`${I18N_PREFIX}.controlCenterLabel`)}
+              </Link>
             </div>
             <div>
               {T.translate(`${I18N_PREFIX}.manageLabel`)}
