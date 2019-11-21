@@ -327,9 +327,17 @@ export default class KafkaConnection extends Component {
 
   /** Return true if there is some error. */
   testInputs() {
-    let isSomeError = Object.keys(this.state.inputs).some(key => this.state.inputs[key]['error'] !== '');
+    let isSomeError = Object.keys(this.state.inputs).some(key => {
+      if (Array.isArray(this.state.inputs[key])) {
+        const isSomeErrInArr = this.state.inputs[key].reduce((a,b) => { return a.concat(b);  })
+          .some((obj) => { return obj.hasOwnProperty('error')  ? obj['error'] !== '' : false; });
+        return isSomeErrInArr;
+      } else {
+        return this.state.inputs[key]['error'] !== '';
+      }
+    });
     isSomeError = isSomeError || this.state.brokersList.some(broker => !broker.valid);
-    return (isSomeError ? true : false);
+    return isSomeError;
   }
 
   handleChange(key, e) {
@@ -446,9 +454,9 @@ export default class KafkaConnection extends Component {
   }
 
   renderKafkaProducerProperties() {
-    const items = []
+    const items = [];
 
-    for (let i = 0; i < this.state.inputs['kafkaProducerProperties'][0].length; i++) {
+    for (let i = 0; i < this.state.inputs['kafkaProducerProperties'].length; i++) {
       const elem = this.state.inputs['kafkaProducerProperties'][i];
       items.push(
         <div className='item-container' key={`kafkaProducerProperties_${i}`}>
@@ -457,8 +465,8 @@ export default class KafkaConnection extends Component {
               type="text"
               validationError={elem[0]['error']}
               className="form-control"
-              value={this.state.kafkaProducerProperties[i].key}
-              onChange={this.handleChange.bind(this, 'kafkaProducerProperties[0][i].key')}
+              value={this.state.kafkaProducerProperties[i]['key']}
+              onChange={this.handleChangeKafkaProducerProp.bind(this, 'kafkaProducerProperties',i,'key')}
               placeholder={T.translate(`${PREFIX}.Placeholders.kafkaProducerProperties.${i}.key`)}
             />
           </div>
@@ -467,22 +475,41 @@ export default class KafkaConnection extends Component {
               type="text"
               validationError={elem[1]['error']}
               className="form-control"
-              value={this.state.kafkaProducerProperties[i].value}
-              onChange={this.handleChange.bind(this, 'kafkaProducerProperties[0][i].value')}
+              value={this.state.kafkaProducerProperties[i]['value']}
+              onChange={this.handleChangeKafkaProducerProp.bind(this, 'kafkaProducerProperties',i,'value')}
               placeholder={T.translate(`${PREFIX}.Placeholders.kafkaProducerProperties.${i}.value`)}
             />
           </div>
         </div>
-      )
+      );
     }
-
 
     return (
       <div className={`${INPUT_COL_CLASS} kafka-producer-prop-container`}>
         {items}
       </div>
-    )
+    );
   }
+
+  handleChangeKafkaProducerProp(key, rowIndex, item, e) {
+    const keyOrVal = item === 'key' ? 0 : 1;
+    const isValid = types[this.state.inputs[key][rowIndex][keyOrVal]['template']].validate(e.target.value);
+    let errorMsg = '';
+    if (e.target.value && !isValid) {
+      errorMsg = types[this.state.inputs[key][rowIndex][keyOrVal]['template']].getErrorMsg();
+    }
+
+    let newState = Object.assign({}, this.state[key]);
+    newState[rowIndex][item] = e.target.value;
+    let inputsNewState = Object.assign({}, this.state['inputs'][key]);
+    inputsNewState[rowIndex][keyOrVal]['error'] = errorMsg;
+
+    this.setState({
+      newState,
+      inputsNewState
+    });
+  }
+
   renderContent() {
     if (this.state.loading) {
       return (
