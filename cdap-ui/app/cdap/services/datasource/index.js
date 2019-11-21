@@ -32,6 +32,7 @@ import 'rxjs/add/operator/combineLatest';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/debounceTime';
+import WindowManager, {WINDOW_ON_BLUR, WINDON_ON_FOCUS} from 'services/WindowManager';
 
 var CDAP_API_VERSION = 'v3';
 // FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
@@ -106,6 +107,8 @@ export default class Datasource {
         }
       });
     });
+    this.eventEmitter.on(WINDON_ON_FOCUS, this.resumePoll.bind(this));
+    this.eventEmitter.on(WINDOW_ON_BLUR, this.pausePoll.bind(this));
   }
 
   socketSend(actionType, resource) {
@@ -250,6 +253,28 @@ export default class Datasource {
       this.bindings[id].rx.unsubscribe();
       delete this.bindings[id];
     }
+  }
+
+  pausePoll() {
+    Object.keys(this.bindings)
+      .filter(subscriptionID => this.bindings[subscriptionID].action === 'POLL')
+      .forEach(subscriptionID => {
+        Socket.send({
+          action: 'poll-stop',
+          resource: this.bindings[subscriptionID].resource,
+        });
+      });
+  }
+
+  resumePoll() {
+    Object.keys(this.bindings)
+      .filter(subscriptionID => this.bindings[subscriptionID].action === 'POLL')
+      .forEach(subscriptionID => {
+        Socket.send({
+          action: 'poll-start',
+          resource: this.bindings[subscriptionID].resource,
+        });
+      });
   }
 
   destroy() {
