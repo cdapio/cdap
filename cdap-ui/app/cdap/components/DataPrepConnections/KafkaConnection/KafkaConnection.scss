@@ -63,6 +63,9 @@ $success-color: $green-02;
     padding: 10px 0px;
     background: #eee;
     margin-left: 2%;
+    .item-container {
+      margin: 0px;
+    }
   }
 
   .test-connection-button {

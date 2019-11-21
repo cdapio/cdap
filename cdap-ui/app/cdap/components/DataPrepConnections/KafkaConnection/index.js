@@ -459,7 +459,7 @@ export default class KafkaConnection extends Component {
     for (let i = 0; i < this.state.inputs['kafkaProducerProperties'].length; i++) {
       const elem = this.state.inputs['kafkaProducerProperties'][i];
       items.push(
-        <div className='item-container' key={`kafkaProducerProperties_${i}`}>
+        <div className='row item-container' key={`kafkaProducerProperties_${i}`}>
           <div className="col-xs-6 property-input" key={elem[0].id}>
             <ValidatedInput
               type="text"
