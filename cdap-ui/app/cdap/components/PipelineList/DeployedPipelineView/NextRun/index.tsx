@@ -22,6 +22,8 @@ import { GLOBALS } from 'services/global-constants';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyPipelineApi } from 'api/pipeline';
+import ee from 'event-emitter';
+import { WINDON_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
 
 interface IProps {
   pipeline: IPipeline;
@@ -35,6 +37,7 @@ interface IState {
 export default class NextRun extends React.PureComponent<IProps, IState> {
   private interval = null;
 
+  public eventemitter = ee(ee);
   public state = {
     loading: true,
     nextRun: null,
@@ -47,15 +50,27 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
 
     // Interval only runs after the delay, so have to
     // initially call the function first
-    this.getNextRun();
-    this.interval = Observable.interval(30 * 1000).subscribe(this.getNextRun.bind(this));
+    this.startNextRunInterval();
+    this.eventemitter.on(WINDON_ON_FOCUS, this.startNextRunInterval);
+    this.eventemitter.on(WINDOW_ON_BLUR, this.stopNextRunInterval);
   }
 
   public componentWillUnmount() {
+    this.stopNextRunInterval();
+    this.eventemitter.off(WINDON_ON_FOCUS, this.startNextRunInterval);
+    this.eventemitter.off(WINDOW_ON_BLUR, this.stopNextRunInterval);
+  }
+
+  private stopNextRunInterval = () => {
     if (this.interval && this.interval.unsubscribe) {
       this.interval.unsubscribe();
     }
-  }
+  };
+
+  private startNextRunInterval = () => {
+    this.getNextRun();
+    this.interval = Observable.interval(30 * 1000).subscribe(this.getNextRun.bind(this));
+  };
 
   private getNextRun() {
     const namespace = getCurrentNamespace();
