@@ -48,8 +48,8 @@ export default class KafkaConnection extends Component {
     this.state = {
       name: '',
       brokersList: [{
-        host: '',
-        port: '',
+        host: 'localhost',
+        port: '9062',
         uniqueId: uuidV4(),
         valid: true,
       }],
