@@ -1956,14 +1956,15 @@ features:
       title: Schema of each record in the {entityType} "{entityId}"
       tooltip: Schema defines the structure of each record in the dataset. A schema is a collection of fields, where each field has a name and a data type.
   Page404:
-    genericMessage: Sorry, we are not able to find the page you are looking for.
     entityMessage: Sorry, we are not able to find {entityType} "{entityName}"
+    genericMessage: Sorry, we are not able to find the page you are looking for.
+    homePageLabel: Home Page
     mainTitle: Page not found
     manageLabel: Manage
     overviewLabel: Overview
     pipelinesMessage: Pipelines
     subtitleMessage1: Here are some options on where to go next
-    subtitleMessage2: View all your entities in the
+    subtitleMessage2: Navigate to
   Page500:
     mainTitle: Unexpected error
     secondaryTitle: We have encountered an error and could not load the page you requested
