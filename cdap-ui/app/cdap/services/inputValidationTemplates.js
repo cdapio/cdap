@@ -215,41 +215,7 @@ const KEYTAB_LOCATION = {
   }
 };
 
-const KAFKA_PRODUCER_PROPERTIES_KEY = {
-  allowed: {
-    ALLOWED_TAGS: [],
-  },
-  info: [
-      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
-  ],
-  validate: function(val) {
-      return isValidUsingDOMPurify(val, this.allowed);
-  },
-  getInfo: function() {
-      return this.info[0];
-  },
-  getErrorMsg: function() {
-    return `Invalid input. ${this.info[0]}`;
-  }
-};
 
-const KAFKA_PRODUCER_PROPERTIES_VALUE = {
-  allowed: {
-    ALLOWED_TAGS: [],
-  },
-  info: [
-      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
-  ],
-  validate: function(val) {
-      return isValidUsingDOMPurify(val, this.allowed);
-  },
-  getInfo: function() {
-      return this.info[0];
-  },
-  getErrorMsg: function() {
-    return `Invalid input. ${this.info[0]}`;
-  }
-};
 
 
 const types = {
@@ -262,9 +228,7 @@ const types = {
   "GCS_BUCKET_ID": GCS_BUCKET_ID,
   "HOSTNAME_1123": HOSTNAME_1123,
   "KEYTAB_LOCATION": KEYTAB_LOCATION,
-  "KERBEROS_PRINCIPAL": KERBEROS_PRINCIPAL,
-  "KAFKA_PRODUCER_PROPERTIES_KEY": KAFKA_PRODUCER_PROPERTIES_KEY,
-  "KAFKA_PRODUCER_PROPERTIES_VALUE": KAFKA_PRODUCER_PROPERTIES_VALUE,
+  "KERBEROS_PRINCIPAL": KERBEROS_PRINCIPAL
 };
 
 export default types;
