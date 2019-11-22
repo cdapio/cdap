@@ -197,6 +197,14 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
           return;
         }
 
+        // TODO(CDAP-13010): for splitters, the backend returns port names similar to [schemaName].string or [schemaName].int.
+        // However, some weird parsing code in the avsc library doesn't allow primitive type names to be after periods(.),
+        // so we have to manually make this change here. Ideally the backend should provide a different syntax for port
+        // names so that we don't have to do this hack in the UI.
+        if (jsonSchema.name) {
+          jsonSchema.name = jsonSchema.name.replace('.', '.type');
+        }
+
         schema.schema = avsc.parse(jsonSchema, { wrapUnions: true });
         return schema;
 
