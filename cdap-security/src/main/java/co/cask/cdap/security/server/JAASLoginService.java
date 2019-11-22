@@ -15,26 +15,22 @@
  */
 
 package co.cask.cdap.security.server;
+
 import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.plus.jaas.callback.RequestParameterCallback;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
-import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.server.AbstractHttpConnection;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.Loader;
-import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -45,15 +41,12 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.CConfiguration;
-
 /* ---------------------------------------------------- */
 /** JAASLoginService
  *
  * Creates a UserRealm suitable for use with JAAS
  */
-public class JAASLoginService extends AbstractLifeCycle implements LoginService {
+public class JAASLoginService extends AbstractLoginService {
   private static final Logger LOG = Log.getLogger(JAASLoginService.class);
 
   public static String defaultRoleClassName = "org.eclipse.jetty.plus.jaas.JAASRole";
@@ -66,17 +59,12 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   protected JAASUserPrincipal defaultUser = new JAASUserPrincipal(null, null, null);
   protected IdentityService identityService;
   protected Configuration configuration;
-  protected CConfiguration cConfiguration;
-  protected String ldap_caseconversion;
-
     /* ---------------------------------------------------- */
   /**
    * Constructor.
    *
    */
   public JAASLoginService() {
-    cConfiguration = CConfiguration.create();
-    ldap_caseconversion = cConfiguration.get(Constants.Security.CDAP_RANGER_LDAP_USESYNC_CASECENVERSION);
   }
 
 
@@ -225,16 +213,10 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
       Subject subject = new Subject();
 
       LoginContext loginContext = new LoginContext(loginModuleName, subject, callbackHandler, configuration);
-
       loginContext.login();
       
       String userNameCH = getUserName(callbackHandler);
-      if(ldap_caseconversion !=null && ldap_caseconversion.equalsIgnoreCase("lower")){
-        userNameCH = userNameCH.toLowerCase();
-      } else if (ldap_caseconversion !=null && ldap_caseconversion.equalsIgnoreCase("upper")){
-        userNameCH = userNameCH.toUpperCase();
-      }
-      
+      userNameCH = usernameCaseConvert(userNameCH);
       //login success
       JAASUserPrincipal userPrincipal = new JAASUserPrincipal(userNameCH, subject, loginContext);
       subject.getPrincipals().add(userPrincipal);
@@ -307,6 +289,11 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public String serverCaseConvert(String userName) {
+    throw new UnsupportedOperationException("server type is not supported for JAASLoginService");
   }
 
 }
