@@ -215,7 +215,7 @@ const KEYTAB_LOCATION = {
   }
 };
 
-const KAFKA_PRODUCER_PROPERTIES0_KEY = {
+const KAFKA_PRODUCER_PROPERTIES_KEY = {
   allowed: {
     ALLOWED_TAGS: [],
   },
@@ -233,7 +233,7 @@ const KAFKA_PRODUCER_PROPERTIES0_KEY = {
   }
 };
 
-const KAFKA_PRODUCER_PROPERTIES0_VALUE = {
+const KAFKA_PRODUCER_PROPERTIES_VALUE = {
   allowed: {
     ALLOWED_TAGS: [],
   },
@@ -251,41 +251,6 @@ const KAFKA_PRODUCER_PROPERTIES0_VALUE = {
   }
 };
 
-const KAFKA_PRODUCER_PROPERTIES1_KEY = {
-  allowed: {
-    ALLOWED_TAGS: [],
-  },
-  info: [
-      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
-  ],
-  validate: function(val) {
-      return isValidUsingDOMPurify(val, this.allowed);
-  },
-  getInfo: function() {
-      return this.info[0];
-  },
-  getErrorMsg: function() {
-    return `Invalid input. ${this.info[0]}`;
-  }
-};
-
-const KAFKA_PRODUCER_PROPERTIES1_VALUE = {
-  allowed: {
-    ALLOWED_TAGS: [],
-  },
-  info: [
-      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
-  ],
-  validate: function(val) {
-      return isValidUsingDOMPurify(val, this.allowed);
-  },
-  getInfo: function() {
-      return this.info[0];
-  },
-  getErrorMsg: function() {
-    return `Invalid input. ${this.info[0]}`;
-  }
-};
 
 const types = {
   "DEFAULT": DEFAULT,
@@ -298,10 +263,8 @@ const types = {
   "HOSTNAME_1123": HOSTNAME_1123,
   "KEYTAB_LOCATION": KEYTAB_LOCATION,
   "KERBEROS_PRINCIPAL": KERBEROS_PRINCIPAL,
-  "KAFKA_PRODUCER_PROPERTIES0_KEY": KAFKA_PRODUCER_PROPERTIES0_KEY,
-  "KAFKA_PRODUCER_PROPERTIES0_VALUE": KAFKA_PRODUCER_PROPERTIES0_VALUE,
-  "KAFKA_PRODUCER_PROPERTIES1_KEY": KAFKA_PRODUCER_PROPERTIES1_KEY,
-  "KAFKA_PRODUCER_PROPERTIES1_VALUE": KAFKA_PRODUCER_PROPERTIES1_VALUE
+  "KAFKA_PRODUCER_PROPERTIES_KEY": KAFKA_PRODUCER_PROPERTIES_KEY,
+  "KAFKA_PRODUCER_PROPERTIES_VALUE": KAFKA_PRODUCER_PROPERTIES_VALUE,
 };
 
 export default types;

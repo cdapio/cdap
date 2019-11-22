@@ -1185,7 +1185,7 @@ features:
           EDIT: Failed to edit connection
         kafka: Kafka
         kafkaProducerProperties: Additional Kafka Producer Properties
-        kerberosPrincipal: Kerberos Principal
+        principal: Kerberos Principal
         keytabLocation: Keytab Location
         ModalHeader:
           ADD: "Add connection: Kafka"
@@ -1194,15 +1194,11 @@ features:
         name: Connection name
         Placeholders:
           name: Specify a name to identify this connection,
-          kerberosPrincipal: Specify a Kerberos Principal to this connection
+          principal: Specify a Kerberos Principal to this connection
           keytabLocation: Specify a Keytab Location to this connection
           kafkaProducerProperties:
-            0:
-              key: Enter Key
-              value: Enter Value
-            1:
-              key: Enter Key
-              value: Enter Value
+            key: Enter Key
+            value: Enter Value
         port: Port
         required: Required
         testConnection: Test Connection
