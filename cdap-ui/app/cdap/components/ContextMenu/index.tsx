@@ -18,11 +18,12 @@ import * as React from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import withStyles from '@material-ui/core/styles/withStyles';
-
-interface IContextMenuOption {
+import PropTypes from 'prop-types';
+export interface IContextMenuOption {
   name: string;
   label: string;
   onClick: (event: React.SyntheticEvent) => void;
+  disabled?: boolean;
 }
 
 interface IContextMenuProps {
@@ -39,6 +40,14 @@ const initialMousePosition = {
 const StyledMenuItem = withStyles(() => ({
   root: {
     minHeight: 'auto',
+  },
+}))(MenuItem);
+
+const StyledDisabledMenuItem = withStyles(() => ({
+  root: {
+    minHeight: 'auto',
+    color: 'lightgrey',
+    cursor: 'not-allowed',
   },
 }))(MenuItem);
 
@@ -105,6 +114,7 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
 
   return (
     <Menu
+      keepMounted={true}
       open={mousePosition.mouseY !== null}
       onClose={() => setMousePosition(initialMousePosition)}
       anchorReference="anchorPosition"
@@ -115,13 +125,25 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
       }
       ref={measuredRef}
     >
-      {options.map((option) => (
-        <StyledMenuItem key={option.name} onClick={handleClose.bind(null, option)}>
-          {option.label}
-        </StyledMenuItem>
-      ))}
+      {options.map((option) => {
+        const MenuItemComp = option.disabled ? StyledDisabledMenuItem : StyledMenuItem;
+        return (
+          <MenuItemComp
+            key={option.name}
+            onClick={option.disabled === true ? undefined : handleClose.bind(null, option)}
+          >
+            {option.label}
+          </MenuItemComp>
+        );
+      })}
     </Menu>
   );
+};
+
+(ContextMenu as any).propTypes = {
+  selector: PropTypes.string,
+  element: PropTypes.node,
+  options: PropTypes.object,
 };
 
 export default function ContextMenuWrapper() {
