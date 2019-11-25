@@ -21,6 +21,8 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.JoinElement;
+import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
+import co.cask.cdap.etl.api.batch.SparkJoiner;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.common.RecordInfo;
@@ -28,6 +30,8 @@ import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.SparkPipelineRunner;
+import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
+import co.cask.cdap.etl.spark.batch.RDDCollection;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spark.streaming.DStreamCollection;
@@ -37,14 +41,19 @@ import co.cask.cdap.etl.spark.streaming.PairDStreamCollection;
 import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinOn;
+import co.cask.cdap.etl.spark.streaming.function.MultiStreamsTransform;
 import co.cask.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import co.cask.cdap.etl.spec.StageSpec;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Driver for running pipelines using Spark Streaming.
@@ -122,5 +131,22 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     JavaPairDStream<Object, List<JoinElement<Object>>> pairDStream = joinedInputs.getUnderlying();
     JavaDStream<Object> result = pairDStream.transform(new DynamicJoinMerge<>(dynamicDriverContext));
     return new DStreamCollection<>(sec, result);
+  }
+
+  @Override
+  protected SparkCollection<Object> computeJoin(StageSpec stageSpec,
+    Map<String, SparkCollection<Object>> inputs,
+    StageStatisticsCollector collector) throws Exception {
+    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
+
+    List<String> stageNames = new ArrayList<>();
+    List<JavaDStream<?>> dstreams = new ArrayList<>();
+    inputs.forEach((key, value) -> {
+      stageNames.add(key);
+      dstreams.add(value.getUnderlying());
+    });
+    JavaDStream<Object> result = streamingContext.transform(dstreams, new MultiStreamsTransform<Object>(dynamicDriverContext, stageNames));
+    return new DStreamCollection<>(sec, result);
+
   }
 }

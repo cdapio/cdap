@@ -31,6 +31,7 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.SparkJoiner;
 import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.common.ArtifactSelectorProvider;
 import co.cask.cdap.etl.common.Constants;
@@ -181,6 +182,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
 
         // Do not allow more than one input schema for stages other than Joiner and Action
         if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType)
+          && !SparkJoiner.PLUGIN_TYPE.equals(nextStageType)
           && !Action.PLUGIN_TYPE.equals(nextStageType)
           && !Condition.PLUGIN_TYPE.equals(nextStageType)
           && !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
@@ -324,7 +326,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
                       etlPlugin.getType(), etlPlugin.getName(), pluginId));
     }
     try {
-      if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
+      if (type.equals(BatchJoiner.PLUGIN_TYPE) || type.equals(SparkJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
         multiPlugin.configurePipeline(pipelineConfigurer);
       } else if (type.equals(SplitterTransform.PLUGIN_TYPE)) {

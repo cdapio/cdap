@@ -434,7 +434,7 @@ which operates on a single record at a time, a ``BatchJoiner`` operates on a col
   previous stage. This method returns a join key for each object it recieves.
   Objects with the same join key will be grouped together for the ``merge`` method.
 - ``getJoinConfig()``: This method will be called by the CDAP Pipeline to find out the type of join to be performed.
-  The config specifies which input stages are ``requiredInputs``.  Records from a required input
+  The config specifies which input stages are ``leftInput``.  Records from a required input
   will always be present in the ``merge()`` method.  Records from a non-required input will
   only be present in the ``merge()`` method if they meet the join criteria. In other words,
   if there are no required inputs, a full outer join is performed. If all inputs are
