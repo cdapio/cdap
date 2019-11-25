@@ -144,4 +144,7 @@ angular
   })
   .directive('loadingSvg', function(reactDirective) {
     return reactDirective(window.CaskCommon.LoadingSVG);
+  })
+  .directive('pipelineContextMenu', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineContextMenu);
   });
