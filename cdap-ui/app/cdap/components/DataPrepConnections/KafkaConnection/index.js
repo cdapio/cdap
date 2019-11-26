@@ -208,12 +208,15 @@ export default class KafkaConnection extends Component {
   }
 
   getProperties() {
-    return Theme.isCustomerJIO ? { brokers: this.convertBrokersList() } :
+    const prop = {
+      brokers: this.convertBrokersList(),
+      kafkaProducerProperties: JSON.stringify(this.getKeyValObject())
+    };
+    return Theme.isCustomerJIO ? prop :
       {
-        brokers: this.convertBrokersList(),
+        ...prop,
         principal: this.state.principal,
         keytabLocation: this.state.keytabLocation,
-        kafkaProducerProperties: JSON.stringify(this.getKeyValObject())
       };
   }
   addConnection() {
@@ -440,11 +443,16 @@ export default class KafkaConnection extends Component {
 
   renderKafkaProducerProperties() {
     return (
-      <div className={`${INPUT_COL_CLASS} kafka-producer-prop-container`}>
-        <KeyValuePairs
-          keyValues = {this.state.kafkaProducerProperties}
-          onKeyValueChange = {this.onKeyValueChange}
-        />
+      <div className="form-group row">
+        <label className={LABEL_COL_CLASS}>
+          {T.translate(`${PREFIX}.kafkaProducerProperties`)}
+        </label>
+        <div className={`${INPUT_COL_CLASS} kafka-producer-prop-container`}>
+          <KeyValuePairs
+            keyValues = {this.state.kafkaProducerProperties}
+            onKeyValueChange = {this.onKeyValueChange}
+          />
+        </div>
       </div>
     );
   }
@@ -453,7 +461,7 @@ export default class KafkaConnection extends Component {
     this.setState({kafkaProducerProperties});
   }
 
-  renderKerberossProperties() {
+  renderPrincipalKeytabLocation() {
     return (
       <div>
         {/* principal field */}
@@ -494,14 +502,6 @@ export default class KafkaConnection extends Component {
               />
             </div>
           </div>
-        </div>
-
-        {/* kafka producer properties */}
-        <div className="form-group row">
-          <label className={LABEL_COL_CLASS}>
-            {T.translate(`${PREFIX}.kafkaProducerProperties`)}
-          </label>
-          {this.renderKafkaProducerProperties()}
         </div>
       </div>
     );
@@ -545,9 +545,9 @@ export default class KafkaConnection extends Component {
 
           {this.renderKafka()}
           {
-            Theme.isCustomerJIO ? null : this.renderKerberossProperties()
+            Theme.isCustomerJIO ? null : this.  renderPrincipalKeytabLocation()
           }
-
+          {this.renderKafkaProducerProperties()}
         </div>
       </div>
     );
