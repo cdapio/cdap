@@ -26,6 +26,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
@@ -69,6 +70,7 @@ import javax.annotation.Nullable;
  * Prepares Spark jobs.
  */
 public class SparkPreparer extends PipelinePhasePreparer {
+
   private static final Logger LOG = LoggerFactory.getLogger(SparkPreparer.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -168,6 +170,15 @@ public class SparkPreparer extends PipelinePhasePreparer {
     ContextProvider<SparkBatchSourceContext> contextProvider =
       dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
     return new SubmitterPlugin<>(stageName, context, transform, contextProvider,
+                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+  }
+
+  @Override
+  protected SubmitterPlugin createSplitterTransform(SplitterTransform<?, ?> splitterTransform, StageSpec stageSpec) {
+    String stageName = stageSpec.getName();
+    ContextProvider<SparkBatchSourceContext> contextProvider =
+      dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
+    return new SubmitterPlugin<>(stageName, context, splitterTransform, contextProvider,
                                  ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
   }
 

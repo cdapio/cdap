@@ -21,6 +21,7 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
@@ -44,13 +45,12 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * For each stage, call prepareRun() in topological order.
- * prepareRun will setup the input/output of the pipeline phase and set any arguments that should be visible
- * to subsequent stages. These configure and prepare operations must be performed in topological order
- * to ensure that arguments set by one stage are available to subsequent stages.
- *
+ * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of the pipeline phase
+ * and set any arguments that should be visible to subsequent stages. These configure and prepare operations must be
+ * performed in topological order to ensure that arguments set by one stage are available to subsequent stages.
  */
 public abstract class PipelinePhasePreparer {
+
   private final PluginContext pluginContext;
   private final Metrics metrics;
   protected final MacroEvaluator macroEvaluator;
@@ -104,6 +104,9 @@ public abstract class PipelinePhasePreparer {
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
         BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createJoiner(batchJoiner, stageSpec);
+      } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
+        SplitterTransform<?, ?> splitterTransform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+        submitterPlugin = createSplitterTransform(splitterTransform, stageSpec);
       } else {
         submitterPlugin = create(pluginInstantiator, stageSpec);
       }
@@ -127,6 +130,9 @@ public abstract class PipelinePhasePreparer {
   protected abstract SubmitterPlugin createSink(BatchConfigurable<BatchSinkContext> batchSink, StageSpec stageSpec);
 
   protected abstract SubmitterPlugin createTransform(Transform<?, ?> transform, StageSpec stageSpec);
+
+  protected abstract SubmitterPlugin createSplitterTransform(SplitterTransform<?, ?> splitterTransform,
+                                                             StageSpec stageSpec);
 
   protected abstract SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator, StageSpec stageSpec);
 
