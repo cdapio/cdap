@@ -51,7 +51,6 @@ function WranglerConnection({ classes, onModalClose, onWranglerSourceAdd }: ICon
   const toggleModal = () => { setShowModal(!showModal); onModalClose(); }
   const onWranglerConnectionSubmit = ({ onUnmount }) => {
     if (onUnmount) {
-      console.log('Unmounting so just return');
       return;
     }
     getPipelineConfig().subscribe(({ batchConfig }) => {
