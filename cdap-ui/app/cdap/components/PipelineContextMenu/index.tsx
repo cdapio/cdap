@@ -18,7 +18,9 @@ import React from 'react';
 import { ContextMenu, IContextMenuOption } from 'components/ContextMenu';
 import WranglerConnection from 'components/PipelineContextMenu/WranglerConnection';
 import If from 'components/If';
-export default function PipelineContextMenu() {
+import PropTypes from 'prop-types';
+
+export default function PipelineContextMenu({ onWranglerSourceAdd }) {
   const [showWranglerModal, setShowWranglerModal] = React.useState(false);
 
   const menuOptions: IContextMenuOption[] = [
@@ -40,6 +42,10 @@ export default function PipelineContextMenu() {
       disabled: true,
     }
   ];
+  const onWranglerSourceAddWrapper = (...props) => {
+    setShowWranglerModal(!showWranglerModal);
+    onWranglerSourceAdd.apply(null, props);
+  };
   return (
     <React.Fragment>
       <ContextMenu
@@ -47,8 +53,15 @@ export default function PipelineContextMenu() {
         options={menuOptions}
       />
       <If condition={showWranglerModal}>
-        <WranglerConnection onModalClose={() => setShowWranglerModal(!showWranglerModal)} />
+        <WranglerConnection
+          onModalClose={() => setShowWranglerModal(!showWranglerModal)}
+          onWranglerSourceAdd={onWranglerSourceAddWrapper}
+        />
       </If>
     </React.Fragment>
   );
-} 
+}
+
+(PipelineContextMenu as any).propTypes = {
+  onWranglerSourceAdd: PropTypes.func
+}

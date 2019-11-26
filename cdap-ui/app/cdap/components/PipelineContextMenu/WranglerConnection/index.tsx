@@ -20,6 +20,9 @@ import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import IconSVG from 'components/IconSVG';
 import PropTypes from 'prop-types';
+import DataPrepHome from 'components/DataPrepHome';
+import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
+import If from 'components/If';
 
 const styles = (theme) => ({
   modalBtnClose: {
@@ -39,12 +42,26 @@ const styles = (theme) => ({
 });
 
 interface IContextMenuOptionProp extends WithStyles<typeof styles> {
-  onModalClose: () => void
+  onModalClose: () => void;
+  onWranglerSourceAdd: (obj: any) => void;
 }
 
-function WranglerConnection({ classes, onModalClose }: IContextMenuOptionProp) {
+function WranglerConnection({ classes, onModalClose, onWranglerSourceAdd }: IContextMenuOptionProp) {
   const [showModal, setShowModal] = React.useState(true);
   const toggleModal = () => { setShowModal(!showModal); onModalClose(); }
+  const onWranglerConnectionSubmit = ({ onUnmount }) => {
+    if (onUnmount) {
+      console.log('Unmounting so just return');
+      return;
+    }
+    getPipelineConfig().subscribe(({ batchConfig }) => {
+      onWranglerSourceAdd({
+        nodes: batchConfig.config.stages,
+        connections: batchConfig.config.connections
+      });
+      setShowModal(!showModal);
+    });
+  };
   return (
     <Modal
       isOpen={showModal}
@@ -61,7 +78,12 @@ function WranglerConnection({ classes, onModalClose }: IContextMenuOptionProp) {
         </button>
       </div>
       <div className="modal-body">
-        <h1> Coming soon ... </h1>
+        <If condition={showModal}>
+          <DataPrepHome
+            singleWorkspaceMode={true}
+            onSubmit={onWranglerConnectionSubmit}
+          />
+        </If>
       </div>
     </Modal>
   );
@@ -78,5 +100,6 @@ export default function WranglerConnectionWrapper(props) {
 }
 
 (WranglerConnectionWrapper as any).propTypes = {
-  onModalClose: PropTypes.func
+  onModalClose: PropTypes.func,
+  onWranglerSourceAdd: PropTypes.func
 }
