@@ -59,7 +59,6 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
       mouseX: e.clientX - 2,
       mouseY: e.clientY - 4,
     });
-    console.log('Updating mouse position and shouwing', e.clientX, e.clientY);
     e.preventDefault();
   };
   const defaultEventHandler = (e) => e.preventDefault();
