@@ -28,6 +28,9 @@
     grid-template-columns: 1fr 1fr;
     grid-gap: 10px;
   }
+  .arguments-label {
+    margin-top: 10px;
+  }
   .tab-footer {
     border-top: 1px solid $grey-05;
     display: flex;

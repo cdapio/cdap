@@ -25,24 +25,9 @@ import RuntimeArgsPairs from 'components/PipelineDetails/PipelineRuntimeArgsDrop
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
-import ProvidedPopover from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/ProvidedPopover';
 import { connect } from 'react-redux';
 
 require('./RuntimeArgsKeyValuePairWrapper.scss');
-
-const toggleAllProvided = (isProvided) => {
-  let runtimeArgs = { ...PipelineConfigurationsStore.getState().runtimeArgs };
-  runtimeArgs.pairs.forEach((runtimeArgsPair) => {
-    if (runtimeArgsPair.notDeletable) {
-      runtimeArgsPair.provided = isProvided;
-    }
-  });
-  PipelineConfigurationsStore.dispatch({
-    type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-    payload: { runtimeArgs },
-  });
-  updateKeyValueStore();
-};
 
 const onPaste = (dataObj, index) => {
   let runtimeArgs = { ...PipelineConfigurationsStore.getState().runtimeArgs };
@@ -80,8 +65,6 @@ function RuntimeArgsKeyValuePairWrapper({ runtimeArgs }) {
       <div className={classnames('runtime-arguments-labels key-value-pair-labels')}>
         <span className="key-label">{T.translate('commons.nameLabel')}</span>
         <span className="value-label">{T.translate('commons.keyValPairs.valueLabel')}</span>
-        <span />
-        <ProvidedPopover toggleAllProvided={toggleAllProvided} />
       </div>
       <div className="runtime-arguments-values key-value-pair-values">
         <RuntimeArgsPairs onPaste={onPaste} runtimeArgs={runtimeArgs} />

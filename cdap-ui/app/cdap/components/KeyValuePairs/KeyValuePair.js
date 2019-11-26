@@ -140,35 +140,12 @@ class KeyValuePair extends Component {
     preventPropagation(e);
   };
 
-  renderProvidedCheckboxAndResetBtn() {
-    if (typeof this.props.provided !== 'boolean') {
-      return null;
-    }
-    return (
-      <span>
-        <input
-          type="checkbox"
-          checked={this.props.provided}
-          onChange={this.props.onProvided}
-          className="form-control provided-input"
-        />
-        <span
-          className={classnames('reset-action', { hidden: !this.props.showReset })}
-          onClick={this.getResettedKeyValue.bind(this, this.props.index)}
-        >
-          {T.translate('commons.keyValPairs.reset')}
-        </span>
-      </span>
-    );
-  }
-
   render() {
     return (
       <div className="key-value-pair-preference">
         {this.renderKeyField()}
         {this.renderValueField()}
         {this.renderActionButtons()}
-        {this.renderProvidedCheckboxAndResetBtn()}
       </div>
     );
   }

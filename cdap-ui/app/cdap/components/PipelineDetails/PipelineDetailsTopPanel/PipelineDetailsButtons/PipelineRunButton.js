@@ -22,6 +22,7 @@ import { runPipeline } from 'components/PipelineConfigurations/Store/ActionCreat
 import { setRunError } from 'components/PipelineDetails/store/ActionCreator';
 import PipelineRuntimeArgsDropdownBtn from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
+import { convertKeyValuePairsToMap } from 'services/helpers';
 import T from 'i18n-react';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
@@ -58,7 +59,11 @@ export default class PipelineRunButton extends Component {
       if (isMissingKeyValues) {
         this.toggleRunConfigOption();
       } else {
-        runPipeline();
+        let { runtimeArgs } = this.props;
+        // Arguments with empty values are assumed to be provided from the pipeline
+        runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => !runtimeArg.value);
+        let runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
+        runPipeline(runtimeArgsMap);
       }
     }
   };
