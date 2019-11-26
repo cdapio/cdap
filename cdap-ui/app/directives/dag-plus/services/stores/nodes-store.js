@@ -24,6 +24,7 @@ class DAGPlusPlusNodesStore {
 
     let dispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
+    dispatcher.register('onSetNodes', this.setNodes.bind(this));
     dispatcher.register('onRemoveNode', this.removeNode.bind(this));
     dispatcher.register('onConnect', this.addConnection.bind(this));
     dispatcher.register('onConnectionsUpdate', this.updateConnections.bind(this));

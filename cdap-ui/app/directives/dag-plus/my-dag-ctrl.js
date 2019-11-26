@@ -79,6 +79,48 @@ angular.module(PKG.name + '.commons')
 
     const repaintTimeoutsMap = {};
 
+    vm.onWranglerConnectionAdd = ({nodes, connections}) => {
+      if (!Array.isArray(nodes) || !Array.isArray(connections)) {
+        return;
+      }
+      nodes = nodes.map(node => {
+        const name = node.plugin.label;
+        let filteredNodes = $scope.nodes.filter(n => (n.plugin.label ? n.plugin.label.indexOf(name) !== -1 : false));
+        // This won't work all the time. We can do better to
+        // auto generate meaningful names for node names.
+        if (filteredNodes.length) {
+          node.name = `${node.name}${filteredNodes.length}`;
+          node.plugin.label = `${node.name}`;
+        }
+        connections = connections.map(conn => {
+          const newConnObj = Object.assign({}, conn);
+          if (conn.from === name) {
+            newConnObj.from = node.name;
+          }
+          if (conn.to === name) {
+            newConnObj.to = node.name;
+          }
+          return newConnObj;
+        });
+        return node;
+      });
+      const newNodes = [...$scope.nodes, ...nodes].map(node => {
+        if (!node.icon) {
+          return Object.assign({}, node, {
+            icon: DAGPlusPlusFactory.getIcon(node.plugin.name)
+          });
+        }
+        return node;
+      });
+      const newConnections  = [...$scope.connections, ...connections];
+      DAGPlusPlusNodesActionsFactory.createGraphFromConfig(newNodes, newConnections);
+      vm.instance.unbind('connection');
+      vm.instance.detachEveryConnection();
+      $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+      $scope.connections = DAGPlusPlusNodesStore.getConnections();
+      init();
+    };
+
     function repaintEverything() {
       const id = uuid.v4();
 
