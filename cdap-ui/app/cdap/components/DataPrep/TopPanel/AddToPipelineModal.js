@@ -96,7 +96,7 @@ export default class AddToHydratorModal extends Component {
           }
         });
 
-        let showBatchPipeline = Theme.batchPipelineConnection && Theme.batchPipelineConnection.length > 0 ? (Theme.batchPipelineConnection.indexOf(DataPrepStore.getState().dataprep.workspaceInfo.connection) != -1) : true;
+        let showBatchPipeline = Theme.batchPipelineConnection && Theme.batchPipelineConnection.length > 0 ? (Theme.batchPipelineConnection.indexOf(DataPrepStore.getState().dataprep.workspaceInfo.properties.connection) != -1) : true;
 
         this.setState({
           loading: false,
