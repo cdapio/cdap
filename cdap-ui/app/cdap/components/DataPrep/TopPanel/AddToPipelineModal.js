@@ -95,9 +95,9 @@ export default class AddToHydratorModal extends Component {
             artifactType: 'cdap-data-pipeline'
           }
         });
-
-        let showBatchPipeline = Theme.batchPipelineConnection && Theme.batchPipelineConnection.length > 0 ? (Theme.batchPipelineConnection.indexOf(DataPrepStore.getState().dataprep.workspaceInfo.properties.connection) != -1) : true;
-
+        let connection = DataPrepStore.getState().dataprep.workspaceInfo.properties.connection;
+        let showBatchPipeline = Theme.batchPipelineConnection && Theme.batchPipelineConnection.length > 0 ? (Theme.batchPipelineConnection.indexOf(connection) != -1) : true;
+        let showRealtimePipeline = Theme.realtimePipelineConnection && Theme.realtimePipelineConnection.length > 0 ? (Theme.realtimePipelineConnection.indexOf(connection) != -1) : true;
         this.setState({
           loading: false,
           realtimeUrl,
@@ -105,7 +105,8 @@ export default class AddToHydratorModal extends Component {
           workspaceId,
           realtimeConfig: res.realtimeConfig,
           batchConfig: res.batchConfig,
-          showBatchPipeline
+          showBatchPipeline,
+          showRealtimePipeline
         });
       },
       (err) => {
