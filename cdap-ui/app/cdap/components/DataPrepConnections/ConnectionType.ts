@@ -26,3 +26,9 @@ export enum ConnectionType {
   SPANNER = "SPANNER",
   ADLS = "ADLS",
 }
+
+export enum JIOConnectionType {
+  UPLOAD = "UPLOAD",
+  FILE = "FILE",
+  KAFKA = "KAFKA",
+}

@@ -36,6 +36,8 @@
     "hub": false,
     "ingest-data": true,
     "add-namespace": true,
-    "enable-jio": true
+    "enable-jio": true,
+    "batch-pipeline-connection":["upload","file","database","table","s3","gcs","bigquery","spanner","adls"],
+    "realtime-pipeline-connection":["upload","file","database","table","s3","gcs","bigquery","spanner","adls","kafka"]
   }
 }

@@ -292,6 +292,9 @@ $success_alert_bg_color: $brand-success;
             background: transparent;
           }
         }
+        &.width-100 {
+          width: 100%;
+        }
       }
 
     }

@@ -83,7 +83,9 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "hub"?: boolean;
     "ingest-data"?: boolean;
     "add-namespace"?: boolean;
-    "enable-jio"?: boolean
+    "enable-jio"?: boolean,
+    "batch-pipeline-connection"?: string[],
+    "realtime-pipeline-connection"?: string[]
   };
 }
 
@@ -176,6 +178,9 @@ interface IThemeObj {
   showDataPrepPlusButton?: boolean;
   isCustomerMWC?: boolean;
   isCustomerJIO?: boolean;
+  batchPipelineConnection?: string[];
+  realtimePipelineConnection?: string[];
+
 }
 
 function getTheme(): IThemeObj {
@@ -344,6 +349,8 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showAddNamespace: true,
       showAboutProductModal: true,
       isCustomerJIO: false,
+      batchPipelineConnection: [],
+      realtimePipelineConnection: [],
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -385,9 +392,14 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     if ('about-product' in featuresJson && isBoolean(featuresJson['about-product'])) {
       features.showAboutProductModal = featuresJson['about-product'];
     }
-
     if ('enable-jio' in featuresJson && isBoolean(featuresJson['enable-jio'])) {
       features.isCustomerJIO = featuresJson['enable-jio'];
+    }
+    if ('batch-pipeline-connection' in featuresJson) {
+      features.batchPipelineConnection = featuresJson['batch-pipeline-connection'];
+    }
+    if ('realtime-pipeline-connection' in featuresJson) {
+      features.realtimePipelineConnection = featuresJson['realtime-pipeline-connection'];
     }
     return features;
   }
