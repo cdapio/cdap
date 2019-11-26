@@ -322,9 +322,7 @@ export default class KafkaConnection extends Component {
   testInputs() {
     let isSomeErrorInputs = Object.keys(this.state.inputs).some(key => this.state.inputs[key]['error'] !== '');
     let kafkaProducerProperties = this.state.kafkaProducerProperties ? this.state.kafkaProducerProperties.pairs : DEFAULT_KAFKA_PRODUCER_PROPERTIES.pairs;
-    let isSomeErrorKeyValuePairs = Object.keys(kafkaProducerProperties).some((key, index) => {
-      return (!kafkaProducerProperties[index].validKey ||
-      !kafkaProducerProperties[index].validValue)});
+    let isSomeErrorKeyValuePairs = kafkaProducerProperties.some(property => { return (!property.validKey || !property.validValue);});
     return isSomeErrorInputs || isSomeErrorKeyValuePairs;
   }
 
