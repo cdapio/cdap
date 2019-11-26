@@ -54,6 +54,16 @@ const StyledDisabledMenuItem = withStyles(() => ({
 export const ContextMenu = ({ selector, element, options }: IContextMenuProps) => {
   const [mousePosition, setMousePosition] = React.useState(initialMousePosition);
 
+  const toggleMenu = (e: PointerEvent) => {
+    setMousePosition({
+      mouseX: e.clientX - 2,
+      mouseY: e.clientY - 4,
+    });
+    console.log('Updating mouse position and shouwing', e.clientX, e.clientY);
+    e.preventDefault();
+  };
+  const defaultEventHandler = (e) => e.preventDefault();
+
   // state to capture children of context menu to disable right click on them.
   const [children, setChildren] = React.useState(null);
   // we don't use 'useRef' but a 'useCallback' is because 'ref.current' state is not
@@ -62,12 +72,12 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
   const measuredRef = React.useCallback((node) => {
     if (node !== null) {
       setChildren(Array.prototype.slice.call(node.children));
+      node.addEventListener('contextmenu', toggleMenu);
     }
   }, []);
 
   React.useEffect(
     () => {
-      const defaultEventHandler = (e) => e.preventDefault();
       if (children) {
         children.forEach((child) => child.addEventListener('contextmenu', defaultEventHandler));
       }
@@ -94,14 +104,6 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
     if (!el) {
       throw new Error("Context Menu either needs a 'selector' or 'element' props to be passed");
     }
-    const toggleMenu = (e: PointerEvent) => {
-      // setShowMenu((status) => (status ? false : true));
-      setMousePosition({
-        mouseX: e.clientX - 2,
-        mouseY: e.clientY - 4,
-      });
-      e.preventDefault();
-    };
 
     el.addEventListener('contextmenu', toggleMenu);
     return () => el.removeEventListener('contextmenu', toggleMenu);
