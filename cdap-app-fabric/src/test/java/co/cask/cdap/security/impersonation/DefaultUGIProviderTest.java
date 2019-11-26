@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.impersonation;
 
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -93,6 +94,7 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   private static File bobKeytabFile;
   private static File eveKeytabFile;
   private static Store store;
+  private static ProgramRuntimeService runtimeService;;
 
   private static File createPrincipal(File keytabDirPath, String username) throws Exception {
     File keytabFile = new File(keytabDirPath, username + ".keytab");
@@ -140,6 +142,7 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     UserGroupInformation.setConfiguration(hConf);
 
     store = getInjector().getInstance(DefaultStore.class);
+    runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
   }
 
   @AfterClass
@@ -162,7 +165,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     // get the owner admin which has been created from the cConf which got modified above
     OwnerAdmin ownerAdmin = getOwnerAdmin();
 
-    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient, store);
+    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient, store,
+                                                         runtimeService);
 
     // create a namespace with a principal and keytab so that later we can verify that if a required entity owner does
     // not exists then the provider gives the UGI for namespace owner
@@ -213,7 +217,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     Location bobRemoteKeytabFile = copyFileToHDFS(hdfsKeytabDir, bobKeytabFile);
 
     OwnerAdmin ownerAdmin = getOwnerAdmin();
-    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient, store);
+    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient, store,
+                                                         runtimeService);
 
     // add some entity owners
     ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);

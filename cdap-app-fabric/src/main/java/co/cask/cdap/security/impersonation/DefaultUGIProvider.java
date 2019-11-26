@@ -16,11 +16,15 @@
 
 package co.cask.cdap.security.impersonation;
 
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -29,13 +33,16 @@ import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TwillRunProgramId;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -50,6 +57,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -67,16 +75,20 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   protected final Store store;
   private static final String RUNTIME_ARG_KEYTAB = "pipeline.keytab.path";
   private static final String RUNTIME_ARG_PRINCIPAL = "pipeline.principal.name";
+  private static final Gson gson = new Gson();
+  private final ProgramRuntimeService runtimeService;
  
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
-                     NamespaceQueryAdmin namespaceQueryAdmin, Store store) {
+                     NamespaceQueryAdmin namespaceQueryAdmin, Store store,
+                     ProgramRuntimeService runtimeService) {
     super(cConf, ownerAdmin);
     this.locationFactory = locationFactory;
     this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
+    this.runtimeService = runtimeService;
   }
 
   /**
@@ -121,28 +133,41 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
    */
   @Override
   protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
-
-      // Get impersonation keytab and principal from runtime arguments if present
-      Map<String, String> properties = getRuntimeImpersonationProperties(impersonationRequest.getEntityId());
-      NamespacedEntityId programId = impersonationRequest.getEntityId();
+    Map<String, String> properties = getRuntimeImpersonationProperties(impersonationRequest.getEntityId());
       
-      if ((properties != null) && (properties.containsKey(RUNTIME_ARG_KEYTAB)) &&
-                  (properties.containsKey(RUNTIME_ARG_PRINCIPAL))) {
-          String keytab = properties.get(RUNTIME_ARG_KEYTAB);
-          String principal = properties.get(RUNTIME_ARG_PRINCIPAL);
-          LOG.debug("Using runtime config principal: " + principal + ", keytab = " + keytab);
-          UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(
-                  principal, keytab);
-          return new UGIWithPrincipal(principal, ugi);
-          
-      }
+    boolean isUserImpersonationEnabled = false;
+    if ((properties != null) &&
+          (!(properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)))) {
+      isUserImpersonationEnabled = true;
+    }
       
-    // no need to get a UGI if the current UGI is the one we're requesting; simply return it
+    // Get impersonation keytab and principal from runtime arguments if present
+    ImpersonationRequest updatedRequest = impersonationRequest;
+    if ((!isUserImpersonationEnabled) &&
+          (properties.containsKey(RUNTIME_ARG_KEYTAB)) &&
+          (properties.containsKey(RUNTIME_ARG_PRINCIPAL))) {
+      String keytab = properties.get(RUNTIME_ARG_KEYTAB);
+      String principal = properties.get(RUNTIME_ARG_PRINCIPAL);
+      updatedRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
+              impersonationRequest.getImpersonatedOpType(), keytab, principal);
+      LOG.debug("Using runtime config principal: " + principal + ", keytab = " + keytab);
+    }
+      
+    String loggedInUser = getImpersonatedUser(updatedRequest);
+    return createUGI(updatedRequest, loggedInUser);
+  }
+  
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest, 
+          String loggedInUser) throws IOException {
+      
+    NamespacedEntityId programId = impersonationRequest.getEntityId();
+    
+    // no need to login from keytab if the current UGI already matches
     String configuredPrincipalShortName = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
     if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-        UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
-        UserGroupInformation proxyUgi = getProxyUGI(ugi, programId, properties);   
-        return new UGIWithPrincipal(impersonationRequest.getPrincipal(), proxyUgi);
+      UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
+      UserGroupInformation proxyUgi = getProxyUGI(ugi, programId, loggedInUser);   
+      return new UGIWithPrincipal(impersonationRequest.getPrincipal(), proxyUgi);
     }
 
     URI keytabURI = URI.create(impersonationRequest.getKeytabURI());
@@ -164,12 +189,14 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
       UserGroupInformation loggedInUGI;
       try {
-          UserGroupInformation tmpUgi =
-                UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
-          loggedInUGI = getProxyUGI(tmpUgi, programId, properties);
+        UserGroupInformation tmpUgi =
+              UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal,
+              localKeytabFile.getAbsolutePath());
+        loggedInUGI = getProxyUGI(tmpUgi, programId, loggedInUser);
      
-          LOG.debug("loggedInUGI {} , realUser {}, userShortName {} , userName {} , loginUser {}", 
-                 loggedInUGI, loggedInUGI.getRealUser(), loggedInUGI.getShortUserName(), loggedInUGI.getUserName() , loggedInUGI.getLoginUser());
+        LOG.debug("loggedInUGI {} , realUser {}, userShortName {} , userName {} , loginUser {}", 
+             loggedInUGI, loggedInUGI.getRealUser(), loggedInUGI.getShortUserName(), loggedInUGI.getUserName(),
+             loggedInUGI.getLoginUser());
          
          
       } catch (Exception e) {
@@ -214,70 +241,145 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     return localKeytabFile.toFile();
   }
   
-  private Map<String, String> getRuntimeImpersonationProperties(NamespacedEntityId programId) {
-      if (programId instanceof ProgramRunId) {
-          ProgramRunId runId = ((ProgramRunId) programId);
-          RunRecordMeta runRecord = null;
-          
-          long sleepDelayMs = TimeUnit.MILLISECONDS.toMillis(100);
-          long startTime = System.currentTimeMillis();
-          long timeoutMs = TimeUnit.SECONDS.toMillis(10);
-          while (System.currentTimeMillis() - startTime < timeoutMs) {
-            try {
-                runRecord = this.store.getRun(runId);
-                if (runRecord != null) {
-                  break;
-                }
-                Thread.sleep(sleepDelayMs);
-            } catch (Exception e) {
-                LOG.info("Exception while trying to fecth RunRecord : " + e.getMessage());
-                return null;
-            }
-          }
-          
-          if (runRecord != null) {
-              Map<String, String> resultProps = new HashMap<String, String>();
-              
-              Gson gson = new Gson();
-              Type stringStringMap = new TypeToken<Map<String, String>>() { }.getType();
-
-              Map<String, String> properties = runRecord.getProperties();
-              String runtimeArgsJson = properties.get("runtimeArgs");
-              if (runtimeArgsJson != null) {
-                  properties = gson.fromJson(runtimeArgsJson, stringStringMap);
-                  if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
-                      properties.remove(ProgramOptionConstants.LOGGED_IN_USER);
-                  }
-                  resultProps.putAll(properties);
-              } else {
-                  LOG.debug("Could not find any runtime args");
-              }
-              resultProps.putAll(runRecord.getSystemArgs());
-              return resultProps;
-          } else {
-              LOG.debug("Could not obtain program's meta run record");
-          }
-      } else {
-          LOG.debug("Entity Id not of type ProgramRunId, skippinh checking of runtime args");
+  private Map<String, String> getRuntimeImpersonationProperties(NamespacedEntityId entityId) {     
+    if (!(entityId instanceof ProgramRunId) && (!(entityId instanceof TwillRunProgramId))) {
+      LOG.debug("Entity Id not of type ProgramRunId or TwillRunProgramId, skip fetching runtime args");
+      return Collections.emptyMap();
+    }
+      
+    ProgramRunId programRunId;
+    
+    if (entityId instanceof TwillRunProgramId) {
+      programRunId = getProgramRunIdFromTwillRunProgramId(entityId);
+      if (programRunId == null) {
+        return Collections.emptyMap();
       }
-      return null;
+    } else {
+      programRunId = ((ProgramRunId) entityId);
+    }
+          
+    RunRecordMeta runRecord = null;
+    long sleepDelayMs = TimeUnit.MILLISECONDS.toMillis(100);
+    long timeoutMs = TimeUnit.SECONDS.toMillis(10);
+
+    try {
+      runRecord = Retries.callWithRetries(() -> {
+        RunRecordMeta rec = store.getRun(programRunId);
+        if (rec != null) {
+          return rec;
+        }
+        throw new Exception("Retrying again to fetch run record");
+      }, RetryStrategies.timeLimit(timeoutMs, TimeUnit.MILLISECONDS,
+                  RetryStrategies.fixDelay(sleepDelayMs, TimeUnit.MILLISECONDS)),
+                  Exception.class::isInstance);
+    } catch (Exception e) {
+      LOG.warn("Failed to fetch run record for {} due to {}", programRunId, e.getMessage(), e);
+      return Collections.emptyMap();
+    }
+
+    Map<String, String> resultProps = Collections.emptyMap();
+    Type stringStringMap = new TypeToken<Map<String, String>>() { }.getType();
+    Map<String, String> properties = runRecord.getProperties();
+    LOG.debug("Runtime args for program {} are sysargs {}, properties {}", programRunId,
+            Arrays.toString(runRecord.getSystemArgs().entrySet().toArray()),
+            Arrays.toString(properties.entrySet().toArray()));
+    String runtimeArgsJson = properties.get("runtimeArgs");
+    if (runtimeArgsJson != null) {
+      properties = gson.fromJson(runtimeArgsJson, stringStringMap);
+      if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
+        properties.remove(ProgramOptionConstants.LOGGED_IN_USER);
+      }
+      resultProps = properties;
+      resultProps.putAll(runRecord.getSystemArgs());
+    } else {
+      LOG.debug("Could not find any runtime args for program {}", programRunId);
+      resultProps = runRecord.getSystemArgs();
+    }
+    return resultProps;
   }
   
-  private UserGroupInformation getProxyUGI(UserGroupInformation currentUgi, NamespacedEntityId programId, 
-          Map<String,String> properties) {
-      UserGroupInformation proxyUgi = currentUgi;
-      
-      if ((properties != null) && (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER))) {
-          String proxiedUser = properties.get(ProgramOptionConstants.LOGGED_IN_USER);
-          if (programId instanceof ProgramRunId) {
-              ProgramRunId runId = ((ProgramRunId) programId);
-              String pCategory = runId.getType().getCategoryName();
-              if (!(pCategory.equalsIgnoreCase(ProgramType.SERVICE.getCategoryName()))) {
-                  proxyUgi = currentUgi.createProxyUser(proxiedUser, currentUgi);
-              }
-          }
-      }
+  private ProgramRunId getProgramRunIdFromTwillRunProgramId(NamespacedEntityId entityId) {
+    if (!(entityId instanceof TwillRunProgramId)) {
+      LOG.debug("Enity {} not of type Twill ProgramId", entityId);
+      return null;
+    }
+    
+    TwillRunProgramId twillProgramId = ((TwillRunProgramId) entityId);
+    if (twillProgramId.getTwillRunId() == null) {
+      LOG.debug("Enity {} has twill run id as null", entityId);
+      return null;
+    }
 
-      return proxyUgi;
+    Map<RunId, RuntimeInfo> runInfos = this.runtimeService.list(twillProgramId.getProgramId());
+    if (runInfos == null) {
+      LOG.debug("Could not find any runtime infos for {}", twillProgramId);
+      return null;
+    }
+    
+    for (RunId key : runInfos.keySet()) {
+      RuntimeInfo runInfo = runInfos.get(key);
+      String twillId = runInfo.getTwillRunId().getId();
+      if ((twillId != null) && (twillId.equals(twillProgramId.getTwillRunId()))) {
+        LOG.debug("Found RunId {} for Twill ProgramId {}", key.getId(), twillProgramId);
+        return new ProgramRunId(twillProgramId.getNamespace(),
+              twillProgramId.getProgramId().getApplication(),
+              twillProgramId.getProgramId().getType(),
+              twillProgramId.getProgramId().getProgram(),
+              key.getId());
+      }
+    }
+    LOG.debug("No ProgramRunId found matching Twill ProgramId {}", twillProgramId);  
+    return null;
+  }
+
+  private UserGroupInformation getProxyUGI(UserGroupInformation currentUgi, NamespacedEntityId entityId, 
+          String loggedInUser) {
+    UserGroupInformation proxyUgi = currentUgi;
+    
+    if (loggedInUser == null) {
+      LOG.debug("Logged in user set as null");
+      return currentUgi;
+    }
+    
+    ProgramId programId = null;
+    if (entityId instanceof TwillRunProgramId) {
+      programId = ((TwillRunProgramId)entityId).getProgramId();
+    } else if (entityId instanceof ProgramRunId) {
+      programId = ((ProgramRunId) entityId).getParent();
+    }
+
+    if (programId != null) {
+      String pCategory = programId.getType().getCategoryName();
+      if (!(pCategory.equalsIgnoreCase(ProgramType.SERVICE.getCategoryName()))) {
+        proxyUgi = UserGroupInformation.createProxyUser(loggedInUser, currentUgi);
+      }
+    }
+
+    return proxyUgi;
+  }
+  
+  @Override
+  protected String getImpersonatedUser(ImpersonationRequest impersonationRequest) {
+    Map<String, String> properties = getRuntimeImpersonationProperties(impersonationRequest.getEntityId());
+
+    if (properties == null) {
+      return impersonationRequest.getPrincipal();
+    }
+
+    if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
+      return properties.get(ProgramOptionConstants.LOGGED_IN_USER);
+    }
+
+    if ((properties.containsKey(RUNTIME_ARG_KEYTAB)) &&
+      (properties.containsKey(RUNTIME_ARG_PRINCIPAL))) {
+      String principal = properties.get(RUNTIME_ARG_PRINCIPAL);
+      try {
+        return new KerberosName(principal).getShortName();
+      } catch (IOException e) {
+        LOG.debug("Exception while converting principal {} to short name: {}", principal, e);
+        return principal;
+      }  
+    }
+    return impersonationRequest.getPrincipal();
   }
 }
