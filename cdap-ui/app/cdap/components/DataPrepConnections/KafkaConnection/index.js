@@ -208,7 +208,7 @@ export default class KafkaConnection extends Component {
   }
 
   getProperties() {
-    Theme.isCustomerJIO ? { brokers: this.convertBrokersList() } :
+    return Theme.isCustomerJIO ? { brokers: this.convertBrokersList() } :
       {
         brokers: this.convertBrokersList(),
         principal: this.state.principal,
