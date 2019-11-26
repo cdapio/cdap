@@ -144,7 +144,7 @@ export default class KafkaConnection extends Component {
   }
 
   getKeyValObject() {
-    let keyValArr = this.state.kafkaProducerProperties ? this.state.kafkaProducerProperties.pairs : DEFAULT_KAFKA_PRODUCER_PROPERTIES;
+    let keyValArr = this.state.kafkaProducerProperties ? this.state.kafkaProducerProperties.pairs : DEFAULT_KAFKA_PRODUCER_PROPERTIES.pairs;
     let keyValObj = {};
     keyValArr.forEach((pair) => {
       if (pair.key.length > 0 && pair.value.length > 0) {
@@ -317,17 +317,12 @@ export default class KafkaConnection extends Component {
 
   /** Return true if there is some error. */
   testInputs() {
-    let isSomeError = Object.keys(this.state.inputs).some(key => {
-      if (Array.isArray(this.state.inputs[key])) {
-        const isSomeErrInArr = this.state.inputs[key].reduce((arr1, arr2) => { return arr1.concat(arr2);  })
-          .some((obj) => { return obj.hasOwnProperty('error')  ? obj['error'] !== '' : false; });
-        return isSomeErrInArr;
-      } else {
-        return this.state.inputs[key]['error'] !== '';
-      }
-    });
-    isSomeError = isSomeError || this.state.brokersList.some(broker => !broker.valid);
-    return isSomeError;
+    let isSomeErrorInputs = Object.keys(this.state.inputs).some(key => this.state.inputs[key]['error'] !== '');
+    let kafkaProducerProperties = this.state.kafkaProducerProperties ? this.state.kafkaProducerProperties.pairs : DEFAULT_KAFKA_PRODUCER_PROPERTIES.pairs;
+    let isSomeErrorKeyValuePairs = Object.keys(kafkaProducerProperties).some((key, index) => {
+      return (!kafkaProducerProperties[index].validKey ||
+      !kafkaProducerProperties[index].validValue)});
+    return isSomeErrorInputs || isSomeErrorKeyValuePairs;
   }
 
   handleChange(key, e) {
