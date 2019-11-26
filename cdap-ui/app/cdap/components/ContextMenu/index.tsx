@@ -71,8 +71,7 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
   // the dom node changes.
   const measuredRef = React.useCallback((node) => {
     if (node !== null) {
-      setChildren(Array.prototype.slice.call(node.children));
-      node.addEventListener('contextmenu', toggleMenu);
+      setChildren([...Array.prototype.slice.call(node.children), node]);
     }
   }, []);
 
