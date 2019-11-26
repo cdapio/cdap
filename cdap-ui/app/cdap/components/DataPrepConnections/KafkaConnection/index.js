@@ -543,7 +543,7 @@ export default class KafkaConnection extends Component {
 
           {this.renderKafka()}
           {
-            Theme.isCustomerJIO ? null : this.  renderPrincipalKeytabLocation()
+            Theme.isCustomerJIO ? null : this.renderPrincipalKeytabLocation()
           }
           {this.renderKafkaProducerProperties()}
         </div>
