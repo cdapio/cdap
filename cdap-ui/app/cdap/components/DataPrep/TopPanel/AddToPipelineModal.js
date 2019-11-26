@@ -29,6 +29,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
 import isString from 'lodash/isString';
 import If from 'components/If';
+import { Theme } from 'services/ThemeHelper';
 
 const mapErrorToMessage = (message) => {
   if (message.indexOf('invalid field name') !== -1) {
@@ -54,7 +55,9 @@ export default class AddToHydratorModal extends Component {
       error: null,
       workspaceId: null,
       realtimeConfig: null,
-      batchConfig: null
+      batchConfig: null,
+      showBatchPipeline: true,
+      showRealtimePipeline: true
     };
   }
 
@@ -92,14 +95,18 @@ export default class AddToHydratorModal extends Component {
             artifactType: 'cdap-data-pipeline'
           }
         });
-
+        let connection = DataPrepStore.getState().dataprep.workspaceInfo.properties.connection;
+        let showBatchPipeline = Theme.batchPipelineConnection && Theme.batchPipelineConnection.length > 0 ? (Theme.batchPipelineConnection.indexOf(connection) != -1) : true;
+        let showRealtimePipeline = Theme.realtimePipelineConnection && Theme.realtimePipelineConnection.length > 0 ? (Theme.realtimePipelineConnection.indexOf(connection) != -1) : true;
         this.setState({
           loading: false,
           realtimeUrl,
           batchUrl,
           workspaceId,
           realtimeConfig: res.realtimeConfig,
-          batchConfig: res.batchConfig
+          batchConfig: res.batchConfig,
+          showBatchPipeline,
+          showRealtimePipeline
         });
       },
       (err) => {
@@ -197,33 +204,43 @@ export default class AddToHydratorModal extends Component {
             {T.translate(`${PREFIX}.addToPipelineModal.title`)}
           </div>
           <div className="action-buttons">
-            <a
-              href={this.state.error ? null : this.state.batchUrl}
-              className={classnames('btn btn-secondary', {
-                'inactive': this.state.error
-              })}
-              onClick={(() => {
-                if (this.state.error) { return; }
-                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.batchConfig));
-              }).bind(this)}
-            >
-              <i className="fa icon-ETLBatch"/>
-              <span>{T.translate(`${PREFIX}.addToPipelineModal.batchPipelineBtn`)}</span>
-            </a>
-            <a
-              href={this.state.realtimeUrl}
-              className={classnames('btn btn-secondary', {
-                'inactive': !this.state.realtimeUrl || this.state.error
-              })}
-              onClick={(() => {
-                if (!this.state.realtimeUrl) { return; }
-                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
-              }).bind(this)}
-              title={realtimeDisabledTooltip}
-            >
-              <i className="fa icon-sparkstreaming"/>
-              <span>{T.translate(`${PREFIX}.addToPipelineModal.realtimePipelineBtn`)}</span>
-            </a>
+            {
+              this.state.showBatchPipeline ?
+                <a
+                  href={this.state.error ? null : this.state.batchUrl}
+                  className={classnames('btn btn-secondary', {
+                    'inactive': this.state.error,
+                    'width-100': !this.state.showRealtimePipeline
+                  })}
+                  onClick={(() => {
+                    if (this.state.error) { return; }
+                    window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.batchConfig));
+                  }).bind(this)}
+                >
+                  <i className="fa icon-ETLBatch" />
+                  <span>{T.translate(`${PREFIX}.addToPipelineModal.batchPipelineBtn`)}</span>
+                </a>
+              : null
+            }
+            {
+              this.state.showRealtimePipeline ?
+                <a
+                  href={this.state.realtimeUrl}
+                  className={classnames('btn btn-secondary', {
+                    'inactive': !this.state.realtimeUrl || this.state.error,
+                    'width-100': !this.state.showBatchPipeline
+                  })}
+                  onClick={(() => {
+                    if (!this.state.realtimeUrl) { return; }
+                    window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
+                  }).bind(this)}
+                  title={realtimeDisabledTooltip}
+                >
+                  <i className="fa icon-sparkstreaming" />
+                  <span>{T.translate(`${PREFIX}.addToPipelineModal.realtimePipelineBtn`)}</span>
+                </a>
+                : null
+            }
           </div>
         </div>
       );

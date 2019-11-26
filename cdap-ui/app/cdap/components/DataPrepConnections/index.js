@@ -49,7 +49,7 @@ import queryString from 'query-string';
 import Version from 'services/VersionRange/Version';
 import { MIN_DATAPREP_VERSION } from 'components/DataPrep';
 import NavLinkWrapper from 'components/NavLinkWrapper';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType, JIOConnectionType} from 'components/DataPrepConnections/ConnectionType';
 import find from 'lodash/find';
 import If from 'components/If';
 import NoDefaultConnection from 'components/DataPrepConnections/NoDefaultConnection';
@@ -60,6 +60,7 @@ import {Theme} from 'services/ThemeHelper';
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
 const DATAPREP_I18N_PREFIX = 'features.DataPrep.pageTitle';
+const JIO_SPECIFIC_CONNECTION_TYPES = [{ type: "UPLOAD" }, { type: "FILE" }, { type: "KAFKA" }];
 
 export default class DataPrepConnections extends Component {
   static propTypes = {
@@ -264,7 +265,7 @@ export default class DataPrepConnections extends Component {
       })
       .subscribe(
         res => {
-          let respObj = Theme.isCustomerJIO ? [{type: "UPLOAD"},{type: "FILE"}] : res;
+          let respObj = Theme.isCustomerJIO ? JIO_SPECIFIC_CONNECTION_TYPES : res;
 
           this.setState({
             connectionTypes: respObj
@@ -277,7 +278,7 @@ export default class DataPrepConnections extends Component {
           // If the user happens to use older dataprep artifact `/connectionTypes` won't exist.
           // So just query connections list instead of showing a spinner.
           if (err && err.statusCode === 404) {
-            let connectionType = Theme.isCustomerJIO ? {UPLOAD: "UPLOAD",FILE: "FILE"} : ConnectionType;
+            let connectionType = Theme.isCustomerJIO ? JIOConnectionType : ConnectionType;
             this.setState({
               connectionTypes: Object.keys(connectionType).map((conn) => ({ type: conn }))
             }, this.fetchConnectionsList);

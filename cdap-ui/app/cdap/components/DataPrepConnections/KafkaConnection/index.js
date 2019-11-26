@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, isNilOrEmpty} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
@@ -28,15 +28,26 @@ import uuidV4 from 'uuid/v4';
 import ee from 'event-emitter';
 import CardActionFeedback, {CARD_ACTION_TYPES} from 'components/CardActionFeedback';
 import BtnWithLoading from 'components/BtnWithLoading';
-import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import KeyValuePairs from 'components/KeyValuePairs';
 import ValidatedInput from 'components/ValidatedInput';
 import types from 'services/inputValidationTemplates';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Kafka';
 const ADDCONN_PREFIX = 'features.DataPrepConnections.AddConnections';
 
 const LABEL_COL_CLASS = 'col-xs-3 col-form-label text-xs-right';
 const INPUT_COL_CLASS = 'col-xs-8';
+const DEFAULT_KAFKA_PRODUCER_PROPERTIES = {
+  'pairs': [{
+    'key': '',
+    'value': '',
+    'validKey': true,
+    'validValue': true,
+    'uniqueId': uuidV4()
+  }]
+};
 
 require('./KafkaConnection.scss');
 
@@ -48,10 +59,13 @@ export default class KafkaConnection extends Component {
       name: '',
       brokersList: [{
         host: 'localhost',
-        port: '9092',
+        port: '9062',
         uniqueId: uuidV4(),
         valid: true,
       }],
+      principal: '',
+      keytabLocation: '',
+      kafkaProducerProperties: DEFAULT_KAFKA_PRODUCER_PROPERTIES,
       connectionResult: {
         type: null,
         message: null
@@ -63,8 +77,18 @@ export default class KafkaConnection extends Component {
           'error': '',
           'required': true,
           'template': 'NAME',
-          'label': 'Connection Name'
+          'label': T.translate(`${PREFIX}.name`)
         },
+        'principal': {
+          'error': '',
+          'template': 'KERBEROS_PRINCIPAL',
+          'label': T.translate(`${PREFIX}.principal`)
+        },
+        'keytabLocation': {
+          'error': '',
+          'template': 'KEYTAB_LOCATION',
+          'label': T.translate(`${PREFIX}.keytabLocation`)
+        }
       },
       loading: false
     };
@@ -75,6 +99,8 @@ export default class KafkaConnection extends Component {
     this.editConnection = this.editConnection.bind(this);
     this.testConnection = this.testConnection.bind(this);
     this.handleBrokersChange = this.handleBrokersChange.bind(this);
+    this.onKeyValueChange = this.onKeyValueChange.bind(this);
+
   }
 
   componentWillMount() {
@@ -92,14 +118,20 @@ export default class KafkaConnection extends Component {
     MyDataPrepApi.getConnection(params)
       .subscribe((res) => {
         let info = objectQuery(res, 'values', 0),
-            brokers = objectQuery(info, 'properties', 'brokers');
+          brokers = objectQuery(info, 'properties', 'brokers'),
+          kafkaProducerPropertiesPairs = objectQuery(info, 'properties', 'kafkaProducerProperties');
 
         let name = this.props.mode === 'EDIT' ? info.name : '';
         let brokersList = this.parseBrokers(brokers);
-
+        let principal = objectQuery(info, 'properties', 'principal');
+        let keytabLocation = objectQuery(info, 'properties', 'keytabLocation');
+        let kafkaProducerProperties = {'pairs': this.getKeyValPair(JSON.parse(kafkaProducerPropertiesPairs))};
         this.setState({
           name,
           brokersList,
+          principal,
+          keytabLocation,
+          kafkaProducerProperties,
           loading: false
         });
       }, (err) => {
@@ -109,6 +141,34 @@ export default class KafkaConnection extends Component {
           loading: false
         });
       });
+  }
+
+  getKeyValObject() {
+    let keyValArr = this.state.kafkaProducerProperties ? this.state.kafkaProducerProperties.pairs : DEFAULT_KAFKA_PRODUCER_PROPERTIES.pairs;
+    let keyValObj = {};
+    keyValArr.forEach((pair) => {
+      if (pair.key.length > 0 && pair.value.length > 0) {
+        keyValObj[pair.key] = pair.value;
+      }
+    });
+    return keyValObj;
+  }
+
+  getKeyValPair(prefObj) {
+    let sortedPrefObjectKeys = [...Object.keys(prefObj)].sort();
+    if (isNilOrEmpty(sortedPrefObjectKeys)) {
+      return DEFAULT_KAFKA_PRODUCER_PROPERTIES.pairs;
+    } else {
+      return sortedPrefObjectKeys.map(key => {
+        return {
+          key: key,
+          value: prefObj[key],
+          uniqueId: uuidV4(),
+          'validKey':true,
+          'validValue':true,
+        };
+      });
+    }
   }
 
   parseBrokers(brokers) {
@@ -147,15 +207,25 @@ export default class KafkaConnection extends Component {
     }).join(',');
   }
 
+  getProperties() {
+    const prop = {
+      brokers: this.convertBrokersList(),
+      kafkaProducerProperties: JSON.stringify(this.getKeyValObject())
+    };
+    return Theme.isCustomerJIO ? prop :
+      {
+        ...prop,
+        principal: this.state.principal,
+        keytabLocation: this.state.keytabLocation,
+      };
+  }
   addConnection() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestBody = {
       name: this.state.name,
       type: ConnectionType.KAFKA,
-      properties: {
-        brokers: this.convertBrokersList()
-      }
+      properties: this.getProperties()
     };
 
     MyDataPrepApi.createConnection({namespace}, requestBody)
@@ -183,9 +253,7 @@ export default class KafkaConnection extends Component {
       name: this.state.name,
       id: this.props.connectionId,
       type: ConnectionType.KAFKA,
-      properties: {
-        brokers: this.convertBrokersList()
-      }
+      properties: this.getProperties()
     };
 
     MyDataPrepApi.updateConnection(params, requestBody)
@@ -198,7 +266,13 @@ export default class KafkaConnection extends Component {
         console.log('err', err);
 
         let error = objectQuery(err, 'response', 'message') || objectQuery(err, 'response');
-        this.setState({ error });
+        this.setState({
+          connectionResult: {
+            type: CARD_ACTION_TYPES.DANGER,
+            message: error
+          },
+          testConnectionLoading: false
+        });
       });
   }
 
@@ -217,9 +291,7 @@ export default class KafkaConnection extends Component {
     let requestBody = {
       name: this.state.name,
       type: ConnectionType.KAFKA,
-      properties: {
-        brokers: this.convertBrokersList()
-      }
+      properties: this.getProperties()
     };
 
     MyDataPrepApi.kafkaTestConnection({namespace}, requestBody)
@@ -248,9 +320,10 @@ export default class KafkaConnection extends Component {
 
   /** Return true if there is some error. */
   testInputs() {
-    let isSomeError = Object.keys(this.state.inputs).some(key => this.state.inputs[key]['error'] !== '');
-    isSomeError = isSomeError || this.state.brokersList.some(broker => !broker.valid);
-    return (isSomeError ? true : false);
+    let isSomeErrorInputs = Object.keys(this.state.inputs).some(key => this.state.inputs[key]['error'] !== '');
+    let kafkaProducerProperties = this.state.kafkaProducerProperties ? this.state.kafkaProducerProperties.pairs : DEFAULT_KAFKA_PRODUCER_PROPERTIES.pairs;
+    let isSomeErrorKeyValuePairs = kafkaProducerProperties.some(property => { return (!property.validKey || !property.validValue);});
+    return isSomeErrorInputs || isSomeErrorKeyValuePairs;
   }
 
   handleChange(key, e) {
@@ -366,6 +439,71 @@ export default class KafkaConnection extends Component {
     );
   }
 
+  renderKafkaProducerProperties() {
+    return (
+      <div className="form-group row">
+        <label className={LABEL_COL_CLASS}>
+          {T.translate(`${PREFIX}.kafkaProducerProperties`)}
+        </label>
+        <div className={`${INPUT_COL_CLASS} kafka-producer-prop-container`}>
+          <KeyValuePairs
+            keyValues = {this.state.kafkaProducerProperties}
+            onKeyValueChange = {this.onKeyValueChange}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  onKeyValueChange(kafkaProducerProperties) {
+    this.setState({kafkaProducerProperties});
+  }
+
+  renderPrincipalKeytabLocation() {
+    return (
+      <div>
+        {/* principal field */}
+        <div className="form-group row">
+          <label className={LABEL_COL_CLASS}>
+            {T.translate(`${PREFIX}.principal`)}
+          </label>
+          <div className={INPUT_COL_CLASS}>
+            <div className="input-name">
+              <ValidatedInput
+                type="text"
+                label={this.state.inputs['principal']['label']}
+                validationError={this.state.inputs['principal']['error']}
+                className="form-control"
+                value={this.state.principal}
+                onChange={this.handleChange.bind(this, 'principal')}
+                placeholder={T.translate(`${PREFIX}.Placeholders.principal`)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* keytabLocation field */}
+        <div className="form-group row">
+          <label className={LABEL_COL_CLASS}>
+            {T.translate(`${PREFIX}.keytabLocation`)}
+          </label>
+          <div className={INPUT_COL_CLASS}>
+            <div className="input-name">
+              <ValidatedInput
+                type="text"
+                label={this.state.inputs['keytabLocation']['label']}
+                validationError={this.state.inputs['keytabLocation']['error']}
+                className="form-control"
+                value={this.state.keytabLocation}
+                onChange={this.handleChange.bind(this, 'keytabLocation')}
+                placeholder={T.translate(`${PREFIX}.Placeholders.keytabLocation`)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   renderContent() {
     if (this.state.loading) {
       return (
@@ -404,7 +542,10 @@ export default class KafkaConnection extends Component {
           </div>
 
           {this.renderKafka()}
-
+          {
+            Theme.isCustomerJIO ? null : this.renderPrincipalKeytabLocation()
+          }
+          {this.renderKafkaProducerProperties()}
         </div>
       </div>
     );

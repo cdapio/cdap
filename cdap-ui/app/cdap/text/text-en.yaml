@@ -1184,13 +1184,21 @@ features:
           DUPLICATE: Failed to duplicate connection
           EDIT: Failed to edit connection
         kafka: Kafka
+        kafkaProducerProperties: Additional Kafka Producer Properties
+        principal: Kerberos Principal
+        keytabLocation: Keytab Location
         ModalHeader:
           ADD: "Add connection: Kafka"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
         name: Connection name
         Placeholders:
-          name: Specify a name to identify this connection
+          name: Specify a name to identify this connection,
+          principal: Specify a Kerberos Principal to this connection
+          keytabLocation: Specify a Keytab Location to this connection
+          kafkaProducerProperties:
+            key: Enter Key
+            value: Enter Value
         port: Port
         required: Required
         testConnection: Test Connection

@@ -179,15 +179,56 @@ const DEFAULT = {
     }
 };
 
+const KERBEROS_PRINCIPAL = {
+  allowed: {
+    ALLOWED_TAGS: [],
+  },
+  info: [
+      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
+  ],
+  validate: function(val) {
+      return isValidUsingDOMPurify(val, this.allowed);
+  },
+  getInfo: function() {
+      return this.info[0];
+  },
+  getErrorMsg: function() {
+    return `Invalid input. ${this.info[0]}`;
+  }
+};
+
+const KEYTAB_LOCATION = {
+  allowed: {
+    ALLOWED_TAGS: [],
+  },
+  info: [
+      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
+  ],
+  validate: function(val) {
+      return isValidUsingDOMPurify(val, this.allowed);
+  },
+  getInfo: function() {
+      return this.info[0];
+  },
+  getErrorMsg: function() {
+    return `Invalid input. ${this.info[0]}`;
+  }
+};
+
+
+
+
 const types = {
-    "DEFAULT": DEFAULT,
-    "NAME": NAME,
-    "FILE_PATH": FILE_PATH,
-    "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
-    "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
-    "GCS_PROJECT_ID": GCS_PROJECT_ID,
-    "GCS_BUCKET_ID": GCS_BUCKET_ID,
-    "HOSTNAME_1123": HOSTNAME_1123
+  "DEFAULT": DEFAULT,
+  "NAME": NAME,
+  "FILE_PATH": FILE_PATH,
+  "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
+  "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
+  "GCS_PROJECT_ID": GCS_PROJECT_ID,
+  "GCS_BUCKET_ID": GCS_BUCKET_ID,
+  "HOSTNAME_1123": HOSTNAME_1123,
+  "KEYTAB_LOCATION": KEYTAB_LOCATION,
+  "KERBEROS_PRINCIPAL": KERBEROS_PRINCIPAL
 };
 
 export default types;

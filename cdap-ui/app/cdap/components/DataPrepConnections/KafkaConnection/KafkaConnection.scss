@@ -58,6 +58,23 @@ $success-color: $green-02;
     }
   }
 
+  .kafka-producer-prop-container {
+    border-radius: 10px;
+    padding: 10px 0px;
+    background: #eeeeee;
+    margin-left: 2%;
+    .item-container {
+      margin: 0px;
+    }
+    .key-value-pair-preference {
+      width: 100%;
+      .key-input,
+      .value-input {
+        border: 1px solid lightgrey;
+      }
+    }
+  }
+
   .test-connection-button {
     margin-left: 5px;
   }
