@@ -20,6 +20,10 @@ import WranglerConnection from 'components/PipelineContextMenu/WranglerConnectio
 import If from 'components/If';
 import PropTypes from 'prop-types';
 
+function isPasteOptionDisabled() {
+
+}
+
 export default function PipelineContextMenu({ onWranglerSourceAdd }) {
   const [showWranglerModal, setShowWranglerModal] = React.useState(false);
 
@@ -39,7 +43,7 @@ export default function PipelineContextMenu({ onWranglerSourceAdd }) {
       name: 'pipeline node paste',
       label: 'Paste',
       onClick: () => console.log('Pasting node(s)'),
-      disabled: true,
+      disabled: isPasteOptionDisabled(),
     }
   ];
   const onWranglerSourceAddWrapper = (...props) => {

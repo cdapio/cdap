@@ -60,6 +60,8 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
       mouseY: e.clientY - 4,
     });
     e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
   };
   const defaultEventHandler = (e) => e.preventDefault();
 

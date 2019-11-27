@@ -147,4 +147,7 @@ angular
   })
   .directive('pipelineContextMenu', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineContextMenu);
+  })
+  .directive('pluginContextMenu', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PluginContextMenu);
   });

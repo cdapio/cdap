@@ -120,6 +120,21 @@ angular.module(PKG.name + '.commons')
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
       init();
     };
+    vm.getPluginConfiguration = (nodeid) => {
+      const node = HydratorPlusPlusConfigStore.getNodes().find(node => node.name === nodeid);
+      return {
+        stages: [{
+          icon: node.icon,
+          type: node.type,
+          plugin: {
+            name: node.plugin.name,
+            artifact: node.plugin.artifact,
+            properties: angular.copy(node.plugin.properties),
+            label: node.plugin.label,
+          },
+        }]
+      };
+    };
 
     function repaintEverything() {
       const id = uuid.v4();
@@ -1339,7 +1354,7 @@ angular.module(PKG.name + '.commons')
         if (!node) { return; }
 
         // change name
-        let newName = `copy ${node.plugin.label}`;
+        let newName = `copy_${node.plugin.label}`;
         const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
           .filter(filteredNode => {
             return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
@@ -1367,7 +1382,6 @@ angular.module(PKG.name + '.commons')
       let key = generatePluginMapKey(node);
 
       let iconSourceType = myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'icon', 'type');
-
       return ['inline', 'link'].indexOf(iconSourceType) !== -1;
     };
 
@@ -1390,7 +1404,7 @@ angular.module(PKG.name + '.commons')
       }
     });
 
-    $scope.$on('$destroy', function () {
+    function cleanupOnDestroy() {
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
 
@@ -1416,5 +1430,7 @@ angular.module(PKG.name + '.commons')
       vm.instance.reset();
 
       document.body.onpaste = null;
-    });
+    }
+
+    $scope.$on('$destroy', cleanupOnDestroy);
   });

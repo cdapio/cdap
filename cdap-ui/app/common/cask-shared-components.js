@@ -105,6 +105,7 @@ var ConfigurationGroupUtilities = require('../cdap/components/ConfigurationGroup
 var DynamicFiltersUtilities = require('../cdap/components/ConfigurationGroup/utilities/DynamicPluginFilters');
 var LoadingSVG = require('../cdap/components/LoadingSVG').default;
 var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
+var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
 export {
   Store,
   DataPrepHome,
@@ -183,4 +184,5 @@ export {
   DynamicFiltersUtilities,
   LoadingSVG,
   PipelineContextMenu,
+  PluginContextMenu,
 };
