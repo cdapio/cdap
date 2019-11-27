@@ -32,7 +32,7 @@ import 'rxjs/add/operator/combineLatest';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/debounceTime';
-import WindowManager, {WINDOW_ON_BLUR, WINDON_ON_FOCUS} from 'services/WindowManager';
+import WindowManager, {WINDOW_ON_BLUR, WINDOW_ON_FOCUS} from 'services/WindowManager';
 
 var CDAP_API_VERSION = 'v3';
 // FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
@@ -107,7 +107,7 @@ export default class Datasource {
         }
       });
     });
-    this.eventEmitter.on(WINDON_ON_FOCUS, this.resumePoll.bind(this));
+    this.eventEmitter.on(WINDOW_ON_FOCUS, this.resumePoll.bind(this));
     this.eventEmitter.on(WINDOW_ON_BLUR, this.pausePoll.bind(this));
   }
 

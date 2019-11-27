@@ -60,7 +60,7 @@ import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemo
 // See ./graphql/fragements/README.md
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
-import { WINDON_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
+import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -98,7 +98,7 @@ class CDAP extends Component {
       loading: true,
     };
     this.eventEmitter = ee(ee);
-    this.eventEmitter.on(WINDON_ON_FOCUS, this.onWindowFocus);
+    this.eventEmitter.on(WINDOW_ON_FOCUS, this.onWindowFocus);
     this.eventEmitter.on(WINDOW_ON_BLUR, this.onWindowBlur);
   }
 
@@ -107,7 +107,7 @@ class CDAP extends Component {
   }
 
   componentWillUnmount() {
-    this.eventEmitter.off(WINDON_ON_FOCUS, this.onWindowFocus);
+    this.eventEmitter.off(WINDOW_ON_FOCUS, this.onWindowFocus);
     this.eventEmitter.off(WINDOW_ON_BLUR, this.onWindowBlur);
   }
 

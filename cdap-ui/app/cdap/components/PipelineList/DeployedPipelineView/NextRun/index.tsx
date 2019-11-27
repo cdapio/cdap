@@ -23,7 +23,7 @@ import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyPipelineApi } from 'api/pipeline';
 import ee from 'event-emitter';
-import { WINDON_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
+import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
 
 interface IProps {
   pipeline: IPipeline;
@@ -51,13 +51,13 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
     // Interval only runs after the delay, so have to
     // initially call the function first
     this.startNextRunInterval();
-    this.eventemitter.on(WINDON_ON_FOCUS, this.startNextRunInterval);
+    this.eventemitter.on(WINDOW_ON_FOCUS, this.startNextRunInterval);
     this.eventemitter.on(WINDOW_ON_BLUR, this.stopNextRunInterval);
   }
 
   public componentWillUnmount() {
     this.stopNextRunInterval();
-    this.eventemitter.off(WINDON_ON_FOCUS, this.startNextRunInterval);
+    this.eventemitter.off(WINDOW_ON_FOCUS, this.startNextRunInterval);
     this.eventemitter.off(WINDOW_ON_BLUR, this.stopNextRunInterval);
   }
 

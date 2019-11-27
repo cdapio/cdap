@@ -16,7 +16,7 @@
 
 import ee from 'event-emitter';
 const WINDOW_ON_BLUR = 'WINDOW_BLUR_EVENT';
-const WINDON_ON_FOCUS = 'WINDOW_FOCUS_EVENT';
+const WINDOW_ON_FOCUS = 'WINDOW_FOCUS_EVENT';
 
 class WindowManager {
   public eventemitter = ee(ee);
@@ -35,9 +35,9 @@ class WindowManager {
   };
 
   public onFocusHandler = () => {
-    this.eventemitter.emit(WINDON_ON_FOCUS);
+    this.eventemitter.emit(WINDOW_ON_FOCUS);
   };
 }
 
 export default new WindowManager();
-export { WINDOW_ON_BLUR, WINDON_ON_FOCUS };
+export { WINDOW_ON_BLUR, WINDOW_ON_FOCUS };
