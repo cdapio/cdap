@@ -80,6 +80,11 @@ angular.module(PKG.name + '.feature.hydrator')
           resolve: {
              rCDAPVersion: function($q) {
               var defer = $q.defer();
+              let cdapversion = window.CaskCommon.VersionStore.getState().version;
+              if (cdapversion) {
+                defer.resolve(cdapversion);
+                return defer.promise;
+              }
               const subscription = window.CaskCommon.VersionStore.subscribe(() => {
                 let cdapversion = window.CaskCommon.VersionStore.getState().version;
                 if (cdapversion) {
