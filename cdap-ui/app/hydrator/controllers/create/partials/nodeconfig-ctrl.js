@@ -525,8 +525,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   fetchPreview() {
     this.previewLoading = true;
     let previewId = this.previewStore.getState().preview.previewId;
-    let previousStageIsCondition = false;
-    let previousStagePort;
+    let previousStages = {};
 
     if (!previewId) {
       this.previewLoading = false;
@@ -541,26 +540,27 @@ class HydratorPlusPlusNodeConfigCtrl {
     let { stages, connections } = this.ConfigStore.getConfigForExport().config;
     let adjacencyMap = this.HydratorPlusPlusOrderingFactory.getAdjacencyMap(connections);
     let postBody = [];
-    let previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(this.state.node.plugin.label) !== -1);
+    let previousStageNames = Object.keys(adjacencyMap).filter(key => adjacencyMap[key].indexOf(this.state.node.plugin.label) !== -1);
 
-    if (previousStageName) {
+    previousStageNames.forEach(previousStageName => {
       let previousStage = stages.find(stage => stage.name === previousStageName);
+      previousStages[previousStageName] = {};
       if (previousStage.plugin.type === 'splittertransform') {
         let previousStageConnection = connections.find((connection) => connection.from === previousStageName && connection.to === this.state.node.plugin.label);
         if (previousStageConnection) {
-          previousStagePort = previousStageConnection.port;
+          previousStages[previousStageName].port = previousStageConnection.port;
         }
       } else {
         // In case we have multiple condition nodes in a row, we have to keep traversing back
         // until we find a node that actually has records out
         while (previousStage && previousStage.plugin.type === 'condition') {
-          previousStageIsCondition = true;
+          previousStages[previousStageName].condition = true;
           previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(previousStageName) !== -1);
           previousStage = stages.find(stage => stage.name === previousStageName);
         }
       }
       postBody.push(previousStageName);
-    }
+    });
 
     this.myPipelineApi.getStagePreview(params, {
       tracers: postBody.concat([this.state.node.plugin.label])
@@ -602,7 +602,7 @@ class HydratorPlusPlusNodeConfigCtrl {
           } else {
             let correctMetricsName;
             if (recordsOutPorts.length) {
-              correctMetricsName = recordsOutPorts.find(port => port.split('.').pop() === previousStagePort);
+              correctMetricsName = recordsOutPorts.find(port => port.split('.').pop() === this.myHelpers.objectQuery(previousStages, stageName, 'port'));
             } else if (stageMetrics.hasOwnProperty('records.alert') && this.state.node.plugin.type === 'alertpublisher') {
               correctMetricsName = 'records.alert';
             } else {
@@ -619,13 +619,6 @@ class HydratorPlusPlusNodeConfigCtrl {
         if (!this.state.isSource) {
           this.previewData.input = recordsIn;
           this.previewData.numInputStages = Object.keys(recordsIn).length;
-        }
-
-        // set current stage's input records to null only if its output records are null AND if the previous
-        // stage is a Condition, since that means data didn't flow through to that branch
-        if (_.isEmpty(recordsOut[Object.keys(recordsOut)[0]]) && previousStageIsCondition) {
-          this.previewData.input = {};
-          this.previewData.numInputStages = 0;
         }
 
         let logViewerState = this.LogViewerStore.getState();
