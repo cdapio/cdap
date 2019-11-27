@@ -202,6 +202,14 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
               if (property.show === false) {
                 return null;
               }
+              // Hiding all plugin functions if pipeline is deployed
+              if (
+                disabled &&
+                property.hasOwnProperty('widget-category') &&
+                property['widget-category'] === 'plugin'
+              ) {
+                return null;
+              }
               // Check if a field is present to display the error contextually
               const errorObjs =
                 errors && errors.hasOwnProperty(property.name) ? errors[property.name] : null;
