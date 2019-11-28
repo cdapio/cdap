@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A abstract base class for bridging standard main method to method invoked through
@@ -36,38 +37,52 @@ public abstract class DaemonMain {
   protected void doMain(final String[] args) throws Exception {
     try {
       init(args);
-
-      final CountDownLatch shutdownLatch = new CountDownLatch(1);
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          try {
-            try {
-              DaemonMain.this.stop();
-            } finally {
-              try {
-                DaemonMain.this.destroy();
-              } finally {
-                shutdownLatch.countDown();
-              }
-            }
-          } catch (Throwable t) {
-            LOG.error("Exception when shutting down: " + t.getMessage(), t);
-          }
-        }
-      });
-
-      start();
-      // Set uncaught exception handler after startup, this is so that if startup throws exception then we
-      // want it to be logged as error (the handler logs it as debug)
-      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
-      shutdownLatch.await();
     } catch (Throwable t) {
-      // In case there is exception, log it before the process terminates.
-      // This normally doesn't happen, but when it does, we need the log before process die.
-      LOG.error("Exception raised from main method", t);
+      LOG.error("Exception raised when calling init", t);
+      try {
+        destroy();
+      } catch (Throwable t2) {
+        LOG.error("Exception raised when calling destroy", t);
+        t.addSuppressed(t2);
+      }
+      // Throw to terminate the main thread
       throw t;
     }
+
+    CountDownLatch shutdownLatch = new CountDownLatch(1);
+    AtomicBoolean terminated = new AtomicBoolean();
+    Runnable terminateRunnable = () -> {
+      if (!terminated.compareAndSet(false, true)) {
+        return;
+      }
+      try {
+        try {
+          DaemonMain.this.stop();
+        } finally {
+          try {
+            DaemonMain.this.destroy();
+          } finally {
+            shutdownLatch.countDown();
+          }
+        }
+      } catch (Throwable t) {
+        LOG.error("Exception when shutting down: " + t.getMessage(), t);
+      }
+    };
+    Runtime.getRuntime().addShutdownHook(new Thread(terminateRunnable));
+    try {
+      start();
+    } catch (Throwable t) {
+      // Throw to terminate the main thread
+      LOG.error("Exception raised when calling start", t);
+      terminateRunnable.run();
+      throw t;
+    }
+
+    // Set uncaught exception handler after startup, this is so that if startup throws exception then we
+    // want it to be logged as error (the handler logs it as debug)
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
+    shutdownLatch.await();
   }
 
   /**

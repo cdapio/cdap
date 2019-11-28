@@ -259,7 +259,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
       // instantiate the data source and create a connection
       DataSource dataSource = injector.getInstance(DataSource.class);
       try (Connection connection = dataSource.getConnection()) {
-        // no-op, just to instantiate the connection and close it
+        // Just to ping the connection and close it to populate the connection pool.
+        connection.isValid(5);
       }
     }
   }
