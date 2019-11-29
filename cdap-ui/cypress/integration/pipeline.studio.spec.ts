@@ -142,6 +142,6 @@ describe('Pipeline Studio', () => {
     cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
     cy.get('[data-cy="pipeline-fit-to-screen-control"]').click();
 
-    cy.compareSnapshot('test');
+    cy.compareSnapshot('pipeline_with_condition');
   });
 });
