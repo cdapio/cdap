@@ -120,6 +120,10 @@ angular.module(PKG.name + '.commons')
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
       init();
     };
+    vm.onNodesPaste = (stages) => {
+      handleNodePaste(JSON.stringify(stages));
+    };
+
     vm.getPluginConfiguration = (nodeid) => {
       const node = HydratorPlusPlusConfigStore.getNodes().find(node => node.name === nodeid);
       return {

@@ -30,6 +30,7 @@ interface IContextMenuProps {
   element?: HTMLElement;
   selector?: string;
   options?: IContextMenuOption[];
+  onOpen?: () => void; // to update disabled flags
 }
 
 const initialMousePosition = {
@@ -51,7 +52,7 @@ const StyledDisabledMenuItem = withStyles(() => ({
   },
 }))(MenuItem);
 
-export const ContextMenu = ({ selector, element, options }: IContextMenuProps) => {
+export const ContextMenu = ({ selector, element, options, onOpen }: IContextMenuProps) => {
   const [mousePosition, setMousePosition] = React.useState(initialMousePosition);
 
   const toggleMenu = (e: PointerEvent) => {
@@ -62,6 +63,9 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
+    if (onOpen) {
+      onOpen();
+    }
   };
   const defaultEventHandler = (e) => e.preventDefault();
 
@@ -147,6 +151,7 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
   selector: PropTypes.string,
   element: PropTypes.node,
   options: PropTypes.object,
+  onOpen: PropTypes.func,
 };
 
 export default function ContextMenuWrapper() {
@@ -154,16 +159,19 @@ export default function ContextMenuWrapper() {
     {
       name: 'option1',
       label: 'Option One',
+      // @ts-ignore
       onClick: (e) => console.log('option 1 clicked'),
     },
     {
       name: 'option2',
       label: 'Option Two',
+      // @ts-ignore
       onClick: (e) => console.log('option2 clicked'),
     },
     {
       name: 'option3',
       label: 'Option Three',
+      // @ts-ignore
       onClick: (e) => console.log('option3 clicked'),
     },
   ];

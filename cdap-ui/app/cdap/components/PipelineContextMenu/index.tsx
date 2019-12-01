@@ -21,15 +21,47 @@ import If from 'components/If';
 import PropTypes from 'prop-types';
 import { CopyFromClipBoard } from 'services/Clipboard';
 import { objectQuery } from 'services/helpers';
+import { INode } from 'components/PipelineContextMenu/PipelineTypes';
+import { INewWranglerConnection } from 'components/PipelineContextMenu/WranglerConnection';
 
-async function isPasteOptionDisabled() {
+export interface IStage {
+  stages: INode[];
+}
+interface IPipelineContextMenuProps {
+  onNodesPaste: (stages: IStage) => void;
+  onWranglerSourceAdd: INewWranglerConnection;
+}
+
+async function getNodesFromClipBoard(): Promise<IStage | undefined> {
   let clipText;
   try {
     clipText = await CopyFromClipBoard();
   } catch (e) {
-    return true;
+    return Promise.reject();
   }
-  return isClipboardPastable(clipText);
+  return Promise.resolve(getClipboardData(clipText));
+}
+
+function getClipboardData(text): IStage | undefined {
+  let jsonNodes;
+  if (typeof text !== 'object') {
+    try {
+      jsonNodes = JSON.parse(text);
+    } catch (e) {
+      return;
+    }
+  }
+  return jsonNodes;
+}
+
+async function isPasteOptionDisabled(): Promise<boolean> {
+  let clipText;
+  try {
+    clipText = await CopyFromClipBoard();
+  } catch (e) {
+    return Promise.reject(true);
+  }
+  return Promise.resolve(isClipboardPastable(clipText));
 }
 
 function isClipboardPastable(text) {
@@ -41,17 +73,21 @@ function isClipboardPastable(text) {
       return true;
     }
   }
-
   return objectQuery(jsonNodes, 'stages', 'length') > 0 ? false : true;
 }
 
-export default function PipelineContextMenu({ onWranglerSourceAdd }) {
+export default function PipelineContextMenu({
+  onWranglerSourceAdd,
+  onNodesPaste,
+}: IPipelineContextMenuProps) {
   const [showWranglerModal, setShowWranglerModal] = React.useState(false);
   const [pasteOptionDisabled, setPasteOptionDisabled] = React.useState(true);
 
   isPasteOptionDisabled().then(setPasteOptionDisabled);
-  console.log('paste option:', pasteOptionDisabled);
 
+  const updateOptionDisabledFlags = () => {
+    isPasteOptionDisabled().then(setPasteOptionDisabled);
+  };
   const menuOptions: IContextMenuOption[] = [
     {
       name: 'add-wrangler-source',
@@ -67,7 +103,9 @@ export default function PipelineContextMenu({ onWranglerSourceAdd }) {
     {
       name: 'pipeline-node-paste',
       label: 'Paste',
-      onClick: () => console.log('Pasting node(s)'),
+      onClick: () => {
+        getNodesFromClipBoard().then(onNodesPaste);
+      },
       disabled: pasteOptionDisabled,
     },
   ];
@@ -75,9 +113,15 @@ export default function PipelineContextMenu({ onWranglerSourceAdd }) {
     setShowWranglerModal(!showWranglerModal);
     onWranglerSourceAdd.apply(null, props);
   };
+
+  const onNodePaste = () => {};
   return (
     <React.Fragment>
-      <ContextMenu selector="#diagram-container" options={menuOptions} />
+      <ContextMenu
+        selector="#diagram-container"
+        options={menuOptions}
+        onOpen={updateOptionDisabledFlags}
+      />
       <If condition={showWranglerModal}>
         <WranglerConnection
           onModalClose={() => setShowWranglerModal(!showWranglerModal)}
@@ -90,4 +134,5 @@ export default function PipelineContextMenu({ onWranglerSourceAdd }) {
 
 (PipelineContextMenu as any).propTypes = {
   onWranglerSourceAdd: PropTypes.func,
+  onNodesPaste: PropTypes.func,
 };

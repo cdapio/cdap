@@ -80,9 +80,9 @@ export async function CopyToClipBoard(text) {
   try {
     // @ts-ignore
     await navigator.clipboard.writeText(text);
-    Promise.resolve();
+    return Promise.resolve();
   } catch (e) {
-    Promise.reject('Unable to copy: ' + e.message);
+    return Promise.reject('Unable to copy: ' + e.message);
   }
 }
 
@@ -96,8 +96,8 @@ export async function CopyFromClipBoard() {
     // @ts-ignore
     const clipText = await navigator.clipboard.readText();
     console.log('Clip Text: ', clipText);
-    Promise.resolve(clipText);
+    return Promise.resolve(clipText);
   } catch (e) {
-    Promise.reject('Unable to copy from clipboard: ' + e.message);
+    return Promise.reject('Unable to copy from clipboard: ' + e.message);
   }
 }

@@ -23,6 +23,11 @@ import PropTypes from 'prop-types';
 import DataPrepHome from 'components/DataPrepHome';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
 import If from 'components/If';
+import {
+  IArtifactObj,
+  PluginTypes,
+  IProperties,
+} from 'components/PipelineContextMenu/PipelineTypes';
 
 const styles = (theme) => ({
   modalBtnClose: {
@@ -41,9 +46,28 @@ const styles = (theme) => ({
   },
 });
 
+interface IPluginObj {
+  name: string;
+  artifact: IArtifactObj;
+  label: string;
+  type: PluginTypes;
+  properties: IProperties;
+}
+
+interface INode {
+  name: string;
+  plugin: IPluginObj;
+}
+
+interface IConnection {
+  from: string;
+  to: string;
+}
+
+export type INewWranglerConnection = (obj: { nodes: INode[]; connections: IConnection[] }) => void;
 interface IContextMenuOptionProp extends WithStyles<typeof styles> {
   onModalClose: () => void;
-  onWranglerSourceAdd: (obj: any) => void;
+  onWranglerSourceAdd: INewWranglerConnection;
 }
 
 function WranglerConnection({
