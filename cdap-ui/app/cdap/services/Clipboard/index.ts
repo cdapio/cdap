@@ -15,8 +15,8 @@
 */
 
 function useDocumentExecPaste() {
-  var promise = new Promise((resolve, reject) => {
-    var textarea = document.createElement('textarea');
+  const promise = new Promise((resolve, reject) => {
+    const textarea = document.createElement('textarea');
     textarea.style.position = 'fixed';
     textarea.style.top = '0';
     textarea.style.left = '0';
@@ -42,8 +42,8 @@ function useDocumentExecPaste() {
 }
 
 function useDocumentExecCopy(text: string) {
-  var promise = new Promise((resolve, reject) => {
-    var textarea = document.createElement('textarea');
+  const promise = new Promise((resolve, reject) => {
+    const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed';
     textarea.style.top = '0';
@@ -79,9 +79,25 @@ export async function CopyToClipBoard(text) {
 
   try {
     // @ts-ignore
-    await navigator.clipboard.writeText(text)
+    await navigator.clipboard.writeText(text);
     Promise.resolve();
   } catch (e) {
     Promise.reject('Unable to copy: ' + e.message);
+  }
+}
+
+export async function CopyFromClipBoard() {
+  // @ts-ignore
+  if (!navigator.clipboard) {
+    return await useDocumentExecPaste();
+  }
+
+  try {
+    // @ts-ignore
+    const clipText = await navigator.clipboard.readText();
+    console.log('Clip Text: ', clipText);
+    Promise.resolve(clipText);
+  } catch (e) {
+    Promise.reject('Unable to copy from clipboard: ' + e.message);
   }
 }

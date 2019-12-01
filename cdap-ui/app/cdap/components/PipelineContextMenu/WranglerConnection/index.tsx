@@ -38,7 +38,7 @@ const styles = (theme) => ({
       background: theme.palette.blue['40'],
       color: 'white',
     },
-  }
+  },
 });
 
 interface IContextMenuOptionProp extends WithStyles<typeof styles> {
@@ -46,9 +46,16 @@ interface IContextMenuOptionProp extends WithStyles<typeof styles> {
   onWranglerSourceAdd: (obj: any) => void;
 }
 
-function WranglerConnection({ classes, onModalClose, onWranglerSourceAdd }: IContextMenuOptionProp) {
+function WranglerConnection({
+  classes,
+  onModalClose,
+  onWranglerSourceAdd,
+}: IContextMenuOptionProp) {
   const [showModal, setShowModal] = React.useState(true);
-  const toggleModal = () => { setShowModal(!showModal); onModalClose(); }
+  const toggleModal = () => {
+    setShowModal(!showModal);
+    onModalClose();
+  };
   const onWranglerConnectionSubmit = ({ onUnmount }) => {
     if (onUnmount) {
       return;
@@ -56,7 +63,7 @@ function WranglerConnection({ classes, onModalClose, onWranglerSourceAdd }: ICon
     getPipelineConfig().subscribe(({ batchConfig }) => {
       onWranglerSourceAdd({
         nodes: batchConfig.config.stages,
-        connections: batchConfig.config.connections
+        connections: batchConfig.config.connections,
       });
       setShowModal(!showModal);
     });
@@ -78,10 +85,7 @@ function WranglerConnection({ classes, onModalClose, onWranglerSourceAdd }: ICon
       </div>
       <div className="modal-body">
         <If condition={showModal}>
-          <DataPrepHome
-            singleWorkspaceMode={true}
-            onSubmit={onWranglerConnectionSubmit}
-          />
+          <DataPrepHome singleWorkspaceMode={true} onSubmit={onWranglerConnectionSubmit} />
         </If>
       </div>
     </Modal>
@@ -95,10 +99,10 @@ export default function WranglerConnectionWrapper(props) {
     <ThemeWrapper>
       <StyledWranglerConnection {...props} />
     </ThemeWrapper>
-  )
+  );
 }
 
 (WranglerConnectionWrapper as any).propTypes = {
   onModalClose: PropTypes.func,
-  onWranglerSourceAdd: PropTypes.func
-}
+  onWranglerSourceAdd: PropTypes.func,
+};

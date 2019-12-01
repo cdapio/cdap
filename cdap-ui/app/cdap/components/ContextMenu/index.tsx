@@ -128,13 +128,14 @@ export const ContextMenu = ({ selector, element, options }: IContextMenuProps) =
       ref={measuredRef}
     >
       {options.map((option) => {
-        const MenuItemComp = option.disabled ? StyledDisabledMenuItem : StyledMenuItem;
+        const { name, label, disabled } = option;
+        const MenuItemComp = disabled ? StyledDisabledMenuItem : StyledMenuItem;
         return (
           <MenuItemComp
-            key={option.name}
-            onClick={option.disabled === true ? undefined : handleClose.bind(null, option)}
+            key={name}
+            onClick={disabled === true ? undefined : handleClose.bind(null, option)}
           >
-            {option.label}
+            {label}
           </MenuItemComp>
         );
       })}

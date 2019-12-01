@@ -29,21 +29,18 @@ export default function PluginContextMenu({ nodeId, getPluginConfiguration }) {
         CopyToClipBoard(text).then(
           () => console.log('Success now show a tooltip or something to the user'),
           () => console.error('Fail!. Show to the user copy failed')
-        )
-      }
-    }
-  ]
+        );
+      },
+    },
+  ];
   return (
     <React.Fragment>
-      <ContextMenu
-        selector={`#${nodeId}`}
-        options={PluginContextMenuOptions}
-      />
+      <ContextMenu selector={`#${nodeId}`} options={PluginContextMenuOptions} />
     </React.Fragment>
   );
 }
 
 (PluginContextMenu as any).propTypes = {
   nodeId: PropTypes.string,
-  getPluginConfiguration: PropTypes.func
+  getPluginConfiguration: PropTypes.func,
 };
