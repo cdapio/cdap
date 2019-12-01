@@ -252,7 +252,7 @@ angular.module(PKG.name + '.commons')
         vm.secondInstance.setDraggable('diagram-container', false);
       }, 'keydown');
       Mousetrap.bind(['shift'], () => {
-        vm.setCanvasAsDraggable();
+        vm.secondInstance.setDraggable('diagram-container', true);
       }, 'keyup');
     }
 
@@ -973,21 +973,6 @@ angular.module(PKG.name + '.commons')
       }
     };
 
-    vm.setCanvasAsDraggable = () => {
-      if (!vm.secondInstance) {
-        return;
-      }
-      vm.secondInstance.draggable('diagram-container', {
-        stop: function (e) {
-          e.el.style.left = '0px';
-          e.el.style.top = '0px';
-          transformCanvas(e.pos[1], e.pos[0]);
-          DAGPlusPlusNodesActionsFactory.resetPluginCount();
-          DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
-        }
-      });
-    };
-
     jsPlumb.ready(function() {
       var dagSettings = DAGPlusPlusFactory.getSettings();
       var {defaultDagSettings, defaultConnectionStyle, selectedConnectionStyle, dashedConnectionStyle, solidConnectionStyle, conditionTrueConnectionStyle, conditionTrueEndpointStyle, conditionFalseConnectionStyle, conditionFalseEndpointStyle, splitterEndpointStyle, alertEndpointStyle, errorEndpointStyle, targetNodeOptions} = dagSettings;
@@ -1012,7 +997,15 @@ angular.module(PKG.name + '.commons')
       // Making canvas draggable
       vm.secondInstance = jsPlumb.getInstance();
       if (!vm.disableNodeClick) {
-        vm.setCanvasAsDraggable();
+        vm.secondInstance.draggable('diagram-container', {
+          stop: function (e) {
+            e.el.style.left = '0px';
+            e.el.style.top = '0px';
+            transformCanvas(e.pos[1], e.pos[0]);
+            DAGPlusPlusNodesActionsFactory.resetPluginCount();
+            DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
+          }
+        });
       }
 
       // doing this to listen to changes to just $scope.nodes instead of everything else
