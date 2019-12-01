@@ -23,6 +23,7 @@ import { CopyFromClipBoard } from 'services/Clipboard';
 import { objectQuery } from 'services/helpers';
 import { INode } from 'components/PipelineContextMenu/PipelineTypes';
 import { INewWranglerConnection } from 'components/PipelineContextMenu/WranglerConnection';
+import { GLOBALS } from 'services/global-constants';
 
 export interface IStage {
   stages: INode[];
@@ -30,6 +31,7 @@ export interface IStage {
 interface IPipelineContextMenuProps {
   onNodesPaste: (stages: IStage) => void;
   onWranglerSourceAdd: INewWranglerConnection;
+  pipelineArtifactType: 'cdap-data-pipeline' | 'cdap-data-streams';
 }
 
 async function getNodesFromClipBoard(): Promise<IStage | undefined> {
@@ -79,6 +81,7 @@ function isClipboardPastable(text) {
 export default function PipelineContextMenu({
   onWranglerSourceAdd,
   onNodesPaste,
+  pipelineArtifactType,
 }: IPipelineContextMenuProps) {
   const [showWranglerModal, setShowWranglerModal] = React.useState(false);
   const [pasteOptionDisabled, setPasteOptionDisabled] = React.useState(true);
@@ -97,7 +100,10 @@ export default function PipelineContextMenu({
     {
       name: 'pipeline-node-copy',
       label: 'Copy',
-      onClick: () => console.log('Copying node(s)'),
+      onClick: () => {
+        // to be implemented.
+        return;
+      },
       disabled: true,
     },
     {
@@ -113,8 +119,6 @@ export default function PipelineContextMenu({
     setShowWranglerModal(!showWranglerModal);
     onWranglerSourceAdd.apply(null, props);
   };
-
-  const onNodePaste = () => {};
   return (
     <React.Fragment>
       <ContextMenu
@@ -126,6 +130,7 @@ export default function PipelineContextMenu({
         <WranglerConnection
           onModalClose={() => setShowWranglerModal(!showWranglerModal)}
           onWranglerSourceAdd={onWranglerSourceAddWrapper}
+          pipelineArtifactType={pipelineArtifactType}
         />
       </If>
     </React.Fragment>
@@ -135,4 +140,5 @@ export default function PipelineContextMenu({
 (PipelineContextMenu as any).propTypes = {
   onWranglerSourceAdd: PropTypes.func,
   onNodesPaste: PropTypes.func,
+  pipelineArtifactType: PropTypes.oneOf([GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams]),
 };

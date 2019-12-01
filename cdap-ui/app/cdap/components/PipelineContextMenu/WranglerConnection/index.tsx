@@ -28,6 +28,7 @@ import {
   PluginTypes,
   IProperties,
 } from 'components/PipelineContextMenu/PipelineTypes';
+import { GLOBALS } from 'services/global-constants';
 
 const styles = (theme) => ({
   modalBtnClose: {
@@ -68,12 +69,14 @@ export type INewWranglerConnection = (obj: { nodes: INode[]; connections: IConne
 interface IContextMenuOptionProp extends WithStyles<typeof styles> {
   onModalClose: () => void;
   onWranglerSourceAdd: INewWranglerConnection;
+  pipelineArtifactType: 'cdap-data-pipeline' | 'cdap-data-streams';
 }
 
 function WranglerConnection({
   classes,
   onModalClose,
   onWranglerSourceAdd,
+  pipelineArtifactType,
 }: IContextMenuOptionProp) {
   const [showModal, setShowModal] = React.useState(true);
   const toggleModal = () => {
@@ -84,10 +87,20 @@ function WranglerConnection({
     if (onUnmount) {
       return;
     }
-    getPipelineConfig().subscribe(({ batchConfig }) => {
+    getPipelineConfig().subscribe(({ batchConfig, realtimeConfig }) => {
+      let finalConfig;
+      if (pipelineArtifactType === GLOBALS.etlDataPipeline) {
+        finalConfig = batchConfig;
+      }
+      if (pipelineArtifactType === GLOBALS.etlDataStreams) {
+        finalConfig = realtimeConfig;
+      }
+      if (!finalConfig) {
+        return;
+      }
       onWranglerSourceAdd({
-        nodes: batchConfig.config.stages,
-        connections: batchConfig.config.connections,
+        nodes: finalConfig.config.stages,
+        connections: finalConfig.config.connections,
       });
       setShowModal(!showModal);
     });
@@ -129,4 +142,5 @@ export default function WranglerConnectionWrapper(props) {
 (WranglerConnectionWrapper as any).propTypes = {
   onModalClose: PropTypes.func,
   onWranglerSourceAdd: PropTypes.func,
+  pipelineArtifactType: PropTypes.oneOf([GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams]),
 };

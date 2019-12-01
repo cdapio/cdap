@@ -79,6 +79,7 @@ angular.module(PKG.name + '.commons')
 
     const repaintTimeoutsMap = {};
 
+    vm.pipelineArtifactType = HydratorPlusPlusConfigStore.getAppType();
     vm.onWranglerConnectionAdd = ({nodes, connections}) => {
       if (!Array.isArray(nodes) || !Array.isArray(connections)) {
         return;

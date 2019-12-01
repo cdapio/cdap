@@ -159,20 +159,17 @@ export default function ContextMenuWrapper() {
     {
       name: 'option1',
       label: 'Option One',
-      // @ts-ignore
-      onClick: (e) => console.log('option 1 clicked'),
+      onClick: () => ({}),
     },
     {
       name: 'option2',
       label: 'Option Two',
-      // @ts-ignore
-      onClick: (e) => console.log('option2 clicked'),
+      onClick: () => ({}),
     },
     {
       name: 'option3',
       label: 'Option Three',
-      // @ts-ignore
-      onClick: (e) => console.log('option3 clicked'),
+      onClick: () => ({}),
     },
   ];
   return (
