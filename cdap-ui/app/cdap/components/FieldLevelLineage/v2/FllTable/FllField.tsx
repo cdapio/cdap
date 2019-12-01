@@ -89,6 +89,7 @@ function FllField({ field, isActive, classes }: IFieldProps) {
       data-fieldname={field.name}
       data-hovering={isHovering}
       data-target={isTarget}
+      data-cy={`${field.type}-${field.name}`}
     >
       <span className={classes.fieldname}>{field.name}</span>
       <If condition={isHovering && !isTarget}>
