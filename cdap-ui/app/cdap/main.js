@@ -60,7 +60,6 @@ import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemo
 // See ./graphql/fragements/README.md
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
-
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
   loading: LoadingSVGCentered,
@@ -262,6 +261,25 @@ class CDAP extends Component {
                   />
                   <Route
                     exact
+                    path="/selectionbox"
+                    render={(props) => {
+                      if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                        return <Page404 {...props} />;
+                      }
+                      const SelectionBox = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "SelectionBox" */ 'components/SelectionBoxWrapper'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <SelectionBox {...props} />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
+                  <Route
+                    exact
                     path="/contextmenu"
                     render={(props) => {
                       if (window.CDAP_CONFIG.cdap.mode !== 'development') {
@@ -269,7 +287,7 @@ class CDAP extends Component {
                       }
                       const ContextMenu = Loadable({
                         loader: () =>
-                          import(/* webpackChunkName: "MarkdownImplExample" */ 'components/ContextMenu'),
+                          import(/* webpackChunkName: "ContextMenu" */ 'components/ContextMenu'),
                         loading: LoadingSVGCentered,
                       });
                       return (

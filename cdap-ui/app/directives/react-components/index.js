@@ -150,4 +150,7 @@ angular
   })
   .directive('pluginContextMenu', function(reactDirective) {
     return reactDirective(window.CaskCommon.PluginContextMenu);
+  })
+  .directive('selectionBox', function(reactDirective) {
+    return reactDirective(window.CaskCommon.SelectionBox);
   });

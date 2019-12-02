@@ -77,6 +77,20 @@ angular.module(PKG.name + '.commons')
       vm.selectedNode = node;
     };
 
+    vm.selectionBox = {
+      boundaries: ['#dag-container'],
+      selectables: ['.box'],
+      toggle: false,
+      start: () => vm.selectNode = null,
+      move: ({added, removed}) => {
+        if (added.length || removed.length) {
+          console.log('Angular: ', added, removed);
+        }
+      },
+      end: () => {
+        console.log('selection end');
+      }
+    };
     const repaintTimeoutsMap = {};
 
     vm.pipelineArtifactType = HydratorPlusPlusConfigStore.getAppType();
@@ -250,9 +264,11 @@ angular.module(PKG.name + '.commons')
       Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
       Mousetrap.bind(['shift'], () => {
         vm.secondInstance.setDraggable('diagram-container', false);
+        vm.selectionBox.toggle = true;
       }, 'keydown');
       Mousetrap.bind(['shift'], () => {
         vm.secondInstance.setDraggable('diagram-container', true);
+        vm.selectionBox.toggle = false;
       }, 'keyup');
     }
 

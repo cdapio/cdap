@@ -299,6 +299,14 @@
         on-nodes-paste="DAGPlusPlusCtrl.onNodesPaste"
         pipeline-artifact-type="DAGPlusPlusCtrl.pipelineArtifactType"
       ></pipeline-context-menu>
+      <selection-box
+        boundaries="DAGPlusPlusCtrl.selectionBox.boundaries"
+        selectables="DAGPlusPlusCtrl.selectionBox.selectables"
+        toggle-selection="DAGPlusPlusCtrl.selectionBox.toggle"
+        on-selection-start="DAGPlusPlusCtrl.selectionBox.start"
+        on-selection-move="DAGPlusPlusCtrl.selectionBox.move"
+        on-selection-end="DAGPlusPlusCtrl.selectionBox.end"
+      ></selection-box>
     </div>
 </div>
 
