@@ -50,68 +50,75 @@ export default function SelectionBox(props: ISelectionBoxProps) {
   const [selection, setSelection] = React.useState(null);
 
   React.useEffect(() => {
-    setSelection(Selection.create({
-      // Class for the selection-area
-      class: selectionClass || SELECTION_CSS_CLASS,
+    setSelection(
+      Selection.create({
+        // Class for the selection-area
+        class: selectionClass || SELECTION_CSS_CLASS,
 
-      // All elements in this container can be selected
-      selectables: selectables || SELECTABLES,
+        // All elements in this container can be selected
+        selectables: selectables || SELECTABLES,
 
-      // The container is also the boundary in this case
-      boundaries: boundaries || BOUNDARIES,
-    }));
+        // The container is also the boundary in this case
+        boundaries: boundaries || BOUNDARIES,
+      })
+    );
   }, []);
 
-  React.useEffect(() => {
-    if (!selection) {
-      return;
-    }
-    if (toggleSelection) {
-      selection.enable();
-    } else {
-      selection.disable();
-    }
+  React.useEffect(
+    () => {
+      if (!selection) {
+        return;
+      }
+      if (toggleSelection) {
+        selection.enable();
+      } else {
+        selection.disable();
+      }
+    },
+    [toggleSelection]
+  );
 
-  }, [toggleSelection]);
+  React.useEffect(
+    () => {
+      if (!selection) {
+        return;
+      }
 
-  React.useEffect(() => {
-    if (!selection) {
-      return;
-    }
+      selection.on('start', () => {
+        if (onSelectionStart) {
+          onSelectionStart();
+        }
+      });
+      selection.on('move', ({ changed: { removed, added } }) => {
+        const addedNodes = [];
+        const removedNodes = [];
+        for (const el of added) {
+          addedNodes.push(el.id);
+        }
+        for (const el of removed) {
+          removedNodes.push(el.id);
+        }
+        if (added.length || removed.length) {
+          console.log({ added, removed });
+        }
+        if (onSelectionMove) {
+          onSelectionMove({ added, removed });
+        }
+      });
+      selection.on('stop', () => {
+        if (onSelectionEnd) {
+          onSelectionEnd();
+        }
+      });
 
-    selection.on('start', () => {
-      if (onSelectionStart) {
-        onSelectionStart();
-      }
-    });
-    selection.on('move', ({ changed: { removed, added } }) => {
-      let addedNodes = [];
-      let removedNodes = [];
-      for (const el of added) {
-        addedNodes.push(el.id);
-      }
-      for (const el of removed) {
-        removedNodes.push(el.id);
-      }
-      if (added.length || removed.length) {
-        console.log({ added, removed });
-      }
-      if (onSelectionMove) {
-        onSelectionMove({ added, removed });
-      }
-    });
-    selection.on('stop', () => {
-      if (onSelectionEnd) {
-        onSelectionEnd();
-      }
-    });
-
-    return () => {
-      if (selection) {
-        selection.destroy();
-      }
-    };
-  }, [selection]);
+      return () => {
+        if (selection) {
+          selection.destroy();
+        }
+      };
+    },
+    [selection]
+  );
   return null;
 }
 

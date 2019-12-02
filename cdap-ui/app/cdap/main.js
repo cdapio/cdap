@@ -268,7 +268,7 @@ class CDAP extends Component {
                       }
                       const SelectionBox = Loadable({
                         loader: () =>
-                          import(/* webpackChunkName: "SelectionBox" */ 'components/SelectionBoxWrapper'),
+                          import(/* webpackChunkName: "SelectionBox" */ 'components/SelectionBox/SelectionBoxWrapper'),
                         loading: LoadingSVGCentered,
                       });
                       return (
