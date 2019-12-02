@@ -102,7 +102,7 @@ export default function SelectionBox(props: ISelectionBoxProps) {
           console.log({ added, removed });
         }
         if (onSelectionMove) {
-          onSelectionMove({ added, removed });
+          onSelectionMove({ added: addedNodes, removed: removedNodes });
         }
       });
       selection.on('stop', () => {

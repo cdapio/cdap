@@ -113,7 +113,7 @@
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
-                 'selected': DAGPlusPlusCtrl.selectedNode.name === node.name,
+                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.name),
                }"
                ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
           <div class="node"

@@ -59,7 +59,7 @@ angular.module(PKG.name + '.commons')
     vm.comments = [];
     vm.nodeMenuOpen = null;
 
-    vm.selectedNode = null;
+    vm.selectedNode = [];
 
     var commentsTimeout,
         nodesTimeout,
@@ -74,17 +74,38 @@ angular.module(PKG.name + '.commons')
       if (vm.isDisabled) { return; }
       event.stopPropagation();
       clearConnectionsSelection();
-      vm.selectedNode = node;
+      vm.selectedNode.push(node);
+      console.log('selected by click', vm.selectedNode);
+    };
+
+    vm.isNodeSelected = (nodeName) => {
+      if (!vm.selectedNode.length) {
+        return false;
+      }
+      console.log('is selected?: ', vm.selectedNode.filter(node => node.name === nodeName));
+      return vm.selectedNode.filter(node => node.name === nodeName).length > 0;
     };
 
     vm.selectionBox = {
       boundaries: ['#dag-container'],
       selectables: ['.box'],
       toggle: false,
-      start: () => vm.selectNode = null,
+      start: () => {
+        console.log('start');
+        vm.selectedNode = [];
+      },
       move: ({added, removed}) => {
+        const selectedNodes = $scope.nodes.filter(node => {
+          if (added.indexOf(node.name) !== -1) {
+            return true;
+          }
+          return false;
+        });
+
+        vm.selectedNode = vm.selectedNode.filter(node => removed.indexOf(node.name) === -1).concat(selectedNodes);
         if (added.length || removed.length) {
           console.log('Angular: ', added, removed);
+          console.log('selectednodes: ', vm.selectedNode);
         }
       },
       end: () => {
@@ -262,11 +283,11 @@ angular.module(PKG.name + '.commons')
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
       Mousetrap.bind(['del', 'backspace'], onKeyboardDelete);
       Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
-      Mousetrap.bind(['shift'], () => {
+      Mousetrap.bind(['shift'], (e) => {
         vm.secondInstance.setDraggable('diagram-container', false);
         vm.selectionBox.toggle = true;
       }, 'keydown');
-      Mousetrap.bind(['shift'], () => {
+      Mousetrap.bind(['shift'], (e) => {
         vm.secondInstance.setDraggable('diagram-container', true);
         vm.selectionBox.toggle = false;
       }, 'keyup');
@@ -292,7 +313,7 @@ angular.module(PKG.name + '.commons')
     }
 
     function onKeyboardDelete() {
-      if (vm.selectedNode) {
+      if (vm.selectedNode.length) {
         vm.onNodeDelete(null, vm.selectedNode);
       } else {
         vm.removeSelectedConnections();
@@ -610,8 +631,12 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.handleCanvasClick = () => {
+      if (vm.selectionBox.toggle) {
+        return;
+      }
       vm.toggleNodeMenu();
-      vm.selectedNode = null;
+      console.log('asdsd');
+      vm.selectedNode = [];
       vm.clearCommentSelection();
     };
 
@@ -684,7 +709,7 @@ angular.module(PKG.name + '.commons')
     function toggleConnections(selectedObj) {
       if (vm.isDisabled) { return; }
 
-      vm.selectedNode = null;
+      vm.selectedNode = [];
 
       // is connection
       if (selectedObj.sourceId && selectedObj.targetId) {
@@ -725,7 +750,7 @@ angular.module(PKG.name + '.commons')
     }
 
     function toggleConnection(connObj) {
-      vm.selectedNode = null;
+      vm.selectedNode = [];
 
       if (selectedConnections.indexOf(connObj) === -1) {
         selectedConnections.push(connObj);
@@ -971,7 +996,7 @@ angular.module(PKG.name + '.commons')
 
     vm.selectEndpoint = function(event, node) {
       if (event.target.className.indexOf('endpoint-circle') === -1) { return; }
-      vm.selectedNode = null;
+      vm.selectedNode = [];
 
       let sourceElem = node.name;
       let endpoints = vm.instance.getEndpoints(sourceElem);
@@ -1076,35 +1101,37 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
-    vm.onNodeDelete = function (event, node) {
+    vm.onNodeDelete = function (event, nodes) {
       if (event) {
         event.stopPropagation();
       }
 
-      DAGPlusPlusNodesActionsFactory.removeNode(node.name);
-
-      if (Object.keys(splitterNodesPorts).indexOf(node.name) !== -1) {
-        delete splitterNodesPorts[node.name];
-      }
-      let nodeType = node.plugin.type || node.type;
-      if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
-        let portNames = node.outputSchema.map(port => port.name);
-        let endpoints = portNames.map(portName => `endpoint_${node.name}_port_${portName}`);
-        angular.forEach(endpoints, (endpoint) => {
-          deleteEndpoints(endpoint);
+      nodes.forEach(node => {
+        DAGPlusPlusNodesActionsFactory.removeNode(node.name);
+  
+        if (Object.keys(splitterNodesPorts).indexOf(node.name) !== -1) {
+          delete splitterNodesPorts[node.name];
+        }
+        let nodeType = node.plugin.type || node.type;
+        if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
+          let portNames = node.outputSchema.map(port => port.name);
+          let endpoints = portNames.map(portName => `endpoint_${node.name}_port_${portName}`);
+          angular.forEach(endpoints, (endpoint) => {
+            deleteEndpoints(endpoint);
+          });
+        }
+  
+        vm.instance.unbind('connectionDetached');
+        selectedConnections = selectedConnections.filter(function(selectedConnObj) {
+          return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
         });
-      }
-
-      vm.instance.unbind('connectionDetached');
-      selectedConnections = selectedConnections.filter(function(selectedConnObj) {
-        return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
+        vm.instance.unmakeTarget(node.name);
+  
+        vm.instance.remove(node.name);
       });
-      vm.instance.unmakeTarget(node.name);
-
-      vm.instance.remove(node.name);
       vm.instance.bind('connectionDetached', removeConnection);
 
-      vm.selectedNode = null;
+      vm.selectedNode = [];
     };
 
     vm.cleanUpGraph = function () {
@@ -1162,7 +1189,7 @@ angular.module(PKG.name + '.commons')
         vm.nodeMenuOpen = null;
       } else {
         vm.nodeMenuOpen = node.name;
-        vm.selectedNode = node;
+        vm.selectedNode = [node];
       }
     };
 
@@ -1314,24 +1341,26 @@ angular.module(PKG.name + '.commons')
       return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'emit-errors');
     };
 
-    vm.onNodeCopy = (node) => {
-      const config = {
-        icon: node.icon,
-        type: node.type,
-        plugin: {
-          name: node.plugin.name,
-          artifact: node.plugin.artifact,
-          properties: angular.copy(node.plugin.properties),
-          label: node.plugin.label,
-        },
-      };
+    vm.onNodeCopy = (nodes) => {
+      const stages = nodes.map(node => {
+        return {
+          icon: node.icon,
+          type: node.type,
+          plugin: {
+            name: node.plugin.name,
+            artifact: node.plugin.artifact,
+            properties: angular.copy(node.plugin.properties),
+            label: node.plugin.label,
+          },
+        };
+      });
 
       vm.nodeMenuOpen = null;
 
       // The idea behind this clipboard object is to replicate the stage config as much as possible.
       // The roadmap is to be able to support copying multiple stages with their connections.
       const clipboardObj = {
-        stages: [config]
+        stages
       };
 
       const clipboardText = JSON.stringify(clipboardObj);
@@ -1345,7 +1374,7 @@ angular.module(PKG.name + '.commons')
     };
 
     function onKeyboardCopy() {
-      if (!vm.selectedNode) { return; }
+      if (!vm.selectedNode.length) { return; }
 
       vm.onNodeCopy(vm.selectedNode);
     }
