@@ -22,6 +22,7 @@ import {
 } from 'components/ConfigurationGroup/types';
 import xor from 'lodash/xor';
 import flatten from 'lodash/flatten';
+import { Position } from 'components/AbstractWidget/GetSchemaWidget';
 
 interface IDefaultValues {
   [key: string]: string;
@@ -157,6 +158,7 @@ function addPluginFunctions(configurationGroups) {
       }
 
       // add plugin function as a separate widget
+      const pluginFunctionPosition: string = pluginFunction.position || Position.BottomLeft;
       const pluginFunctionWidget = {
         'widget-type': 'get-schema',
         'widget-category': 'plugin',
@@ -166,6 +168,7 @@ function addPluginFunctions(configurationGroups) {
           'add-properties': pluginFunction['add-properties'],
           'required-fields': pluginFunction['required-fields'],
           'missing-required-fields-message': pluginFunction['missing-required-fields-message'],
+          position: pluginFunctionPosition, // top, bottom, left, right or a combination ex. top-left
         },
       };
 
@@ -174,8 +177,16 @@ function addPluginFunctions(configurationGroups) {
       };
       delete propertyWidget['plugin-function'];
 
-      newGroup.properties.push(pluginFunctionWidget);
-      newGroup.properties.push(propertyWidget);
+      if (
+        pluginFunctionPosition === Position.BottomLeft ||
+        pluginFunctionPosition === Position.BottomRight
+      ) {
+        newGroup.properties.push(propertyWidget);
+        newGroup.properties.push(pluginFunctionWidget);
+      } else {
+        newGroup.properties.push(pluginFunctionWidget);
+        newGroup.properties.push(propertyWidget);
+      }
     });
 
     updatedConfigurationGroups.push(newGroup);
