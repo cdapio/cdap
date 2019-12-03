@@ -60,6 +60,7 @@ import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemo
 // See ./graphql/fragements/README.md
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
+import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -97,11 +98,26 @@ class CDAP extends Component {
       loading: true,
     };
     this.eventEmitter = ee(ee);
+    this.eventEmitter.on(WINDOW_ON_FOCUS, this.onWindowFocus);
+    this.eventEmitter.on(WINDOW_ON_BLUR, this.onWindowBlur);
   }
 
   componentWillMount() {
     this.fetchSessionTokenAndUpdateState().then(this.setUIState);
   }
+
+  componentWillUnmount() {
+    this.eventEmitter.off(WINDOW_ON_FOCUS, this.onWindowFocus);
+    this.eventEmitter.off(WINDOW_ON_BLUR, this.onWindowBlur);
+  }
+
+  onWindowBlur = () => {
+    StatusFactory.stopPollingForBackendStatus();
+  };
+
+  onWindowFocus = () => {
+    this.fetchSessionTokenAndUpdateState().then(this.setUIState);
+  };
 
   setUIState = () => {
     StatusFactory.startPollingForBackendStatus();

@@ -21,7 +21,7 @@ import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMe
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import { Observable } from 'rxjs/Observable';
-import SystemServicesStore, { pollSystemServices } from 'services/SystemServicesStore';
+import SystemServicesStore, { pollSystemServices, stopSystemServicesPolling } from 'services/SystemServicesStore';
 import SessionTokenStore from 'services/SessionTokenStore';
 
 let pollingObservable;
@@ -153,6 +153,7 @@ const stopServicePolling = () => {
     systemServiceSubscription();
     systemServiceSubscription = null;
   }
+  stopSystemServicesPolling();
 };
 
 const stopPolling = () => {
