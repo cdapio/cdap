@@ -787,7 +787,7 @@ public class DefaultStore implements Store {
 
   @Override
   public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime,
-                                      long endTime, int limit, Predicate<RunRecordMeta> filter) {
+                                      long endTime, int limit, @Nullable Predicate<RunRecordMeta> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);

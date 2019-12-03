@@ -105,7 +105,6 @@ import javax.annotation.Nullable;
  * Tests for {@link ProgramLifecycleHttpHandler}
  */
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandlerTest.class);
 
   private static final Gson GSON = new GsonBuilder()
     .create();

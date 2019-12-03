@@ -516,5 +516,5 @@ public interface Store {
    * @return          runs for each program
    */
   List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime, long endTime,
-                               int limit, Predicate<RunRecordMeta> filter);
+                               int limit, @Nullable Predicate<RunRecordMeta> filter);
 }

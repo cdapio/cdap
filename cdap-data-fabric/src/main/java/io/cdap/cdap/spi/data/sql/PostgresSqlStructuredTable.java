@@ -60,6 +60,7 @@ import javax.annotation.Nullable;
  */
 public class PostgresSqlStructuredTable implements StructuredTable {
   private static final Logger LOG = LoggerFactory.getLogger(PostgresSqlStructuredTable.class);
+  private static final int SCAN_FETCH_SIZE = 100;
 
   private final Connection connection;
   private final StructuredTableSchema tableSchema;
@@ -199,6 +200,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
+      statement.setFetchSize(SCAN_FETCH_SIZE);
       int index = 1;
       if (keyRange.getBegin() != null) {
         for (Field<?> key : keyRange.getBegin()) {
@@ -233,6 +235,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     // We don't close the statement here because once it is closed, the result set is also closed.
     try {
       PreparedStatement statement = connection.prepareStatement(sql);
+      statement.setFetchSize(SCAN_FETCH_SIZE);
       setField(statement, index, 1);
       LOG.trace("SQL statement: {}", statement);
       ResultSet resultSet = statement.executeQuery();
