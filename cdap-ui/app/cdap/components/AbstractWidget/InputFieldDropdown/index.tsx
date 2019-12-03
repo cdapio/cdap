@@ -18,16 +18,24 @@ import Select from 'components/AbstractWidget/FormInputs/Select';
 import { IWidgetProps, IStageSchema } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import MultiSelect from '../FormInputs/MultiSelect';
 
 interface IField {
   name: string;
-  type: string;
+  type: string[];
 }
 
-interface IInputFieldProps extends IWidgetProps<null> {}
+const delimiter = ',';
+
+interface IInputFieldWidgetProps {
+  multiselect?: boolean;
+  allowedTypes?: string[];
+}
+
+interface IInputFieldProps extends IWidgetProps<IInputFieldWidgetProps> {}
 
 // We are assuming all incoming stages have the same schema
-function getFields(schemas: IStageSchema[]) {
+function getFields(schemas: IStageSchema[], allowedTypes: string[]) {
   let fields = [];
   if (!schemas || schemas.length === 0) {
     return fields;
@@ -38,7 +46,9 @@ function getFields(schemas: IStageSchema[]) {
     const unparsedFields = JSON.parse(stage.schema).fields;
 
     if (unparsedFields.length > 0) {
-      fields = unparsedFields.map((field: IField) => field.name);
+      fields = unparsedFields
+        .filter((field: IField) => containsType(field.type, allowedTypes))
+        .map((field: IField) => field.name);
     }
   } catch {
     // tslint:disable-next-line: no-console
@@ -47,19 +57,76 @@ function getFields(schemas: IStageSchema[]) {
   return fields;
 }
 
+// Function that checks if types contains a type that is in allowedTypes
+// This is meant to handle nullable fields since a nullable string type is
+// presented as ['string','null'].
+function containsType(types: string[], allowedTypes: string[]) {
+  if (allowedTypes.length == 0) {
+    return true;
+  }
+
+  for (const allowedType of allowedTypes) {
+    if (types.length === 1 && types[0] === allowedType) {
+      return true;
+    } else if (types.length === 2 && types.includes(allowedType) && types.includes('null')) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const InputFieldDropdown: React.FC<IInputFieldProps> = ({
   value,
   onChange,
   disabled,
   extraConfig,
+  widgetProps,
 }) => {
   const inputSchema = objectQuery(extraConfig, 'inputSchema');
-  const fieldValues = getFields(inputSchema);
-  const widgetProps = {
+
+  // TODO: Add handling for empty values in dropdown (https://issues.cask.co/browse/CDAP-16143)
+  const isMultiSelect: boolean = widgetProps.multiselect || false;
+
+  // List of type names to allow in the dropdown
+  // (ex. ['string']) display fields of type string and nullable string
+  // in the dropdown
+  // TODO: Add support for disallowedTypes (https://issues.cask.co/browse/CDAP-16144)
+  const allowedTypes: string[] = widgetProps.allowedTypes || [];
+
+  const fieldValues = getFields(inputSchema, allowedTypes);
+
+  const newValue = value
+    .toString()
+    .split(delimiter)
+    .filter((value) => fieldValues.includes(value))
+    .join(delimiter);
+
+  if (newValue !== value) {
+    onChange(newValue);
+  }
+
+  if (isMultiSelect) {
+    const multiSelectWidgetProps = {
+      delimiter,
+      options: fieldValues.map((field) => ({ id: field, label: field })),
+    };
+
+    return (
+      <MultiSelect
+        value={value}
+        onChange={onChange}
+        widgetProps={multiSelectWidgetProps}
+        disabled={disabled}
+      />
+    );
+  }
+  const selectWidgetProps = {
     options: fieldValues,
   };
-
-  return <Select value={value} onChange={onChange} widgetProps={widgetProps} disabled={disabled} />;
+  return (
+    <Select value={value} onChange={onChange} widgetProps={selectWidgetProps} disabled={disabled} />
+  );
 };
 
 export default InputFieldDropdown;

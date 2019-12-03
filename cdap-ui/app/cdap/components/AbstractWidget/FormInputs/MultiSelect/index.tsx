@@ -14,14 +14,14 @@
  * the License.
 */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-interface IOption {
+export interface IOption {
   id: string;
   label: string;
 }
@@ -47,6 +47,14 @@ export default function MultiSelect({ value, widgetProps, disabled, onChange }: 
     setSelections(values);
     onChange(selectionsString);
   };
+
+  useEffect(
+    () => {
+      const selection = value.toString().split(delimiter);
+      setSelections(selection);
+    },
+    [value]
+  );
 
   return (
     <Select multiple value={selections} onChange={onChangeHandler} disabled={disabled}>

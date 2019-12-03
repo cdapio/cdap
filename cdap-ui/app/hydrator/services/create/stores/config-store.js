@@ -607,7 +607,7 @@ class HydratorPlusPlusConfigStore {
     };
 
     if (this.state.__ui__.nodes && this.state.__ui__.nodes.length) {
-      this.state.__ui__.nodes.forEach( n => {
+      this.state.__ui__.nodes.filter(n => !n._backendProperties).forEach( n => {
         listOfPromises.push(this.HydratorPlusPlusHydratorService.fetchBackendProperties(n, this.getAppType()));
       });
     } else {
@@ -621,21 +621,43 @@ class HydratorPlusPlusConfigStore {
             if (!this.validateState()) {
               this.emitChange();
             }
+
             // Once the backend properties are fetched for all nodes, fetch their config jsons.
             // This will be used for schema propagation where we import/use a predefined app/open a published pipeline
             // the user should directly click on the last node and see what is the incoming schema
             // without having to open the subsequent nodes.
+            const reqBody = [];
             this.state.__ui__.nodes.forEach( n => {
               // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
               // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
-              if (!n.plugin.artifact) { return; }
-              this.HydratorPlusPlusPluginConfigFactory.fetchWidgetJson(
-                n.plugin.artifact.name,
-                n.plugin.artifact.version,
-                n.plugin.artifact.scope,
-                `widgets.${n.plugin.name}-${n.type}`
-              ).then(parseNodeConfig.bind(null, n));
+              if (!n.plugin || !n.plugin.artifact) { return; }
+              const pluginInfo = {
+                name: n.plugin.artifact.name,
+                version: n.plugin.artifact.version,
+                scope: n.plugin.artifact.scope,
+                properties: [
+                  `widgets.${n.plugin.name}-${n.type}`,
+                ],
+              };
+
+              reqBody.push(pluginInfo);
             });
+
+            this.myPipelineApi.fetchAllPluginsProperties({ namespace: this.$stateParams.namespace }, reqBody)
+              .$promise
+              .then((resInfo) => {
+                resInfo.forEach((pluginInfo, index) => {
+                  const pluginProperties = Object.keys(pluginInfo.properties);
+                  if (pluginProperties.length === 0) { return; }
+
+                  try {
+                    const config = JSON.parse(pluginInfo.properties[pluginProperties[0]]);
+                    parseNodeConfig(this.state.__ui__.nodes[index], config);
+                  } catch (e) {
+                    // no-op
+                  }
+                });
+              });
           },
           (err) => console.log('ERROR fetching backend properties for nodes', err)
         );

@@ -82,17 +82,33 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorStudioPlusPlus'
           },
           resolve: {
-            rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService) {
+             rCDAPVersion: function($q) {
+              var defer = $q.defer();
+              let cdapversion = window.CaskCommon.VersionStore.getState().version;
+              if (cdapversion) {
+                defer.resolve(cdapversion);
+                return defer.promise;
+              }
+              const subscription = window.CaskCommon.VersionStore.subscribe(() => {
+                let cdapversion = window.CaskCommon.VersionStore.getState().version;
+                if (cdapversion) {
+                  defer.resolve(cdapversion);
+                  subscription();
+                }
+              });
+              return defer.promise;
+            },
+            rConfig: function(rCDAPVersion, $stateParams, mySettings, $q, myHelpers, $window, HydratorPlusPlusHydratorService) {
               var defer = $q.defer();
               if ($stateParams.data) {
                 // This is being used while cloning a published a pipeline.
                 let isVersionInRange = HydratorPlusPlusHydratorService
                   .isVersionInRange({
-                    supportedVersion: $rootScope.cdapVersion,
+                    supportedVersion: rCDAPVersion,
                     versionRange: $stateParams.data.artifact.version
                   });
                 if (isVersionInRange) {
-                  $stateParams.data.artifact.version = $rootScope.cdapVersion;
+                  $stateParams.data.artifact.version = rCDAPVersion;
                 } else {
                   defer.resolve(false);
                 }
@@ -106,12 +122,12 @@ angular.module(PKG.name + '.feature.hydrator')
                     if (angular.isObject(draft)) {
                       let isVersionInRange = HydratorPlusPlusHydratorService
                         .isVersionInRange({
-                          supportedVersion: $rootScope.cdapVersion,
+                          supportedVersion: rCDAPVersion,
                           versionRange: draft.artifact.version
                         });
 
                       if (isVersionInRange) {
-                        draft.artifact.version = $rootScope.cdapVersion;
+                        draft.artifact.version = rCDAPVersion;
                       } else {
                         defer.resolve(false);
                         return;
@@ -162,16 +178,16 @@ angular.module(PKG.name + '.feature.hydrator')
               }
               return defer.promise;
             },
-            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, $rootScope) {
+            rSelectedArtifact: function(rCDAPVersion, $stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
               var defer = $q.defer();
               let isArtifactValid = (backendArtifacts, artifact) => {
                 return backendArtifacts.filter( a =>
-                  (a.name === artifact && a.version === $rootScope.cdapVersion)
+                  (a.name === artifact && a.version === rCDAPVersion)
                 ).length;
               };
               let isAnyUISupportedArtifactPresent = (backendArtifacts) => {
                 return backendArtifacts
-                        .filter( artifact => artifact.version === $rootScope.cdapVersion)
+                        .filter( artifact => artifact.version === rCDAPVersion)
                         .filter( artifact => uiSupportedArtifacts.indexOf(artifact.name) !== -1);
               };
               let getValidUISupportedArtifact = (backendArtifacts) => {
@@ -229,7 +245,7 @@ angular.module(PKG.name + '.feature.hydrator')
             );
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, $rootScope) {
+            rArtifacts: function(rCDAPVersion, myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
@@ -239,7 +255,7 @@ angular.module(PKG.name + '.feature.hydrator')
                   return;
                 } else {
                   let filteredRes = res
-                    .filter( artifact => artifact.version === $rootScope.cdapVersion)
+                    .filter( artifact => artifact.version === rCDAPVersion)
                     .filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
 
                   filteredRes = filteredRes.map( r => {
@@ -292,7 +308,7 @@ angular.module(PKG.name + '.feature.hydrator')
             document.title = `${productName} | ${featureName} | ${$stateParams.pipelineId}`;
           },
           resolve : {
-            rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, $window) {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $window) {
               var params = {
                 namespace: $stateParams.namespace,
                 pipeline: $stateParams.pipelineId

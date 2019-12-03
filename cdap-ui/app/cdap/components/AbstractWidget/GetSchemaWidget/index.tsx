@@ -30,14 +30,28 @@ const styles = (): StyleRules => {
     spinner: {
       fontSize: '16px',
     },
+    buttonWrapper: {
+      textAlign: 'right',
+    },
   };
 };
 
-interface IGetSchemaProps extends IWidgetProps<null>, WithStyles<typeof styles> {}
+export enum Position {
+  TopLeft = 'top-left',
+  TopRight = 'top-right',
+  BottomLeft = 'bottom-left',
+  BottomRight = 'bottom-right',
+}
+interface IGetSchemaWidgetProps {
+  position?: Position;
+}
 
-const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes }) => {
+interface IGetSchemaProps extends IWidgetProps<IGetSchemaWidgetProps>, WithStyles<typeof styles> {}
+
+const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes, widgetProps }) => {
   const validateProperties = objectQuery(extraConfig, 'validateProperties');
   const [loading, setLoading] = React.useState<boolean>(false);
+  const position = widgetProps.position || '';
 
   function onClickHander() {
     if (loading) {
@@ -58,11 +72,15 @@ const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes }
     </span>
   );
 
+  const className =
+    position === Position.TopRight || position === Position.BottomRight
+      ? classes.buttonWrapper
+      : '';
   return (
-    <div>
+    <div className={className}>
       <Button
-        variant="contained"
-        color="primary"
+        variant="outlined"
+        color="default"
         disabled={typeof validateProperties !== 'function'}
         onClick={onClickHander}
         className={classes.button}
