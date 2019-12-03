@@ -126,7 +126,11 @@ class DAGPlusPlusNodesStore {
 
   addNode(nodeConfig) {
     if (!nodeConfig.name) {
-      nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
+      // name is used for id in html and html ids with space are invalid
+      // and not supported by spec. document.querySelector will not work
+      // for ids with spaces.
+      const label = nodeConfig.plugin.label.replace(/ /g, '-');
+      nodeConfig.name = label + '-' + this.uuid.v4();
     }
     this.addStateToHistory();
     switch (this.GLOBALS.pluginConvert[nodeConfig.type]) {

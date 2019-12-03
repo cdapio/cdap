@@ -75,14 +75,20 @@ angular.module(PKG.name + '.commons')
       event.stopPropagation();
       clearConnectionsSelection();
       vm.selectedNode.push(node);
-      console.log('selected by click', vm.selectedNode);
     };
-
+    vm.getSelectedNodes = () => vm.selectedNode;
+    vm.deleteSelectedNodes = () => onKeyboardDelete();
+    vm.onPluginContextMenuOpen = (nodeId) => {
+      const node = DAGPlusPlusNodesStore.getNodes().find(n => n.name === nodeId);
+      if (!node) {
+        return;
+      }
+      vm.selectedNode = [node];
+    }
     vm.isNodeSelected = (nodeName) => {
       if (!vm.selectedNode.length) {
         return false;
       }
-      console.log('is selected?: ', vm.selectedNode.filter(node => node.name === nodeName));
       return vm.selectedNode.filter(node => node.name === nodeName).length > 0;
     };
 
@@ -91,7 +97,6 @@ angular.module(PKG.name + '.commons')
       selectables: ['.box'],
       toggle: false,
       start: () => {
-        console.log('start');
         vm.selectedNode = [];
       },
       move: ({added, removed}) => {
@@ -103,13 +108,9 @@ angular.module(PKG.name + '.commons')
         });
 
         vm.selectedNode = vm.selectedNode.filter(node => removed.indexOf(node.name) === -1).concat(selectedNodes);
-        if (added.length || removed.length) {
-          console.log('Angular: ', added, removed);
-          console.log('selectednodes: ', vm.selectedNode);
-        }
       },
       end: () => {
-        console.log('selection end');
+        // console.log('selection end');
       }
     };
     const repaintTimeoutsMap = {};
@@ -160,19 +161,23 @@ angular.module(PKG.name + '.commons')
       handleNodePaste(JSON.stringify(stages));
     };
 
-    vm.getPluginConfiguration = (nodeid) => {
-      const node = HydratorPlusPlusConfigStore.getNodes().find(node => node.name === nodeid);
+    vm.getPluginConfiguration = () => {
+      if (!vm.selectedNode.length) {
+        return;
+      }
       return {
-        stages: [{
-          icon: node.icon,
-          type: node.type,
-          plugin: {
-            name: node.plugin.name,
-            artifact: node.plugin.artifact,
-            properties: angular.copy(node.plugin.properties),
-            label: node.plugin.label,
-          },
-        }]
+        stages: this.selectedNode.map((node) => {
+          return {
+            icon: node.icon,
+            type: node.type,
+            plugin: {
+              name: node.plugin.name,
+              artifact: node.plugin.artifact,
+              properties: angular.copy(node.plugin.properties),
+              label: node.plugin.label,
+            },
+          };
+        })
       };
     };
 
@@ -283,13 +288,17 @@ angular.module(PKG.name + '.commons')
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
       Mousetrap.bind(['del', 'backspace'], onKeyboardDelete);
       Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
-      Mousetrap.bind(['shift'], (e) => {
-        vm.secondInstance.setDraggable('diagram-container', false);
-        vm.selectionBox.toggle = true;
+      Mousetrap.bind('shift', () => {
+        $scope.$apply(function() {
+          vm.secondInstance.setDraggable('diagram-container', false);
+          vm.selectionBox.toggle = true;
+        });
       }, 'keydown');
-      Mousetrap.bind(['shift'], (e) => {
-        vm.secondInstance.setDraggable('diagram-container', true);
-        vm.selectionBox.toggle = false;
+      Mousetrap.bind('shift', () => {
+        $scope.$apply(function() {
+          vm.secondInstance.setDraggable('diagram-container', true);
+          vm.selectionBox.toggle = false;
+        });
       }, 'keyup');
     }
 
@@ -635,7 +644,6 @@ angular.module(PKG.name + '.commons')
         return;
       }
       vm.toggleNodeMenu();
-      console.log('asdsd');
       vm.selectedNode = [];
       vm.clearCommentSelection();
     };
@@ -1403,24 +1411,27 @@ angular.module(PKG.name + '.commons')
     function handleNodePaste(text) {
       try {
         const config = JSON.parse(text);
+        const stages = myHelpers.objectQuery(config, 'stages');
+        if (!stages || !Array.isArray(stages)) {
+          return;
+        }
 
-        // currently only handling 1 node copy/paste
-        const node = myHelpers.objectQuery(config, 'stages', 0);
-
-        if (!node) { return; }
-
-        // change name
-        let newName = `copy_${node.plugin.label}`;
-        const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
-          .filter(filteredNode => {
-            return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
-          });
-
-        newName = filteredNodes.length > 0 ? `${newName}${filteredNodes.length + 1}` : newName;
-
-        node.plugin.label = newName;
-
-        DAGPlusPlusNodesActionsFactory.addNode(node);
+        stages.forEach(node => {
+          if (!node) { return; }
+  
+          // change name
+          let newName = `copy_${node.plugin.label}`;
+          const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
+            .filter(filteredNode => {
+              return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
+            });
+  
+          newName = filteredNodes.length > 0 ? `${newName}${filteredNodes.length + 1}` : newName;
+  
+          node.plugin.label = newName;
+  
+          DAGPlusPlusNodesActionsFactory.addNode(node);
+        });
       } catch (e) {
         console.log('error parsing node config', e);
       }

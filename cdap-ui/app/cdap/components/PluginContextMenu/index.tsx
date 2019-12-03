@@ -19,23 +19,43 @@ import { ContextMenu, IContextMenuOption } from 'components/ContextMenu';
 import PropTypes from 'prop-types';
 import { CopyToClipBoard } from 'services/Clipboard';
 
-export default function PluginContextMenu({ nodeId, getPluginConfiguration }) {
+export default function PluginContextMenu({
+  nodeId,
+  getPluginConfiguration,
+  getSelectedNodes,
+  onDelete,
+  onOpen,
+}) {
   const PluginContextMenuOptions: IContextMenuOption[] = [
     {
       name: 'plugin copy',
-      label: 'Copy Plugin',
+      label: () => (getSelectedNodes().length > 1 ? 'Copy Plugins' : 'Copy Plugin'),
       onClick: () => {
-        const text = JSON.stringify(getPluginConfiguration(nodeId));
+        const text = JSON.stringify(getPluginConfiguration());
         CopyToClipBoard(text).then(
           () => console.log('Success now show a tooltip or something to the user'),
           () => console.error('Fail!. Show to the user copy failed')
         );
       },
     },
+    {
+      name: 'plugin delete',
+      label: () => (getSelectedNodes().length > 1 ? 'Delete Plugins' : 'Delete Plugin'),
+      onClick: () => {
+        onDelete();
+      },
+    },
   ];
+  const onPluginContextMenuOpen = () => {
+    onOpen(nodeId);
+  };
   return (
     <React.Fragment>
-      <ContextMenu selector={`#${nodeId}`} options={PluginContextMenuOptions} />
+      <ContextMenu
+        selector={`#${nodeId}`}
+        options={PluginContextMenuOptions}
+        onOpen={onPluginContextMenuOpen}
+      />
     </React.Fragment>
   );
 }
@@ -43,4 +63,7 @@ export default function PluginContextMenu({ nodeId, getPluginConfiguration }) {
 (PluginContextMenu as any).propTypes = {
   nodeId: PropTypes.string,
   getPluginConfiguration: PropTypes.func,
+  getSelectedNodes: PropTypes.func,
+  onDelete: PropTypes.func,
+  onOpen: PropTypes.func,
 };

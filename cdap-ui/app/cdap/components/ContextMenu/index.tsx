@@ -21,7 +21,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 import PropTypes from 'prop-types';
 export interface IContextMenuOption {
   name: string;
-  label: string;
+  label: (() => string) | string;
   onClick: (event: React.SyntheticEvent) => void;
   disabled?: boolean;
 }
@@ -139,7 +139,7 @@ export const ContextMenu = ({ selector, element, options, onOpen }: IContextMenu
             key={name}
             onClick={disabled === true ? undefined : handleClose.bind(null, option)}
           >
-            {label}
+            {typeof label === 'function' ? label() : label}
           </MenuItemComp>
         );
       })}
