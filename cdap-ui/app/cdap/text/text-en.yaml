@@ -75,7 +75,6 @@ commons:
   keyValPairs:
     keyLabel: Key
     keyPlaceholder: key
-    reset: Reset
     valueLabel: Value
     valuePlaceholder: value
   market: Hub
@@ -2027,6 +2026,10 @@ features:
           clearAll: Clear All
           provided: Provided
           selectAll: Select All
+        RuntimeArgsModeless:
+          runBtnPopover: Run the pipeline once with the runtime arguments set above. Any changes made to the runtime arguments will be available only for the next run.
+          saveBtnPopover: Changes to runtime arguments will be saved for all future runs of the pipeline. This may impact any schedules and triggers configured for this pipeline.
+          specifyArgs: Specify runtime arguments, empty values need to come from the pipeline.
     ProfilesListView:
       click: Click here
       countProfiles:

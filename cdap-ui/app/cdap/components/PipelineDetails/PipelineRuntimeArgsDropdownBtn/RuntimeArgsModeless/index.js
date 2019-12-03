@@ -27,8 +27,11 @@ import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
 import { convertKeyValuePairsToMap } from 'services/helpers';
 import Popover from 'components/Popover';
+import T from 'i18n-react';
 require('./RuntimeArgsModeless.scss');
 
+const I18N_PREFIX =
+  'features.PipelineDetails.PipelineRuntimeArgsDropdownBtn.RuntimeArgsTabContent.RuntimeArgsModeless';
 class RuntimeArgsModeless extends PureComponent {
   static propTypes = {
     runtimeArgs: PropTypes.object,
@@ -38,27 +41,14 @@ class RuntimeArgsModeless extends PureComponent {
   state = {
     saving: false,
     savedSuccessMessage: null,
-    savingAndRunBtnDisabled: this.isRuntimeArgsFilled(this.props.runtimeArgs),
     savingAndRun: false,
     error: null,
   };
 
-  componentWillReceiveProps(nextProps) {
-    let { runtimeArgs } = nextProps;
+  componentWillReceiveProps() {
     this.setState({
-      savingAndRunBtnDisabled: this.isRuntimeArgsFilled(runtimeArgs),
       savedSuccessMessage: null,
     });
-  }
-
-  isRuntimeArgsFilled(runtimeArgs) {
-    return (
-      runtimeArgs.pairs.filter(
-        (runtimearg) =>
-          (!runtimearg.provided && (!isEmpty(runtimearg.key) && isEmpty(runtimearg.value))) ||
-          (isEmpty(runtimearg.key) && !isEmpty(runtimearg.value))
-      ).length > 0
-    );
   }
 
   toggleSaving = () => {
@@ -94,7 +84,8 @@ class RuntimeArgsModeless extends PureComponent {
   saveRuntimeArgsAndRun = () => {
     this.toggleSavingAndRun();
     let { runtimeArgs } = this.props;
-    runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => !runtimeArg.provided);
+    // Arguments with empty values are assumed to be provided from the pipeline
+    runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => !runtimeArg.value);
     let runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
     runPipeline(runtimeArgsMap);
     this.props.onClose();
@@ -118,23 +109,22 @@ class RuntimeArgsModeless extends PureComponent {
           loading={this.state.savingAndRun}
           className="btn btn-secondary"
           onClick={this.saveRuntimeArgsAndRun}
-          disabled={this.state.savingAndRunBtnDisabled || this.state.saving}
+          disabled={this.state.saving}
           label="Run"
         />
       );
     };
     return (
       <div className="runtime-args-modeless">
+        <div className="arguments-label">{T.translate(`${I18N_PREFIX}.specifyArgs`)}</div>
         <RuntimeArgsTabContent />
         <div className="tab-footer">
           <div className="btns-container">
             <Popover target={SaveBtn} placement="left" showOn="Hover">
-              Changes to runtime arguments will be saved for all future runs of the pipeline. This
-              may impact any schedules and triggers configured for this pipeline.
+              {T.translate(`${I18N_PREFIX}.saveBtnPopover`)}
             </Popover>
             <Popover target={RunBtn} showOn="Hover" placement="right">
-              Run the pipeline once with the runtime arguments set above. Any changes made to the
-              runtime arguments will be available only for the next run.
+              {T.translate(`${I18N_PREFIX}.runBtnPopover`)}
             </Popover>
             {!isEmpty(this.state.savedSuccessMessage) ? (
               <span className="text-success">{this.state.savedSuccessMessage}</span>

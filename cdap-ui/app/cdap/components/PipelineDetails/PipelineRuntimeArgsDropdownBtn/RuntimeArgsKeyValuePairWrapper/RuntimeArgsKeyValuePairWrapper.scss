@@ -35,7 +35,7 @@ $key-value-pair-visible-number: 6;
   }
   .runtime-arguments-labels {
     display: grid;
-    grid-template-columns: 1fr 1fr 62px 100px;
+    grid-template-columns: 1fr 1fr 62px;
     grid-gap: 10px;
     margin-right: -25px;
 
@@ -100,7 +100,7 @@ $key-value-pair-visible-number: 6;
       margin-bottom: 15px;
       justify-content: initial;
       display: grid;
-      grid-template-columns: 1fr 1fr auto 100px;
+      grid-template-columns: 1fr 1fr auto;
       grid-gap: 10px;
 
       input[type="checkbox"] {
