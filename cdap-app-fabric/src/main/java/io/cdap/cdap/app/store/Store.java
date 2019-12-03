@@ -95,19 +95,6 @@ public interface Store {
   void setStart(ProgramRunId id, @Nullable String twillRunId, Map<String, String> systemArgs, byte[] sourceId);
 
   /**
-   * Logs rejection of a program run and persists program status to {@link ProgramRunStatus#REJECTED}.
-   *
-   * @param id run id of the program
-   * @param runtimeArgs the runtime arguments for this program run
-   * @param systemArgs the system arguments for this program run
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached
-   * @param artifactId artifact id used to create the application the program belongs to
-   */
-  void setRejected(ProgramRunId id, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
-                   byte[] sourceId, ArtifactId artifactId);
-
-  /**
    * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
    *
    * @param id run id of the program
@@ -275,19 +262,6 @@ public interface Store {
    * @return map of logged runs
    */
   Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId);
-
-  /**
-   * Fetches the historical (i.e COMPLETED or FAILED or KILLED) run records from a given set of namespaces
-   * which matches both the earliestStopTime and latestStartTime conditions.
-   *
-   * @param namespaces fetch run history that is belonged to one of these namespaces
-   * @param earliestStopTime fetch run history that has stopped at or after the earliestStopTime in seconds
-   * @param latestStartTime fetch run history that has started before the latestStartTime in seconds
-   * @param limit max number of entries to fetch for this history call
-   * @return map of logged runs
-   */
-  Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<NamespaceId> namespaces,
-                                                     long earliestStopTime, long latestStartTime, int limit);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -516,5 +490,5 @@ public interface Store {
    * @return          runs for each program
    */
   List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime, long endTime,
-                               int limit, Predicate<RunRecordMeta> filter);
+                               int limit, @Nullable Predicate<RunRecordMeta> filter);
 }

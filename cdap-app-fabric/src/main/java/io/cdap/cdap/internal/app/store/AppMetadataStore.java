@@ -997,8 +997,7 @@ public class AppMetadataStore {
     throws IOException {
     // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
     List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
-    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
-    return getProgramRunIdMap(Range.singleton(prefix), timePredicate);
+    return getProgramRunIdMap(Range.singleton(prefix), null);
   }
 
   /**
@@ -1010,9 +1009,8 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId)
     throws IOException {
-    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
     List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
-    return getProgramRunIdMap(Range.singleton(prefix), timePredicate);
+    return getProgramRunIdMap(Range.singleton(prefix), null);
   }
 
   /**
@@ -1022,11 +1020,9 @@ public class AppMetadataStore {
    * @param programId given program
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId)
-    throws IOException {
-    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
-    return getProgramRunIdMap(Range.singleton(prefix), timePredicate);
+    return getProgramRunIdMap(Range.singleton(prefix), null);
   }
 
   public Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, final ProgramRunStatus status,
@@ -1145,14 +1141,30 @@ public class AppMetadataStore {
 
   private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(@Nullable ProgramId programId, String recordType,
                                                               long startTime, long endTime, int limit,
-                                                              Predicate<RunRecordMeta> filter) throws IOException {
-    Predicate<RunRecordMeta> valuePredicate = andPredicate(getTimeRangePredicate(startTime, endTime), filter);
+                                                              @Nullable Predicate<RunRecordMeta> filter)
+    throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId);
-    return getProgramRunIdMap(Range.singleton(prefix), valuePredicate, null, limit);
+    Range scanRange;
+    Predicate<StructuredRow> keyFilter = null;
+
+    if (programId == null) {
+      // Cannot use the run start time field if programId is missing. Need to use a key filter.
+      keyFilter = getKeyFilterByTimeRange(startTime, endTime);
+      scanRange = Range.singleton(prefix);
+    } else {
+      List<Field<?>> begin = new ArrayList<>(prefix);
+      List<Field<?>> end = new ArrayList<>(prefix);
+
+      begin.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsScanKeyPart(endTime)));
+      end.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsScanKeyPart(startTime)));
+      scanRange = Range.create(begin, Range.Bound.INCLUSIVE, end, Range.Bound.EXCLUSIVE);
+    }
+    return getProgramRunIdMap(scanRange, filter, keyFilter, limit);
   }
 
   private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(ApplicationId applicationId, String recordType, int limit,
-                                                              Predicate<RunRecordMeta> filter) throws IOException {
+                                                              @Nullable Predicate<RunRecordMeta> filter)
+    throws IOException {
     List<Field<?>> prefix = getRunRecordApplicationPrefix(recordType, applicationId);
     return getProgramRunIdMap(Range.singleton(prefix), filter, null, limit);
   }
@@ -1255,14 +1267,7 @@ public class AppMetadataStore {
                                                              final long startTime, final long endTime, int limit,
                                                              @Nullable Predicate<RunRecordMeta> valueFilter)
     throws IOException {
-    long lowerBound = getInvertedTsScanKeyPart(endTime);
-    long upperBound = getInvertedTsScanKeyPart(startTime);
-    Predicate<StructuredRow> keyFilter = row -> {
-      Long time = row.getLong(StoreDefinition.AppMetadataStore.RUN_START_TIME);
-      return time != null && time >= lowerBound && time <= upperBound;
-
-    };
-    return getHistoricalRuns(historyKey, status, limit, keyFilter, valueFilter);
+    return getHistoricalRuns(historyKey, status, limit, getKeyFilterByTimeRange(startTime, endTime), valueFilter);
   }
 
   private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(List<Field<?>> historyKey, ProgramRunStatus status,
@@ -1292,10 +1297,6 @@ public class AppMetadataStore {
 
   private Predicate<RunRecordMeta> getPredicate(final ProgramController.State state) {
     return (record) -> record.getStatus().equals(state.getRunStatus());
-  }
-
-  private Predicate<RunRecordMeta> getTimeRangePredicate(final long startTime, final long endTime) {
-    return (record) -> record.getStartTs() >= startTime && record.getStartTs() < endTime;
   }
 
   private Predicate<RunRecordMeta> andPredicate(Predicate<RunRecordMeta> first,
@@ -1684,5 +1685,18 @@ public class AppMetadataStore {
     return new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
       .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD));
+  }
+
+  @Nullable
+  private Predicate<StructuredRow> getKeyFilterByTimeRange(long startTime, long endTime) {
+    if (startTime <= 0 && endTime == Long.MAX_VALUE) {
+      return null;
+    }
+    long lowerBound = getInvertedTsScanKeyPart(endTime);
+    long upperBound = getInvertedTsScanKeyPart(startTime);
+    return row -> {
+      Long time = row.getLong(StoreDefinition.AppMetadataStore.RUN_START_TIME);
+      return time != null && time >= lowerBound && time <= upperBound;
+    };
   }
 }
