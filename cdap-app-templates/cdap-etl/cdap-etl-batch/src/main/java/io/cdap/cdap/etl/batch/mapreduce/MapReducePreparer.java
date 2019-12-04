@@ -22,6 +22,7 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
@@ -58,13 +59,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * For each stage, call prepareRun() in topological order.
- * prepareRun will setup the input/output of the pipeline phase and set any arguments that should be visible
- * to subsequent stages. These configure and prepare operations must be performed in topological order
- * to ensure that arguments set by one stage are available to subsequent stages.
- *
+ * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of the pipeline phase
+ * and set any arguments that should be visible to subsequent stages. These configure and prepare operations must be
+ * performed in topological order to ensure that arguments set by one stage are available to subsequent stages.
  */
 public class MapReducePreparer extends PipelinePhasePreparer {
+
   private static final Gson GSON = new Gson();
   private final MapReduceContext context;
   private final Set<String> connectorDatasets;
@@ -150,6 +150,15 @@ public class MapReducePreparer extends PipelinePhasePreparer {
     ContextProvider<MapReduceBatchContext> contextProvider =
       new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
     return new SubmitterPlugin<>(stageName, context, transform, contextProvider,
+                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+  }
+
+  @Override
+  protected SubmitterPlugin createSplitterTransform(SplitterTransform<?, ?> splitterTransform, StageSpec stageSpec) {
+    String stageName = stageSpec.getName();
+    ContextProvider<MapReduceBatchContext> contextProvider =
+      new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
+    return new SubmitterPlugin<>(stageName, context, splitterTransform, contextProvider,
                                  ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
   }
 
@@ -242,6 +251,7 @@ public class MapReducePreparer extends PipelinePhasePreparer {
    * Context provider for mapreduce.
    */
   private static class MapReduceBatchContextProvider implements ContextProvider<MapReduceBatchContext> {
+
     private final MapReduceContext context;
     private final PipelineRuntime pipelineRuntime;
     private final StageSpec stageSpec;

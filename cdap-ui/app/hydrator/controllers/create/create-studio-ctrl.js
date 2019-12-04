@@ -40,14 +40,27 @@ class HydratorPlusPlusStudioCtrl {
       return isValidArtifact.length ? isValidArtifact[0]: rArtifacts[0];
     };
     let artifact = getValidArtifact();
+
     if (rConfig) {
-      if (!rConfig.artifact) {
-        rConfig.artifact = artifact;
+      const modifiedConfig = angular.copy(rConfig);
+
+      if (!modifiedConfig.artifact) {
+        modifiedConfig.artifact = artifact;
       }
-      HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
-      let configJson = rConfig;
-      configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig, true);
-      configJson['__ui__'] = Object.assign({}, rConfig.__ui__, {
+
+      // remove backendProperties from rConfig to force re-fetching of properties
+      if (modifiedConfig.config && modifiedConfig.config.stages) {
+        modifiedConfig.config.stages.forEach((stage) => {
+          if (stage._backendProperties) {
+            delete stage._backendProperties;
+          }
+        });
+      }
+
+      HydratorPlusPlusConfigActions.initializeConfigStore(modifiedConfig);
+      let configJson = modifiedConfig;
+      configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(modifiedConfig, true);
+      configJson['__ui__'] = Object.assign({}, modifiedConfig.__ui__, {
         nodes: configJson.nodes.map( (node) => {
           node.properties = node.plugin.properties;
           node.label = node.plugin.label;

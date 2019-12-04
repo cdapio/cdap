@@ -74,7 +74,7 @@ function FllMenu({ classes }) {
   const hasIncomingOps = Object.keys(activeCauseSets).length !== 0;
   const hasOutgoingOps = Object.keys(activeImpactSets).length !== 0;
   return (
-    <div className={classes.root}>
+    <span className={classes.root}>
       <Button onClick={handleViewClick} className={classes.targetView} data-cy="fll-view-dropdown">
         {T.translate(`${PREFIX}.FllField.viewDropdown`)}
         <KeyboardArrowDownIcon />
@@ -108,7 +108,7 @@ function FllMenu({ classes }) {
           {T.translate(`${PREFIX}.FllMenu.viewOutgoing`)}
         </MenuItem>
       </Menu>
-    </div>
+    </span>
   );
 }
 

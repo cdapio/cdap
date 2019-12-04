@@ -66,8 +66,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
   });
   it('Should show operations for target field', () => {
     // focus on a field with outgoing operations
-    cy.get('[data-cy="target-fields"]').within(() => {
-      cy.contains('body').click();
+    cy.get('[data-cy="target-body"]').within(() => {
       cy.get('[data-cy="fll-view-dropdown"]').click();
     });
     cy.get('[data-cy="fll-view-incoming"]').click();

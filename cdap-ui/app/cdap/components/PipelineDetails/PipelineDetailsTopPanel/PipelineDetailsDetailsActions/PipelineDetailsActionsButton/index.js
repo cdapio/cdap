@@ -26,9 +26,29 @@ import TriggeredPipelineStore from 'components/TriggeredPipelines/store/Triggere
 import T from 'i18n-react';
 import classnames from 'classnames';
 import { duplicatePipeline } from 'services/PipelineUtils';
+import cloneDeep from 'lodash/cloneDeep';
 require('./PipelineDetailsActionsButton.scss');
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
+
+/**
+ * This function is to clean up properties that is not necessary for the pipeline configuration.
+ * Pipeline DAG in angular is using __ui__ property to maintain positioning of the node, also
+ * _backendProperties to save the properties of the plugin. In addition, angular is assigning
+ * $$hashkey for each element of an array being rendered. This function will cleanup these extra properties.
+ */
+const sanitizeConfig = (pipeline) => {
+  const pipelineClone = { ...pipeline };
+
+  pipelineClone.config.stages.forEach((stage) => {
+    const keysToSanitize = Object.keys(stage).filter((k) => k.startsWith('_') || k.startsWith('$'));
+    keysToSanitize.forEach((k) => {
+      delete stage[k];
+    });
+  });
+
+  return pipelineClone;
+};
 
 export default class PipelineDetailsActionsButton extends Component {
   static propTypes = {
@@ -53,7 +73,7 @@ export default class PipelineDetailsActionsButton extends Component {
   componentWillReceiveProps(nextProps) {
     this.pipelineConfig = {
       ...this.pipelineConfig,
-      config: nextProps.config,
+      config: cloneDeep(nextProps.config),
     };
   }
 
@@ -61,11 +81,11 @@ export default class PipelineDetailsActionsButton extends Component {
     name: this.props.pipelineName,
     description: this.props.description,
     artifact: this.props.artifact,
-    config: this.props.config,
+    config: cloneDeep(this.props.config), // currently doing a cloneDeep because angular is mutating this state...
   };
 
   duplicateConfigAndNavigate = () => {
-    duplicatePipeline(this.props.pipelineName, this.pipelineConfig);
+    duplicatePipeline(this.props.pipelineName, sanitizeConfig(this.pipelineConfig));
   };
 
   deletePipeline = () => {
@@ -119,7 +139,7 @@ export default class PipelineDetailsActionsButton extends Component {
       <PipelineExportModal
         isOpen={this.state.showExportModal}
         onClose={this.toggleExportModal}
-        pipelineConfig={this.pipelineConfig}
+        pipelineConfig={sanitizeConfig(this.pipelineConfig)}
       />
     );
   }

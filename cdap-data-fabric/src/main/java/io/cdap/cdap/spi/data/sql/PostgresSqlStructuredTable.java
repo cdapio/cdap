@@ -106,6 +106,10 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     throws InvalidFieldException, IOException {
     LOG.trace("Table {}: Read with multiple keys {}", tableSchema.getTableId(), multiKeys);
 
+    if (multiKeys.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     for (Collection<Field<?>> keys : multiKeys) {
       fieldValidator.validatePrimaryKeys(keys, false);
     }
