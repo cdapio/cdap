@@ -28,6 +28,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.ProgramType;
@@ -137,11 +138,17 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       
     boolean isUserImpersonationEnabled = false;
     if ((properties != null) &&
-          (!(properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)))) {
+          (properties.containsKey(SystemArguments.USER_IMPERSONATION_ENABLED))) {
       isUserImpersonationEnabled = true;
     }
       
-    // Get impersonation keytab and principal from runtime arguments if present
+    /*
+     *  If user impersonation is enabled, identity of user will be propagated to downstream systems, else
+     *  we will use Application runtime or Namespace level impersonation
+     *  
+     *  Get runtime arguments containing keytab and principal from runtime arguments if present
+     */
+    
     ImpersonationRequest updatedRequest = impersonationRequest;
     if ((!isUserImpersonationEnabled) &&
           (properties.containsKey(RUNTIME_ARG_KEYTAB)) &&
@@ -241,7 +248,12 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     return localKeytabFile.toFile();
   }
   
-  private Map<String, String> getRuntimeImpersonationProperties(NamespacedEntityId entityId) {     
+  private Map<String, String> getRuntimeImpersonationProperties(NamespacedEntityId entityId) {    
+    if (entityId == null) {
+      LOG.debug("Entity Id null, skip fetching runtime args");
+      return Collections.emptyMap();
+    }
+    
     if (!(entityId instanceof ProgramRunId) && (!(entityId instanceof TwillRunProgramId))) {
       LOG.debug("Entity Id not of type ProgramRunId or TwillRunProgramId, skip fetching runtime args");
       return Collections.emptyMap();
@@ -286,6 +298,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     String runtimeArgsJson = properties.get("runtimeArgs");
     if (runtimeArgsJson != null) {
       properties = gson.fromJson(runtimeArgsJson, stringStringMap);
+      // To avoid any conflicts with user supplied runtime arguments, if same named property
+      // is provided by user as user runtime arguments, remove it from our map
       if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
         properties.remove(ProgramOptionConstants.LOGGED_IN_USER);
       }
@@ -381,7 +395,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       return defaultRes;
     }
 
-    if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
+    if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER) && 
+            (properties.containsKey(SystemArguments.USER_IMPERSONATION_ENABLED))) {
       return properties.get(ProgramOptionConstants.LOGGED_IN_USER);
     }
 
