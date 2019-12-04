@@ -28,6 +28,7 @@ import {
   setBigQueryAsActiveBrowser,
   setSpannerAsActiveBrowser,
   setAdlsAsActiveBrowser,
+  setHiveServer2AsActiveBrowser,
   reset as resetDataPrepBrowserStore
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, Switch, Redirect} from 'react-router-dom';
@@ -60,7 +61,7 @@ import {Theme} from 'services/ThemeHelper';
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
 const DATAPREP_I18N_PREFIX = 'features.DataPrep.pageTitle';
-const JIO_SPECIFIC_CONNECTION_TYPES = [{ type: "UPLOAD" }, { type: "FILE" }, { type: "KAFKA" }];
+const JIO_SPECIFIC_CONNECTION_TYPES = [{ type: "UPLOAD" }, { type: "FILE" }, { type: "KAFKA" }, { type: "HIVESERVER2" }];
 
 export default class DataPrepConnections extends Component {
   static propTypes = {
@@ -103,6 +104,7 @@ export default class DataPrepConnections extends Component {
       bigQueryList: [],
       spannerList: [],
       adlsList: [],
+      hiveserver2List: [],
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
@@ -245,6 +247,10 @@ export default class DataPrepConnections extends Component {
       setAdlsAsActiveBrowser({name: ConnectionType.ADLS, id: browserName.id, path: '/'});
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.ADLS;
+    } else if (typeof browserName === 'object' && browserName.type === ConnectionType.HIVESERVER2) {
+      setHiveServer2AsActiveBrowser({name: ConnectionType.HIVESERVER2, id: browserName.id});
+      activeConnectionid = browserName.id;
+      activeConnectionType = ConnectionType.HIVESERVER2;
     }
 
     this.setState({
@@ -328,7 +334,8 @@ export default class DataPrepConnections extends Component {
           gcsList = [],
           bigQueryList = [],
           spannerList = [],
-          adlsList = [];
+          adlsList = [],
+          hiveserver2List = [];
 
       if (!state.activeConnectionId && !state.activeConnectionType && state.defaultConnection) {
         let defaultConnectionObj = find(res.values, {id: state.defaultConnection});
@@ -353,6 +360,8 @@ export default class DataPrepConnections extends Component {
           spannerList.push(connection);
         } else if (connection.type === ConnectionType.ADLS) {
           adlsList.push(connection);
+        } else if (connection.type === ConnectionType.HIVESERVER2) {
+          hiveserver2List.push(connection);
         }
       });
 
@@ -366,6 +375,7 @@ export default class DataPrepConnections extends Component {
         bigQueryList,
         spannerList,
         adlsList,
+        hiveserver2List,
         loading: false
       };
 
@@ -566,6 +576,40 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={adls}
+                onAction={this.onActionFromConnectionsPopover}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderHIVEServer2Detail() {
+    let namespace = getCurrentNamespace();
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.hiveserver2List.map((hive) => {
+          return (
+            <div
+              key={hive.id}
+              title={hive.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/hiveserver2/${hive.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, {...hive, name: ConnectionType.HIVESERVER2})}
+                isNativeLink={this.props.singleWorkspaceMode}
+              >
+                {hive.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={hive}
                 onAction={this.onActionFromConnectionsPopover}
               />
             </div>
@@ -802,6 +846,20 @@ export default class DataPrepConnections extends Component {
               {this.renderADLSDetail()}
             </ExpandableMenu>
           </If>
+
+          <If condition={find(this.state.connectionTypes, {type: ConnectionType.HIVESERVER2})}>
+            <ExpandableMenu>
+              <div>
+                <span className="fa fa-fw">
+                  <IconSVG name="icon-hive-server2" />
+                </span>
+                <span>
+                {T.translate(`${PREFIX}.hiveserver2`, {count: this.state.hiveserver2List.length})}
+                </span>
+              </div>
+              {this.renderHIVEServer2Detail()}
+            </ExpandableMenu>
+          </If>
         </div>
 
         <AddConnection
@@ -955,6 +1013,22 @@ export default class DataPrepConnections extends Component {
             );
           }}
         />
+
+        <Route
+          path={`${BASEPATH}/hiveserver2/:hiveserver2Id`}
+          render={({match}) => {
+            const id  = match.params.hiveserver2Id;
+            const setActiveConnection = setHiveServer2AsActiveBrowser.bind(null, {name: ConnectionType.HIVESERVER2, id});
+            return (
+              <DataPrepBrowser
+                match={match}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+                setActiveConnection={setActiveConnection}
+              />
+            );
+          }}
+        />
         <Route render={() => {
           let doesFileExists = find(this.state.connectionTypes, {type: ConnectionType.FILE});
           if (!this.state.defaultConnection && doesFileExists) {
@@ -1063,6 +1137,8 @@ export default class DataPrepConnections extends Component {
       setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid}, true);
     } else if (this.state.activeConnectionType === ConnectionType.ADLS) {
       setActiveConnection = setAdlsAsActiveBrowser.bind(null, {name: ConnectionType.ADLS, id: this.state.activeConnectionid, path:'/'});
+    } else if (this.state.activeConnectionType === ConnectionType.HIVESERVER2) {
+      setActiveConnection = setHiveServer2AsActiveBrowser.bind(null, {name: ConnectionType.HIVESERVER2, id: this.state.activeConnectionid, path:'/'});
     }
 
     const isFileConnectionValid = find(connectionTypes, {type: ConnectionType.FILE});

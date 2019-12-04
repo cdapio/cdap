@@ -200,7 +200,7 @@ export default class ADLSConnection extends React.PureComponent<IADLSConnectionP
         const clientID = objectQuery(info, 'properties', 'clientID');
         const clientSecret = objectQuery(info, 'properties', 'clientSecret');
         const refreshURL = objectQuery(info, 'properties', 'refreshURL');
-        const isUsingJCEKfile = kvURL !== undefined ? true : false;
+        const isUsingJCEKfile = kvURL !== undefined;
 
         this.setState({
           name,
