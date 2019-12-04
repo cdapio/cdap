@@ -311,6 +311,9 @@ angular.module(PKG.name + '.feature.hydrator')
         if (!vm.latestRunExists(app)) {
           app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.DEPLOYED);
         } else {
+          if(app.latestRun.status === PROGRAM_STATUSES.RUNNING){
+            vm.statusCount.running++;
+          }
           app.displayStatus = vm.MyPipelineStatusMapper.lookupDisplayStatus(app.latestRun.status);
         }
       });
@@ -339,6 +342,13 @@ angular.module(PKG.name + '.feature.hydrator')
         });
     };
 
+    vm.refreshScreen = () => {
+      $state.reload()
+      .then(function() {
+        // capture the promise resolve state for feature use.
+      });
+    };
 
     vm.getPipelines();
+
   });
