@@ -22,6 +22,7 @@ import { CopyToClipBoard } from 'services/Clipboard';
 export default function PluginContextMenu({
   nodeId,
   getPluginConfiguration,
+  getSelectedConnections,
   getSelectedNodes,
   onDelete,
   onOpen,
@@ -31,7 +32,12 @@ export default function PluginContextMenu({
       name: 'plugin copy',
       label: () => (getSelectedNodes().length > 1 ? 'Copy Plugins' : 'Copy Plugin'),
       onClick: () => {
-        const text = JSON.stringify(getPluginConfiguration());
+        const stages = getPluginConfiguration().stages;
+        const connections = getSelectedConnections();
+        const text = JSON.stringify({
+          stages,
+          connections,
+        });
         CopyToClipBoard(text).then(
           () => console.log('Success now show a tooltip or something to the user'),
           () => console.error('Fail!. Show to the user copy failed')
@@ -63,6 +69,7 @@ export default function PluginContextMenu({
 (PluginContextMenu as any).propTypes = {
   nodeId: PropTypes.string,
   getPluginConfiguration: PropTypes.func,
+  getSelectedConnections: PropTypes.func,
   getSelectedNodes: PropTypes.func,
   onDelete: PropTypes.func,
   onOpen: PropTypes.func,

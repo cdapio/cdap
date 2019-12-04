@@ -98,7 +98,7 @@ export default function SelectionBox(props: ISelectionBoxProps) {
         for (const el of removed) {
           removedNodes.push(el.id);
         }
-        if (onSelectionMove) {
+        if (onSelectionMove && (addedNodes.length > 0 || removedNodes.length > 0)) {
           onSelectionMove({ added: addedNodes, removed: removedNodes });
         }
       });

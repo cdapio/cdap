@@ -21,6 +21,7 @@ class DAGPlusPlusNodesStore {
     this.changeListeners = [];
     this.uuid = uuid;
     this.GLOBALS = GLOBALS;
+    this.adjacencyMap = {};
 
     let dispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
@@ -129,7 +130,7 @@ class DAGPlusPlusNodesStore {
       // name is used for id in html and html ids with space are invalid
       // and not supported by spec. document.querySelector will not work
       // for ids with spaces.
-      const label = nodeConfig.plugin.label.replace(/ /g, '-');
+      let label = nodeConfig.plugin.label.replace(/[ \/]/g, '-');
       nodeConfig.name = label + '-' + this.uuid.v4();
     }
     this.addStateToHistory();
@@ -145,6 +146,9 @@ class DAGPlusPlusNodesStore {
         break;
     }
     this.state.nodes.push(nodeConfig);
+    if (!this.adjacencyMap[nodeConfig.name]) {
+      this.adjacencyMap[nodeConfig.name] = [];
+    }
     this.emitChange();
   }
   updateNode(nodeId, config) {
@@ -177,6 +181,10 @@ class DAGPlusPlusNodesStore {
       return conn.from !== match.name && conn.to !== match.name;
     });
     this.state.activeNodeId = null;
+    delete this.adjacencyMap[node];
+    Object.keys(this.adjacencyMap).forEach(key => {
+      this.adjacencyMap[key] = this.adjacencyMap[key].filter(n => n !== node);
+    });
     this.emitChange();
   }
   getNodes() {
@@ -191,12 +199,16 @@ class DAGPlusPlusNodesStore {
   }
 
   setNodes(nodes) {
+    this.adjacencyMap = {};
     nodes.forEach(node => {
       if (!node.name) {
         node.name = node.label + '-' + this.uuid.v4();
       }
       if (!node.type) {
         node.type = node.plugin.type;
+      }
+      if (!this.adjacencyMap[node.name]) {
+        this.adjacencyMap[node.name] = [];
       }
     });
     this.state.nodes = nodes;
@@ -221,9 +233,21 @@ class DAGPlusPlusNodesStore {
   addConnection(connection) {
     this.addStateToHistory();
     this.state.connections.push(connection);
+    const {from, to} = connection;
+    if (!this.adjacencyMap[from]) {
+      this.adjacencyMap[from] = [to];  
+    } else {
+      this.adjacencyMap[from].push(to);
+    }
     this.emitChange();
   }
   updateConnections(connections) {
+    Object.keys(this.adjacencyMap).forEach(key => {
+      this.adjacencyMap[key] = [];
+    });
+    connections.forEach(({from, to}) => {
+      this.adjacencyMap[from].push(to);
+    });
     this.addStateToHistory();
     this.state.connections = connections;
     this.emitChange();
@@ -231,6 +255,8 @@ class DAGPlusPlusNodesStore {
   removeConnection(connection) {
     this.addStateToHistory();
     let index = this.state.connections.indexOf(connection);
+    const {from, to} = connection;
+    this.adjacencyMap[from] = this.adjacencyMap[from].filter(target => target !== to);
     this.state.connections.splice(index, 1);
     this.emitChange();
   }
@@ -238,6 +264,12 @@ class DAGPlusPlusNodesStore {
     return angular.copy(this.state.connections);
   }
   setConnections(connections) {
+    Object.keys(this.adjacencyMap).forEach(key => {
+      this.adjacencyMap[key] = [];
+    });
+    connections.forEach(({from, to}) => {
+      this.adjacencyMap[from].push(to);
+    });
     this.state.connections = connections;
     this.emitChange();
   }
@@ -246,6 +278,20 @@ class DAGPlusPlusNodesStore {
     this.setNodes(nodes);
     this.state.connections = connections;
     this.state.comments = comments ? comments : [];
+    this.adjacencyMap = {};
+    nodes.forEach(node => {
+      let nodeName = node;
+      if (typeof nodeName === 'object' && typeof nodeName.name === 'string') {
+        nodeName = node.name;
+      }
+      if (!nodeName) {
+        return;
+      }
+      this.adjacencyMap[nodeName] = [];
+    });
+    connections.forEach(({from, to}) => {
+      this.adjacencyMap[from].push(to);
+    });
     this.emitChange();
   }
 
@@ -331,6 +377,10 @@ class DAGPlusPlusNodesStore {
       this.stateHistory.past.push(presentState);
       this.setState(nextState);
     }
+  }
+
+  getAdjacencyMap() {
+    return this.adjacencyMap;
   }
 }
 

@@ -44,6 +44,7 @@ angular.module(PKG.name + '.commons')
     let splitterNodesPorts = {};
 
     vm.pluginsMap = {};
+    vm.adjacencyMap = DAGPlusPlusNodesStore.getAdjacencyMap();
 
     vm.scale = 1.0;
 
@@ -74,17 +75,43 @@ angular.module(PKG.name + '.commons')
       if (vm.isDisabled) { return; }
       event.stopPropagation();
       clearConnectionsSelection();
-      vm.selectedNode.push(node);
+      if (event) {
+        vm.selectedNode = [node];
+      } else {
+        vm.selectedNode.push(node);
+      }
     };
     vm.getSelectedNodes = () => vm.selectedNode;
+    /**
+     * This is inconsistent when it comes to jsplumb. On connect or detach or click
+     * we get the right connection object with proper source and target ids referring
+     * to plugin nodes.
+     * However when we query vm.instance.getConnnections({sourceId: ...})
+     * It returns a connection object that is slightly different. The source
+     * now points to the endpoint instead of the actual node. For the love of god
+     * I don't know why will need to file a issue and see what is going on. :sigh:
+     */
+    vm.getSelectedConnections = () => {
+      return selectedConnections.map(({source, target}) => {
+        return {
+          from: source.getAttribute('data-nodeid'),
+          to: target.id
+        };
+      });
+    };
     vm.deleteSelectedNodes = () => onKeyboardDelete();
     vm.onPluginContextMenuOpen = (nodeId) => {
+      const isNodeAlreadySelected = vm.selectedNode.find(n => n.name === nodeId);
+      if (isNodeAlreadySelected) {
+        return;
+      }
       const node = DAGPlusPlusNodesStore.getNodes().find(n => n.name === nodeId);
       if (!node) {
         return;
       }
       vm.selectedNode = [node];
-    }
+      clearConnectionsSelection();
+    };
     vm.isNodeSelected = (nodeName) => {
       if (!vm.selectedNode.length) {
         return false;
@@ -93,7 +120,7 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.selectionBox = {
-      boundaries: ['#dag-container'],
+      boundaries: ['#diagram-container'],
       selectables: ['.box'],
       toggle: false,
       start: () => {
@@ -108,6 +135,26 @@ angular.module(PKG.name + '.commons')
         });
 
         vm.selectedNode = vm.selectedNode.filter(node => removed.indexOf(node.name) === -1).concat(selectedNodes);
+        const selectedNodesMap = {};
+        vm.selectedNode.forEach(node => selectedNodesMap[node.name] = true);
+        const adjacencyMap = DAGPlusPlusNodesStore.getAdjacencyMap();
+        clearConnectionsSelection();
+        vm.selectedNode.forEach(({name}) => {
+          const connectedNodes = adjacencyMap[name];
+          if (!Array.isArray(connectedNodes)) {
+            return;
+          }
+          const connectionsFromSource = vm.instance.getConnections({sourceId: name});
+          connectedNodes.forEach(nodeId => {
+            if (!selectedNodesMap[nodeId]) {
+              return;
+            }
+            const connObj = connectionsFromSource.find(conn => conn.targetId === nodeId);
+            if (connObj) {
+              toggleConnection(connObj);
+            }
+          });
+        });
       },
       end: () => {
         // console.log('selection end');
@@ -168,6 +215,7 @@ angular.module(PKG.name + '.commons')
       return {
         stages: this.selectedNode.map((node) => {
           return {
+            name: node.name,
             icon: node.icon,
             type: node.type,
             plugin: {
@@ -644,6 +692,7 @@ angular.module(PKG.name + '.commons')
         return;
       }
       vm.toggleNodeMenu();
+      clearConnectionsSelection();
       vm.selectedNode = [];
       vm.clearCommentSelection();
     };
@@ -758,7 +807,9 @@ angular.module(PKG.name + '.commons')
     }
 
     function toggleConnection(connObj) {
-      vm.selectedNode = [];
+      if (!connObj) {
+        return;
+      }
 
       if (selectedConnections.indexOf(connObj) === -1) {
         selectedConnections.push(connObj);
@@ -770,7 +821,10 @@ angular.module(PKG.name + '.commons')
 
     function clearConnectionsSelection() {
       selectedConnections.forEach((conn) => {
-        conn.toggleType('selected');
+        const existingTypes = conn.getType();
+        if (Array.isArray(existingTypes) && existingTypes.indexOf('selected') !== -1) {
+          conn.toggleType('selected');
+        }
       });
 
       selectedConnections = [];
