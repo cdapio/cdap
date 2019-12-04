@@ -28,7 +28,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
 import io.cdap.cdap.metrics.process.DirectMetricsSystemClient;
-import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 
@@ -57,7 +57,8 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
         // Bind a processor for consuming metrics from TMS and write to MetricsStore
         bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID)).toInstance(0);
         install(new FactoryModuleBuilder()
-                  .implement(MessagingMetricsProcessorService.class, MessagingMetricsProcessorService.class)
+                  .implement(MessagingMetricsProcessorManagerService.class,
+                             MessagingMetricsProcessorManagerService.class)
                   .build(MessagingMetricsProcessorServiceFactory.class));
 
         // We have to expose the factory in order for the optional injection in the LocalMetricsCollectionService

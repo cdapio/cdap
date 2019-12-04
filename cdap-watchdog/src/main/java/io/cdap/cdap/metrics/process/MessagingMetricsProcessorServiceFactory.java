@@ -20,10 +20,10 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import java.util.Set;
 
 /**
- * Factory for creating {@link MessagingMetricsProcessorService}.
+ * Factory for creating {@link MessagingMetricsProcessorManagerService}.
  */
 public interface MessagingMetricsProcessorServiceFactory {
 
-  MessagingMetricsProcessorService create(Set<Integer> topicNumbers, MetricsContext metricsContext,
+  MessagingMetricsProcessorManagerService create(Set<Integer> topicNumbers, MetricsContext metricsContext,
                                           Integer instanceId);
 }

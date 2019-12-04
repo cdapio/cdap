@@ -23,7 +23,7 @@ import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 
@@ -49,7 +49,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   private final MetricStore metricStore;
   private final MetricsCleanUpService metricsCleanUpService;
   private MessagingMetricsProcessorServiceFactory messagingMetricsProcessorFactory;
-  private MessagingMetricsProcessorService messagingMetricsProcessor;
+  private MessagingMetricsProcessorManagerService messagingMetricsProcessor;
 
   @Inject
   LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore,
