@@ -61,7 +61,7 @@ import {Theme} from 'services/ThemeHelper';
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
 const DATAPREP_I18N_PREFIX = 'features.DataPrep.pageTitle';
-const JIO_SPECIFIC_CONNECTION_TYPES = [{ type: "UPLOAD" }, { type: "FILE" }, { type: "KAFKA" }, { type: "HIVESERVER2" }];
+const JIO_SPECIFIC_CONNECTION_TYPES = [{ type: "UPLOAD" }, { type: "FILE" }];
 
 export default class DataPrepConnections extends Component {
   static propTypes = {
