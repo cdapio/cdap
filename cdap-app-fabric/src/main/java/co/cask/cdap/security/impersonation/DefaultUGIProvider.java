@@ -138,7 +138,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       
     boolean isUserImpersonationEnabled = false;
     if ((properties != null) &&
-          (properties.containsKey(SystemArguments.USER_IMPERSONATION_ENABLED))) {
+          (properties.containsKey(SystemArguments.USER_IMPERSONATION_ENABLED)) &&
+          ((properties.get(SystemArguments.USER_IMPERSONATION_ENABLED).equalsIgnoreCase("true")))) {
       isUserImpersonationEnabled = true;
     }
       
