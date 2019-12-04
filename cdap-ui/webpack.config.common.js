@@ -17,10 +17,9 @@ var webpack = require('webpack');
 var path = require('path');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var TerserPlugin = require('terser-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-let pathsToClean = ['server/public/common_dist'];
 
 // the clean options to use
 let cleanOptions = {
@@ -36,7 +35,7 @@ var plugins = [
     collections: true,
     caching: true,
   }),
-  new CleanWebpackPlugin(pathsToClean, cleanOptions),
+  new CleanWebpackPlugin(cleanOptions),
   new CaseSensitivePathsPlugin(),
   // by default minify it.
   new webpack.DefinePlugin({
@@ -60,18 +59,23 @@ if (!isModeProduction(mode)) {
   );
 }
 
+const loaderExclude = [
+  /node_modules/,
+  /bower_components/,
+  /server\/public\/dist/,
+  /server\/public\/cdap_dist/,
+  /server\/public\/common_dist/,
+  /lib/,
+];
+
 var rules = [
   {
-    test: /\.scss$/,
+    test: /\.s?css$/,
     use: ['style-loader', 'css-loader', 'sass-loader'],
   },
   {
     test: /\.ya?ml$/,
     use: 'yml-loader',
-  },
-  {
-    test: /\.css$/,
-    use: ['style-loader', 'css-loader', 'sass-loader'],
   },
   {
     enforce: 'pre',
@@ -80,20 +84,13 @@ var rules = [
     options: {
       fix: true,
     },
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /server\/public\/dist/,
-      /server\/public\/cdap_dist/,
-      /server\/public\/common_dist/,
-      /lib/,
-    ],
+    exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.js$/,
     use: 'babel-loader',
-    exclude: /node_modules/,
+    exclude: loaderExclude,
   },
   {
     test: /\.tsx?$/,
@@ -106,7 +103,7 @@ var rules = [
         },
       },
     ],
-    exclude: [/node_modules/, /lib/],
+    exclude: loaderExclude,
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,

@@ -17,15 +17,15 @@
 const cdapconfig = require('../webpack.config.cdap');
 const path = require("path");
 
-module.exports = (baseConfig, env, defaultConfig) => {
-  const config = defaultConfig;
-  config.resolve.extensions.push(".ts", ".tsx", ".js");
-  config.resolve.alias = cdapconfig.resolve.alias;
-  config.module = cdapconfig.module;
-  config.module.rules.push({
+module.exports = ({ config }) => {
+  const newConfig = config;
+  newConfig.resolve.extensions.push(".ts", ".tsx", ".js");
+  newConfig.resolve.alias = cdapconfig.resolve.alias;
+  newConfig.module = cdapconfig.module;
+  newConfig.module.rules.push({
     test: /\.(png|jpg|jpeg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     use: 'url-loader'
   })
 
-  return config;
+  return newConfig;
 };

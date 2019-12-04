@@ -23,16 +23,24 @@ var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var uuidV4 = require('uuid/v4');
 var TerserPlugin = require('terser-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-let pathsToClean = ['server/public/cdap_dist'];
 
 // the clean options to use
 let cleanOptions = {
   verbose: true,
   dry: false,
 };
+
+const loaderExclude = [
+  /node_modules/,
+  /bower_components/,
+  /server\/public\/dist/,
+  /server\/public\/cdap_dist/,
+  /server\/public\/common_dist/,
+  /lib/,
+];
 
 var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
@@ -55,7 +63,7 @@ const getWebpackDllPlugins = (mode) => {
   ];
 };
 var plugins = [
-  new CleanWebpackPlugin(pathsToClean, cleanOptions),
+  new CleanWebpackPlugin(cleanOptions),
   new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
   new LodashModuleReplacementPlugin({
@@ -63,7 +71,6 @@ var plugins = [
     collections: true,
     caching: true,
   }),
-  new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
   new CopyWebpackPlugin([
     {
@@ -78,7 +85,9 @@ var plugins = [
       from: './styles/img',
       to: './img/',
     },
-  ]),
+  ], {
+    copyUnmodified: true,
+  }),
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss'],
@@ -107,16 +116,12 @@ if (!isModeProduction(mode)) {
 
 var rules = [
   {
-    test: /\.scss$/,
+    test: /\.s?css$/,
     use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
   },
   {
     test: /\.ya?ml$/,
     use: 'yml-loader',
-  },
-  {
-    test: /\.css$/,
-    use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
   },
   {
     enforce: 'pre',
@@ -125,19 +130,12 @@ var rules = [
     options: {
       fix: true,
     },
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /server\/public\/dist/,
-      /server\/public\/cdap_dist/,
-      /server\/public\/common_dist/,
-      /lib/,
-    ],
+    exclude: loaderExclude,
   },
   {
     test: /\.js$/,
     use: ['babel-loader'],
-    exclude: [/node_modules/, /lib/],
+    exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
@@ -151,7 +149,7 @@ var rules = [
         },
       },
     ],
-    exclude: [/node_modules/, /lib/],
+    exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
@@ -196,6 +194,8 @@ if (mode === 'development') {
     new LiveReloadPlugin({
       port: 35728,
       appendScriptTag: true,
+      delay: 500,
+      ignore: '/node_modules/|/bower_components/|/server\/public\/dist/|/server\/public\/cdap_dist/|/server\/public\/common_dist/|/lib/',
     })
   );
 }

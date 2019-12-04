@@ -20,11 +20,10 @@ var path = require('path');
 var uuidV4 = require('uuid/v4');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var TerserPlugin = require('terser-webpack-plugin');
-let pathsToClean = ['server/public/login_dist'];
 
 // the clean options to use
 let cleanOptions = {
@@ -50,19 +49,24 @@ var plugins = [
     collections: true,
     caching: true,
   }),
-  new CleanWebpackPlugin(pathsToClean, cleanOptions),
+  new CleanWebpackPlugin(cleanOptions),
   new CaseSensitivePathsPlugin(),
   getWebpackDllPlugins(mode),
-  new CopyWebpackPlugin([
+  new CopyWebpackPlugin(
+    [
+      {
+        from: './styles/fonts',
+        to: './fonts/',
+      },
+      {
+        from: './styles/img',
+        to: './img/',
+      },
+    ],
     {
-      from: './styles/fonts',
-      to: './fonts/',
-    },
-    {
-      from: './styles/img',
-      to: './img/',
-    },
-  ]),
+      copyUnmodified: true,
+    }
+  ),
   new HtmlWebpackPlugin({
     title: 'CDAP',
     template: './login.html',
@@ -90,18 +94,23 @@ if (!isModeProduction(mode)) {
   );
 }
 
+const loaderExclude = [
+  /node_modules/,
+  /bower_components/,
+  /server\/public\/dist/,
+  /server\/public\/cdap_dist/,
+  /server\/public\/common_dist/,
+  /lib/,
+];
+
 var rules = [
   {
-    test: /\.scss$/,
+    test: /\.s?css$/,
     use: ['style-loader', 'css-loader', 'sass-loader'],
   },
   {
     test: /\.ya?ml$/,
     use: 'yml-loader',
-  },
-  {
-    test: /\.css$/,
-    use: ['style-loader', 'css-loader', 'sass-loader'],
   },
   {
     enforce: 'pre',
@@ -110,21 +119,13 @@ var rules = [
     options: {
       fix: true,
     },
-    exclude: [
-      /node_modules/,
-      /bower_components/,
-      /dist/,
-      /cdap_dist/,
-      /common_dist/,
-      /lib/,
-      /wrangler_dist/,
-    ],
+    exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.js$/,
     use: 'babel-loader',
-    exclude: /node_modules/,
+    exclude: loaderExclude,
   },
   {
     test: /\.tsx?$/,
@@ -137,7 +138,7 @@ var rules = [
         },
       },
     ],
-    exclude: [/node_modules/, /lib/],
+    exclude: loaderExclude,
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
