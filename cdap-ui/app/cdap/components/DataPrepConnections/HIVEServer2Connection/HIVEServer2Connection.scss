@@ -1,0 +1,88 @@
+/*
+ * Copyright © 2017-2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '~styles/variables.scss';
+
+$asterisk-color: $red-02;
+$success-color: $green-02;
+$db-sprite-url: url('/cdap_assets/img/db-sprite.png');
+
+@mixin db-image($index) {
+  background-image: $db-sprite-url;
+  background-position: 0 $index*-100px;
+}
+
+.modal-dialog.hive-server2-connection-modal {
+  .col-form-label {
+    font-weight: 500;
+    font-size: 14px;
+    padding-top: 4px;
+
+    .asterisk {
+      position: relative;
+      top: -3px;
+      left: 2px;
+      color: $asterisk-color;
+    }
+  }
+  .connection-check { margin-left: 5px; }
+
+  .hive-server2-detail-content {
+    form {
+      padding: 10px;
+    }
+  }
+  .modal-body {
+    padding: 0px;
+  }
+  .custom-input {
+    margin-top: 5px;
+  }
+
+  .action-buttons-container {
+    .btn.btn-link {
+      padding: 7px 5px;
+    }
+
+    .add-row-btn i { vertical-align: middle; }
+  }
+
+  .test-connection-button {
+    margin-right: 0%;
+  }
+
+  .loading-indicator {
+    vertical-align: middle;
+    margin-left: 5px;
+  }
+  .hiveserver2-database-error-message {
+    color: #d15668;
+    display: inline-block;
+    margin-top: 1%;
+    margin-left: 2%;
+  }
+  .hiveserver2-database-error {
+    border: 1px solid #d15668;
+  }
+}
+.db-hive2binary {
+  @include db-image(9);
+}
+
+.icon-hive-server2 {
+  width: 1.5em;
+  height: 1.5em;
+}

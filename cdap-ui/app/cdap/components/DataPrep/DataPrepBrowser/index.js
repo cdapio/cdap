@@ -26,6 +26,7 @@ import GCSBrowser from 'components/DataPrep/DataPrepBrowser/GCSBrowser';
 import BigQueryBrowser from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser';
 import SpannerBrowser from 'components/DataPrep/DataPrepBrowser/SpannerBrowser';
 import ADLSBrowser from 'components/DataPrep/DataPrepBrowser/ADLSBrowser';
+import HIVEServer2Browser from 'components/DataPrep/DataPrepBrowser/HIVEServer2Browser';
 import DataPrepErrorBanner from 'components/DataPrep/DataPrepBrowser/ErrorBanner';
 import {Provider} from 'react-redux';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
@@ -39,6 +40,7 @@ const browserMap = {
   [ConnectionType.BIGQUERY]: BigQueryBrowser,
   [ConnectionType.SPANNER]: SpannerBrowser,
   [ConnectionType.ADLS]: ADLSBrowser,
+  [ConnectionType.HIVESERVER2]: HIVEServer2Browser,
 };
 
 export default class DataPrepBrowser extends Component {

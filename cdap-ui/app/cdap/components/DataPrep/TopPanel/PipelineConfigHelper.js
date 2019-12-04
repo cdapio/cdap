@@ -373,6 +373,69 @@ function constructAdlsSource(artifactsList, adlsInfo) {
   };
 }
 
+function constructHiveServer2Source(artifactsList, hiveserver2Info) {
+  if (!hiveserver2Info) { return null; }
+
+  /* hive server2  */
+  let batchArtifact = find(artifactsList, { 'name': 'hivesource' });
+
+  if (!batchArtifact) {
+    return T.translate(`${PREFIX}.hiveserver2`);
+  }
+
+
+  let plugin = objectQuery(hiveserver2Info, 'values', 0);
+  let pluginName = Object.keys(plugin)[1];
+  plugin = plugin[pluginName];
+
+  let batchPluginInfo = {
+    name: plugin.name,
+    label: plugin.name,
+    type: 'sparkcompute',
+    artifact: batchArtifact,
+    properties: plugin.properties
+  };
+
+  let batchStage = {
+    name: pluginName,
+    plugin: batchPluginInfo
+  };
+
+  /* file plugin */
+  let fileBatchArtifact = find(artifactsList, { 'name': 'core-plugins' });
+
+  if (!fileBatchArtifact) {
+    return T.translate(`${PREFIX}.file`);
+  }
+
+  let filePlugin = objectQuery(hiveserver2Info, 'values', 0);
+  let filePluginName = Object.keys(filePlugin)[0];
+  filePlugin = filePlugin[filePluginName];
+
+  let fileBatchPluginInfo = {
+    name: filePlugin.name,
+    label: filePlugin.name,
+    type: 'batchsource',
+    artifact: fileBatchArtifact,
+    properties: filePlugin.properties
+  };
+
+  let fileBatchStage = {
+    name: filePluginName,
+    plugin: fileBatchPluginInfo
+  };
+
+  return {
+    batchSource: [fileBatchStage, batchStage],
+    connections: [{
+      from: filePluginName,
+      to: pluginName
+    },{
+      from: pluginName,
+      to: 'Wrangler'
+    }]
+  };
+}
 
 function constructSpannerSource(artifactsList, spannerInfo) {
   if (!spannerInfo) { return null; }
@@ -495,6 +558,15 @@ function constructProperties(workspaceInfo, pluginVersion) {
       connectionId: state.workspaceInfo.properties.connectionid,
     };
     rxArray.push(MyDataPrepApi.getAdlsSpecification(specParams));
+  } else if (state.workspaceInfo.properties.connection === 'hiveserver2') {
+    let specParams = {
+      namespace,
+      connectionId,
+      tableId: state.workspaceInfo.properties.id
+    };
+    rxArray.push(MyDataPrepApi.getHiveserver2Specification(specParams));
+    let requestBody = directiveRequestBodyCreator([]);
+    rxArray.push(MyDataPrepApi.getSchema(requestObj, requestBody));
   }
 
   try {
@@ -589,6 +661,8 @@ function constructProperties(workspaceInfo, pluginVersion) {
         sourceConfigs = constructSpannerSource(res[0], res[2]);
       } else if (connectionType === 'adls') {
         sourceConfigs = constructAdlsSource(res[0], res[2]);
+      } else if (connectionType === 'hiveserver2') {
+        sourceConfigs = constructHiveServer2Source(res[0], res[2]);
       }
 
       if (typeof sourceConfigs === 'string') {
@@ -631,7 +705,11 @@ function constructProperties(workspaceInfo, pluginVersion) {
 
       if (batchSource || connectionType === 'upload') {
         if (batchSource) {
-          batchStages.push(batchSource);
+          if (Array.isArray(batchSource)) {
+            batchStages = batchStages.concat(batchSource);
+          } else {
+            batchStages.push(batchSource);
+          }
         }
         batchConfig = {
           artifact: batchArtifact,

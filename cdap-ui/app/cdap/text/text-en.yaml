@@ -534,6 +534,34 @@ features:
             truncatedContentsTooltip: The bucket you are viewing contains more directories and files we can currently display.
             truncatedLabel: "{dirsCount} directories and {fileCount} files of many"
           selectData: Select data
+      HIVEServer2Browser:
+        EmptyMessage:
+          clearLabel: Clear
+          emptyDatabase: 'No tables in connection _{connectionName}_'
+          emptyDatasetList: 'No Data'
+          emptyTableList: 'No Data'
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: 'No match found for "{searchText}"'
+        name: Name
+        pageTitle: '{productName} | Connections | HIVE Server2 | {connectionId}'
+        title: 'Select table'
+        Search:
+          placeholder: Search this directory
+        TopPanel:
+          ListingInfo:
+            label: "{dirsCount} directories and {filesCount} files"
+            truncatedContentsTooltip: The bucket you are viewing contains more directories and files we can currently display.
+            truncatedLabel: "{dirsCount} directories and {fileCount} files of many"
+          selectData: Select data
+        defaultErrorMessage: Reading {tableId} failed. Please try again.
+        searchPlaceholder: Search table name
+        table:
+          namecollabel: NAME
+        tableCount:
+          0: No tables
+          1: '{context} table'
+          _: "{context} tables"
 
     Directives:
       apply: Apply
@@ -996,6 +1024,7 @@ features:
       s3: Unable find S3 plugin. Please install Amazon S3 Plugins from Hub.
       spanner: Unable find Google Cloud Spanner plugin. Please install Google Cloud Plugins from Hub.
       missingWranglerPlugin: Cannot find wrangler-transform plugin. Please load wrangler transform from Hub
+      hiveserver2: Unable to find HIVE Server2 plugin. Please install HIVE Server2 Plugins from Hub.
     sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
@@ -1043,6 +1072,7 @@ features:
       file: File System
       gcs: Google Cloud Storage
       adls: ADLS File System
+      hiveserver2: HIVE Server2
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
@@ -1147,6 +1177,32 @@ features:
           ADD: "Add connection: Database"
           DUPLICATE: "Duplicate connection: {connection}"
           EDIT: "Edit connection: {connection}"
+      HIVEServer2:
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        url: JDBC URL
+        database: Database
+        databaseSelectionMessage: Database field is mandatory for {connectionMode} connection
+        defaultTestErrorMessage: Error connecting to HIVE Server2
+        defaultFetchDatabaseErrorMessage: Error in fetching databases
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        name: Connection name
+        Placeholders:
+          url: "E.g. {url}"
+          urlDefault: Specify HIVE JDBC url
+          name: Specify a name to identify this connection
+        required: Required
+        testConnection: Test Connection
+        ModalHeader:
+          ADD: "Add connection: HIVE Server2"
+          DUPLICATE: "Duplicate connection: {connection}"
+          EDIT: "Edit connection: {connection}"
+        customLabel: "Select Database"
       GCS:
         Buttons:
           ADD: Add Connection
@@ -1311,6 +1367,7 @@ features:
     database: Database ({count})
     gcs: Google Cloud Storage ({count})
     hdfs: File System
+    hiveserver2: Hive Server2 ({count})
     kafka: Kafka ({count})
     NoDefaultConnection:
       title: No default connection available

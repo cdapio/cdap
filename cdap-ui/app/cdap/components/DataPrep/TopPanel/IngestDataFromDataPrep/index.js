@@ -202,6 +202,7 @@ export default class IngestDataFromDataPrep extends Component {
     let bigqueryStage = pipelineConfig.config.stages.find(stage => stage.name === 'BigQueryTable');
     let spannerStage = pipelineConfig.config.stages.find(stage => stage.name === 'Spanner');
     let adlsStage = pipelineConfig.config.stages.find(stage => stage.name === 'ADLS');
+    let hiveserver2Stage = pipelineConfig.config.stages.find(stage => stage.name === 'HIVESERVER2');
 
     let macroMap = {};
     if (databaseConfig) {
@@ -243,6 +244,7 @@ export default class IngestDataFromDataPrep extends Component {
       spannerTable: objectQuery(spannerStage, 'plugin', 'properties', 'table') || '',
       spannerSchema: objectQuery(spannerStage, 'plugin', 'properties', 'schema') || '',
       adlsProject: objectQuery(adlsStage, 'plugin', 'properties', 'project') || '',
+      hiveserver2Project: objectQuery(hiveserver2Stage, 'plugin', 'properties', 'project') || '',
     });
     var newMacorMap = {};
     // This is to prevent from passing all the empty properties as payload while starting the pipeline.
@@ -327,6 +329,9 @@ export default class IngestDataFromDataPrep extends Component {
       },
       'ADLS': {
         project: '${adlsProject}',
+      },
+      'HIVESERVER2': {
+        project: '${adlsProject}',
       }
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {
@@ -400,6 +405,8 @@ export default class IngestDataFromDataPrep extends Component {
         pipelineName = 'one_time_copy_to_fs_from_spanner';
       } else if (workspaceProps.connection === 'adls') {
         pipelineName = 'one_time_copy_to_fs_from_adls';
+      } else if (workspaceProps.connection === 'hiveserver2') {
+        pipelineName = 'one_time_copy_to_fs_from_hiveserver2';
       }
     } else {
       pipelineName = `one_time_copy_to_table`;
@@ -413,10 +420,12 @@ export default class IngestDataFromDataPrep extends Component {
         pipelineName = 'one_time_copy_to_table_from_gcs';
       } else if (workspaceProps.connection === 'bigquery') {
         pipelineName = 'one_time_copy_to_table_from_bigquery';
-      } else if (workspaceProps.connection === 'bigquery') {
+      } else if (workspaceProps.connection === 'spanner') {
         pipelineName = 'one_time_copy_to_table_from_spanner';
       } else if (workspaceProps.connection === 'adls') {
         pipelineName = 'one_time_copy_to_table_from_adls';
+      } else if (workspaceProps.connection === 'hiveserver2') {
+        pipelineName = 'one_time_copy_to_table_from_hiveserver2';
       }
     }
 
