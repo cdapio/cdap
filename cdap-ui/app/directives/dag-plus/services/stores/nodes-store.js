@@ -246,7 +246,11 @@ class DAGPlusPlusNodesStore {
       this.adjacencyMap[key] = [];
     });
     connections.forEach(({from, to}) => {
-      this.adjacencyMap[from].push(to);
+      if (!this.adjacencyMap[from]) {
+        this.adjacencyMap[from] = [to];
+      } else {
+        this.adjacencyMap[from].push(to);
+      }
     });
     this.addStateToHistory();
     this.state.connections = connections;
