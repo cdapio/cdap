@@ -16,6 +16,8 @@
 
 function InputValiadtorController($scope) {
   var vm = this;
+  vm.restricted = ['_'];
+  vm.isRestrictedError = false;
 
   vm.showErrorMessage = false;
   // vm.value = '';
@@ -35,7 +37,12 @@ function InputValiadtorController($scope) {
   };
 
   vm.getErrorMessage = () => {
-    return 'Invalid input.cannot contain any xml tags, space required before and after logical operator. like x < y.';
+    if (vm.isRestrictedError) {
+      if (vm.restricted && vm.restricted !== undefined && vm.restricted.length > 0) {
+        return 'Restricted input: ' + vm.restricted.toString();
+      }
+    }
+    return `Invalid input.cannot contain any xml tags, space required before and after logical operator. like x < y.`;
   };
 
   vm.onValueChange = () => {
@@ -54,6 +61,15 @@ function InputValiadtorController($scope) {
     var allowed = {
       ALLOWED_TAGS: [],
     };
+    if (vm.restricted && vm.restricted !== undefined && vm.restricted.length > 0) {
+      for (let i=0; i < vm.restricted.length; ++i) {
+        if (dirty.includes(vm.restricted[i])) {
+          vm.isRestrictedError = true;
+          return false;
+        }
+      }
+    }
+    vm.isRestrictedError = false;
     const clean = _.unescape(window['DOMPurify'].sanitize(dirty, allowed));
     return clean === dirty ? true : false;
   };
@@ -73,10 +89,10 @@ angular.module(PKG.name + '.commons')
         placeholder: '@',
         //inputValue: '=',
         disabled: '=',
-        model: '='
+        model: '=',
+        restricted: '=',
       },
       controller: InputValiadtorController,
       controllerAs: 'InputValidate',
-
     };
   });

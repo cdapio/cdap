@@ -24,6 +24,17 @@ const isValidUsingDOMPurify = (val, config) => {
     return clean === val ? true : false;
 };
 
+const notContainsRestricted = (val, restricted) => {
+  if (restricted && restricted !== undefined && restricted.length > 0) {
+    for (let i=0; i < restricted.length; ++i) {
+      if (val.includes(restricted[i])) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
 
 const NAME = {
     allowed: {
@@ -43,7 +54,29 @@ const NAME = {
     }
 };
 
-const FILE_PATH = {
+
+const PLUGIN_LABEL = {
+  restrictedError: false,
+  restricted: ['_'],
+  allowed: {
+    ALLOWED_TAGS: [],
+  },
+  info: [
+      "Cannot contain any xml tags, space required before and after logical operator. like x < y."
+  ],
+  validate: function(val) {
+      this.restrictedError = !notContainsRestricted(val, this.restricted);
+      return this.restrictedError? false: isValidUsingDOMPurify(val, this.allowed);
+  },
+  getInfo: function() {
+      return this.info[0];
+  },
+  getErrorMsg: function() {
+    return this.restrictedError?`Restricted input: ${this.restricted.toString()}`:`Invalid input. ${this.info[0]}`;
+  }
+};
+
+const FILE_PATH = { 
     allowed: {
         ALLOWED_TAGS: [],
     },
@@ -221,6 +254,7 @@ const KEYTAB_LOCATION = {
 const types = {
   "DEFAULT": DEFAULT,
   "NAME": NAME,
+  "PLUGIN_LABEL": PLUGIN_LABEL,
   "FILE_PATH": FILE_PATH,
   "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
   "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,

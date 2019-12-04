@@ -36,11 +36,15 @@ let isValidValue = (dirty) => {
   return types['NAME'].validate(dirty);
 };
 
+let isValidLabel = (dirty) => {
+  return types['PLUGIN_LABEL'].validate(dirty);
+};
+
 let countInvalidFields = (node) => {
   var invalidFieldCount = 0;
   // check the label value of the plugins
   if (node.plugin && node.plugin.label) {
-    if (!isValidValue(node.plugin.label)) {
+    if (!isValidLabel(node.plugin.label)) {
       invalidFieldCount++;
     }
   }
