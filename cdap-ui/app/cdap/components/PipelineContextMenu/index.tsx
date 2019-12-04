@@ -82,6 +82,10 @@ export default function PipelineContextMenu({
   onWranglerSourceAdd,
   onNodesPaste,
   pipelineArtifactType,
+  onZoomIn,
+  onZoomOut,
+  fitToScreen,
+  prettyPrintGraph,
 }: IPipelineContextMenuProps) {
   const [showWranglerModal, setShowWranglerModal] = React.useState(false);
   const [pasteOptionDisabled, setPasteOptionDisabled] = React.useState(true);
@@ -98,13 +102,24 @@ export default function PipelineContextMenu({
       onClick: () => setShowWranglerModal(!showWranglerModal),
     },
     {
-      name: 'pipeline-node-copy',
-      label: 'Copy',
-      onClick: () => {
-        // to be implemented.
-        return;
-      },
-      disabled: true,
+      name: 'zoom-in',
+      label: 'Zoom in',
+      onClick: onZoomIn,
+    },
+    {
+      name: 'zoom-out',
+      label: 'Zoom Out',
+      onClick: onZoomOut,
+    },
+    {
+      name: 'fit-to-screen',
+      label: 'Fit to Screen',
+      onClick: fitToScreen,
+    },
+    {
+      name: 'align-nodes',
+      label: 'Pretty print',
+      onClick: prettyPrintGraph,
     },
     {
       name: 'pipeline-node-paste',
@@ -141,4 +156,8 @@ export default function PipelineContextMenu({
   onWranglerSourceAdd: PropTypes.func,
   onNodesPaste: PropTypes.func,
   pipelineArtifactType: PropTypes.oneOf([GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams]),
+  onZoomIn: PropTypes.func,
+  onZoomOut: PropTypes.func,
+  fitToScreen: PropTypes.func,
+  prettyPrintGraph: PropTypes.func,
 };

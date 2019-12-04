@@ -92,12 +92,23 @@ angular.module(PKG.name + '.commons')
      * I don't know why will need to file a issue and see what is going on. :sigh:
      */
     vm.getSelectedConnections = () => {
-      return selectedConnections.map(({source, target}) => {
-        return {
-          from: source.getAttribute('data-nodeid'),
-          to: target.id
-        };
+      const connectionsMap = {};
+      $scope.connections.forEach(conn => {
+        connectionsMap[`${conn.from}###${conn.to}`] = conn;
       });
+      return selectedConnections
+        .map(({source, target}) => {
+          return {
+            from: source.getAttribute('data-nodeid'),
+            to: target.id
+          };
+        }).map(({from, to}) => {
+          const originalConnection = connectionsMap[`${from}###${to}`];
+          if (originalConnection) {
+            return originalConnection;
+          }
+          return {from, to};
+        });
     };
     vm.deleteSelectedNodes = () => onKeyboardDelete();
     vm.onPluginContextMenuOpen = (nodeId) => {
@@ -204,8 +215,14 @@ angular.module(PKG.name + '.commons')
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
       init();
     };
-    vm.onNodesPaste = (stages) => {
-      handleNodePaste(JSON.stringify(stages));
+    vm.onPipelineContextMenuPaste = (config) => {
+      handleNodePaste(JSON.stringify(config));
+      handleConnectionsPaste(JSON.stringify(config));
+      vm.instance.unbind('connection');
+      vm.instance.detachEveryConnection();
+      $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+      $scope.connections = DAGPlusPlusNodesStore.getConnections();
+      init();
     };
 
     vm.getPluginConfiguration = () => {
@@ -218,6 +235,7 @@ angular.module(PKG.name + '.commons')
             name: node.name,
             icon: node.icon,
             type: node.type,
+            outputSchema: node.outputSchema,
             plugin: {
               name: node.plugin.name,
               artifact: node.plugin.artifact,
@@ -1451,15 +1469,17 @@ angular.module(PKG.name + '.commons')
         return;
       }
 
-      let nodeText;
+      let config;
       if (window.clipboardData && window.clipboardData.getData) {
         // for IE......
-        nodeText = window.clipboardData.getData('Text');
+        config = window.clipboardData.getData('Text');
       } else {
-        nodeText = e.clipboardData.getData('text/plain');
+        config = e.clipboardData.getData('text/plain');
       }
 
-      handleNodePaste(nodeText);
+      handleNodePaste(config);
+      handleConnectionsPaste(config);
+      init();
     };
 
     function handleNodePaste(text) {
@@ -1474,7 +1494,7 @@ angular.module(PKG.name + '.commons')
           if (!node) { return; }
   
           // change name
-          let newName = `copy_${node.plugin.label}`;
+          let newName = `copy_${node.plugin.label.replace(/[ \/]/g, '-')}`;
           const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
             .filter(filteredNode => {
               return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
@@ -1483,6 +1503,7 @@ angular.module(PKG.name + '.commons')
           newName = filteredNodes.length > 0 ? `${newName}${filteredNodes.length + 1}` : newName;
   
           node.plugin.label = newName;
+          node.name = newName;
   
           DAGPlusPlusNodesActionsFactory.addNode(node);
         });
@@ -1491,6 +1512,18 @@ angular.module(PKG.name + '.commons')
       }
     }
 
+    function handleConnectionsPaste(text) {
+       try {
+        const config = JSON.parse(text);
+        const connections = myHelpers.objectQuery(config, 'connections');
+        if (!connections || (Array.isArray(connections) && !connections.length)) {
+          return;
+        }
+        DAGPlusPlusNodesActionsFactory.setConnections(connections);
+       } catch(e) {
+         console.log('error parsing connection config', e);
+       }
+    }
     // CUSTOM ICONS CONTROL
     function generatePluginMapKey(node) {
       let plugin = node.plugin;
