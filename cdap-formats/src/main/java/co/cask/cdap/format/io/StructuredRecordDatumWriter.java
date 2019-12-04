@@ -357,6 +357,11 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
       return type;
     }
 
+    // Fix to handle java.nio.HeapByteBuffer
+    if (value instanceof ByteBuffer) {
+      return TYPE_TO_SCHEMA.get(ByteBuffer.class);
+    }
+
     if (Collection.class.isAssignableFrom(cls) || cls.isArray()) {
       return Schema.Type.ARRAY;
     }
