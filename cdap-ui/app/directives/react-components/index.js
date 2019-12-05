@@ -144,4 +144,13 @@ angular
   })
   .directive('loadingSvg', function(reactDirective) {
     return reactDirective(window.CaskCommon.LoadingSVG);
+  })
+  .directive('pipelineContextMenu', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineContextMenu);
+  })
+  .directive('pluginContextMenu', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PluginContextMenu);
+  })
+  .directive('selectionBox', function(reactDirective) {
+    return reactDirective(window.CaskCommon.SelectionBox);
   });
