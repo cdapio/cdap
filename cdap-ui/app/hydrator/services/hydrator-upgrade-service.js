@@ -276,6 +276,31 @@ class HydratorUpgradeService {
         return;
       }
     }
+    /**
+     * This exists because we could easily have users import nodes with
+     * name that has spaces and other special characters. Space and `/` are
+     * not allowed as per html spec.
+     *
+     * We need the ids for adding context menus to plugin nodes.
+     */
+    const oldNameToNewNameMap = {};
+    jsonData.config.stages = jsonData.config.stages.map(stage => {
+      if(stage.name.indexOf(' ') !== -1 || stage.name.indexOf('/') !== -1) {
+        oldNameToNewNameMap[stage.name] = stage.name.replace(/[ \/]/g, '-');
+        return Object.assign({}, stage, {
+          name: oldNameToNewNameMap[stage.name]
+        });
+      }
+      return stage;
+    });
+    jsonData.config.connections = jsonData.config.connections.map((connection) => {
+      const from = connection.from;
+      const to = connection.to;
+      return Object.assign({}, connection, {
+        from: oldNameToNewNameMap[from] || from,
+        to: oldNameToNewNameMap[to] || to,
+      });
+    });
     this.$uibModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/pipeline-upgrade-modal.html',
       size: 'lg',

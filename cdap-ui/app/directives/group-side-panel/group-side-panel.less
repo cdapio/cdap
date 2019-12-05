@@ -22,6 +22,11 @@ my-side-panel {
   height: 100%;
   .side-panel {
     height: 100%;
+    * {
+      -moz-user-select: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
     .groups-container {
       position: absolute;

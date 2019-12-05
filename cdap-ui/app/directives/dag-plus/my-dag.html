@@ -108,7 +108,7 @@
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
-                 'selected': DAGPlusPlusCtrl.selectedNode.name === node.name,
+                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.name),
                }"
                ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
           <div class="node"
@@ -256,6 +256,16 @@
               </div>
             </div>
           </div>
+          <div ng-if="!DAGPlusPlusCtrl.isDisabled">
+            <plugin-context-menu
+              node-id="'{{node.name}}'"
+              get-plugin-configuration="DAGPlusPlusCtrl.getPluginConfiguration"
+              get-selected-connections="DAGPlusPlusCtrl.getSelectedConnections"
+              get-selected-nodes="DAGPlusPlusCtrl.getSelectedNodes"
+              on-delete="DAGPlusPlusCtrl.deleteSelectedNodes"
+              on-open="DAGPlusPlusCtrl.onPluginContextMenuOpen"
+            ></plugin-context-menu>
+          </div>
         </div>
 
         <div ng-repeat="comment in DAGPlusPlusCtrl.comments"
@@ -283,7 +293,25 @@
 
         </div>
       </div>
-
+      <div ng-if="!DAGPlusPlusCtrl.isDisabled">
+        <pipeline-context-menu
+          on-wrangler-source-add="DAGPlusPlusCtrl.onPipelineContextMenuPaste"
+          on-nodes-paste="DAGPlusPlusCtrl.onPipelineContextMenuPaste"
+          pipeline-artifact-type="DAGPlusPlusCtrl.pipelineArtifactType"
+          on-zoom-in="DAGPlusPlusCtrl.zoomIn"
+          on-zoom-out="DAGPlusPlusCtrl.zoomOut"
+          fit-to-screen="DAGPlusPlusCtrl.fitToScreen"
+          pretty-print-graph="DAGPlusPlusCtrl.cleanUpGraph"
+        ></pipeline-context-menu>
+        <selection-box
+          boundaries="DAGPlusPlusCtrl.selectionBox.boundaries"
+          selectables="DAGPlusPlusCtrl.selectionBox.selectables"
+          toggle-selection="DAGPlusPlusCtrl['selectionBox'].toggle"
+          on-selection-start="DAGPlusPlusCtrl.selectionBox.start"
+          on-selection-move="DAGPlusPlusCtrl.selectionBox.move"
+          on-selection-end="DAGPlusPlusCtrl.selectionBox.end"
+        ></selection-box>
+      </div>
     </div>
 </div>
 
