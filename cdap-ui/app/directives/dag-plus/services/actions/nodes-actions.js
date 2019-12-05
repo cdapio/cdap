@@ -115,6 +115,11 @@ class DAGPlusPlusNodesActionsFactory {
     this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections, comments);
   }
 
+  createGraphFromConfigOnPaste(nodes, connections, comments) {
+    this.DAGPlusPlusNodesStore.addStateToHistory();
+    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections, comments);
+  }
+
   addComment(comment) {
     this.nodesDispatcher.dispatch('onAddComment', comment);
   }

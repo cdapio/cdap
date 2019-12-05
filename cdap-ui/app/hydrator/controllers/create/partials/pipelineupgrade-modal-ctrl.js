@@ -96,6 +96,17 @@ angular.module(PKG.name + '.feature.hydrator')
             !this.fixAllDisabled
           ) {
             HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
+            rPipelineConfig.config.stages = rPipelineConfig.config.stages.map(stage => {
+              return Object.assign({}, stage, {
+                name: stage.name.replace(/[ \/]/g, '-')
+              });
+            });
+            rPipelineConfig.config.connections = rPipelineConfig.config.connections.map(conn => {
+              return Object.assign({}, conn, {
+                from: conn.from.replace(/[ \/]/g, '-'),
+                to: conn.to.replace(/[ \/]/g, '-')
+              });
+            });
             $state.go('hydrator.create', { data: rPipelineConfig });
           } else {
             this.loading = false;

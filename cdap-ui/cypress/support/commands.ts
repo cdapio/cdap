@@ -17,7 +17,7 @@
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
 import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
-import { getGenericEndpoint, getConditionNodeEndpoint } from '../helpers';
+import { getGenericEndpoint, getConditionNodeEndpoint, getNodeSelectorFromNodeIndentifier } from '../helpers';
 /**
  * Uploads a pipeline json from fixtures to input file element.
  *
@@ -306,33 +306,48 @@ Cypress.Commands.add('move_node', (node: INodeIdentifier | string, toX: number, 
     .trigger('mouseup', { force: true });
 });
 
-Cypress.Commands.add(
-  'connect_two_nodes',
-  (
-    sourceNode: INodeIdentifier,
-    targetNode: INodeIdentifier,
-    sourceEndpoint: (options: IgetNodeIDOptions, s: string) => string,
-    options: IgetNodeIDOptions = {}
-  ) => {
-    cy.get_node(sourceNode).then((sourceEl) => {
-      cy.get_node(targetNode).then((targetEl) => {
-        const sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
-        const targetCoOrdinates = targetEl[0].getBoundingClientRect();
-        // connect from source endpoint to midway between the target node
-        cy.move_node(
-          sourceEndpoint(options, sourceEl[0].id),
-          targetCoOrdinates.left - sourceCoOrdinates.right + targetCoOrdinates.width / 2,
-          targetCoOrdinates.top - sourceCoOrdinates.bottom + targetCoOrdinates.height / 2
-        );
-      });
+Cypress.Commands.add('select_from_to', (from: INodeIdentifier, to: INodeIdentifier) => {
+  let fromNodeElement, toNodeElement;
+  cy.get_node(from).then(sElement => {
+    fromNodeElement = sElement;
+    cy.get_node(to).then(tElement => {
+      toNodeElement = tElement;
+      const { x: fromX, y: fromY } = fromNodeElement[0].getBoundingClientRect();
+      const { x: toX, y: toY, width: toWidth, height: toHeight } = toNodeElement[0].getBoundingClientRect();
+      cy.get('body').type('{shift}', { release: false });
+      cy.get('#diagram-container')
+        .trigger('mousedown', { which: 1, force: true, clientX: (fromX - 10), clientY: (fromY - 10) });
+      cy.get('#diagram-container')
+        .trigger('mousemove', { which: 1, clientX: (toX + toWidth + 10), clientY: (toY + toHeight + 10) })
+        .trigger('mouseup', { force: true });
+      cy.get('body').type('{shift}', { release: true });
     });
-  }
-);
+  });
+});
+
+Cypress.Commands.add('connect_two_nodes', (
+  sourceNode: INodeIdentifier,
+  targetNode: INodeIdentifier,
+  sourceEndpoint: (options: IgetNodeIDOptions, s: string) => string,
+  options: IgetNodeIDOptions = {},
+) => {
+  cy.get_node(sourceNode).then(sourceEl => {
+    cy.get_node(targetNode).then(targetEl => {
+      let sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
+      let targetCoOrdinates = targetEl[0].getBoundingClientRect();
+      // connect from source endpoint to midway between the target node
+      cy.move_node(
+        sourceEndpoint(options, sourceEl[0].id),
+        (targetCoOrdinates.left - sourceCoOrdinates.right + (targetCoOrdinates.width / 2)),
+        (targetCoOrdinates.top - sourceCoOrdinates.bottom + (targetCoOrdinates.height / 2))
+      );
+    });
+  });
+});
 
 Cypress.Commands.add('get_node', (element: INodeIdentifier) => {
-  const { nodeName, nodeType, nodeId } = element;
-  const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
-  return cy.get(elementId).then((e) => cy.wrap(e));
+  let elementId = getNodeSelectorFromNodeIndentifier(element);
+  return cy.get(elementId).then(e => cy.wrap(e));
 });
 
 Cypress.Commands.add('create_simple_pipeline', () => {
@@ -353,6 +368,7 @@ Cypress.Commands.add('create_simple_pipeline', () => {
 
   cy.connect_two_nodes(sourceNodeId, transformNodeId, getGenericEndpoint);
   cy.connect_two_nodes(transformNodeId, sinkNodeId, getGenericEndpoint);
+  return cy.wrap({ sourceNodeId, transformNodeId, sinkNodeId });
 });
 
 Cypress.Commands.add('create_complex_pipeline', () => {
@@ -417,6 +433,17 @@ Cypress.Commands.add('create_complex_pipeline', () => {
 
   cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
   cy.get('[data-cy="pipeline-fit-to-screen-control"]').click();
+
+  return cy.wrap({
+    sourceNodeId1,
+    sourceNodeId2,
+    transformNodeId1,
+    transformNodeId2,
+    joinerNodeId,
+    conditionNodeId,
+    sinkNodeId1,
+    sinkNodeId2
+  });
 });
 
 Cypress.Commands.add('get_pipeline_json', () => {
