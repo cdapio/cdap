@@ -93,12 +93,6 @@
         "emessage": "<field:1> is not a valid ISBN-10 or ISBN-13 code"
       },
       {
-        "name": "isValidISBN",
-        "arguments": ["<field:1>"],
-        "ecode": 16,
-        "emessage": "<field:1> is not a valid ISBN-10 or ISBN-13 code"
-      },
-      {
         "name": "isValidInet4Address",
         "arguments": ["<field:1>"],
         "ecode": 17,
