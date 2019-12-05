@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.streaming.function;
 
 import co.cask.cdap.etl.api.batch.SparkJoiner;
+import co.cask.cdap.etl.spark.function.CountingFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
 import co.cask.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
@@ -70,11 +71,13 @@ public class MultiStreamsTransform<T> implements Function2<List<JavaRDD<?>>, Tim
                 String stageName = stageNamesIt.next();
                 assert rddIt.hasNext();
                 JavaRDD<?> rdd = rddIt.next();
-                inputs.put(stageName,rdd);
+                inputs.put(stageName,rdd.map(new CountingFunction<>(pluginFunctionContext.getStageSpec().getName(), dynamicDriverContext.getSparkExecutionContext().getMetrics(),
+                        "records.in", null)).cache());
             }
             assert  !rddIt.hasNext();
 
-            return sparkJoiner.join(executionContext, inputs);
+            return sparkJoiner.join(executionContext, inputs).map(new CountingFunction<>(pluginFunctionContext.getStageSpec().getName(), dynamicDriverContext.getSparkExecutionContext().getMetrics(),
+                    "records.out", dynamicDriverContext.getSparkExecutionContext().getDataTracer(pluginFunctionContext.getStageSpec().getName())));
         }
         catch (RuntimeException|Error e) {
             throw e;
