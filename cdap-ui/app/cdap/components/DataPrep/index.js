@@ -89,7 +89,7 @@ export default class DataPrep extends Component {
     this._isMounted = false;
     if (this.props.onSubmit) {
       let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
-      this.props.onSubmit({ workspaceId });
+      this.props.onSubmit({ workspaceId, onUnmount: true });
     }
     DataPrepStore.dispatch({
       type: DataPrepActions.reset,
