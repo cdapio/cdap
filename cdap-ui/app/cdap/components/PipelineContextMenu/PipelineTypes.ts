@@ -48,8 +48,14 @@ export interface IPluginObj {
 }
 
 export interface INode {
+  name: string;
   type: PluginTypes;
   icon: string;
   plugin: IPluginObj;
   label: string;
+}
+
+export interface IConnection {
+  from: string;
+  to: string;
 }

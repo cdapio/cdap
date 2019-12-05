@@ -174,40 +174,13 @@ angular.module(PKG.name + '.commons')
     const repaintTimeoutsMap = {};
 
     vm.pipelineArtifactType = HydratorPlusPlusConfigStore.getAppType();
-    vm.onWranglerConnectionAdd = ({nodes, connections}) => {
+    vm.onPipelineContextMenuPaste = ({nodes, connections}) => {
       if (!Array.isArray(nodes) || !Array.isArray(connections)) {
         return;
       }
-      nodes = nodes.map(node => {
-        const name = node.plugin.label;
-        let filteredNodes = $scope.nodes.filter(n => (n.plugin.label ? n.plugin.label.indexOf(name) !== -1 : false));
-        // This won't work all the time. We can do better to
-        // auto generate meaningful names for node names.
-        if (filteredNodes.length) {
-          node.name = `${node.name}${filteredNodes.length}`;
-          node.plugin.label = `${node.name}`;
-        }
-        connections = connections.map(conn => {
-          const newConnObj = Object.assign({}, conn);
-          if (conn.from === name) {
-            newConnObj.from = node.name;
-          }
-          if (conn.to === name) {
-            newConnObj.to = node.name;
-          }
-          return newConnObj;
-        });
-        return node;
-      });
-      const newNodes = [...$scope.nodes, ...nodes].map(node => {
-        if (!node.icon) {
-          return Object.assign({}, node, {
-            icon: DAGPlusPlusFactory.getIcon(node.plugin.name)
-          });
-        }
-        return node;
-      });
-      const newConnections  = [...$scope.connections, ...connections];
+      let {nodes: newNodes, connections: newConnections} = sanitizeNodesAndConnectionsBeforePaste({nodes, connections});
+      newNodes = [...$scope.nodes, ...newNodes];
+      newConnections  = [...$scope.connections, ...newConnections];
       DAGPlusPlusNodesActionsFactory.createGraphFromConfig(newNodes, newConnections);
       vm.instance.unbind('connection');
       vm.instance.detachEveryConnection();
@@ -215,16 +188,6 @@ angular.module(PKG.name + '.commons')
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
       init();
     };
-    vm.onPipelineContextMenuPaste = (config) => {
-      handleNodePaste(JSON.stringify(config));
-      handleConnectionsPaste(JSON.stringify(config));
-      vm.instance.unbind('connection');
-      vm.instance.detachEveryConnection();
-      $scope.nodes = DAGPlusPlusNodesStore.getNodes();
-      $scope.connections = DAGPlusPlusNodesStore.getConnections();
-      init();
-    };
-
     vm.getPluginConfiguration = () => {
       if (!vm.selectedNode.length) {
         return;
@@ -1421,27 +1384,13 @@ angular.module(PKG.name + '.commons')
       return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'emit-errors');
     };
 
-    vm.onNodeCopy = (nodes) => {
-      const stages = nodes.map(node => {
-        return {
-          icon: node.icon,
-          type: node.type,
-          plugin: {
-            name: node.plugin.name,
-            artifact: node.plugin.artifact,
-            properties: angular.copy(node.plugin.properties),
-            label: node.plugin.label,
-          },
-        };
-      });
-
-      vm.nodeMenuOpen = null;
-
-      // The idea behind this clipboard object is to replicate the stage config as much as possible.
-      // The roadmap is to be able to support copying multiple stages with their connections.
-      const clipboardObj = {
-        stages
-      };
+    /**
+     * Not refactoring this to use the new CopyToClipboard.
+     * This will eventually be replaced by react implementation
+     * which will use the new utility.
+     * */
+    vm.copyToClipboard = (config) => {
+      const clipboardObj = config;
 
       const clipboardText = JSON.stringify(clipboardObj);
 
@@ -1454,9 +1403,13 @@ angular.module(PKG.name + '.commons')
     };
 
     function onKeyboardCopy() {
-      if (!vm.selectedNode.length) { return; }
-
-      vm.onNodeCopy(vm.selectedNode);
+      const stages = vm.getPluginConfiguration().stages;
+      const connections =  vm.getSelectedConnections();
+      vm.nodeMenuOpen = null;
+      vm.copyToClipboard({
+        stages,
+        connections
+      });
     }
 
     // handling node paste
@@ -1476,54 +1429,71 @@ angular.module(PKG.name + '.commons')
       } else {
         config = e.clipboardData.getData('text/plain');
       }
-
-      handleNodePaste(config);
-      handleConnectionsPaste(config);
-      init();
+      try {
+        config = JSON.parse(config);
+      } catch(err) {
+        console.error('Unable to paste to canvas: '+ err);
+      }
+      config.nodes = config.stages;
+      delete config.stages;
+      vm.onPipelineContextMenuPaste(config);
     };
 
-    function handleNodePaste(text) {
+    function sanitizeNodesAndConnectionsBeforePaste(text) {
       try {
-        const config = JSON.parse(text);
-        const stages = myHelpers.objectQuery(config, 'stages');
-        if (!stages || !Array.isArray(stages)) {
+        let config = {};
+        if (typeof text === 'string') {
+          config = JSON.parse(text);
+        } else {
+          config = text;
+        }
+        let nodes = myHelpers.objectQuery(config, 'nodes');
+        let connections = myHelpers.objectQuery(config, 'connections');
+        const oldNameToNewNameMap = {};
+        if (!nodes || !Array.isArray(nodes)) {
           return;
         }
 
-        stages.forEach(node => {
+        nodes = nodes.map(node => {
           if (!node) { return; }
-  
+
           // change name
-          let newName = `copy_${node.plugin.label.replace(/[ \/]/g, '-')}`;
+          let newName = `${node.plugin.label.replace(/[ \/]/g, '-')}`;
           const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
             .filter(filteredNode => {
               return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
             });
-  
-          newName = filteredNodes.length > 0 ? `${newName}${filteredNodes.length + 1}` : newName;
-  
+
+          const nodeIndex = filteredNodes.length + 1;
+          newName = filteredNodes.length > 0 ? `${newName}${nodeIndex}` : newName;
+          let iconConfiguration = {};
+          if (!node.icon) {
+            iconConfiguration = Object.assign({}, {
+              icon: DAGPlusPlusFactory.getIcon(node.plugin.name)
+            });
+          }
+
+          oldNameToNewNameMap[node.name] = newName;
           node.plugin.label = newName;
-          node.name = newName;
-  
-          DAGPlusPlusNodesActionsFactory.addNode(node);
+          return Object.assign({}, node, {
+            name: oldNameToNewNameMap[node.name]
+          }, iconConfiguration);
         });
+        connections = connections.map((connection) => {
+          const from = connection.from;
+          const to = connection.to;
+          return Object.assign({}, connection, {
+            from: oldNameToNewNameMap[from] || from,
+            to: oldNameToNewNameMap[to] || to,
+          });
+        });
+        console.log('After sanitization: ', {nodes, connections});
+        return {nodes, connections};
       } catch (e) {
         console.log('error parsing node config', e);
       }
     }
 
-    function handleConnectionsPaste(text) {
-       try {
-        const config = JSON.parse(text);
-        const connections = myHelpers.objectQuery(config, 'connections');
-        if (!connections || (Array.isArray(connections) && !connections.length)) {
-          return;
-        }
-        DAGPlusPlusNodesActionsFactory.setConnections(connections);
-       } catch(e) {
-         console.log('error parsing connection config', e);
-       }
-    }
     // CUSTOM ICONS CONTROL
     function generatePluginMapKey(node) {
       let plugin = node.plugin;

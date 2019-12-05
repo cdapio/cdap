@@ -21,17 +21,22 @@ import If from 'components/If';
 import PropTypes from 'prop-types';
 import { CopyFromClipBoard } from 'services/Clipboard';
 import { objectQuery } from 'services/helpers';
-import { INode } from 'components/PipelineContextMenu/PipelineTypes';
+import { INode, IConnection } from 'components/PipelineContextMenu/PipelineTypes';
 import { INewWranglerConnection } from 'components/PipelineContextMenu/WranglerConnection';
 import { GLOBALS } from 'services/global-constants';
 
 export interface IStage {
-  stages: INode[];
+  nodes: INode[];
+  connections: IConnection[];
 }
 interface IPipelineContextMenuProps {
   onNodesPaste: (stages: IStage) => void;
   onWranglerSourceAdd: INewWranglerConnection;
   pipelineArtifactType: 'cdap-data-pipeline' | 'cdap-data-streams';
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  fitToScreen: () => void;
+  prettyPrintGraph: () => void;
 }
 
 async function getNodesFromClipBoard(): Promise<IStage | undefined> {
@@ -45,15 +50,17 @@ async function getNodesFromClipBoard(): Promise<IStage | undefined> {
 }
 
 function getClipboardData(text): IStage | undefined {
-  let jsonNodes;
+  let config;
   if (typeof text !== 'object') {
     try {
-      jsonNodes = JSON.parse(text);
+      config = JSON.parse(text);
+      config.nodes = config.stages;
+      delete config.stages;
     } catch (e) {
       return;
     }
   }
-  return jsonNodes;
+  return config;
 }
 
 async function isPasteOptionDisabled(): Promise<boolean> {
