@@ -75,7 +75,11 @@ angular.module(PKG.name + '.commons')
       if (vm.isDisabled) { return; }
       event.stopPropagation();
       clearConnectionsSelection();
-      vm.selectedNode.push(node);
+      if (vm.selectionBox.toggle) {
+        vm.selectedNode.push(node);
+        return;
+      }
+      vm.selectedNode = [node];
     };
     vm.getSelectedNodes = () => vm.selectedNode;
     /**
@@ -158,6 +162,7 @@ angular.module(PKG.name + '.commons')
         vm.selectedNode = selectedNodes;
         const selectedNodesMap = {};
         vm.selectedNode.forEach(node => selectedNodesMap[node.name] = true);
+        console.log('selected nodes: ', selectedNodesMap);
         const adjacencyMap = DAGPlusPlusNodesStore.getAdjacencyMap();
         clearConnectionsSelection();
         vm.selectedNode.forEach(({name}) => {
@@ -166,13 +171,21 @@ angular.module(PKG.name + '.commons')
             return;
           }
           const connectionsFromSource = vm.instance.getConnections({sourceId: name});
+          console.log('Connections from source: ', name, connectionsFromSource);
           connectedNodes.forEach(nodeId => {
             if (!selectedNodesMap[nodeId]) {
+              console.log(nodeId + ' doesn\'t exist in the selected nodes');
               return;
             }
-            const connObj = connectionsFromSource.find(conn => conn.targetId === nodeId);
-            if (connObj) {
-              toggleConnection(connObj);
+            const connObj = connectionsFromSource.filter(conn => conn.source.getAttribute('data-nodeid') === name && conn.targetId === nodeId);
+            if (connObj.length) {
+              connObj.forEach(conn => {
+                console.log(`
+                Highlighting connection:
+                  ${conn.sourceId} - ${conn.targetId}
+                `);
+                toggleConnection(conn, false);
+              });
             }
           });
         });
@@ -750,7 +763,7 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
     };
 
-    function toggleConnections(selectedObj) {
+    function toggleConnections(selectedObj, event) {
       if (vm.isDisabled) { return; }
 
       vm.selectedNode = [];
@@ -791,9 +804,14 @@ angular.module(PKG.name + '.commons')
           connection.removeType('selected');
         });
       }
+      if (event) {
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        event.preventDefault();
+      }
     }
 
-    function toggleConnection(connObj) {
+    function toggleConnection(connObj, toggle = true) {
       if (!connObj) {
         return;
       }
@@ -802,6 +820,11 @@ angular.module(PKG.name + '.commons')
         selectedConnections.push(connObj);
       } else {
         selectedConnections.splice(selectedConnections.indexOf(connObj), 1);
+      }
+      if (!toggle) {
+        console.log('setting selected type');
+        connObj.addType('selected');
+        return;
       }
       connObj.toggleType('selected');
     }
@@ -1061,6 +1084,9 @@ angular.module(PKG.name + '.commons')
           }
         }
       }
+      event.stopPropagation();
+      event.preventDefault();
+      event.stopImmediatePropagation();
     };
 
     jsPlumb.ready(function() {
