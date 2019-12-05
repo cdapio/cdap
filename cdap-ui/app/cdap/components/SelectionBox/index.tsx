@@ -88,12 +88,12 @@ export default function SelectionBox(props: ISelectionBoxProps) {
           onSelectionStart();
         }
       });
-      selection.on('move', ({ selected }) => {
+      selection.on('move', ({ selected, changed: { added, removed } }) => {
         const selectedNodes = [];
         for (const el of selected) {
           selectedNodes.push(el.id);
         }
-        if (onSelectionMove && selectedNodes.length > 0) {
+        if (onSelectionMove && (added.length > 0 || removed.length > 0)) {
           onSelectionMove({ selected: selectedNodes });
         }
       });

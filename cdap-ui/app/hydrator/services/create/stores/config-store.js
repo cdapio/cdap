@@ -203,6 +203,7 @@ class HydratorPlusPlusConfigStore {
         inputSchema: node.inputSchema
       };
 
+      configObj.name = configObj.name.replace(/[ \/]/g, '-');
       if (node.errorDatasetName) {
         configObj.errorDatasetName = node.errorDatasetName;
       }
@@ -239,8 +240,8 @@ class HydratorPlusPlusConfigStore {
         toPluginName = toConnectionName.plugin.label || toConnectionName.name;
         toConnectionName = toPluginName;
       }
-      connection.from = fromConnectionName;
-      connection.to = toConnectionName;
+      connection.from = fromConnectionName.replace(/[ \/]/g, '-');
+      connection.to = toConnectionName.replace(/[ \/]/g, '-');
     });
     config.connections = connections;
 
@@ -333,7 +334,7 @@ class HydratorPlusPlusConfigStore {
     state.config = angular.copy(config);
 
     var nodes = angular.copy(this.getNodes()).map( node => {
-      node.name = node.plugin.label;
+      node.name = node.plugin.label.replace(/[ \/]/g, '-');
       return node;
     });
     state.__ui__.nodes = nodes;
