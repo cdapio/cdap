@@ -653,7 +653,11 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.get('/validators', [
     function (req, res) {
-      var filePath = __dirname + '/../templates/validators/validators.json';
+      var validatorJsonFile = 'validators.json';
+      if (uiThemeConfig && uiThemeConfig['features'] && uiThemeConfig['features']['enable-jio']) {
+        validatorJsonFile = 'jioValidators.json';
+      }
+      var filePath = __dirname + '/../templates/validators/' + validatorJsonFile;
       var config = {};
       var validators = {};
       res.header({

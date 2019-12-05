@@ -1,0 +1,32 @@
+{
+  "core": {
+    "classname": "coreValidator",
+    "functions": [
+      {
+        "name": "maxLength",
+        "arguments": ["<field:1>", "maxlength"],
+        "ecode": 11,
+        "emessage": "<field:1> length is greater than the maximum"
+      },
+      {
+        "name": "maxValue",
+        "arguments": ["<field:1>", "maxValue"],
+        "ecode": 12,
+        "emessage": "<field:1> value is greater than maximum"
+      },
+      {
+        "name": "minValue",
+        "arguments": ["<field:1>", "minValue"],
+        "ecode": 13,
+        "emessage": "<field:1> value is less than the minimum"
+      },
+      {
+        "name": "minLength",
+        "arguments": ["<field:1>", "minLength"],
+        "ecode": 14,
+        "emessage": "<field:1> length is less than the minimum"
+      }
+    ]
+  }
+}
+
