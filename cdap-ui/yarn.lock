@@ -2134,6 +2134,11 @@
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.2.tgz#8013f2af54a2b7d735f71560ff360d3a8176a87b"
 
+"@simonwep/selection-js@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@simonwep/selection-js/-/selection-js-1.4.0.tgz#119662b6c8ff7702c352d5dd97699fd2d2631374"
+  integrity sha512-9dXzxCmVQ0Sg7ZKmPc37xqupvOpCLAIK2glmf0ZcUQMJUrq9Ebx+PCmXJYZxAHxv8ujq/UADvdh7KZrOqRg2yA==
+
 "@storybook/addon-actions@5.2.8":
   version "5.2.8"
   resolved "https://registry.yarnpkg.com/@storybook/addon-actions/-/addon-actions-5.2.8.tgz#f63c6e1afb59e94ca1ebc776b7cad9b815e7419e"

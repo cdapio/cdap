@@ -106,6 +106,9 @@ var DynamicFiltersUtilities = require('../cdap/components/ConfigurationGroup/uti
 var LoadingSVG = require('../cdap/components/LoadingSVG').default;
 var DateTimeWidget = require('../cdap/components/AbstractWidget/DateTimeWidget').default;
 var DateRangeWidget = require('../cdap/components/AbstractWidget/DateRangeWidget').default;
+var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
+var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
+var SelectionBox = require('../cdap/components/SelectionBox').default;
 
 export {
   Store,
@@ -186,4 +189,7 @@ export {
   LoadingSVG,
   DateTimeWidget,
   DateRangeWidget,
+  PipelineContextMenu,
+  PluginContextMenu,
+  SelectionBox,
 };
