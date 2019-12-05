@@ -112,7 +112,13 @@ angular.module(PKG.name + '.commons')
 
 
     function formatValidationRules() {
-      if (Object.keys(vm.validationFields).length === 0) { return; }
+      if (Object.keys(vm.validationFields).length === 0) {
+        if ($scope.model.properties) {
+          $scope.model.properties['validators'] = '';
+          $scope.model.properties['validationScript'] = '';
+        }
+        return;
+      }
 
       var conditions = '';
       var flattenRulesArrays = [];
