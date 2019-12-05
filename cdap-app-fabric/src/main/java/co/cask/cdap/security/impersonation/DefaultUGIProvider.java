@@ -157,7 +157,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       String keytab = properties.get(RUNTIME_ARG_KEYTAB);
       String principal = properties.get(RUNTIME_ARG_PRINCIPAL);
       updatedRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
-              impersonationRequest.getImpersonatedOpType(), keytab, principal);
+              impersonationRequest.getImpersonatedOpType(), principal, keytab);
       LOG.debug("Using runtime config principal: " + principal + ", keytab = " + keytab);
     }
       
