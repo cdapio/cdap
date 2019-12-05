@@ -24,16 +24,13 @@ import PipelineConfigurationsStore, {
   ACTIONS as PipelineConfigurationsActions,
 } from 'components/PipelineConfigurations/Store';
 import PlusButton from 'components/PlusButton';
-import { GLOBALS } from 'services/global-constants';
 import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
 
 require('./PipelineDetailsTopPanel.scss');
 
 const mapStateToButtonsProps = (state) => {
   return {
-    isBatch:
-      state.artifact.name === GLOBALS.etlDataPipeline ||
-      state.artifact.name === GLOBALS.eltSqlPipeline,
+    pipelineType: state.artifact.name,
     pipelineName: state.name,
     schedule: state.config.schedule,
     maxConcurrentRuns: state.config.maxConcurrentRuns,
@@ -59,9 +56,7 @@ export default class PipelineDetailsTopPanel extends Component {
       type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
       payload: {
         pipelineVisualConfiguration: {
-          isBatch:
-            pipelineDetailStore.artifact.name === GLOBALS.etlDataPipeline ||
-            pipelineDetailStore.artifact.name === GLOBALS.eltSqlPipeline,
+          pipelineType: pipelineDetailStore.artifact.name,
         },
       },
     });

@@ -26,7 +26,7 @@ import PipelineSummaryButton from 'components/PipelineDetails/PipelineDetailsTop
 
 const mapStateToConfigureButton = (state, ownProps) => {
   return {
-    isBatch: ownProps.isBatch,
+    pipelineType: ownProps.pipelineType,
     pipelineName: ownProps.pipelineName,
     resolvedMacros: state.resolvedMacros,
     runtimeArgs: state.runtimeArgs,
@@ -35,7 +35,7 @@ const mapStateToConfigureButton = (state, ownProps) => {
 
 const mapStateToRunButton = (state, ownProps) => {
   return {
-    isBatch: ownProps.isBatch,
+    pipelineType: ownProps.pipelineType,
     pipelineName: ownProps.pipelineName,
     runButtonLoading: ownProps.runButtonLoading,
     runError: ownProps.runError,
@@ -45,7 +45,7 @@ const mapStateToRunButton = (state, ownProps) => {
 
 const mapStateToScheduleButton = (state, ownProps) => {
   return {
-    isBatch: ownProps.isBatch,
+    pipelineType: ownProps.pipelineType,
     pipelineName: ownProps.pipelineName,
     schedule: ownProps.schedule,
     maxConcurrentRuns: ownProps.maxConcurrentRuns,
@@ -61,7 +61,7 @@ const ConnectedRunButton = connect(mapStateToRunButton)(PipelineRunButton);
 const ConnectedScheduleButton = connect(mapStateToScheduleButton)(PipelineScheduleButton);
 
 export default function PipelineDetailsButtons({
-  isBatch,
+  pipelineType,
   pipelineName,
   schedule,
   maxConcurrentRuns,
@@ -78,9 +78,9 @@ export default function PipelineDetailsButtons({
   return (
     <Provider store={PipelineConfigurationsStore}>
       <div className="pipeline-details-buttons">
-        <ConnectedConfigureButton isBatch={isBatch} pipelineName={pipelineName} />
+        <ConnectedConfigureButton pipelineType={pipelineType} pipelineName={pipelineName} />
         <ConnectedScheduleButton
-          isBatch={isBatch}
+          pipelineType={pipelineType}
           pipelineName={pipelineName}
           schedule={schedule}
           maxConcurrentRuns={maxConcurrentRuns}
@@ -89,7 +89,7 @@ export default function PipelineDetailsButtons({
           scheduleError={scheduleError}
         />
         <PipelineStopButton
-          isBatch={isBatch}
+          pipelineType={pipelineType}
           pipelineName={pipelineName}
           runs={runs}
           currentRun={currentRun}
@@ -97,19 +97,19 @@ export default function PipelineDetailsButtons({
           stopError={stopError}
         />
         <ConnectedRunButton
-          isBatch={isBatch}
+          pipelineType={pipelineType}
           pipelineName={pipelineName}
           runButtonLoading={runButtonLoading}
           runError={runError}
         />
-        <PipelineSummaryButton isBatch={isBatch} pipelineName={pipelineName} />
+        <PipelineSummaryButton pipelineType={pipelineType} pipelineName={pipelineName} />
       </div>
     </Provider>
   );
 }
 
 PipelineDetailsButtons.propTypes = {
-  isBatch: PropTypes.boolean,
+  pipelineType: PropTypes.string,
   pipelineName: PropTypes.string,
   schedule: PropTypes.string,
   maxConcurrentRuns: PropTypes.number,

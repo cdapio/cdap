@@ -2004,6 +2004,8 @@ features:
       contentHeading: Set configurations for this pipeline
       instrumentation: Instrumentation
       instrumentationTooltip: Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources.
+      serviceAccountPath: Service Account Path
+      serviceAccountPathTooltip: The filepath to the service account credentials to use when connecting to BigQuery.
       stageLogging: Stage level logging
       stageLoggingTooltip: Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources.
       title: Pipeline config

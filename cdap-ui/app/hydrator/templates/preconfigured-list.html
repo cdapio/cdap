@@ -45,7 +45,7 @@
                   All
                 </button>
                 <button class="btn btn-default text-left"
-                  ng-class="{'active': PreconfiguredController.GLOBALS.etlBatchPipelines.indexOf(PreconfiguredController.typeFilter) !== -1}"
+                  ng-class="{'active': PreconfiguredController.GLOBALS.etlBatchPipelines.includes(PreconfiguredController.typeFilter)}"
                   ng-click="PreconfiguredController.typeFilter = PreconfiguredController.GLOBALS.etlBatch">
                   Batch
                 </button>

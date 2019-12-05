@@ -19,34 +19,37 @@ import PropTypes from 'prop-types';
 import Instrumentation from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Instrumentation';
 import Checkpointing from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/Checkpointing';
 import BatchInterval from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/BatchInterval';
+import ServiceAccountPath from 'components/PipelineConfigurations/ConfigurationsContent/PipelineConfigTabContent/ServiceAccountPath';
 import { connect } from 'react-redux';
 import T from 'i18n-react';
+import { GLOBALS } from 'services/global-constants';
 require('./PipelineConfigTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
-function PipelineConfigTabContent({ isBatch }) {
+function PipelineConfigTabContent({ pipelineType }) {
   return (
     <div id="pipeline-config-tab-content" className="configuration-step-content">
       <div className="step-content-heading">{T.translate(`${PREFIX}.contentHeading`)}</div>
-      {!isBatch ? (
+      {pipelineType === GLOBALS.etlDataStreams ? (
         <div>
           <BatchInterval />
           <Checkpointing />
         </div>
       ) : null}
+      {pipelineType === GLOBALS.eltSqlPipeline ? <ServiceAccountPath /> : null}
       <Instrumentation />
     </div>
   );
 }
 
 PipelineConfigTabContent.propTypes = {
-  isBatch: PropTypes.bool,
+  pipelineType: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
   return {
-    isBatch: state.pipelineVisualConfiguration.isBatch,
+    pipelineType: state.pipelineVisualConfiguration.pipelineType,
   };
 };
 const ConnectedPipelineConfigTabContent = connect(mapStateToProps)(PipelineConfigTabContent);

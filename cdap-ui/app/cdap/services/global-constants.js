@@ -189,6 +189,12 @@ const GLOBALS = {
     'cdap-sql-pipeline': 'Workflow'
   },
 
+  programLabel: {
+    'cdap-data-pipeline': 'batch',
+    'cdap-data-streams': 'realtime',
+    'cdap-sql-pipeline': 'SQL',
+  },
+
   wrangler: {
     pluginArtifactName: 'wrangler-transform',
   },

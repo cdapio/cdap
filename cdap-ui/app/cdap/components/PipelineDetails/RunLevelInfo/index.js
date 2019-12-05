@@ -26,7 +26,6 @@ import RunDuration from 'components/PipelineDetails/RunLevelInfo/RunDuration';
 import RunNumWarnings from 'components/PipelineDetails/RunLevelInfo/RunNumWarnings';
 import RunNumErrors from 'components/PipelineDetails/RunLevelInfo/RunNumErrors';
 import RunComputeProfile from 'components/PipelineDetails/RunLevelInfo/RunComputeProfile';
-import { GLOBALS } from 'services/global-constants';
 
 require('./RunLevelInfo.scss');
 
@@ -34,7 +33,7 @@ const mapStateToProps = (state) => {
   return {
     currentRun: state.currentRun,
     runs: state.runs,
-    isBatch: state.artifact.name === GLOBALS.etlDataPipeline,
+    pipelineType: state.artifact.name,
     pipelineName: state.name,
   };
 };

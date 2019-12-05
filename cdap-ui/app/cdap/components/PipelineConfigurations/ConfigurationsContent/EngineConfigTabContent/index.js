@@ -24,13 +24,14 @@ import CustomConfig from 'components/PipelineConfigurations/ConfigurationsConten
 import { connect } from 'react-redux';
 import T from 'i18n-react';
 import classnames from 'classnames';
+import { GLOBALS } from 'services/global-constants';
 require('./EngineConfigTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.EngineConfig';
 
 class EngineConfigTabContent extends Component {
   static propTypes = {
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     isDetailView: PropTypes.bool,
   };
 
@@ -69,21 +70,21 @@ class EngineConfigTabContent extends Component {
   }
 
   render() {
-    let pipelineTypeLabel = this.props.isBatch ? 'batch' : 'realtime';
-
+    const pipelineTypeLabel = GLOBALS.programLabel[this.props.pipelineType];
+    const isBatch = GLOBALS.etlBatchPipelines.includes(this.props.pipelineType);
     return (
       <div
         id="engine-config-tab-content"
         className={classnames('configuration-step-content configuration-content-container', {
-          'batch-content': this.props.isBatch,
-          'realtime-content': !this.props.isBatch,
+          'batch-content': isBatch,
+          'realtime-content': !isBatch,
         })}
       >
         <fieldset disabled={this.props.isDetailView}>
           <div className="step-content-heading">
             {T.translate(`${PREFIX}.contentHeading`, { pipelineTypeLabel })}
           </div>
-          {this.props.isBatch
+          {isBatch
             ? this.renderBatchEngineConfig()
             : this.renderRealtimeEngineConfig(this.props.isDetailView)}
         </fieldset>
@@ -91,7 +92,7 @@ class EngineConfigTabContent extends Component {
           isDetailView={this.props.isDetailView}
           showCustomConfig={this.state.showCustomConfig}
           toggleCustomConfig={this.toggleCustomConfig}
-          isBatch={this.props.isBatch}
+          pipelineType={this.props.pipelineType}
         />
       </div>
     );
@@ -100,7 +101,7 @@ class EngineConfigTabContent extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    isBatch: state.pipelineVisualConfiguration.isBatch,
+    pipelineType: state.pipelineVisualConfiguration.pipelineType,
     isDetailView: state.pipelineVisualConfiguration.isDetailView,
   };
 };

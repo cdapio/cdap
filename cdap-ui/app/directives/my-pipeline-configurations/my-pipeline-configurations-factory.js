@@ -38,10 +38,15 @@ angular.module(PKG.name + '.commons')
       'element': '<my-realtime-pipeline-config></my-realtime-pipeline-config>',
       'attributes': attributes
     };
+    let sqlPipelineConfig = {
+      'element': '<my-sql-pipeline-config></my-sql-pipeline-config>',
+      'attributes': attributes
+    };
     return {
       'cdap-etl-batch': batchPipelineConfig,
       'cdap-data-pipeline': batchPipelineConfig,
       'cdap-data-streams': realtimePipelineConfig,
-      'cdap-etl-realtime': realtimePipelineConfig
+      'cdap-etl-realtime': realtimePipelineConfig,
+      'cdap-sql-pipeline': sqlPipelineConfig
     };
   });

@@ -245,6 +245,10 @@ let hasValidArtifact = (importConfig) => {
     uiSupportedArtifacts.push(GLOBALS.etlDataStreams);
   }
 
+  if (Theme.showSqlPipeline !== false) {
+    uiSupportedArtifacts.push(GLOBALS.eltSqlPipeline);
+  }
+
   return (
     importConfig.artifact &&
     importConfig.artifact.name.length &&
@@ -256,8 +260,8 @@ let hasValidConfig = (importConfig) => {
   return importConfig.config;
 };
 let hasValidSchedule = (importConfig) => {
-  let isBatchPipeline = GLOBALS.etlBatchPipelines.indexOf(importConfig.artifact.name) !== -1;
-  return !isBatchPipeline ? true : importConfig.config.schedule;
+  let isSchedulable = GLOBALS.programType[importConfig.artifact.name] === 'workflows';
+  return isSchedulable ? importConfig.config.schedule : true;
 };
 let hasValidInstance = (importConfig) => {
   let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;

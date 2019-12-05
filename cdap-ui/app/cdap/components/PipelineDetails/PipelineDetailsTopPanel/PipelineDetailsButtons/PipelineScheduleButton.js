@@ -31,12 +31,13 @@ import {
 } from 'components/PipelineConfigurations/Store/ActionCreator';
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
+import { GLOBALS } from 'services/global-constants';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineScheduleButton extends Component {
   static propTypes = {
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     schedule: PropTypes.string,
     maxConcurrentRuns: PropTypes.number,
     pipelineName: PropTypes.string,
@@ -125,7 +126,10 @@ export default class PipelineScheduleButton extends Component {
   }
 
   render() {
-    if (!this.props.isBatch || Theme.showSchedules === false) {
+    if (
+      GLOBALS.programType[this.props.pipelineType] !== 'workflows' ||
+      Theme.showSchedules === false
+    ) {
       return null;
     }
 

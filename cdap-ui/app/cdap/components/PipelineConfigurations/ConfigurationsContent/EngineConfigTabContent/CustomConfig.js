@@ -48,7 +48,7 @@ const mapDispatchToCustomConfigKeyValuesProps = (dispatch, ownProps) => {
         type: PipelineConfigurationsActions.SET_CUSTOM_CONFIG,
         payload: {
           customConfig: customConfigObj,
-          isBatch: ownProps.isBatch,
+          pipelineType: ownProps.pipelineType,
         },
       });
     },
@@ -63,7 +63,7 @@ const ConnectedCustomConfigKeyValuePairs = connect(
 const mapStateToCustomConfigProps = (state, ownProps) => {
   return {
     isDetailView: ownProps.isDetailView,
-    isBatch: ownProps.isBatch,
+    pipelineType: ownProps.pipelineType,
     showCustomConfig: ownProps.showCustomConfig,
     toggleCustomConfig: ownProps.toggleCustomConfig,
     engine: state.engine,
@@ -73,13 +73,13 @@ const mapStateToCustomConfigProps = (state, ownProps) => {
 
 const CustomConfig = ({
   isDetailView,
-  isBatch,
+  pipelineType,
   showCustomConfig,
   toggleCustomConfig,
   engine,
   customConfigKeyValuePairs,
 }) => {
-  let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
+  let engineDisplayLabel = getEngineDisplayLabel(engine, pipelineType);
   let numberOfCustomConfigFilled = customConfigKeyValuePairs.pairs.filter(
     (pair) => !isEmpty(pair.key) && !isEmpty(pair.value)
   ).length;
@@ -142,7 +142,7 @@ const CustomConfig = ({
             <span className="value-label">{T.translate('commons.keyValPairs.valueLabel')}</span>
           </div>
           <div className="custom-config-values key-value-pair-values">
-            <ConnectedCustomConfigKeyValuePairs isBatch={isBatch} />
+            <ConnectedCustomConfigKeyValuePairs pipelineType={pipelineType} />
           </div>
         </div>
       ) : null}
@@ -152,7 +152,7 @@ const CustomConfig = ({
 
 CustomConfig.propTypes = {
   isDetailView: PropTypes.bool,
-  isBatch: PropTypes.bool,
+  pipelineType: PropTypes.string,
   showCustomConfig: PropTypes.bool,
   toggleCustomConfig: PropTypes.func,
   engine: PropTypes.string,

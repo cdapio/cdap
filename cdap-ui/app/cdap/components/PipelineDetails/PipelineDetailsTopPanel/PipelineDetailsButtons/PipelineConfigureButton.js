@@ -26,7 +26,7 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineConfigureButton extends Component {
   static propTypes = {
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     pipelineName: PropTypes.string,
     resolvedMacros: PropTypes.object,
     runtimeArgs: PropTypes.array,
@@ -76,7 +76,7 @@ export default class PipelineConfigureButton extends Component {
           <PipelineConfigurations
             onClose={this.toggleModeless}
             isDetailView={true}
-            isBatch={this.props.isBatch}
+            pipelineType={this.props.pipelineType}
             pipelineName={this.props.pipelineName}
           />
         ) : null}

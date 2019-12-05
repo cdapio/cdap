@@ -22,7 +22,7 @@ class HydratorPlusPlusSettingsCtrl {
     this.activeTab = 0;
 
     // If ETL Batch
-    if (GLOBALS.etlBatchPipelines.indexOf(this.templateType) !== -1) {
+    if (GLOBALS.etlBatchPipelines.includes(this.templateType)) {
       // Initialiting ETL Batch Schedule
       this.initialCron = HydratorPlusPlusConfigStore.getSchedule();
 

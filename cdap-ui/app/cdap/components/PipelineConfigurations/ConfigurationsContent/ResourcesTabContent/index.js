@@ -23,18 +23,19 @@ import ExecutorResources from 'components/PipelineConfigurations/ConfigurationsC
 import ClientResources from 'components/PipelineConfigurations/ConfigurationsContent/ResourcesTabContent/ClientResources';
 import T from 'i18n-react';
 import classnames from 'classnames';
+import { GLOBALS } from 'services/global-constants';
 require('./ResourcesTabContent.scss');
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
 
 const mapStateToStepContentHeadingProps = (state, ownProps) => {
   return {
-    isBatch: ownProps.isBatch,
+    pipelineType: ownProps.pipelineType,
     engine: state.engine,
   };
 };
-const StepContentHeading = ({ isBatch, engine }) => {
-  let engineDisplayLabel = getEngineDisplayLabel(engine, isBatch);
+const StepContentHeading = ({ pipelineType, engine }) => {
+  let engineDisplayLabel = getEngineDisplayLabel(engine, pipelineType);
   return (
     <div className="step-content-heading">
       {T.translate(`${PREFIX}.contentHeading`, { engineDisplayLabel })}
@@ -43,13 +44,14 @@ const StepContentHeading = ({ isBatch, engine }) => {
 };
 
 StepContentHeading.propTypes = {
-  isBatch: PropTypes.bool,
+  pipelineType: PropTypes.string,
   engine: PropTypes.string,
 };
 
 const ConnectedStepContentHeading = connect(mapStateToStepContentHeadingProps)(StepContentHeading);
 
-function ResourcesTabContent({ isBatch }) {
+function ResourcesTabContent({ pipelineType }) {
+  const isBatch = GLOBALS.etlBatchPipelines.includes(pipelineType);
   return (
     <div
       id="resources-tab-content"
@@ -58,23 +60,23 @@ function ResourcesTabContent({ isBatch }) {
         'realtime-content': !isBatch,
       })}
     >
-      <ConnectedStepContentHeading isBatch={isBatch} />
+      <ConnectedStepContentHeading pipelineType={pipelineType} />
       <div className="resource-container">
         {!isBatch ? <ClientResources /> : null}
         <DriverResources />
-        <ExecutorResources isBatch={isBatch} />
+        <ExecutorResources pipelineType={pipelineType} />
       </div>
     </div>
   );
 }
 
 ResourcesTabContent.propTypes = {
-  isBatch: PropTypes.bool,
+  pipelineType: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
   return {
-    isBatch: state.pipelineVisualConfiguration.isBatch,
+    pipelineType: state.pipelineVisualConfiguration.pipelineType,
   };
 };
 const ConnectedResourceTabContent = connect(mapStateToProps)(ResourcesTabContent);
