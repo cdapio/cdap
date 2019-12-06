@@ -135,8 +135,8 @@ const startServicePolling = () => {
 };
 
 const startPolling = () => {
-  pollSystemServices();
   stopPolling();
+  pollSystemServices();
   startServicePolling();
   pollingObservable = Observable.interval(BACKEND_STATUS_POLL_INTERVAL)
     .mergeMap(() =>
