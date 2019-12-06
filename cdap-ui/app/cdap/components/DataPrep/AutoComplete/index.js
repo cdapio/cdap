@@ -82,7 +82,8 @@ export default class DataPrepAutoComplete extends Component {
 
     MyDataPrepApi.getUsage({ context: namespace }).subscribe((res) => {
       const fuseOptions = {
-        include: ['matches', 'score'],
+        includeScore: true,
+        includeMatches: true,
         caseSensitive: false,
         threshold: 0,
         shouldSort: true,

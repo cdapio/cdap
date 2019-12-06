@@ -170,7 +170,7 @@
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
     "frameguard": "3.1.0",
-    "fuse.js": "2.5.0",
+    "fuse.js": "3.4.6",
     "global": "^4.4.0",
     "graphql": "14.4.0",
     "graphql-import": "0.7.1",
