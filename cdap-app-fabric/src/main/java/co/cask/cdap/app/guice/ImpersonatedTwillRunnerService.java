@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TwillRunProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Function;
@@ -86,8 +88,9 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
   public TwillPreparer prepare(TwillApplication application) {
     if (application instanceof ProgramTwillApplication) {
       ProgramId programId = ((ProgramTwillApplication) application).getProgramRunId().getParent();
+      ProgramRunId programRunId = ((ProgramTwillApplication) application).getProgramRunId();
       return new ImpersonatedTwillPreparer(hConf, delegate.prepare(application), impersonator,
-                                           secureStoreRenewer, programId);
+                                           secureStoreRenewer, programId, programRunId);
     }
     return delegate.prepare(application);
   }
@@ -182,9 +185,10 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
           return;
         }
 
+        TwillRunProgramId twillProgramId = new TwillRunProgramId(programId, runId.getId());
         try {
           // Impersonate as the program owner and call the renewer
-          impersonator.doAs(programId, new Callable<Void>() {
+          impersonator.doAs(twillProgramId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
               renewer.renew(application, runId, secureStoreWriter);
