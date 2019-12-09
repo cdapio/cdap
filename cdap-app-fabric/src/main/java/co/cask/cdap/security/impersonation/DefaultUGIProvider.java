@@ -23,10 +23,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -49,8 +47,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -67,7 +63,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   protected final Store store;
   private static final String RUNTIME_ARG_KEYTAB = "pipeline.keytab.path";
   private static final String RUNTIME_ARG_PRINCIPAL = "pipeline.principal.name";
- 
+
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
                      NamespaceQueryAdmin namespaceQueryAdmin, Store store) {
@@ -124,10 +120,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
       // Get impersonation keytab and principal from runtime arguments if present
       Map<String, String> properties = getRuntimeImpersonationProperties(impersonationRequest.getEntityId());
-      NamespacedEntityId programId = impersonationRequest.getEntityId();
-      
-      if ((properties != null) && (properties.containsKey(RUNTIME_ARG_KEYTAB)) &&
-                  (properties.containsKey(RUNTIME_ARG_PRINCIPAL))) {
+      if (properties != null) {
           String keytab = properties.get(RUNTIME_ARG_KEYTAB);
           String principal = properties.get(RUNTIME_ARG_PRINCIPAL);
           LOG.debug("Using runtime config principal: " + principal + ", keytab = " + keytab);
@@ -140,9 +133,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
     String configuredPrincipalShortName = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
     if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-        UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
-        UserGroupInformation proxyUgi = getProxyUGI(ugi, programId, properties);   
-        return new UGIWithPrincipal(impersonationRequest.getPrincipal(), proxyUgi);
+      return new UGIWithPrincipal(impersonationRequest.getPrincipal(), UserGroupInformation.getCurrentUser());
     }
 
     URI keytabURI = URI.create(impersonationRequest.getKeytabURI());
@@ -164,14 +155,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
       UserGroupInformation loggedInUGI;
       try {
-          UserGroupInformation tmpUgi =
-                UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
-          loggedInUGI = getProxyUGI(tmpUgi, programId, properties);
-     
-          LOG.debug("loggedInUGI {} , realUser {}, userShortName {} , userName {} , loginUser {}", 
-                 loggedInUGI, loggedInUGI.getRealUser(), loggedInUGI.getShortUserName(), loggedInUGI.getUserName() , loggedInUGI.getLoginUser());
-         
-         
+        loggedInUGI =
+          UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
       } catch (Exception e) {
         // rethrow the exception with additional information tagged, so the user knows which principal/keytab is
         // not working
@@ -236,8 +221,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
           }
           
           if (runRecord != null) {
-              Map<String, String> resultProps = new HashMap<String, String>();
-              
               Gson gson = new Gson();
               Type stringStringMap = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -245,15 +228,16 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
               String runtimeArgsJson = properties.get("runtimeArgs");
               if (runtimeArgsJson != null) {
                   properties = gson.fromJson(runtimeArgsJson, stringStringMap);
-                  if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
-                      properties.remove(ProgramOptionConstants.LOGGED_IN_USER);
+                  if ((properties.containsKey(RUNTIME_ARG_KEYTAB)) && 
+                          (properties.containsKey(RUNTIME_ARG_PRINCIPAL))) {
+                      LOG.debug("Found impersonation info from runtime arguments");
+                      return properties;
+                  } else {
+                      LOG.debug("Could not find keytab, principal in runtime args");
                   }
-                  resultProps.putAll(properties);
               } else {
                   LOG.debug("Could not find any runtime args");
               }
-              resultProps.putAll(runRecord.getSystemArgs());
-              return resultProps;
           } else {
               LOG.debug("Could not obtain program's meta run record");
           }
@@ -261,23 +245,5 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
           LOG.debug("Entity Id not of type ProgramRunId, skippinh checking of runtime args");
       }
       return null;
-  }
-  
-  private UserGroupInformation getProxyUGI(UserGroupInformation currentUgi, NamespacedEntityId programId, 
-          Map<String,String> properties) {
-      UserGroupInformation proxyUgi = currentUgi;
-      
-      if ((properties != null) && (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER))) {
-          String proxiedUser = properties.get(ProgramOptionConstants.LOGGED_IN_USER);
-          if (programId instanceof ProgramRunId) {
-              ProgramRunId runId = ((ProgramRunId) programId);
-              String pCategory = runId.getType().getCategoryName();
-              if (!(pCategory.equalsIgnoreCase(ProgramType.SERVICE.getCategoryName()))) {
-                  proxyUgi = currentUgi.createProxyUser(proxiedUser, currentUgi);
-              }
-          }
-      }
-
-      return proxyUgi;
   }
 }
