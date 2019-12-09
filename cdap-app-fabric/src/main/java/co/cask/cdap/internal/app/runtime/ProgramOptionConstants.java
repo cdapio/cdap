@@ -137,10 +137,4 @@ public final class ProgramOptionConstants {
    * Option for requirements of various plugins present in the program
    */
   public static final String PLUGIN_REQUIREMENTS = "pluginRequirements";
-  
-  /*
-   * Logged in user, this will be used as proxy user for impersonation 
-   */
-  public static final String LOGGED_IN_USER = "loggedInUser";
-  
 }
