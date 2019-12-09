@@ -58,13 +58,6 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
 
   /**
-   * Returns user to be impersonated
-   */
-  protected String getImpersonatedUser(ImpersonationRequest impersonationRequest) {
-      return impersonationRequest.getPrincipal();
-  }
-     
-  /**
    * Checks the {@link ImpersonationRequest} is an explore request and determine whether to cache the result or not
    */
   protected abstract boolean checkExploreAndDetermineCache(
@@ -72,11 +65,10 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
 
   @Override
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
-    String impersonatedUser = getImpersonatedUser(impersonationRequest);
     try {
       UGIWithPrincipal ugi = impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) ||
         impersonationRequest.getPrincipal() == null ?
-        null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest, impersonatedUser));
+        null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
       if (ugi != null) {
         return ugi;
       }
@@ -91,8 +83,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       ImpersonationRequest newRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
                                                                  impersonationRequest.getImpersonatedOpType(),
                                                                  info.getPrincipal(), info.getKeytabURI());
-      return isCache ? ugiCache.get(new UGICacheKey(newRequest, impersonatedUser)) : createUGI(newRequest);
-
+      return isCache ? ugiCache.get(new UGICacheKey(newRequest)) : createUGI(newRequest);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       // Propagate if the cause is an IOException or RuntimeException
@@ -128,20 +119,14 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   }
 
   private static final class UGICacheKey {
-    private final ImpersonationRequest request;    
-    private final String impersonatedUser;
+    private final ImpersonationRequest request;
 
-    UGICacheKey(ImpersonationRequest request, String loggedInUser) {
+    UGICacheKey(ImpersonationRequest request) {
       this.request = request;
-      this.impersonatedUser = loggedInUser;
     }
 
     public ImpersonationRequest getRequest() {
       return request;
-    }
-
-    public String getImpersonatedUser() {
-      return impersonatedUser;
     }
 
     @Override
@@ -153,25 +138,12 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
         return false;
       }
       UGICacheKey cachekey = (UGICacheKey) o;
-      
-      if (!(Objects.equals(request.getPrincipal(), cachekey.getRequest().getPrincipal()))) {
-          return false;
-      }
-      
-      if ((impersonatedUser != null) && (cachekey.getImpersonatedUser() != null)) {
-          return impersonatedUser.equals(cachekey.getImpersonatedUser());
-      } else if ((impersonatedUser == null) && (cachekey.getImpersonatedUser() == null)) {
-          return true;
-      }
-      return false;
+      return Objects.equals(request.getPrincipal(), cachekey.getRequest().getPrincipal());
     }
 
     @Override
     public int hashCode() {
-      if (impersonatedUser == null) {
-        return Objects.hash(request.getPrincipal());
-      }
-      return Objects.hash(request.getPrincipal(), impersonatedUser);
+      return Objects.hash(request.getPrincipal());
     }
   }
 }
