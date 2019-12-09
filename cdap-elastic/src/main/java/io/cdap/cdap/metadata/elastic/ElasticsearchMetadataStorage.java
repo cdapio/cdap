@@ -188,14 +188,13 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     this.cConf = cConf;
     this.indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
     this.scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
-    String elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
+    this.elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
     int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
                                   Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
     int retrySleepMs = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_RETRY_SLEEP_MS,
                                     Config.DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS);
     this.retryStrategyOnConflict = RetryStrategies.limit(numRetries,
                                                          RetryStrategies.fixDelay(retrySleepMs, TimeUnit.MILLISECONDS));
-    this.elasticHosts = elasticHosts;
   }
 
   @Override
