@@ -26,6 +26,8 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.TwillRunProgramId;
+
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -99,7 +101,11 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
     // For program we look for application owner. In future we might want to support lookup parent owner
     // recursively once we have a use-case for it.
     if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
-      entityId = ((ProgramId) entityId).getParent();
+      if (entityId instanceof TwillRunProgramId) {
+        entityId = ((TwillRunProgramId) entityId).getParent();  
+      } else {
+        entityId = ((ProgramId) entityId).getParent();
+      }
     }
     return entityId;
   }

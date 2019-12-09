@@ -18,6 +18,7 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.internal.app.runtime.distributed.ForwardingTwillPreparer;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
@@ -40,14 +41,17 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
   private final Impersonator impersonator;
   private final ProgramId programId;
   private final TokenSecureStoreRenewer secureStoreRenewer;
+  private final ProgramRunId programRunId;
 
   ImpersonatedTwillPreparer(Configuration hConf, TwillPreparer delegate, Impersonator impersonator,
-                            TokenSecureStoreRenewer secureStoreRenewer, ProgramId programId) {
+                            TokenSecureStoreRenewer secureStoreRenewer, ProgramId programId,
+                            ProgramRunId programRunId) {
     this.hConf = hConf;
     this.delegate = delegate;
     this.impersonator = impersonator;
     this.programId = programId;
     this.secureStoreRenewer = secureStoreRenewer;
+    this.programRunId = programRunId;
   }
 
   @Override
@@ -58,7 +62,7 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
   @Override
   public TwillController start(final long timeout, final TimeUnit timeoutUnit) {
     try {
-      return impersonator.doAs(programId, () -> {
+      return impersonator.doAs(programRunId, () -> {
         // Add secure tokens
         if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
           addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
