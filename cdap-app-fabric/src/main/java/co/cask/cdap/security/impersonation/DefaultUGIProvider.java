@@ -341,12 +341,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       return currentUgi;
     }
     
-    if (loggedInUser.equals(currentUgi.getShortUserName())) {
-      LOG.debug("Current UGI {} already set as loggedInUser {}, skipping creation of proxy user",
-              currentUgi, loggedInUser);
-      return currentUgi;
-    }
-    
     ProgramId programId = null;
     if (entityId instanceof TwillRunProgramId) {
       programId = ((TwillRunProgramId)entityId).getProgramId();
@@ -368,17 +362,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   protected String getImpersonatedUser(ImpersonationRequest impersonationRequest) {
     Map<String, String> properties = getRuntimeImpersonationProperties(impersonationRequest.getEntityId());
 
-    String defaultRes;
-    try {
-      defaultRes = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
-    } catch (IOException e) {
-        LOG.warn("Exception while converting principal {} to short name: {}",
-                impersonationRequest.getPrincipal(), e);
-        defaultRes = impersonationRequest.getPrincipal();
-    }
-    
     if (properties == null) {
-      return defaultRes;
+      return impersonationRequest.getPrincipal();
     }
 
     if (properties.containsKey(ProgramOptionConstants.LOGGED_IN_USER)) {
@@ -391,10 +376,10 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       try {
         return new KerberosName(principal).getShortName();
       } catch (IOException e) {
-        LOG.warn("Exception while converting principal {} to short name: {}", principal, e);
+        LOG.debug("Exception while converting principal {} to short name: {}", principal, e);
         return principal;
       }  
     }
-    return defaultRes;
+    return impersonationRequest.getPrincipal();
   }
 }

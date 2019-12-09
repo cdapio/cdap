@@ -72,7 +72,14 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
 
   @Override
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
+    String impersonatedUser = getImpersonatedUser(impersonationRequest);
     try {
+      UGIWithPrincipal ugi = impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) ||
+        impersonationRequest.getPrincipal() == null ?
+        null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest, impersonatedUser));
+      if (ugi != null) {
+        return ugi;
+      }
       boolean isCache = checkExploreAndDetermineCache(impersonationRequest);
       ImpersonationRequest tmpRequest = impersonationRequest;
       if (impersonationRequest.getEntityId() instanceof ProgramRunId) {
@@ -84,7 +91,6 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       ImpersonationRequest newRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
                                                                  impersonationRequest.getImpersonatedOpType(),
                                                                  info.getPrincipal(), info.getKeytabURI());
-      String impersonatedUser = getImpersonatedUser(newRequest);
       return isCache ? ugiCache.get(new UGICacheKey(newRequest, impersonatedUser)) : createUGI(newRequest);
 
     } catch (ExecutionException e) {
