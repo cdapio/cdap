@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -31,6 +33,7 @@ import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
@@ -51,6 +54,7 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.NoOpAuthorizer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -110,6 +114,23 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
                              EnvironmentOptions options) {
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
+
+    // Add a service just for closing MetadataStorage to release resource.
+    // MetadataStorage is binded as Singleton, so ok to get the instance and close it.
+    MetadataStorage metadataStorage = injector.getInstance(MetadataStorage.class);
+    services.add(new AbstractService() {
+
+      @Override
+      protected void doStart() {
+        notifyStarted();
+      }
+
+      @Override
+      protected void doStop() {
+        Closeables.closeQuietly(metadataStorage);
+        notifyStopped();
+      }
+    });
   }
 
   @Nullable
