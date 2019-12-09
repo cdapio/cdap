@@ -168,12 +168,14 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     "entity-name", NAME_FIELD,
     "creation-time", CREATED_FIELD
   );
-  private static final String SUPPORTED_SORT_KEYS = SORT_KEY_MAP.keySet().stream().collect(Collectors.joining(", "));
+  private static final String SUPPORTED_SORT_KEYS = String.join(", ", SORT_KEY_MAP.keySet());
 
   private final CConfiguration cConf;
-  private final RestHighLevelClient client;
+  private final String elasticHosts;
   private final String indexName;
   private final String scrollTimeout;
+
+  private volatile RestHighLevelClient client;
 
   private volatile boolean created = false;
   private int maxWindowSize = Config.DEFAULT_MAX_RESULT_WINDOW;
@@ -184,31 +186,20 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   @Inject
   public ElasticsearchMetadataStorage(CConfiguration cConf) {
     this.cConf = cConf;
-    indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
-    scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
-    String elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
+    this.indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
+    this.scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
+    this.elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
     int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
                                   Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
     int retrySleepMs = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_RETRY_SLEEP_MS,
                                     Config.DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS);
-    retryStrategyOnConflict = RetryStrategies.limit(numRetries,
-                                                    RetryStrategies.fixDelay(retrySleepMs, TimeUnit.MILLISECONDS));
-
-    LOG.info("Elasticsearch cluster is {}", elasticHosts);
-    HttpHost[] hosts = Arrays.stream(elasticHosts.split(",")).map(hostAndPort -> {
-      int pos = hostAndPort.indexOf(':');
-      String host = pos < 0 ? hostAndPort : hostAndPort.substring(0, pos);
-      int port = pos < 0 ? 9200 : Integer.parseInt(hostAndPort.substring(pos + 1));
-      return new HttpHost(host, port);
-    }).toArray(HttpHost[]::new);
-    client = new RestHighLevelClient(RestClient.builder(hosts));
+    this.retryStrategyOnConflict = RetryStrategies.limit(numRetries,
+                                                         RetryStrategies.fixDelay(retrySleepMs, TimeUnit.MILLISECONDS));
   }
 
   @Override
   public void close() {
-    if (client != null) {
-      Closeables.closeQuietly(client);
-    }
+    Closeables.closeQuietly(client);
   }
 
   @Override
@@ -222,6 +213,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       }
       GetIndexRequest request = new GetIndexRequest();
       request.indices(indexName);
+      RestHighLevelClient client = getClient();
       if (!client.indices().exists(request, RequestOptions.DEFAULT)) {
         String settings = createSettings();
         LOG.info("Creating index '{}' with settings: {}", indexName, settings);
@@ -258,7 +250,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * The only way to store metadata for an index in Elasticsearch is to create a mapping
    * for "_meta". We do this to store the version of CDAP that creates the index.
    */
-  public VersionInfo getVersionInfo() throws IOException {
+  VersionInfo getVersionInfo() throws IOException {
+    RestHighLevelClient client = getClient();
     GetMappingsRequest request = new GetMappingsRequest().indices(indexName);
     GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
     MappingMetaData mapping = response.getMappings().get(indexName).get(DOC_TYPE);
@@ -277,8 +270,34 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
+  /**
+   * Returns a {@link RestHighLevelClient} for talking to elastic search.
+   */
+  private RestHighLevelClient getClient() {
+    RestHighLevelClient client = this.client;
+    if (client != null) {
+      return client;
+    }
+
+    synchronized (this) {
+      client = this.client;
+      if (client != null) {
+        return client;
+      }
+
+      LOG.info("Create new Elasticsearch client for cluster {}", elasticHosts);
+      HttpHost[] hosts = Arrays.stream(elasticHosts.split(",")).map(hostAndPort -> {
+        int pos = hostAndPort.indexOf(':');
+        String host = pos < 0 ? hostAndPort : hostAndPort.substring(0, pos);
+        int port = pos < 0 ? 9200 : Integer.parseInt(hostAndPort.substring(pos + 1));
+        return new HttpHost(host, port);
+      }).toArray(HttpHost[]::new);
+      this.client = client = new RestHighLevelClient(RestClient.builder(hosts));
+      return client;
+    }
+  }
+
   private String createMappings() throws IOException {
-    @SuppressWarnings("ConstantConditions")
     URL url = getClass().getClassLoader().getResource(MAPPING_RESOURCE);
     if (url == null) {
       throw new IllegalStateException("Index mapping file '" + MAPPING_RESOURCE + "'not found in classpath");
@@ -324,6 +343,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public void dropIndex() throws IOException {
+    RestHighLevelClient client = getClient();
     synchronized (this) {
       GetIndexRequest request = new GetIndexRequest();
       request.indices(indexName);
@@ -429,6 +449,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     for (Map.Entry<MetadataEntity, MetadataMutation> entry : mutations.entrySet()) {
       multiGet.add(indexName, DOC_TYPE, toDocumentId(entry.getKey()));
     }
+    RestHighLevelClient client = getClient();
     MultiGetResponse multiGetResponse = client.mget(multiGet, RequestOptions.DEFAULT);
     // responses are in the same order as the original requests
     int index = 0;
@@ -449,7 +470,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
     setRefreshPolicy(bulkRequest, options);
     executeBulk(bulkRequest, mutations);
-    return changes.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+    return new ArrayList<>(changes.values());
   }
 
   @Override
@@ -477,7 +498,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    */
   private RequestAndChange applyMutation(VersionedMetadata before,
                                          MetadataMutation mutation) {
-    LOG.trace("Applying mutation {} to entity {} with metadata", mutation, mutation.getEntity(), before.getMetadata());
+    LOG.trace("Applying mutation {} to entity {} with metadata {}",
+              mutation, mutation.getEntity(), before.getMetadata());
     switch (mutation.getType()) {
       case CREATE:
         return create(before, (MetadataMutation.Create) mutation);
@@ -617,9 +639,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return existing metadata along with its version in the index, or an empty metadata with null version.
    */
-  private VersionedMetadata readFromIndex(MetadataEntity entity)
-    throws IOException {
+  private VersionedMetadata readFromIndex(MetadataEntity entity) throws IOException {
     String id = toDocumentId(entity);
+    RestHighLevelClient client = getClient();
     try {
       GetRequest getRequest = new GetRequest(indexName).type(DOC_TYPE).id(id);
       GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
@@ -677,6 +699,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     String requestType = null;
     DocWriteResponse response;
     setRefreshPolicy(writeRequest, options);
+    RestHighLevelClient client = getClient();
     try {
       if (writeRequest instanceof DeleteRequest) {
         requestType = "Delete";
@@ -717,8 +740,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * @throws MetadataConflictException if a conflict occurs for any of the operations in the bulk
    * @throws IOException for any other problem encountered
    */
-  private void executeBulk(BulkRequest bulkRequest, LinkedHashMap<MetadataEntity, MetadataMutation> mutations)
-    throws IOException {
+  private void executeBulk(BulkRequest bulkRequest,
+                           LinkedHashMap<MetadataEntity, MetadataMutation> mutations) throws IOException {
+    RestHighLevelClient client = getClient();
     BulkResponse response = client.bulk(bulkRequest, RequestOptions.DEFAULT);
     if (response.hasFailures()) {
       IOException ioe = null;
@@ -795,6 +819,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       scrollRequest.scroll(scrollTimeout);
     }
     SearchResponse searchResponse;
+    RestHighLevelClient client = getClient();
     try {
       searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
     } catch (ElasticsearchStatusException e) {
@@ -805,10 +830,15 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       // scroll had expired, we have to search again
       return doSearch(createRequestFromCursor(request, cursor));
     }
-    SearchHits hits = searchResponse.getHits();
+    return createSearchResponse(request, searchResponse, computeCursor(searchResponse, cursor),
+                                cursor.getOffset(), cursor.getLimit());
+  }
+
+  private io.cdap.cdap.spi.metadata.SearchResponse createSearchResponse(SearchRequest request, SearchResponse response,
+                                                                        String cursor, int offset, int limit) {
+    SearchHits hits = response.getHits();
     List<MetadataRecord> results = fromHits(hits);
-    String newCursor = computeCursor(searchResponse, cursor);
-    return new io.cdap.cdap.spi.metadata.SearchResponse(request, newCursor, cursor.getOffset(), cursor.getLimit(),
+    return new io.cdap.cdap.spi.metadata.SearchResponse(request, cursor, offset, limit,
                                                         (int) hits.getTotalHits(), results);
   }
 
@@ -847,14 +877,11 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (request.isCursorRequested() && searchSource.from() == 0) {
       searchRequest.scroll(scrollTimeout);
     }
+    RestHighLevelClient client = getClient();
     LOG.debug("Executing search request {}", searchRequest);
-    SearchResponse searchResponse =
-      client.search(searchRequest, RequestOptions.DEFAULT);
-    SearchHits hits = searchResponse.getHits();
-    List<MetadataRecord> results = fromHits(hits);
-    String newCursor = computeCursor(searchResponse, request);
-    return new io.cdap.cdap.spi.metadata.SearchResponse(request, newCursor, request.getOffset(), request.getLimit(),
-                                                        (int) hits.getTotalHits(), results);
+    SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+    return createSearchResponse(request, searchResponse, computeCursor(searchResponse, request),
+                                request.getOffset(), request.getLimit());
   }
 
   /**
@@ -904,6 +931,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
     clearScrollRequest.addScrollId(scrollId);
     // clear the scroll request asynchronously. We don't really care about the response
+    RestHighLevelClient client = getClient();
     client.clearScrollAsync(clearScrollRequest, RequestOptions.DEFAULT, ActionListener.wrap(x -> { }, x -> { }));
   }
 
