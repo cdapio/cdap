@@ -14,8 +14,6 @@
 * the License.
 */
 
-$reset-button-color: #0275d8;
-
 .key-value-pair-preference {
   display: flex;
   justify-content: center;
@@ -54,9 +52,5 @@ $reset-button-color: #0275d8;
   }
   .hidden {
     display: none;
-  }
-  .reset-action {
-    cursor: pointer;
-    color: $reset-button-color;
   }
 }

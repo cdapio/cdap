@@ -61,7 +61,7 @@ function getFields(schemas: IStageSchema[], allowedTypes: string[]) {
 // This is meant to handle nullable fields since a nullable string type is
 // presented as ['string','null'].
 function containsType(types: string[], allowedTypes: string[]) {
-  if (allowedTypes.length == 0) {
+  if (allowedTypes.length === 0) {
     return true;
   }
 
@@ -99,7 +99,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
   const newValue = value
     .toString()
     .split(delimiter)
-    .filter((value) => fieldValues.includes(value))
+    .filter((v) => fieldValues.includes(v))
     .join(delimiter);
 
   if (newValue !== value) {

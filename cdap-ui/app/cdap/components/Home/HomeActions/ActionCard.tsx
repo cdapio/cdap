@@ -53,20 +53,26 @@ const styles = (theme): StyleRules => {
       color: theme.palette.grey[100],
       lineHeight: '1.2',
     },
-    footer: {
+    divider: {
       margin: '0 10px',
-      borderTop: `1px solid ${theme.palette.grey[500]}`,
-      padding: '10px 30px 18px',
+      borderColor: theme.palette.grey[500],
+    },
+    footer: {
       display: 'flex',
       justifyContent: 'center',
+      height: '48px',
     },
     link: {
-      width: '50%',
-      '&:last-child:not(:only-child)': {
-        textAlign: 'right',
-      },
-      '&:only-child': {
-        textAlign: 'center',
+      minWidth: '50%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexGrow: 1,
+      color: 'var(--blue)',
+      '&:hover': {
+        textDecoration: 'none',
+        backgroundColor: theme.palette.grey[700],
+        color: 'var(--blue)',
       },
     },
   };
@@ -96,6 +102,7 @@ const ActionCardView: React.FC<IActionCardProps> = ({ config, classes }) => {
         <Heading type={HeadingTypes.h3} label={config.title} className={classes.title} />
         <div className={classes.description}>{config.description}</div>
       </div>
+      <hr className={classes.divider} />
       <div className={classes.footer}>
         {config.links.slice(0, 2).map((link) => {
           const linkPrefix = '/cdap';

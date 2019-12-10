@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS) {
+  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS, caskWindowManager) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     const pipelineDetailsActionCreator = window.CaskCommon.PipelineDetailActionCreator;
     const pipelineMetricsActionCreator = window.CaskCommon.PipelineMetricsActionCreator;
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.hydrator')
     let programName = GLOBALS.programId[this.pipelineType];
     let scheduleId = GLOBALS.defaultScheduleId;
 
-    let currentRun, metricsObservable, runsPoll;
+    let currentRun, metricsObservable, runsPoll, runsCountPoll;
     let pluginsFetched = false;
 
     pipelineDetailsActionCreator.init(rPipelineDetail);
@@ -75,19 +75,28 @@ angular.module(PKG.name + '.feature.hydrator')
       } else if (runid) {
         pipelineDetailsActionCreator.setCurrentRunId(runid);
       }
+      pollRuns();
+    });
+
+    pollRunsCount();
+
+    function pollRuns() {
       runsPoll = pipelineDetailsActionCreator.pollRuns({
         namespace: $stateParams.namespace,
         appId: rPipelineDetail.name,
         programType,
         programName
       });
-    });
-    let pollRunsCount = pipelineDetailsActionCreator.pollRunsCount({
-      namespace: $stateParams.namespace,
-      appId: rPipelineDetail.name,
-      programType: programTypeForRunsCount,
-      programName
-    });
+    }
+
+    function pollRunsCount() {
+      runsCountPoll = pipelineDetailsActionCreator.pollRunsCount({
+        namespace: $stateParams.namespace,
+        appId: rPipelineDetail.name,
+        programType: programTypeForRunsCount,
+        programName
+      });
+    }
 
     pipelineDetailsActionCreator.fetchScheduleStatus({
       namespace: $stateParams.namespace,
@@ -141,13 +150,30 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     });
 
+    $scope.$on(caskWindowManager.event.focus, () => {
+      pollRuns();
+      pollRunsCount();
+    });
+
+    $scope.$on(caskWindowManager.event.blur, () => {
+      if (metricsObservable) {
+        metricsObservable.unsubscribe();
+      }
+      if (runsPoll) {
+        runsPoll.unsubscribe();
+      }
+      if (runsCountPoll) {
+        runsCountPoll.unsubscribe();
+      }
+    });
+
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
       if (runsPoll) {
         runsPoll.unsubscribe();
       }
-      if (pollRunsCount) {
-        pollRunsCount.unsubscribe();
+      if (runsCountPoll) {
+        runsCountPoll.unsubscribe();
       }
       if (metricsObservable) {
         metricsObservable.unsubscribe();

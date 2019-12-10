@@ -75,7 +75,9 @@ const pollSystemServices = () => {
 };
 
 const stopSystemServicesPolling = () => {
-  systemServicesPollSubscription();
+  if (systemServicesPollSubscription) {
+    systemServicesPollSubscription.unsubscribe();
+  }
 };
 
 export default ServicesStore;

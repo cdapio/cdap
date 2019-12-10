@@ -160,14 +160,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setRejected(ProgramRunId id, Map<String, String> runtimeArgs,
-                          Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId) {
-    TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).recordProgramRejected(id, runtimeArgs, systemArgs, sourceId, artifactId);
-    });
-  }
-
-  @Override
   public void setRunning(ProgramRunId id, long runTime, String twillRunId, byte[] sourceId) {
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).recordProgramRunning(id, runTime, twillRunId, sourceId);
@@ -373,14 +365,6 @@ public class DefaultStore implements Store {
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(programId);
-    });
-  }
-
-  @Override
-  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<NamespaceId> namespaces,
-                                                            long earliestStopTime, long latestStartTime, int limit) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getHistoricalRuns(namespaces, earliestStopTime, latestStartTime, limit);
     });
   }
 
@@ -787,7 +771,7 @@ public class DefaultStore implements Store {
 
   @Override
   public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime,
-                                      long endTime, int limit, Predicate<RunRecordMeta> filter) {
+                                      long endTime, int limit, @Nullable Predicate<RunRecordMeta> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
