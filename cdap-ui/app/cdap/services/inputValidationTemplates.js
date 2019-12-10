@@ -76,7 +76,7 @@ const PLUGIN_LABEL = {
   }
 };
 
-const FILE_PATH = { 
+const FILE_PATH = {
     allowed: {
         ALLOWED_TAGS: [],
     },

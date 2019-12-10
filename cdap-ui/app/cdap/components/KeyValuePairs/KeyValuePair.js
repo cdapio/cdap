@@ -82,7 +82,9 @@ class KeyValuePair extends Component {
           placeholder={keyPlaceholder}
           className={classnames(" form-control key-input", {"wider": this.props.disabled})}
           disabled={this.props.notDeletable || this.props.disabled}
-          onPaste={this.handlePaste}
+          /* commented code because currently allowing copy-paste all types of values
+            onPaste={this.handlePaste}
+          */
           />
           {
             ((this.props.validKey !== undefined) && !this.props.validKey) &&
@@ -120,7 +122,9 @@ class KeyValuePair extends Component {
           placeholder={valuePlaceholder}
           className={classnames(" form-control key-input", {"wider": this.props.disabled})}
           disabled={this.props.disabled}
-          onPaste={this.handlePaste}
+          /* commented code because currently allowing copy-paste all types of values
+            onPaste={this.handlePaste}
+          */
           />
           {
             ((this.props.validValue !== undefined) && !this.props.validValue)&&
