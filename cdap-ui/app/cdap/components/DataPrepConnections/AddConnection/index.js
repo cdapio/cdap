@@ -27,7 +27,6 @@ import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnectio
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
 import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
 import HIVEServer2Connection from 'components/DataPrepConnections/HIVEServer2Connection';
-import { Theme } from 'services/ThemeHelper';
 
 import T from 'i18n-react';
 import find from 'lodash/find';
@@ -187,12 +186,7 @@ export default class AddConnection extends Component {
   render() {
     return (
       <div className="add-connection-container text-xs-center">
-        {
-          !Theme.isCustomerJIO ?
-           this.renderPopover()
-          :
-            null
-        }
+        {this.renderPopover()}
         {this.renderModal()}
       </div>
     );
