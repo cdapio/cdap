@@ -23,6 +23,8 @@ angular.module(PKG.name + '.commons')
     var undoListenerId = dispatcher.register('onUndoActions', resetEndpointsAndConnections);
     var redoListenerId = dispatcher.register('onRedoActions', resetEndpointsAndConnections);
 
+    let fileInputElement;
+    
     let localX, localY;
 
     const SHOW_METRICS_THRESHOLD = 0.8;
@@ -174,11 +176,14 @@ angular.module(PKG.name + '.commons')
       Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
       Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
+      Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
     }
 
     function unbindKeyboardEvents() {
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
+      Mousetrap.unbind(['command+c', 'ctrl+c']);
+
     }
 
     function closeMetricsPopover(node) {
@@ -975,9 +980,151 @@ angular.module(PKG.name + '.commons')
 
     });
 
+    vm.onNodeCopy = (node) => {
+      const config = {
+        icon: node.icon,
+        type: node.type,
+        plugin: {
+          name: node.plugin.name,
+          artifact: node.plugin.artifact,
+          properties: angular.copy(node.plugin.properties),
+          label: node.plugin.label,
+        },
+      };
+      vm.nodeMenuOpen = null;
+      // The idea behind this clipboard object is to replicate the stage config as much as possible.
+      // The roadmap is to be able to support copying multiple stages with their connections.
+      const clipboardObj = {
+        stages: [config]
+      };
+
+      const clipboardText = JSON.stringify(clipboardObj);
+
+      const textArea = document.createElement('textarea');
+      textArea.value = clipboardText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    };
+
+    function onKeyboardCopy() {
+      if (!vm.selectedNode) { return; }
+
+      vm.onNodeCopy(vm.selectedNode);
+    }
+
+    vm.onNodeExport = (node) => {
+      const config = getPluginConfig(node);
+      vm.nodeMenuOpen = null;
+      if (config) {
+        var blob = new Blob([JSON.stringify(config, null, 4)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const dummyElement = document.createElement('a');
+        dummyElement.style.display = 'none';
+        dummyElement.href = url;
+        dummyElement.download = `${config.plugin.label?config.plugin.label:config.plugin.name}-template.json`;
+        document.body.appendChild(dummyElement);
+        dummyElement.click();
+        document.body.removeChild(dummyElement);
+      }
+    };
+
+    vm.importTemplate = function () {
+      if (!fileInputElement) {
+        fileInputElement = document.createElement('INPUT');
+        fileInputElement.setAttribute('type', 'file');
+        fileInputElement.setAttribute('accept', '.json');
+        fileInputElement.setAttribute('style', 'display:none;');
+        document.body.appendChild(fileInputElement);
+        fileInputElement.addEventListener('change', function(event) {
+          console.log('valchangeue', event);
+          var input = event.target;
+          let reader = new FileReader();
+          reader.onload = (evt) => {
+            let data = evt.target.result;
+            const config = JSON.parse(data);
+            addPluginNode(config);
+            input.value = '';
+          };
+          reader.readAsText(input.files[0], 'UTF-8');
+        });
+      }
+      fileInputElement.click();
+    };
+
+    function getPluginConfig(node) {
+      if (!node) {
+        return undefined;
+      } else {
+        return {
+          icon: node.icon,
+          type: node.type,
+          plugin: {
+            name: node.plugin.name,
+            artifact: node.plugin.artifact,
+            properties: angular.copy(node.plugin.properties),
+            label: node.plugin.label,
+          },
+        };
+      }
+    }
+
+
+    // handling node paste
+    document.body.onpaste = (e) => {
+      const activeNode = DAGPlusPlusNodesStore.getActiveNodeId();
+      const target = myHelpers.objectQuery(e, 'target', 'tagName');
+      const INVALID_TAG_NAME = ['INPUT', 'TEXTAREA'];
+
+      if (activeNode || INVALID_TAG_NAME.indexOf(target) !== -1) {
+        return;
+      }
+
+      let nodeText;
+      if (window.clipboardData && window.clipboardData.getData) {
+        // for IE......
+        nodeText = window.clipboardData.getData('Text');
+      } else {
+        nodeText = e.clipboardData.getData('text/plain');
+      }
+      handleNodePaste(nodeText);
+    };
+
+    function handleNodePaste(text) {
+      try {
+        const config = JSON.parse(text);
+        // currently only handling 1 node copy/paste
+        const node = myHelpers.objectQuery(config, 'stages', 0);
+        addPluginNode(node, 'copy ');
+      } catch (e) {
+        console.log('error parsing node config', e);
+        alert('Error parsing node config');
+      }
+    }
+
+    function addPluginNode(node, prefix = '') {
+      try {
+        if (!node) { return; }
+        let newName = `${prefix}${node.plugin.label}`;
+        const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
+          .filter(filteredNode => {
+            return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
+          });
+
+        newName = filteredNodes.length > 0 ? `${newName}${filteredNodes.length + 1}` : newName;
+
+        node.plugin.label = newName;
+
+        DAGPlusPlusNodesActionsFactory.addNode(node);
+      } catch (e) {
+        console.log('error parsing node config', e);
+        alert('Error parsing node config');
+      }
+    }
+
     vm.onNodeClick = function(event, node) {
       closeMetricsPopover(node);
-
       window.CaskCommon.PipelineMetricsActionCreator.setMetricsTabActive(false);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };

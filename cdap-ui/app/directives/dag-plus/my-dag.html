@@ -15,7 +15,12 @@
 -->
 
 <!-- Control Buttons -->
-<div class="btn-group-vertical btn-group-sm zoom-control">
+<div class="btn-group-vertical btn-group-sm zoom-control"> 
+  <button class="btn btn-default" ng-click="DAGPlusPlusCtrl.importTemplate()" uib-tooltip="Import Plugin Template"
+    ng-if="!DAGPlusPlusCtrl.disableNodeClick" tooltip-append-to-body="true" tooltip-placement="left"
+    tooltip-popup-delay="500">
+    <i class="fa fa-upload"></i>
+  </button>
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.zoomIn()"
           uib-tooltip="Zoom In"
@@ -243,6 +248,17 @@
               ng-click="DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
             </div>
             <div class="menu-content">
+              <div class="menu-content-action"
+                ng-click="DAGPlusPlusCtrl.onNodeExport(node)">
+                Export
+              </div>
+              <hr />
+              <div
+                class="menu-content-action"
+                ng-click="DAGPlusPlusCtrl.onNodeCopy(node)">
+                Copy
+              </div>
+              <hr />
               <div class="menu-content-action menu-content-delete"
                 ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
                 Delete
