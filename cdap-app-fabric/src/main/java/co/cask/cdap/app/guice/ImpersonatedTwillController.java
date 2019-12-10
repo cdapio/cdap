@@ -18,6 +18,8 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TwillRunProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
@@ -53,11 +55,13 @@ final class ImpersonatedTwillController implements TwillController {
   private final TwillController delegate;
   private final Impersonator impersonator;
   private final ProgramId programId;
+  private final TwillRunProgramId twillProgramId;
 
   ImpersonatedTwillController(TwillController delegate, Impersonator impersonator, ProgramId programId) {
     this.delegate = delegate;
     this.impersonator = impersonator;
     this.programId = programId;
+    this.twillProgramId = new TwillRunProgramId(programId, delegate.getRunId().getId());
   }
 
   @Override
@@ -79,7 +83,7 @@ final class ImpersonatedTwillController implements TwillController {
   @Override
   public ResourceReport getResourceReport() {
     try {
-      return impersonator.doAs(programId, new Callable<ResourceReport>() {
+      return impersonator.doAs(twillProgramId, new Callable<ResourceReport>() {
         @Nullable
         @Override
         public ResourceReport call() throws Exception {
@@ -159,7 +163,7 @@ final class ImpersonatedTwillController implements TwillController {
   @Override
   public Future<? extends ServiceController> terminate() {
     try {
-      return impersonator.doAs(programId, new Callable<Future<? extends ServiceController>>() {
+      return impersonator.doAs(twillProgramId, new Callable<Future<? extends ServiceController>>() {
         @Override
         public Future<? extends ServiceController> call() throws Exception {
           return delegate.terminate();
@@ -173,7 +177,7 @@ final class ImpersonatedTwillController implements TwillController {
   @Override
   public void kill() {
     try {
-      impersonator.doAs(programId, new Callable<Void>() {
+      impersonator.doAs(twillProgramId, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           delegate.kill();
