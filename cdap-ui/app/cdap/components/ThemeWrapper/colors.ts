@@ -19,6 +19,7 @@ export const grey = {
   500: colors.grey06,
   600: colors.grey07,
   700: colors.grey08,
+  800: colors.grey09,
 };
 
 export const green = {
