@@ -170,15 +170,23 @@ public final class TimeScheduler {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
       // Must assert all trigger keys exist before processing each trigger key
-      assertTriggerKeysExist(triggerKeys);
+      /**
+       * If one of the trigger in the list does not exits. Say, manually deleted or something has happened,
+       * as a user i am not able to delete pipeline
+       * RAFD-3186
+       */
+//      assertTriggerKeysExist(triggerKeys);
       for (TriggerKey triggerKey : triggerKeys) {
-        Trigger trigger = getTrigger(triggerKey, schedule.getProgramId(), schedule.getName());
-        scheduler.unscheduleJob(trigger.getKey());
-
-        JobKey jobKey = trigger.getJobKey();
-        if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
-          scheduler.deleteJob(jobKey);
-        }
+    	  //Changes for RAFD-3186
+    	  if (scheduler.checkExists(triggerKey)) {
+    		  Trigger trigger = getTrigger(triggerKey, schedule.getProgramId(), schedule.getName());
+    		  scheduler.unscheduleJob(trigger.getKey());
+    		  
+    		  JobKey jobKey = trigger.getJobKey();
+    		  if (scheduler.getTriggersOfJob(jobKey).isEmpty()) {
+    			  scheduler.deleteJob(jobKey);
+    		  }
+    	  }
       }
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
