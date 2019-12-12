@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>5.1.2045</version>
+    <version>5.1.2046</version>
   </parent>
 
   <artifactId>cdap-data-fabric</artifactId>
