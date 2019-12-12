@@ -16,6 +16,12 @@
 
 <div class="side-panel top clearfix {{ListController.headerClass}}">
   <h1 class="pull-left">{{ ListController.featureName }}</h1>
+  <div class="pipeline-search-contianer">
+      <span class="input-search-icon">
+        <span class="fa fa-search"></span>
+      </span>
+    <input type="text" class="search-input form-control" ng-model="ListController.searchText" placeholder="Search Pipeline...">
+  </div>
   <ul ng-if="ListController.pipelineList.length > 0" class="list-unstyled list-inline pull-left">
     <li>
       <span>{{ ListController.pipelineList.length }}</span>
@@ -59,7 +65,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="pipeline in ListController.pipelineList | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
+          <tr ng-repeat="pipeline in ListController.filtered = (ListController.pipelineList | filter: ListController.searchText) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td class="pipeline-name">
               <a ui-sref="hydrator.detail({ pipelineId: pipeline.name })" ng-if="::!pipeline.isDraft">
                 {{::pipeline.name}}
@@ -120,9 +126,9 @@
       </table>
     </div>
 
-    <div class="text-center" ng-if="ListController.pipelineList.length > ListController.PAGE_SIZE">
+    <div class="text-center" ng-if="(ListController.pipelineList | filter: ListController.searchText).length > ListController.PAGE_SIZE">
       <uib-pagination
-        total-items="ListController.pipelineList.length"
+        total-items="(ListController.pipelineList | filter: ListController.searchText).length"
         ng-change="ListController.goToPage()"
         ng-model="ListController.currentPage"></uib-pagination>
     </div>

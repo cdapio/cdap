@@ -35,7 +35,7 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     vm.PAGE_SIZE = 10;
     vm.GLOBALS = GLOBALS;
-
+    vm.searchText = '';
     vm.featureName = window.CaskCommon.ThemeHelper.Theme.featureNames.pipelines;
     vm.headerClass = !window.CaskCommon.ThemeHelper.Theme.showHeader ? 'no-header' : '';
     vm.checkForValidPage = (pageNumber) => {
