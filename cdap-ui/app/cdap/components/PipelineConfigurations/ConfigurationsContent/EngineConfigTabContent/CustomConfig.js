@@ -112,7 +112,10 @@ const CustomConfig = ({isDetailView, isBatch, showCustomConfig, toggleCustomConf
   const DetailViewCustomConfigLabel = () => {
     return (
       <div>
-        <hr />
+        {/*
+          currently hide engine type so no need of extra line in UI
+          <hr />
+        */}
         <div className="add-custom-config-headers">
           <label>{T.translate(`${PREFIX}.customConfig`)}</label>
           <Popover

@@ -86,7 +86,7 @@ export default function getPipelineConfig({
         }
       ],
       "schedule": "0 * * * *",
-      "engine": "mapreduce",
+      "engine": "spark",
       "numOfRecordsPreview": 100,
       "maxConcurrentRuns": 1
     }

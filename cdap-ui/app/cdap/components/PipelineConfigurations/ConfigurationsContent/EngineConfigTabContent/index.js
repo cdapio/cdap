@@ -81,17 +81,19 @@ class EngineConfigTabContent extends Component {
           }
         )}
       >
-        <fieldset disabled={this.props.isDetailView}>
-          <div className="step-content-heading">
-            {T.translate(`${PREFIX}.contentHeading`, {pipelineTypeLabel})}
-          </div>
-          {
-            this.props.isBatch ?
-              this.renderBatchEngineConfig()
-            :
-              this.renderRealtimeEngineConfig(this.props.isDetailView)
-          }
-        </fieldset>
+        {/*
+          currenlty only spark type of engine running and map-reduce not working so hiding
+          renderBatchEngineConfig()
+        */}
+        {
+          this.props.isBatch ? null :
+            <fieldset disabled={this.props.isDetailView}>
+              <div className="step-content-heading">
+                {T.translate(`${PREFIX}.contentHeading`, {pipelineTypeLabel})}
+              </div>
+              { this.renderRealtimeEngineConfig(this.props.isDetailView) }
+            </fieldset>
+        }
         <CustomConfig
           isDetailView={this.props.isDetailView}
           showCustomConfig={this.state.showCustomConfig}

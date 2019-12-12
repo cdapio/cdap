@@ -370,7 +370,7 @@ export default class IngestDataFromDataPrep extends Component {
     ];
     appConfig.config.connections = connections.concat(sinkConnection);
     appConfig.config.schedule = '0 * * * *';
-    appConfig.config.engine = 'mapreduce';
+    appConfig.config.engine = 'spark';
     appConfig.description = `Pipeline to create dataset for workspace ${pipelineName} from dataprep`;
     return {appConfig, macroMap};
   }

@@ -215,7 +215,8 @@
       <div class="configuration-step-content configuration-content-container batch-content"
             id="engine-config-tab-content"
             ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
-        <fieldset ng-disabled="BatchPipelineConfigCtrl.isDeployed">
+        <!-- commenting selection of type of engine running  -->
+        <!-- <fieldset ng-disabled="BatchPipelineConfigCtrl.isDeployed">
           <div class="step-content-heading">
             Select the type of engine running your batch pipeline
           </div>
@@ -235,7 +236,7 @@
               MapReduce
             </label>
           </div>
-        </fieldset>
+        </fieldset> -->
         <div class="add-custom-config">
           <span ng-if="!BatchPipelineConfigCtrl.isDeployed">
             <a class="add-custom-config-label"
