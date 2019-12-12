@@ -93,28 +93,28 @@ describe('Creating a pipeline', () => {
     cy.contains('Send Email').click();
     // enter sender, recipients, subject, message
 
-    cy.get('[data-cy="sender"').within(() => {
+    cy.get('[data-cy="sender"]').within(() => {
       cy.get('input').type(TEST_SENDER);
     });
-    cy.get('[data-cy="recipients"').within(() => {
+    cy.get('[data-cy="recipients"]').within(() => {
       cy.get('input').type(TEST_RECIPIENT);
     });
-    cy.get('[data-cy="subject"').within(() => {
+    cy.get('[data-cy="subject"]').within(() => {
       cy.get('input').type(TEST_SUBJECT);
     });
     // validate and see error
     cy.get('[data-cy="validate-btn"]').click();
 
-    cy.get('.propertyError').should('exist');
+    cy.contains('error found').should('exist');
 
     // Fix missing field to resolve error
-    cy.get('[data-cy="message"').within(() => {
+    cy.get('[data-cy="message"]').within(() => {
       cy.get('button').click();
     });
     // validate
     cy.get('[data-cy="validate-btn"]').click();
     cy.wait(2000);
-    cy.get('.propertyError').should('not.exist');
+    cy.contains('error found').should('not.exist');
 
     // click next
     cy.get('[data-cy="next-btn"]').click();
