@@ -24,6 +24,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
+import ExperimentWrapper from 'components/ExperimentWrapper';
 
 require('./Home.scss');
 
@@ -93,9 +94,13 @@ const SecureKeys = Loadable({
   loading: LoadingSVGCentered,
 });
 
+const FllExperiment = Loadable({
+  loader: () => import(/* webpackChunkName: "FllExperiment" */ 'components/FieldLevelLineage/v2'),
+  loading: LoadingSVGCentered,
+});
+
 const FieldLevelLineage = Loadable({
-  loader: () =>
-    import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage/v2'),
+  loader: () => import(/* webpackChunkName: "FieldLevelLineage" */ 'components/FieldLevelLineage'),
   loading: LoadingSVGCentered,
 });
 
@@ -125,7 +130,12 @@ export default class Home extends Component {
             exact
             path="/ns/:namespace/datasets/:datasetId/fields"
             render={(props) => {
-              return <FieldLevelLineage {...props} />;
+              return (
+                <ExperimentWrapper
+                  defaultComponent={<FieldLevelLineage {...props} />}
+                  experimentComponent={<FllExperiment {...props} />}
+                />
+              );
             }}
           />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
