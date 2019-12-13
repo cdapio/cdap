@@ -1499,6 +1499,7 @@ features:
         operation: Transformation
         outputFields: Output fields
         output: Output
+        pluginName: Plugin name
       Title:
         incoming: "Cause for field '{fieldName}'"
         outgoing: "Impact for field '{fieldName}'"
@@ -1534,8 +1535,9 @@ features:
       title: Field level lineage
     v2:
       FllHeader:
+        InputHeader: "Input datasets to {target}"
         NoRelatedSubheader: "0 datasets"
-        RelatedHeader: "Datasets used as {type} by {target}"
+        OutputHeader: "Output datasets from {target}"
         RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and transformations'
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
