@@ -42,9 +42,15 @@ class HydratorUpgradeService {
     return range === version;
   }
 
-  _checkVersionIsInVersionList(version, range){
-    if (!range || !version) { return false; }
-    return (range.indexOf(version) === -1) ? false : true;
+  _checkVersionIsInVersionList(stagingArtifact, artifactsList){
+    if (stagingArtifact && artifactsList && Array.isArray(artifactsList)) {
+      for (var i=0; i<artifactsList.length; i++){
+        if( (stagingArtifact.scope === artifactsList[i].scope) && (stagingArtifact.version === artifactsList[i].version) ){
+          return true;
+        }
+      }
+    }
+    return false ;
   }
 
   checkPipelineArtifactVersion(config) {
@@ -198,7 +204,7 @@ class HydratorUpgradeService {
 
       if (!pluginsMap[stageKey]) {
         data.error = 'NOTFOUND';
-      } else if (!this._checkVersionIsInVersionList(stageArtifact.version, pluginsMap[stageKey].versionList)) {
+      } else if (!this._checkVersionIsInVersionList(stageArtifact, pluginsMap[stageKey].allArtifacts)) {
         data.error = 'VERSION_MISMATCH';
         data.suggestion = pluginsMap[stageKey].highestVersion ? pluginsMap[stageKey].highestVersion : '';
         data.versionList = pluginsMap[stageKey].allArtifacts;
@@ -207,17 +213,7 @@ class HydratorUpgradeService {
           // defaulting to USER scope when both version exists
           data.suggestion.scope = 'USER';
         }
-
-        // This is to check whether the version of the imported pipeline exist or not
-        let existingVersion = pluginsMap[stageKey].artifactVersionMap[stageArtifact.version];
-        if (existingVersion && existingVersion.indexOf(stageArtifact.scope) !== -1) {
-          data.error = 'CAN_UPGRADE';
-        }
-      } else if (pluginsMap[stageKey].highestVersion.scope.indexOf(stageArtifact.scope) < 0) {
-        data.error = 'SCOPE_MISMATCH';
-        data.suggestion = pluginsMap[stageKey].highestVersion ? pluginsMap[stageKey].highestVersion : '';
       }
-
       transformedStages.push(data);
     });
 

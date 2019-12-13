@@ -89,18 +89,18 @@
 
       <div ng-if="stage.error === 'VERSION_MISMATCH'">
         <div class="error-description">
-          There is a different version available for plugin artifact <em>{{ stage.stageInfo.plugin.artifact.name }}</em>.
+          There is a different version or scope available for plugin artifact <em>{{ stage.stageInfo.plugin.artifact.name }}</em>.
         </div>
 
         <div class="error-suggestion">
           <span>
-            <strong>Imported Version:</strong>
-            {{ stage.stageInfo.plugin.artifact.version }}
+            <strong>Imported Version(Scope):</strong>
+            {{stage.stageInfo.plugin.artifact.version}} ({{stage.stageInfo.plugin.artifact.scope}})
           </span>
           <span>
-            <strong>Available Version:</strong>
+            <strong>Available Version(Scope):</strong>
             <select ng-model="stage.suggestion" ng-change="PipelineUpgradeController.changeArtifactVersion(stage)">
-              <option ng-repeat="option in stage.versionList" ng-selected="stage.suggestion.version == option.version" value="{{option}}">{{option.version}}</option>
+              <option ng-repeat="option in stage.versionList" ng-selected="stage.suggestion.version == option.version " value="{{option}}">{{option.version}} ({{option.scope}})</option>
             </select>
           </span>
         </div>
