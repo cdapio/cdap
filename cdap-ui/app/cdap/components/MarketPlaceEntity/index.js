@@ -26,6 +26,7 @@ import ExperimentalBanner from 'components/ExperimentalBanner';
 import T from 'i18n-react';
 import If from 'components/If';
 import LicenseRow from 'components/MarketPlaceEntity/LicenseRow';
+import PaidBanner from 'components/PaidBanner';
 
 require('./MarketPlaceEntity.scss');
 export default class MarketPlaceEntity extends Component {
@@ -204,7 +205,10 @@ export default class MarketPlaceEntity extends Component {
           onClick={this.openDetailedMode.bind(this)}
           size="LG"
         >
-          {this.props.entity.beta ? <ExperimentalBanner /> : null}
+          <div className={this.props.entity.beta ? 'banners-shifted' : 'banners'}>
+            {this.props.entity.beta ? <ExperimentalBanner /> : null}
+            {this.props.entity.paid ? <PaidBanner expandedView={false} /> : null}
+          </div>
           <div className={beta}>
             {this.state.imageError ? (
               <span className={classnames('fa', this.state.logoIcon)} />
@@ -227,7 +231,10 @@ export default class MarketPlaceEntity extends Component {
           cardStyle={style}
           onClick={this.openDetailedMode.bind(this)}
         >
-          {this.props.entity.beta ? <ExperimentalBanner /> : null}
+          <div className={this.props.entity.beta ? 'banners-shifted' : 'banners'}>
+            {this.props.entity.beta ? <ExperimentalBanner /> : null}
+            {this.props.entity.paid ? <PaidBanner expandedView={true} /> : null}
+          </div>
           <div>
             <div className={beta}>
               {this.state.imageError ? (
@@ -246,10 +253,7 @@ export default class MarketPlaceEntity extends Component {
                 <If condition={this.props.entity.version}>
                   <div>
                     <span>
-                      <strong>
-                        {' '}
-                        {T.translate('features.MarketPlaceEntity.Metadata.version')}{' '}
-                      </strong>
+                      <strong>{T.translate('features.MarketPlaceEntity.Metadata.version')}</strong>
                     </span>
                     <span> {this.props.entity.version} </span>
                   </div>
@@ -260,6 +264,19 @@ export default class MarketPlaceEntity extends Component {
           </div>
           <div className="package-footer">
             <p>{this.props.entity.description}</p>
+            <If condition={this.props.entity.paid}>
+              <br />
+              <p className="additional-charges-header">Additional Charges</p>
+              <p>
+                {T.translate('features.MarketPlaceEntity.AdditionalCharges.description')}
+                <If condition={this.props.entity.paidLink && this.props.entity.paidLink !== ''}>
+                  <a href={this.props.entity.paidLink} target="blank">
+                    {' ' + T.translate('features.MarketPlaceEntity.AdditionalCharges.moreInfo')}
+                  </a>
+                </If>
+              </p>
+            </If>
+
             {getConsolidatedFooter()}
           </div>
         </Card>
@@ -310,6 +327,8 @@ MarketPlaceEntity.propTypes = {
     created: PropTypes.number,
     cdapVersion: PropTypes.string,
     beta: PropTypes.bool,
+    paid: PropTypes.bool,
+    paidLink: PropTypes.string,
     licenseInfo: PropTypes.shape({
       name: PropTypes.string,
       url: PropTypes.string,

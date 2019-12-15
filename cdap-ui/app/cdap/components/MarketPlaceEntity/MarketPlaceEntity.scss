@@ -14,7 +14,8 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+@import "../../styles/variables.scss";
+@import "../../styles/colors.scss";
 
 .market-place-package-card {
   margin: 5px;
@@ -56,7 +57,7 @@
     width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
   }
 
-  @media(min-width: 768px) and (max-width: 992px) {
+  @media (min-width: 768px) and (max-width: 992px) {
     width: calc((100% - 20px - 10px - 10px) / 2);
   }
 
@@ -74,10 +75,18 @@
     }
   }
 
-  .experimental-banner {
-    top: -25px;
-    left: -25px;
+  .banners {
+    top: -20px;
+    left: -15px;
+    position: relative;
   }
+
+  .banners-shifted {
+    top: -20px;
+    left: -25px;
+    position: relative;
+  }
+
   .package-icon-container {
     // This is to maintain a consistent height across all entities
     // as the image sizes could be differing.
@@ -108,12 +117,6 @@
     }
   }
   &.expanded {
-
-    .experimental-banner {
-      left: -25px;
-      top: -25px;
-      text-align: center;
-    }
     cursor: default;
 
     .cask-card {
@@ -124,7 +127,7 @@
           width: 100%;
           height: auto;
           z-index: 2;
-          background: #e8e8e8;
+          background: $grey-09;
           text-align: left;
           box-shadow: 2px 2px 7px;
 
@@ -202,4 +205,16 @@
       transition: opacity 300ms ease-in;
     }
   }
+}
+
+.banners,
+.banners-shifted {
+  height: 18px;
+  display: inline-flex;
+  text-align: center;
+}
+
+.additional-charges-header {
+  font-weight: bold;
+  margin-bottom: 0;
 }

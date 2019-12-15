@@ -21,9 +21,8 @@
   display: inline-block;
   position: relative;
   color: white;
-  background-color: var(--brand-primary-color);
+  background-color: $blue-03;
   text-shadow: 0px 1px 2px $grey-04;
-  box-shadow: 0px 2px 4px $grey-03;
   font-size: 12px;
   display: block;
 
@@ -36,7 +35,7 @@
     top: 100%;
     border-width: 5px 5px;
     border-style: solid;
-    border-color: var(--brand-primary-color) var(--brand-primary-color) transparent transparent;
+    border-color: $blue-03 $blue-03 transparent transparent;
     opacity: 0.5;
   }
 }
