@@ -133,6 +133,11 @@ public class StageOperationsValidator {
           break;
         case TRANSFORM:
           FieldTransformOperation transform = (FieldTransformOperation) pipelineOperation;
+          // if this transform writes to no input or output fields, ignore the validation since the operation will
+          // take no effect
+          if (transform.getInputFields().isEmpty() || transform.getOutputFields().isEmpty()) {
+            continue;
+          }
           validateInputs(pipelineOperation.getName(), transform.getInputFields(), validInputsSoFar);
           updateInvalidOutputs(transform.getInputFields(), unusedOutputs, redundantOutputs);
           validInputsSoFar.addAll(transform.getOutputFields());
