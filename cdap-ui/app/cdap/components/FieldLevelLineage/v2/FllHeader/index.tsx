@@ -52,13 +52,18 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
   );
   let last;
   let first;
+  let header;
 
   const isTarget = type === 'target';
 
   if (type === 'impact') {
     first = firstImpact;
+    header = T.translate('features.FieldLevelLineage.v2.FllHeader.OutputHeader', { target });
   } else {
     first = firstCause;
+    header = isTarget
+      ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetHeader')
+      : T.translate('features.FieldLevelLineage.v2.FllHeader.InputHeader', { target });
   }
 
   last = first + numTables - 1 <= total ? first + numTables - 1 : total;
@@ -67,12 +72,6 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
     last = total;
   }
 
-  const header = isTarget
-    ? T.translate('features.FieldLevelLineage.v2.FllHeader.TargetHeader')
-    : T.translate('features.FieldLevelLineage.v2.FllHeader.RelatedHeader', {
-        type,
-        target,
-      });
   const options = { first, last, total };
   let subHeader;
 
