@@ -139,7 +139,6 @@ public class FieldLineageProcessor {
       // Do not throw but just log the exception message for validation failure
       // Once most of the plugins are updated to write lineage exception can be thrown
       LOG.debug(new InvalidLineageException(stageInvalids).getMessage());
-      return Collections.emptySet();
     }
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(pipelineSpec.getConnections(),
