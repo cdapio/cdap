@@ -114,6 +114,10 @@ features:
     security: "Security: "
     version: Version {version}
   AbstractWidget:
+    DLPWidget:
+      apply: Apply
+      on: on
+      within: within
     SecureKeyTextarea:
       customEntryHelper: Specify a different secure key
       customEntryPlaceholder: Type the name of secure key
