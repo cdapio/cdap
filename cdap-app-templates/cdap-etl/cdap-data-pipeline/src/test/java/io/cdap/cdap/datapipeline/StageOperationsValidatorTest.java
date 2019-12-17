@@ -176,11 +176,9 @@ public class StageOperationsValidatorTest {
     StageOperationsValidator stageOperationsValidator = builder.build();
     stageOperationsValidator.validate();
 
-    InvalidFieldOperations expected =
-      new InvalidFieldOperations(Collections.emptyMap(),
-                                 ImmutableMap.of("name", Collections.singletonList("redundant_parse")));
+    Map<String, List<String>> expected = ImmutableMap.of("name", Collections.singletonList("redundant_parse"));
 
-    Assert.assertEquals(expected, stageOperationsValidator.getStageInvalids());
+    Assert.assertEquals(expected, stageOperationsValidator.getRedundantOutputs());
   }
 
   @Test
@@ -201,10 +199,9 @@ public class StageOperationsValidatorTest {
     StageOperationsValidator stageOperationsValidator = builder.build();
     stageOperationsValidator.validate();
 
-    InvalidFieldOperations expected =
-      new InvalidFieldOperations(Collections.emptyMap(),
-                                 ImmutableMap.of("name", Arrays.asList("redundant_parse1", "redundant_parse2")));
+    Map<String, List<String>> expected =
+      ImmutableMap.of("name", Arrays.asList("redundant_parse1", "redundant_parse2"));
 
-    Assert.assertEquals(expected, stageOperationsValidator.getStageInvalids());
+    Assert.assertEquals(expected, stageOperationsValidator.getRedundantOutputs());
   }
 }
