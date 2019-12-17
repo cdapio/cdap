@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.cli;
 
+import io.cdap.cdap.cli.util.InstanceURIParser;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 
@@ -29,6 +30,8 @@ public class CLIConnectionConfig extends ConnectionConfig {
 
   private final NamespaceId namespace;
   private final String username;
+
+  private static final String CDF_API_PREFIX = "/api";
 
   public CLIConnectionConfig(ConnectionConfig connectionConfig, NamespaceId namespace, @Nullable String username) {
     super(connectionConfig);
@@ -58,8 +61,42 @@ public class CLIConnectionConfig extends ConnectionConfig {
 
   @Override
   public URI getURI() {
-    return URI.create(String.format("%s://%s%s:%d/%s", super.isSSLEnabled() ? "https" : "http",
-                                    username == null ? "" : username + "@",
-                                    super.getHostname(), super.getPort(), namespace.getNamespace()));
+    StringBuilder builder = new StringBuilder(String.format("%s://%s%s", super.isSSLEnabled() ? "https" : "http",
+        username == null ? "" : username + "@", super.getHostname()));
+    if (super.getPort() != -1) {
+      builder.append(String.format(":%s", super.getPort()));
+    }
+
+    if (super.getHostname().contains(InstanceURIParser.CDF_SUFFIX)) {
+      builder.append(CDF_API_PREFIX);
+    } else {
+      builder.append(String.format("/%s", namespace.getNamespace()));
+    }
+    return URI.create(builder.toString());
+  }
+
+  @Override
+  public URI resolveURI(String path) {
+    if (super.getHostname().contains(InstanceURIParser.CDF_SUFFIX)) {
+      return getURI().resolve(String.format("%s/%s", CDF_API_PREFIX, path));
+    }
+    return getURI().resolve(String.format("/%s", path));
+  }
+
+  @Override
+  public URI resolveURI(String apiVersion, String path) {
+    if (super.getHostname().contains(InstanceURIParser.CDF_SUFFIX)) {
+      return getURI().resolve(String.format("%s/%s/%s", CDF_API_PREFIX, apiVersion, path));
+    }
+    return getURI().resolve(String.format("/%s/%s", apiVersion, path));
+  }
+
+  @Override
+  public URI resolveNamespacedURI(NamespaceId namespace, String apiVersion, String path) {
+    if (super.getHostname().contains(InstanceURIParser.CDF_SUFFIX)) {
+      return getURI().resolve(String.format("%s/%s/namespaces/%s/%s", CDF_API_PREFIX, apiVersion,
+          namespace.getNamespace(), path));
+    }
+    return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getNamespace(), path));
   }
 }

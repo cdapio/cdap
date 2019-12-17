@@ -67,4 +67,14 @@ public class InstanceURIParserTest {
                         parser.parse("https://somehost:1234/"));
   }
 
+  @Test
+  public void testCDFUrl() {
+    CConfiguration cConf = CConfiguration.create();
+    InstanceURIParser parser = new InstanceURIParser(cConf);
+
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT,
+            "test-cdf-dot-usw1.datafusion.googleusercontent.com", -1, true),
+        parser.parse("https://test-dot-usw1.datafusion.googleusercontent.com"));
+  }
+
 }

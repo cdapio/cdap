@@ -31,7 +31,7 @@ public class InstanceURIParser {
 
   public static final InstanceURIParser DEFAULT = new InstanceURIParser(CConfiguration.create());
   public static final String DEFAULT_PROTOCOL = "http";
-
+  public static final String CDF_SUFFIX = "datafusion.googleusercontent.com";
   private final CConfiguration cConf;
 
   @Inject
@@ -45,12 +45,22 @@ public class InstanceURIParser {
     }
 
     URI uri = URI.create(uriString);
+    boolean sslEnabled = "https".equals(uri.getScheme());
+    int port = uri.getPort();
+
+    if (uriString.contains(CDF_SUFFIX)) {
+      ConnectionConfig config = ConnectionConfig.builder()
+          .setHostname(uri.getHost())
+          .setPort(port)
+          .setSSLEnabled(sslEnabled)
+          .build();
+      return new CLIConnectionConfig(config, NamespaceId.DEFAULT, null);
+    }
+
     NamespaceId namespace =
       (uri.getPath() == null || uri.getPath().isEmpty() || "/".equals(uri.getPath())) ?
       NamespaceId.DEFAULT : new NamespaceId(uri.getPath().substring(1));
     String hostname = uri.getHost();
-    boolean sslEnabled = "https".equals(uri.getScheme());
-    int port = uri.getPort();
 
     if (port == -1) {
       port = sslEnabled ?
