@@ -183,13 +183,13 @@ See the Administration Manual sections on :ref:`Scaling Instances <admin:scaling
 
 Upgrading a Pipeline
 ====================
-If you wish to upgrade older pipelines, you can use the ETL upgrade
+If you wish to upgrade |previous-short-version|\.x pipelines, you can use the ETL upgrade
 tool packaged with the **distributed** version of CDAP. You would want to run this tool to
 upgrade applications that were created with earlier versions of the artifacts, that you
 would like to open in the |version| version of CDAP Studio.
 
 The tool will connect to an instance of CDAP, look for any applications that use
-older versions of the system artifacts, and then update the
+|previous-short-version|\.x versions of the system artifacts, and then update the
 application to use the |version| version of those artifacts.
 
 CDAP must be running when you run the command:

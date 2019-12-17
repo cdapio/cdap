@@ -106,6 +106,12 @@ installation and its security configuration.
 
 - |incompatibilities|_ What are various incompatibilities with 5.x clusters.
 
+.. |upgrading| replace:: **Upgrading:**
+.. _upgrading: upgrading/index.html
+
+- |upgrading|_ Instructions for upgrading both CDAP and its underlying Hadoop distribution.
+
+
 .. |security| replace:: **Security:**
 .. _security: security/index.html
 
