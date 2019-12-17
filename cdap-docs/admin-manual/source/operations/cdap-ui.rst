@@ -242,8 +242,8 @@ and their expected values:
 
 .. highlight:: xml
 
-It is not recommended to overwrite values in ``default.json`` for customizations.
-Instead of this, users should create their own theme file using this spec, and link to this file.
+It is not recommended to overwrite values in ``default.json`` for customizations, since these values will be reverted
+when CDAP is upgraded. Instead of this, users should create their own theme file using this spec, and link to this file.
 To do so, add this property to ``cdap-site.xml``::
 
     <property>

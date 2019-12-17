@@ -309,6 +309,58 @@ See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml
 <appendix-cdap-site.xml>` for a list of these configuration parameters and their
 values that can be adjusted.
 
+
+.. rubric:: Upgrading CDAP
+
+
+Can a CDAP installation be upgraded more than one version?
+----------------------------------------------------------
+In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
+This table lists the upgrade paths available for different CDAP versions:
+
++---------+---------------------+
+| Version | Upgrade Directly To |
++=========+=====================+
+| 3.2.x   | 3.3.x               |
++---------+---------------------+
+| 3.1.x   | 3.2.x               |
++---------+---------------------+
+| 3.0.x   | 3.1.x               |
++---------+---------------------+
+| 2.8.x   | 3.0.x               |
++---------+---------------------+
+| 2.6.3   | 2.8.2               |
++---------+---------------------+
+
+If you are doing a new installation, we recommend using the current version of CDAP.
+
+
+.. _faqs-cloudera-troubleshooting-upgrade-cdh:
+
+I missed doing a step while upgrading; how do I fix my system?
+--------------------------------------------------------------
+If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the upgrade process.
+
+.. highlight:: xml
+
+In that case, set this configuration property in ``hbase-site.xml``::
+
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>false</value>
+  </property>
+
+and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully.
+
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.
+
+
 .. rubric:: Ask the CDAP Community for assistance
 
 .. include:: cdap-user-googlegroups.txt

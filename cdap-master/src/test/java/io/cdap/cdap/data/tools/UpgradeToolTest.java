@@ -24,9 +24,4 @@ public class UpgradeToolTest {
     // testing upgrade tool injector creation.
     new UpgradeTool().createInjector();
   }
-
-  @Test(expected = RuntimeException.class)
-  public void testUpgradeFailure() {
-    UpgradeTool.main(null);
-  }
 }
