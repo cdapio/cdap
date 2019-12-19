@@ -104,6 +104,7 @@ describe('Creating a pipeline', () => {
     });
     // validate and see error
     cy.get('[data-cy=validate-btn]').click();
+    cy.wait(2000);
     cy.get('[data-cy=validate-error-msg]').should('exist');
 
     // Fix missing field to resolve error
