@@ -104,8 +104,7 @@ describe('Creating a pipeline', () => {
     });
     // validate and see error
     cy.get('[data-cy=validate-btn]').click();
-
-    cy.contains('error found').should('exist');
+    cy.get('[data-cy=validate-error-msg]').should('exist');
 
     // Fix missing field to resolve error
     cy.get('[data-cy=message]').within(() => {
@@ -114,7 +113,7 @@ describe('Creating a pipeline', () => {
     // validate
     cy.get('[data-cy=validate-btn]').click();
     cy.wait(2000);
-    cy.contains('error found').should('not.exist');
+    cy.get('[data-cy=validate-success-msg]').should('exist');
 
     // click next
     cy.get('[data-cy=next-btn]').click();
@@ -142,7 +141,7 @@ describe('Creating a pipeline', () => {
     cy.contains('FileDelete');
     cy.wait(5000);
     cy.get('.pipeline-configure-btn', { timeout: 60000 }).click();
-    cy.get('[data-cy=tab-head-Pipeline config]').click();
+    cy.get('[data-cy="tab-head-Pipeline config"]').click();
     cy.get('.label-with-toggle')
       .contains('Instrumentation')
       .parent()

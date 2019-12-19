@@ -25,8 +25,10 @@
     </p>
   </h5>
   <span class="text-success"
+        data-cy="validate-success-msg"
         ng-if="errorCount === 0">No errors found.</span>
   <span class="text-danger"
+        data-cy="validate-error-msg"
         ng-if="errorCount > 0">
     <ng-pluralize count="errorCount"
                   when="{'1': '1 error found',
