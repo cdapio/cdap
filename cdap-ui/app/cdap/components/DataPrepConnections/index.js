@@ -343,7 +343,11 @@ export default class DataPrepConnections extends Component {
         spannerList = [],
         adlsList = [];
 
-      if (!state.activeConnectionId && !state.activeConnectionType && state.defaultConnection) {
+      if (
+        !this.state.activeConnectionId &&
+        !this.state.activeConnectionType &&
+        state.defaultConnection
+      ) {
         let defaultConnectionObj = find(res.values, { id: state.defaultConnection });
         if (defaultConnectionObj) {
           state.activeConnectionid = objectQuery(defaultConnectionObj, 'id');
