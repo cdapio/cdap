@@ -17,6 +17,7 @@
 <!-- Control Buttons -->
 <div class="btn-group-vertical btn-group-sm zoom-control">
   <button class="btn btn-default"
+          data-cy="pipeline-zoom-in-control"
           ng-click="DAGPlusPlusCtrl.zoomIn()"
           uib-tooltip="Zoom In"
           ng-if="!DAGPlusPlusCtrl.disableNodeClick"
@@ -28,6 +29,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.zoomOut()"
+          data-cy="pipeline-zoom-out-control"
           ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           uib-tooltip="Zoom Out"
           tooltip-append-to-body="true"
@@ -38,6 +40,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.fitToScreen()"
+          data-cy="pipeline-fit-to-screen-control"
           ng-if="!DAGPlusPlusCtrl.disableNodeClick"
           uib-tooltip="Fit to screen"
           tooltip-append-to-body="true"
@@ -48,6 +51,7 @@
 
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.cleanUpGraph()"
+          data-cy="pipeline-clean-up-graph-control"
           ng-if="!DAGPlusPlusCtrl.isDisabled"
           uib-tooltip="Align"
           tooltip-append-to-body="true"
@@ -105,6 +109,7 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
+               data-cy="plugin-node-{{node.plugin.name}}-{{node.type}}-{{$index}}"
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
@@ -121,7 +126,8 @@
                   ng-attr-id="{{node.type === 'condition' ? 'endpoint_' + node.name + '_condition_true' : 'endpoint_' + node.name}}"
                   data-nodeid="{{node.name}}"
                   data-nodetype="{{node.type === 'condition' ? 'condition-true' : 'regular'}}"
-                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
+                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
+                  data-cy="plugin-endpoint-{{node.plugin.name}}-{{node.type}}-right">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div class="endpoint-circle node-splitter-endpoint"
@@ -148,7 +154,8 @@
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
                   ng-attr-id="{{'endpoint_' + node.name + '_condition_false'}}"
                   data-nodeid="{{node.name}}"
-                  data-nodetype="condition-false">
+                  data-nodetype="condition-false"
+                  data-cy="plugin-endpoint-{{node.plugin.name}}-{{node.type}}-false">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">

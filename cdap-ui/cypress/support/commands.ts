@@ -16,6 +16,7 @@
 
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
+import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
 /**
  * Uploads a pipeline json from fixtures to input file element.
  *
@@ -267,4 +268,66 @@ Cypress.Commands.add('start_wrangler', (headers) => {
       }
     }
   });
+});
+
+Cypress.Commands.add('open_source_panel', () => {
+  cy.get('[data-cy="plugin-Source-group"]').click();
+});
+Cypress.Commands.add('open_transform_panel', () => {
+  cy.get('[data-cy="plugin-Transform-group"]').click();
+});
+Cypress.Commands.add('open_analytics_panel', () => {
+  cy.get('[data-cy="plugin-Analytics-group"]').click();
+});
+Cypress.Commands.add('open_sink_panel', () => {
+  cy.get('[data-cy="plugin-Sink-group"]').click();
+});
+Cypress.Commands.add('open_condition_and_actions_panel', () => {
+  cy.get('[data-cy="plugin-Conditions and Actions-group"]').click();
+});
+
+
+Cypress.Commands.add('add_node_to_canvas', (nodeObj: INodeInfo) => {
+  const { nodeName, nodeType } = nodeObj;
+  return cy.get(`[data-cy="plugin-${nodeName}-${nodeType}"]`).click();
+});
+
+Cypress.Commands.add('move_node', (node: INodeIdentifier | string, toX: number, toY: number) => {
+  let nodeSelector;
+  if (typeof node === 'object') {
+    const { nodeName, nodeType, nodeId } = node;
+    nodeSelector = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+  } else {
+    nodeSelector = node;
+  }
+  cy.get(nodeSelector)
+    .trigger('mousedown', { which: 1, pageX: 0, pageY: 0 })
+    .trigger('mousemove', { which: 1, pageX: toX, pageY: toY })
+    .trigger('mouseup', { force: true });
+});
+
+Cypress.Commands.add('connect_two_nodes', (
+  sourceNode: INodeIdentifier,
+  targetNode: INodeIdentifier,
+  sourceEndpoint: (options: IgetNodeIDOptions, s: string) => string,
+  options: IgetNodeIDOptions = {},
+) => {
+  cy.get_node(sourceNode).then(sourceEl => {
+    cy.get_node(targetNode).then(targetEl => {
+      let sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
+      let targetCoOrdinates = targetEl[0].getBoundingClientRect();
+      // connect from source endpoint to midway between the target node
+      cy.move_node(
+        sourceEndpoint(options, sourceEl[0].id),
+        (targetCoOrdinates.left - sourceCoOrdinates.right + (targetCoOrdinates.width / 2)),
+        (targetCoOrdinates.top - sourceCoOrdinates.bottom + (targetCoOrdinates.height / 2))
+      );
+    });
+  });
+});
+
+Cypress.Commands.add('get_node', (element: INodeIdentifier) => {
+  const { nodeName, nodeType, nodeId } = element;
+  let elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+  return cy.get(elementId).then(e => cy.wrap(e));
 });

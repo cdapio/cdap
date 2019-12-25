@@ -9,5 +9,9 @@
   "supportFile": "cypress/support/index.js",
   "fixturesFolder": "cypress/fixtures",
   "chromeWebSecurity": false,
-  "defaultCommandTimeout": 20000
+  "defaultCommandTimeout": 20000,
+  "viewportWidth": 1280,
+  "viewportHeight": 780,
+  "screenshotsFolder": "cypress/snapshots/actual",
+  "trashAssetsBeforeRuns": true
 }

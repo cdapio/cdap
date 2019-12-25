@@ -36,7 +36,8 @@
           ng-repeat="group in MySidePanel.groups track by $index"
           ng-click="MySidePanel.openedGroup = group.name"
           ng-style="MySidePanel.openedGroup === group.name && {height: MySidePanel.groupWrapperHeight}"
-          ng-class="{'item-open': MySidePanel.openedGroup === group.name }">
+          ng-class="{'item-open': MySidePanel.openedGroup === group.name }"
+          data-cy="plugin-{{group.name}}-group">
       <div class="text-left item-heading" >
         <span class="fa"
               ng-class="{'fa-caret-down': MySidePanel.openedGroup === group.name, 'fa-caret-right': MySidePanel.openedGroup !== group.name}">
@@ -60,7 +61,8 @@
                data-template="plugin.template"
                content-data="plugin"
                data-popover-context="MySidePanel"
-               ng-click="MySidePanel.onItemClicked($event, plugin)">
+               ng-click="MySidePanel.onItemClicked($event, plugin)"
+               data-cy="plugin-{{plugin.name}}-{{plugin.type}}">
 
             <div
               class="text-center fa icon-container"
@@ -88,7 +90,8 @@
           <div ng-if="MySidePanel.view === 'list'"
                ng-repeat="plugin in group.filtered = (group.plugins | myMultiKeySearch: ['name', 'label']: MySidePanel.searchText | orderBy: 'pluginTemplate || name') track by $index"
                class="plugin-item {{plugin.nodeClass}}"
-               ng-click="MySidePanel.onItemClicked($event, plugin)">
+               ng-click="MySidePanel.onItemClicked($event, plugin)"
+               data-cy="plugin-{{plugin.name}}-{{plugin.type}}">
             <div class="text-center fa {{plugin.icon}}"></div>
             <span class="name"
                   my-popover
