@@ -26,6 +26,7 @@ import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,6 +44,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -148,6 +150,28 @@ public abstract class StructuredTableTest {
   }
 
   @Test
+  public void testMultiRead() throws Exception {
+    int max = 10;
+
+    // Write multiple rows with sequential keys
+    writeSimpleStructuredRows(max, "");
+
+    // Read all of them back using multiRead
+    Collection<Collection<Field<?>>> keys = new ArrayList<>();
+    for (int i = 0; i < max; i++) {
+      keys.add(Arrays.asList(Fields.intField(KEY, i), Fields.longField(KEY2, (long) i)));
+    }
+    // There is no particular ordering of the result, hence use a set to compare
+    Set<Collection<Field<?>>> result = TransactionRunners.run(getTransactionRunner(), context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      return new HashSet<>(convertRowsToFields(table.multiRead(keys).iterator(), Arrays.asList(KEY, KEY2)));
+    });
+
+    Assert.assertEquals(10, result.size());
+    Assert.assertEquals(new HashSet<>(keys), result);
+  }
+
+  @Test
   public void testSimpleScan() throws Exception {
     int max = 100;
 
@@ -173,6 +197,62 @@ public abstract class StructuredTableTest {
     // TODO: test invalid range
     // TODO: test begin only range
     // TODO: test end only range
+  }
+
+  @Test
+  public void testMultiScan() throws Exception {
+    int max = 100;
+
+    // Write multiple rows with sequential keys
+    writeSimpleStructuredRows(max, "");
+
+    // Empty range scan
+    List<Collection<Field<?>>> result = runMultiScan(Collections.emptyList(), Integer.MAX_VALUE, KEY, KEY2);
+    Assert.assertTrue(result.isEmpty());
+
+    // Multiscan with a range that scans all.
+    Collection<Range> ranges = Arrays.asList(
+      Range.create(Collections.singleton(Fields.intField(KEY, 0)), Range.Bound.INCLUSIVE,
+                   Collections.singleton(Fields.intField(KEY, 10)), Range.Bound.EXCLUSIVE),
+      Range.all());
+    result = runMultiScan(ranges, Integer.MAX_VALUE, KEY, KEY2);
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+    for (int i = 0; i < max; i++) {
+      expected.add(Arrays.asList(Fields.intField(KEY, i), Fields.longField(KEY2, (long) i)));
+    }
+    Assert.assertEquals(expected, result);
+
+    // Constructs multiple scan ranges.
+    ranges = new ArrayList<>();
+    expected = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      int begin = i * 20;
+      int end = begin + 10;
+      ranges.add(Range.create(Collections.singleton(Fields.intField(KEY, begin)), Range.Bound.INCLUSIVE,
+                              Collections.singleton(Fields.intField(KEY, end)), Range.Bound.EXCLUSIVE));
+      for (int j = begin; j < end; j++) {
+        expected.add(Arrays.asList(Fields.intField(KEY, j), Fields.longField(KEY2, (long) j)));
+      }
+    }
+
+    // Scan without limit
+    result = runMultiScan(ranges, Integer.MAX_VALUE, KEY, KEY2);
+    Assert.assertEquals(expected, result);
+
+    // Scan with limit
+    int limit = 25;
+    result = runMultiScan(ranges, limit, KEY, KEY2);
+    Assert.assertEquals(expected.subList(0, limit), result);
+  }
+
+  private List<Collection<Field<?>>> runMultiScan(Collection<Range> ranges, int limit,
+                                                  String... outputFields) throws Exception {
+    return TransactionRunners.run(getTransactionRunner(), context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.multiScan(ranges, limit)) {
+        return convertRowsToFields(iterator, Arrays.asList(outputFields));
+      }
+    });
   }
 
   @Test
@@ -299,7 +379,7 @@ public abstract class StructuredTableTest {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       Optional<StructuredRow> rowOptional = table.read(keys);
       Assert.assertTrue(rowOptional.isPresent());
-      Assert.assertEquals(increment, (long) rowOptional.get().getLong(LONG_COL));
+      Assert.assertEquals(Long.valueOf(increment), rowOptional.get().getLong(LONG_COL));
     });
 
     // Increment
@@ -436,8 +516,7 @@ public abstract class StructuredTableTest {
 
       // non-index column
       try {
-        try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.longField(LONG_COL, 1L))) {
-        }
+        table.scan(Fields.longField(LONG_COL, 1L));
         Assert.fail("Expected InvalidFieldException for scanning a non-index column");
       } catch (InvalidFieldException e) {
         // Expected

@@ -264,6 +264,15 @@ public interface Store {
   Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId);
 
   /**
+   * Fetches active runs for a set of programs.
+   *
+   * @param programIds collection of program ids for fetching active run records.
+   * @return a {@link Map} from the {@link ProgramId} to the list of run records; there will be no entry for programs
+   * that do not exist.
+   */
+  Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> programIds);
+
+  /**
    * Fetches the run record for particular run of a program.
    *
    * @param id        run id of the program
