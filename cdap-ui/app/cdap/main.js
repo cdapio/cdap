@@ -156,9 +156,11 @@ class CDAP extends Component {
     } catch (e) {
       console.log('Fetching session token failed.');
     }
-    this.setState({
-      loading: false,
-    });
+    if (this.state.loading) {
+      this.setState({
+        loading: false,
+      });
+    }
   }
 
   render() {

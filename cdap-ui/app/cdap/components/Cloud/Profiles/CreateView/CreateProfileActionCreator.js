@@ -33,6 +33,11 @@ function updateProfileDescription(description) {
 }
 
 function initializeProperties(provisionerJson = {}) {
+  const { properties: provisionerProperties } = CreateProfileStore.getState();
+  // This indicates the properties are already initialized.
+  if (Object.keys(provisionerProperties).length) {
+    return;
+  }
   let configs = provisionerJson['configuration-groups'] || [];
   let properties = {};
   configs.forEach((config) => {
