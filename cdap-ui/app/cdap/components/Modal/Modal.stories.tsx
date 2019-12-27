@@ -39,7 +39,7 @@ storiesOf('Modals', module)
           className="cdap-modal"
           backdrop={boolean('Modal backdrop', true)}
           zIndex={1061}
-          keyboard={text('Modal Keyboard', true)}
+          keyboard={boolean('Modal Keyboard', true)}
         >
           <ModalHeader>
             {text('Modal title', 'Default Modal')}

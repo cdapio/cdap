@@ -10081,6 +10081,11 @@ immutability-helper@2.7.1:
   dependencies:
     invariant "^2.2.0"
 
+immutable@3.8.2:
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+  integrity sha1-wkOZUUVbs5kT2vKBN28VMOEErfM=
+
 immutable@^4.0.0-rc.9:
   version "4.0.0-rc.12"
   resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0-rc.12.tgz#ca59a7e4c19ae8d9bf74a97bdf0f6e2f2a5d0217"
@@ -11391,6 +11396,10 @@ jsonfile@^4.0.0:
 jsonify@~0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
+
+jsplumb@2.5.12:
+  version "2.5.12"
+  resolved "https://registry.yarnpkg.com/jsplumb/-/jsplumb-2.5.12.tgz#77d0abf524d5b0ee3df7a0de9463fc2b1510b070"
 
 jsprim@^1.2.2:
   version "1.4.1"

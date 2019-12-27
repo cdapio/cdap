@@ -43,7 +43,9 @@
     "app/cdap/**/*.js",
     "app/cdap/**/*.ts",
     "app/cdap/**/*.jsx",
-    "app/cdap/**/*.tsx"
+    "app/cdap/**/*.tsx",
+    "./node_modules/@types/**/*.d.ts",
+    "./node_modules/jsplumb/index.d.ts",
   ],
   "exclude": [
     "node_modules",
