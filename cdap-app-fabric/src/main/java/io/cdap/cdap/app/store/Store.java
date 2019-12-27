@@ -319,6 +319,14 @@ public interface Store {
   Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
 
   /**
+   * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
+   *
+   * @param ids the list of application ids to get the specs
+   * @return collection of application specs. For applications that don't exist, there will be no entry in the result.
+   */
+  Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
+
+  /**
    * Returns a collection of all application specs of all the versions of the application by id
    *
    * @param id application id

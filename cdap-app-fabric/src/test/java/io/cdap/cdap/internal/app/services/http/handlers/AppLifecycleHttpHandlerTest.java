@@ -34,10 +34,13 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -301,10 +304,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDeployInvalid() throws Exception {
     deploy(String.class, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-//    Assert.assertNotNull(response.getEntity());
-//    try (InputStream responseContent = response.getEntity().getContent()) {
-//      Assert.assertNotEquals(-1, responseContent.read());
-//    }
   }
 
   /**
@@ -387,12 +386,21 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     );
 
     //get and verify app details in testnamespace2
-    result = getAppDetails(TEST_NAMESPACE2, ns2AppName);
-    Assert.assertEquals(ns2AppName, result.get("name").getAsString());
+    List<BatchApplicationDetail> appDetails = getAppDetails(TEST_NAMESPACE2,
+                                                            Arrays.asList(ImmutablePair.of(ns2AppName, null),
+                                                                          ImmutablePair.of(ns2AppName, VERSION1)));
+    Assert.assertEquals(2, appDetails.size());
+    Assert.assertTrue(appDetails.stream().allMatch(d -> d.getStatusCode() == 200));
 
-    //get and verify app details in testnamespace2
-    result = getAppDetails(TEST_NAMESPACE2, ns2AppName, VERSION1);
-    Assert.assertEquals(ns2AppName, result.get("name").getAsString());
+    ApplicationDetail appDetail = appDetails.get(0).getDetail();
+    Assert.assertNotNull(appDetail);
+    Assert.assertEquals(ns2AppName, appDetail.getName());
+    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetail.getAppVersion());
+
+    appDetail = appDetails.get(1).getDetail();
+    Assert.assertNotNull(appDetail);
+    Assert.assertEquals(ns2AppName, appDetail.getName());
+    Assert.assertEquals(VERSION1, appDetail.getAppVersion());
 
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
