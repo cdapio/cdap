@@ -42,7 +42,6 @@ import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.Tasks;
@@ -86,10 +85,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -646,21 +644,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Test missing app, programType, etc
     request = Collections.singletonList(
-      ImmutableMap.of("appId", "NotExist", "programType", "Service", "programId", "Service")
+      ImmutableMap.of("appId", "NotExist", "programType", ProgramType.SERVICE.getPrettyName(), "programId", "Service")
     );
     List<JsonObject> returnedBody = readResponse(doPost(statusUrl1, gson.toJson(request)), LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace1", "NotExist")).getMessage(),
-                        returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, returnedBody.get(0).get("statusCode").getAsInt());
 
     request = Arrays.asList(
-      ImmutableMap.of("appId", AllProgramsApp.NAME, "programType", "service", "programId", "NotExist"),
-      ImmutableMap.of("appId", AllProgramsApp.NAME, "programType", "service",
+      ImmutableMap.of("appId", AllProgramsApp.NAME, "programType", ProgramType.SERVICE.getPrettyName(),
+                      "programId", "NotExist"),
+      ImmutableMap.of("appId", AllProgramsApp.NAME, "programType", ProgramType.SERVICE.getPrettyName(),
                       "programId", AllProgramsApp.NoOpService.NAME)
     );
     returnedBody = readResponse(doPost(statusUrl1, gson.toJson(request)), LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals(new NotFoundException(new ProgramId("testnamespace1", AllProgramsApp.NAME, ProgramType.SERVICE,
-                                                            "NotExist")).getMessage(),
-                        returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, returnedBody.get(0).get("statusCode").getAsInt());
 
     // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Service", returnedBody.get(1).get("programType").getAsString());
@@ -734,12 +730,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     );
     response = doPost(statusUrl2, gson.toJson(request));
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace2", AllProgramsApp.NAME)).getMessage(),
-                        returnedBody.get(0).get("error").getAsString());
-    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace2", AllProgramsApp.NAME)).getMessage(),
-                        returnedBody.get(1).get("error").getAsString());
-    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace2", AllProgramsApp.NAME)).getMessage(),
-                        returnedBody.get(2).get("error").getAsString());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, returnedBody.get(0).get("statusCode").getAsInt());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, returnedBody.get(1).get("statusCode").getAsInt());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, returnedBody.get(2).get("statusCode").getAsInt());
   }
 
   @Test

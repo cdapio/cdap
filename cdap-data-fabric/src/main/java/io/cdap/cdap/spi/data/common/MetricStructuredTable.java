@@ -167,6 +167,27 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
+                                                    int limit) throws InvalidFieldException, IOException {
+    try {
+      CloseableIterator<StructuredRow> result;
+      if (!emitTimeMetrics) {
+        result = structuredTable.multiScan(keyRanges, limit);
+      } else {
+        long curTime = System.nanoTime();
+        result = structuredTable.multiScan(keyRanges, limit);
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + "multi.scan.time", duration);
+      }
+      metricsCollector.increment(metricPrefix + "multi.scan.count", 1L);
+      return result;
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "multi.scan.error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue)
     throws InvalidFieldException, IOException, IllegalArgumentException {
     try {

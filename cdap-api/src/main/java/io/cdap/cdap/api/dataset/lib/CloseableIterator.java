@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.dataset.lib;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator that can be closed.
@@ -24,6 +25,29 @@ import java.util.Iterator;
  * @param <T> Type of elements returned by this iterator
  */
 public interface CloseableIterator<T> extends Iterator<T>, AutoCloseable {
+
+  /**
+   * Returns an empty {@link CloseableIterator} that contains no element.
+   */
+  static <T> CloseableIterator<T> empty() {
+    return new CloseableIterator<T>() {
+      @Override
+      public void close() {
+        // no-op
+      }
+
+      @Override
+      public boolean hasNext() {
+        return false;
+      }
+
+      @Override
+      public T next() {
+        throw new NoSuchElementException();
+      }
+    };
+  }
+
   @Override
   void close();
 }

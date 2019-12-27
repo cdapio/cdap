@@ -368,6 +368,28 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
+  public Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> programIds) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+      Map<ApplicationId, ApplicationMeta> metas =
+        appMetadataStore.getApplicationsForAppIds(
+          programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet()));
+
+      // Get the active runs for programs that exist
+      Collection<ProgramId> existingProgramIds = new ArrayList<>();
+      for (ProgramId programId : programIds) {
+        // Ignore app or program that doesn't exist
+        ApplicationMeta appMeta = metas.get(programId.getParent());
+        if (appMeta == null || getExistingAppProgramSpecification(appMeta.getSpec(), programId) == null) {
+          continue;
+        }
+        existingProgramIds.add(programId);
+      }
+      return getAppMetadataStore(context).getActiveRuns(existingProgramIds);
+    });
+  }
+
   /**
    * Returns run record for a given run.
    *
@@ -740,7 +762,7 @@ public class DefaultStore implements Store {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       Map<ApplicationId, ApplicationMeta> metas =
         appMetadataStore.getApplicationsForAppIds(
-          programIds.stream().map(ProgramId::getParent).collect(Collectors.toList()));
+          programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet()));
 
       Set<ProgramId> existingPrograms = new HashSet<>();
       for (ProgramId programId : programIds) {

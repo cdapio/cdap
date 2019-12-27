@@ -69,6 +69,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1023,6 +1024,35 @@ public class AppMetadataStore {
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
     return getProgramRunIdMap(Range.singleton(prefix), null);
+  }
+
+  /**
+   * Get active runs for the given programs. Active runs means program run with status STARTING, PENDING,
+   * RUNNING or SUSPENDED.
+   *
+   * @param ids set of program ids to fetch for active run records
+   * @return a map from {@link ProgramId} to a {@link Collection} of {@link RunRecordMeta}. It is guaranteed to have
+   *         an entry for each of the given program id.
+   * @throws IOException if failed to fetch the run records.
+   */
+  public Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> ids) throws IOException {
+    Collection<Range> ranges = new ArrayList<>();
+    Map<ProgramId, Collection<RunRecordMeta>> result = new LinkedHashMap<>();
+
+    for (ProgramId programId : ids) {
+      ranges.add(Range.singleton(getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId)));
+      result.put(programId, new LinkedHashSet<>());
+    }
+
+    try (CloseableIterator<StructuredRow> iterator = getRunRecordsTable().multiScan(ranges, Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        RunRecordMeta meta = deserializeRunRecordMeta(row);
+        result.get(meta.getProgramRunId().getParent()).add(meta);
+      }
+    }
+
+    return result;
   }
 
   public Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, final ProgramRunStatus status,
