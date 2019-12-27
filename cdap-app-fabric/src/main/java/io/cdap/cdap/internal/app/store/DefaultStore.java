@@ -576,6 +576,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getApplicationsForAppIds(ids).entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getSpec()));
+    });
+  }
+
+  @Override
   public Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersions(id.getNamespace(), id.getApplication()).stream()

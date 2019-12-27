@@ -28,6 +28,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -79,6 +81,14 @@ public class DefaultOwnerStore extends OwnerStore {
     return TransactionRunners.run(txRunner, context -> {
       OwnerTable ownerTable = getOwnerTable(context);
       return ownerTable.getOwner(entityId);
+    }, IOException.class);
+  }
+
+  @Override
+  public <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids) throws IOException {
+    ids.forEach(this::validate);
+    return TransactionRunners.run(txRunner, context -> {
+      return getOwnerTable(context).getOwners(ids);
     }, IOException.class);
   }
 

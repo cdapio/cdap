@@ -35,12 +35,15 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.cdap.security.impersonation.OwnerStore;
+import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.nosql.NoSqlTransactionRunner;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
@@ -61,6 +64,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static TransactionRunner txRunner;
   private static OwnerStore ownerStore;
 
   @BeforeClass
@@ -91,16 +95,24 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
     injector.getInstance(StructuredTableRegistry.class).initialize();
 
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    TransactionRunner transactionRunner =
+    txRunner =
       new NoSqlTransactionRunner(injector.getInstance(NoSqlStructuredTableAdmin.class),
                                  injector.getInstance(TransactionSystemClient.class),
                                  new NoOpMetricsCollectionService(), cConf);
     StoreDefinition.OwnerStore.createTables(structuredTableAdmin, false);
-    ownerStore = new DefaultOwnerStore(transactionRunner);
+    ownerStore = new DefaultOwnerStore(txRunner);
   }
 
   @Override
   public OwnerStore getOwnerStore() {
     return ownerStore;
+  }
+
+  @Override
+  public void cleanup() {
+    TransactionRunners.run(txRunner, context -> {
+      StructuredTable ownerTable = context.getTable(StoreDefinition.OwnerStore.OWNER_TABLE);
+      ownerTable.deleteAll(Range.all());
+    });
   }
 }

@@ -18,13 +18,16 @@ package io.cdap.cdap.store;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import io.cdap.cdap.security.impersonation.OwnerStore;
+import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import io.cdap.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import io.cdap.cdap.spi.data.sql.SqlTransactionRunner;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
+import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -41,6 +44,7 @@ public class SqlOwnerStoreTest extends OwnerStoreTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static TransactionRunner txRunner;
   private static OwnerStore ownerStore;
   private static EmbeddedPostgres pg;
 
@@ -51,14 +55,22 @@ public class SqlOwnerStoreTest extends OwnerStoreTest {
     StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
-    TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
+    txRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     StoreDefinition.OwnerStore.createTables(structuredTableAdmin, false);
-    ownerStore = new DefaultOwnerStore(transactionRunner);
+    ownerStore = new DefaultOwnerStore(txRunner);
   }
 
   @Override
   public OwnerStore getOwnerStore() {
     return ownerStore;
+  }
+
+  @Override
+  public void cleanup() {
+    TransactionRunners.run(txRunner, context -> {
+      StructuredTable ownerTable = context.getTable(StoreDefinition.OwnerStore.OWNER_TABLE);
+      ownerTable.deleteAll(Range.all());
+    });
   }
 
   @AfterClass

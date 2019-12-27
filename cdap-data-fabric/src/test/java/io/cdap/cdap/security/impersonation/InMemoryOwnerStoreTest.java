@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.store;
+package io.cdap.cdap.security.impersonation;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
-import io.cdap.cdap.security.impersonation.OwnerStore;
+import io.cdap.cdap.store.DefaultOwnerStore;
+import io.cdap.cdap.store.OwnerStoreTest;
 import org.junit.BeforeClass;
 
 /**
@@ -28,17 +25,16 @@ import org.junit.BeforeClass;
  */
 public class InMemoryOwnerStoreTest extends OwnerStoreTest {
 
-  private static OwnerStore ownerStore;
+  private static InMemoryOwnerStore ownerStore;
 
   @BeforeClass
   public static void setup() {
-    Injector injector = Guice.createInjector(new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(OwnerStore.class).to(InMemoryOwnerStore.class);
-      }
-    });
-    ownerStore = injector.getInstance(OwnerStore.class);
+    ownerStore = new InMemoryOwnerStore();
+  }
+
+  @Override
+  public void cleanup() {
+    ownerStore.clear();
   }
 
   @Override
