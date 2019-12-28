@@ -22,6 +22,9 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -52,6 +55,8 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -78,8 +83,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -364,6 +372,77 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Gets {@link ApplicationDetail} for a set of applications. It expects a post body as a array of object, with each
+   * object specifying the applciation id and an optional version. E.g.
+   *
+   * <pre>
+   * {@code
+   * [
+   *   {"appId":"XYZ", "version":"1.2.3"},
+   *   {"appId":"ABC"},
+   *   {"appId":"FOO", "version":"2.3.4"},
+   * ]
+   * }
+   * </pre>
+   *
+   * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
+   * failure for each of the requested application in the same order as the request.
+   */
+  @POST
+  @Path("/appdetail")
+  public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespace) throws Exception {
+
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
+    Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.getAppDetails(appIds);
+
+    List<BatchApplicationDetail> result = new ArrayList<>();
+    for (ApplicationId appId : appIds) {
+      ApplicationDetail detail = details.get(appId);
+      if (detail == null) {
+        result.add(new BatchApplicationDetail(new NotFoundException(appId)));
+      } else {
+        result.add(new BatchApplicationDetail(detail));
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
+  /**
+   * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder, String)} call.
+   */
+  private List<ApplicationId> decodeAndValidateBatchApplication(NamespaceId namespaceId,
+                                                                FullHttpRequest request) throws BadRequestException {
+    try {
+      List<ApplicationId> result = new ArrayList<>();
+      JsonArray array = DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8), JsonArray.class);
+      if (array == null) {
+        throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
+      }
+      for (JsonElement element : array) {
+        if (!element.isJsonObject()) {
+          throw new BadRequestException("Request element is expected to be a json object.");
+        }
+        JsonObject obj = element.getAsJsonObject();
+        if (!obj.has("appId")) {
+          throw new BadRequestException("Missing 'appId' in the request element.");
+        }
+        String appId = obj.get("appId").getAsString();
+
+        JsonElement version = obj.get("version");
+        if (version == null) {
+          result.add(validateApplicationId(namespaceId, appId));
+        } else {
+          result.add(validateApplicationVersionId(namespaceId, appId, version.getAsString()));
+        }
+      }
+      return result;
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    }
+  }
+
   // normally we wouldn't want to use a body consumer but would just want to read the request body directly
   // since it wont be big. But the deploy app API has one path with different behavior based on content type
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
@@ -555,14 +634,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return namespace;
   }
 
-  private ApplicationId validateApplicationId(String namespaceId, String appId)
+  private ApplicationId validateApplicationId(String namespace, String appId)
     throws BadRequestException, NamespaceNotFoundException {
+    return validateApplicationId(validateNamespace(namespace), appId);
+  }
+
+  private ApplicationId validateApplicationId(NamespaceId namespaceId, String appId) throws BadRequestException {
     return validateApplicationVersionId(namespaceId, appId, ApplicationId.DEFAULT_VERSION);
   }
 
-  private ApplicationId validateApplicationVersionId(String namespaceId, String appId, String versionId)
+  private ApplicationId validateApplicationVersionId(String namespace, String appId, String versionId)
     throws BadRequestException, NamespaceNotFoundException {
-    NamespaceId namespace = validateNamespace(namespaceId);
+    return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
+  }
+
+  private ApplicationId validateApplicationVersionId(NamespaceId namespaceId, String appId,
+                                                     String versionId) throws BadRequestException {
     if (appId == null) {
       throw new BadRequestException("Path parameter app-id cannot be empty");
     }
@@ -573,7 +660,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Path parameter version-id cannot be empty");
     }
     if (EntityId.isValidVersionId(versionId)) {
-      return namespace.app(appId, versionId);
+      return namespaceId.app(appId, versionId);
     }
     throw new BadRequestException(String.format("Invalid version '%s'", versionId));
   }

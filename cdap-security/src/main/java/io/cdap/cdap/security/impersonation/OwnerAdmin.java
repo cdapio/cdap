@@ -22,6 +22,8 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -81,6 +83,23 @@ public interface OwnerAdmin {
    */
   @Nullable
   String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException;
+
+  /**
+   * Batch version of the {@link #getOwnerPrincipal(NamespacedEntityId)} method for retrieving principals of multiple
+   * {@link NamespacedEntityId}.
+   *
+   * @param ids the set of {@link NamespacedEntityId} for getting the owners.
+   * @param <T> type of the entity
+   * @return a {@link Map} from the entity id to the owner if one was explicitly provided during entity
+   * creation or no entry if
+   * <ol>
+   * <li>the entity does not exists in the system</li>
+   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   * </ol>
+   * @throws IOException if failed to get the information
+   * @throws IllegalArgumentException if any of the given entities is not of supported type.
+   */
+  <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids) throws IOException;
 
   /**
    * <p>
