@@ -108,7 +108,8 @@ const getPageSize = (element) => {
   }
   return {
     numColumns,
-    limit: numColumns * numRows,
+    // limit: numColumns * numRows,
+    limit: 10,
   };
 };
 
