@@ -157,7 +157,13 @@ Aggregator.prototype.startPolling = function(resource) {
  */
 Aggregator.prototype.scheduleAnotherIteration = function(resource) {
   log.debug(
-    '[RESCHEDULING]: (id: ' + resource.id + ',' + resource.url + ', url: ' + resource.interval + ')'
+    '[RESCHEDULING]: (id: ' +
+      resource.id +
+      ', url: ' +
+      resource.url +
+      ', interval: ' +
+      resource.interval +
+      ')'
   );
   resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };

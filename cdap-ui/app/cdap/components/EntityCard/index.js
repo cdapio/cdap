@@ -61,7 +61,7 @@ export default class EntityCard extends Component {
   renderEntityStatus() {
     switch (this.props.entity.type) {
       case 'application':
-        return <ApplicationMetrics entity={this.props.entity} />;
+        return <ApplicationMetrics entity={this.props.entity} extraInfo={this.props.extraInfo} />;
       case 'artifact':
         return <ArtifactMetrics entity={this.props.entity} />;
       case 'dataset':
@@ -202,4 +202,5 @@ EntityCard.propTypes = {
   id: PropTypes.string,
   onClick: PropTypes.func,
   activeEntity: PropTypes.string,
+  extraInfo: PropTypes.object,
 };
