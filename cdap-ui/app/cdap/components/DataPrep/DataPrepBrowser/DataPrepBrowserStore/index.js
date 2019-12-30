@@ -214,7 +214,7 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
     case Actions.SET_DATABASE_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
-        connectionId: objectQuery(action, 'payload', 'connectionId'),
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         tables: objectQuery(action, 'payload', 'tables'),
         error: null,
         loading: false,
@@ -253,7 +253,7 @@ const kafka = (state = defaultKafkaValue, action = defaultAction) => {
     case Actions.SET_KAFKA_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
-        connectionId: objectQuery(action, 'payload', 'connectionId'),
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         topics: objectQuery(action, 'payload', 'topics'),
         error: null,
         loading: false,
@@ -293,6 +293,7 @@ const s3 = (state = defaultS3Value, action = defaultAction) => {
       return {
         ...state,
         info: action.payload.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         error: null,
       };
     case Actions.SET_S3_LOADING:
@@ -347,6 +348,7 @@ const gcs = (state = defaultGCSValue, action = defaultAction) => {
       return {
         ...state,
         info: action.payload.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         error: null,
       };
     case Actions.SET_GCS_LOADING:
@@ -401,6 +403,7 @@ const bigquery = (state = defaultBigQueryValue, action = defaultAction) => {
       return {
         ...state,
         info: action.payload.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         error: null,
       };
     case Actions.SET_BIGQUERY_LOADING:
@@ -452,6 +455,7 @@ const spanner = (state = defaultSpannerValue, action = defaultAction) => {
       return {
         ...state,
         info: action.payload.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         error: null,
       };
     case Actions.SET_SPANNER_LOADING:
@@ -513,6 +517,7 @@ const adls = (state = defaultADLSValue, action = defaultAction) => {
       return {
         ...state,
         info: action.payload.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         error: null,
       };
     case Actions.SET_ADLS_LOADING:
@@ -523,7 +528,7 @@ const adls = (state = defaultADLSValue, action = defaultAction) => {
     case Actions.SET_ADLS_PROPERTIES:
       return Object.assign({}, state, {
         info: objectQuery(action, 'payload', 'info') || state.info,
-        connectionId: objectQuery(action, 'payload', 'connectionId'),
+        connectionId: objectQuery(action, 'payload', 'connectionId') || state.connectionId,
         error: null,
         loading: false,
       });

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.impersonation;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
@@ -23,6 +24,7 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -31,6 +33,11 @@ import javax.annotation.Nullable;
 public class InMemoryOwnerStore extends OwnerStore {
 
   private final Map<NamespacedEntityId, KerberosPrincipalId> ownerInfo = new HashMap<>();
+
+  @VisibleForTesting
+  synchronized void clear() {
+    ownerInfo.clear();
+  }
 
   @Override
   public synchronized void add(NamespacedEntityId entityId,
@@ -45,9 +52,22 @@ public class InMemoryOwnerStore extends OwnerStore {
 
   @Nullable
   @Override
-  public synchronized KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException {
+  public synchronized KerberosPrincipalId getOwner(NamespacedEntityId entityId) {
     validate(entityId);
     return ownerInfo.get(entityId);
+  }
+
+  @Override
+  public synchronized <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids) {
+    ids.forEach(this::validate);
+    Map<T, KerberosPrincipalId> result = new HashMap<>();
+    for (T id : ids) {
+      KerberosPrincipalId principalId = ownerInfo.get(id);
+      if (principalId != null) {
+        result.put(id, principalId);
+      }
+    }
+    return result;
   }
 
   @Override

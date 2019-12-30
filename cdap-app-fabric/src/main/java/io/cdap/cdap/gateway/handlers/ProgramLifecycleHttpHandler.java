@@ -1026,22 +1026,26 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
 
-    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<ProgramId> programs = batchPrograms.stream()
+      .map(p -> new ProgramId(namespaceId, p.getAppId(), p.getProgramType(), p.getProgramId()))
+      .collect(Collectors.toList());
 
-    List<BatchProgramStatus> statuses = new ArrayList<>(programs.size());
-    for (BatchProgram program : programs) {
+    Map<ProgramId, ProgramStatus> statuses = lifecycleService.getProgramStatuses(programs);
+
+    List<BatchProgramStatus> result = new ArrayList<>(programs.size());
+    for (BatchProgram program : batchPrograms) {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                           program.getProgramId());
-      try {
-        ProgramStatus programStatus = lifecycleService.getProgramStatus(programId);
-        statuses.add(new BatchProgramStatus(
-          program, HttpResponseStatus.OK.code(), null, programStatus.name()));
-      } catch (NotFoundException e) {
-        statuses.add(new BatchProgramStatus(
-          program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage(), null));
+      ProgramStatus status = statuses.get(programId);
+      if (status == null) {
+        result.add(new BatchProgramStatus(program, HttpResponseStatus.NOT_FOUND.code(),
+                                          new NotFoundException(programId).getMessage(), null));
+      } else {
+        result.add(new BatchProgramStatus(program, HttpResponseStatus.OK.code(), null, status.name()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(statuses));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
   /**

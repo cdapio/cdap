@@ -59,8 +59,19 @@ export default class AbstractMultiRowWidget<
     this.init(nextProps);
   }
 
-  private init = (props) => {
+  public deconstructValues = (props) => {
     if (!props.value || props.value.length === 0) {
+      return [];
+    }
+    const delimiter = objectQuery(props, 'widgetProps', 'delimiter') || ',';
+
+    return props.value.split(delimiter);
+  };
+
+  private init = (props) => {
+    const splitValues = this.deconstructValues(props);
+
+    if (splitValues.length === 0) {
       // reset state before adding a new empty row
       this.values = {};
       this.setState(
@@ -76,9 +87,6 @@ export default class AbstractMultiRowWidget<
       return;
     }
 
-    const delimiter = objectQuery(props, 'widgetProps', 'delimiter') || ',';
-
-    const splitValues = props.value.split(delimiter);
     const rows = [];
 
     splitValues.forEach((value) => {
@@ -143,7 +151,7 @@ export default class AbstractMultiRowWidget<
     this.onChange();
   };
 
-  private constructValues = () => {
+  public constructValues = () => {
     const delimiter = objectQuery(this.props, 'widgetProps', 'delimiter') || ',';
 
     const values = this.state.rows

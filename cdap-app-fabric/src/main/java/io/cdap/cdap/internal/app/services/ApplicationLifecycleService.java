@@ -101,6 +101,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -233,6 +234,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return filterApplicationDetail(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
+  }
+
+  /**
+   * Gets details for a set of given applications.
+   *
+   * @param appIds the set of application id to get details
+   * @return a {@link Map} from the application id to the corresponding detail. There will be no entry for applications
+   * that don't exist.
+   * @throws Exception if failed to get details.
+   */
+  public Map<ApplicationId, ApplicationDetail> getAppDetails(Collection<ApplicationId> appIds) throws Exception {
+    Set<? extends EntityId> visibleIds = authorizationEnforcer.isVisible(new HashSet<>(appIds),
+                                                                         authenticationContext.getPrincipal());
+    Set<ApplicationId> filterIds = appIds.stream().filter(visibleIds::contains).collect(Collectors.toSet());
+    Map<ApplicationId, ApplicationSpecification> appSpecs = store.getApplications(filterIds);
+    Map<ApplicationId, String> principals = ownerAdmin.getOwnerPrincipals(filterIds);
+
+    Map<ApplicationId, ApplicationDetail> result = new HashMap<>();
+    for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
+      ApplicationId appId = entry.getKey();
+      result.put(appId,
+                 filterApplicationDetail(appId, ApplicationDetail.fromSpec(entry.getValue(), principals.get(appId))));
+    }
+    return result;
   }
 
   public Collection<String> getAppVersions(String namespace, String application) throws Exception {

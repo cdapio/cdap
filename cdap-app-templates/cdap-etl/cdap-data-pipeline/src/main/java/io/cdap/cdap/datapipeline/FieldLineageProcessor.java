@@ -67,6 +67,7 @@ public class FieldLineageProcessor {
 
     // validate the stage operations
     Map<String, InvalidFieldOperations> stageInvalids = new HashMap<>();
+    Map<String, Map<String, List<String>>> stageRedundants = new HashMap<>();
     for (StageSpec stageSpec : pipelineSpec.getStages()) {
 
       Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
@@ -124,13 +125,20 @@ public class FieldLineageProcessor {
       if (invalidFieldOperations != null) {
         stageInvalids.put(stageName, invalidFieldOperations);
       }
+
+      if (!stageOperationsValidator.getRedundantOutputs().isEmpty()) {
+        stageRedundants.put(stageName, stageOperationsValidator.getRedundantOutputs());
+      }
+    }
+
+    if (!stageRedundants.isEmpty()) {
+      LOG.debug("The pipeline has redundant operations {} and they will be ignored", stageRedundants);
     }
 
     if (!stageInvalids.isEmpty()) {
       // Do not throw but just log the exception message for validation failure
       // Once most of the plugins are updated to write lineage exception can be thrown
       LOG.debug(new InvalidLineageException(stageInvalids).getMessage());
-      return Collections.emptySet();
     }
 
     LineageOperationsProcessor processor = new LineageOperationsProcessor(pipelineSpec.getConnections(),

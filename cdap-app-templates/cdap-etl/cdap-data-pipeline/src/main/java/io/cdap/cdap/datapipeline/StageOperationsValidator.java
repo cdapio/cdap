@@ -71,9 +71,11 @@ import javax.annotation.Nullable;
  * OP5: [c] -> [x]
  * OP6: [a, c] -> [z]
  *
- * In this case the output field [z] created by OP4 is redundant (and so is invalid), since the
+ * In this case the output field [z] created by OP4 is redundant, since the
  * field [z] of the output schema will always come from OP6 and [z] is not used as input by any
- * operation subsequent of OP6. However note that even OP1 and OP5 both outputs [x], OP1 output is
+ * operation subsequent of OP6.
+ * The redundant operations will be considered valid but will be ignored.
+ * However note that even OP1 and OP5 both outputs [x], OP1 output is
  * not considered as invalid, since its used as input by OP2 which happens before OP5.
  */
 public class StageOperationsValidator {
@@ -84,7 +86,7 @@ public class StageOperationsValidator {
   private final Set<String> stageOutputs;
   private final Map<String, List<String>> invalidOutputs;
   private final Map<String, List<String>> invalidInputs;
-
+  private final Map<String, List<String>> redundantOutputs;
 
   private StageOperationsValidator(List<FieldOperation> operations, Set<String> stageInputs,
                                    Set<String> stageOutputs) {
@@ -93,6 +95,7 @@ public class StageOperationsValidator {
     this.stageOutputs = stageOutputs;
     this.invalidInputs = new HashMap<>();
     this.invalidOutputs = new HashMap<>();
+    this.redundantOutputs = new HashMap<>();
   }
 
   /**
@@ -130,6 +133,11 @@ public class StageOperationsValidator {
           break;
         case TRANSFORM:
           FieldTransformOperation transform = (FieldTransformOperation) pipelineOperation;
+          // if this transform writes to no input or output fields, ignore the validation since the operation will
+          // take no effect
+          if (transform.getInputFields().isEmpty() || transform.getOutputFields().isEmpty()) {
+            continue;
+          }
           validateInputs(pipelineOperation.getName(), transform.getInputFields(), validInputsSoFar);
           updateInvalidOutputs(transform.getInputFields(), unusedOutputs, redundantOutputs);
           validInputsSoFar.addAll(transform.getOutputFields());
@@ -163,34 +171,23 @@ public class StageOperationsValidator {
       String field = next.getKey();
       List<FieldOperation> origins = next.getValue();
 
-      if (stageOutputs.contains(field)) {
-        if (origins.size() > 1) {
-          // size will be greater than 1 only if its redundant
-          origins.remove(origins.size() - 1);
-        } else {
-          iterator.remove();
-        }
-      } else {
-        // If this field is not in the output schema of the stage, it is valid.
-        // For example, a Joiner joins two datasets D1,D2 based on the joiner key D1.K1, D2.K2, and
-        // decides to drop the joiner key in the output schema. The operation
-        // [D1.K1, D2.K2] ->[K1, K2] is a valid even though K1,K2 are not in the output schema.
-
-        // this means the field has redundant, TODO: CDAP-15785 revist redundant validation
-        if (origins.size() > 1) {
-          continue;
-        }
-
-        // Origin is empty means this is an generated field, it can be considered valid.
-        // If the size is 1, this field has no redundant operations, it is valid.
-        iterator.remove();
+      if (origins.size() > 1) {
+        List<FieldOperation> operations = redundantOutputs.computeIfAbsent(field, k -> new ArrayList<>());
+        // except the last origin, all others are redundant
+        operations.addAll(origins.subList(0, origins.size() - 1));
       }
+
+      // No matter this field is or is not in the output schema of the stage, it is valid.
+      // For example, a Joiner joins two datasets D1,D2 based on the joiner key D1.K1, D2.K2, and
+      // decides to drop the joiner key in the output schema. The operation
+      // [D1.K1, D2.K2] ->[K1, K2] is a valid even though K1,K2 are not in the output schema.
+      iterator.remove();
     }
 
     this.invalidOutputs.putAll(unusedOutputs.entrySet().stream().collect(
       Collectors.toMap(Map.Entry::getKey,
                        e -> e.getValue().stream().map(FieldOperation::getName).collect(Collectors.toList()))));
-    this.invalidOutputs.putAll(redundantOutputs.entrySet().stream().collect(
+    this.redundantOutputs.putAll(redundantOutputs.entrySet().stream().collect(
       Collectors.toMap(Map.Entry::getKey,
                        e -> e.getValue().stream().map(FieldOperation::getName).collect(Collectors.toList()))));
   }
@@ -260,6 +257,10 @@ public class StageOperationsValidator {
     }
 
     return new InvalidFieldOperations(invalidInputs, invalidOutputs);
+  }
+
+  public Map<String, List<String>> getRedundantOutputs() {
+    return redundantOutputs;
   }
 
   /**

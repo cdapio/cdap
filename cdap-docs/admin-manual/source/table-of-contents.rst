@@ -17,6 +17,7 @@ CDAP Administration Manual Table of Contents
     System Requirements <system-requirements>
     Installation <installation/index>
     Incompatibilities <incompatibilities>
+    Upgrading <upgrading/index>
     Security <security/index>
     Operations <operations/index>
     Appendices <appendices/index>

@@ -101,7 +101,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
   }
 
   private renderHeader() {
-    const headers = ['input', 'inputFields', 'operation', 'description', 'outputFields', 'output'];
+    const headers = ['input', 'inputFields', 'pluginName', 'description', 'outputFields', 'output'];
 
     return (
       <div className="grid-header">
@@ -120,6 +120,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
       <div className="grid-body">
         {operations.map((operation, i) => {
           let description = null;
+          const pluginName = operation.name.split('.')[0];
 
           if (operation.description) {
             const descriptionSplit = operation.description.split('\n');
@@ -143,7 +144,7 @@ export default class OperationsTable extends Component<{}, IOpsTableState> {
               <div>{i + 1}</div>
               <div>{this.renderInput(operation)}</div>
               <div>{this.renderInputFields(operation)}</div>
-              <div title={operation.name}>{operation.name}</div>
+              <div title={pluginName}>{pluginName}</div>
               <div title={operation.description}>{description}</div>
               <div>{this.renderOutputFields(operation)}</div>
               <div>{this.renderOutput(operation)}</div>

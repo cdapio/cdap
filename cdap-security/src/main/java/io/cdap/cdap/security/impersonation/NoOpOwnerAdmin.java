@@ -21,6 +21,9 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -45,6 +48,11 @@ public class NoOpOwnerAdmin implements OwnerAdmin {
   @Override
   public String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException {
     return null;
+  }
+
+  @Override
+  public <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids) throws IOException {
+    return Collections.emptyMap();
   }
 
   @Nullable

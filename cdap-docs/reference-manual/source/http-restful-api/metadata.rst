@@ -38,6 +38,11 @@ metadata object associated with a single entity is limited to 10K bytes in size.
 There is one reserved word for property keys and values: *tags*, either as ``tags`` or
 ``TAGS``. Tags themselves have no reserved words.
 
+The online metadata is migrated when CDAP is upgraded from 4.3.x to 5.0.0. During metadata migration,
+writes to non-migrated entities fail and reads on metadata for non-migrated entities do not have all the metadata.
+Metadata migration takes approximately 2-3 minutes. You can check the metadata migration status by using the
+:ref:upgrade status <http-restful-api-monitor-status-system-upgrade> REST endpoint.
+
 .. Base URL explanation
 .. --------------------
 .. include:: base-url.txt

@@ -264,6 +264,15 @@ public interface Store {
   Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId);
 
   /**
+   * Fetches active runs for a set of programs.
+   *
+   * @param programIds collection of program ids for fetching active run records.
+   * @return a {@link Map} from the {@link ProgramId} to the list of run records; there will be no entry for programs
+   * that do not exist.
+   */
+  Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> programIds);
+
+  /**
    * Fetches the run record for particular run of a program.
    *
    * @param id        run id of the program
@@ -308,6 +317,14 @@ public interface Store {
    * @return collection of all application specs in the namespace
    */
   Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
+
+  /**
+   * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
+   *
+   * @param ids the list of application ids to get the specs
+   * @return collection of application specs. For applications that don't exist, there will be no entry in the result.
+   */
+  Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids);
 
   /**
    * Returns a collection of all application specs of all the versions of the application by id
