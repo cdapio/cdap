@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import { MySearchApi } from 'api/search';
-import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import { parseMetadata } from 'services/metadata-parser';
 import uuidV4 from 'uuid/v4';
 import { objectQuery } from 'services/helpers';
@@ -32,6 +32,7 @@ import { JUSTADDED_THRESHOLD_TIME } from 'components/EntityListView/SearchStore/
 import isNil from 'lodash/isNil';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import { SCOPES } from 'services/global-constants';
+import { MyAppApi } from 'api/app';
 require('./JustAddedSection.scss');
 
 export default class JustAddedSection extends Component {
@@ -41,6 +42,7 @@ export default class JustAddedSection extends Component {
     this.state = {
       entities: [],
       selectedEntity: {},
+      applicationInfo: {},
     };
 
     this.fetchEntities = this.fetchEntities.bind(this);
@@ -101,6 +103,10 @@ export default class JustAddedSection extends Component {
     }
     this.namespaceSub();
     this.unmounted = true;
+
+    if (this.statusPoll$ && typeof this.statusPoll$.unsubscribe === 'function') {
+      this.statusPoll$.unsubscribe();
+    }
   }
 
   fetchEntities() {
@@ -141,6 +147,8 @@ export default class JustAddedSection extends Component {
               entities: res,
               loading: false,
             });
+
+          this.fetchBatchApplicationsInfo(res);
         },
         (err) => {
           console.log('Error', err);
@@ -148,6 +156,85 @@ export default class JustAddedSection extends Component {
         }
       );
   }
+
+  // TODO: CDAP-16192
+  // Consolidate logic with ListView
+  fetchBatchApplicationsInfo = (list) => {
+    const apps = list.filter((entity) => entity.type === 'application').map((app) => {
+      return {
+        appId: app.id,
+      };
+    });
+
+    if (apps.length === 0) {
+      return;
+    }
+
+    const params = {
+      namespace: getCurrentNamespace(),
+    };
+
+    MyAppApi.batchAppDetail(params, apps).subscribe((res) => {
+      const statusRequestBody = [];
+
+      res.forEach((app) => {
+        if (!app.detail || app.statusCode !== 200) {
+          return;
+        }
+
+        const detail = app.detail;
+
+        detail.programs.forEach((program) => {
+          const programRequest = {
+            appId: program.app,
+            programType: program.type.toLowerCase(),
+            programId: program.name,
+          };
+
+          statusRequestBody.push(programRequest);
+        });
+      });
+
+      this.pollApplicationInfo(statusRequestBody);
+    });
+  };
+
+  pollApplicationInfo = (requestBody) => {
+    if (this.statusPoll$ && typeof this.statusPoll$.unsubscribe === 'function') {
+      this.statusPoll$.unsubscribe();
+    }
+
+    const params = {
+      namespace: getCurrentNamespace(),
+    };
+
+    this.statusPoll$ = MyAppApi.batchStatus(params, requestBody).subscribe((statusRes) => {
+      const applicationInfo = {};
+
+      statusRes.forEach((program) => {
+        const appId = program.appId;
+        if (!applicationInfo[appId]) {
+          applicationInfo[appId] = {
+            numPrograms: 0,
+            running: 0,
+            failed: 0,
+          };
+        }
+
+        applicationInfo[appId].numPrograms++;
+
+        if (program.status === 'RUNNING') {
+          applicationInfo[appId].running++;
+        } else if (program.status === 'FAILED') {
+          applicationInfo[appId].failed++;
+        }
+      });
+
+      this.setState({
+        applicationInfo,
+      });
+    });
+  };
 
   onClick(entity) {
     this.setState({
@@ -161,6 +248,11 @@ export default class JustAddedSection extends Component {
     }
 
     let content = this.state.entities.map((entity) => {
+      let extraInfo;
+      if (entity.type === 'application') {
+        extraInfo = this.state.applicationInfo[entity.id];
+      }
+
       return (
         <EntityCard
           className={classnames('entity-card-container', {
@@ -172,6 +264,7 @@ export default class JustAddedSection extends Component {
           entity={entity}
           onFastActionSuccess={this.props.onFastActionSuccess}
           onUpdate={this.props.onUpdate}
+          extraInfo={extraInfo}
         />
       );
     });
