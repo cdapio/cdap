@@ -65,6 +65,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -80,6 +81,7 @@ import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramHistory;
 import io.cdap.cdap.proto.DatasetMeta;
@@ -596,6 +598,27 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getResponseCode());
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
+  }
+
+  /**
+   * Gets a list of {@link BatchApplicationDetail} from the give set of application version
+   *
+   * @param namespace the namespace to read from
+   * @param appVersions list of appId and version pair.
+   */
+  protected List<BatchApplicationDetail> getAppDetails(String namespace,
+                                                       Collection<ImmutablePair<String, String>> appVersions)
+    throws Exception {
+    List<Map<String, String>> request = appVersions.stream()
+      .map(e -> (e.getSecond() == null)
+        ? Collections.singletonMap("appId", e.getFirst())
+        : ImmutableMap.of("appId", e.getFirst(), "version", e.getSecond()))
+      .collect(Collectors.toList());
+    HttpResponse response = doPost(getVersionedAPIPath("appdetail", Constants.Gateway.API_VERSION_3_TOKEN, namespace),
+                                   GSON.toJson(request));
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
+    return readResponse(response, new TypeToken<List<BatchApplicationDetail>>() { }.getType());
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {

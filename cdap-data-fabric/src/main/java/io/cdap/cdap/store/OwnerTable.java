@@ -35,7 +35,14 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -108,6 +115,37 @@ public class OwnerTable {
 
     return row.isPresent() ?
         new KerberosPrincipalId(Bytes.toString(row.get().getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))) : null;
+  }
+
+  /**
+   * Batch version of {@link #getOwner(NamespacedEntityId)} for getting Kerberos principals for a set of entity ids.
+   *
+   * @param ids set of ids to get the Kerberos principals
+   * @param <T> type of the entity id
+   * @return A {@link Map} from the request id to the Kerberos principal. There will be no entry for entity id that
+   *         doesn't have an owner principal.
+   * @throws IOException if failed to read from the table
+   */
+  public <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids) throws IOException {
+    List<Collection<Field<?>>> keys = new ArrayList<>();
+    Map<String, T> rowKeys = new HashMap<>();
+    for (T id : ids) {
+      String rowKey = createRowKey(id);
+      keys.add(Collections.singleton(Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD, rowKey)));
+      rowKeys.put(rowKey, id);
+    }
+
+    Map<T, KerberosPrincipalId> result = new HashMap<>();
+    for (StructuredRow row : table.multiRead(keys)) {
+      String principalField = row.getString(StoreDefinition.OwnerStore.PRINCIPAL_FIELD);
+      T id = rowKeys.get(principalField);
+      if (id == null) {
+        // This shouldn't happen as the table shouldn't return a row that is not part of the query.
+        throw new IllegalStateException("Row key doesn't present in the set of requested ids: " + principalField);
+      }
+      result.put(id, new KerberosPrincipalId(Bytes.toString(row.getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))));
+    }
+    return result;
   }
 
   /**

@@ -24,6 +24,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -106,6 +107,19 @@ public abstract class OwnerStore {
    */
   @Nullable
   public abstract KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException;
+
+  /**
+   * Batch version of {@link #getOwner(NamespacedEntityId)} for retrieving multiple owners information for a given
+   * set of entity id.
+   *
+   * @param ids the set of entity id
+   * @param <T> type of the entity id
+   * @return A {@link Map} from the request id to the Kerberos principal. There will be no entry for entity id that
+   *         doesn't have an owner principal.
+   * @throws IOException if failed to get the information
+   * @throws IllegalArgumentException if any of the given entities is not of supported type.
+   */
+  public abstract <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids) throws IOException;
 
   /**
    * Checks if owner information exists or not

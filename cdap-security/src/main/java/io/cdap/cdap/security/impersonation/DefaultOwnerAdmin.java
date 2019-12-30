@@ -29,6 +29,9 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -64,6 +67,12 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
   public String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException {
     KerberosPrincipalId owner = getOwner(entityId);
     return owner == null ? null : owner.getPrincipal();
+  }
+
+  @Override
+  public <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids) throws IOException {
+    return ownerStore.getOwners(ids).entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPrincipal()));
   }
 
   @Nullable

@@ -151,8 +151,8 @@ public final class RunRecordMeta extends RunRecord {
       .add("twillrunid", getTwillRunId())
       .add("properties", getProperties())
       .add("sourceId", getSourceId() == null ? null : Bytes.toHexString(getSourceId()))
-      .add("artifactId", getArtifactId() == null ? null : getArtifactId())
-      .add("principal", getPrincipal() == null ? null : getPrincipal())
+      .add("artifactId", getArtifactId())
+      .add("principal", getPrincipal())
       .toString();
   }
 

@@ -117,9 +117,9 @@ public class PostgresSqlStructuredTable implements StructuredTable {
 
     // Collapse values of each key
     Map<String, Set<Field<?>>> keyFields = new LinkedHashMap<>();
-    multiKeys.stream().flatMap(Collection::stream).forEach(field -> {
-      keyFields.computeIfAbsent(field.getName(), k -> new LinkedHashSet<>()).add(field);
-    });
+    multiKeys.stream()
+      .flatMap(Collection::stream)
+      .forEach(field -> keyFields.computeIfAbsent(field.getName(), k -> new LinkedHashSet<>()).add(field));
 
     try (PreparedStatement statement = prepareMultiReadQuery(keyFields)) {
       LOG.trace("SQL statement: {}", statement);
@@ -201,26 +201,84 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
       statement.setFetchSize(SCAN_FETCH_SIZE);
-      int index = 1;
-      if (keyRange.getBegin() != null) {
-        for (Field<?> key : keyRange.getBegin()) {
-          setField(statement, key, index);
-          index++;
-        }
-      }
-      if (keyRange.getEnd() != null) {
-        for (Field<?> key : keyRange.getEnd()) {
-          setField(statement, key, index);
-          index++;
-        }
-      }
+      setStatementFieldByRange(keyRange, statement);
       LOG.trace("SQL statement: {}", statement);
+
       ResultSet resultSet = statement.executeQuery();
       return new ResultSetIterator(statement, resultSet, tableSchema);
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to scan from table %s with range %s",
                                           tableSchema.getTableId().getName(), keyRange), e);
     }
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
+                                                    int limit) throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Multiscan ranges {} with limit {}", tableSchema.getTableId(), keyRanges, limit);
+
+    if (keyRanges.isEmpty()) {
+      return CloseableIterator.empty();
+    }
+
+    // Validate all ranges. Also, find if there is any range that is open on both ends.
+    boolean scanAll = false;
+    for (Range range : keyRanges) {
+      fieldValidator.validatePrimaryKeys(range.getBegin(), true);
+      fieldValidator.validatePrimaryKeys(range.getEnd(), true);
+
+      if (range.getBegin().isEmpty() && range.getEnd().isEmpty()) {
+        scanAll = true;
+      }
+    }
+    if (scanAll) {
+      return scan(Range.all(), limit);
+    }
+
+    String query = getMultiScanQuery(keyRanges, limit);
+    try {
+      PreparedStatement statement = connection.prepareStatement(query);
+      statement.setFetchSize(SCAN_FETCH_SIZE);
+
+      int index = 1;
+      for (Range range : keyRanges) {
+        index = setStatementFieldByRange(range, statement, index);
+      }
+      LOG.trace("SQL statement: {}", statement);
+
+      ResultSet resultSet = statement.executeQuery();
+      return new ResultSetIterator(statement, resultSet, tableSchema);
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to scan from table %s with ranges %s",
+                                          tableSchema.getTableId().getName(), keyRanges), e);
+    }
+  }
+
+  /**
+   * Generates a SELECT query for scanning over all the provided ranges. For each of the range, it generates a where
+   * clause using the {@link #appendRange(StringBuilder, Range)} method. The where clause of each range are OR together.
+   * E.g.
+   *
+   * SELECT * FROM table WHERE ((key >= ?) AND (key <= ?)) OR ((key >= ?) AND (key <= ?)) LIMIT limit
+   *
+   * @param ranges the list of ranges to scan
+   * @param limit number of result
+   * @return a select query
+   */
+  private String getMultiScanQuery(Collection<Range> ranges, int limit) {
+    StringBuilder query = new StringBuilder("SELECT * FROM ").append(tableSchema.getTableId().getName());
+    String separator = " WHERE ";
+    for (Range range : ranges) {
+      query.append(separator);
+      query.append("(");
+      appendRange(query, range);
+      query.append(")");
+      separator = " OR ";
+    }
+
+    query.append(getOrderByClause(tableSchema.getPrimaryKeys()));
+    query.append(" LIMIT ").append(limit).append(";");
+    return query.toString();
   }
 
   @Override
@@ -367,20 +425,9 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
     String sql = getDeleteAllStatement(keyRange);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      int index = 1;
-      if (keyRange.getBegin() != null) {
-        for (Field<?> key : keyRange.getBegin()) {
-          setField(statement, key, index);
-          index++;
-        }
-      }
-      if (keyRange.getEnd() != null) {
-        for (Field<?> key : keyRange.getEnd()) {
-          setField(statement, key, index);
-          index++;
-        }
-      }
+      setStatementFieldByRange(keyRange, statement);
       LOG.trace("SQL statement: {}", statement);
+
       statement.executeUpdate();
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to delete the rows from table %s with range %s",
@@ -503,6 +550,35 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   /**
+   * Sets the {@link PreparedStatement} arguments by the key {@link Range}.
+   */
+  private void setStatementFieldByRange(Range keyRange,
+                                        PreparedStatement statement) throws SQLException, InvalidFieldException {
+    setStatementFieldByRange(keyRange, statement, 1);
+  }
+
+  /**
+   * Sets the {@link PreparedStatement} arguments by the key {@link Range} starting from the given argument index.
+   *
+   * @return the next argument index that have been set up to
+   */
+  private int setStatementFieldByRange(Range keyRange, PreparedStatement statement,
+                                       int startIndex) throws SQLException, InvalidFieldException {
+    int index = startIndex;
+
+    for (Field<?> key : keyRange.getBegin()) {
+      setField(statement, key, index);
+      index++;
+    }
+    for (Field<?> key : keyRange.getEnd()) {
+      setField(statement, key, index);
+      index++;
+    }
+
+    return index;
+  }
+
+  /**
    * Get the write sql query for PreparedStatement for the fields given. For example, if "simpletable" has 5 columns,
    * (key1, key2, col1, col2, col3), this write query will generate the following query:
    * INSERT INTO simpletable (key1,key2,col1,col2,col3) VALUES (?,?,?,?,?) ON CONFLICT (key1,key2)
@@ -525,7 +601,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
       valuePart.add("?");
       if (tableSchema.isPrimaryKeyColumn(field.getName())) {
         conflictPart.add(field.getName());
-      } else if (incrementField != null && field.getName().equals(incrementField)) {
+      } else if (field.getName().equals(incrementField)) {
         updatePart.add(field.getName() + " = " + tableSchema.getTableId().getName() + "." + field.getName() + " + ?");
       } else {
         updatePart.add(field.getName() + "=EXCLUDED." + field.getName());
@@ -535,16 +611,14 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns, boolean forUpdate) {
-    StringBuilder queryString =
-      new StringBuilder("SELECT ")
+    return new StringBuilder("SELECT ")
         .append(columns == null ? "*" : Joiner.on(",").join(columns))
         .append(" FROM ")
         .append(tableSchema.getTableId().getName())
         .append(" WHERE ").append(getEqualsClause(keys))
         .append(getOrderByClause(tableSchema.getPrimaryKeys()))
         .append(forUpdate ? " FOR UPDATE " : "")
-        .append(";");
-    return queryString.toString();
+        .append(";").toString();
   }
 
   /**

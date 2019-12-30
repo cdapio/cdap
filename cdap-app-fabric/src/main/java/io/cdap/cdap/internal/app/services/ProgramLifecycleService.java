@@ -99,6 +99,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -171,6 +172,26 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Gets the {@link ProgramStatus} for the given set of programs.
+   *
+   * @param programIds collection of program ids for retrieving status
+   * @return a {@link Map} from the {@link ProgramId} to the corresponding status; there will be no entry for programs
+   * that do not exist.
+   */
+  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramId> programIds) throws Exception {
+    // filter the result
+    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new LinkedHashSet<>(programIds),
+                                                                              authenticationContext.getPrincipal());
+    List<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toList());
+
+    Map<ProgramId, ProgramStatus> result = new HashMap<>();
+    for (Map.Entry<ProgramId, Collection<RunRecordMeta>> entry : store.getActiveRuns(filteredIds).entrySet()) {
+      result.put(entry.getKey(), getProgramStatus(entry.getValue()));
+    }
+    return result;
+  }
+
+  /**
    * Returns the program run count of the given program.
    *
    * @param programId the id of the program for which the count call is made
@@ -190,21 +211,28 @@ public class ProgramLifecycleService {
    * @return the counts of given program ids
    */
   public List<RunCountResult> getProgramRunCounts(List<ProgramId> programIds) throws Exception {
-    List<RunCountResult> result = store.getProgramRunCounts(programIds);
-
     // filter the result
-    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programIds),
-                                                                              authenticationContext.getPrincipal());
-    return result.stream()
-      .map(runCount -> {
-        if (!visibleEntities.contains(runCount.getProgramId())) {
-          return new RunCountResult(runCount.getProgramId(), null,
-                                    new UnauthorizedException(authenticationContext.getPrincipal(),
-                                                              runCount.getProgramId()));
+    Principal principal = authenticationContext.getPrincipal();
+    Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programIds), principal);
+    Set<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toSet());
+
+    Map<ProgramId, RunCountResult> programCounts = store.getProgramRunCounts(filteredIds).stream()
+      .collect(Collectors.toMap(RunCountResult::getProgramId, c -> c));
+
+    List<RunCountResult> result = new ArrayList<>();
+    for (ProgramId programId : programIds) {
+      if (!visibleEntities.contains(programId)) {
+        result.add(new RunCountResult(programId, null, new UnauthorizedException(principal, programId)));
+      } else {
+        RunCountResult count = programCounts.get(programId);
+        if (count != null) {
+          result.add(count);
+        } else {
+          result.add(new RunCountResult(programId, 0L, null));
         }
-        return runCount;
-      })
-      .collect(Collectors.toList());
+      }
+    }
+    return result;
   }
 
   /**
@@ -239,7 +267,7 @@ public class ProgramLifecycleService {
    * @param programRunStatus status of runs to return
    * @param start earliest start time of runs to return
    * @param end latest start time of runs to return
-   * @param limit the maximum number of runs to return
+   * @param limit the maximum number of runs per program to return
    * @return the latest runs for the program sorted by start time, with the newest run as the first run
    * @throws NotFoundException if the application to which this program belongs was not found or the program is not
    *                           found in the app

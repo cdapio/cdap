@@ -16,13 +16,22 @@
 
 package io.cdap.cdap.store;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.security.impersonation.OwnerStore;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link OwnerStore}.
@@ -30,6 +39,9 @@ import org.junit.Test;
 public abstract class OwnerStoreTest {
 
   public abstract OwnerStore getOwnerStore();
+
+  @After
+  public abstract void cleanup();
 
   @Test
   public void test() throws Exception {
@@ -88,5 +100,28 @@ public abstract class OwnerStoreTest {
     ownerStore.delete(datasetId);
     Assert.assertFalse(ownerStore.exists(datasetId));
     Assert.assertNull(ownerStore.getOwner(datasetId));
+  }
+
+  @Test
+  public void testGetOwners() throws IOException, AlreadyExistsException {
+    OwnerStore ownerStore = getOwnerStore();
+    ownerStore.add(NamespaceId.DEFAULT.dataset("dataset"), new KerberosPrincipalId("ds"));
+    ownerStore.add(NamespaceId.DEFAULT.app("app"), new KerberosPrincipalId("app"));
+    ownerStore.add(NamespaceId.DEFAULT.artifact("artifact", "1.2.3"), new KerberosPrincipalId("artifact"));
+
+    Set<NamespacedEntityId> ids = ImmutableSet.of(
+      NamespaceId.DEFAULT.dataset("dataset"),
+      NamespaceId.DEFAULT.app("app"),
+      NamespaceId.DEFAULT.artifact("artifact", "1.2.3"),
+      NamespaceId.DEFAULT.app("noowner")
+    );
+
+    Map<NamespacedEntityId, KerberosPrincipalId> owners = ownerStore.getOwners(ids);
+    Assert.assertEquals(3, owners.size());
+    Assert.assertEquals(new KerberosPrincipalId("ds"), owners.get(NamespaceId.DEFAULT.dataset("dataset")));
+    Assert.assertEquals(new KerberosPrincipalId("app"), owners.get(NamespaceId.DEFAULT.app("app")));
+    Assert.assertEquals(new KerberosPrincipalId("artifact"),
+                        owners.get(NamespaceId.DEFAULT.artifact("artifact", "1.2.3")));
+    Assert.assertNull(owners.get(NamespaceId.DEFAULT.app("noowner")));
   }
 }

@@ -47,6 +47,7 @@ import T from 'i18n-react';
 import { SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
 import { Theme } from 'services/ThemeHelper';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import If from 'components/If';
 
 const PREFIX = 'features.Cloud.Profiles.CreateView';
 
@@ -286,9 +287,9 @@ class ProfileCreateView extends Component {
               </Form>
             </fieldset>
           </div>
-          {this.state.error ? (
+          <If condition={this.state.error}>
             <div className="error-section text-danger">{this.state.error}</div>
-          ) : null}
+          </If>
           <div className="btns-section">
             <CreateProfileBtn
               className="btn-primary"
