@@ -21,6 +21,8 @@ export interface INodeConfig extends Map<string, any> {
   label?: string;
   styles?: object;
   properties?: object;
+  showAlert?: boolean;
+  showError?: boolean;
   [newProps: string]: any;
 }
 
