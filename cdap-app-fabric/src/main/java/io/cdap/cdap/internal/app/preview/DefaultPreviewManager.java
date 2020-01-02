@@ -157,6 +157,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         public void onRemoval(RemovalNotification<ApplicationId, Injector> notification) {
           Injector injector = notification.getValue();
           if (injector != null) {
+            LOG.debug("Removing preview run for {}", notification.getKey());
             PreviewRunner runner = injector.getInstance(PreviewRunner.class);
             if (runner instanceof Service) {
               stopQuietly((Service) runner);
