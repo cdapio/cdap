@@ -179,7 +179,6 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
       .clear()
       .type('field');
 
-    cy.get('[data-cy="BigQueryTable-stage-expansion-panel"]').click();
     cy.get('[data-cy="BigQueryTable2-stage-expansion-panel"]').click();
 
     TABLE2_FIELDS.forEach((field) => {

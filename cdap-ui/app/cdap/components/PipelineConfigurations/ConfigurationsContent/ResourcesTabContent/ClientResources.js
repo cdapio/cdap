@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -78,9 +78,6 @@ ClientResources.propTypes = {
   onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedClientResources = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ClientResources);
+const ConnectedClientResources = connect(mapStateToProps, mapDispatchToProps)(ClientResources);
 
 export default ConnectedClientResources;

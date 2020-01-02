@@ -83,7 +83,7 @@ export default class DataPrepBrowser extends Component {
 
   render() {
     let activeBrowser = this.state.activeBrowser.name;
-    if (browserMap.hasOwnProperty(activeBrowser)) {
+    if (Object.prototype.hasOwnProperty.call(browserMap, activeBrowser)) {
       let Tag = browserMap[activeBrowser];
       return (
         <Provider store={DataPrepBrowserStore}>

@@ -41,12 +41,9 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
     },
   };
 };
-const ArtifactUploader = connect(
-  mapStateWithDNDFileProps,
-  mapDispatchWithDNDFileProps
-)(FileDnD);
+const ArtifactUploader = connect(mapStateWithDNDFileProps, mapDispatchWithDNDFileProps)(FileDnD);
 
-export default function UploadJarStep(undefined, context) {
+export default function UploadJarStep(props, context) {
   return (
     <Provider store={PluginArtifactUploadStore}>
       <div className="upload-step-container">

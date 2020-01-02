@@ -62,9 +62,6 @@ MethodSelectorView.propTypes = {
   onChange: PropTypes.func,
 };
 
-const MethodSelector = connect(
-  mapStateToProps,
-  mapDispatch
-)(MethodSelectorView);
+const MethodSelector = connect(mapStateToProps, mapDispatch)(MethodSelectorView);
 
 export default MethodSelector;

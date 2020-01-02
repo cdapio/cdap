@@ -93,7 +93,7 @@ export default class LogAction extends Component {
     const link = this.generateLink();
 
     const renderLog = (
-      <a href={link} target="_blank" className="btn btn-link">
+      <a href={link} target="_blank" className="btn btn-link" rel="noopener noreferrer">
         <IconSVG name="icon-file-text" />
       </a>
     );

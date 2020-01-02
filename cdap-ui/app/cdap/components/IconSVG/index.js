@@ -36,6 +36,7 @@ export default function IconSVG(props) {
 }
 
 IconSVG.propTypes = {
+  id: PropTypes.string,
   name: PropTypes.string.isRequired,
   className: PropTypes.string,
   style: PropTypes.object,

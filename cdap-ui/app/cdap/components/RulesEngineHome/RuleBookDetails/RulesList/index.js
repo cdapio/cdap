@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -92,7 +92,10 @@ class RulesList extends Component {
     this.setState(
       update(this.state, {
         rulebookRules: {
-          $splice: [[dragIndex, 1], [hoverIndex, 0, dragRule]],
+          $splice: [
+            [dragIndex, 1],
+            [hoverIndex, 0, dragRule],
+          ],
         },
       }),
       () => {

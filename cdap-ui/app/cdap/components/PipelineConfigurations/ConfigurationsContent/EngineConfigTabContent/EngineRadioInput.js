@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { connect } from 'react-redux';
 import { Input } from 'reactstrap';
@@ -37,9 +37,6 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-const EngineRadioInput = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Input);
+const EngineRadioInput = connect(mapStateToProps, mapDispatchToProps)(Input);
 
 export default EngineRadioInput;

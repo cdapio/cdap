@@ -47,9 +47,7 @@ export default class DatasetDetailedViewTabs extends Component {
   }
 
   render() {
-    const baseLinkPath = `/ns/${this.props.params.namespace}/datasets/${
-      this.props.params.datasetId
-    }`;
+    const baseLinkPath = `/ns/${this.props.params.namespace}/datasets/${this.props.params.datasetId}`;
     const baseMatchPath = `/ns/:namespace/datasets/:datasetId`;
 
     return (

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -30,11 +30,12 @@ import { Observable } from 'rxjs/Observable';
 import ImportRulebookWizardConfig from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookWizardConfig';
 import ImportRulebookStore from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
 import T from 'i18n-react';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import isNil from 'lodash/isNil';
 
 require('./ImportRulebookWizard.scss');
 const PREFIX = 'features.RulesEngine.ImportRulebook';
+const cookie = new Cookies();
 
 export default class ImportRulebookWizard extends Component {
   static propTypes = {
@@ -81,7 +82,7 @@ export default class ImportRulebookWizard extends Component {
       'content-type': 'application/rules-engine',
     };
     if (window.CDAP_CONFIG.securityEnabled) {
-      let token = cookie.load('CDAP_Auth_Token');
+      let token = cookie.get('CDAP_Auth_Token');
       if (!isNil(token)) {
         headers.Authorization = `Bearer ${token}`;
       }

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 import Proptypes from 'prop-types';
 import React from 'react';
 import { UncontrolledTooltip } from 'reactstrap';
@@ -36,10 +36,10 @@ const styles = (theme) => {
     },
   };
 };
-interface InformationIconprops extends WithStyles<typeof styles> {
+interface IInformationIconprops extends WithStyles<typeof styles> {
   description?: string;
 }
-function InformationIcon({ description, classes }: InformationIconprops) {
+function InformationIcon({ description, classes }: IInformationIconprops) {
   if (!description || (typeof description === 'string' && description === '')) {
     return null;
   }

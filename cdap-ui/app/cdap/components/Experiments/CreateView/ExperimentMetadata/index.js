@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -100,10 +100,7 @@ const mapStateToProps = (state) => ({
         (algo) => algo.name === state.model_create.algorithm.name
       ).label,
 });
-const ConnectedExperimentMetadata = connect(
-  mapStateToProps,
-  null
-)(ExperimentMetadataWrapper);
+const ConnectedExperimentMetadata = connect(mapStateToProps, null)(ExperimentMetadataWrapper);
 
 export default function ExperimentMetadata() {
   return (

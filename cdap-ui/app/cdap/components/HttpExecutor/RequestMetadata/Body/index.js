@@ -52,9 +52,6 @@ BodyView.propTypes = {
   onChange: PropTypes.func,
 };
 
-const Body = connect(
-  mapStateToProps,
-  mapDispatch
-)(BodyView);
+const Body = connect(mapStateToProps, mapDispatch)(BodyView);
 
 export default Body;

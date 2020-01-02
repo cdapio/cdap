@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PipelineConfigurationsStore, {
   ACTIONS as PipelineConfigurationsActions,
@@ -59,20 +59,22 @@ const getFilteredRuntimeArgs = (runtimeArgs) => {
     );
     return isMatch.length ? true : false;
   };
-  pairs = pairs.filter((pair) => !skipIfProfilePropMatch(pair.key)).map((pair) => {
-    if (pair.key in resolvedMacros) {
+  pairs = pairs
+    .filter((pair) => !skipIfProfilePropMatch(pair.key))
+    .map((pair) => {
+      if (pair.key in resolvedMacros) {
+        return {
+          notDeletable: true,
+          provided: pair.provided || false,
+          ...pair,
+        };
+      }
       return {
-        notDeletable: true,
-        provided: pair.provided || false,
         ...pair,
+        // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
+        provided: null,
       };
-    }
-    return {
-      ...pair,
-      // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
-      provided: null,
-    };
-  });
+    });
   if (!pairs.length) {
     pairs.push(getDefaultKeyValuePair());
   }
@@ -127,7 +129,10 @@ const updateKeyValueStore = () => {
 const getMacrosResolvedByPrefs = (resolvedPrefs = {}, macrosMap = {}) => {
   let resolvedMacros = { ...macrosMap };
   for (let pref in resolvedPrefs) {
-    if (resolvedPrefs.hasOwnProperty(pref) && resolvedMacros.hasOwnProperty(pref)) {
+    if (
+      Object.prototype.hasOwnProperty.call(resolvedPrefs, pref) &&
+      Object.prototype.hasOwnProperty.call(resolvedMacros, pref)
+    ) {
       resolvedMacros[pref] = resolvedPrefs[pref];
     }
   }

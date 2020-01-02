@@ -60,7 +60,8 @@ export default class DataPrepServiceControl extends Component {
         // when it is already running.
         if (
           statusCode === 409 &&
-          (typeof extendedMessage === 'string' && extendedMessage.indexOf('already running') !== -1)
+          typeof extendedMessage === 'string' &&
+          extendedMessage.indexOf('already running') !== -1
         ) {
           return this.props.onServiceStart();
         }

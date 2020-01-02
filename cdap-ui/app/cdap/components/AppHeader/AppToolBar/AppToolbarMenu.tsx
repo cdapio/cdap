@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -32,8 +32,10 @@ import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import NamespaceStore from 'services/NamespaceStore';
 import Divider from '@material-ui/core/Divider';
 import AccessTokenModal from 'components/AppHeader/AccessTokenModal';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import RedirectToLogin from 'services/redirect-to-login';
+
+const cookie = new Cookies();
 
 interface IAppToolbarState {
   anchorEl: EventTarget | null;

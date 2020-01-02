@@ -65,7 +65,7 @@ $contrast: 0;
     top: -30px;
 
     .time-range-selector {
-      padding: 9px;
+      padding: 7px;
       margin-bottom: 10px;
     }
   }
@@ -120,7 +120,7 @@ $contrast: 0;
     }
 
     .separator {
-      width: 28px;
+      width: 26px;
       font-weight: bold;
       line-height: 32px;
     }
@@ -132,8 +132,8 @@ $contrast: 0;
     }
 
     .time {
-      // 14px = separator width divided by 2
-      width: calc(50% - 14px);
+      // 13px = separator width divided by 2
+      width: calc(50% - 13px);
 
       .time-wrapper {
         line-height: 32px;

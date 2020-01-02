@@ -85,9 +85,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const TypeSelector = connect(
-  mapStateToProps,
-  mapDispatch
-)(TypeSelectorView);
+const TypeSelector = connect(mapStateToProps, mapDispatch)(TypeSelectorView);
 
 export default TypeSelector;

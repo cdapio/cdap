@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 import React from 'react';
 import { MarkdownTable } from 'components/Markdown/MarkdownTable';
 import { MarkdownHeading } from 'components/Markdown/MarkdownHeading';

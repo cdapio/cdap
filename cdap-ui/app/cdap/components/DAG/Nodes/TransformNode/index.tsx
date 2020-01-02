@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as React from 'react';
 import withStyles from '@material-ui/core/styles/withStyles';
@@ -81,9 +81,7 @@ class TransformNodeComponent extends AbstractNode<ITransformNodeProps> {
     );
     const AlertEndpoint = () => (
       <div
-        className={`${classes.endpointCircle} ${classes.bottomEndpointCircle} ${
-          classes.alertEndpointCircle
-        }`}
+        className={`${classes.endpointCircle} ${classes.bottomEndpointCircle} ${classes.alertEndpointCircle}`}
         ref={(ref) => (this.alertEndpointRef = ref)}
         data-node-type={this.type}
         data-endpoint-type={AbstractNode.ENDPOINT.ALERT}
@@ -96,9 +94,7 @@ class TransformNodeComponent extends AbstractNode<ITransformNodeProps> {
     );
     const ErrorEndpoint = () => (
       <div
-        className={`${classes.endpointCircle} ${classes.bottomEndpointCircle} ${
-          classes.errorEndpointCircle
-        }`}
+        className={`${classes.endpointCircle} ${classes.bottomEndpointCircle} ${classes.errorEndpointCircle}`}
         ref={(ref) => (this.errorEndpointRef = ref)}
         data-node-type={this.type}
         data-endpoint-type={AbstractNode.ENDPOINT.ERROR}

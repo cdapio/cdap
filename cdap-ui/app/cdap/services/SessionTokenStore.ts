@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { createStore, Reducer } from 'redux';
 import LoadingIndicatorStore, {
@@ -20,8 +20,9 @@ import LoadingIndicatorStore, {
 } from 'components/LoadingIndicator/LoadingIndicatorStore';
 import { IAction } from 'services/redux-helpers';
 import { composeEnhancers } from 'services/helpers';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 
+const cookie = new Cookies();
 const DEFAULT_STATE = '';
 const SESSION_TOKENS_ACTIONS = {
   SET_TOKEN: 'SET_TOKEN',
@@ -41,8 +42,8 @@ const store = createStore(reducer, DEFAULT_STATE, composeEnhancers('SessionToken
 export async function fetchSessionToken() {
   try {
     const headers: HeadersInit = {};
-    if (window.CDAP_CONFIG.securityEnabled && cookie.load('CDAP_Auth_Token')) {
-      headers.authorization = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+    if (window.CDAP_CONFIG.securityEnabled && cookie.get('CDAP_Auth_Token')) {
+      headers.authorization = `Bearer ${cookie.get('CDAP_Auth_Token')}`;
     }
     const sessionTokenRes = await fetch('/sessionToken', { headers });
     const sessionToken = await sessionTokenRes.text();

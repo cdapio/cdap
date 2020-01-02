@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -298,7 +298,7 @@ const renderModelDetails = (model, newlyTrainingModel, experimentId) => {
           {splitId ? (
             <div>
               <strong>{T.translate(`${PREFIX}.modelTrainingLogs`)}</strong>
-              <a href={modelTrainingLogsUrl} target="_blank">
+              <a href={modelTrainingLogsUrl} target="_blank" rel="noopener noreferrer">
                 {' '}
                 Logs{' '}
               </a>

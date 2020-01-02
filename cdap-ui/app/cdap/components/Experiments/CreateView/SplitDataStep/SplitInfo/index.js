@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
@@ -42,11 +42,10 @@ class SplitInfo extends Component {
     this.setState({ activeColumn });
   };
 
-  componentWillReceiveProps({ splitInfo, outcome, schema }) {
+  componentWillReceiveProps({ splitInfo, outcome }) {
     this.setState({
       splitInfo,
       activeColumn: outcome,
-      schema,
     });
   }
 
@@ -85,7 +84,6 @@ const mapStateToSplitInfoProps = (state) => {
   return {
     splitInfo: state.model_create.splitInfo,
     outcome: state.experiments_create.outcome,
-    schema: state.model_create.schema,
   };
 };
 

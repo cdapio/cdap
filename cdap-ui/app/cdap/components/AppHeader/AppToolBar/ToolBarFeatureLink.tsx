@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 import * as React from 'react';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ExtendedLinkButton from 'components/AppHeader/ExtendedLinkButton';
@@ -46,9 +46,13 @@ class ToolBarFeatureLink extends React.PureComponent<IToolBarFeatureLinkProps> {
     }
     const { isNativeLink } = this.props.context;
     const Comp = isNativeLink ? 'a' : ExtendedLinkButton(featureUrl);
-    const ReactRef = React.forwardRef<HTMLElement, ButtonProps>((props, ref) => (
-      <Comp {...props} />
-    ));
+    let ReactRef;
+    // Typescript won't infer if 'isNativeLink' then its an anchor element.
+    if (Comp === 'a') {
+      ReactRef = React.forwardRef<HTMLElement, 'a'>((props, ref) => <Comp {...props} />);
+    } else {
+      ReactRef = React.forwardRef<HTMLElement, ButtonProps>((props, ref) => <Comp {...props} />);
+    }
     return (
       <Button
         component={ReactRef}

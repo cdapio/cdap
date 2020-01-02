@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import ColumnTextSelection from 'components/DataPrep/ColumnTextSelection';
-import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
+import { Popover, PopoverHeader, PopoverBody } from 'reactstrap';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
@@ -123,10 +123,10 @@ export default class MaskSelection extends Component {
         container={tableContainer}
         hideArrow
       >
-        <PopoverTitle className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>
+        <PopoverHeader className={`${CELLHIGHLIGHTCLASSNAME} popover-title`}>
           {T.translate(`${PREFIX}.popoverTitle`)}
-        </PopoverTitle>
-        <PopoverContent
+        </PopoverHeader>
+        <PopoverBody
           className={`${CELLHIGHLIGHTCLASSNAME} popover-content`}
           onClick={this.preventPropagation}
         >
@@ -140,7 +140,7 @@ export default class MaskSelection extends Component {
           <div className={`btn ${CELLHIGHLIGHTCLASSNAME}`} onClick={this.props.onClose}>
             {T.translate(`${PREFIX}.cancelBtnLabel`)}
           </div>
-        </PopoverContent>
+        </PopoverBody>
       </Popover>
     );
   }

@@ -15,7 +15,6 @@
  */
 
 import * as React from 'react';
-import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import { isNilOrEmpty } from 'services/helpers';
 import { Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -51,7 +50,7 @@ const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
         <DataprepBrowserTopPanel
           allowSidePanelToggle={true}
           toggle={toggleSidepanel}
-          browserTitle={T.translate(`${PREFIX}.title`).toString()}
+          browserTitle={T.translate(`${PREFIX}.title`)}
         />
 
         <EmptyMessageContainer title={T.translate(`${PREFIX}.title`)}>

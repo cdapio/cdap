@@ -67,9 +67,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const ActionButtons = connect(
-  mapStateToProps,
-  mapDispatch
-)(ActionButtonsView);
+const ActionButtons = connect(mapStateToProps, mapDispatch)(ActionButtonsView);
 
 export default ActionButtons;

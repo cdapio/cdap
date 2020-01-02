@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -35,7 +35,7 @@ export default function EmptyMessageContainer({ title = null, searchText = '', c
   );
 }
 EmptyMessageContainer.propTypes = {
-  title: PropTypes.string,
+  title: PropTypes.ReactNode,
   searchText: PropTypes.string,
   children: PropTypes.node.isRequired,
 };

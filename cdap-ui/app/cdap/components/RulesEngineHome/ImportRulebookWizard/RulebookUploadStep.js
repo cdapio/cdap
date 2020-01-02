@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
 import { Provider, connect } from 'react-redux';
@@ -50,10 +50,7 @@ const mapDispatchToDndProps = (dispatch) => {
     },
   };
 };
-const ImportRulebookFile = connect(
-  mapStateToFileDnDProps,
-  mapDispatchToDndProps
-)(FileDnD);
+const ImportRulebookFile = connect(mapStateToFileDnDProps, mapDispatchToDndProps)(FileDnD);
 
 export default function RulebookUploadStep() {
   return (

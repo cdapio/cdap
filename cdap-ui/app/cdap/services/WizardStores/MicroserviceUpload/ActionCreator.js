@@ -15,7 +15,7 @@
  */
 
 import UploadFile from 'services/upload-file';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import {Observable} from 'rxjs/Observable';
 import NamespaceStore from 'services/NamespaceStore';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
@@ -26,6 +26,8 @@ import {MyArtifactApi} from 'api/artifact';
 import {MyPipelineApi} from 'api/pipeline';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
+
+const cookie = new Cookies();
 
 const uploadArtifact = () => {
   const state = MicroserviceUploadStore.getState();
@@ -42,7 +44,7 @@ const uploadArtifact = () => {
     'Artifact-Extends': state.uploadjson.artifactExtends
   };
   if (window.CDAP_CONFIG.securityEnabled) {
-    let token = cookie.load('CDAP_Auth_Token');
+    let token = cookie.get('CDAP_Auth_Token');
     if (!isNil(token)) {
       headers.Authorization = `Bearer ${token}`;
     }

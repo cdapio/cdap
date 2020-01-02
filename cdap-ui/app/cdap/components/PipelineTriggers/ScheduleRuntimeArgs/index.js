@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -111,9 +111,7 @@ export default class ScheduleRuntimeArgs extends Component {
       let pluginProperties = triggerProperties.pluginProperties;
       if (pluginProperties.length > 0) {
         pluginProperties.forEach((properties) => {
-          let key = `${this.props.triggeringPipelineInfo.id}:${properties.stageName}:${
-            properties.source
-          }`;
+          let key = `${this.props.triggeringPipelineInfo.id}:${properties.stageName}:${properties.source}`;
 
           argsArray.push({
             key,

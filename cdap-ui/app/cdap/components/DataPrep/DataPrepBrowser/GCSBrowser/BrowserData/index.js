@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -129,9 +129,6 @@ const mapDispatchToProps = () => {
   };
 };
 
-const BrowserDataWrapper = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(BrowserData);
+const BrowserDataWrapper = connect(mapStateToProps, mapDispatchToProps)(BrowserData);
 
 export default BrowserDataWrapper;

@@ -106,9 +106,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const RunsTable = connect(
-  mapStateToProps,
-  mapDispatch
-)(RunsTableView);
+const RunsTable = connect(mapStateToProps, mapDispatch)(RunsTableView);
 
 export default RunsTable;

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -29,7 +29,7 @@ import {
 } from 'components/RulesEngineHome/RulesEngineTabCounters';
 import T from 'i18n-react';
 import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
+import Backend from 'react-dnd-html5-backend';
 import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
 
 require('./RulesEngineWrapper.scss');
@@ -123,4 +123,4 @@ class RulesEngineWrapper extends Component {
   }
 }
 
-export default DragDropContext(HTML5Backend)(RulesEngineWrapper);
+export default DragDropContext(Backend)(RulesEngineWrapper);

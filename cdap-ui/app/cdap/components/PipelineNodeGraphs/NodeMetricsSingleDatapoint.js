@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -25,7 +25,7 @@ export default function NodeMetricsSingleDatapoint({ data }) {
     We would need this check
      - if we have only aggregated metric
      - or if we have a time series with only one data point.
-   
+
      The aggregated metric would be just plain number and the single datapoint timeseries will be d[0].y
   */
   const renderData = (d) => {

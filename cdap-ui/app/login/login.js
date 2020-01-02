@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import 'whatwg-fetch';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 
 import Card from 'components/Card';
 import CardActionFeedback from 'components/CardActionFeedback';
@@ -29,6 +29,8 @@ require('./styles/lib-styles.scss');
 require('./login.scss');
 import T from 'i18n-react';
 T.setTexts(require('./text/text-en.yaml'));
+
+const cookie = new Cookies();
 
 class Login extends Component {
   constructor(props) {
@@ -65,8 +67,8 @@ class Login extends Component {
         }
       })
       .then((res) => {
-        cookie.save('CDAP_Auth_Token', res.access_token, { path: '/' });
-        cookie.save('CDAP_Auth_User', this.state.username);
+        cookie.set('CDAP_Auth_Token', res.access_token, { path: '/' });
+        cookie.set('CDAP_Auth_User', this.state.username);
         var queryObj = util.getQueryParams(location.search);
         queryObj.redirectUrl = queryObj.redirectUrl || '/';
         window.location.href = queryObj.redirectUrl;

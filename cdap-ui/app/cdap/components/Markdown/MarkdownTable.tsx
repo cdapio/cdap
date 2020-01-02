@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
 import Table from '@material-ui/core/Table';
@@ -94,9 +94,8 @@ const MarkdownWithoutStyles: React.SFC<IMarkdownWithoutStylesProps> = ({ childre
           return c;
         }
       })
-      .map(
-        (nodeTypeNodes) =>
-          typeof nodeTypeNodes === 'string' ? nodeTypeNodes : nodeTypeNodes.props.children
+      .map((nodeTypeNodes) =>
+        typeof nodeTypeNodes === 'string' ? nodeTypeNodes : nodeTypeNodes.props.children
       );
   return (
     <div>

@@ -85,7 +85,11 @@ class EmptyList extends React.PureComponent<IProps, IState> {
     reader.readAsText(uploadedFile, 'UTF-8');
 
     reader.onload = (evt) => {
-      const fileDataString = evt.target.result;
+      if (typeof evt.target.result !== 'string') {
+        return;
+      }
+
+      const fileDataString: string = evt.target.result;
       const error = validateImportJSON(fileDataString);
       if (error) {
         this.onError(error);

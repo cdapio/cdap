@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 /*
   This store represents the state of the Pipeline Configure modeless.
@@ -142,7 +142,7 @@ const getCustomConfigForDisplay = (properties, engine, pipelineType) => {
   let currentCustomConfig = getCustomConfigFromProperties(properties, pipelineType);
   let customConfigForDisplay = {};
   for (let key in currentCustomConfig) {
-    if (currentCustomConfig.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(currentCustomConfig, key)) {
       let newKey = key;
       const mapReduceKey = 'system.mapreduce.';
       const sparkKey = 'system.spark.';
@@ -173,7 +173,7 @@ const checkForReset = (runtimeArgs, resolvedMacros) => {
       runtimeArg.showReset = false;
     } else {
       let runtimeArgKey = runtimeArg.key;
-      if (resolvedMacros.hasOwnProperty(runtimeArgKey)) {
+      if (Object.prototype.hasOwnProperty.call(resolvedMacros, runtimeArgKey)) {
         if (resolvedMacros[runtimeArgKey] !== runtimeArg.value) {
           runtimeArg.showReset = true;
         } else {
@@ -216,7 +216,7 @@ const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
       showReset: macrosMap[macroKey].showReset,
       uniqueId: 'id-' + uuidV4(),
       notDeletable: true,
-      provided: providedMacros.hasOwnProperty(macroKey),
+      provided: Object.prototype.hasOwnProperty.call(providedMacros, macroKey),
     };
   });
   currentRuntimeArgs.pairs = macros.concat(currentRuntimeArgs.pairs);
@@ -356,7 +356,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       let currentProperties = { ...state.properties };
       let currentCustomConfigs = getCustomConfigFromProperties(currentProperties);
       Object.keys(currentCustomConfigs).forEach((customConfigKey) => {
-        if (currentProperties.hasOwnProperty(customConfigKey)) {
+        if (Object.prototype.hasOwnProperty.call(currentProperties, customConfigKey)) {
           delete currentProperties[customConfigKey];
         }
       });
