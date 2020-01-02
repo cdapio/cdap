@@ -452,6 +452,25 @@ function removeEmptyJsonValues(obj) {
   return newValues;
 }
 
+function handlePageLevelError(error) {
+  // This function parses receiveing error messages and converts it to a
+  // format that page level error supports
+  let message = null;
+  let errorCode = null;
+  if (error.data) {
+    message = error.data;
+  } else if (typeof error.response === 'string') {
+    message = error.response;
+  }
+
+  if (error.statusCode) {
+    errorCode = error.statusCode;
+  } else {
+    // If we don't know about the error type, showing a 500 level error
+    errorCode = 500;
+  }
+  return {errorCode, message};
+}
 
 export {
   objectQuery,
@@ -491,4 +510,5 @@ export {
   parseQueryString,
   isMacro,
   removeEmptyJsonValues,
+  handlePageLevelError
 };

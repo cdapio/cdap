@@ -15,8 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.logviewer')
-  .config(function($stateProvider) {
+  .config(function($stateProvider,$urlRouterProvider) {
     const productName = window.CaskCommon.ThemeHelper.Theme.productName;
+    $urlRouterProvider.otherwise(() => {
+      //Unmatched route, will show 404
+      window.CaskCommon.ee.emit(
+        window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { statusCode: 404 });
+    });
     $stateProvider
       .state('logviewerhome', {
         resolve: {

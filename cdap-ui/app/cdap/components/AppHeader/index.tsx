@@ -66,21 +66,26 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
 
   public componentDidMount() {
     // Polls for namespace data
-    this.namespacesubscription = MyNamespaceApi.pollList().subscribe((res) => {
-      if (res.length > 0) {
-        NamespaceStore.dispatch({
-          type: NamespaceActions.updateNamespaces,
-          payload: {
-            namespaces: res,
-          },
-        });
-      } else {
-        // TL;DR - This is emitted for Authorization in main.js
-        // This means there is no namespace for the user to work on.
-        // which indicates she/he have no authorization for any namesapce in the system.
-        this.eventEmitter.emit(globalEvents.NONAMESPACE);
+    this.namespacesubscription = MyNamespaceApi.pollList().subscribe(
+      (res) => {
+        if (res.length > 0) {
+          NamespaceStore.dispatch({
+            type: NamespaceActions.updateNamespaces,
+            payload: {
+              namespaces: res,
+            },
+          });
+        } else {
+          // TL;DR - This is emitted for Authorization in main.js
+          // This means there is no namespace for the user to work on.
+          // which indicates she/he have no authorization for any namesapce in the system.
+          this.eventEmitter.emit(globalEvents.NONAMESPACE);
+        }
+      },
+      (err) => {
+        this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, err);
       }
-    });
+    );
     this.nsSubscription = NamespaceStore.subscribe(() => {
       let selectedNamespace: string = getLastSelectedNamespace() as string;
       const { namespaces } = NamespaceStore.getState();

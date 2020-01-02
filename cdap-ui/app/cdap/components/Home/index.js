@@ -19,12 +19,14 @@ import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
 import Loadable from 'react-loadable';
-import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore, { isValidNamespace } from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
 
+import globalEvents from 'services/global-events';
+import ee from 'event-emitter';
 require('./Home.scss');
 
 const EntityListView = Loadable({
@@ -115,6 +117,11 @@ const Replicator = Loadable({
 });
 
 export default class Home extends Component {
+  constructor(props) {
+    super(props);
+    this.eventEmitter = ee(ee);
+  }
+
   componentWillMount() {
     NamespaceStore.dispatch({
       type: NamespaceActions.selectNamespace,
@@ -124,6 +131,20 @@ export default class Home extends Component {
     });
   }
   render() {
+    const { namespace } = this.props.match.params;
+    isValidNamespace(namespace)
+      .then((isValid) => {
+        if (!isValid) {
+          this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
+            statusCode: 404,
+            data: `Namespace '${namespace}' does not exist.`,
+          });
+        }
+      })
+      .catch((err) => {
+        this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, err);
+      });
+
     return (
       <div>
         <Switch>

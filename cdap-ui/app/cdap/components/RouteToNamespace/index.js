@@ -16,8 +16,10 @@
 
 import React, { Component } from 'react';
 import find from 'lodash/find';
-import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore, { isValidNamespace, getValidNamespace } from 'services/NamespaceStore';
 import { Redirect } from 'react-router-dom';
+import globalEvents from 'services/global-events';
+import ee from 'event-emitter';
 
 export default class RouteToNamespace extends Component {
   constructor(props) {
@@ -26,6 +28,7 @@ export default class RouteToNamespace extends Component {
       selectedNamespace: null,
     };
   }
+  eventEmitter = ee(ee);
 
   componentWillMount() {
     this.setNamespace();
@@ -40,41 +43,15 @@ export default class RouteToNamespace extends Component {
     return find(list, { name: name });
   }
 
-  setNamespace() {
-    let list = NamespaceStore.getState().namespaces;
-
-    if (!list || list.length === 0) {
-      return;
+  async setNamespace() {
+    const selectedNamespace = await getValidNamespace();
+    const isvalid = await isValidNamespace(selectedNamespace);
+    if (!isvalid) {
+      this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
+        statusCode: 404,
+        data: `Namespace '${selectedNamespace}' does not exist.`,
+      });
     }
-
-    /**
-     * 1. Check if localStorage has a 'DefaultNamespace' set by the user, if not,
-     * 2. Check if there is a 'default' namespace from backend, if not,
-     * 3. Take first one from the list of namespaces from backend.
-     **/
-
-    let selectedNamespace;
-    let defaultNamespace;
-
-    // Check #1
-    if (!selectedNamespace) {
-      defaultNamespace = localStorage.getItem('DefaultNamespace');
-      let defaultNsFromBackend = list.filter((ns) => ns.name === defaultNamespace);
-      if (defaultNsFromBackend.length) {
-        selectedNamespace = defaultNsFromBackend[0];
-      }
-    }
-    // Check #2
-    if (!selectedNamespace) {
-      selectedNamespace = this.findNamespace(list, 'default');
-    }
-    // Check #3
-    if (!selectedNamespace) {
-      selectedNamespace = list[0].name;
-    } else {
-      selectedNamespace = selectedNamespace.name;
-    }
-
     localStorage.setItem('DefaultNamespace', selectedNamespace);
     this.setState({ selectedNamespace });
   }

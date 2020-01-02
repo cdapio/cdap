@@ -30,5 +30,11 @@ body {
         height: inherit;
       }
     }
+    .loading-svg {
+      display: flex;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+    }
   }
 }

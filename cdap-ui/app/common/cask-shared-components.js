@@ -17,6 +17,7 @@
 import T from 'i18n-react';
 T.setTexts(require('../cdap/text/text-en.yaml'));
 var Store = require('../cdap/services/NamespaceStore').default;
+var NameSpaceStoreActions = require('../cdap/services/NamespaceStore/NamespaceActions').default;
 var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
 var DataPrepHome = require('../cdap/components/DataPrepHome').default;
 var DataPrepHelper = require('../cdap/components/DataPrep/helper');
@@ -110,9 +111,12 @@ var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').defa
 var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
 var SelectionBox = require('../cdap/components/SelectionBox').default;
 var Clipboard = require('../cdap/services/Clipboard');
+var Page404 = require('../cdap/components/404').default;
+var Page500 = require('../cdap/components/500').default;
 
 export {
   Store,
+  NameSpaceStoreActions,
   DataPrepHome,
   DataPrepHelper,
   globalEvents,
@@ -194,4 +198,6 @@ export {
   PluginContextMenu,
   SelectionBox,
   Clipboard,
+  Page404,
+  Page500,
 };

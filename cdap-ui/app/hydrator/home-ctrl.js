@@ -28,11 +28,9 @@ angular.module(PKG.name + '.feature.hydrator')
 
     let ns = $state.params.namespace;
     let defaultNS = localStorage.getItem('DefaultNamespace');
-    let setNamespace = ns ? ns : defaultNS;
+    const namespaceToUse = ns ? ns : defaultNS;
 
-    var n = rNsList.filter(function (one) {
-      return one.name === setNamespace;
-    });
+    const validNamespace = rNsList.find(namespace => namespace.name === namespaceToUse);
 
     function checkNamespace (ns) {
       return rNsList.filter(namespace => namespace.name === ns).length;
@@ -40,7 +38,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var PREFKEY = 'feature.home.ns.latest';
 
-    if (!n.length) {
+    if (validNamespace) {
       mySessionStorage.get(PREFKEY)
         .then(function (latest) {
           let ns;
@@ -66,7 +64,7 @@ angular.module(PKG.name + '.feature.hydrator')
       $window.location.href = $window.getHydratorUrl({
         stateName: 'hydrator.list',
         stateParams: {
-          namespace: setNamespace
+          namespace: namespaceToUse
         },
       });
     }

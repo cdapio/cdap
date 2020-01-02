@@ -15,8 +15,16 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .config(function($stateProvider, MYAUTH_ROLE) {
+  .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     const productName = window.CaskCommon.ThemeHelper.Theme.productName;
+
+    $urlRouterProvider.otherwise(() => {
+      //unmatched route, will show 404
+      window.CaskCommon.ee.emit(
+        window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { statusCode: 404 });
+
+    });
+
     $stateProvider
       .state('home', {
         url: '/',
@@ -43,6 +51,30 @@ angular.module(PKG.name + '.feature.tracker')
           sessionToken: function() {
             window.CaskCommon.SessionTokenStore.fetchSessionToken();
           },
+          rResetPreviousPageLevelError: function () {
+            window.CaskCommon.ee.emit(
+              window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
+          },
+          rValidNamespace: function ($stateParams, myNamespace) {
+            const { namespace } = $stateParams;
+
+            myNamespace.getList().then(namespaces => {
+              const validNamespace = namespaces.find(ns => ns.name === namespace);
+              // Current namespace not in available list of namespaces
+              if (namespaces.length > 0 && !validNamespace) {
+                const error = {
+                  statusCode: 404,
+                  data: `Namespace '${namespace}' does not exist.`
+                };
+                window.CaskCommon.ee.emit(
+                  window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
+              }
+            }).catch(err => {
+              //When namespace call fails for any other reason
+              window.CaskCommon.ee.emit(
+                window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, err);
+            });
+          }
         },
       })
       .state('tracker', {
