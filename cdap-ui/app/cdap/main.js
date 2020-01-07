@@ -311,7 +311,7 @@ class CDAP extends Component {
                       );
                     }}
                   />
-                  <Route
+                  {/* <Route
                     exact
                     path="/contextmenu"
                     render={(props) => {
@@ -320,7 +320,7 @@ class CDAP extends Component {
                       }
                       const ContextMenu = Loadable({
                         loader: () =>
-                          import(/* webpackChunkName: "ContextMenu" */ 'components/ContextMenu'),
+                          import(/* webpackChunkName: "ContextMenu" *\/ 'components/ContextMenu'),
                         loading: LoadingSVGCentered,
                       });
                       return (
@@ -329,7 +329,7 @@ class CDAP extends Component {
                         </ErrorBoundary>
                       );
                     }}
-                  />
+                  />*/}
                   {/*
                     Eventually handling 404 should move to the error boundary and all container components will have the error object.
                   */}

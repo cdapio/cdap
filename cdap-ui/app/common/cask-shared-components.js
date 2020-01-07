@@ -108,6 +108,8 @@ var DateTimeWidget = require('../cdap/components/AbstractWidget/DateTimeWidget')
 var DateRangeWidget = require('../cdap/components/AbstractWidget/DateRangeWidget').default;
 var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
 var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
+// var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
+// var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
 var SelectionBox = require('../cdap/components/SelectionBox').default;
 
 export {
@@ -191,5 +193,7 @@ export {
   DateRangeWidget,
   PipelineContextMenu,
   PluginContextMenu,
+  // PipelineContextMenu,
+  // PluginContextMenu,
   SelectionBox,
 };
