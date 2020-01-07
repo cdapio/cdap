@@ -1501,7 +1501,7 @@ export IDENT_STRING=${USER}
 # Below are what we set by default.  May only work with SUN JVM.
 # For more on why as well as other possible settings,
 # see http://wiki.apache.org/hadoop/PerformanceTuning
-export OPTS="-XX:+UseG1GC"
+export OPTS=${OPTS:-"-XX:+UseG1GC"}
 
 # The directory where PID files are stored. Default: /var/cdap/run
 export PID_DIR=${CDAP_PID_DIR:-/var/cdap/run}

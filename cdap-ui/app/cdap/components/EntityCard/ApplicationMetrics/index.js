@@ -17,81 +17,14 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { MyAppApi } from 'api/app';
-import NamespaceStore from 'services/NamespaceStore';
 import { humanReadableNumber } from 'services/helpers';
 import T from 'i18n-react';
 
 export default class ApplicationMetrics extends Component {
   constructor(props) {
     super(props);
+  }
 
-    this.state = {
-      numPrograms: 0,
-      running: 0,
-      failed: 0,
-      loading: true,
-    };
-    this.updateState = this.updateState.bind(this);
-  }
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.entity.id !== this.props.entity.id) {
-      this.fetchApplicationMetrics();
-    }
-  }
-  updateState() {
-    if (!this._mounted) {
-      return;
-    }
-    this.setState.apply(this, arguments);
-  }
-  // Need a major refactor
-  componentWillMount() {
-    this._mounted = true;
-    if (!this.props.entity.id) {
-      return;
-    } else {
-      this.fetchApplicationMetrics();
-    }
-  }
-  componentWillUnmount() {
-    this._mounted = false;
-  }
-  fetchApplicationMetrics() {
-    const params = {
-      namespace: NamespaceStore.getState().selectedNamespace,
-      appId: this.props.entity.id,
-    };
-    MyAppApi.get(params).subscribe(
-      (res) => {
-        this.updateState({ numPrograms: res.programs.length });
-
-        const statusRequestArray = res.programs.map((program) => {
-          return {
-            appId: this.props.entity.id,
-            programType: program.type.toLowerCase(),
-            programId: program.name,
-          };
-        });
-
-        MyAppApi.batchStatus(
-          {
-            namespace: NamespaceStore.getState().selectedNamespace,
-          },
-          statusRequestArray
-        ).subscribe((stats) => {
-          this.updateState({
-            running: stats.filter((stat) => stat.status === 'RUNNING').length,
-            failed: stats.filter((stat) => stat.status === 'FAILED').length,
-            loading: false,
-          });
-        });
-      },
-      (err) => {
-        console.log('ERROR', err);
-      }
-    );
-  }
   render() {
     const loading = <span className="fa fa-spin fa-spinner" />;
 
@@ -99,15 +32,23 @@ export default class ApplicationMetrics extends Component {
       <div className="metrics-container">
         <div className="metric-item">
           <p className="metric-header">{T.translate('commons.entity.metrics.programs')}</p>
-          <p>{this.state.loading ? loading : humanReadableNumber(this.state.numPrograms)}</p>
+          <p>
+            {!this.props.extraInfo
+              ? loading
+              : humanReadableNumber(this.props.extraInfo.numPrograms)}
+          </p>
         </div>
         <div className="metric-item">
           <p className="metric-header">{T.translate('commons.entity.metrics.running')}</p>
-          <p>{this.state.loading ? loading : humanReadableNumber(this.state.running)}</p>
+          <p>
+            {!this.props.extraInfo ? loading : humanReadableNumber(this.props.extraInfo.running)}
+          </p>
         </div>
         <div className="metric-item">
           <p className="metric-header">{T.translate('commons.entity.metrics.failed')}</p>
-          <p>{this.state.loading ? loading : humanReadableNumber(this.state.failed)}</p>
+          <p>
+            {!this.props.extraInfo ? loading : humanReadableNumber(this.props.extraInfo.failed)}
+          </p>
         </div>
       </div>
     );
@@ -116,4 +57,5 @@ export default class ApplicationMetrics extends Component {
 
 ApplicationMetrics.propTypes = {
   entity: PropTypes.object,
+  extraInfo: PropTypes.object,
 };

@@ -31,6 +31,8 @@ import {
   DEFAULT_SEARCH_FILTERS,
 } from 'components/EntityListView/SearchStore/SearchConstants';
 import isNil from 'lodash/isNil';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { MyAppApi } from 'api/app';
 
 export default class HomeListView extends Component {
   constructor(props) {
@@ -38,15 +40,103 @@ export default class HomeListView extends Component {
     this.state = {
       loading: this.props.loading || false,
       list: this.props.list || [],
+      applicationInfo: {},
     };
   }
 
   componentWillReceiveProps(nextProps) {
+    this.fetchBatchApplicationsInfo(nextProps.list);
     this.setState({
       list: nextProps.list,
       loading: nextProps.loading,
     });
   }
+
+  componentWillUnmount() {
+    if (this.statusPoll$ && typeof this.statusPoll$.unsubscribe === 'function') {
+      this.statusPoll$.unsubscribe();
+    }
+  }
+
+  // TODO: CDAP-16192
+  // Consolidate logic with JustAddedSection
+  fetchBatchApplicationsInfo = (list) => {
+    const apps = list.filter((entity) => entity.type === 'application').map((app) => {
+      return {
+        appId: app.id,
+      };
+    });
+
+    if (apps.length === 0) {
+      return;
+    }
+
+    const params = {
+      namespace: getCurrentNamespace(),
+    };
+
+    MyAppApi.batchAppDetail(params, apps).subscribe((res) => {
+      const statusRequestBody = [];
+
+      res.forEach((app) => {
+        if (!app.detail || app.statusCode !== 200) {
+          return;
+        }
+
+        const detail = app.detail;
+
+        detail.programs.forEach((program) => {
+          const programRequest = {
+            appId: program.app,
+            programType: program.type.toLowerCase(),
+            programId: program.name,
+          };
+
+          statusRequestBody.push(programRequest);
+        });
+      });
+
+      this.pollApplicationInfo(statusRequestBody);
+    });
+  };
+
+  pollApplicationInfo = (requestBody) => {
+    if (this.statusPoll$ && typeof this.statusPoll$.unsubscribe === 'function') {
+      this.statusPoll$.unsubscribe();
+    }
+
+    const params = {
+      namespace: getCurrentNamespace(),
+    };
+
+    this.statusPoll$ = MyAppApi.batchStatus(params, requestBody).subscribe((statusRes) => {
+      const applicationInfo = {};
+
+      statusRes.forEach((program) => {
+        const appId = program.appId;
+        if (!applicationInfo[appId]) {
+          applicationInfo[appId] = {
+            numPrograms: 0,
+            running: 0,
+            failed: 0,
+          };
+        }
+
+        applicationInfo[appId].numPrograms++;
+
+        if (program.status === 'RUNNING') {
+          applicationInfo[appId].running++;
+        } else if (program.status === 'FAILED') {
+          applicationInfo[appId].failed++;
+        }
+      });
+
+      this.setState({
+        applicationInfo,
+      });
+    });
+  };
+
   onClick(entity) {
     SearchStore.dispatch({
       type: SearchStoreActions.SETOVERVIEWENTITY,
@@ -113,6 +203,11 @@ export default class HomeListView extends Component {
     }
     if (!this.state.loading && this.state.list.length) {
       content = this.state.list.map((entity) => {
+        let extraInfo;
+        if (entity.type === 'application') {
+          extraInfo = this.state.applicationInfo[entity.id];
+        }
+
         return (
           <EntityCard
             className={classnames('entity-card-container', { active: isEntityActive(entity) })}
@@ -121,6 +216,7 @@ export default class HomeListView extends Component {
             onClick={this.onClick.bind(this, entity)}
             entity={entity}
             onFastActionSuccess={this.props.onFastActionSuccess}
+            extraInfo={extraInfo}
           />
         );
       });

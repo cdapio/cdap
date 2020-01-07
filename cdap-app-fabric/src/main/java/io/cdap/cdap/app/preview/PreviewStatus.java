@@ -29,12 +29,23 @@ public class PreviewStatus {
    * Status for the preview
    */
   public enum Status {
-    RUNNING,
-    COMPLETED,
-    DEPLOY_FAILED,
-    RUN_FAILED,
-    KILLED,
-    KILLED_BY_TIMER
+    INIT(false),
+    RUNNING(false),
+    COMPLETED(true),
+    DEPLOY_FAILED(true),
+    RUN_FAILED(true),
+    KILLED(true),
+    KILLED_BY_TIMER(true);
+
+    private final boolean endState;
+
+    Status(boolean endState) {
+      this.endState = endState;
+    }
+
+    public boolean isEndState() {
+      return endState;
+    }
   }
 
   private final Status status;
