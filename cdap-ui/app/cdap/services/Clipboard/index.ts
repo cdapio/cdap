@@ -82,6 +82,7 @@ export async function copyToClipBoard(text) {
     await navigator.clipboard.writeText(text);
     return Promise.resolve();
   } catch (e) {
+    /* tslint:disable:no-console */
     console.error('Unable to copy: ' + e.message);
     return await useDocumentExecCopy(text);
   }
@@ -98,6 +99,7 @@ export async function getValueFromClipboard() {
     const clipText = await navigator.clipboard.readText();
     return Promise.resolve(clipText);
   } catch (e) {
+    /* tslint:disable:no-console */
     console.error('Unable to copy from clipboard: ' + e.message);
     return await useDocumentExecPaste();
   }

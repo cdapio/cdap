@@ -104,8 +104,8 @@ var WidgetWrapper = require('../cdap/components/ConfigurationGroup/WidgetWrapper
 var ConfigurationGroupUtilities = require('../cdap/components/ConfigurationGroup/utilities');
 var DynamicFiltersUtilities = require('../cdap/components/ConfigurationGroup/utilities/DynamicPluginFilters');
 var LoadingSVG = require('../cdap/components/LoadingSVG').default;
-var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
-var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
+// var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
+// var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
 var SelectionBox = require('../cdap/components/SelectionBox').default;
 export {
   Store,
@@ -184,7 +184,7 @@ export {
   ConfigurationGroupUtilities,
   DynamicFiltersUtilities,
   LoadingSVG,
-  PipelineContextMenu,
-  PluginContextMenu,
+  // PipelineContextMenu,
+  // PluginContextMenu,
   SelectionBox,
 };
