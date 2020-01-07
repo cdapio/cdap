@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.codec.ConditionSpecificationCodec;
 import io.cdap.cdap.proto.codec.CustomActionSpecificationCodec;
@@ -51,12 +52,16 @@ import io.cdap.cdap.proto.codec.SparkSpecificationCodec;
 import io.cdap.cdap.proto.codec.WorkerSpecificationCodec;
 import io.cdap.cdap.proto.codec.WorkflowNodeCodec;
 import io.cdap.cdap.proto.codec.WorkflowSpecificationCodec;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -89,6 +94,52 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
       .registerTypeAdapter(Constraint.class, new ConstraintCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
+  }
+
+  /**
+   * Get the set of {@link ProgramId}s contained from the given {@link JsonReader} that points
+   * to a json serialized {@link ApplicationSpecification}.
+   *
+   * @param appId the {@link ApplicationId} for the specification
+   * @param reader the reader for reading the json serialized application specification
+   * @return a set of program ids in the spec
+   * @throws IllegalArgumentException if the given {@link ApplicationId} doesn't match with the name in the json spec
+   */
+  public static Set<ProgramId> getProgramIds(ApplicationId appId, JsonReader reader) throws IOException {
+    Set<ProgramId> result = new HashSet<>();
+    reader.beginObject();
+    while (reader.peek() != JsonToken.END_OBJECT) {
+      String name = reader.nextName();
+      switch (name) {
+        case "mapReduces":
+        case "sparks":
+        case "workflows":
+        case "services":
+        case "workers":
+          // Get the keys from the map from the property value
+          reader.beginObject();
+          while (reader.peek() != JsonToken.END_OBJECT) {
+            String programName = reader.nextName();
+            ProgramType programType = ProgramType.valueOf(name.substring(0, name.length() - 1).toUpperCase());
+            result.add(appId.program(programType, programName));
+            reader.skipValue();
+          }
+          reader.endObject();
+          break;
+        case "name":
+          String appName = reader.nextString();
+          if (!appId.getApplication().equals(appName)) {
+            throw new IllegalArgumentException(
+              String.format("Application name in the specification is '%s' and it doesn't " +
+                              "match with the provided application id '%s'", appName, appId.getApplication()));
+          }
+          break;
+        default:
+          reader.skipValue();
+      }
+    }
+    reader.endObject();
+    return result;
   }
 
   public String toJson(ApplicationSpecification appSpec) {
