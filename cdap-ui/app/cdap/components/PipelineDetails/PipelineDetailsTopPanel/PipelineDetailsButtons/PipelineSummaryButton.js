@@ -28,7 +28,7 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineSummaryButton extends Component {
   static propTypes = {
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     pipelineName: PropTypes.string,
   };
 
@@ -59,7 +59,7 @@ export default class PipelineSummaryButton extends Component {
   }
 
   render() {
-    let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
+    let pipelineType = this.props.pipelineType;
     let programType = GLOBALS.programType[pipelineType];
     let programId = GLOBALS.programId[pipelineType];
 

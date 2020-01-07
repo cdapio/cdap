@@ -41,6 +41,7 @@ import {
   SPARK_BACKPRESSURE_ENABLED,
   ENGINE_OPTIONS,
 } from 'components/PipelineConfigurations/PipelineConfigConstants';
+import { GLOBALS } from 'services/global-constants';
 
 const ACTIONS = {
   INITIALIZE_CONFIG: 'INITIALIZE_CONFIG',
@@ -67,6 +68,7 @@ const ACTIONS = {
   SET_NUM_RECORDS_PREVIEW: 'SET_NUM_RECORDS_PREVIEW',
   SET_MODELESS_OPEN_STATUS: 'SET_MODELESS_OPEN_STATUS',
   SET_PIPELINE_VISUAL_CONFIGURATION: 'SET_PIPELINE_VISUAL_CONFIGURATION',
+  SET_SERVICE_ACCOUNT_PATH: 'SET_SERVICE_ACCOUNT_PATH',
   RESET: 'RESET',
 };
 
@@ -115,16 +117,16 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   modelessOpen: false,
 
   pipelineVisualConfiguration: {
-    isBatch: false,
+    pipelineType: GLOBALS.etlDataPipeline,
     isHistoricalRun: false,
     isPreview: false,
     isDetailView: false,
   },
 };
 
-const getCustomConfigFromProperties = (properties = {}, isBatch) => {
+const getCustomConfigFromProperties = (properties = {}, pipelineType) => {
   let backendProperties = [SPARK_BACKPRESSURE_ENABLED, SPARK_EXECUTOR_INSTANCES];
-  if (isBatch) {
+  if (GLOBALS.etlBatchPipelines.includes(pipelineType)) {
     backendProperties = [];
   }
   let customConfig = {};
@@ -136,8 +138,8 @@ const getCustomConfigFromProperties = (properties = {}, isBatch) => {
   return customConfig;
 };
 
-const getCustomConfigForDisplay = (properties, engine, isBatch) => {
-  let currentCustomConfig = getCustomConfigFromProperties(properties, isBatch);
+const getCustomConfigForDisplay = (properties, engine, pipelineType) => {
+  let currentCustomConfig = getCustomConfigFromProperties(properties, pipelineType);
   let customConfigForDisplay = {};
   for (let key in currentCustomConfig) {
     if (currentCustomConfig.hasOwnProperty(key)) {
@@ -155,8 +157,10 @@ const getCustomConfigForDisplay = (properties, engine, isBatch) => {
   return convertMapToKeyValuePairsObj(customConfigForDisplay);
 };
 
-const getEngineDisplayLabel = (engine, isBatch) => {
-  return engine === ENGINE_OPTIONS.MAPREDUCE && isBatch ? 'MapReduce' : 'Apache Spark Streaming';
+const getEngineDisplayLabel = (engine, pipelineType) => {
+  return engine === ENGINE_OPTIONS.MAPREDUCE && GLOBALS.etlBatchPipelines.includes(pipelineType)
+    ? 'MapReduce'
+    : 'Apache Spark Streaming';
 };
 
 const checkForReset = (runtimeArgs, resolvedMacros) => {
@@ -234,7 +238,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
         customConfigKeyValuePairs: getCustomConfigForDisplay(
           action.payload.properties,
           action.payload.engine,
-          state.pipelineVisualConfiguration.isBatch
+          state.pipelineVisualConfiguration.pipelineType
         ),
       };
     case ACTIONS.SET_RUNTIME_ARGS:
@@ -361,7 +365,10 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       let newCustomConfigs = {};
       Object.keys(action.payload.customConfig).forEach((newCustomConfigKey) => {
         let newCustomConfigValue = action.payload.customConfig[newCustomConfigKey];
-        if (action.payload.isBatch && state.engine === 'mapreduce') {
+        if (
+          GLOBALS.etlBatchPipelines.includes(action.payload.pipelineType) &&
+          state.engine === ENGINE_OPTIONS.MAPREDUCE
+        ) {
           newCustomConfigKey = 'system.mapreduce.' + newCustomConfigKey;
         } else {
           newCustomConfigKey = 'system.spark.' + newCustomConfigKey;
@@ -416,6 +423,11 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         modelessOpen: action.payload.open,
+      };
+    case ACTIONS.SET_SERVICE_ACCOUNT_PATH:
+      return {
+        ...state,
+        serviceAccountPath: action.payload.serviceAccountPath,
       };
     case ACTIONS.RESET:
       return cloneDeep(DEFAULT_CONFIGURE_OPTIONS);

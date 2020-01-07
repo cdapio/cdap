@@ -27,6 +27,7 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import ConfigurableTab from 'components/ConfigurableTab';
 import TabConfig from 'components/PipelineConfigurations/TabConfig';
+import { GLOBALS } from 'services/global-constants';
 
 require('./PipelineConfigurations.scss');
 require('./ConfigurationsContent/ConfigurationsContent.scss');
@@ -38,7 +39,7 @@ export default class PipelineConfigurations extends Component {
     onClose: PropTypes.func,
     isDetailView: PropTypes.bool,
     isPreview: PropTypes.bool,
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     isHistoricalRun: PropTypes.bool,
     action: PropTypes.string,
     pipelineName: PropTypes.string,
@@ -47,7 +48,7 @@ export default class PipelineConfigurations extends Component {
   static defaultProps = {
     isDetailView: false,
     isPreview: false,
-    isBatch: true,
+    pipelineType: GLOBALS.etlDataPipeline,
   };
 
   componentDidMount() {
@@ -59,13 +60,13 @@ export default class PipelineConfigurations extends Component {
       payload: { open: true },
     });
 
-    let { isBatch, isDetailView, isHistoricalRun, isPreview } = this.props;
+    let { pipelineType, isDetailView, isHistoricalRun, isPreview } = this.props;
 
     PipelineConfigurationsStore.dispatch({
       type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
       payload: {
         pipelineVisualConfiguration: {
-          isBatch,
+          pipelineType,
           isDetailView,
           isHistoricalRun,
           isPreview,
@@ -127,14 +128,25 @@ export default class PipelineConfigurations extends Component {
 
   render() {
     let tabConfig;
-    if (this.props.isBatch) {
+    if (GLOBALS.etlBatchPipelines.includes(this.props.pipelineType)) {
       tabConfig = TabConfig;
-    } else {
+    } else if (this.props.pipelineType === GLOBALS.etlDataStreams) {
       tabConfig = { ...TabConfig };
       // Don't show Alerts tab for realtime pipelines
       const alertsTabName = T.translate(`${PREFIX}.Alerts.title`);
       tabConfig.tabs = TabConfig.tabs.filter((tab) => {
         return tab.name !== alertsTabName;
+      });
+    } else if (this.props.pipelineType === GLOBALS.eltSqlPipeline) {
+      tabConfig = { ...TabConfig };
+      // Only show pipeline config, compute config, and resource config for now
+      let allowed = [
+        T.translate(`${PREFIX}.ComputeConfig.title`),
+        T.translate(`${PREFIX}.PipelineConfig.title`),
+        T.translate(`${PREFIX}.Resources.title`),
+      ];
+      tabConfig.tabs = TabConfig.tabs.filter((tab) => {
+        return allowed.indexOf(tab.name) !== -1;
       });
     }
     return (

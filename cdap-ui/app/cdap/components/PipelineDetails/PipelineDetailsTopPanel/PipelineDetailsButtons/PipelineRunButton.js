@@ -29,7 +29,7 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineRunButton extends Component {
   static propTypes = {
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     pipelineName: PropTypes.string,
     runButtonLoading: PropTypes.bool,
     runError: PropTypes.string,

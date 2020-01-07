@@ -23,12 +23,13 @@ import PipelineResources from 'components/PipelineResources';
 import { ENGINE_OPTIONS } from 'components/PipelineConfigurations/PipelineConfigConstants';
 import { ACTIONS as PipelineConfigurationsActions } from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
+import { GLOBALS } from 'services/global-constants';
 
 const PREFIX = 'features.PipelineConfigurations.Resources';
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    isBatch: ownProps.isBatch,
+    pipelineType: ownProps.pipelineType,
     engine: state.engine,
     virtualCores: state.resources.virtualCores,
     memoryMB: state.resources.memoryMB,
@@ -52,14 +53,15 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 const ExecutorResources = ({
-  isBatch,
+  pipelineType,
   engine,
   virtualCores,
   onVirtualCoresChange,
   memoryMB,
   onMemoryMBChange,
 }) => {
-  let isMapReduce = engine === ENGINE_OPTIONS.MAPREDUCE && isBatch;
+  const isMapReduce =
+    engine === ENGINE_OPTIONS.MAPREDUCE && GLOBALS.etlBatchPipelines.includes(pipelineType);
   return (
     <div className="executor">
       <div className="resource-title-icon">
@@ -89,7 +91,7 @@ const ExecutorResources = ({
 };
 
 ExecutorResources.propTypes = {
-  isBatch: PropTypes.bool,
+  pipelineType: PropTypes.string,
   engine: PropTypes.string,
   virtualCores: PropTypes.number,
   onVirtualCoresChange: PropTypes.func,

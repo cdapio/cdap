@@ -105,6 +105,8 @@ class HydratorPlusPlusConfigStore {
         this.setCheckpointDir(this.state.config.checkpointDir || window.CDAP_CONFIG.hydrator.defaultCheckpointDir);
         this.setGracefulStop(this.state.config.stopGracefully);
         this.setBatchInterval(this.state.config.batchInterval);
+      } else if (this.state.artifact.name === this.GLOBALS.eltSqlPipeline) {
+        this.setServiceAccountPath(this.state.config.serviceAccountPath || '');
       } else {
         this.setEngine(this.state.config.engine);
         this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
@@ -252,33 +254,27 @@ class HydratorPlusPlusConfigStore {
     }
 
     let appType = this.getAppType();
-    if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
+    // Resources
+    config.resources = {
+      memoryMB: this.getMemoryMB(),
+      virtualCores: this.getVirtualCores()
+    };
+    config.driverResources = {
+      memoryMB: this.getDriverMemoryMB(),
+      virtualCores: this.getDriverVirtualCores()
+    };
+
+    if (this.GLOBALS.etlBatchPipelines.includes(appType)) {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
-      config.resources = {
-        memoryMB: this.getMemoryMB(),
-        virtualCores: this.getVirtualCores()
-      };
-      config.driverResources = {
-        memoryMB: this.getDriverMemoryMB(),
-        virtualCores: this.getDriverVirtualCores()
-      };
       config.properties = this.getProperties();
       config.stageLoggingEnabled = this.getStageLogging();
       config.processTimingEnabled = this.getInstrumentation();
       config.numOfRecordsPreview = this.getNumRecordsPreview();
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instances = this.getInstance();
-    } else if (this.GLOBALS.etlDataStreams) {
+    } else if (appType === this.GLOBALS.etlDataStreams) {
       config.batchInterval = this.getBatchInterval();
-      config.resources = {
-        memoryMB: this.getMemoryMB(),
-        virtualCores: this.getVirtualCores()
-      };
-      config.driverResources = {
-        memoryMB: this.getDriverMemoryMB(),
-        virtualCores: this.getDriverVirtualCores()
-      };
       config.clientResources = {
         memoryMB: this.getClientMemoryMB(),
         virtualCores: this.getClientVirtualCores()
@@ -291,6 +287,13 @@ class HydratorPlusPlusConfigStore {
         config.checkpointDir = this.getCheckpointDir();
       }
       config.stopGracefully = this.getGracefulStop();
+    } else if (appType === this.GLOBALS.eltSqlPipeline) {
+      config.schedule = this.getSchedule();
+      config.serviceAccountPath = this.getServiceAccountPath();
+      config.clientResources = {
+        memoryMB: this.getClientMemoryMB(),
+        virtualCores: this.getClientVirtualCores()
+      };
     }
 
     if (this.state.description) {
@@ -298,7 +301,6 @@ class HydratorPlusPlusConfigStore {
     }
 
     config.comments = this.getComments();
-
 
     // Removing UUID from postactions name
     let postActions = this.getPostActions();
@@ -499,7 +501,7 @@ class HydratorPlusPlusConfigStore {
     for (let configKey in customConfig) {
       if (customConfig.hasOwnProperty(configKey)) {
         let newKey = configKey;
-        if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1 && this.getEngine() === 'mapreduce') {
+        if (this.GLOBALS.etlBatchPipelines.includes(this.state.artifact.name) && this.getEngine() === 'mapreduce') {
           newKey = 'system.mapreduce.' + configKey;
         } else {
           newKey = 'system.spark.' + configKey;
@@ -564,7 +566,7 @@ class HydratorPlusPlusConfigStore {
     return this.getConfig().numOfRecordsPreview;
   }
   setNumRecordsPreview(val=100) {
-    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
+    if (this.GLOBALS.etlBatchPipelines.includes(this.state.artifact.name)) {
       this.state.config.numOfRecordsPreview = val;
     }
   }
@@ -573,10 +575,12 @@ class HydratorPlusPlusConfigStore {
     this.state.artifact.version = artifact.version;
     this.state.artifact.scope = artifact.scope;
 
-    if (this.GLOBALS.etlBatchPipelines.indexOf(artifact.name) !== -1) {
+    if (this.GLOBALS.etlBatchPipelines.includes(artifact.name)) {
       this.state.config.schedule = this.state.config.schedule || this.HYDRATOR_DEFAULT_VALUES.schedule;
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
       this.state.config.instances = this.state.config.instances || this.HYDRATOR_DEFAULT_VALUES.instance;
+    } else if (artifact.name === this.GLOBALS.eltSqlPipeline) {
+      this.state.config.schedule = this.state.config.schedule || this.HYDRATOR_DEFAULT_VALUES.schedule;
     }
 
     this.emitChange();
@@ -946,6 +950,7 @@ class HydratorPlusPlusConfigStore {
     this.state.config.resources = this.state.config.resources || {};
     this.state.config.resources.virtualCores = virtualCores;
   }
+
   getVirtualCores() {
     return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'virtualCores');
   }
@@ -1007,6 +1012,13 @@ class HydratorPlusPlusConfigStore {
   }
   setMaxConcurrentRuns(num=1) {
     this.state.config.maxConcurrentRuns = num;
+  }
+
+  setServiceAccountPath(path) {
+    this.state.config.serviceAccountPath = path;
+  }
+  getServiceAccountPath() {
+    return this.getState().config.serviceAccountPath;
   }
 
   saveAsDraft() {

@@ -30,7 +30,7 @@ const PREFIX = 'features.PipelineDetails.TopPanel';
 
 export default class PipelineStopButton extends Component {
   static propTypes = {
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     pipelineName: PropTypes.string,
     currentRun: PropTypes.object,
     runs: PropTypes.array,
@@ -73,12 +73,11 @@ export default class PipelineStopButton extends Component {
   };
 
   stopRun = (runId = this.props.runs[0].runid) => {
-    let pipelineType = this.props.isBatch ? GLOBALS.etlDataPipeline : GLOBALS.etlDataStreams;
     let params = {
       namespace: getCurrentNamespace(),
       appId: this.props.pipelineName,
-      programType: GLOBALS.programType[pipelineType],
-      programId: GLOBALS.programId[pipelineType],
+      programType: GLOBALS.programType[this.props.pipelineType],
+      programId: GLOBALS.programId[this.props.pipelineType],
       runId,
     };
     return MyProgramApi.stopRun(params);

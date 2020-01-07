@@ -1,0 +1,245 @@
+<!--
+  Copyright © 2019 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="pipeline-configurations-content modeless-container">
+  <div class="pipeline-configurations-header modeless-header">
+    <div class="modeless-title">
+      Configure
+      <span ng-if="SqlPipelineConfigCtrl.pipelineName.length > 0">
+        "{{SqlPipelineConfigCtrl.pipelineName}}"
+      </span>
+    </div>
+    <div class="btn-group">
+      <a class="btn" ng-click="SqlPipelineConfigCtrl.onClose()">
+        <span class="fa fa-remove"></span>
+      </a>
+    </div>
+  </div>
+  <div class="pipeline-configurations-body modeless-content">
+    <div class="configurations-side-panel">
+      <div class="configurations-tabs">
+        <div class="configuration-tab"
+          ng-class="{'active': SqlPipelineConfigCtrl.activeTab === 'runtimeArgs'}"
+          ng-click="SqlPipelineConfigCtrl.activeTab = 'runtimeArgs'"
+          ng-if="SqlPipelineConfigCtrl.isDeployed || SqlPipelineConfigCtrl.showPreviewConfig">
+          Runtime arguments
+        </div>
+        <div class="configuration-tab toggle-advanced-options"
+          ng-click="SqlPipelineConfigCtrl.showAdvanced = !SqlPipelineConfigCtrl.showAdvanced"
+          ng-if="SqlPipelineConfigCtrl.isDeployed || SqlPipelineConfigCtrl.showPreviewConfig">
+        <span class="fa"
+          ng-class="{'fa-caret-down': SqlPipelineConfigCtrl.showAdvanced, 'fa-caret-right': !SqlPipelineConfigCtrl.showAdvanced}">
+        </span>
+          Advanced options
+        </div>
+        <div class="advanced-options"
+          ng-show="SqlPipelineConfigCtrl.showAdvanced || !SqlPipelineConfigCtrl.isDeployed && !SqlPipelineConfigCtrl.showPreviewConfig">
+          <div class="configuration-tab"
+            ng-class="{'active': SqlPipelineConfigCtrl.activeTab === 'pipelineConfig'}"
+            ng-click="SqlPipelineConfigCtrl.activeTab = 'pipelineConfig'">
+            Pipeline config
+          </div>
+          <div class="configuration-tab"
+            ng-class="{'active': SqlPipelineConfigCtrl.activeTab === 'resources', 'disabled': SqlPipelineConfigCtrl.showPreviewConfig}"
+            ng-click="SqlPipelineConfigCtrl.activeTab = 'resources'">
+            Resources
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="configuration-content">
+      <div class="configuration-step-content configuration-content-container"
+        id="runtime-arguments-tab-content"
+        ng-if="SqlPipelineConfigCtrl.activeTab === 'runtimeArgs'">
+        <my-pipeline-runtime-args
+          runtime-arguments="SqlPipelineConfigCtrl.runtimeArguments"
+          contains-macros="SqlPipelineConfigCtrl.containsMacros"
+          resolved-macros="SqlPipelineConfigCtrl.resolvedMacros">
+        </my-pipeline-runtime-args>
+      </div>
+
+      <div class="configuration-step-content"
+        id="pipeline-config-tab-content"
+        ng-if="SqlPipelineConfigCtrl.activeTab === 'pipelineConfig'">
+        <div class="step-content-heading">
+          Set configurations for this pipeline
+        </div>
+        <div class="label-with-toggle service-account-path row">
+          <span class="toggle-label col-xs-4">Service Account Path</span>
+          <div class="col-xs-7">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Service Account Path"
+              ng-model="SqlPipelineConfigCtrl.serviceAccountPath" />
+            <i class="fa fa-info-circle"
+              uib-tooltip="The filepath to the service account credentials to use when connecting to BigQuery."
+              tooltip-placement="right">
+            </i>
+          </div>
+        </div>
+        <div class="label-with-toggle instrumentation row">
+          <span class="toggle-label col-xs-4">Instrumentation</span>
+          <div class="col-xs-7 toggle-container">
+            <toggle-switch
+              is-on="SqlPipelineConfigCtrl.instrumentation"
+              on-toggle="SqlPipelineConfigCtrl.onInstrumentationChange"
+            ></toggle-switch>
+            <i class="fa fa-info-circle"
+              uib-tooltip="Emits timing metrics such as total time, mean, and and standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources."
+              tooltip-placement="right">
+            </i>
+          </div>
+        </div>
+      </div>
+      <div class="configuration-step-content sql-content"
+        id="resources-tab-content"
+        ng-if="SqlPipelineConfigCtrl.activeTab === 'resources'">
+        <div class="step-content-heading">
+          Specify the resources for the following processes of the Spark program
+        </div>
+        <div class="col-xs-4 client">
+          <span class="resource-title">
+            Client
+          </span>
+          <i class="fa fa-info-circle"
+            uib-tooltip="Resources for the client process which launches the Apache Spark Streaming pipeline"
+            tooltip-placement="right">
+          </i>
+          <div class="resource-holder">
+            <div
+              action-creator="SqlPipelineConfigCtrl.actionCreator"
+              store="SqlPipelineConfigCtrl.store"
+              resource-type="clientResource"
+              on-memory-change="SqlPipelineConfigCtrl.onClientMemoryChange"
+              on-core-change="SqlPipelineConfigCtrl.onClientCoreChange"
+              virtual-cores-value="SqlPipelineConfigCtrl.clientResources.virtualCores"
+              memory-mb-value="SqlPipelineConfigCtrl.clientResources.memoryMB"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+        <div class="col-xs-4 driver">
+          <span class="resource-title">
+            Driver
+          </span>
+          <i class="fa fa-info-circle"
+            uib-tooltip="Resources for the Apache Spark driver process which initializes the pipeline"
+            tooltip-placement="right">
+          </i>
+          <div class="resource-holder">
+            <div
+              action-creator="SqlPipelineConfigCtrl.actionCreator"
+              store="SqlPipelineConfigCtrl.store"
+              resource-type="driverResource"
+              on-memory-change="SqlPipelineConfigCtrl.onDriverMemoryChange"
+              on-core-change="SqlPipelineConfigCtrl.onDriverCoreChange"
+              virtual-cores-value="SqlPipelineConfigCtrl.driverResources.virtualCores"
+              memory-mb-value="SqlPipelineConfigCtrl.driverResources.memoryMB"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+        <div class="col-xs-4 executor">
+          <span class="resource-title">
+            Executor
+          </span>
+          <i class="fa fa-info-circle"
+            uib-tooltip="Resources for executor processes which run tasks in an Apache Spark pipeline"
+            tooltip-placement="right">
+          </i>
+          <div class="resource-holder">
+            <div
+              action-creator="SqlPipelineConfigCtrl.actionCreator"
+              store="SqlPipelineConfigCtrl.store"
+              resource-type="executorResource"
+              on-memory-change="SqlPipelineConfigCtrl.onExecutorMemoryChange"
+              on-core-change="SqlPipelineConfigCtrl.onExecutorCoreChange"
+              virtual-cores-value="SqlPipelineConfigCtrl.executorResources.virtualCores"
+              memory-mb-value="SqlPipelineConfigCtrl.executorResources.memoryMB"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="configuration-step-navigation">
+        <div class="apply-action-container"
+          ng-if="SqlPipelineConfigCtrl.isDeployed || SqlPipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-action"
+            ng-if="SqlPipelineConfigCtrl.isDeployed"
+            ng-disabled="SqlPipelineConfigCtrl.buttonsAreDisabled() || SqlPipelineConfigCtrl.startingPipeline || SqlPipelineConfigCtrl.updatingPipeline"
+            ng-click="SqlPipelineConfigCtrl.applyAndRunPipeline()">
+            <span>Save &amp; Run</span>
+            <span ng-if="SqlPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
+          </button>
+          <button
+            class="btn btn-primary apply-action"
+            ng-if="SqlPipelineConfigCtrl.showPreviewConfig"
+            ng-disabled="SqlPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="SqlPipelineConfigCtrl.applyAndRunPipeline()">
+            <span>Save &amp; Run</span>
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="SqlPipelineConfigCtrl.isDeployed && SqlPipelineConfigCtrl.activeTab === 'runtimeArgs'"
+            ng-disabled="SqlPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="SqlPipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="SqlPipelineConfigCtrl.isDeployed && SqlPipelineConfigCtrl.activeTab !== 'runtimeArgs'"
+            ng-disabled="!SqlPipelineConfigCtrl.enablePipelineUpdate || SqlPipelineConfigCtrl.startingPipeline || SqlPipelineConfigCtrl.updatingPipeline || SqlPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="SqlPipelineConfigCtrl.updateAndClose()">
+            <span ng-if="!SqlPipelineConfigCtrl.updatingPipeline">Save</span>
+            <span ng-if="SqlPipelineConfigCtrl.updatingPipeline">Saving</span>
+            <span ng-if="SqlPipelineConfigCtrl.updatingPipeline">
+              <span class="fa fa-spinner fa-spin"></span>
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="SqlPipelineConfigCtrl.showPreviewConfig"
+            ng-disabled="SqlPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="SqlPipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+          <span class="num-runtime-args"
+            ng-if="SqlPipelineConfigCtrl.activeTab === 'runtimeArgs'">
+            {{ SqlPipelineConfigCtrl.runtimeArguments.pairs.length }}
+            <ng-pluralize
+              count="SqlPipelineConfigCtrl.runtimeArguments.pairs.length"
+              when="{'one': 'runtime argument',
+                    'other': 'runtime arguments'}">
+            </ng-pluralize>
+          </span>
+        </div>
+        <div ng-if="!SqlPipelineConfigCtrl.isDeployed && !SqlPipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-close"
+            data-testid="config-apply-close"
+            ng-disabled="SqlPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="SqlPipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

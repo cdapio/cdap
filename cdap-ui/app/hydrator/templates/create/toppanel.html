@@ -20,7 +20,7 @@
         ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()">
 
     <div class="pipeline-type">
-      <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1"
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.includes(HydratorPlusPlusTopPanelCtrl.state.artifact.name)"
             class="icon-ETLBatch"></span>
       <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlRealtime"
             class="icon-ETLRealtime"></span>

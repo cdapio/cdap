@@ -45,7 +45,7 @@ export default class RunConfigs extends Component {
   static propTypes = {
     currentRun: PropTypes.object,
     runs: PropTypes.array,
-    isBatch: PropTypes.bool,
+    pipelineType: PropTypes.string,
     pipelineName: PropTypes.string,
   };
 

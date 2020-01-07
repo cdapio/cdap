@@ -172,6 +172,7 @@ const updatePipeline = () => {
     stopGracefully,
     schedule,
     maxConcurrentRuns,
+    serviceAccountPath,
   } = PipelineConfigurationsStore.getState();
 
   properties = Object.keys(properties).reduce(
@@ -203,15 +204,22 @@ const updatePipeline = () => {
     stopGracefully,
   };
 
+  let sqlOnlyConfig = {
+    schedule,
+    serviceAccountPath,
+  };
+
   if (!disableCheckpoints) {
     realtimeOnlyConfig.checkpointDir = checkpointDir;
   }
 
   let config;
-  if (artifact.name === GLOBALS.etlDataPipeline) {
+  if (GLOBALS.etlBatchPipelines.includes(artifact.name)) {
     config = { ...commonConfig, ...batchOnlyConfig };
-  } else {
+  } else if (artifact.name === GLOBALS.etlDataStreams) {
     config = { ...commonConfig, ...realtimeOnlyConfig };
+  } else if (artifact.name === GLOBALS.eltSqlPipeline) {
+    config = { ...commonConfig, ...sqlOnlyConfig };
   }
 
   let publishObservable = MyPipelineApi.publish(
