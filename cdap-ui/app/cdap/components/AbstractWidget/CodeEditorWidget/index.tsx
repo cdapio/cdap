@@ -45,6 +45,7 @@ const CodeEditorWidgetView: React.FC<ICodeEditorProps> = ({
   mode,
   rows,
   classes,
+  dataCy,
 }) => {
   return (
     <div className={classes.root}>
@@ -55,6 +56,7 @@ const CodeEditorWidgetView: React.FC<ICodeEditorProps> = ({
         onChange={onChange}
         disabled={disabled}
         classes={{ root: classes.editorRoot }}
+        dataCy={dataCy}
       />
     </div>
   );

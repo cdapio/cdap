@@ -26,7 +26,7 @@ interface ITextBoxWidgetProps {
 
 interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {}
 
-const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabled }) => {
+const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabled, dataCy }) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
@@ -42,6 +42,9 @@ const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabl
       onChange={onChangeHandler}
       placeholder={placeholder}
       readOnly={disabled}
+      inputProps={{
+        'data-cy': dataCy,
+      }}
     />
   );
 };

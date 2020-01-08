@@ -49,6 +49,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
   onChange,
   widgetProps,
   disabled,
+  dataCy,
 }: ISelectProps) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const v = event.target.value;
@@ -69,6 +70,9 @@ const CustomSelect: React.FC<ISelectProps> = ({
       onChange={onChangeHandler}
       input={<CustomizedInput />}
       readOnly={disabled}
+      inputProps={{
+        'data-cy': dataCy,
+      }}
     >
       {optionValues.map((opt) => (
         <MenuItem value={opt.value} key={opt.value}>

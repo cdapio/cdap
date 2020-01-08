@@ -34,7 +34,13 @@ interface IMultiSelectWidgetProps {
 
 interface IMultiSelectProps extends IWidgetProps<IMultiSelectWidgetProps> {}
 
-export default function MultiSelect({ value, widgetProps, disabled, onChange }: IMultiSelectProps) {
+export default function MultiSelect({
+  value,
+  widgetProps,
+  disabled,
+  onChange,
+  dataCy,
+}: IMultiSelectProps) {
   const delimiter = objectQuery(widgetProps, 'delimiter') || ',';
   const options = objectQuery(widgetProps, 'options') || [];
   const showSelectionCount = objectQuery(widgetProps, 'showSelectionCount') || false;
@@ -89,6 +95,9 @@ export default function MultiSelect({ value, widgetProps, disabled, onChange }: 
       onChange={onChangeHandler}
       disabled={disabled}
       renderValue={renderValue}
+      inputProps={{
+        'data-cy': dataCy,
+      }}
     >
       {options.map((opt) => (
         <MenuItem value={opt.id} key={opt.id}>

@@ -25,7 +25,8 @@
     <textarea class="form-control"
               data-ng-trim="false"
               ng-model="JsonEditor.internalModel"
-              placeholder="{{placeholder}}">
+              placeholder="{{placeholder}}"
+              data-cy="{{JsonEditor.cy}}">
     </textarea>
 
     <button ng-if="!JsonEditor.disabled"

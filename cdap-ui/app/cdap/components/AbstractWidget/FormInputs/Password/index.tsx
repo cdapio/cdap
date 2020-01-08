@@ -46,7 +46,7 @@ interface IPasswordWidgetProps {
 
 interface IPasswordProps extends IWidgetProps<IPasswordWidgetProps>, WithStyles<typeof styles> {}
 
-function Password({ value, onChange, widgetProps, disabled, classes }: IPasswordProps) {
+function Password({ value, onChange, widgetProps, disabled, classes, dataCy }: IPasswordProps) {
   const [pwdVisibility, setPwdVisibility] = useState<boolean>(false);
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
@@ -80,6 +80,9 @@ function Password({ value, onChange, widgetProps, disabled, classes }: IPassword
           </IconButton>
         </InputAdornment>
       }
+      inputProps={{
+        'data-cy': dataCy,
+      }}
     />
   );
 }

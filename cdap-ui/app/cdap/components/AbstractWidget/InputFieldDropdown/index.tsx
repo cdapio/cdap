@@ -90,6 +90,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
   disabled,
   extraConfig,
   widgetProps,
+  dataCy,
 }) => {
   const inputSchema = objectQuery(extraConfig, 'inputSchema');
 
@@ -127,6 +128,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
         onChange={onChange}
         widgetProps={multiSelectWidgetProps}
         disabled={disabled}
+        dataCy={dataCy}
       />
     );
   }
@@ -134,7 +136,13 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
     options: fieldValues,
   };
   return (
-    <Select value={value} onChange={onChange} widgetProps={selectWidgetProps} disabled={disabled} />
+    <Select
+      value={value}
+      onChange={onChange}
+      widgetProps={selectWidgetProps}
+      disabled={disabled}
+      dataCy={dataCy}
+    />
   );
 };
 

@@ -27,7 +27,13 @@ interface INumberWidgetProps {
 
 interface INumberProps extends IWidgetProps<INumberWidgetProps> {}
 
-const NumberWidget: React.FC<INumberProps> = ({ value, onChange, disabled, widgetProps }) => {
+const NumberWidget: React.FC<INumberProps> = ({
+  value,
+  onChange,
+  disabled,
+  widgetProps,
+  dataCy,
+}) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
@@ -48,6 +54,7 @@ const NumberWidget: React.FC<INumberProps> = ({ value, onChange, disabled, widge
       inputProps={{
         min,
         max,
+        'data-cy': dataCy,
       }}
     />
   );

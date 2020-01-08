@@ -153,6 +153,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
           extraConfig={extraConfig}
           disabled={disabled}
           errors={errors}
+          dataCy={pluginProperty.name}
         />
       </div>
       <If condition={!hideDescription}>

@@ -17,7 +17,8 @@
 <div class="side-panel top text-center">
   <div class="hydrator-metadata"
         ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}"
-        ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()">
+        ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()"
+        data-cy="pipeline-metadata">
 
     <div class="pipeline-type">
       <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.includes(HydratorPlusPlusTopPanelCtrl.state.artifact.name)"
@@ -61,10 +62,23 @@
            ></div>
       <textarea ng-model="HydratorPlusPlusTopPanelCtrl.state.metadata['description']"
                 placeholder="Enter a description for your pipeline."
-                ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"></textarea>
+                ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded"
+                data-cy="pipeline-description-input"></textarea>
       <div class="btn-group pull-left" ng-if="HydratorPlusPlusTopPanelCtrl.metadataExpanded">
-        <button type="button" class="btn btn-primary save-button" ng-click="HydratorPlusPlusTopPanelCtrl.saveMetadata($event)">Ok</button>
-        <button type="button" class="btn btn-secondary cancel-button" ng-click="HydratorPlusPlusTopPanelCtrl.resetMetadata($event)">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary save-button"
+          ng-click="HydratorPlusPlusTopPanelCtrl.saveMetadata($event)"
+          data-cy="pipeline-metadata-ok-btn">
+        Ok
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary cancel-button"
+          ng-click="HydratorPlusPlusTopPanelCtrl.resetMetadata($event)"
+          data-cy="pipeline-metadata-cancel-btn">
+          Cancel
+        </button>
       </div>
     </div>
   </div>
@@ -77,7 +91,8 @@
          tooltip-placement="bottom"
          tooltip-class="toppanel-tooltip"
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
+         data-cy="pipeline-preview-btn">
       <div class="btn-container">
         <span class="fa icon-eye"></span>
         <div class="button-label">Preview</div>
@@ -85,7 +100,8 @@
     </div>
     <div class="btn margin-left"
          ng-click="HydratorPlusPlusTopPanelCtrl.toggleConfig()"
-         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}">
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}"
+         data-cy="pipeline-configure-modeless-btn">
       <div class="btn-container">
         <span class="fa fa-sliders"></span>
         <div class="button-label">Configure</div>
@@ -100,7 +116,8 @@
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         data-cy="pipeline-schedule-modeless-btn">
       <div class="btn-container">
         <span class="fa icon-runtimestarttime"></span>
         <div class="button-label">Schedule</div>
@@ -113,7 +130,8 @@
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         data-cy="pipeline-draft-save-btn">
       <div class="btn-container">
         <span class="fa icon-savedraft"></span>
         <div class="button-label">Save</div>
@@ -134,7 +152,8 @@
       </div>
     </div>
     <div class="btn margin-left"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onImport()">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onImport()"
+         data-cy="pipeline-import-btn">
       <div class="btn-container">
         <span class="fa icon-import"></span>
         <div class="button-label">Import</div>
@@ -147,7 +166,8 @@
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         data-cy="pipeline-export-btn">
       <div class="btn-container">
         <span class="fa icon-export"></span>
         <div class="button-label">Export</div>

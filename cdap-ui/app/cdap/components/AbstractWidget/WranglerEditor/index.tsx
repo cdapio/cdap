@@ -153,6 +153,7 @@ class WranglerEditor extends React.PureComponent<IWranglerEditorProps, IWrangler
               placeholder={placeholder}
               rows={rows}
               disabled={disabled}
+              dataCy={this.props.dataCy}
             />
           </If>
           <Button
