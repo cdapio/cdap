@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@ import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
@@ -63,11 +65,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -282,6 +286,44 @@ public class AppMetadataStore {
 
     return result;
   }
+
+  /**
+   * Filter the given set of programs and return those that exist.
+   *
+   * @param programIds the set of program ids to filter
+   * @return the set of program ids that exist
+   * @throws IOException if failed to read metadata
+   */
+  public Set<ProgramId> filterProgramsExistence(Collection<ProgramId> programIds) throws IOException {
+    Set<ApplicationId> appIds = programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet());
+    List<List<Field<?>>> multiKeys = new ArrayList<>();
+    for (ApplicationId appId: appIds) {
+      multiKeys.add(getApplicationPrimaryKeys(appId.getNamespace(), appId.getApplication(), appId.getVersion()));
+    }
+
+    Set<ProgramId> existingPrograms = new HashSet<>();
+    for (StructuredRow row : getApplicationSpecificationTable().multiRead(multiKeys)) {
+      ApplicationId appId = getApplicationIdFromRow(row);
+      String appMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+      if (appMeta == null) {
+        throw new IOException("Missing application metadata for application " + appId);
+      }
+      try (JsonReader reader = new JsonReader(new StringReader(appMeta))) {
+        reader.beginObject();
+        while (reader.peek() != JsonToken.END_OBJECT) {
+          String name = reader.nextName();
+          if (name.equals("spec")) {
+            existingPrograms.addAll(ApplicationSpecificationAdapter.getProgramIds(appId, reader));
+          } else {
+            reader.skipValue();
+          }
+        }
+        reader.endObject();
+      }
+    }
+    return programIds.stream().filter(existingPrograms::contains).collect(Collectors.toSet());
+  }
+
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
     throws IOException {

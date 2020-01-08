@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -372,21 +372,8 @@ public class DefaultStore implements Store {
   public Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> programIds) {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
-      Map<ApplicationId, ApplicationMeta> metas =
-        appMetadataStore.getApplicationsForAppIds(
-          programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet()));
-
       // Get the active runs for programs that exist
-      Collection<ProgramId> existingProgramIds = new ArrayList<>();
-      for (ProgramId programId : programIds) {
-        // Ignore app or program that doesn't exist
-        ApplicationMeta appMeta = metas.get(programId.getParent());
-        if (appMeta == null || getExistingAppProgramSpecification(appMeta.getSpec(), programId) == null) {
-          continue;
-        }
-        existingProgramIds.add(programId);
-      }
-      return getAppMetadataStore(context).getActiveRuns(existingProgramIds);
+      return getAppMetadataStore(context).getActiveRuns(appMetadataStore.filterProgramsExistence(programIds));
     });
   }
 
@@ -768,31 +755,16 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       List<RunCountResult> result = new ArrayList<>();
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
-      Map<ApplicationId, ApplicationMeta> metas =
-        appMetadataStore.getApplicationsForAppIds(
-          programIds.stream().map(ProgramId::getParent).collect(Collectors.toSet()));
 
-      Set<ProgramId> existingPrograms = new HashSet<>();
+      Map<ProgramId, Long> runCounts = appMetadataStore.getProgramRunCounts(
+        appMetadataStore.filterProgramsExistence(programIds));
+
       for (ProgramId programId : programIds) {
-        ApplicationId appId = programId.getParent();
-        if (metas.containsKey(appId)) {
-          ProgramSpecification programSpec = getExistingAppProgramSpecification(metas.get(appId).getSpec(),
-                                                                                programId);
-          // program not found
-          if (programSpec == null) {
-            result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
-          } else {
-            existingPrograms.add(programId);
-          }
-          // app not found
+        Long count = runCounts.get(programId);
+        if (count == null) {
+          result.add(new RunCountResult(programId, null, new NotFoundException(programId)));
         } else {
-          result.add(new RunCountResult(programId, null, new NotFoundException(appId)));
-        }
-      }
-
-      if (!existingPrograms.isEmpty()) {
-        for (Map.Entry<ProgramId, Long> entry : appMetadataStore.getProgramRunCounts(existingPrograms).entrySet()) {
-          result.add(new RunCountResult(entry.getKey(), entry.getValue(), null));
+          result.add(new RunCountResult(programId, count, null));
         }
       }
       return result;
@@ -806,29 +778,18 @@ public class DefaultStore implements Store {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
-      Collection<ApplicationId> appIds = programs.stream().map(ProgramId::getParent).collect(Collectors.toList());
-      Map<ApplicationId, ApplicationMeta> apps = appMetadataStore.getApplicationsForAppIds(appIds);
+      Set<ProgramId> existingPrograms = appMetadataStore.filterProgramsExistence(programs);
 
-      for (ProgramId program : programs) {
-        ApplicationMeta appMeta = apps.get(program.getParent());
-        if (appMeta == null) {
-          result.add(new ProgramHistory(program, Collections.emptyList(),
-                                        new ApplicationNotFoundException(program.getParent())));
+      for (ProgramId programId : programs) {
+        if (!existingPrograms.contains(programId)) {
+          result.add(new ProgramHistory(programId, Collections.emptyList(), new ProgramNotFoundException(programId)));
           continue;
         }
 
-        ApplicationSpecification appSpec = appMeta.getSpec();
-        ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec, program);
-
-        if (programSpec == null) {
-          result.add(new ProgramHistory(program, Collections.emptyList(), new ProgramNotFoundException(program)));
-          continue;
-        }
-
-        List<RunRecord> runs = appMetadataStore.getRuns(program, status, startTime, endTime, limit, filter).values()
+        List<RunRecord> runs = appMetadataStore.getRuns(programId, status, startTime, endTime, limit, filter).values()
           .stream()
           .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
-        result.add(new ProgramHistory(program, runs, null));
+        result.add(new ProgramHistory(programId, runs, null));
       }
 
       return result;
