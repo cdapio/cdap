@@ -185,7 +185,7 @@ export default class AbstractMultiRowWidget<
 
   public render() {
     return (
-      <MultiRowContainer>
+      <MultiRowContainer dataCy={this.props.dataCy}>
         {this.state.rows.map((id, index) => {
           if (!this.values[id]) {
             return null;

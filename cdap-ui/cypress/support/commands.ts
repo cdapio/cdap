@@ -287,7 +287,6 @@ Cypress.Commands.add('open_condition_and_actions_panel', () => {
   cy.get('[data-cy="plugin-Conditions and Actions-group"]').click();
 });
 
-
 Cypress.Commands.add('add_node_to_canvas', (nodeObj: INodeInfo) => {
   const { nodeName, nodeType } = nodeObj;
   return cy.get(`[data-cy="plugin-${nodeName}-${nodeType}"]`).click();
@@ -307,30 +306,33 @@ Cypress.Commands.add('move_node', (node: INodeIdentifier | string, toX: number, 
     .trigger('mouseup', { force: true });
 });
 
-Cypress.Commands.add('connect_two_nodes', (
-  sourceNode: INodeIdentifier,
-  targetNode: INodeIdentifier,
-  sourceEndpoint: (options: IgetNodeIDOptions, s: string) => string,
-  options: IgetNodeIDOptions = {},
-) => {
-  cy.get_node(sourceNode).then(sourceEl => {
-    cy.get_node(targetNode).then(targetEl => {
-      let sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
-      let targetCoOrdinates = targetEl[0].getBoundingClientRect();
-      // connect from source endpoint to midway between the target node
-      cy.move_node(
-        sourceEndpoint(options, sourceEl[0].id),
-        (targetCoOrdinates.left - sourceCoOrdinates.right + (targetCoOrdinates.width / 2)),
-        (targetCoOrdinates.top - sourceCoOrdinates.bottom + (targetCoOrdinates.height / 2))
-      );
+Cypress.Commands.add(
+  'connect_two_nodes',
+  (
+    sourceNode: INodeIdentifier,
+    targetNode: INodeIdentifier,
+    sourceEndpoint: (options: IgetNodeIDOptions, s: string) => string,
+    options: IgetNodeIDOptions = {}
+  ) => {
+    cy.get_node(sourceNode).then((sourceEl) => {
+      cy.get_node(targetNode).then((targetEl) => {
+        const sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
+        const targetCoOrdinates = targetEl[0].getBoundingClientRect();
+        // connect from source endpoint to midway between the target node
+        cy.move_node(
+          sourceEndpoint(options, sourceEl[0].id),
+          targetCoOrdinates.left - sourceCoOrdinates.right + targetCoOrdinates.width / 2,
+          targetCoOrdinates.top - sourceCoOrdinates.bottom + targetCoOrdinates.height / 2
+        );
+      });
     });
-  });
-});
+  }
+);
 
 Cypress.Commands.add('get_node', (element: INodeIdentifier) => {
   const { nodeName, nodeType, nodeId } = element;
-  let elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
-  return cy.get(elementId).then(e => cy.wrap(e));
+  const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+  return cy.get(elementId).then((e) => cy.wrap(e));
 });
 
 Cypress.Commands.add('create_simple_pipeline', () => {
@@ -366,13 +368,12 @@ Cypress.Commands.add('create_complex_pipeline', () => {
   const transformNode2: INodeInfo = { nodeName: 'JavaScript', nodeType: 'transform' };
   const transformNodeId2: INodeIdentifier = { ...transformNode2, nodeId: '3' };
 
-
   // One joiner
   const joinerNode: INodeInfo = { nodeName: 'Joiner', nodeType: 'batchjoiner' };
   const joinerNodeId: INodeIdentifier = { ...joinerNode, nodeId: '4' };
 
   // One condition node
-  const conditionNode: INodeInfo = { nodeName: 'Conditional', nodeType: 'condition' }
+  const conditionNode: INodeInfo = { nodeName: 'Conditional', nodeType: 'condition' };
   const conditionNodeId: INodeIdentifier = { ...conditionNode, nodeId: '5' };
 
   // Two BigQuery sinks
@@ -410,28 +411,51 @@ Cypress.Commands.add('create_complex_pipeline', () => {
   cy.connect_two_nodes(joinerNodeId, conditionNodeId, getGenericEndpoint);
 
   cy.connect_two_nodes(conditionNodeId, sinkNodeId1, getConditionNodeEndpoint, { condition: true });
-  cy.connect_two_nodes(conditionNodeId, sinkNodeId2, getConditionNodeEndpoint, { condition: false });
+  cy.connect_two_nodes(conditionNodeId, sinkNodeId2, getConditionNodeEndpoint, {
+    condition: false,
+  });
 
   cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
   cy.get('[data-cy="pipeline-fit-to-screen-control"]').click();
-
 });
 
 Cypress.Commands.add('get_pipeline_json', () => {
   cy.get('[data-cy="pipeline-export-btn"]').click();
-  cy.get('textarea[data-cy="pipeline-export-json-container"]').invoke('val').then(va => {
 
-    if (typeof va !== 'string') {
-      throw new Error('Unable to get pipeline config');
-    }
-    let pipelineConfig;
-    try {
-      pipelineConfig = JSON.parse(va);
-    } catch (e) {
-      throw new Error('Invalid pipeline config');
-    }
-    cy.get('[data-cy="export-pipeline-close-modal-btn"]').click();
-    return cy.wrap(pipelineConfig);
+  cy.get('textarea[data-cy="pipeline-export-json-container"]')
+    .invoke('val')
+    .then((va) => {
+      if (typeof va !== 'string') {
+        throw new Error('Unable to get pipeline config');
+      }
+      let pipelineConfig;
+      try {
+        pipelineConfig = JSON.parse(va);
+      } catch (e) {
+        throw new Error('Invalid pipeline config');
+      }
+      cy.get('[data-cy="export-pipeline-close-modal-btn"]').click();
+      return cy.wrap(pipelineConfig);
+    });
+});
+
+Cypress.Commands.add('get_pipeline_stage_json', (stageName: string) => {
+  cy.get_pipeline_json().then((pipelineConfig) => {
+    const stages = pipelineConfig.config.stages;
+    const stageInfo = stages.find((stage) => stage.name === stageName);
+
+    return cy.wrap(stageInfo);
   });
+});
 
+Cypress.Commands.add('open_node_property', (element: INodeIdentifier) => {
+  const { nodeName, nodeType, nodeId } = element;
+  const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+  cy.get(`${elementId} .node .node-configure-btn`)
+    .invoke('show')
+    .click();
+});
+
+Cypress.Commands.add('close_node_property', () => {
+  cy.get('[data-testid="close-config-popover"]').click();
 });
