@@ -62,6 +62,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
   disabled,
   onChange,
   errors,
+  dataCy,
 }) => {
   const options: IOption[] = objectQuery(widgetProps, 'options') || [];
   const layout = objectQuery(widgetProps, 'layout') || 'block';
@@ -85,6 +86,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
         className={classnames({ [classes.inlineRadio]: layout === 'inline' })}
         value={value.toString()}
         onChange={updateModel}
+        name={dataCy}
       >
         {options.map((option: IOption, i) => {
           let errorMsg = null;

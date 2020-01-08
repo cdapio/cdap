@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         placeholder: '=',
-        disabled: '='
+        disabled: '=',
+        cy: '@',
       },
       controllerAs: 'JsonEditor',
       bindToController: true,

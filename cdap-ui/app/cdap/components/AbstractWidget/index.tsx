@@ -47,6 +47,7 @@ export interface IWidgetProps<T = any> {
   };
   disabled?: boolean;
   errors?: IErrorObj[];
+  dataCy?: string;
 }
 
 interface IAbstractWidgetProps extends IWidgetProps {
@@ -70,6 +71,7 @@ export default class AbstractWidget extends React.PureComponent<IAbstractWidgetP
           extraConfig={this.props.extraConfig}
           disabled={this.props.disabled}
           errors={this.props.errors}
+          dataCy={this.props.dataCy}
         />
       </div>
     );

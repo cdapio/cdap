@@ -183,6 +183,9 @@ class MySqlPipelineConfigCtrl {
   }
 
   updatePipelineEditStatus() {
+    const isResourcesEqual = (oldvalue, newvalue) => {
+      return oldvalue.memoryMB === newvalue.memoryMB && oldvalue.virtualCores === newvalue.virtualCores;
+    };
     let oldConfig = this.store.getCloneConfig();
     let updatedConfig = this.getUpdatedPipelineConfig();
     let isResourceModified = !isResourcesEqual(oldConfig.config.resources, updatedConfig.config.resources);

@@ -51,6 +51,7 @@ const ToggleSwitchWidgetView: React.FC<IToggleToggleSwitchProps> = ({
   onChange,
   disabled,
   classes,
+  dataCy,
 }) => {
   const onValue = objectQuery(widgetProps, 'on', 'value') || 'on';
   const offValue = objectQuery(widgetProps, 'off', 'value') || 'off';
@@ -69,6 +70,7 @@ const ToggleSwitchWidgetView: React.FC<IToggleToggleSwitchProps> = ({
         disabled={disabled}
         onLabel={onLabel}
         offLabel={offLabel}
+        dataCy={dataCy}
       />
     </div>
   );

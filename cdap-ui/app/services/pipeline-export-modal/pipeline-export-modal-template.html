@@ -16,7 +16,7 @@
 <div class="modal-header clearfix">
   <h3 class="modal-title pull-left">Export pipeline configuration</h3>
   <div class="btn-group pull-right">
-    <a class="btn" ng-click="$close()">
+    <a class="btn" ng-click="$close()" data-cy="export-pipeline-close-modal-btn">
       <span class="fa fa-remove"></span>
       <span class="sr-only"> Close </span>
     </a>
@@ -24,7 +24,7 @@
 </div>
 <div class="modal-body config-modal">
   <fieldset disabled="true" class="view-plugin-json">
-    <my-json-textbox ng-model="config" disabled="true"></my-json-textbox>
+    <my-json-textbox ng-model="config" disabled="true" data-cy="pipeline-export-json-container"></my-json-textbox>
   </fieldset>
   <br/>
 </div>

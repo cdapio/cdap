@@ -44,6 +44,7 @@ const JsonEditorWidgetView: React.FC<IJsonEditorProps> = ({
   disabled,
   rows,
   classes,
+  dataCy,
 }) => {
   return (
     <div className={classes.root}>
@@ -54,6 +55,7 @@ const JsonEditorWidgetView: React.FC<IJsonEditorProps> = ({
         onChange={onChange}
         disabled={disabled}
         classes={{ root: classes.editorRoot }}
+        dataCy={dataCy}
       />
     </div>
   );
