@@ -17,6 +17,7 @@
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
 import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
+import { getGenericEndpoint, getConditionNodeEndpoint } from '../helpers';
 /**
  * Uploads a pipeline json from fixtures to input file element.
  *
@@ -330,4 +331,107 @@ Cypress.Commands.add('get_node', (element: INodeIdentifier) => {
   const { nodeName, nodeType, nodeId } = element;
   let elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
   return cy.get(elementId).then(e => cy.wrap(e));
+});
+
+Cypress.Commands.add('create_simple_pipeline', () => {
+  const sourceNode: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
+  const sourceNodeId: INodeIdentifier = { ...sourceNode, nodeId: '0' };
+  const transformNode: INodeInfo = { nodeName: 'Wrangler', nodeType: 'transform' };
+  const transformNodeId: INodeIdentifier = { ...transformNode, nodeId: '1' };
+  const sinkNode: INodeInfo = { nodeName: 'BigQueryMultiTable', nodeType: 'batchsink' };
+  const sinkNodeId: INodeIdentifier = { ...sinkNode, nodeId: '2' };
+
+  cy.add_node_to_canvas(sourceNode);
+
+  cy.open_transform_panel();
+  cy.add_node_to_canvas(transformNode);
+
+  cy.open_sink_panel();
+  cy.add_node_to_canvas(sinkNode);
+
+  cy.connect_two_nodes(sourceNodeId, transformNodeId, getGenericEndpoint);
+  cy.connect_two_nodes(transformNodeId, sinkNodeId, getGenericEndpoint);
+});
+
+Cypress.Commands.add('create_complex_pipeline', () => {
+  // Two BigQuery sources
+  const sourceNode1: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
+  const sourceNodeId1: INodeIdentifier = { ...sourceNode1, nodeId: '0' };
+  const sourceNode2: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
+  const sourceNodeId2: INodeIdentifier = { ...sourceNode2, nodeId: '1' };
+
+  // Two javascript transforms
+  const transformNode1: INodeInfo = { nodeName: 'JavaScript', nodeType: 'transform' };
+  const transformNodeId1: INodeIdentifier = { ...transformNode1, nodeId: '2' };
+  const transformNode2: INodeInfo = { nodeName: 'JavaScript', nodeType: 'transform' };
+  const transformNodeId2: INodeIdentifier = { ...transformNode2, nodeId: '3' };
+
+
+  // One joiner
+  const joinerNode: INodeInfo = { nodeName: 'Joiner', nodeType: 'batchjoiner' };
+  const joinerNodeId: INodeIdentifier = { ...joinerNode, nodeId: '4' };
+
+  // One condition node
+  const conditionNode: INodeInfo = { nodeName: 'Conditional', nodeType: 'condition' }
+  const conditionNodeId: INodeIdentifier = { ...conditionNode, nodeId: '5' };
+
+  // Two BigQuery sinks
+  const sinkNode1: INodeInfo = { nodeName: 'BigQueryMultiTable', nodeType: 'batchsink' };
+  const sinkNodeId1: INodeIdentifier = { ...sinkNode1, nodeId: '6' };
+  const sinkNode2: INodeInfo = { nodeName: 'BigQueryMultiTable', nodeType: 'batchsink' };
+  const sinkNodeId2: INodeIdentifier = { ...sinkNode2, nodeId: '7' };
+
+  cy.add_node_to_canvas(sourceNode1);
+  cy.add_node_to_canvas(sourceNode2);
+
+  cy.open_transform_panel();
+  cy.add_node_to_canvas(transformNode1);
+  cy.add_node_to_canvas(transformNode2);
+
+  cy.open_analytics_panel();
+  cy.add_node_to_canvas(joinerNode);
+
+  cy.open_condition_and_actions_panel();
+  cy.add_node_to_canvas(conditionNode);
+
+  cy.open_sink_panel();
+  cy.add_node_to_canvas(sinkNode1);
+  cy.add_node_to_canvas(sinkNode2);
+
+  cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
+  cy.get('[data-cy="pipeline-fit-to-screen-control"]').click();
+
+  cy.connect_two_nodes(sourceNodeId1, transformNodeId1, getGenericEndpoint);
+  cy.connect_two_nodes(sourceNodeId2, transformNodeId2, getGenericEndpoint);
+
+  cy.connect_two_nodes(transformNodeId1, joinerNodeId, getGenericEndpoint);
+  cy.connect_two_nodes(transformNodeId2, joinerNodeId, getGenericEndpoint);
+
+  cy.connect_two_nodes(joinerNodeId, conditionNodeId, getGenericEndpoint);
+
+  cy.connect_two_nodes(conditionNodeId, sinkNodeId1, getConditionNodeEndpoint, { condition: true });
+  cy.connect_two_nodes(conditionNodeId, sinkNodeId2, getConditionNodeEndpoint, { condition: false });
+
+  cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
+  cy.get('[data-cy="pipeline-fit-to-screen-control"]').click();
+
+});
+
+Cypress.Commands.add('get_pipeline_json', () => {
+  cy.get('[data-cy="pipeline-export-btn"]').click();
+  cy.get('textarea[data-cy="pipeline-export-json-container"]').invoke('val').then(va => {
+
+    if (typeof va !== 'string') {
+      throw new Error('Unable to get pipeline config');
+    }
+    let pipelineConfig;
+    try {
+      pipelineConfig = JSON.parse(va);
+    } catch (e) {
+      throw new Error('Invalid pipeline config');
+    }
+    cy.get('[data-cy="export-pipeline-close-modal-btn"]').click();
+    return cy.wrap(pipelineConfig);
+  });
+
 });

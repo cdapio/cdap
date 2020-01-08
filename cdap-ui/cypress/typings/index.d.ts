@@ -64,6 +64,26 @@ declare global {
        * [data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]
        * */
       move_node: (nodeObj: INodeIdentifier | string, toX: number, toY: number) => Chainable<JQuery<any>>;
+
+      /**
+       * Creates a simple BQ source -> Wrangler Transform -> BQ Sink pipeline.
+       *
+       * This is a dumb command to be reused whenever we want to create a basic pipeline
+       * to test pipeline canvas actions.
+       */
+      create_simple_pipeline: () => Chainable<any>;
+
+      /**
+       * Create a relatively complex pipeline with joiner and condition nodes.
+       *
+       * This is not a logically valid pipeline. This is purely to test pipeline actions
+       */
+      create_complex_pipeline: () => Chainable<any>;
+
+      /**
+       * Get pipeline config.
+       */
+      get_pipeline_json: () => Chainable<any>;
       /**
        * Uploads a pipeline json from fixtures to input file element.
        *
