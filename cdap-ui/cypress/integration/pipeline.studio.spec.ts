@@ -18,11 +18,17 @@ import {
   loginIfRequired,
   getGenericEndpoint,
   getConditionNodeEndpoint,
-  getArtifactsPoll
+  getArtifactsPoll,
 } from '../helpers';
-import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH, DEFAULT_BIGQUERY_DATASET, DEFAULT_BIGQUERY_TABLE } from '../support/constants';
+import {
+  DEFAULT_GCP_PROJECTID,
+  DEFAULT_GCP_SERVICEACCOUNT_PATH,
+  DEFAULT_BIGQUERY_DATASET,
+  DEFAULT_BIGQUERY_TABLE,
+} from '../support/constants';
 import { INodeInfo, INodeIdentifier } from '../typings';
 let headers = {};
+const TEST_PIPELINE_NAME = 'pipeline_name';
 describe('Pipeline Studio', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
@@ -40,6 +46,11 @@ describe('Pipeline Studio', () => {
 
   beforeEach(() => {
     getArtifactsPoll(headers);
+  });
+
+  after(() => {
+    // Delete the pipeline to clean up
+    cy.cleanup_pipelines(headers, TEST_PIPELINE_NAME);
   });
 
   it('Should renders pipeline studio correctly', () => {
@@ -86,9 +97,7 @@ describe('Pipeline Studio', () => {
   });
 
   it('Should configure plugin properties', () => {
-
     cy.visit('/pipelines/ns/default/studio');
-    const TEST_PIPELINE_NAME = 'pipeline_name';
     const sourceNode1: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
     const sourceNodeId1: INodeIdentifier = { ...sourceNode1, nodeId: '0' };
     const sourceProperties = {
@@ -109,7 +118,7 @@ describe('Pipeline Studio', () => {
       truncateTable: 'true',
       project: DEFAULT_GCP_PROJECTID,
       serviceFilePath: DEFAULT_GCP_SERVICEACCOUNT_PATH,
-    }
+    };
     cy.add_node_to_canvas(sourceNode1);
 
     cy.open_sink_panel();
@@ -119,28 +128,41 @@ describe('Pipeline Studio', () => {
 
     // Open Bigquery source properties modal
     cy.get('[data-cy="plugin-node-BigQueryTable-batchsource-0"] .node .node-configure-btn')
-      .invoke('show').click();
+      .invoke('show')
+      .click();
 
     // Configure properties for Bigquery source
     cy.get('input[data-cy="referenceName"]').type(sourceProperties.referenceName);
-    cy.get('input[data-cy="project"]').clear().type(sourceProperties.project);
+    cy.get('input[data-cy="project"]')
+      .clear()
+      .type(sourceProperties.project);
     cy.get('input[data-cy="datasetProject"]').type(sourceProperties.datasetProject);
     cy.get('input[data-cy="dataset"]').type(sourceProperties.dataset);
     cy.get('input[data-cy="table"]').type(sourceProperties.table);
-    cy.get('input[data-cy="serviceFilePath"]').clear().type(sourceProperties.serviceFilePath);
+    cy.get('input[data-cy="serviceFilePath"]')
+      .clear()
+      .type(sourceProperties.serviceFilePath);
     // close the modal
     cy.get('[data-testid="close-config-popover"]').click();
 
     // Open Bigquery sink properties modal
-    cy.get('[data-cy="plugin-node-BigQueryTable-batchsink-1"] .node .node-configure-btn').invoke('show').click();
+    cy.get('[data-cy="plugin-node-BigQueryTable-batchsink-1"] .node .node-configure-btn')
+      .invoke('show')
+      .click();
 
     // Configure properties for Bigquery sink
     cy.get('input[data-cy="referenceName"]').type(sinkProperties.referenceName);
     cy.get('input[data-cy="dataset"]').type(sinkProperties.dataset);
     cy.get('[data-cy="switch-truncateTable"]').click();
-    cy.get('input[data-cy="project"]').clear().type(sinkProperties.project)
-    cy.get('input[data-cy="serviceFilePath"]').clear().type(sinkProperties.serviceFilePath);
-    cy.get('input[data-cy="table"]').clear().type(sinkProperties.table);
+    cy.get('input[data-cy="project"]')
+      .clear()
+      .type(sinkProperties.project);
+    cy.get('input[data-cy="serviceFilePath"]')
+      .clear()
+      .type(sinkProperties.serviceFilePath);
+    cy.get('input[data-cy="table"]')
+      .clear()
+      .type(sinkProperties.table);
     // close the modal
     cy.get('[data-testid="close-config-popover"]').click();
 
@@ -151,36 +173,42 @@ describe('Pipeline Studio', () => {
     cy.get('[data-cy="pipeline-metadata-ok-btn"]').click();
     // Export the pipeline to validate if configure plugins reflect correctly.
     cy.get('[data-cy="pipeline-export-btn"]').click();
-    cy.get('textarea[data-cy="pipeline-export-json-container"]').invoke('val').then(va => {
-      if (typeof va !== 'string') {
-        throw new Error('Unable to get pipeline config');
-      }
-      let pipelineConfig;
-      try {
-        pipelineConfig = JSON.parse(va);
-      } catch (e) {
-        throw new Error('Invalid pipeline config');
-      }
-      const stages = pipelineConfig.config.stages;
-      const sourcePropertiesFromNode = stages.find(stage => stage.plugin.name === 'BigQueryTable' && stage.plugin.type === 'batchsource').plugin.properties;
-      const sinkPropertiesFromNode = stages.find(stage => stage.plugin.name === 'BigQueryTable' && stage.plugin.type === 'batchsink').plugin.properties;
-      expect(sourcePropertiesFromNode.referenceName).equals(sourceProperties.referenceName);
-      expect(sourceProperties.project).equals(sourceProperties.project);
-      expect(sourceProperties.datasetProject).equals(sourceProperties.datasetProject);
-      expect(sourceProperties.dataset).equals(sourceProperties.dataset);
-      expect(sourceProperties.table).equals(sourceProperties.table);
-      expect(sourceProperties.serviceFilePath).equals(sourceProperties.serviceFilePath);
+    cy.get('textarea[data-cy="pipeline-export-json-container"]')
+      .invoke('val')
+      .then((va) => {
+        if (typeof va !== 'string') {
+          throw new Error('Unable to get pipeline config');
+        }
+        let pipelineConfig;
+        try {
+          pipelineConfig = JSON.parse(va);
+        } catch (e) {
+          throw new Error('Invalid pipeline config');
+        }
+        const stages = pipelineConfig.config.stages;
+        const sourcePropertiesFromNode = stages.find(
+          (stage) => stage.plugin.name === 'BigQueryTable' && stage.plugin.type === 'batchsource'
+        ).plugin.properties;
+        const sinkPropertiesFromNode = stages.find(
+          (stage) => stage.plugin.name === 'BigQueryTable' && stage.plugin.type === 'batchsink'
+        ).plugin.properties;
+        expect(sourcePropertiesFromNode.referenceName).equals(sourceProperties.referenceName);
+        expect(sourceProperties.project).equals(sourceProperties.project);
+        expect(sourceProperties.datasetProject).equals(sourceProperties.datasetProject);
+        expect(sourceProperties.dataset).equals(sourceProperties.dataset);
+        expect(sourceProperties.table).equals(sourceProperties.table);
+        expect(sourceProperties.serviceFilePath).equals(sourceProperties.serviceFilePath);
 
-      expect(sinkPropertiesFromNode.referenceName).equal(sinkProperties.referenceName);
-      expect(sinkPropertiesFromNode.table).equal(sinkProperties.table);
-      expect(sinkPropertiesFromNode.dataset).equal(sinkProperties.dataset);
-      expect(sinkPropertiesFromNode.truncateTable).equal(sinkProperties.truncateTable);
-      expect(sinkPropertiesFromNode.project).equal(sinkProperties.project);
-      expect(sinkPropertiesFromNode.serviceFilePath).equal(sinkProperties.serviceFilePath);
+        expect(sinkPropertiesFromNode.referenceName).equal(sinkProperties.referenceName);
+        expect(sinkPropertiesFromNode.table).equal(sinkProperties.table);
+        expect(sinkPropertiesFromNode.dataset).equal(sinkProperties.dataset);
+        expect(sinkPropertiesFromNode.truncateTable).equal(sinkProperties.truncateTable);
+        expect(sinkPropertiesFromNode.project).equal(sinkProperties.project);
+        expect(sinkPropertiesFromNode.serviceFilePath).equal(sinkProperties.serviceFilePath);
 
-      cy.get('[data-cy="export-pipeline-close-modal-btn"]').click();
-      cy.get('[data-testid="deploy-pipeline"]').click();
-      cy.url({ timeout: 60000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
-    });
+        cy.get('[data-cy="export-pipeline-close-modal-btn"]').click();
+        cy.get('[data-testid="deploy-pipeline"]').click();
+        cy.url({ timeout: 60000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
+      });
   });
 });

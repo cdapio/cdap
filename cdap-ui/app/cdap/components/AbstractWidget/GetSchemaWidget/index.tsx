@@ -84,6 +84,7 @@ const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes, 
         disabled={typeof validateProperties !== 'function'}
         onClick={onClickHander}
         className={classes.button}
+        data-cy="get-schema-btn"
       >
         {loading ? loadingIcon : 'Get Schema'}
       </Button>

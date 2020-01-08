@@ -178,9 +178,14 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
         className={classes.schemaContainer}
         expanded={this.props.stage.expanded}
         onChange={this.toggleExpansionPanel}
+        data-cy={`${this.props.stage.name}-stage-expansion-panel`}
       >
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" className={classes.stageName}>
+          <Typography
+            variant="h6"
+            className={classes.stageName}
+            data-cy={`${this.props.stage.name}-input-stage`}
+          >
             {this.props.stage.name}
           </Typography>
           <If condition={Boolean(this.props.errorCount)}>

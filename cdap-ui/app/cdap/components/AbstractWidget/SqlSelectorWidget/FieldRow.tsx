@@ -107,6 +107,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
               className={classnames(classes.fieldName, 'truncate')}
               variant="body1"
               display="inline"
+              data-cy={`${field.name}-field-selector-name`}
             >
               {field.name}
             </Typography>
@@ -127,6 +128,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
               value={field.alias}
               onChange={aliasChange}
               disabled={!field.selected || disabled}
+              data-cy={`${field.name}-field-selector-alias-textbox`}
             />
           </div>
           <If condition={validationError !== ''}>
