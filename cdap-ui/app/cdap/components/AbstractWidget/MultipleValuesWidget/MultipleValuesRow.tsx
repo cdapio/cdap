@@ -87,6 +87,7 @@ class MultipleValuesRow extends AbstractRow<IMultipleValuesRowProps, {}> {
           return (
             <Input
               key={i}
+              data-cy={`multiple-values-input-${i}`}
               classes={{ disabled: this.props.classes.disabled }}
               placeholder={this.props.placeholders[i]}
               onChange={this.handleChange.bind(this, i)}

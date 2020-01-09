@@ -134,6 +134,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
       })}
       onFocus={onFocus}
       onBlur={onBlur}
+      data-cy="widget-wrapper-container"
     >
       <If condition={!hideWrapper || hideLabel}>
         <div className={`widget-wrapper-label ${classes.label}`}>

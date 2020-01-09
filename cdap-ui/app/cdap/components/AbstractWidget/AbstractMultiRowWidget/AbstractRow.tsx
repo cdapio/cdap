@@ -115,7 +115,9 @@ export default class AbstractRow<
           </If>
         </div>
         <If condition={errorMsg}>
-          <div className={this.props.classes.errorText}>{errorMsg}</div>
+          <div className={this.props.classes.errorText} data-cy={`error-text-${index}`}>
+            {errorMsg}
+          </div>
         </If>
       </React.Fragment>
     );
