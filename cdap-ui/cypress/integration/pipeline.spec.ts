@@ -132,6 +132,24 @@ describe('Creating a pipeline', () => {
 
     cy.get('[data-testid=config-apply-close]').click();
 
+    // Export pipeline JSON and check email alert properties
+    cy.get_pipeline_json().then((pipelineConfig) => {
+      const config = pipelineConfig.config;
+
+      expect(config).to.haveOwnProperty('postActions');
+      expect(config.postActions.length).eq(1);
+
+      const alert = config.postActions[0];
+      expect(alert).to.haveOwnProperty('plugin');
+      expect(alert.plugin.name).eq('Email');
+      expect(alert.plugin.type).eq('postaction');
+      expect(alert.plugin).to.haveOwnProperty('properties');
+
+      const pluginProps = alert.plugin.properties;
+      expect(pluginProps.sender).eq(TEST_SENDER);
+      expect(pluginProps.message).eq('${}');
+    });
+
     // Name pipeline then deploy pipeline
     cy.get('.pipeline-name').click();
     cy.get('#pipeline-name-input')
