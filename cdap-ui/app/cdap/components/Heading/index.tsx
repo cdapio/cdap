@@ -29,7 +29,7 @@ export interface IHeadingProps {
   className?: string;
   id?: string;
 }
-const Heading: React.SFC<IHeadingProps> = ({ type, label, className, id }) => {
+const Heading: React.SFC<IHeadingProps> = ({ type, label, className, id, ...restProps }) => {
   let HtmlHeading: string = '';
   switch (type) {
     case HeadingTypes.h2:
@@ -56,7 +56,11 @@ const Heading: React.SFC<IHeadingProps> = ({ type, label, className, id }) => {
   if (id) {
     props.id = id;
   }
-  return <HtmlHeading {...props}>{label}</HtmlHeading>;
+  return (
+    <HtmlHeading {...props} {...restProps}>
+      {label}
+    </HtmlHeading>
+  );
 };
 
 export default Heading;

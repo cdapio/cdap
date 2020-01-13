@@ -76,6 +76,7 @@ class FeatureHeading extends React.PureComponent<WithStyles, IFeatureHeadingStat
   public render() {
     return (
       <Heading
+        data-cy="feature-heading"
         type={HeadingTypes.h4}
         label={this.state.featureName}
         className={this.props.classes.featureHeading}
