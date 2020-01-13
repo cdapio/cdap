@@ -593,21 +593,6 @@ public abstract class DefaultStoreTest {
   }
 
   @Test
-  public void testRemoveAllApplications() {
-    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
-    NamespaceId namespaceId = new NamespaceId("account1");
-    ApplicationId appId = namespaceId.app(spec.getName());
-    store.addApplication(appId, spec);
-
-    Assert.assertNotNull(store.getApplication(appId));
-
-    // removing all applications
-    store.removeAllApplications(namespaceId);
-
-    Assert.assertNull(store.getApplication(appId));
-  }
-
-  @Test
   public void testRemoveAll() {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");

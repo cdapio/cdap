@@ -174,21 +174,6 @@ public interface Store {
                                            long startTime, long endTime, int limit);
 
   /**
-   * Fetches run records for particular program.
-   * Returned ProgramRunRecords are sorted by their startTime.
-   *
-   * @param id        id of the program
-   * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime in seconds
-   * @param endTime   fetch run history that has started before the endTime in seconds
-   * @param limit     max number of entries to fetch for this history call
-   * @param filter    predicate to be passed to filter the records
-   * @return          map of logged runs
-   */
-  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime,
-                                           int limit, Predicate<RunRecordMeta> filter);
-
-  /**
    * Fetches the run records for the particular status. Same as calling
    * {@link #getRuns(ProgramRunStatus, long, long, int, Predicate)
    * getRuns(status, 0, Long.MAX_VALUE, Integer.MAX_VALUE, filter)}
@@ -381,13 +366,6 @@ public interface Store {
   void removeApplication(ApplicationId id);
 
   /**
-   * Removes all applications (with programs) associated with the given namespace.
-   *
-   * @param id namespace id whose applications to remove
-   */
-  void removeAllApplications(NamespaceId id);
-
-  /**
    * Remove all metadata associated with the given namespace.
    *
    * @param id namespace id whose items to remove
@@ -502,10 +480,9 @@ public interface Store {
    * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
-   * @param limit     max number of runs to fetch for each program
-   * @param filter    predicate to be passed to filter the records
+   * @param limitPerProgram     max number of runs to fetch for each program
    * @return          runs for each program
    */
-  List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime, long endTime,
-                               int limit, @Nullable Predicate<RunRecordMeta> filter);
+  List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
+                               long startTime, long endTime, int limitPerProgram);
 }

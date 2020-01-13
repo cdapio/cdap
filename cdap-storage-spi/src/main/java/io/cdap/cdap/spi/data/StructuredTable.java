@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.data;
 
 import io.cdap.cdap.api.annotation.Beta;
-import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Field;
@@ -27,7 +26,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -123,10 +121,7 @@ public interface StructuredTable extends Closeable {
 
   /**
    * Read a set of rows from the table matching the set of key ranges.
-   * The sorting order of the returned rows will be implementation dependent. The default implementation is to
-   * call {@link #scan(Range, int)} on each of the given key ranges one by one. This means if the given set of ranges
-   * have overlap, duplicate rows might be returned.
-   * Implementations of this interface can provide an optimized version and duplication.
+   * The rows returned will be sorted on the primary key order.
    *
    * @param keyRanges collection of key ranges for the scan
    * @param limit maximum number of rows to return
@@ -135,54 +130,8 @@ public interface StructuredTable extends Closeable {
    *                               do not match
    * @throws IOException if there is an error scanning the table
    */
-  default CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
-                                                     int limit) throws InvalidFieldException, IOException {
-    // Use scan if there is any range that scans all
-    for (Range range : keyRanges) {
-      if (range.getBegin().isEmpty() && range.getEnd().isEmpty()) {
-        return scan(Range.all(), limit);
-      }
-    }
-
-    Iterator<Range> rangeIterator = keyRanges.iterator();
-    return new AbstractCloseableIterator<StructuredRow>() {
-
-      CloseableIterator<StructuredRow> iterator = CloseableIterator.empty();
-      int currentLimit = limit;
-
-      @Override
-      protected StructuredRow computeNext() {
-        if (currentLimit == 0) {
-          return endOfData();
-        }
-
-        while (!iterator.hasNext()) {
-          if (!rangeIterator.hasNext()) {
-            // No need to close the iterator. By contract, the close() method on this iterator
-            // should get called by the caller when the iteration ended.
-            return endOfData();
-          }
-          iterator.close();
-          try {
-            iterator = scan(rangeIterator.next(), currentLimit);
-          } catch (IOException | InvalidFieldException e) {
-            // The default implementation of this method can't be better than wrapping it as RuntimeException
-            // as it can't do pre-validation of the provided ranges, unless it scans all results and keep them in
-            // memory, which is a poor choice of default implementation.
-            throw new RuntimeException(e);
-          }
-        }
-
-        currentLimit--;
-        return iterator.next();
-      }
-
-      @Override
-      public void close() {
-        iterator.close();
-      }
-    };
-  }
+  CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
+                                             int limit) throws InvalidFieldException, IOException;
 
   /**
    * Atomically compare and swap the value of a column in a row if the expected value matches.

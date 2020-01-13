@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * This is a test base for {@link StructuredTable}.
@@ -243,6 +245,47 @@ public abstract class StructuredTableTest {
     int limit = 25;
     result = runMultiScan(ranges, limit, KEY, KEY2);
     Assert.assertEquals(expected.subList(0, limit), result);
+  }
+
+  @Test
+  public void testSingletonMultiScan() throws Exception {
+    int max = 100;
+
+    // Write rows with duplicate prefixes
+    for (int i = 0; i < max; i++) {
+      List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i / 10),
+                                            Fields.longField(KEY2, (long) i),
+                                            Fields.stringField(STRING_COL, VAL + i),
+                                            Fields.doubleField(DOUBLE_COL, (double) i),
+                                            Fields.floatField(FLOAT_COL, (float) i),
+                                            Fields.bytesField(BYTES_COL, Bytes.toBytes("bytes-" + i)));
+      getTransactionRunner().run(context -> {
+        StructuredTable table = context.getTable(SIMPLE_TABLE);
+        table.upsert(fields);
+      });
+    }
+
+    List<List<? extends Field<?>>> expected = IntStream.concat(IntStream.range(10, 20), IntStream.range(50, 60))
+      .mapToObj(i -> Arrays.asList(Fields.intField(KEY, i / 10), Fields.longField(KEY2, (long) i)))
+      .collect(Collectors.toList());
+
+    // Multiscan with singleton ranges only
+    List<Range> ranges = Arrays.asList(
+      Range.singleton(Collections.singleton(Fields.intField(KEY, 5))),
+      Range.singleton(Collections.singleton(Fields.intField(KEY, 1)))
+    );
+
+    List<Collection<Field<?>>> result = runMultiScan(ranges, Integer.MAX_VALUE, KEY, KEY2);
+    Assert.assertEquals(expected, result);
+
+    // Multiscan with a mix of singleton and range
+    ranges = Arrays.asList(
+      Range.singleton(Collections.singleton(Fields.intField(KEY, 5))),
+      Range.create(Collections.singleton(Fields.intField(KEY, 1)), Range.Bound.INCLUSIVE,
+                   Collections.singleton(Fields.intField(KEY, 2)), Range.Bound.EXCLUSIVE)
+    );
+    result = runMultiScan(ranges, Integer.MAX_VALUE, KEY, KEY2);
+    Assert.assertEquals(expected, result);
   }
 
   private List<Collection<Field<?>>> runMultiScan(Collection<Range> ranges, int limit,

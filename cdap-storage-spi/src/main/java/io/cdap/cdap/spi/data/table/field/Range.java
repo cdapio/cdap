@@ -21,6 +21,7 @@ import io.cdap.cdap.spi.data.InvalidFieldException;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Represents a range of fields.
@@ -117,6 +118,13 @@ public final class Range {
   }
 
   /**
+   * Returns {@code true} if the range is a single value range.
+   */
+  public boolean isSingleton() {
+    return !begin.isEmpty() && begin.equals(end) && beginBound == Bound.INCLUSIVE && endBound == Bound.INCLUSIVE;
+  }
+
+  /**
    * @return the beginning of the range, if empty, it will be reading from the start
    */
   public Collection<Field<?>> getBegin() {
@@ -142,6 +150,24 @@ public final class Range {
    */
   public Bound getEndBound() {
     return endBound;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (other == null || getClass() != other.getClass()) {
+      return false;
+    }
+    Range range = (Range) other;
+    return Objects.equals(begin, range.begin) && beginBound == range.beginBound
+      && Objects.equals(end, range.end) && endBound == range.endBound;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(begin, beginBound, end, endBound);
   }
 
   @Override

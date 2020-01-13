@@ -544,7 +544,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       preferencesService.deleteProperties(NamespaceId.DEFAULT);
       preferencesService.deleteProperties();
       preferencesService.deleteProperties(appId);
-      store.removeAllApplications(NamespaceId.DEFAULT);
+      store.removeAll(NamespaceId.DEFAULT);
       scheduleService.delete(scheduleId);
       profileService.disableProfile(myProfile);
       profileService.disableProfile(myProfile2);
@@ -606,7 +606,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     } finally {
       // stop and clean up the store
       preferencesService.deleteProperties(NamespaceId.DEFAULT);
-      store.removeAllApplications(NamespaceId.DEFAULT);
+      store.removeAll(NamespaceId.DEFAULT);
       profileService.disableProfile(myProfile);
       profileService.deleteProfile(myProfile);
       mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()), MutationOptions.DEFAULT);
