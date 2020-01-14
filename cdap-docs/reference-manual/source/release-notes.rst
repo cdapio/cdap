@@ -30,6 +30,141 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 6.1.1 <http://docs.cask.co/cdap/6.1.1/index.html>`__
+=============================================================
+
+Summary
+-------
+
+This release introduces a number of new features, improvements, and bug fixes to CDAP. Some of the main highlights of the release are:
+
+1. **Pipeline improvements**
+    - Validation checks for plugins for early error detection and prevention
+    - New widgets for better pipeline configurability
+    - Wrangler ADLS connection
+
+2. **Field Level Lineage**
+    - New, intuitive UI for field level lineage
+    - Field level lineage support for more plugins
+
+3. **Platform enhancements**
+    - Performance mprovements across the platform
+    - Migration of more UI components from Angular to React
+
+New Features
+------------
+
+- :cask-issue:`CDAP-16102` - Added field level lineage support for Error Transform
+
+- :cask-issue:`CDAP-16037` - Added region support for google cloud plugins
+
+- :cask-issue:`CDAP-15795` - New UI landing page
+
+- :cask-issue:`CDAP-15789` - Allow plugin developers to define filters to show/hide properties based on custom plugin configuration logic.
+
+- :cask-issue:`CDAP-15787` - Introduced new FailureCollector apis for better user experience via contextual error messages
+
+- :cask-issue:`CDAP-15767` - Added support for reading INT96 types in parquet file sources.
+
+- :cask-issue:`CDAP-15728` - New ConfigurationGroup component in UI
+
+- :cask-issue:`CDAP-15723` - Added support for pipeline to run in shared vpc network
+
+- :cask-issue:`CDAP-15619` - Stage level validation for plugin properties.
+
+- :cask-issue:`CDAP-15482` - Added a new REST endpoint that retrieves back all field lineage information about a dataset.
+
+- :cask-issue:`CDAP-15342` - Added support for bytes types in the bigquery sink
+
+
+Deprecation
+-----------
+
+- :cask-issue:`CDAP-15917` - Removed the outdated Validator plugin
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-16193` - Fix the preview run state after JVM restarted
+
+- :cask-issue:`CDAP-16146` - content type detection now uses case insensitive file extensions
+
+- :cask-issue:`CDAP-16137` - Fixed bug that prevents users from navigating to pipeline studio (indicating system artifacts being loaded for a long time).
+
+- :cask-issue:`CDAP-15973` - Fixed the dataproc provisioner to log the error message if the dataproc creation operation fails.
+
+- :cask-issue:`CDAP-15899` - Fixed a bug that caused pipeline startup to take longer than needed for cloud runs
+
+- :cask-issue:`CDAP-15879` - Fixed regex usage in GCS and S3 source plugins.
+
+- :cask-issue:`CDAP-15878` - Fixed a bug with the Datastore source that was overly restrictive when validating the user provided schema
+
+- :cask-issue:`CDAP-15809` - Fixing a bug which can cause a thread spinning in an infinite while loop due to multi thread consumers on a queue that allows a single consumer.
+
+- :cask-issue:`CDAP-15770` - Fixed a bug that caused pipeline failures when writing nullable byte fields as json.
+
+- :cask-issue:`CDAP-15757` - Fixed a bug that caused MapReduce and Spark logs to be missing for remote pipeline runs
+
+- :cask-issue:`CDAP-15747` - Fixed a race condition that could cause a program to get stuck in the pending state when stopped in the pending state
+
+- :cask-issue:`CDAP-15742` - Added some safeguards to prevent cloud pipeline runs from getting stuck in certain edge cases
+
+- :cask-issue:`CDAP-15726` - Fixed a bug where secure macros were not evaluated in preview mode
+
+- :cask-issue:`CDAP-15617` - Fixed a bug in the BigQuery source that cause automatic bucket creation to fail if the dataset is in a different project.
+
+- :cask-issue:`CDAP-15583` - Fix bug in new user tour on lower resolution screens
+
+- :cask-issue:`CDAP-15554` - Fixed a bug that wrong resolution is used if a time range is specified for metrics query
+
+- :cask-issue:`CDAP-15535` - Fixed an issue where BigQuery multi sink doesn't work if using an Oracle database as a source.
+
+- :cask-issue:`CDAP-15498` - Fixed the dataproc provisioner to disable YARN pre-emptive container killing and to disable conscrypt. 
+
+- :cask-issue:`CDAP-15445` - Fixed a bug in the MLPredictor plugin that caused error when using a classification model
+
+- :cask-issue:`CDAP-15423` - Fixed bug that didn't allow users to paste schema as runtime argument
+
+- :cask-issue:`CDAP-15388` - Spark pipelines no longer try to run sinks in parallel unless runtime argument 'pipeline.spark.parallel.sinks.enabled' is set to 'true'. This prevents pipeline sections from being re-processed in the majority of situations.
+
+- :cask-issue:`CDAP-15373` - Fixed the dataproc provisioner to handle networks that do not use automatic subnet creation
+
+- :cask-issue:`CDAP-15353` - Fixed a Wrangler bug where the wrong jdbc driver would be used in some situations and where required classes could be unavailable.
+
+- :cask-issue:`CDAP-15221` - Fixed a bug about artifact version comparison
+
+- :cask-issue:`CDAP-15206` - Fixed a bug that the rollup of the workflow lineage does not remove the local datasets.
+
+- :cask-issue:`CDAP-15097` - Expanding filename format that UI takes in when uploading artifacts.
+
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-16110` - Fixed batch pipeline preview to read only the preview records instead of the full input.
+
+- :cask-issue:`CDAP-16069` - Greatly improved the time it takes to calculate field level lineage
+
+- :cask-issue:`CDAP-15983` - Set Spark as the default execution engine for batch pipeline
+
+- :cask-issue:`CDAP-15794` - Improved error message for csv, tsv, and delimited formats when the schema has fewer fields than the data
+
+- :cask-issue:`CDAP-15782` - Added support to automatically fill field level lineage for plugins that do not emit any
+
+- :cask-issue:`CDAP-15738` - Upgrades Nodejs version from 8.x to 10.16.2
+
+- :cask-issue:`CDAP-15677` - Added support to restore preview status after restart
+
+- :cask-issue:`CDAP-15659` - Route user directly to the pipeline's detail page from pipeline card in Control Center. 
+
+- :cask-issue:`CDAP-15489` - New user experience for log level selection.
+
+- :cask-issue:`CDAP-15265` - Added image version as a configuration setting to the dataproc provisioner
+
+- :cask-issue:`CDAP-16076` - Improved the way pipelines with macros that are provided by intermediate stages run.
+
+
 `Release 6.0.0 <http://docs.cask.co/cdap/6.0.0/index.html>`__
 =============================================================
 

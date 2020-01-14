@@ -79,10 +79,6 @@ CDAP Dependent Packages, Licenses, and License URLs
 All the licenses are packaged in the downloaded CDAP distribution for your reference
 
 - `CDAP Sandbox Dependencies <cdap-sandbox-dependencies.html>`_
-  (`PDF <cdap-sandbox-dependencies.pdf>`__)
 - `CDAP Level 1 Dependencies <cdap-level-1-dependencies.html>`_
-  (`PDF <cdap-level-1-dependencies.pdf>`__)
 - `CDAP Distributed Dependencies <cdap-enterprise-dependencies.html>`_
-  (`PDF <cdap-enterprise-dependencies.pdf>`__)
 - `CDAP UI Dependencies <cdap-ui-dependencies.html>`_
-  (`PDF <cdap-ui-dependencies.pdf>`__)

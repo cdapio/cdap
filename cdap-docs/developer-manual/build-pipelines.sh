@@ -235,8 +235,6 @@ function pipelines_download_includes() {
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md '' "analytic"
-  download_md_file core-plugins HDFSDelete-action.md
-  download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins Joiner-batchjoiner.md '' "analytic"
   download_md_file core-plugins KVTable-batchsink.md
@@ -261,7 +259,6 @@ function pipelines_download_includes() {
   download_md_file core-plugins TPFSOrc-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsource.md
-  download_md_file core-plugins Validator-transform.md
   download_md_file core-plugins Window-windower.md
   download_md_file core-plugins WindowsShareCopy-action.md
   download_md_file core-plugins XMLReader-batchsource.md
