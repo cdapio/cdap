@@ -30,9 +30,9 @@ import com.google.gson.stream.JsonToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
@@ -80,7 +80,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -131,7 +130,6 @@ public class AppMetadataStore {
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.REJECTED, TYPE_RUN_RECORD_COMPLETED)
     .build();
-
 
   private final StructuredTableContext context;
   private StructuredTable applicationSpecificationTable;
@@ -991,12 +989,12 @@ public class AppMetadataStore {
    * @param filter filter to filter run record
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter)
-    throws IOException {
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces,
+                                                        Predicate<RunRecordMeta> filter) throws IOException {
     Map<ProgramRunId, RunRecordMeta> result = new HashMap<>();
     for (NamespaceId namespaceId : namespaces) {
       List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
-      result.putAll(getProgramRunIdMap(Range.singleton(prefix), filter));
+      result.putAll(getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, filter));
     }
     return result;
   }
@@ -1008,11 +1006,12 @@ public class AppMetadataStore {
    */
   public int countActiveRuns(@Nullable Integer limit) throws IOException {
     AtomicInteger count = new AtomicInteger(0);
-    enumerateProgramRuns(Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null)),
-                         null, key -> !NamespaceId.SYSTEM.getNamespace().equals(
-                           key.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD)),
-                         limit != null ? limit : Integer.MAX_VALUE,
-                         run -> count.incrementAndGet());
+    try (CloseableIterator<RunRecordMeta> iterator = queryProgramRuns(
+      Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null)),
+      key -> !NamespaceId.SYSTEM.getNamespace().equals(key.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD)),
+      null, limit != null ? limit : Integer.MAX_VALUE)) {
+      iterator.forEachRemaining(m -> count.getAndIncrement());
+    }
     return count.get();
   }
 
@@ -1023,10 +1022,9 @@ public class AppMetadataStore {
    * @param filter filter to filter run record
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Predicate<RunRecordMeta> filter)
-    throws IOException {
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Predicate<RunRecordMeta> filter) throws IOException {
     List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null);
-    return getProgramRunIdMap(Range.singleton(prefix), filter);
+    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, filter);
   }
 
   /**
@@ -1036,11 +1034,9 @@ public class AppMetadataStore {
    * @param namespaceId given namespace
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId)
-    throws IOException {
-    // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) throws IOException {
     List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
-    return getProgramRunIdMap(Range.singleton(prefix), null);
+    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
 
   /**
@@ -1050,10 +1046,9 @@ public class AppMetadataStore {
    * @param applicationId given app
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId)
-    throws IOException {
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) throws IOException {
     List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
-    return getProgramRunIdMap(Range.singleton(prefix), null);
+    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
 
   /**
@@ -1065,7 +1060,7 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
-    return getProgramRunIdMap(Range.singleton(prefix), null);
+    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
 
   /**
@@ -1097,28 +1092,38 @@ public class AppMetadataStore {
     return result;
   }
 
-  public Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, final ProgramRunStatus status,
+  /**
+   * Get runs for an optional {@link ProgramId} that fits the given set of criteria.
+   * If the program id is not provided, it fetches all runs that matches with the criteria.
+   *
+   * @param programId an optional program id to match
+   * @param status to filter by
+   * @param startTime the run has to be started on or after this time
+   * @param endTime the run has to be started before this time
+   * @param limit of number of records to return
+   * @param filter of RunRecordMeta to post filter by
+   * @return map of run id to run record meta
+   */
+  public Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
                                                   long startTime, long endTime, int limit,
                                                   @Nullable Predicate<RunRecordMeta> filter)
     throws IOException {
     switch (status) {
       case ALL:
-        Map<ProgramRunId, RunRecordMeta> runRecords = new LinkedHashMap<>();
-        runRecords.putAll(getNonCompleteRuns(programId, TYPE_RUN_RECORD_ACTIVE, startTime, endTime,
-                                             limit - runRecords.size(), filter));
-        runRecords.putAll(getHistoricalRuns(programId, status, startTime, endTime, limit - runRecords.size(), filter));
+        Map<ProgramRunId, RunRecordMeta> runRecords = getProgramRuns(programId, status, startTime, endTime,
+                                                                     limit, filter, TYPE_RUN_RECORD_ACTIVE);
+        if (runRecords.size() < limit) {
+          runRecords.putAll(getProgramRuns(programId, status, startTime, endTime,
+                                           limit, filter, TYPE_RUN_RECORD_COMPLETED));
+        }
         return runRecords;
       case PENDING:
       case STARTING:
       case RUNNING:
       case SUSPENDED:
-        Predicate<RunRecordMeta> stateFilter = record -> record.getStatus() == status;
-        if (filter != null) {
-          stateFilter = stateFilter.and(filter);
-        }
-        return getNonCompleteRuns(programId, TYPE_RUN_RECORD_ACTIVE, startTime, endTime, limit, stateFilter);
+        return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_ACTIVE);
       default:
-        return getHistoricalRuns(programId, status, startTime, endTime, limit, filter);
+        return getProgramRuns(programId, status, startTime, endTime, limit, filter, TYPE_RUN_RECORD_COMPLETED);
     }
   }
 
@@ -1136,22 +1141,20 @@ public class AppMetadataStore {
     throws IOException {
     switch (status) {
       case ALL:
-        Map<ProgramRunId, RunRecordMeta> runRecords = new LinkedHashMap<>();
-        runRecords.putAll(getNonCompleteRuns(applicationId, TYPE_RUN_RECORD_ACTIVE, limit - runRecords.size(),
-                                             filter));
-        runRecords.putAll(getHistoricalRuns(applicationId, status, limit - runRecords.size(), filter));
+        Map<ProgramRunId, RunRecordMeta> runRecords = getApplicationRuns(applicationId, status, limit, filter,
+                                                                         TYPE_RUN_RECORD_ACTIVE);
+        if (runRecords.size() < limit) {
+          runRecords.putAll(getApplicationRuns(applicationId, status, limit - runRecords.size(), filter,
+                                               TYPE_RUN_RECORD_COMPLETED));
+        }
         return runRecords;
       case PENDING:
       case STARTING:
       case RUNNING:
       case SUSPENDED:
-        Predicate<RunRecordMeta> stateFilter = record -> record.getStatus() == status;
-        if (filter != null) {
-          stateFilter = stateFilter.and(filter);
-        }
-        return getNonCompleteRuns(applicationId, TYPE_RUN_RECORD_ACTIVE, limit, stateFilter);
+        return getApplicationRuns(applicationId, status, limit, filter, TYPE_RUN_RECORD_ACTIVE);
       default:
-        return getHistoricalRuns(applicationId, status, limit, filter);
+        return getApplicationRuns(applicationId, status, limit, filter, TYPE_RUN_RECORD_COMPLETED);
     }
   }
 
@@ -1211,10 +1214,99 @@ public class AppMetadataStore {
       }, LinkedHashMap::new));
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(@Nullable ProgramId programId, String recordType,
-                                                              long startTime, long endTime, int limit,
-                                                              @Nullable Predicate<RunRecordMeta> filter)
-    throws IOException {
+  /**
+   * Creates a {@link Range} for scanning the run record table with the given key prefix for records start time
+   * fall in the given time range.
+   */
+  private Range createRunRecordScanRange(List<Field<?>> keyPrefix, long startTime, long endTime) {
+    if (startTime <= 0 && endTime == Long.MAX_VALUE) {
+      return Range.singleton(keyPrefix);
+    }
+
+    List<Field<?>> begin = new ArrayList<>(keyPrefix);
+    List<Field<?>> end = new ArrayList<>(keyPrefix);
+
+    begin.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsScanKeyPart(endTime)));
+    end.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsScanKeyPart(startTime)));
+    return Range.create(begin, Range.Bound.INCLUSIVE, end, Range.Bound.EXCLUSIVE);
+  }
+
+  /**
+   * Returns the query limit based on the given {@link ProgramRunStatus}.
+   * If the given status is {@link ProgramRunStatus#ALL}, then the limit is unaltered. Otherwise it will be
+   * multiplied to make sure it will include enough records for post query status filtering.
+   */
+  private int getLimitByStatus(int limit, ProgramRunStatus status) {
+    if (status == ProgramRunStatus.ALL) {
+      return limit;
+    }
+
+    String type = STATUS_TYPE_MAP.get(status);
+    int multiplier = (int) STATUS_TYPE_MAP.values().stream().filter(type::equals).count();
+
+    if (limit > Integer.MAX_VALUE / multiplier) {
+      return Integer.MAX_VALUE;
+    }
+    return limit * multiplier;
+  }
+
+  /**
+   * Iterate over a range of run records, filter by predicates and pass each run record to the consumer.
+   * @param range to scan runRecordsTable with
+   * @param keyPredicate to filter the row keys by. If null, then does not filter.
+   * @param predicate to filter the runRecordMetas by. If null, then does not filter.
+   * @param limit the maximum number of entries to return
+   */
+  private CloseableIterator<RunRecordMeta> queryProgramRuns(Range range,
+                                                            @Nullable Predicate<StructuredRow> keyPredicate,
+                                                            @Nullable Predicate<RunRecordMeta> predicate,
+                                                            int limit) throws IOException {
+    CloseableIterator<StructuredRow> iterator = getRunRecordsTable()
+      .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE);
+
+    return new AbstractCloseableIterator<RunRecordMeta>() {
+
+      private int currentLimit = limit;
+
+      @Override
+      protected RunRecordMeta computeNext() {
+        if (currentLimit <= 0) {
+          return endOfData();
+        }
+
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          if (keyPredicate != null && !keyPredicate.test(row)) {
+            continue;
+          }
+          RunRecordMeta recordMeta = deserializeRunRecordMeta(row);
+          if (predicate == null || predicate.test(recordMeta)) {
+            currentLimit--;
+            return recordMeta;
+          }
+        }
+        return endOfData();
+      }
+
+      @Override
+      public void close() {
+        iterator.close();
+      }
+    };
+  }
+
+  private Map<ProgramRunId, RunRecordMeta> getApplicationRuns(ApplicationId applicationId, ProgramRunStatus status,
+                                                              int limit, @Nullable Predicate<RunRecordMeta> filter,
+                                                              String recordType) throws IOException {
+    List<Field<?>> prefix = getRunRecordApplicationPrefix(recordType, applicationId);
+    return getRuns(Range.singleton(prefix), status, limit, null, filter);
+  }
+
+
+  private Map<ProgramRunId, RunRecordMeta> getProgramRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+                                                          long startTime, long endTime, int limit,
+                                                          @Nullable Predicate<RunRecordMeta> filter,
+                                                          String recordType) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId);
     Range scanRange;
     Predicate<StructuredRow> keyFilter = null;
@@ -1224,160 +1316,29 @@ public class AppMetadataStore {
       keyFilter = getKeyFilterByTimeRange(startTime, endTime);
       scanRange = Range.singleton(prefix);
     } else {
-      List<Field<?>> begin = new ArrayList<>(prefix);
-      List<Field<?>> end = new ArrayList<>(prefix);
-
-      begin.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsScanKeyPart(endTime)));
-      end.add(Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsScanKeyPart(startTime)));
-      scanRange = Range.create(begin, Range.Bound.INCLUSIVE, end, Range.Bound.EXCLUSIVE);
+      scanRange = createRunRecordScanRange(prefix, startTime, endTime);
     }
-    return getProgramRunIdMap(scanRange, filter, keyFilter, limit);
+
+    return getRuns(scanRange, status, limit, keyFilter, filter);
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(ApplicationId applicationId, String recordType, int limit,
-                                                              @Nullable Predicate<RunRecordMeta> filter)
-    throws IOException {
-    List<Field<?>> prefix = getRunRecordApplicationPrefix(recordType, applicationId);
-    return getProgramRunIdMap(Range.singleton(prefix), filter, null, limit);
-  }
+  private Map<ProgramRunId, RunRecordMeta> getRuns(Range range, ProgramRunStatus status, int limit,
+                                                   @Nullable Predicate<StructuredRow> keyFilter,
+                                                   @Nullable Predicate<RunRecordMeta> valueFilter) throws IOException {
 
-  /**
-   * Converts the range in the map to the actual run records.
-   *
-   * @param range to scan runRecordsTable with
-   * @param predicate to filter the runRecordMetas by. If null, then does not filter.
-   * @param keyPredicate to filter the row keys by. If null, then does not filter.
-   * @param limit the maximum number of entries to return
-   * @return map with keys as program run IDs
-   */
-  private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(Range range,
-                                                              @Nullable Predicate<RunRecordMeta> predicate,
-                                                              @Nullable Predicate<StructuredRow> keyPredicate,
-                                                              int limit) throws IOException {
     Map<ProgramRunId, RunRecordMeta> map = new LinkedHashMap<>();
-    enumerateProgramRuns(range, predicate, keyPredicate, limit, meta -> map.put(meta.getProgramRunId(), meta));
-    return map;
-  }
-
-  /**
-   * Iterate over a range of run records, filter by predicates and pass each run record to the consumer.
-   *
-   * @param range to scan runRecordsTable with
-   * @param predicate to filter the runRecordMetas by. If null, then does not filter.
-   * @param keyPredicate to filter the row keys by. If null, then does not filter.
-   * @param limit the maximum number of entries to return
-   */
-  private void enumerateProgramRuns(Range range, @Nullable Predicate<RunRecordMeta> predicate,
-                                    @Nullable Predicate<StructuredRow> keyPredicate, int limit,
-                                    Consumer<RunRecordMeta> consumer) throws IOException {
-    // Only pass in limit if predicates are null, or else we may return fewer than limit items
-    try (CloseableIterator<StructuredRow> iterator =
-           getRunRecordsTable().scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE)) {
-      while (iterator.hasNext() && limit > 0) {
-        StructuredRow row = iterator.next();
-        if (keyPredicate != null && !keyPredicate.test(row)) {
-          continue;
-        }
-        RunRecordMeta meta = deserializeRunRecordMeta(row);
-        if (predicate == null || predicate.test(meta)) {
-          consumer.accept(meta);
-          limit--;
+    try (CloseableIterator<RunRecordMeta> iterator = queryProgramRuns(range, keyFilter, valueFilter,
+                                                                      getLimitByStatus(limit, status))) {
+      while (iterator.hasNext() && map.size() < limit) {
+        RunRecordMeta meta = iterator.next();
+        if (status == ProgramRunStatus.ALL || status == meta.getStatus()) {
+          map.put(meta.getProgramRunId(), meta);
         }
       }
     }
+    return map;
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(Range range,
-                                                              @Nullable Predicate<RunRecordMeta> predicate)
-    throws IOException {
-    return getProgramRunIdMap(range, predicate, null, Integer.MAX_VALUE);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(@Nullable ProgramId programId, ProgramRunStatus status,
-                                                             final long startTime, final long endTime, int limit,
-                                                             @Nullable Predicate<RunRecordMeta> filter)
-    throws IOException {
-    List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programId);
-    return getHistoricalRuns(prefix, status, startTime, endTime, limit, filter);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(ApplicationId applicationId, ProgramRunStatus status,
-                                                             int limit, @Nullable Predicate<RunRecordMeta> filter)
-    throws IOException {
-    List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_COMPLETED, applicationId);
-
-    return getHistoricalRuns(prefix, status, limit, null, filter);
-  }
-
-  /**
-   * Fetches the historical (i.e COMPLETED or FAILED or KILLED) run records from a given set of namespaces.
-   *
-   * @param namespaces fetch run history that is belonged to one of these namespaces
-   * @param earliestStopTime fetch run history that has stopped at or after the earliestStopTime in seconds
-   * @param latestStartTime fetch run history that has started before the latestStartTime in seconds
-   * @param limit max number of entries to fetch for this history call
-   * @return map of logged runs
-   */
-  public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<NamespaceId> namespaces,
-                                                            long earliestStopTime, long latestStartTime,
-                                                            int limit) throws IOException {
-    Map<ProgramRunId, RunRecordMeta> result = new HashMap<>();
-    for (NamespaceId namespaceId : namespaces) {
-      // get active runs in a time window with range [earliestStopTime, latestStartTime),
-      // which excludes program run records that stopped before earliestStopTime and
-      // program run records that started after latestStartTime, all remaining records are active
-      // at some point within the time window and will be returned
-      result.putAll(getProgramRunIdMap(Range.singleton(
-        getRunRecordNamespacePrefix(TYPE_RUN_RECORD_COMPLETED, namespaceId)),
-                                       meta -> meta.getStopTs() != null && meta.getStopTs() >= earliestStopTime
-                                         && meta.getStartTs() < latestStartTime, null, limit));
-    }
-    return result;
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(List<Field<?>> historyKey, ProgramRunStatus status,
-                                                             final long startTime, final long endTime, int limit,
-                                                             @Nullable Predicate<RunRecordMeta> valueFilter)
-    throws IOException {
-    return getHistoricalRuns(historyKey, status, limit, getKeyFilterByTimeRange(startTime, endTime), valueFilter);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(List<Field<?>> historyKey, ProgramRunStatus status,
-                                                             int limit,
-                                                             @Nullable Predicate<StructuredRow> keyFilter,
-                                                             @Nullable Predicate<RunRecordMeta> valueFilter)
-    throws IOException {
-    if (status.equals(ProgramRunStatus.ALL)) {
-      //return all records (successful and failed)
-      return getProgramRunIdMap(Range.singleton(historyKey), valueFilter, keyFilter, limit);
-    }
-
-    if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return getProgramRunIdMap(Range.singleton(historyKey),
-                                andPredicate(getPredicate(ProgramController.State.COMPLETED), valueFilter),
-                                keyFilter, limit);
-    }
-    if (status.equals(ProgramRunStatus.KILLED)) {
-      return getProgramRunIdMap(Range.singleton(historyKey),
-                                andPredicate(getPredicate(ProgramController.State.KILLED), valueFilter),
-                                keyFilter, limit);
-    }
-    return getProgramRunIdMap(Range.singleton(historyKey),
-                              andPredicate(getPredicate(ProgramController.State.ERROR), valueFilter),
-                              keyFilter, limit);
-  }
-
-  private Predicate<RunRecordMeta> getPredicate(final ProgramController.State state) {
-    return (record) -> record.getStatus().equals(state.getRunStatus());
-  }
-
-  private Predicate<RunRecordMeta> andPredicate(Predicate<RunRecordMeta> first,
-                                                @Nullable Predicate<RunRecordMeta> second) {
-    if (second != null) {
-      return first.and(second);
-    }
-    return first;
-  }
 
   private long getInvertedTsKeyPart(long time) {
     return Long.MAX_VALUE - time;
@@ -1405,11 +1366,11 @@ public class AppMetadataStore {
       Range.singleton(getCountApplicationPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationId)));
   }
 
-  public void deleteProgramHistory(String namespaceId) throws IOException {
+  public void deleteProgramHistory(NamespaceId namespaceId) throws IOException {
     getRunRecordsTable().deleteAll(
-      Range.singleton(getRunRecordNamespacePrefixWithString(TYPE_RUN_RECORD_ACTIVE, namespaceId)));
+      Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId)));
     getRunRecordsTable().deleteAll(Range.singleton(
-      getRunRecordNamespacePrefixWithString(TYPE_RUN_RECORD_COMPLETED, namespaceId)));
+      getRunRecordNamespacePrefix(TYPE_RUN_RECORD_COMPLETED, namespaceId)));
     getProgramCountsTable().deleteAll(Range.singleton(getCountNamespacePrefix(TYPE_COUNT, namespaceId)));
     getProgramCountsTable().deleteAll(Range.singleton(
       getCountNamespacePrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, namespaceId)));
@@ -1559,7 +1520,7 @@ public class AppMetadataStore {
         (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
 
     List<Field<?>> prefix = getRunRecordStatusPrefix(statusKey);
-    return getProgramRunIdMap(Range.singleton(prefix), timeFilter, null, Integer.MAX_VALUE).values().stream()
+    return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, timeFilter).values().stream()
       .map(RunRecordMeta::getPid)
       .map(RunIds::fromString)
       .collect(Collectors.toSet());
@@ -1621,9 +1582,9 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getCountNamespacePrefix(String countType, String namespace) {
+  private List<Field<?>> getCountNamespacePrefix(String countType, NamespaceId namespaceId) {
     List<Field<?>> fields = getCountTypePrefix(countType);
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId.getNamespace()));
     return fields;
   }
 
@@ -1666,12 +1627,6 @@ public class AppMetadataStore {
       return fields;
     }
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId.getNamespace()));
-    return fields;
-  }
-
-  private List<Field<?>> getRunRecordNamespacePrefixWithString(String status, String namespaceId) {
-    List<Field<?>> fields = getRunRecordStatusPrefix(status);
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
     return fields;
   }
 

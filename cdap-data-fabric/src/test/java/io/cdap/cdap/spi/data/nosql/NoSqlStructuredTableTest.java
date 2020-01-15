@@ -149,8 +149,8 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     MockScanner scanner = new MockScanner(expected.iterator());
 
     List<Integer> actual = new ArrayList<>();
-    try (NoSqlStructuredTable.LimitIterator closeableIterator =
-           new NoSqlStructuredTable.LimitIterator(new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA), limit)) {
+    try (NoSqlStructuredTable.LimitIterator closeableIterator = new NoSqlStructuredTable.LimitIterator(
+      Collections.singleton(new NoSqlStructuredTable.ScannerIterator(scanner, SCHEMA)).iterator(), limit)) {
       while (closeableIterator.hasNext()) {
         actual.add(closeableIterator.next().getInteger("key"));
         Assert.assertFalse(scanner.isClosed());

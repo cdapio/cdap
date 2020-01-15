@@ -17,6 +17,7 @@
 package io.cdap.cdap.spi.data.nosql;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -25,6 +26,7 @@ import io.cdap.cdap.api.dataset.table.Get;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -40,6 +42,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -104,7 +109,47 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
     LOG.trace("Table {}: Scan range {} with limit {}", schema.getTableId(), keyRange, limit);
-    return new LimitIterator(new ScannerIterator(getScanner(keyRange), schema), limit);
+    return new LimitIterator(Collections.singleton(new ScannerIterator(getScanner(keyRange), schema)).iterator(),
+                             limit);
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
+                                                    int limit) throws InvalidFieldException, IOException {
+    // Sort the scan keys by the start key and merge overlapping ranges.
+    Deque<ImmutablePair<byte[], byte[]>> scanKeys = new LinkedList<>();
+    keyRanges.stream()
+      .map(this::createScanKeys)
+      .sorted((o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst()))
+      .forEach(range -> {
+        if (scanKeys.isEmpty()) {
+          scanKeys.add(range);
+        } else {
+          ImmutablePair<byte[], byte[]> last = scanKeys.getLast();
+          if (Bytes.compareTo(last.getSecond(), range.getFirst()) < 0) {
+            // No overlap
+            scanKeys.add(range);
+          } else {
+            // Combine overlapping ranges
+            scanKeys.pollLast();
+            byte[] end = Bytes.compareTo(last.getSecond(), range.getSecond()) > 0
+              ? last.getSecond() : range.getSecond();
+            scanKeys.addLast(ImmutablePair.of(last.getFirst(), end));
+          }
+        }
+      });
+
+    Iterator<ImmutablePair<byte[], byte[]>> rangeIterator = scanKeys.iterator();
+    return new LimitIterator(new AbstractIterator<ScannerIterator>() {
+      @Override
+      protected ScannerIterator computeNext() {
+        if (!rangeIterator.hasNext()) {
+          return endOfData();
+        }
+        ImmutablePair<byte[], byte[]> range = rangeIterator.next();
+        return new ScannerIterator(table.scan(range.getFirst(), range.getSecond()), schema);
+      }
+    }, limit);
   }
 
   @Override
@@ -312,6 +357,11 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   private Scanner getScanner(Range keyRange) {
+    ImmutablePair<byte[], byte[]> keys = createScanKeys(keyRange);
+    return table.scan(keys.getFirst(), keys.getSecond());
+  }
+
+  private ImmutablePair<byte[], byte[]> createScanKeys(Range keyRange) {
     // the method will always prepend the table name as prefix
     byte[] begin = convertKeyToBytes(keyRange.getBegin(), true);
     byte[] end = convertKeyToBytes(keyRange.getEnd(), true);
@@ -328,7 +378,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
       end = Bytes.stopKeyForPrefix(end);
     }
 
-    return table.scan(begin, end);
+    return ImmutablePair.of(begin, end);
   }
 
   /**
@@ -336,13 +386,15 @@ public final class NoSqlStructuredTable implements StructuredTable {
    */
   @VisibleForTesting
   static final class LimitIterator extends AbstractCloseableIterator<StructuredRow> {
-    private final ScannerIterator scannerIterator;
+    private final Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator;
     private final int limit;
+    private CloseableIterator<StructuredRow> currentScanner;
     private int count;
 
-    LimitIterator(ScannerIterator scannerIterator, int limit) {
+    LimitIterator(Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator, int limit) {
       this.scannerIterator = scannerIterator;
       this.limit = limit;
+      this.currentScanner = scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
     }
 
     @Override
@@ -350,17 +402,31 @@ public final class NoSqlStructuredTable implements StructuredTable {
       if (count >= limit) {
         return endOfData();
       }
-      StructuredRow row = scannerIterator.computeNext();
-      if (row == null) {
+
+      while (!currentScanner.hasNext() && scannerIterator.hasNext()) {
+        closeScanner();
+        currentScanner = scannerIterator.next();
+      }
+
+      if (!currentScanner.hasNext()) {
         return endOfData();
       }
+
+      StructuredRow row = currentScanner.next();
       ++count;
       return row;
     }
 
     @Override
     public void close() {
-      scannerIterator.close();
+      closeScanner();
+    }
+
+    private void closeScanner() {
+      if (currentScanner != null) {
+        currentScanner.close();
+        currentScanner = null;
+      }
     }
   }
 

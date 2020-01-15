@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.spi.data.sql;
 
-import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
@@ -27,6 +26,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,42 +52,42 @@ public class SqlStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public Integer getInteger(String fieldName) throws InvalidFieldException {
-    validateField(fieldName, Collections.singleton(FieldType.Type.INTEGER));
+    validateField(fieldName, EnumSet.of(FieldType.Type.INTEGER));
     return (Integer) columns.get(fieldName);
   }
 
   @Nullable
   @Override
   public Long getLong(String fieldName) throws InvalidFieldException {
-    validateField(fieldName, ImmutableSet.of(FieldType.Type.INTEGER, FieldType.Type.LONG));
+    validateField(fieldName, EnumSet.of(FieldType.Type.INTEGER, FieldType.Type.LONG));
     return (Long) columns.get(fieldName);
   }
 
   @Nullable
   @Override
   public String getString(String fieldName) throws InvalidFieldException {
-    validateField(fieldName, Collections.singleton(FieldType.Type.STRING));
+    validateField(fieldName, EnumSet.of(FieldType.Type.STRING));
     return (String) columns.get(fieldName);
   }
 
   @Nullable
   @Override
   public Float getFloat(String fieldName) throws InvalidFieldException {
-    validateField(fieldName, Collections.singleton(FieldType.Type.FLOAT));
+    validateField(fieldName, EnumSet.of(FieldType.Type.FLOAT));
     return (Float) columns.get(fieldName);
   }
 
   @Nullable
   @Override
   public Double getDouble(String fieldName) throws InvalidFieldException {
-    validateField(fieldName, ImmutableSet.of(FieldType.Type.FLOAT, FieldType.Type.DOUBLE));
+    validateField(fieldName, EnumSet.of(FieldType.Type.FLOAT, FieldType.Type.DOUBLE));
     return (Double) columns.get(fieldName);
   }
 
   @Nullable
   @Override
   public byte[] getBytes(String fieldName) throws InvalidFieldException {
-    validateField(fieldName, ImmutableSet.of(FieldType.Type.BYTES));
+    validateField(fieldName, EnumSet.of(FieldType.Type.BYTES));
     return (byte[]) columns.get(fieldName);
   }
 

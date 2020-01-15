@@ -299,7 +299,7 @@ public class ProgramLifecycleService {
                                  ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
     Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programs),
                                                                               authenticationContext.getPrincipal());
-    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit, null)) {
+    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit)) {
       ProgramId programId = programHistory.getProgramId();
       if (visibleEntities.contains(programId)) {
         histories.add(programHistory);
