@@ -27,8 +27,10 @@
     </p>
   </h5>
   <span class="text-success"
+        data-cy="plugin-validation-success-msg"
         ng-if="HydratorPlusPlusNodeConfigCtrl.errorCount === 0">No errors found.</span>
   <span class="text-danger"
+        data-cy="plugin-validation-error-msg"
         ng-if="HydratorPlusPlusNodeConfigCtrl.errorCount > 0">
     <ng-pluralize count="HydratorPlusPlusNodeConfigCtrl.errorCount"
                   when="{'1': '1 error found',
@@ -37,6 +39,7 @@
   </span>
   <div class="btn-group pull-right">
     <button class="btn btn-primary validate-btn" type="button"
+            data-cy="plugin-properties-validate-btn"
             ng-if="!isDisabled"
             ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.validating}"
             ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()">
@@ -72,7 +75,7 @@
 </div>
 <div class="modal-body config-modal">
   <div class="console-type">
-    <div class="node-config">
+    <div class="node-config" data-cy="plugin-properties-config-popover-body">
       <div>
         <ul class="nav nav-tabs" role="tablist">
           <li role="presentation"

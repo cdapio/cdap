@@ -64,6 +64,7 @@
                 <input type="text"
                        id="{{ field.id }}"
                        class="form-control"
+                       data-cy="{{ field.name }}-schema-field"
                        title="{{ field.name }}"
                        ng-model="field.name"
                        ng-blur="ComplexSchema.formatOutput()"

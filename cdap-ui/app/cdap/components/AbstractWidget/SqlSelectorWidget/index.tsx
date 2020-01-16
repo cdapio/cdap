@@ -285,7 +285,12 @@ class SqlSelectorWidgetView extends React.PureComponent<
       <div className={classes.root}>
         <If condition={this.state.parsedInputSchemas.length > 0}>
           <div className={classes.buttonContainer}>
-            <Button variant="outlined" size="small" onClick={this.toggleExpandAll}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={this.toggleExpandAll}
+              data-cy="sql-selector-expand-collapse-btn"
+            >
               {this.state.expandAll
                 ? T.translate(`${I18N_PREFIX}.collapseAll`)
                 : T.translate(`${I18N_PREFIX}.expandAll`)}
