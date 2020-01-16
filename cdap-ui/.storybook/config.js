@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import { configure, setAddon } from '@storybook/react';
+import { configure } from '@storybook/react';
 
 require('font-awesome-sass-loader!../app/cdap/styles/font-awesome.config.js');
 require('../app/cdap/styles/lib-styles.scss');
