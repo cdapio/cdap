@@ -22,11 +22,4 @@ require('../app/cdap/styles/main.scss');
 require('./stories.global.scss');
 require('../app/cdap/styles/bootstrap_4_patch.scss');
 
-// automatically import all files ending in *.stories.js
-const req = require.context('../app/cdap/components/', true, /.stories.tsx$/);
-function loadStories() {
-  require('./Welcome');
-  req.keys().forEach(filename => req(filename));
-}
-
-configure(loadStories, module);
+configure(require.context('../app/cdap/components/', true, /\.stories\.tsx$/), module);
