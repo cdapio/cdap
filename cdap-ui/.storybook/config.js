@@ -14,6 +14,7 @@
  * the License.
 */
 import { configure } from '@storybook/react';
+import T from 'i18n-react';
 
 require('font-awesome-sass-loader!../app/cdap/styles/font-awesome.config.js');
 require('../app/cdap/styles/lib-styles.scss');
@@ -23,3 +24,4 @@ require('./stories.global.scss');
 require('../app/cdap/styles/bootstrap_4_patch.scss');
 
 configure(require.context('../app/cdap/components/', true, /\.stories\.tsx$/), module);
+T.setTexts(require('../app/cdap/text/text-en.yaml'));
