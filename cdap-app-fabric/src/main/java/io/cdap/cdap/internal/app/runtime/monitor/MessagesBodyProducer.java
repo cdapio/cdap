@@ -65,6 +65,7 @@ final class MessagesBodyProducer extends BodyProducer {
   private final int numOfRequests;
   private final int messageChunkSize;
   private final Deque<GenericRecord> monitorMessages;
+  private GenericRecord lastMessageSent;
   private final ByteBuf chunk;
   private final Encoder encoder;
   private final DatumWriter<GenericRecord> messageWriter;
@@ -80,6 +81,7 @@ final class MessagesBodyProducer extends BodyProducer {
     this.numOfRequests = requests.size();
     this.messageChunkSize = cConf.getInt(Constants.RuntimeMonitor.SERVER_CONSUME_CHUNK_SIZE);
     this.monitorMessages = new LinkedList<>();
+
     this.chunk = Unpooled.buffer(messageChunkSize);
     this.encoder = EncoderFactory.get().directBinaryEncoder(new ByteBufOutputStream(chunk), null);
     this.messageWriter = new GenericDatumWriter<GenericRecord>(elementSchema) {
@@ -216,8 +218,13 @@ final class MessagesBodyProducer extends BodyProducer {
     for (GenericRecord monitorMessage : monitorMessages) {
       encoder.startItem();
       messageWriter.write(monitorMessage, encoder);
+      lastMessageSent = monitorMessage;
     }
     monitorMessages.clear();
+  }
+
+  public GenericRecord lastMessageSent() {
+    return lastMessageSent;
   }
 
   private GenericRecord createGenericRecord(Message rawMessage) {

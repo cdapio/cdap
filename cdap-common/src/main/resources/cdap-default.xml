@@ -2196,6 +2196,39 @@
   </property>
 
 
+  <!-- Runtime Configuration -->
+  <property>
+    <name>runtime.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Runtime HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>runtime.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Runtime HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+  <property>
+    <name>runtime.service.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>
+      Number of Netty service executor threads for runtime HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>runtime.service.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>
+      Number of Netty service IO worker threads for runtime HTTP service
+    </description>
+  </property>
+
   <!-- Metadata Configuration -->
 
   <property>

@@ -49,6 +49,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination METRICS_PROCESSOR = new RouteDestination(Constants.Service.METRICS_PROCESSOR);
   public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(Constants.Service.DATASET_EXECUTOR);
   public static final RouteDestination MESSAGING = new RouteDestination(Constants.Service.MESSAGING_SERVICE);
+  public static final RouteDestination RUNTIME = new RouteDestination(Constants.Service.RUNTIME);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -146,6 +147,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics
       return METRICS;
+    } else if (uriParts.length >= 2 && uriParts[1].equals("runtime")) {
+      //Metrics Search Handler Path /v3/runtime
+      return RUNTIME;
     } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
       (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
       // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
@@ -164,6 +168,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.TRANSACTION: return TRANSACTION;
         case Constants.Service.METRICS_PROCESSOR: return METRICS_PROCESSOR;
         case Constants.Service.METRICS: return METRICS;
+        case Constants.Service.RUNTIME: return RUNTIME;
         case Constants.Service.APP_FABRIC_HTTP: return APP_FABRIC_HTTP;
         case Constants.Service.DATASET_EXECUTOR: return DATASET_EXECUTOR;
         case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;

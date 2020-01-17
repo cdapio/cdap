@@ -83,7 +83,7 @@ public class AvroRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord>
    * {@link InputStream} that reads a {@link ByteBuffer}.
    */
   @NotThreadSafe
-  private static final class ByteBufferInputStream extends InputStream {
+  public static final class ByteBufferInputStream extends InputStream {
 
     private ByteBuffer buffer;
 

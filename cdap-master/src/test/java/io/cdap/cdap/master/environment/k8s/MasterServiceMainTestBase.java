@@ -53,14 +53,16 @@ public class MasterServiceMainTestBase {
   private static InMemoryZKServer zkServer;
   private static Map<Class<?>, ServiceMainManager<?>> serviceManagers = new LinkedHashMap<>();
   protected static String[] initArgs;
+  protected static CConfiguration cConf;
+  protected static SConfiguration sConf;
 
   @BeforeClass
   public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setAutoCleanDataDir(false).setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    CConfiguration cConf = CConfiguration.create();
-    SConfiguration sConf = SConfiguration.create();
+    cConf = CConfiguration.create();
+    sConf = SConfiguration.create();
 
     // Set the HDFS directory as well as we are using DFSLocationModule in the master services
     cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
@@ -101,6 +103,7 @@ public class MasterServiceMainTestBase {
     serviceManagers.put(LogsServiceMain.class, runMain(cConf, sConf, LogsServiceMain.class));
     serviceManagers.put(MetadataServiceMain.class, runMain(cConf, sConf, MetadataServiceMain.class));
     serviceManagers.put(AppFabricServiceMain.class, runMain(cConf, sConf, AppFabricServiceMain.class));
+    serviceManagers.put(RuntimeServiceMain.class, runMain(cConf, sConf, RuntimeServiceMain.class));
   }
 
   @AfterClass

@@ -103,6 +103,7 @@ public final class Constants {
    * Global Service names.
    */
   public static final class Service {
+    public static final String RUNTIME = "runtime";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String TRANSACTION_HTTP = "transaction.http";
@@ -856,6 +857,7 @@ public final class Constants {
     // Configuration keys for the runtime monitor server
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
     public static final String SERVER_INFO_FILE = "app.program.runtime.monitor.server.info.file";
+    public static final String SERVER_RUNTIME_COLLECTOR = "app.program.runtime.server.runtime.collector";
 
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
@@ -1273,6 +1275,18 @@ public final class Constants {
    */
   public static final class Namespace {
     public static final String NAMESPACES_DIR = "namespaces.dir";
+  }
+
+  /**
+   * Constants for runtime
+   */
+  public static final class Runtime {
+    public static final String SERVICE_DESCRIPTION = "Service to perform runtime operations.";
+    public static final String SERVICE_BIND_ADDRESS = "runtime.service.bind.address";
+    public static final String SERVICE_BIND_PORT = "runtime.service.bind.port";
+    public static final String SERVICE_WORKER_THREADS = "runtime.service.worker.threads";
+    public static final String SERVICE_EXEC_THREADS = "runtime.service.exec.threads";
+    public static final String HANDLERS_NAME = "runtime.handlers";
   }
 
   /**

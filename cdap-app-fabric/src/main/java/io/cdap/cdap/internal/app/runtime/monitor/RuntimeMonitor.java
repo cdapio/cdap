@@ -485,7 +485,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
    * Creates a map from topic configuration name to the actual TMS topic based on the list of topic configuration names
    * specified by the {@link Constants.RuntimeMonitor#TOPICS_CONFIGS} key.
    */
-  private static Map<String, String> createTopicConfigs(CConfiguration cConf) {
+  public static Map<String, String> createTopicConfigs(CConfiguration cConf) {
     return cConf.getTrimmedStringCollection(Constants.RuntimeMonitor.TOPICS_CONFIGS).stream().flatMap(key -> {
       int idx = key.lastIndexOf(':');
       if (idx < 0) {
