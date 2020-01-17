@@ -16,22 +16,17 @@
 
 package io.cdap.cdap.operations.cdap;
 
-import com.google.common.base.Predicates;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.operations.OperationalStats;
-import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * {@link OperationalStats} for reporting CDAP entities.
@@ -39,7 +34,6 @@ import java.util.Set;
 public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBean {
   private NamespaceQueryAdmin nsQueryAdmin;
   private ApplicationLifecycleService appLifecycleService;
-  private ProgramLifecycleService programLifecycleService;
   private ArtifactRepository artifactRepository;
   private DatasetFramework dsFramework;
   private int namespaces;
@@ -52,7 +46,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
   public void initialize(Injector injector) {
     nsQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     appLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
-    programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
   }
@@ -90,18 +83,14 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
   @Override
   public void collect() throws Exception {
     reset();
-    List<NamespaceMeta> namespaceMetas;
-    namespaceMetas = nsQueryAdmin.list();
+    List<NamespaceMeta> namespaceMetas = nsQueryAdmin.list();
     namespaces = namespaceMetas.size();
     artifacts += artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, false).size();
     for (NamespaceMeta meta : namespaceMetas) {
-      List<ApplicationRecord> appRecords =
-        appLifecycleService.getApps(meta.getNamespaceId(), Predicates.<ApplicationRecord>alwaysTrue());
-      apps += appRecords.size();
-      Set<ProgramType> programTypes = EnumSet.of(ProgramType.MAPREDUCE, ProgramType.SERVICE,
-                                                 ProgramType.SPARK, ProgramType.WORKER, ProgramType.WORKFLOW);
-      for (ProgramType programType : programTypes) {
-        programs += programLifecycleService.list(meta.getNamespaceId(), programType).size();
+      List<ApplicationDetail> apps = appLifecycleService.getApps(meta.getNamespaceId(), detail -> true);
+      this.apps += apps.size();
+      for (ApplicationDetail app : apps) {
+        programs += app.getPrograms().size();
       }
       artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), false).size();
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();

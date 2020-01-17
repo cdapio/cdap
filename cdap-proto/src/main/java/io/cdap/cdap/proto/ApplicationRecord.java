@@ -35,18 +35,22 @@ public class ApplicationRecord {
   @SerializedName("principal")
   private final String ownerPrincipal;
 
-
-  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description) {
-    this(artifact, appId, description, null);
+  public ApplicationRecord(ApplicationDetail detail) {
+    this(detail.getArtifact(), detail.getName(),
+         detail.getAppVersion(), detail.getDescription(), detail.getOwnerPrincipal());
   }
 
-  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description,
+  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description) {
+    this(artifact, appId.getApplication(), appId.getVersion(), description, null);
+  }
+
+  public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
                            @Nullable String ownerPrincipal) {
     this.type = "App";
     this.artifact = artifact;
-    this.name = appId.getApplication();
+    this.name = name;
     this.description = description;
-    this.version = appId.getVersion();
+    this.version = version;
     this.ownerPrincipal = ownerPrincipal;
   }
 
