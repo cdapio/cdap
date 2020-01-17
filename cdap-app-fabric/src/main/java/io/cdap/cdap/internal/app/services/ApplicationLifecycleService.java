@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -63,7 +62,6 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -101,6 +99,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -174,8 +173,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
    * @return list of all applications in the namespace that match the specified artifact names and version
    */
-  public List<ApplicationRecord> getApps(NamespaceId namespace,
-                                         Set<String> artifactNames,
+  public List<ApplicationDetail> getApps(NamespaceId namespace, Set<String> artifactNames,
                                          @Nullable String artifactVersion) throws Exception {
     return getApps(namespace, getAppPredicate(artifactNames, artifactVersion));
   }
@@ -187,34 +185,26 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param predicate the predicate that must be satisfied in order to be returned
    * @return list of all applications in the namespace that satisfy the specified predicate
    */
-  public List<ApplicationRecord> getApps(final NamespaceId namespace,
-                                         com.google.common.base.Predicate<ApplicationRecord> predicate)
-    throws Exception {
-    List<ApplicationRecord> appRecords = new ArrayList<>();
-    Map<ApplicationId, ApplicationSpecification> appSpecs = new HashMap<>();
+  public List<ApplicationDetail> getApps(NamespaceId namespace,
+                                         Predicate<ApplicationDetail> predicate) throws Exception {
+
+    Map<ApplicationId, ApplicationSpecification> appSpecs = new LinkedHashMap<>();
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       appSpecs.put(namespace.app(appSpec.getName(), appSpec.getAppVersion()), appSpec);
     }
-    appSpecs.keySet().retainAll(authorizationEnforcer.isVisible(appSpecs.keySet(),
-                                                                authenticationContext.getPrincipal()));
+    Set<? extends EntityId> visible = authorizationEnforcer.isVisible(appSpecs.keySet(),
+                                                                      authenticationContext.getPrincipal());
+    appSpecs.keySet().removeIf(id -> !visible.contains(id));
 
-    for (ApplicationId appId : appSpecs.keySet()) {
-      ApplicationSpecification appSpec = appSpecs.get(appId);
-      if (appSpec == null) {
-        continue;
-      }
-
-      // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
-      ArtifactId artifactId = appSpec.getArtifactId();
-      ArtifactSummary artifactSummary = artifactId == null ?
-        new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-      ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription(),
-                                                       ownerAdmin.getOwnerPrincipal(appId));
-      if (predicate.apply(record)) {
-        appRecords.add(record);
+    Map<ApplicationId, String> owners = ownerAdmin.getOwnerPrincipals(appSpecs.keySet());
+    List<ApplicationDetail> result = new ArrayList<>();
+    for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
+      ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(), owners.get(entry.getKey()));
+      if (predicate.test(applicationDetail)) {
+        result.add(filterApplicationDetail(entry.getKey(), applicationDetail));
       }
     }
-    return appRecords;
+    return result;
   }
 
   /**
@@ -823,23 +813,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   // get filter for app specs by artifact name and version. if they are null, it means don't filter.
-  private com.google.common.base.Predicate<ApplicationRecord> getAppPredicate(Set<String> artifactNames,
-                                                       @Nullable String artifactVersion) {
+  private Predicate<ApplicationDetail> getAppPredicate(Set<String> artifactNames, @Nullable String artifactVersion) {
     if (artifactNames.isEmpty() && artifactVersion == null) {
-      return Predicates.alwaysTrue();
+      return r -> true;
     } else if (artifactNames.isEmpty()) {
       return new ArtifactVersionPredicate(artifactVersion);
     } else if (artifactVersion == null) {
       return new ArtifactNamesPredicate(artifactNames);
     } else {
-      return Predicates.and(new ArtifactNamesPredicate(artifactNames), new ArtifactVersionPredicate(artifactVersion));
+      return new ArtifactNamesPredicate(artifactNames).and(new ArtifactVersionPredicate(artifactVersion));
     }
   }
 
   /**
    * Returns true if the application artifact is in a whitelist of names
    */
-  private static class ArtifactNamesPredicate implements com.google.common.base.Predicate<ApplicationRecord> {
+  private static class ArtifactNamesPredicate implements Predicate<ApplicationDetail> {
     private final Set<String> names;
 
     ArtifactNamesPredicate(Set<String> names) {
@@ -847,7 +836,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     @Override
-    public boolean apply(ApplicationRecord input) {
+    public boolean test(ApplicationDetail input) {
       return names.contains(input.getArtifact().getName());
     }
   }
@@ -855,7 +844,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Returns true if the application artifact is a specific version
    */
-  private static class ArtifactVersionPredicate implements com.google.common.base.Predicate<ApplicationRecord> {
+  private static class ArtifactVersionPredicate implements Predicate<ApplicationDetail> {
     private final String version;
 
     ArtifactVersionPredicate(String version) {
@@ -863,7 +852,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     @Override
-    public boolean apply(ApplicationRecord input) {
+    public boolean test(ApplicationDetail input) {
       return version.equals(input.getArtifact().getVersion());
     }
   }
