@@ -56,6 +56,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -90,6 +91,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -231,8 +233,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         names.add(name);
       }
     }
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getApps(namespace, names, artifactVersion)));
+    List<ApplicationRecord> apps = applicationLifecycleService.getApps(namespace, names, artifactVersion)
+      .stream()
+      .map(ApplicationRecord::new)
+      .collect(Collectors.toList());
+
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(apps));
   }
 
   /**
