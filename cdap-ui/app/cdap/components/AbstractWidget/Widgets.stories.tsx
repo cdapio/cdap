@@ -35,7 +35,14 @@ const aliasOptions = [
 ];
 
 const transforms = [
-  { label: 'transform1', name: 'name1', options: [{ name: 'widget1' }, { name: 'widget2' }] },
+  {
+    label: 'transform1',
+    name: 'name1',
+    options: [
+      { name: 'widget1', 'widget-attributes': { default: 'default attribute for widget1' } },
+      { name: 'widget2', 'widget-attributes': { default: 'default attribute for widget2' } },
+    ],
+  },
   { label: 'transform2', name: 'name2', options: [{ name: 'widget3' }, { name: 'widget4' }] },
 ];
 const filters = [{ id: 'filter A', label: 'filter A' }, { id: 'filter B', label: 'filter B' }];
