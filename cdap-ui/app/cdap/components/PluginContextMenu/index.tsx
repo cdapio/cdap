@@ -18,6 +18,7 @@ import React from 'react';
 import { ContextMenu, IContextMenuOption } from 'components/ContextMenu';
 import PropTypes from 'prop-types';
 import { copyToClipBoard } from 'services/Clipboard';
+import IconSVG from 'components/IconSVG';
 
 export default function PluginContextMenu({
   nodeId,
@@ -31,6 +32,7 @@ export default function PluginContextMenu({
     {
       name: 'plugin copy',
       label: () => (getSelectedNodes().length > 1 ? 'Copy Plugins' : 'Copy Plugin'),
+      icon: <IconSVG name="icon-filecopyaction" />,
       onClick: () => {
         const stages = getPluginConfiguration().stages;
         const connections = getSelectedConnections();
@@ -52,6 +54,7 @@ export default function PluginContextMenu({
     },
     {
       name: 'plugin delete',
+      icon: <IconSVG name="icon-trash" />,
       label: () => (getSelectedNodes().length > 1 ? 'Delete Plugins' : 'Delete Plugin'),
       onClick: () => {
         onDelete();

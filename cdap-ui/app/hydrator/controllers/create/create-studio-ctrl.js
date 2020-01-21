@@ -68,7 +68,8 @@ class HydratorPlusPlusStudioCtrl {
         })
       });
       configJson.config = {
-        connections : configJson.connections
+        connections : configJson.connections,
+        comments: configJson.comments,
       };
 
       DAGPlusPlusNodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);

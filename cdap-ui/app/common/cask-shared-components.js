@@ -109,6 +109,7 @@ var DateRangeWidget = require('../cdap/components/AbstractWidget/DateRangeWidget
 var PipelineContextMenu = require('../cdap/components/PipelineContextMenu').default;
 var PluginContextMenu = require('../cdap/components/PluginContextMenu').default;
 var SelectionBox = require('../cdap/components/SelectionBox').default;
+var Clipboard = require('../cdap/services/Clipboard');
 
 export {
   Store,
@@ -192,4 +193,5 @@ export {
   PipelineContextMenu,
   PluginContextMenu,
   SelectionBox,
+  Clipboard,
 };

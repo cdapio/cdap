@@ -19,11 +19,14 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import withStyles from '@material-ui/core/styles/withStyles';
 import PropTypes from 'prop-types';
+import MenuItemContentWrapper from 'components/ContextMenu/MenuItemContentWrapper';
+
 export interface IContextMenuOption {
   name: string;
   label: (() => string) | string;
   onClick: (event: React.SyntheticEvent) => void;
   disabled?: boolean;
+  icon?: React.ReactElement;
 }
 
 interface IContextMenuProps {
@@ -42,6 +45,9 @@ const StyledMenuItem = withStyles(() => ({
   root: {
     minHeight: 'auto',
   },
+  gutters: {
+    padding: '2px 12px',
+  },
 }))(MenuItem);
 
 const StyledDisabledMenuItem = withStyles((theme) => ({
@@ -49,6 +55,9 @@ const StyledDisabledMenuItem = withStyles((theme) => ({
     minHeight: 'auto',
     color: theme.palette.grey[500],
     cursor: 'not-allowed',
+  },
+  gutters: {
+    padding: '2px 12px',
   },
 }))(MenuItem);
 
@@ -135,14 +144,16 @@ export const ContextMenu = ({ selector, element, options, onOpen }: IContextMenu
       ref={measuredRef}
     >
       {options.map((option) => {
-        const { name, label, disabled } = option;
+        const { name, label, disabled, icon } = option;
         const MenuItemComp = disabled ? StyledDisabledMenuItem : StyledMenuItem;
         return (
           <MenuItemComp
             key={name}
             onClick={disabled === true ? undefined : handleClose.bind(null, option)}
+            data-cy={`menu-item-${name}`}
+            disabled={disabled ? true : false}
           >
-            {typeof label === 'function' ? label() : label}
+            <MenuItemContentWrapper option={option} />
           </MenuItemComp>
         );
       })}

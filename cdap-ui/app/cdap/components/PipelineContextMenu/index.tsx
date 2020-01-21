@@ -24,6 +24,7 @@ import { objectQuery } from 'services/helpers';
 import { INode, IConnection } from 'components/PipelineContextMenu/PipelineTypes';
 import { INewWranglerConnection } from 'components/PipelineContextMenu/WranglerConnection';
 import { GLOBALS } from 'services/global-constants';
+import IconSVG from 'components/IconSVG';
 
 export interface IStage {
   nodes: INode[];
@@ -106,31 +107,37 @@ export default function PipelineContextMenu({
     {
       name: 'add-wrangler-source',
       label: 'Add a wrangler source',
+      icon: <IconSVG name="icon-DataPreparation" />,
       onClick: () => setShowWranglerModal(!showWranglerModal),
     },
     {
       name: 'zoom-in',
-      label: 'Zoom in',
+      label: 'Zoom In',
+      icon: <IconSVG name="icon-zoomIn" />,
       onClick: onZoomIn,
     },
     {
       name: 'zoom-out',
       label: 'Zoom Out',
+      icon: <IconSVG name="icon-zoomout" />,
       onClick: onZoomOut,
     },
     {
       name: 'fit-to-screen',
       label: 'Fit to Screen',
+      icon: <IconSVG name="icon-fit" />,
       onClick: fitToScreen,
     },
     {
       name: 'align-nodes',
-      label: 'Pretty print',
+      label: 'Align',
+      icon: <IconSVG name="icon-clean" />,
       onClick: prettyPrintGraph,
     },
     {
       name: 'pipeline-node-paste',
       label: 'Paste',
+      icon: <IconSVG name="icon-filecopyaction" />,
       onClick: () => {
         getNodesFromClipBoard().then(onNodesPaste);
       },

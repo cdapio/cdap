@@ -1,3 +1,5 @@
+import { INodeIdentifier } from "./typings";
+
 /*
  * Copyright © 2018 Cask Data, Inc.
  *
@@ -129,6 +131,10 @@ function dataCy(property) {
   return `[data-cy="${property}"]`;
 }
 
+function getNodeSelectorFromNodeIndentifier(node: INodeIdentifier) {
+  const { nodeName, nodeType, nodeId } = node;
+  return `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+}
 export {
   loginIfRequired,
   getArtifactsPoll,
@@ -137,4 +143,5 @@ export {
   getGenericEndpoint,
   getConditionNodeEndpoint,
   dataCy,
+  getNodeSelectorFromNodeIndentifier,
 };

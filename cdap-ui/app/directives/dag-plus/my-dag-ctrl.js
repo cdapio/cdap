@@ -110,7 +110,7 @@ angular.module(PKG.name + '.commons')
           return {from, to};
         });
     };
-    vm.deleteSelectedNodes = () => onKeyboardDelete();
+    vm.deleteSelectedNodes = () => vm.onKeyboardDelete();
     vm.onPluginContextMenuOpen = (nodeId) => {
       const isNodeAlreadySelected = vm.selectedNode.find(n => n.name === nodeId);
       if (isNodeAlreadySelected) {
@@ -133,11 +133,25 @@ angular.module(PKG.name + '.commons')
     vm.selectionBox = {
       boundaries: ['#diagram-container'],
       selectables: ['.box'],
+      /**
+       * It makes sense to have the events start -> move -> end to happen
+       * in linear order. However under rare circumstances (cypress) this can
+       * be out of order, meaning move gets fired before start event callback
+       * is fired. The `isSelectionInProgress` is a catch all to make sure no
+       * matter what the sequence of callback happens it is right.
+       */
+      isSelectionInProgress: false,
       toggle: false,
       start: () => {
-        vm.selectedNode = [];
+        if (!vm.selectionBox.isSelectionInProgress) {
+          vm.selectedNode = [];
+          vm.selectionBox.isSelectionInProgress = true;
+        }
       },
       move: ({selected}) => {
+        if (!vm.selectionBox.isSelectionInProgress) {
+          vm.selectionBox.isSelectionInProgress = true;
+        }
         const selectedNodes = $scope.nodes.filter(node => {
           if (selected.indexOf(node.name) !== -1) {
             return true;
@@ -162,7 +176,6 @@ angular.module(PKG.name + '.commons')
         vm.selectedNode = selectedNodes;
         const selectedNodesMap = {};
         vm.selectedNode.forEach(node => selectedNodesMap[node.name] = true);
-        console.log('selected nodes: ', selectedNodesMap);
         const adjacencyMap = DAGPlusPlusNodesStore.getAdjacencyMap();
         clearConnectionsSelection();
         vm.selectedNode.forEach(({name}) => {
@@ -171,7 +184,6 @@ angular.module(PKG.name + '.commons')
             return;
           }
           const connectionsFromSource = vm.instance.getConnections({sourceId: name});
-          console.log('Connections from source: ', name, connectionsFromSource);
           connectedNodes.forEach(nodeId => {
             if (!selectedNodesMap[nodeId]) {
               console.log(nodeId + ' doesn\'t exist in the selected nodes');
@@ -180,16 +192,15 @@ angular.module(PKG.name + '.commons')
             const connObj = connectionsFromSource.filter(conn => conn.source.getAttribute('data-nodeid') === name && conn.targetId === nodeId);
             if (connObj.length) {
               connObj.forEach(conn => {
-                console.log(`
-                Highlighting connection:
-                  ${conn.sourceId} - ${conn.targetId}
-                `);
                 toggleConnection(conn, false);
               });
             }
           });
         });
       },
+      end: () => {
+        vm.selectionBox.isSelectionInProgress = false;
+      }
     };
     const repaintTimeoutsMap = {};
 
@@ -198,11 +209,17 @@ angular.module(PKG.name + '.commons')
       if (!Array.isArray(nodes) || !Array.isArray(connections)) {
         return;
       }
+      vm.selectedNode = [];
+      clearConnectionsSelection();
       let {nodes: newNodes, connections: newConnections} = sanitizeNodesAndConnectionsBeforePaste({nodes, connections});
       newNodes = [...$scope.nodes, ...newNodes];
       newConnections  = [...$scope.connections, ...newConnections];
-      DAGPlusPlusNodesActionsFactory.createGraphFromConfig(newNodes, newConnections);
+      DAGPlusPlusNodesActionsFactory.createGraphFromConfigOnPaste(newNodes, newConnections);
       vm.instance.unbind('connection');
+      vm.instance.unbind('connectionDetached');
+      vm.instance.unbind('connectionMoved');
+      vm.instance.unbind('beforeDrop');
+      vm.instance.unbind('click');
       vm.instance.detachEveryConnection();
       init();
     };
@@ -333,8 +350,8 @@ angular.module(PKG.name + '.commons')
     function bindKeyboardEvents() {
       Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
-      Mousetrap.bind(['del', 'backspace'], onKeyboardDelete);
-      Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
+      Mousetrap.bind(['del', 'backspace'], vm.onKeyboardDelete);
+      Mousetrap.bind(['command+c', 'ctrl+c'], vm.onKeyboardCopy);
       // This is to select multiple nodes by click-n-drag in pipeline studio
       Mousetrap.bind('shift', () => {
         $scope.$apply(function() {
@@ -369,13 +386,13 @@ angular.module(PKG.name + '.commons')
       }
     }
 
-    function onKeyboardDelete() {
+    vm.onKeyboardDelete = function onKeyboardDelete() {
       if (vm.selectedNode.length) {
         vm.onNodeDelete(null, vm.selectedNode);
       } else {
         vm.removeSelectedConnections();
       }
-    }
+    };
 
     vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
@@ -796,11 +813,13 @@ angular.module(PKG.name + '.commons')
       if (notYetSelectedConnections.length !== 0) {
         notYetSelectedConnections.forEach(connection => {
           selectedConnections.push(connection);
+          connection.addClass('selected-connector');
           connection.addType('selected');
         });
       } else {
         connectionsToToggle.forEach(connection => {
           selectedConnections.splice(selectedConnections.indexOf(connection), 1);
+          connection.removeClass('selected-connector');
           connection.removeType('selected');
         });
       }
@@ -822,11 +841,12 @@ angular.module(PKG.name + '.commons')
         selectedConnections.splice(selectedConnections.indexOf(connObj), 1);
       }
       if (!toggle) {
-        console.log('setting selected type');
+        connObj.addClass('selected-connector');
         connObj.addType('selected');
         return;
       }
       connObj.toggleType('selected');
+      connObj.removeClass('selected-connector');
     }
 
     function clearConnectionsSelection() {
@@ -834,6 +854,7 @@ angular.module(PKG.name + '.commons')
         const existingTypes = conn.getType();
         if (Array.isArray(existingTypes) && existingTypes.indexOf('selected') !== -1) {
           conn.toggleType('selected');
+          conn.removeClass('selected-connector');
         }
       });
 
@@ -1176,7 +1197,7 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
-    vm.onNodeDelete = function (event, nodes) {
+    vm.onNodeDelete = function (event, nodes = vm.selectedNode) {
       if (event) {
         event.stopPropagation();
       }
@@ -1367,6 +1388,13 @@ angular.module(PKG.name + '.commons')
       };
 
       DAGPlusPlusNodesActionsFactory.addComment(config);
+      if (commentsTimeout) {
+        vm.comments = DAGPlusPlusNodesStore.getComments();
+        $timeout.cancel(commentsTimeout);
+      }
+      commentsTimeout = $timeout(function () {
+        makeCommentsDraggable();
+      });
     };
 
     vm.clearCommentSelection = function clearCommentSelection() {
@@ -1415,33 +1443,15 @@ angular.module(PKG.name + '.commons')
       return myHelpers.objectQuery(vm.pluginsMap, key, 'widgets', 'emit-errors');
     };
 
-    /**
-     * Not refactoring this to use the new CopyToClipboard.
-     * This will eventually be replaced by react implementation
-     * which will use the new utility.
-     * */
-    vm.copyToClipboard = (config) => {
-      const clipboardObj = config;
-
-      const clipboardText = JSON.stringify(clipboardObj);
-
-      const textArea = document.createElement('textarea');
-      textArea.value = clipboardText;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-    };
-
-    function onKeyboardCopy() {
+    vm.onKeyboardCopy = function onKeyboardCopy() {
       const stages = vm.getPluginConfiguration().stages;
       const connections =  vm.getSelectedConnections();
       vm.nodeMenuOpen = null;
-      vm.copyToClipboard({
+      window.CaskCommon.Clipboard.copyToClipBoard(JSON.stringify({
         stages,
         connections
-      });
-    }
+      }));
+    };
 
     // handling node paste
     document.body.onpaste = (e) => {
@@ -1494,9 +1504,8 @@ angular.module(PKG.name + '.commons')
             .filter(filteredNode => {
               return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
             });
-
-          const nodeIndex = filteredNodes.length + 1;
-          newName = filteredNodes.length > 0 ? `${newName}${nodeIndex}` : newName;
+          const randIndex = Math.floor(Math.random() * 100);
+          newName = filteredNodes.length > 0 ? `${newName}${randIndex}` : newName;
           let iconConfiguration = {};
           if (!node.icon) {
             iconConfiguration = Object.assign({}, {
