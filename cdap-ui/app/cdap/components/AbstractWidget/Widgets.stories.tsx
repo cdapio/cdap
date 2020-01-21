@@ -15,14 +15,12 @@
  */
 
 import * as React from 'react';
-import { withInfo } from '@storybook/addon-info';
 import { action } from '@storybook/addon-actions';
 import AbstractWidget from './index';
 
 export default {
   component: AbstractWidget,
   title: 'Widgets',
-  decorators: [withInfo],
 };
 
 const selectOptions = [
@@ -30,31 +28,52 @@ const selectOptions = [
   { value: 'choice B', label: 'choice B' },
 ];
 
+const aliasOptions = [
+  { value: 'Avg', label: 'Avg' },
+  { value: 'Count', label: 'Count' },
+  { value: 'CollectList', label: 'CollectList' },
+];
+
+const transforms = [
+  { label: 'transform1', name: 'name1', options: [{ name: 'widget1' }, { name: 'widget2' }] },
+  { label: 'transform2', name: 'name2', options: [{ name: 'widget3' }, { name: 'widget4' }] },
+];
+const filters = [{ id: 'filter A', label: 'filter A' }, { id: 'filter B', label: 'filter B' }];
+
 const radioOptions = [{ label: 'choice A', id: 'choice A' }, { label: 'choice B', id: 'choice B' }];
 
 const widgetProps = {
-  select: { options: selectOptions },
+  datasetSelect: { placeholder: 'placeholder text' },
+  dlp: { transforms, filters },
+  functionDropdown: {
+    dropdownOptions: aliasOptions,
+  },
   radio: { options: radioOptions },
+  select: { options: selectOptions },
   toggle: {
     on: { value: 'on', label: 'on' },
     off: { value: 'off', label: 'off' },
   },
 };
+
+// TO DO: Mock API for MyDataPrepApi
 export const connectionBrowser = () => <AbstractWidget type="connection-browser" />;
 
 export const csv = () => <AbstractWidget type="csv" />;
 
-export const datasetSelector = () => <AbstractWidget type="dataset-selector" />;
+export const datasetSelector = () => (
+  <AbstractWidget type="dataset-selector" widgetProps={widgetProps.datasetSelect} />
+);
 
 export const multipleValues = () => <AbstractWidget type="ds-multiplevalues" />;
 
 export const dsv = () => <AbstractWidget type="dsv" />;
 
 export const functionDropdownWithAlias = () => (
-  <AbstractWidget type="function-dropdown-with-alias" />
+  <AbstractWidget type="function-dropdown-with-alias" widgetProps={widgetProps.functionDropdown} />
 );
 
-export const dlp = () => <AbstractWidget type="dlp" />;
+export const dlp = () => <AbstractWidget type="dlp" widgetProps={widgetProps.dlp} />;
 
 export const getSchema = () => <AbstractWidget type="get-schema" />;
 
