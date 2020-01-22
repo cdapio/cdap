@@ -23,6 +23,8 @@ export default {
   title: 'Widgets',
 };
 
+const memoryOptions = [1024, 2048];
+
 const selectOptions = [
   { value: 'choice A', label: 'choice A' },
   { value: 'choice B', label: 'choice B' },
@@ -67,6 +69,9 @@ const widgetProps = {
   keyValueDropdown: {
     dropdownOptions: ['simple option 1', 'simple option 2', 'simple option 3'],
   },
+  memorySelect: {
+    values: memoryOptions,
+  },
   radio: { options: radioOptions },
   select: { options: selectOptions },
   toggle: {
@@ -75,14 +80,7 @@ const widgetProps = {
   },
 };
 
-// TO DO: Mock API for MyDataPrepApi
-export const connectionBrowser = () => <AbstractWidget type="connection-browser" />;
-
 export const csv = () => <AbstractWidget type="csv" />;
-
-export const datasetSelector = () => (
-  <AbstractWidget type="dataset-selector" widgetProps={widgetProps.datasetSelect} />
-);
 
 export const multipleValues = () => <AbstractWidget type="ds-multiplevalues" />;
 
@@ -90,14 +88,6 @@ export const dsv = () => <AbstractWidget type="dsv" />;
 
 export const functionDropdownWithAlias = () => (
   <AbstractWidget type="function-dropdown-with-alias" widgetProps={widgetProps.functionDropdown} />
-);
-
-export const dlp = () => <AbstractWidget type="dlp" widgetProps={widgetProps.dlp} />;
-
-export const getSchema = () => <AbstractWidget type="get-schema" />;
-
-export const inputFieldDropdown = () => (
-  <AbstractWidget type="input-field-selector" extraConfig={widgetProps.inputFieldDropdown} />
 );
 
 export const keyValueDropdown = () => (
@@ -109,7 +99,7 @@ export const keyValueEncoded = () => <AbstractWidget type="keyvalue-encoded" />;
 export const keyValue = () => <AbstractWidget type="keyvalue" />;
 
 export const memoryDropdown = () => (
-  <AbstractWidget type="memory-dropdown" widgetProps={widgetProps.select} />
+  <AbstractWidget type="memory-dropdown" widgetProps={widgetProps.memorySelect} />
 );
 
 export const memoryTextbox = () => <AbstractWidget type="memory-textbox" />;
@@ -138,8 +128,6 @@ export const selectDropdown = () => (
     onChange={action('onChange')}
   />
 );
-
-// export const text = () => <AbstractWidget type="text" />;
 
 export const textbox = () => <AbstractWidget type="textbox" />;
 
