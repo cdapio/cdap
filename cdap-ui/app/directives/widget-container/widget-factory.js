@@ -52,13 +52,6 @@ angular.module(PKG.name + '.commons')
           'ng-trim': 'false'
         }
       },
-      // 'datetime': {
-      //   element: '<my-timestamp-picker></my-timestamp-picker>',
-      //   attributes: {
-      //     'ng-model': 'model',
-      //     'data-label': 'Date'
-      //   }
-      // },
       'csv': {
         element: '<csv-widget></csv-widget>',
         attributes: {

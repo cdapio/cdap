@@ -19,6 +19,8 @@ import PropTypes from 'prop-types';
 import Calendar from 'react-calendar';
 import moment from 'moment';
 import classnames from 'classnames';
+import If from 'components/If';
+import DateRangeIcon from '@material-ui/icons/DateRange';
 
 require('./TimeRangePicker.scss');
 
@@ -31,10 +33,12 @@ export default class TimeRangePicker extends Component {
     end: PropTypes.number,
     displayOnly: PropTypes.bool,
     onTimeClick: PropTypes.func,
+    showRange: PropTypes.bool,
   };
 
   static defaultProps = {
     displayOnly: false,
+    showRange: true, // for backward compatibility
   };
 
   state = {
@@ -126,16 +130,31 @@ export default class TimeRangePicker extends Component {
   };
 
   displayStartTime = () => {
-    if (!this.state.start) {
-      return 'Start Time';
-    }
+    const startHint = this.props.showRange ? 'Start Time' : 'Select Time';
 
+    if (!this.state.start) {
+      return (
+        <div className="time-select">
+          <span className="calendar-icon">
+            <DateRangeIcon />
+          </span>
+          <div>{startHint}</div>
+        </div>
+      );
+    }
     return moment(this.state.start).format(format);
   };
 
   displayEndTime = () => {
     if (!this.state.end) {
-      return 'End Time';
+      return (
+        <div className="time-select">
+          <span className="calendar-icon">
+            <DateRangeIcon />
+          </span>
+          <div>{'End Time'}</div>
+        </div>
+      );
     }
 
     return moment(this.state.end).format(format);
@@ -260,19 +279,20 @@ export default class TimeRangePicker extends Component {
               {this.displayStartTime()}
             </div>
           </div>
+          <If condition={this.props.showRange}>
+            <div className="separator text-center">to</div>
 
-          <div className="separator text-center">to</div>
-
-          <div className="time">
-            <div
-              className={classnames('time-wrapper', {
-                active: !this.props.displayOnly && this.state.displayCalendar === 'end',
-              })}
-              onClick={this.changeDisplay.bind(this, 'end')}
-            >
-              {this.displayEndTime()}
+            <div className="time">
+              <div
+                className={classnames('time-wrapper', {
+                  active: !this.props.displayOnly && this.state.displayCalendar === 'end',
+                })}
+                onClick={this.changeDisplay.bind(this, 'end')}
+              >
+                {this.displayEndTime()}
+              </div>
             </div>
-          </div>
+          </If>
         </div>
 
         {this.renderCalendar()}

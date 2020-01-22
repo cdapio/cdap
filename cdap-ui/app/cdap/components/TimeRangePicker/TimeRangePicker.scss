@@ -46,6 +46,12 @@ $track-border-color: black;
 $track-radius: 5px;
 $contrast: 0;
 
+.abstract-widget-wrapper {
+  .expandable-time-range-picker {
+    top: 16px;
+  }
+}
+
 .expandable-time-range-picker {
   position: absolute;
   top: -17px;
@@ -80,6 +86,26 @@ $contrast: 0;
       cursor: not-allowed;
       background-color: $time-bg-color;
       color: $disabled-done-color;
+    }
+  }
+}
+.abstract-widget-wrapper {
+  .time-range-picker-container {
+    .time-range-selector {
+      .time {
+        max-width: calc(50% - 18px);
+        width: fit-content;
+        .time-wrapper {
+          border: none;
+          width: 100%;
+          border-radius: unset;
+          border-bottom: 1px solid $grey-03;
+          .calendar-icon {
+            position: relative;
+            top: 3px;
+          }
+        }
+      }
     }
   }
 }
@@ -119,6 +145,11 @@ $contrast: 0;
 
         &.active {
           border-color: $active-border-color;
+        }
+        .time-select {
+          display: grid;
+          grid-template-columns: 25px auto;
+          grid-gap: 3px;
         }
       }
     }

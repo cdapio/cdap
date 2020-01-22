@@ -278,6 +278,34 @@ CDAP pipelines as of version |version|.
             "widget-type": "csv",
             "widget-attributes": {}
           }
+    
+    * - ``daterange``
+     - No attributes
+     - ``string``
+     - Selector for a date and time range using graphical calendar
+     - .. container:: copyable copyable-text
+     
+         ::
+
+          {
+            "name": "daterange-selector",
+            "widget-type": "daterange",
+            "widget-attributes": {}
+          }
+
+    * - ``datetime``
+     - No attributes
+     - ``string``
+     - Selector for a single date and time using graphical calendar
+     - .. container:: copyable copyable-text
+     
+         ::
+
+          {
+            "name": "datetime-selector",
+            "widget-type": "datetime",
+            "widget-attributes": {}
+          }
 
    * - ``dataset-selector``
      - No attributes
