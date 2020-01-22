@@ -18,34 +18,53 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import { apiCreatorAbsPath } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = window.CDAP_CONFIG.marketUrl;
+const basepaths = window.CDAP_CONFIG.marketUrls;
 // FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
 const REQUEST_TYPE_MARKET = 'MARKET';
 const requestOptions = {
   requestOrigin: REQUEST_TYPE_MARKET,
 };
 
+function getVerifiedMarketHost(host) {
+  return basepaths.find((element) => element === host);
+}
+
 export const MyMarketApi = {
-  list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `/packages.json`, requestOptions),
-  getCategories: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `/categories.json`, requestOptions),
+  list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `:marketHost/packages.json`, requestOptions),
+  getMetaData: apiCreatorAbsPath(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `:marketHost/metadata.json`,
+    requestOptions
+  ),
+  getCategories: apiCreatorAbsPath(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `:marketHost/categories.json`,
+    requestOptions
+  ),
   get: apiCreatorAbsPath(
     dataSrc,
     'GET',
     'REQUEST',
-    `/packages/:packageName/:version/spec.json`,
+    `:marketHost/packages/:packageName/:version/spec.json`,
     requestOptions
   ),
-  getCategoryIcon: (category) => {
-    return `${basepath}/categories/${category}/icon.png`;
+  getCategoryIcon: (category, marketHost) => {
+    const verifiedMarketHost = getVerifiedMarketHost(marketHost);
+    return `${verifiedMarketHost}/categories/${category}/icon.png`;
   },
-  getIcon: (entity) => {
-    return `${basepath}/packages/${entity.name}/${entity.version}/icon.png`;
+  getIcon: (entity, marketHost) => {
+    const verifiedMarketHost = getVerifiedMarketHost(marketHost);
+    return `${verifiedMarketHost}/packages/${entity.name}/${entity.version}/icon.png`;
   },
   getSampleData: apiCreatorAbsPath(
     dataSrc,
     'GET',
     'REQUEST',
-    `/packages/:entityName/:entityVersion/:filename`,
+    `:marketHost/packages/:entityName/:entityVersion/:filename`,
     requestOptions
   ),
 };

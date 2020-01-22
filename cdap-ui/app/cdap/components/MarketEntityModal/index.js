@@ -21,6 +21,7 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import {MyMarketApi} from 'api/market';
 import T from 'i18n-react';
 import AbstractWizard from 'components/AbstractWizard';
+import MarketStore from 'components/Market/store/market-store';
 import classnames from 'classnames';
 import uuidV4 from 'uuid/v4';
 import moment from 'moment';
@@ -44,9 +45,11 @@ export default class MarketEntityModal extends Component {
   }
 
   componentWillMount() {
+    const marketHost = MarketStore.getState().selectedMarketHost;
     MyMarketApi.get({
       packageName: this.props.entity.name,
-      version: this.props.entity.version
+      version: this.props.entity.version,
+      marketHost,
     }).subscribe((res) => {
       this.setState({entityDetail: res});
     }, (err) => {
@@ -137,6 +140,8 @@ export default class MarketEntityModal extends Component {
       );
     }
 
+    const marketHost = MarketStore.getState().selectedMarketHost;
+
     return (
       <Modal
         isOpen={this.props.isOpen}
@@ -163,7 +168,7 @@ export default class MarketEntityModal extends Component {
         <ModalBody>
           <div className="entity-information">
             <div className="entity-modal-image">
-              <img src={MyMarketApi.getIcon(this.props.entity)} />
+              <img src={MyMarketApi.getIcon(this.props.entity, marketHost)} />
             </div>
             <div className="entity-content">
               <div className="entity-description">

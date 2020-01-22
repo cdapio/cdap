@@ -14,8 +14,41 @@
  * the License.
 */
 
+import memoize from 'lodash/memoize';
+
 export const REQUEST_ORIGIN_ROUTER = 'ROUTER';
 export const REQUEST_ORIGIN_MARKET = 'MARKET';
+
+function getRouterHost(cdapConfig) {
+  const routerhost = cdapConfig['router.server.address'],
+    routerport =
+      cdapConfig['ssl.external.enabled'] === 'true'
+        ? cdapConfig['router.ssl.server.port']
+        : cdapConfig['router.server.port'],
+    routerprotocol = cdapConfig['ssl.external.enabled'] === 'true' ? 'https' : 'http';
+  return `${routerprotocol}://${routerhost}:${routerport}`;
+}
+
+function extractMarketUrls(cdapConfig) {
+  if (!cdapConfig) {
+    return [];
+  }
+  const defaultMarketUrl = cdapConfig['market.base.url'];
+  if (!cdapConfig['market.base.urls']) {
+    return [defaultMarketUrl];
+  }
+  const marketUrls = cdapConfig['market.base.urls'].split('+');
+  const filteredMarketUrls = marketUrls.filter(element => element !== defaultMarketUrl); 
+  // Make sure the default CDAP market is the first market.
+  filteredMarketUrls.splice(0, 0, defaultMarketUrl);
+  return filteredMarketUrls;
+}
+
+export const getMarketUrls = memoize(extractMarketUrls);
+
+export function isVerifiedMarketHost(cdapConfig, url) {
+  return !!getMarketUrls(cdapConfig).find(element => url.startsWith(element));
+}
 
 export function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
   if (!cdapConfig) {
@@ -23,19 +56,15 @@ export function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
   }
   path = path && path[0] === '/' ? path.slice(1) : path;
   if (origin === REQUEST_ORIGIN_MARKET) {
-    return `${cdapConfig['market.base.url']}/${path}`;
+    return path;
   }
-  let routerhost = cdapConfig['router.server.address'],
-    routerport =
-      cdapConfig['ssl.external.enabled'] === 'true'
-        ? cdapConfig['router.ssl.server.port']
-        : cdapConfig['router.server.port'],
-    routerprotocol = cdapConfig['ssl.external.enabled'] === 'true' ? 'https' : 'http';
-  const baseUrl = `${routerprotocol}://${routerhost}:${routerport}`;
-  return path ? `${baseUrl}/${path}` : baseUrl;
+  return `${getRouterHost(cdapConfig)}/${path}`;
 }
 
-export function deconstructUrl(cdapConfig, url, requestOrigin) {
-  const routerBaseUrl = constructUrl(cdapConfig, '', requestOrigin);
-  return `/${url.replace(routerBaseUrl, '')}`;
+export function deconstructUrl(cdapConfig, url, origin = REQUEST_ORIGIN_ROUTER) {
+  if (origin === REQUEST_ORIGIN_MARKET) {
+    return url;
+  }
+  const baseUrl = getRouterHost(cdapConfig);
+  return `/${url.replace(baseUrl, '')}`;
 }

@@ -77,9 +77,11 @@ export default class MarketPlaceUsecaseEntity extends Component {
         entityId: this.props.entityId,
       },
     });
+    const marketHost = MarketStore.getState().selectedMarketHost;
     MyMarketApi.get({
       packageName: this.props.entity.name,
       version: this.props.entity.version,
+      marketHost,
     }).subscribe(
       (res) => {
         this.setState({
@@ -95,6 +97,8 @@ export default class MarketPlaceUsecaseEntity extends Component {
   }
 
   render() {
+    const marketHost = MarketStore.getState().selectedMarketHost;
+
     return (
       <Card size="LG" cardClass="market-place-usecase-package-card">
         {this.props.entity.beta ? <ExperimentalBanner /> : null}
@@ -108,7 +112,7 @@ export default class MarketPlaceUsecaseEntity extends Component {
               <span className={classnames('fa', this.state.logoIcon)} />
             ) : (
               <img
-                src={MyMarketApi.getIcon(this.props.entity)}
+                src={MyMarketApi.getIcon(this.props.entity, marketHost)}
                 onError={this.imageError.bind(this)}
               />
             )}

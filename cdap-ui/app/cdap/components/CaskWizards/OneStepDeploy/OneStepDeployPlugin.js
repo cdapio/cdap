@@ -24,6 +24,7 @@ import 'whatwg-fetch';
 import { Observable } from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import Cookies from 'universal-cookie';
+import MarketStore from 'components/Market/store/market-store';
 import T from 'i18n-react';
 import { MyMarketApi } from 'api/market';
 import { MyArtifactApi } from 'api/artifact';
@@ -96,8 +97,8 @@ export default class OneStepDeployPlugin extends Component {
       }
     });
 
-    let marketPath = `/packages/${name}/${version}/${pluginJar}`;
-    marketPath = encodeURIComponent(marketPath);
+    const marketPath = `/packages/${name}/${version}/${pluginJar}`;
+    const marketHost = MarketStore.getState().selectedMarketHost;
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -108,6 +109,7 @@ export default class OneStepDeployPlugin extends Component {
       MyMarketApi.getSampleData({
         entityName: name,
         entityVersion: version,
+        marketHost,
         filename: pluginConfig,
       }).subscribe((res) => {
         let pluginJson = res;
@@ -130,7 +132,8 @@ export default class OneStepDeployPlugin extends Component {
           }
         }
 
-        let fetchUrl = `/forwardMarketToCdap?source=${marketPath}&target=${cdapPath}`;
+        const marketUrl = encodeURIComponent(`${marketHost}${marketPath}`);
+        let fetchUrl = `/forwardMarketToCdap?source=${marketUrl}&target=${cdapPath}`;
 
         fetch(fetchUrl, {
           method: 'GET',

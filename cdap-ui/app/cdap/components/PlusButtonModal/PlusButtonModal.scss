@@ -17,6 +17,7 @@
 @import '../../styles/variables.scss';
 
 $sidepanel-width: 160px;
+$horizontal-tab-height: 45px;
 
 .plus-button-modal {
   overflow-x: hidden;
@@ -29,16 +30,29 @@ $sidepanel-width: 160px;
       > div {
         height: 100%;
       }
-      // Magic number. cask-tab-headers are by default 140px wide but
-      // we need that extra space here to fit 'Google Cloud' name :sigh:
-      // Should make it cleaner to expand till a max width and show ellipsis
-      // from there on.
-      .cask-tab-headers {
-        width: $sidepanel-width;
-        overflow-y: auto;
+
+      .cask-tabs:not(.horizontal) {
+        // Magic number. cask-tab-headers are by default 140px wide but
+        // we need that extra space here to fit 'Google Cloud' name :sigh:
+        // Should make it cleaner to expand till a max width and show ellipsis
+        // from there on.
+        .cask-tab-headers {
+          width: $sidepanel-width;
+          overflow-y: auto;
+        }
+        .tab-content {
+          width: calc(100% - #{$sidepanel-width});
+        }
       }
-      .tab-content {
-        width: calc(100% - #{$sidepanel-width});
+
+      .cask-tabs {
+        &.horizontal {
+          > .cask-tab-headers {
+            background-color: white;
+            border-bottom: 1px solid #efefef;
+            height: $horizontal-tab-height;
+          }
+        }
       }
     }
   }

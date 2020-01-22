@@ -17,6 +17,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
+import MarketStore from 'components/Market/store/market-store';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDeployActions';
 import NamespaceStore from 'services/NamespaceStore';
@@ -83,8 +84,9 @@ export default class OneStepDeployApp extends Component {
       }
     });
 
-    let marketPath = `/packages/${name}/${version}/${jarName}`;
-    marketPath = encodeURIComponent(marketPath);
+    const marketPath = `/packages/${name}/${version}/${jarName}`;
+    const marketHost = MarketStore.getState().selectedMarketHost;
+    const marketUrl = encodeURIComponent(`${marketHost}${marketPath}`);
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -104,7 +106,7 @@ export default class OneStepDeployApp extends Component {
       }
     }
 
-    let fetchUrl = `/forwardMarketToCdap?source=${marketPath}&target=${cdapPath}`;
+    let fetchUrl = `/forwardMarketToCdap?source=${marketUrl}&target=${cdapPath}`;
 
     return Observable.create((observer) => {
       fetch(fetchUrl, {

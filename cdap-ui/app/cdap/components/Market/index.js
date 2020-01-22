@@ -25,15 +25,22 @@ import AllTabContents from 'components/Market/AllTab';
 import UsecaseTab from 'components/Market/UsecaseTab';
 import { CATEGORY_MAP, DEFAULT_CATEGORIES } from 'components/Market/CategoryMap';
 import { objectQuery } from 'services/helpers';
+import { Observable } from 'rxjs/Observable';
+
+function hasMultipleMarkets() {
+  return window.CDAP_CONFIG.marketUrls.length > 1;
+}
 
 export default class Market extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      tabsList: [],
       tabConfig: null,
       activeTab: 1,
+      marketsTabConfig: null,
+      marketsActiveTab: 1,
+      marketNames: [],
     };
   }
 
@@ -49,10 +56,50 @@ export default class Market extends Component {
       }
     });
 
-    MyMarketApi.list().subscribe(this.getCategories, (err) => {
-      console.log('Error', err);
-      MarketAction.setError();
+    if (hasMultipleMarkets()) {
+      this.populateMarketNames();
+      return;
+    }
+
+    this.populateMarketPackages(window.CDAP_CONFIG.marketUrls[0]);
+  }
+
+  populateMarketPackages(marketHost) {
+    MyMarketApi.list({ marketHost }).subscribe(
+      (packages) => {
+        this.getCategories(packages, marketHost);
+      },
+      () => {
+        this.handleMarketConnectionError(marketHost);
+      }
+    );
+  }
+
+  populateMarketNames() {
+    if (!hasMultipleMarkets()) {
+      return;
+    }
+    const markets = window.CDAP_CONFIG.marketUrls;
+
+    // Cache all market names from market metadata.
+    const observables = markets.map((marketHost) =>
+      MyMarketApi.getMetaData({ marketHost }).catch(() => {
+        // Fallback to "Unknown" as the market name. If the user clicks the unknown
+        // market, a connection failure UI would most likly appear.
+        return Observable.of({ marketName: marketHost });
+      })
+    );
+    Observable.forkJoin(observables).subscribe((marketMetas) => {
+      const marketNames = marketMetas.map((marketMeta) => marketMeta.marketName);
+      this.setState({ marketNames }, () => {
+        this.populateMarketPackages(markets[0]);
+      });
     });
+  }
+
+  handleMarketConnectionError(marketHost) {
+    this.processPackagesAndCategories([], [], marketHost);
+    MarketAction.setError();
   }
 
   componentWillUnmount() {
@@ -63,7 +110,7 @@ export default class Market extends Component {
     }
   }
 
-  getCategories = (packages) => {
+  getCategories = (packages, marketHost) => {
     const filteredPackages = packages.filter((packet) => {
       return (
         packet.categories.indexOf('datapack') === -1 &&
@@ -72,12 +119,12 @@ export default class Market extends Component {
       );
     });
 
-    MyMarketApi.getCategories().subscribe(
+    MyMarketApi.getCategories({ marketHost }).subscribe(
       (categories) => {
         categories = categories.filter(
           (category) => ['gcp', 'usecase', 'datapack'].indexOf(category.name) === -1
         );
-        this.processPackagesAndCategories(filteredPackages, categories);
+        this.processPackagesAndCategories(filteredPackages, categories, marketHost);
       },
       () => {
         // If categories do not come from backend, revert back to get categories from existing packages
@@ -111,9 +158,9 @@ export default class Market extends Component {
     );
   };
 
-  processPackagesAndCategories(packages, categories) {
+  processPackagesAndCategories(filteredPackages, categories, marketHost) {
     const newState = {
-      tabConfig: this.constructTabConfig(categories),
+      tabConfig: this.constructTabConfig(categories, marketHost),
     };
     const searchFilter = find(newState.tabConfig.tabs, { filter: MarketStore.getState().filter });
 
@@ -121,11 +168,40 @@ export default class Market extends Component {
       newState.activeTab = searchFilter.id;
     }
 
+    if (hasMultipleMarkets()) {
+      newState.marketsTabConfig = this.constructMarketTabConfig(newState);
+    }
+
     this.setState(newState);
-    MarketAction.setList(packages);
+    MarketAction.setList(filteredPackages);
   }
 
-  constructTabConfig(categories) {
+  constructMarketTabConfig(newState) {
+    const tabConfig = {
+      defaultTab: 1,
+      layout: 'horizontal',
+    };
+
+    const tabs = this.state.marketNames.map((marketName, index) => {
+      return {
+        id: index + 1,
+        filter: marketName,
+        marketHost: window.CDAP_CONFIG.marketUrls[index],
+        name: marketName,
+        content: (
+          <ConfigurableTab
+            tabConfig={newState.tabConfig}
+            onTabClick={this.handleTabClick.bind(this)}
+            activeTab={newState.activeTab}
+          />
+        ),
+      };
+    });
+    tabConfig.tabs = tabs;
+    return tabConfig;
+  }
+
+  constructTabConfig(categories, marketHost) {
     const tabConfig = {
       defaultTab: 1,
       defaultTabContent: <AllTabContents />,
@@ -157,7 +233,7 @@ export default class Market extends Component {
         icon = {
           type: 'link',
           arguments: {
-            url: MyMarketApi.getCategoryIcon(category.name),
+            url: MyMarketApi.getCategoryIcon(category.name, marketHost),
           },
         };
       } else if (categoryContent.displayName) {
@@ -205,16 +281,40 @@ export default class Market extends Component {
     MarketAction.setFilter(searchFilter);
   }
 
+  handleMarketTabClick(id) {
+    const marketHost = find(this.state.marketsTabConfig.tabs, { id }).marketHost;
+    this.populateMarketPackages(marketHost);
+
+    // Reset states before rendering market UI.
+    this.setState({ activeTab: 1, marketsActiveTab: id });
+    MarketStore.dispatch({ type: 'RESET' });
+    MarketAction.setSelectedMarketHost(marketHost);
+  }
+
   render() {
     if (!this.state.tabConfig) {
       return null;
     }
 
+    if (!hasMultipleMarkets()) {
+      return (
+        <ConfigurableTab
+          tabConfig={this.state.tabConfig}
+          onTabClick={this.handleTabClick.bind(this)}
+          activeTab={this.state.activeTab}
+        />
+      );
+    }
+
+    if (!this.state.marketsTabConfig) {
+      return null;
+    }
+
     return (
       <ConfigurableTab
-        tabConfig={this.state.tabConfig}
-        onTabClick={this.handleTabClick.bind(this)}
-        activeTab={this.state.activeTab}
+        tabConfig={this.state.marketsTabConfig}
+        onTabClick={this.handleMarketTabClick.bind(this)}
+        activeTab={this.state.marketsActiveTab}
       />
     );
   }

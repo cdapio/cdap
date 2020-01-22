@@ -26,6 +26,7 @@ require('./AllTabContents.scss');
 
 export default class AllTabContents extends Component {
   filterType = '';
+  list = [];
   constructor(props) {
     super(props);
     const filteredEntities = this.getFilteredEntities();
@@ -38,9 +39,10 @@ export default class AllTabContents extends Component {
     };
 
     this.unsub = MarketStore.subscribe(() => {
-      const { loading, isError, filter } = MarketStore.getState();
-      if (this.filterType !== filter) {
+      const { loading, isError, filter, list } = MarketStore.getState();
+      if (this.filterType !== filter || this.list !== list) {
         this.filterType = filter;
+        this.list = list;
         const unSubFilteredEntities = this.getFilteredEntities();
         this.setState({
           entities: unSubFilteredEntities,
@@ -113,14 +115,14 @@ export default class AllTabContents extends Component {
 
   render() {
     let error;
+    let searchBox;
     if (this.state.isError) {
       error = (
         <h3 className="error-message">{T.translate('features.Market.connectErrorMessage')}</h3>
       );
-    }
-
-    return (
-      <div className="all-tab-content">
+      searchBox = null;
+    } else {
+      searchBox = (
         <div className="search-box input-group">
           <div className="input-feedback input-group-prepend">
             <div className="input-group-text">
@@ -136,7 +138,12 @@ export default class AllTabContents extends Component {
             onChange={this.onSearch.bind(this)}
           />
         </div>
+      );
+    }
 
+    return (
+      <div className="all-tab-content">
+        {searchBox}
         <div
           className={classnames('body-section text-center', {
             'empty-section': this.state.filterEntites.length === 0,

@@ -21,8 +21,13 @@ import Version from 'services/VersionRange/Version';
 import VersionStore from 'services/VersionStore';
 import isNil from 'lodash/isNil';
 
+function getDefaultMarketHost() {
+  return window.CDAP_CONFIG.marketUrls[0];
+}
+
 const initialState = {
   list: [],
+  selectedMarketHost: getDefaultMarketHost(),
   activeEntity: undefined,
   filter: '*',
   loading: true,
@@ -38,6 +43,10 @@ const market = (state = initialState, action) => {
           Object.assign(entity, { id: uuidV4() })
         ),
         loading: false,
+      });
+    case 'SET_SELECTED_MARKET_HOST':
+      return Object.assign({}, state, {
+        selectedMarketHost: action.payload,
       });
     case 'SET_ACTIVE_ENTITY':
       return Object.assign({}, state, {
