@@ -55,6 +55,18 @@ const widgetProps = {
   functionDropdown: {
     dropdownOptions: aliasOptions,
   },
+  inputFieldDropdown: {
+    inputSchema: [
+      {
+        name: 'Projection',
+        schema:
+          '{"type":"record","name":"etlSchemaBody","fields":[{"name":"haha","type":"string"},{"name":"hehe","type":"string"},{"name":"hohoho","type":"string"}]}',
+      },
+    ],
+  },
+  keyValueDropdown: {
+    dropdownOptions: ['simple option 1', 'simple option 2', 'simple option 3'],
+  },
   radio: { options: radioOptions },
   select: { options: selectOptions },
   toggle: {
@@ -84,9 +96,13 @@ export const dlp = () => <AbstractWidget type="dlp" widgetProps={widgetProps.dlp
 
 export const getSchema = () => <AbstractWidget type="get-schema" />;
 
-export const inputFieldDropdown = () => <AbstractWidget type="input-field-selector" />;
+export const inputFieldDropdown = () => (
+  <AbstractWidget type="input-field-selector" extraConfig={widgetProps.inputFieldDropdown} />
+);
 
-export const keyValueDropdown = () => <AbstractWidget type="keyvalue-dropdown" />;
+export const keyValueDropdown = () => (
+  <AbstractWidget type="keyvalue-dropdown" widgetProps={widgetProps.keyValueDropdown} />
+);
 
 export const keyValueEncoded = () => <AbstractWidget type="keyvalue-encoded" />;
 
