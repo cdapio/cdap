@@ -48,7 +48,7 @@ This release introduces a number of new features, improvements, and bug fixes to
     - Field level lineage support for more plugins
 
 3. **Platform enhancements**
-    - Performance mprovements across the platform
+    - Performance improvements across the platform
     - Migration of more UI components from Angular to React
 
 New Features
