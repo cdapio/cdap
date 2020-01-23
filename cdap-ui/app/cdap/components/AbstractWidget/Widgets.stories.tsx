@@ -36,35 +36,15 @@ const aliasOptions = [
   { value: 'CollectList', label: 'CollectList' },
 ];
 
-const transforms = [
-  {
-    label: 'transform1',
-    name: 'name1',
-    options: [
-      { name: 'widget1', 'widget-attributes': { default: 'default attribute for widget1' } },
-      { name: 'widget2', 'widget-attributes': { default: 'default attribute for widget2' } },
-    ],
-  },
-  { label: 'transform2', name: 'name2', options: [{ name: 'widget3' }, { name: 'widget4' }] },
+const radioOptions = [
+  { label: 'choice A', id: 'choice A' },
+  { label: 'choice B', id: 'choice B' },
+  { label: 'choice C', id: 'choice C' },
 ];
-const filters = [{ id: 'filter A', label: 'filter A' }, { id: 'filter B', label: 'filter B' }];
-
-const radioOptions = [{ label: 'choice A', id: 'choice A' }, { label: 'choice B', id: 'choice B' }];
 
 const widgetProps = {
-  datasetSelect: { placeholder: 'placeholder text' },
-  dlp: { transforms, filters },
   functionDropdown: {
     dropdownOptions: aliasOptions,
-  },
-  inputFieldDropdown: {
-    inputSchema: [
-      {
-        name: 'Projection',
-        schema:
-          '{"type":"record","name":"etlSchemaBody","fields":[{"name":"haha","type":"string"},{"name":"hehe","type":"string"},{"name":"hohoho","type":"string"}]}',
-      },
-    ],
   },
   keyValueDropdown: {
     dropdownOptions: ['simple option 1', 'simple option 2', 'simple option 3'],
@@ -74,6 +54,7 @@ const widgetProps = {
   },
   radio: { options: radioOptions },
   select: { options: selectOptions },
+  textbox: { placeholder: 'placeholder text' },
   toggle: {
     on: { value: 'on', label: 'on' },
     off: { value: 'off', label: 'off' },
@@ -104,7 +85,9 @@ export const memoryDropdown = () => (
 
 export const memoryTextbox = () => <AbstractWidget type="memory-textbox" />;
 
-export const multiSelect = () => <AbstractWidget type="multi-select" />;
+export const multiSelect = () => (
+  <AbstractWidget type="multi-select" widgetProps={widgetProps.radio} />
+);
 
 export const numberTextbox = () => <AbstractWidget type="number" />;
 
@@ -129,6 +112,6 @@ export const selectDropdown = () => (
   />
 );
 
-export const textbox = () => <AbstractWidget type="textbox" />;
+export const textbox = () => <AbstractWidget type="textbox" widgetProps={widgetProps.textbox} />;
 
 export const toggle = () => <AbstractWidget type="toggle" widgetProps={widgetProps.toggle} />;
