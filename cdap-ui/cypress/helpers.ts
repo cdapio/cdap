@@ -64,15 +64,17 @@ function getSessionToken(headers) {
   if (sessionToken !== null) {
     return sessionToken;
   }
-  return cy.request({
-    method: 'GET',
-    url: `http://${Cypress.env('host')}:11011/sessionToken`,
-    failOnStatusCode: false,
-    headers,
-  }).then(response => {
-    sessionToken = response.body;
-    return sessionToken;
-  });
+  return cy
+    .request({
+      method: 'GET',
+      url: `http://${Cypress.env('host')}:11011/sessionToken`,
+      failOnStatusCode: false,
+      headers,
+    })
+    .then((response) => {
+      sessionToken = response.body;
+      return sessionToken;
+    });
 }
 
 function getArtifactsPoll(headers, retries = 0) {
@@ -115,9 +117,17 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .then(() => done());
 }
 
-function getGenericEndpoint(options, id) { return `.plugin-endpoint_${id}-right` }
+function getGenericEndpoint(options, id) {
+  return `.plugin-endpoint_${id}-right`;
+}
 
-function getConditionNodeEndpoint(options, id) { return `.plugin-endpoint_${id}_condition_${options.condition}` }
+function getConditionNodeEndpoint(options, id) {
+  return `.plugin-endpoint_${id}_condition_${options.condition}`;
+}
+
+function dataCy(property) {
+  return `[data-cy="${property}"]`;
+}
 
 export {
   loginIfRequired,
@@ -125,5 +135,6 @@ export {
   deployAndTestPipeline,
   getSessionToken,
   getGenericEndpoint,
-  getConditionNodeEndpoint
+  getConditionNodeEndpoint,
+  dataCy,
 };

@@ -52,6 +52,7 @@ export interface IAbstractRowProps<S extends typeof AbstractRowStyles> extends W
   changeFocus: (index: number) => void;
   forwardedRef: () => void;
   errors: IErrorObj[];
+  dataCy?: string;
 }
 
 export default class AbstractRow<
@@ -87,7 +88,7 @@ export default class AbstractRow<
   };
 
   public render() {
-    const { errors, value } = this.props;
+    const { errors, value, dataCy, index } = this.props;
     let errorMsg = null;
     if (errors && value) {
       const errorObj = errors.find((error: IErrorObj) => error.element === value);
@@ -95,18 +96,19 @@ export default class AbstractRow<
         errorMsg = errorObj.msg;
       }
     }
+
     return (
       <React.Fragment>
-        <div className={this.props.classes.root}>
+        <div className={this.props.classes.root} data-cy={`${index}`}>
           {this.renderInput()}
 
           <If condition={!this.props.disabled}>
             <React.Fragment>
-              <IconButton onClick={this.props.addRow}>
+              <IconButton onClick={this.props.addRow} data-cy="add-row">
                 <AddIcon fontSize="small" />
               </IconButton>
 
-              <IconButton color="secondary" onClick={this.props.removeRow}>
+              <IconButton color="secondary" onClick={this.props.removeRow} data-cy="remove-row">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </React.Fragment>

@@ -24,15 +24,17 @@ declare global {
       /**
        * Given the nodeidentifier object returns the html element of the plugin
        *
-       * @node - NodeIdentifier object to identify the node in the canvas
+       * @nodeObj - NodeIdentifier object to identify the node in the canvas
        */
       get_node: (nodeObj: INodeIdentifier) => Chainable<JQuery<HTMLElement>>;
+
       /**
        * Add node to canvas
        *
        * @nodeObj - NodeInfo object to identify the node in the side panel
        */
       add_node_to_canvas: (nodeObj: INodeInfo) => Chainable<JQuery<HTMLElement>>;
+
       /**
        * Get all elements at once for matching selectors
        *
@@ -51,6 +53,7 @@ declare global {
        * - in a popover for splitter plugins
        */
       connect_two_nodes: (sourceNode: INodeIdentifier, targetNode: INodeIdentifier, getSourceNodeId: (options: IgetNodeIDOptions, s: string) => string, options?: IgetNodeIDOptions) => Chainable<any>;
+
       /**
        * Moves a node based on selector to X,Y co-ordinates
        *
@@ -84,6 +87,12 @@ declare global {
        * Get pipeline config.
        */
       get_pipeline_json: () => Chainable<any>;
+
+      /**
+       * Get a specific stage info from pipeline export config
+       */
+      get_pipeline_stage_json: (stageName: string) => Chainable<any>;
+
       /**
        * Uploads a pipeline json from fixtures to input file element.
        *
@@ -91,6 +100,19 @@ declare global {
        * @selector - css selector to query for the input[type="file"] element.
       */
       upload_pipeline: (filename: string, selector: string) => Chainable<JQuery<HTMLElement>>;
+
+      /**
+       * Open plugin node property modal
+       *
+       * @nodeObj - NodeIdentifier object to identify the node in the canvas
+       */
+      open_node_property: (nodeObj: INodeIdentifier) => Chainable<JQuery<HTMLElement>>;
+
+      /**
+       * Close node property modal
+       */
+      close_node_property: () => Chainable<JQuery<HTMLElement>>;
+
       /**
        * Cleans up pipelines once expecuting a specific test. This is to remove state
        *  from individual tests.
@@ -109,7 +131,6 @@ declare global {
       /**
        * Fills up the create connection form for GCS
        */
-
       fill_GCS_connection_create_form: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
 
       /**
@@ -126,7 +147,6 @@ declare global {
       /**
       * Fills up the create connection form for BIGQUERY
       */
-
       fill_BIGQUERY_connection_create_form: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
 
       /**
@@ -137,25 +157,22 @@ declare global {
       /**
        * Creates a BigQuery connection
        */
-
       create_BIGQUERY_connection: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
 
 
       /**
-      * Fills up the create connection form for BIGQUERY
+      * Fills up the create connection form for SPANNER
       */
-
       fill_SPANNER_connection_create_form: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
 
       /**
-       * Test BIGQUERY connection
+       * Test SPANNER connection
        */
       test_SPANNER_connection: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
 
       /**
-       * Creates a BigQuery connection
+       * Creates a SPANNER connection
        */
-
       create_SPANNER_connection: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
       compareSnapshot: (s: string) => any;
     }
