@@ -242,6 +242,7 @@
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
+        <stage.launcher.ext.dir>${stage.opt.dir}/ext/launchers</stage.launcher.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
@@ -307,6 +308,12 @@
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-cloudkms</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-runtime-launcher-ext</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -582,6 +589,26 @@
                       </directory>
                       <includes>
                         <include>aws-emr.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-runtime-launcher-ext</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.launcher.ext.dir}/dataproc-launcher</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-runtime-launcher-ext/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
                       </includes>
                     </resource>
                   </resources>

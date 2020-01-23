@@ -266,4 +266,12 @@
     </description>
   </property>
 
+  <property>
+    <name>launcher.extensions.dir</name>
+    <value>ext/launchers</value>
+    <description>
+      Directory for log appender jars
+    </description>
+  </property>
+
 </configuration>

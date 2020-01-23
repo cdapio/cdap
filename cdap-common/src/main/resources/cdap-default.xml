@@ -1530,6 +1530,14 @@
   </property>
 
   <property>
+    <name>launcher.extensions.dir</name>
+    <value>/opt/cdap/master/ext/launchers</value>
+    <description>
+      directory for launchers
+    </description>
+  </property>
+
+  <property>
     <name>app.program.log.appender.provider</name>
     <value></value>
     <description>

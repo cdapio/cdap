@@ -2695,6 +2695,7 @@
         <module>cdap-runtime-ext-remote-hadoop</module>
         <module>cdap-runtime-spi</module>
         <module>cdap-securestore-ext-cloudkms</module>
+        <module>cdap-runtime-launcher-ext</module>
         <module>cdap-securestore-spi</module>
         <module>cdap-operational-stats-core</module>
         <module>cdap-client</module>

@@ -175,12 +175,12 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
         // If the program is not running, emit error state for the program run and stop the retry
         if (!remoteProcessController.isRunning()) {
           LOG.error("Program runtime terminated abnormally for program {}", programRunId, ex);
-          programStateWriter.error(programRunId,
-                                   new IllegalStateException("Program runtime terminated abnormally. " +
-                                                               "Please inspect logs for root cause.", ex));
-          // Clear all program state after erroring out.
-          clearStates();
-          return false;
+//          programStateWriter.error(programRunId,
+//                                   new IllegalStateException("Program runtime terminated abnormally. " +
+//                                                               "Please inspect logs for root cause.", ex));
+//          // Clear all program state after erroring out.
+//          clearStates();
+          return true;
         }
       } catch (Exception e) {
         OUTAGE_LOGGER.warn("Failed to check if the remote process is still running for program {}", programRunId, e);

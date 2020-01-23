@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,32 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.runtime.spi.launcher;
 
-import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
+import java.net.URI;
+import java.util.Map;
 
 /**
- * A TwillRunnable for running Workers in distributed mode.
+ *
  */
-public class WorkerTwillRunnable extends AbstractProgramTwillRunnable<WorkerProgramRunner> {
+public interface Launcher {
 
   /**
-   * Main method for the remote execution mode.
+   *
+   * @return
    */
-  public static void main(String[] args) throws Exception {
-    new WorkerTwillRunnable(getRunnableNameFromEnv()).doMain();
-  }
+  String getName();
 
-  public WorkerTwillRunnable(String name) {
-    super(name);
-  }
+  /**
+   *
+   * @param files
+   */
+  void prepare(Map<String, URI> files);
+
+
+  /**
+   *
+   * @param localFiles
+   */
+  void launch(Map<String, URI> localFiles);
 }

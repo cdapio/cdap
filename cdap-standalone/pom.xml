@@ -435,6 +435,12 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-runtime-launcher-ext</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-emr</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
@@ -652,7 +658,15 @@
                         <include>*.jar</include>
                       </includes>
                     </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-runtime-launcher-ext/target/libexec</directory>
+                      <targetPath>ext/launchers/dataproc-launcher</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
                   </resources>
+
                 </configuration>
               </execution>
               <execution>
