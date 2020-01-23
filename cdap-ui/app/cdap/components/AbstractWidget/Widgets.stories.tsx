@@ -63,6 +63,10 @@ const widgetProps = {
 
 export const csv = () => <AbstractWidget type="csv" />;
 
+export const daterange = () => <AbstractWidget type="daterange" />;
+
+export const datetime = () => <AbstractWidget type="datetime" />;
+
 export const multipleValues = () => <AbstractWidget type="ds-multiplevalues" />;
 
 export const dsv = () => <AbstractWidget type="dsv" />;
