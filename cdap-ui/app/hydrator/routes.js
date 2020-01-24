@@ -199,7 +199,11 @@ angular.module(PKG.name + '.feature.hydrator')
                 message = (typeof message === 'string' ? message : GLOBALS.en.hydrator.studio.error['MISSING-SYSTEM-ARTIFACTS']);
                 myAlertOnValium.show({
                   type: 'danger',
-                  content: message
+                  templateUrl: '/assets/features/hydrator/templates/partial/error-template.html',
+                  templateScope: {
+                    content: [message],
+                    currentIndex: 0
+                  }
                 });
               };
 
