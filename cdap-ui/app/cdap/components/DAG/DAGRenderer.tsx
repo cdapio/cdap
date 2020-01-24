@@ -17,9 +17,23 @@
 import * as React from 'react';
 import 'jsplumb';
 import { INode, IConnection } from 'components/DAG/DAGProvider';
-import { DefaultNode } from 'components/DAG/Nodes/Default';
 import { List, fromJS } from 'immutable';
 import uuidV4 from 'uuid/v4';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+
+const styles = (theme): StyleRules => {
+  return {
+    root: {
+      height: 'inherit',
+      position: 'absolute',
+      width: 'inherit',
+      '& circle': {
+        fill: 'none',
+        stroke: 'none',
+      },
+    },
+  };
+};
 
 const DAG_CONTAINER_ID = `dag-${uuidV4()}`;
 
@@ -34,6 +48,7 @@ export interface IInitNodeProps {
   endPointParams?: IEndPointArgs[];
   makeSourceParams?: any;
   makeTargetParams?: any;
+  validConnectionHandler?: IValidationConnectionListener;
 }
 
 export interface IRegisterTypesProps {
@@ -50,7 +65,7 @@ export interface INodeComponentProps extends INode {
   onDelete?: (nodeId: string) => void;
 }
 
-interface IDAGRendererProps {
+interface IDAGRendererProps extends WithStyles<typeof styles> {
   nodes: List<INode>;
   connections: List<IConnection>;
   onConnection: (connection) => void;
@@ -60,11 +75,24 @@ interface IDAGRendererProps {
   registerTypes?: IRegisterTypesProps;
 }
 
-export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
+interface IConnectionObjWithDOM {
+  source: HTMLElement;
+  target: HTMLElement;
+}
+
+interface IConnectionObj extends IConnection {
+  connection: IConnectionObjWithDOM;
+}
+
+type IValidationConnectionListener = (connectionObj: IConnectionObj) => boolean;
+
+class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
   public state = {
     isJsPlumbInstanceCreated: false,
     jsPlumbInstance: jsPlumb.getInstance(this.props.jsPlumbSettings || {}),
   };
+
+  private validConnectionListeners: IValidationConnectionListener[] = [];
 
   public componentDidMount() {
     jsPlumb.ready(() => {
@@ -86,6 +114,7 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
         const newConnObj = this.getNewConnectionObj(fromJS(connObj));
         this.props.onConnectionDetached(newConnObj);
       });
+      jsPlumbInstance.bind('beforeDrop', this.checkForValidIncomingConnection);
       this.registerTypes(jsPlumbInstance);
       this.setState({
         isJsPlumbInstanceCreated: true,
@@ -115,7 +144,44 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
     if (!element) {
       return;
     }
-    this.state.jsPlumbInstance.addEndpoint(element, params, referenceParams);
+    const jsPlumbEndpoint = this.state.jsPlumbInstance.addEndpoint(
+      element,
+      params,
+      referenceParams
+    );
+    this.addListenersForEndpoint(jsPlumbEndpoint, element);
+  };
+
+  public addHoverListener = (endpoint, domCircleEl, labelId) => {
+    if (!domCircleEl.classList.contains('hover')) {
+      domCircleEl.classList.add('hover');
+    }
+    if (labelId) {
+      endpoint.showOverlay(labelId);
+    }
+  };
+
+  public removeHoverListener = (endpoint, domCircleEl, labelId) => {
+    if (domCircleEl.classList.contains('hover')) {
+      domCircleEl.classList.remove('hover');
+    }
+    if (labelId) {
+      endpoint.hideOverlay(labelId);
+    }
+  };
+
+  // TODO: labelId will be used on nodes with endpoints that have labels (condition, error, alert etc.,)
+  public addListenersForEndpoint = (endpoint, domCircleEl, labelId = null) => {
+    endpoint.canvas.removeEventListener('mouseover', this.addHoverListener);
+    endpoint.canvas.removeEventListener('mouseout', this.removeHoverListener);
+    endpoint.canvas.addEventListener(
+      'mouseover',
+      this.addHoverListener.bind(this, endpoint, domCircleEl, labelId)
+    );
+    endpoint.canvas.addEventListener(
+      'mouseout',
+      this.removeHoverListener.bind(this, endpoint, domCircleEl, labelId)
+    );
   };
 
   public makeNodeDraggable = (id: string) => {
@@ -126,7 +192,6 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
     if (!this.state.jsPlumbInstance) {
       return;
     }
-    this.state.jsPlumbInstance.deleteEveryConnection();
     this.props.connections.forEach((connObj) => {
       const newConnObj = this.getNewConnectionObj(connObj).toJSON();
       if (
@@ -167,6 +232,7 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
     endPointParams = [],
     makeSourceParams = {},
     makeTargetParams = {},
+    validConnectionHandler,
   }: IInitNodeProps) => {
     endPointParams.map((endpoint) => {
       const { element, params, referenceParams } = endpoint;
@@ -179,7 +245,13 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
       this.state.jsPlumbInstance.makeTarget(nodeId, makeTargetParams);
     }
     this.makeNodeDraggable(nodeId);
-    this.makeConnections();
+    if (validConnectionHandler) {
+      this.validConnectionListeners.push(validConnectionHandler);
+    }
+  };
+
+  private checkForValidIncomingConnection = (connObj: IConnectionObj) => {
+    return this.validConnectionListeners.reduce((prev, curr) => prev && curr(connObj), true);
   };
 
   private renderChildren() {
@@ -199,7 +271,7 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
       }
 
       // huh.. This is not how it should be.
-      return React.cloneElement(child as React.ReactElement<DefaultNode>, {
+      return React.cloneElement(child as React.ReactElement, {
         ...child.props,
         id: child.props.id,
         initNode: this.initNode,
@@ -210,19 +282,16 @@ export class DAGRenderer extends React.Component<IDAGRendererProps, any> {
   }
 
   public render() {
+    const { classes } = this.props;
     return (
       <div style={{ position: 'relative' }}>
-        <div
-          id={DAG_CONTAINER_ID}
-          style={{
-            height: 'inherit',
-            position: 'absolute',
-            width: 'inherit',
-          }}
-        >
+        <div id={DAG_CONTAINER_ID} className={classes.root}>
           {this.renderChildren()}
         </div>
       </div>
     );
   }
 }
+
+const DAGRenderer = withStyles(styles)(DAGRendererComponent);
+export { DAGRenderer };
