@@ -16,11 +16,13 @@
 
 import * as React from 'react';
 import { action } from '@storybook/addon-actions';
+import { withInfo } from '@storybook/addon-info';
 import AbstractWidget from './index';
 
 export default {
   component: AbstractWidget,
   title: 'Widgets',
+  decorators: [withInfo],
 };
 
 const memoryOptions = [1024, 2048];
