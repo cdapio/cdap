@@ -40,6 +40,7 @@ public class DatasetFieldLineageSummary {
   private final Set<String> fields;
   private final Set<FieldLineageRelations> incoming;
   private final Set<FieldLineageRelations> outgoing;
+  private final int fieldCount;
 
   public DatasetFieldLineageSummary(Constants.FieldLineage.Direction direction, long startTs, long endTs,
                                     DatasetId datasetId, Set<String> fields,
@@ -57,6 +58,7 @@ public class DatasetFieldLineageSummary {
     this.outgoing = outgoing.entrySet().stream().map(
       entry -> new FieldLineageRelations(entry.getKey(), fieldCounts.getOrDefault(entry.getKey(), 0),
                                          entry.getValue())).collect(Collectors.toSet());
+    this.fieldCount = fields.size();
   }
 
   public Constants.FieldLineage.Direction getDirection() {
@@ -85,6 +87,10 @@ public class DatasetFieldLineageSummary {
 
   public Set<FieldLineageRelations> getOutgoing() {
     return outgoing;
+  }
+
+  public int getFieldCount() {
+    return fieldCount;
   }
 
   /**
