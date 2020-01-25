@@ -109,6 +109,11 @@ const ExperimentToggle = Loadable({
   loading: LoadingSVGCentered,
 });
 
+const Replicator = Loadable({
+  loader: () => import(/* webpackChunkMame: "Replicator" */ 'components/Replicator'),
+  loading: LoadingSVGCentered,
+});
+
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
@@ -160,6 +165,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/experimentToggle" component={ExperimentToggle} />
+          <Route path="/ns/:namespace/replicator" component={Replicator} />
           <Route component={Page404} />
         </Switch>
       </div>
