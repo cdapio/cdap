@@ -33,8 +33,9 @@
         data-cy="plugin-validation-error-msg"
         ng-if="HydratorPlusPlusNodeConfigCtrl.errorCount > 0">
     <ng-pluralize count="HydratorPlusPlusNodeConfigCtrl.errorCount"
+                  data-cy="plugin-properties-errors-found"
                   when="{'1': '1 error found',
-                         'other': '{} errors found.'}">
+                             'other': '{} errors found.'}">
     </ng-pluralize>
   </span>
   <div class="btn-group pull-right">

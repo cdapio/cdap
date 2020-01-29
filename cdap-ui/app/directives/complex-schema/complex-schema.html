@@ -57,9 +57,11 @@
         <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
             class="field-row"
             ng-class="{'nested-row': !field.nested}">
-          <div class="clearfix" ng-class="{'error-row': ComplexSchema.errors[field.name]}">
+          <div class="clearfix"
+               ng-class="{'error-row': ComplexSchema.errors[field.name]}"
+               data-cy="schema-row-{{$index}}">
             <div class="input-column"
-                ng-class="{'tab-header': field.nested}">
+                 ng-class="{'tab-header': field.nested}">
               <div class="tab-header-inner">
                 <input type="text"
                        id="{{ field.id }}"
@@ -71,7 +73,8 @@
                        ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
                        placeholder="Field Name"
                        ng-paste="ComplexSchema.pasteFields($event, $index)"
-                       ng-class="{'disabled': ComplexSchema.isDisabled }">
+                       ng-class="{'disabled': ComplexSchema.isDisabled }"
+                       data-cy="schema-row-field-name-input-{{$index}}">
               </div>
             </div>
 
@@ -81,7 +84,8 @@
                         ng-model="field.displayType"
                         title="{{ field.displayType }}"
                         ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
-                        ng-change="ComplexSchema.changeType(field)">
+                        ng-change="ComplexSchema.changeType(field)"
+                        data-cy="schema-row-type-select-{{$index}}">
                 </select>
               </div>
             </div>
@@ -105,7 +109,7 @@
               </div>
             </div>
           </div>
-          <span class="error">
+          <span class="error" data-cy="schema-row-error-{{$index}}">
             {{ComplexSchema.errors[field.name] }}
           </span>
 

@@ -195,7 +195,10 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
           </If>
         </div>
         <If condition={propertyLevelErrorMsg !== ''}>
-          <div className={classnames(classes.errorText, classes.errorRow, 'propertyError')}>
+          <div
+            className={classnames(classes.errorText, classes.errorRow, 'propertyError')}
+            data-cy="property-row-error"
+          >
             {propertyLevelErrorMsg}
           </div>
         </If>
