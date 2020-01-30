@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -37,6 +36,7 @@ import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -55,8 +55,8 @@ public class LogQueryService extends AbstractIdleService {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_QUERY)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.LOG_QUERY)))
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.LOG_QUERY)))
       .setHost(cConf.get(Constants.LogQuery.ADDRESS))
       .setPort(cConf.getInt(Constants.LogQuery.PORT));
 

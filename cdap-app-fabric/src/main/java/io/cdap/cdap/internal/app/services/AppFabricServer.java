@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,6 @@ import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
-import io.cdap.http.HandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -50,6 +49,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -135,16 +135,15 @@ public class AppFabricServer extends AbstractIdleService {
     ).get();
 
     // Create handler hooks
-    ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
-    for (String hook : handlerHookNames) {
-      builder.add(new MetricsReporterHook(metricsCollectionService, hook));
-    }
+    List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
+      .map(name -> new MetricsReporterHook(metricsCollectionService, name))
+      .collect(Collectors.toList());
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = new CommonNettyHttpServiceBuilder(cConf,
                                                                                     Constants.Service.APP_FABRIC_HTTP)
       .setHost(hostname.getCanonicalHostName())
-      .setHandlerHooks(builder.build())
+      .setHandlerHooks(handlerHooks)
       .setHttpHandlers(handlers)
       .setConnectionBacklog(cConf.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
                                          Constants.AppFabric.DEFAULT_BACKLOG))

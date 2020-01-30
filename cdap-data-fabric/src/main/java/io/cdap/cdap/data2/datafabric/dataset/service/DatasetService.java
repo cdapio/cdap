@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -47,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -107,8 +107,8 @@ public class DatasetService extends AbstractService {
 
     this.httpService = builder
       .setHttpHandlers(datasetTypeHandler, datasetInstanceHandler)
-      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.DATASET_MANAGER)))
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.DATASET_MANAGER)))
       .setHost(cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.Dataset.Manager.PORT))
       .setConnectionBacklog(cConf.getInt(Constants.Dataset.Manager.BACKLOG_CONNECTIONS))

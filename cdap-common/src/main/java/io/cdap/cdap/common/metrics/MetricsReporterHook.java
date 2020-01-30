@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,14 +41,10 @@ import java.util.concurrent.TimeUnit;
 public class MetricsReporterHook extends AbstractHandlerHook {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsReporterHook.class);
 
-  private final MetricsCollectionService metricsCollectionService;
-
   private final String serviceName;
-
   private final LoadingCache<Map<String, String>, MetricsContext> collectorCache;
 
-  public MetricsReporterHook(final MetricsCollectionService metricsCollectionService, String serviceName) {
-    this.metricsCollectionService = metricsCollectionService;
+  public MetricsReporterHook(MetricsCollectionService metricsCollectionService, String serviceName) {
     this.serviceName = serviceName;
 
     if (metricsCollectionService != null) {
@@ -56,7 +52,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         .expireAfterAccess(1, TimeUnit.HOURS)
         .build(new CacheLoader<Map<String, String>, MetricsContext>() {
           @Override
-          public MetricsContext load(Map<String, String> key) throws Exception {
+          public MetricsContext load(Map<String, String> key) {
             return metricsCollectionService.getContext(key);
           }
         });
@@ -67,45 +63,47 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
-    if (metricsCollectionService != null) {
-      try {
-        MetricsContext collector = collectorCache.get(createContext(handlerInfo));
-        collector.increment("request.received", 1);
-      } catch (Throwable e) {
-        LOG.error("Got exception while getting collector", e);
-      }
+    if (collectorCache == null) {
+      return true;
+    }
+    try {
+      MetricsContext collector = collectorCache.get(createContext(handlerInfo));
+      collector.increment("request.received", 1);
+    } catch (Throwable e) {
+      LOG.error("Got exception while getting collector", e);
     }
     return true;
   }
 
   @Override
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
-    if (metricsCollectionService != null) {
-      try {
-        MetricsContext collector = collectorCache.get(createContext(handlerInfo));
-        String name;
-        int code = status.code();
-        if (code < 100) {
-          name = "unknown";
-        } else if (code < 200) {
-          name = "information";
-        } else if (code < 300) {
-          name = "successful";
-        } else if (code < 400) {
-          name = "redirect";
-        } else if (code < 500) {
-          name = "client-error";
-        } else if (code < 600) {
-          name = "server-error";
-        } else {
-          name = "unknown";
-        }
-
-        // todo: report metrics broken down by status
-        collector.increment("response." + name, 1/*, "status:" + code*/);
-      } catch (Throwable e) {
-        LOG.error("Got exception while getting collector", e);
+    if (collectorCache == null) {
+      return;
+    }
+    try {
+      MetricsContext collector = collectorCache.get(createContext(handlerInfo));
+      String name;
+      int code = status.code();
+      if (code < 100) {
+        name = "unknown";
+      } else if (code < 200) {
+        name = "information";
+      } else if (code < 300) {
+        name = "successful";
+      } else if (code < 400) {
+        name = "redirect";
+      } else if (code < 500) {
+        name = "client-error";
+      } else if (code < 600) {
+        name = "server-error";
+      } else {
+        name = "unknown";
       }
+
+      // todo: report metrics broken down by status
+      collector.increment("response." + name, 1/*, "status:" + code*/);
+    } catch (Throwable e) {
+      LOG.error("Got exception while getting collector", e);
     }
   }
 

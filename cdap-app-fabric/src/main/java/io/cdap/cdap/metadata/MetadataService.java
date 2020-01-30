@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.metadata;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -60,8 +60,8 @@ public class MetadataService extends AbstractIdleService {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
-      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.METADATA_SERVICE)))
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.METADATA_SERVICE)))
       .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))
