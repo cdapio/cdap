@@ -58,6 +58,19 @@ public final class MonitorSchemas {
   }
 
   /**
+   * Contains Schema for V2 protocol.
+   */
+  public static final class V2 {
+
+    /**
+     * Contains schema for monitor request.
+     */
+    public static final class MonitorRequest {
+      public static final Schema SCHEMA = loadSchema(MonitorSchemas.V2.MonitorRequest.class);
+    }
+  }
+
+  /**
    * Creates a {@link Schema} instance based on the given class name.
    */
   @Nullable

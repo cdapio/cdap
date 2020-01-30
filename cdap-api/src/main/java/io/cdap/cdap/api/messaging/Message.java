@@ -19,6 +19,7 @@ package io.cdap.cdap.api.messaging;
 import io.cdap.cdap.api.annotation.Beta;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Represents a message in the Transactional Messaging System.
@@ -37,14 +38,18 @@ public interface Message {
    * @param charset the {@link Charset} to use for decoding
    * @return the message payload as a string
    */
-  String getPayloadAsString(Charset charset);
+  default String getPayloadAsString(Charset charset) {
+    return new String(getPayload(), charset);
+  }
 
   /**
    * Returns the message payload as a UTF-8 string.
    *
    * @return a UTF-8 string representation of the message payload
    */
-  String getPayloadAsString();
+  default String getPayloadAsString() {
+    return getPayloadAsString(StandardCharsets.UTF_8);
+  }
 
   /**
    * Returns the message payload.

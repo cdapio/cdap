@@ -139,7 +139,7 @@ public class RuntimeMonitorTest {
         bind(RuntimeMonitorServer.class);
         expose(RuntimeMonitorServer.class);
 
-        // Bind a no-op Cancellable for the RuntimeMonitorService. The cancellable is for killing a program
+        // Bind a no-op Cancellable for the RuntimeServer. The cancellable is for killing a program
         bind(Cancellable.class).toInstance(() -> {
           ProgramRunId programRunId = publishProgramKilled.get();
           if (programRunId != null && publishProgramKilled.compareAndSet(programRunId, null)) {

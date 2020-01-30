@@ -34,7 +34,6 @@ import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
@@ -67,7 +66,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -79,7 +77,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
-import javax.net.ssl.HttpsURLConnection;
 
 /**
  * The client implementation of {@link MessagingService}. This client is intended for internal
@@ -400,18 +397,8 @@ public final class ClientMessagingService implements MessagingService {
 
       // The cask common http library doesn't support read streaming, and we don't want to buffer all messages
       // in memory, hence we use the HttpURLConnection directly instead.
-      URL url = remoteClient.resolve(createTopicPath(topicId) + "/poll");
-
-      HttpURLConnection urlConn = (HttpURLConnection)  url.openConnection();
-      if (urlConn instanceof HttpsURLConnection) {
-        new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
-      }
-      urlConn.setConnectTimeout(HTTP_REQUEST_CONFIG.getConnectTimeout());
-      urlConn.setReadTimeout(HTTP_REQUEST_CONFIG.getReadTimeout());
-      urlConn.setRequestMethod("POST");
+      HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, createTopicPath(topicId) + "/poll");
       urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
-      urlConn.setDoInput(true);
-      urlConn.setDoOutput(true);
 
       // Send the request
       Encoder encoder = EncoderFactory.get().directBinaryEncoder(urlConn.getOutputStream(), null);

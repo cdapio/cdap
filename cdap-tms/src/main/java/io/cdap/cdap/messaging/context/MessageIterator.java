@@ -22,9 +22,6 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.messaging.data.RawMessage;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-
 /**
  * A {@link CloseableIterator} that converts each {@link RawMessage} to {@link Message}.
  */
@@ -47,16 +44,6 @@ final class MessageIterator extends AbstractCloseableIterator<Message> {
       @Override
       public String getId() {
         return Bytes.toHexString(rawMessage.getId());
-      }
-
-      @Override
-      public String getPayloadAsString(Charset charset) {
-        return new String(getPayload(), charset);
-      }
-
-      @Override
-      public String getPayloadAsString() {
-        return getPayloadAsString(StandardCharsets.UTF_8);
       }
 
       @Override
