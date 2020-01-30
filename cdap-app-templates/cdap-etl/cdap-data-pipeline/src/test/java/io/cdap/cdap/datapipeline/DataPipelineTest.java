@@ -258,7 +258,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                                         new FieldRelation("srcField2", "destField2"),
                                                         new FieldRelation("srcField3", "destField3"));
     DatasetFieldLineageSummary.FieldLineageRelations expectedRelations =
-      new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(readDataset), fieldRelations);
+      new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(readDataset), 3, fieldRelations);
     Assert.assertEquals(expectedRelations, summary.getIncoming().iterator().next());
 
     // get field lineage for src dataset
@@ -270,7 +270,8 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertTrue(summary.getIncoming().isEmpty());
     Assert.assertEquals(1, summary.getOutgoing().size());
     expectedRelations =
-      new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(writeDataset), fieldRelations);
+      new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(writeDataset), 3,
+                                                           fieldRelations);
     Assert.assertEquals(expectedRelations, summary.getOutgoing().iterator().next());
 
     LineageAdmin lineageAdmin = getLineageAdmin();
