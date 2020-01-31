@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import { List, Map } from 'immutable';
+import { IPort } from 'components/DAG//Nodes/SplitterNode';
 
 export interface INodeConfig extends Map<string, any> {
   label?: string;
@@ -23,6 +24,7 @@ export interface INodeConfig extends Map<string, any> {
   properties?: object;
   showAlert?: boolean;
   showError?: boolean;
+  ports?: IPort[];
   [newProps: string]: any;
 }
 
@@ -48,11 +50,12 @@ export interface IDagProviderState {
   nodes: List<INode>;
 }
 export interface IDagStore extends IDagProviderState {
-  addNode: (node: INode) => void;
-  addConnection: (connection: IConnection) => void;
-  getConnections: () => List<IConnection>;
   getNodes: () => List<INode>;
+  addNode: (node: INode) => void;
   removeNode: (node: string) => void;
+  updateNode: (nodeId: string, config: INodeConfig) => void;
+  getConnections: () => List<IConnection>;
+  addConnection: (connection: IConnection) => void;
   removeConnection: (connectionObj: IConnection) => void;
 }
 
@@ -66,8 +69,11 @@ export class DAGProvider extends React.Component<any, IDagProviderState> {
     });
   };
   private removeNode = (nodeId: string) => {
+    const newNodes = this.state.nodes.delete(
+      this.state.nodes.findIndex((node: INode) => node.get('id') !== nodeId)
+    );
     this.setState({
-      nodes: this.state.nodes.filter((node) => node.get('id') !== nodeId) as List<INode>,
+      nodes: newNodes,
     });
   };
   private getConnections = (): List<IConnection> => this.state.connections;
@@ -86,31 +92,48 @@ export class DAGProvider extends React.Component<any, IDagProviderState> {
     });
   };
   private removeConnection = (connectionObj: IConnection) => {
-    const newConnections = this.state.connections.filter(
-      (connection: IConnection) =>
-        connection.get('from') !== connectionObj.get('from') &&
-        connection.get('to') !== connectionObj.get('to')
-    ) as List<IConnection>;
+    const newConnections = this.state.connections.delete(
+      this.state.connections.findIndex(
+        (connection: IConnection) =>
+          connection.get('from') !== connectionObj.get('from') &&
+          connection.get('to') !== connectionObj.get('to')
+      )
+    );
     this.setState({
       connections: newConnections,
     });
   };
 
-  public readonly state = {
+  private updateNode = (nodeId: string, newConfig: INodeConfig) => {
+    const newNodes = this.state.nodes.update(
+      this.state.nodes.findIndex((node: INode) => node.get('id') === nodeId),
+      (value: INode) => {
+        const finalConfig: INode = value.update('config', (config) => {
+          return config.merge(newConfig);
+        }) as INode;
+        return finalConfig;
+      }
+    );
+    this.setState({
+      nodes: newNodes,
+    });
+  };
+  public readonly state: IDagProviderState = {
     adjancecyMap: Map<IAdjacencyMap>({}),
-    connections: List(Map([]) as IConnection),
-    nodes: List(Map([]) as IConnection),
+    connections: List<IConnection>(Map([])),
+    nodes: List<INode>(Map([])),
   };
 
   public render() {
     const store: Readonly<IDagStore> = Object.freeze({
       ...this.state,
-      addConnection: this.addConnection,
-      addNode: this.addNode,
-      getConnections: this.getConnections,
       getNodes: this.getNodes,
-      removeConnection: this.removeConnection,
+      addNode: this.addNode,
       removeNode: this.removeNode,
+      updateNode: this.updateNode,
+      getConnections: this.getConnections,
+      addConnection: this.addConnection,
+      removeConnection: this.removeConnection,
     });
     return <MyContext.Provider value={store}>{this.props.children}</MyContext.Provider>;
   }

@@ -32,7 +32,7 @@ class TransformNodeComponent extends AbstractNode<ITransformNodeProps> {
   public alertEndpointRef: HTMLElement | null;
   public errorEndpointRef: HTMLElement | null;
   public getEndpointParams = () => {
-    const endPointConfigs = this.getEndpointConfig();
+    const endPointConfigs = AbstractNode.getEndpointConfig();
     const alertEndpointConfigs = this.getAlertEndpointConfig();
     const errorEndpointConfigs = this.getErrorEndpointConfig();
     return [

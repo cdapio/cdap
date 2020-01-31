@@ -38,9 +38,10 @@ const styles = (theme): StyleRules => {
 const DAG_CONTAINER_ID = `dag-${uuidV4()}`;
 
 export interface IEndPointArgs {
-  element: HTMLElement | null;
+  element: HTMLElement | string | null;
   params?: EndpointParams;
   referenceParams?: EndpointParams;
+  labelId?: string;
 }
 
 export interface IInitNodeProps {
@@ -49,6 +50,7 @@ export interface IInitNodeProps {
   makeSourceParams?: any;
   makeTargetParams?: any;
   validConnectionHandler?: IValidationConnectionListener;
+  registerTypes?: IRegisterTypesProps;
 }
 
 export interface IRegisterTypesProps {
@@ -62,17 +64,23 @@ export interface IRegisterTypesProps {
 
 export interface INodeComponentProps extends INode {
   initNode?: (initConfig: IInitNodeProps) => void;
-  onDelete?: (nodeId: string) => void;
+  removeNode?: (nodeId: string) => void;
+  addEndpoint?: (
+    element: HTMLElement | string | null,
+    params?: EndpointParams,
+    referenceParams?: EndpointParams,
+    label?: string
+  ) => void;
+  removeEndpoint?: (endpointId: string) => void;
 }
 
 interface IDAGRendererProps extends WithStyles<typeof styles> {
   nodes: List<INode>;
   connections: List<IConnection>;
-  onConnection: (connection) => void;
-  onConnectionDetached: (connection) => void;
-  onDeleteNode: (nodeId: string) => void;
+  addConnection: (connection) => void;
+  removeConnection: (connection) => void;
+  removeNode: (nodeId: string) => void;
   jsPlumbSettings: object;
-  registerTypes?: IRegisterTypesProps;
 }
 
 interface IConnectionObjWithDOM {
@@ -105,17 +113,10 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
           return;
         }
         const newConnObj = this.getNewConnectionObj(fromJS(connObj));
-        this.props.onConnection(newConnObj);
+        this.props.addConnection(newConnObj);
       });
-      jsPlumbInstance.bind('connectionDetached', (connObj: IConnection, originalEvent: boolean) => {
-        if (!originalEvent) {
-          return;
-        }
-        const newConnObj = this.getNewConnectionObj(fromJS(connObj));
-        this.props.onConnectionDetached(newConnObj);
-      });
+      jsPlumbInstance.bind('connectionDetached', this.removeConnectionHandler);
       jsPlumbInstance.bind('beforeDrop', this.checkForValidIncomingConnection);
-      this.registerTypes(jsPlumbInstance);
       this.setState({
         isJsPlumbInstanceCreated: true,
         jsPlumbInstance,
@@ -123,23 +124,21 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
     });
   }
 
-  private registerTypes = (jsPlumbInstance: jsPlumbInstance) => {
-    if (typeof this.props.registerTypes === 'undefined') {
-      return;
-    }
-    const { connections, endpoints } = this.props.registerTypes;
+  private registerTypes = (registerTypes: IRegisterTypesProps) => {
+    const { connections, endpoints } = registerTypes;
     if (Object.keys(connections).length) {
-      jsPlumbInstance.registerConnectionTypes(connections);
+      this.state.jsPlumbInstance.registerConnectionTypes(connections);
     }
     if (Object.keys(endpoints).length) {
-      jsPlumbInstance.registerEndpointTypes(endpoints);
+      this.state.jsPlumbInstance.registerEndpointTypes(endpoints);
     }
   };
 
   public addEndpoint = (
-    element: HTMLElement | null,
+    element: HTMLElement | string | null,
     params: EndpointParams = {},
-    referenceParams: EndpointParams = {}
+    referenceParams: EndpointParams = {},
+    labelId?: string | null
   ) => {
     if (!element) {
       return;
@@ -149,12 +148,54 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
       params,
       referenceParams
     );
-    this.addListenersForEndpoint(jsPlumbEndpoint, element);
+    if (labelId) {
+      jsPlumbEndpoint.hideOverlay(labelId);
+    }
+    this.addListenersForEndpoint(jsPlumbEndpoint, element, labelId);
+  };
+
+  public removeEndpoint = (endpointId) => {
+    this.state.jsPlumbInstance.unbind('connectionDetached');
+    const endpoint = this.state.jsPlumbInstance.getEndpoint(endpointId);
+
+    if (endpoint && endpoint.connections) {
+      Object.values(endpoint.connections).forEach((conn: IConnection) => {
+        const connectionObj: IConnection = this.getNewConnectionObj(
+          fromJS({
+            sourceId: conn.sourceId,
+            targetId: conn.targetId,
+            data: conn.getData(),
+          })
+        );
+        this.props.removeConnection(connectionObj);
+      });
+    }
+
+    this.state.jsPlumbInstance.deleteEndpoint(endpoint);
+    this.state.jsPlumbInstance.bind('connectionDetached', this.removeConnectionHandler);
+  };
+
+  public removeConnectionHandler = (connObj: IConnection, originalEvent: boolean) => {
+    if (!originalEvent) {
+      return;
+    }
+    const newConnObj = this.getNewConnectionObj(
+      fromJS({
+        sourceId: connObj.sourceId,
+        targetId: connObj.targetId,
+        data: connObj.getData(),
+      })
+    );
+    this.props.removeConnection(newConnObj);
   };
 
   public addHoverListener = (endpoint, domCircleEl, labelId) => {
-    if (!domCircleEl.classList.contains('hover')) {
-      domCircleEl.classList.add('hover');
+    let domElement = domCircleEl;
+    if (typeof domElement === 'string') {
+      domElement = document.getElementById(domElement);
+    }
+    if (!domElement.classList.contains('hover')) {
+      domElement.classList.add('hover');
     }
     if (labelId) {
       endpoint.showOverlay(labelId);
@@ -162,8 +203,12 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
   };
 
   public removeHoverListener = (endpoint, domCircleEl, labelId) => {
-    if (domCircleEl.classList.contains('hover')) {
-      domCircleEl.classList.remove('hover');
+    let domElement = domCircleEl;
+    if (typeof domElement === 'string') {
+      domElement = document.getElementById(domElement);
+    }
+    if (domElement.classList.contains('hover')) {
+      domElement.classList.remove('hover');
     }
     if (labelId) {
       endpoint.hideOverlay(labelId);
@@ -233,10 +278,11 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
     makeSourceParams = {},
     makeTargetParams = {},
     validConnectionHandler,
+    registerTypes,
   }: IInitNodeProps) => {
     endPointParams.map((endpoint) => {
-      const { element, params, referenceParams } = endpoint;
-      this.addEndpoint(element, params, referenceParams);
+      const { element, params, referenceParams, labelId } = endpoint;
+      this.addEndpoint(element, params, referenceParams, labelId);
     });
     if (Object.keys(makeSourceParams).length) {
       this.state.jsPlumbInstance.makeSource(nodeId, makeSourceParams);
@@ -248,6 +294,20 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
     if (validConnectionHandler) {
       this.validConnectionListeners.push(validConnectionHandler);
     }
+    if (registerTypes) {
+      this.registerTypes(registerTypes);
+    }
+  };
+
+  public updateNode = ({
+    nodeId,
+    endPointParams = [],
+    makeSourceParams = {},
+    makeTargetParams = {},
+    validConnectionHandler,
+    registerTypes,
+  }: IInitNodeProps) => {
+    // TBD
   };
 
   private checkForValidIncomingConnection = (connObj: IConnectionObj) => {
@@ -275,8 +335,10 @@ class DAGRendererComponent extends React.Component<IDAGRendererProps, any> {
         ...child.props,
         id: child.props.id,
         initNode: this.initNode,
+        addEndpoint: this.addEndpoint,
+        removeEndpoint: this.removeEndpoint,
         key: child.props.id,
-        onDelete: this.props.onDeleteNode,
+        removeNode: this.props.removeNode,
       });
     });
   }

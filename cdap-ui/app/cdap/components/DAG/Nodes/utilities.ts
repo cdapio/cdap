@@ -108,6 +108,10 @@ const endpointCircle = (theme): StyleRules => {
       bottom: `-${ENDPOINT_RADIUS}px`,
       left: `${ENDPOINT_RADIUS * 7}px`,
     },
+    conditionNoEndpointCircle: {
+      bottom: `-${ENDPOINT_RADIUS}px`,
+      left: `${105 / 2 - 7}px`,
+    },
   };
 };
 const endpointCaret = (theme): StyleRules => ({
@@ -154,10 +158,11 @@ const endpointTargetEndpointParams = (endpointId) => {
     dropOptions: { hoverClass: 'drag-hover' },
     isTarget: true,
     uuid: endpointId,
+    type: 'dashed',
   };
 };
 
-const genericNodeStyles = (customNodeStyles = {}) => {
+const genericNodeStyles = (customNodeStyles = {}, customStyles = {}) => {
   return (theme): StyleRules => {
     const endpointCircleStyles = endpointCircle(theme);
     return {
@@ -182,12 +187,16 @@ const genericNodeStyles = (customNodeStyles = {}) => {
       errorEndpointCircle: {
         ...endpointCircleStyles.errorEndpointCircle,
       },
+      conditionNoEndpointCircle: {
+        ...endpointCircleStyles.conditionNoEndpointCircle,
+      },
       endpointCaret: {
         ...endpointCaret(theme).root,
       },
       bottomEndpointCaret: {
         ...bottomEndpointCaret().root,
       },
+      ...customStyles,
     };
   };
 };
