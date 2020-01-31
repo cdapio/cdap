@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package io.cdap.cdap.metrics.process;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -40,6 +39,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -59,8 +59,8 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS_PROCESSOR)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                Constants.Service.METRICS_PROCESSOR)))
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.METRICS_PROCESSOR)))
       .setHost(cConf.get(Constants.MetricsProcessor.BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.MetricsProcessor.BIND_PORT));
 

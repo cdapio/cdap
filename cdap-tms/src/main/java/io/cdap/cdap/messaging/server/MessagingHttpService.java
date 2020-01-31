@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.server;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -42,6 +41,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -64,8 +64,8 @@ public class MessagingHttpService extends AbstractIdleService {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.MESSAGING_SERVICE)
       .setHost(cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_BIND_PORT))
-      .setHandlerHooks(ImmutableList.of(
-        new MetricsReporterHook(metricsCollectionService, Constants.Service.MESSAGING_SERVICE)))
+      .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
+                                                                     Constants.Service.MESSAGING_SERVICE)))
       .setWorkerThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_EXECUTOR_THREADS))
       .setHttpChunkLimit(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB) * 1024 * 1024)

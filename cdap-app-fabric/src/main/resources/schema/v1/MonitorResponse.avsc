@@ -3,13 +3,13 @@
   "values" : {
 		"type" : "array",
 		"java-class": "java.util.LinkedList",
-	  	"items" : {
-	    	"type" : "record",
-	    	"name" : "MonitorMessages",
-	    	"fields" : [
-	      		{ "name" : "messageId", "type" : "string" },
-	      		{ "name" : "message", "type" : "bytes" }
-	    	]
-  		}
+    "items" : {
+      "type" : "record",
+      "name" : "MonitorMessages",
+      "fields" : [
+          { "name" : "messageId", "type" : "string" },
+          { "name" : "message", "type" : "bytes" }
+      ]
+    }
   }
 }

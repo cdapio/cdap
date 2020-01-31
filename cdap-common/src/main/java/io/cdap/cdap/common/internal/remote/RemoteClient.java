@@ -23,6 +23,7 @@ import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -38,8 +39,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
@@ -97,6 +100,22 @@ public class RemoteClient {
     } catch (ConnectException e) {
       throw new ServiceUnavailableException(discoverableServiceName, e);
     }
+  }
+
+  public HttpURLConnection openConnection(HttpMethod method, String resource) throws IOException {
+    URL url = resolve(resource);
+    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
+      new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+    }
+    urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
+    urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());
+    urlConn.setDoInput(true);
+    if (EnumSet.of(HttpMethod.POST, HttpMethod.PUT).contains(method)) {
+      urlConn.setDoOutput(true);
+    }
+    urlConn.setRequestMethod(method.name());
+    return urlConn;
   }
 
   /**
