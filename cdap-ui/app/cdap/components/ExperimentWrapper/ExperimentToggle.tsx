@@ -12,18 +12,20 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React, { useState } from 'react';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
+
+const cookie = new Cookies();
 
 const ExperimentToggle = () => {
-  const initSetting = cookie.load('CDAP_enable_experiments') || 'Off';
+  const initSetting = cookie.get('CDAP_enable_experiments') || 'Off';
   const [showExperiments, toggleExperiments] = useState(initSetting);
   const onChangeHandler = (exptSetting: string) => {
     toggleExperiments(exptSetting);
-    cookie.save('CDAP_enable_experiments', exptSetting, { path: '/' });
+    cookie.set('CDAP_enable_experiments', exptSetting, { path: '/' });
   };
 
   return (

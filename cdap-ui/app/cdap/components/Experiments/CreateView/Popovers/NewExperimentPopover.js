@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -161,10 +161,7 @@ const ExperiementDescriptionWrapper = connect(
   mapStateToDescriptionProps,
   mapDispatchToDescriptionToProps
 )(ExperimentDescription);
-const ExperimentNameWrapper = connect(
-  mapStateToNameProps,
-  mapDispatchToNameProps
-)(ExperimentName);
+const ExperimentNameWrapper = connect(mapStateToNameProps, mapDispatchToNameProps)(ExperimentName);
 const ExperimentOutcomeWrapper = connect(
   mapStateToOutcomeProps,
   mapDispatchToOutcomeProps

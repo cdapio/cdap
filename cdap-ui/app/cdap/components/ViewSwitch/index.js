@@ -21,12 +21,14 @@ import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
 require('./ViewSwitch.scss');
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
+
+const cookie = new Cookies();
 
 export default class ViewSwitch extends Component {
   constructor(props) {
     super(props);
-    let defaultView = cookie.load('ViewSwitchDefault');
+    let defaultView = cookie.get('ViewSwitchDefault');
     this.state = {
       list: this.props.list,
       activeTab: defaultView || 'card',
@@ -34,7 +36,7 @@ export default class ViewSwitch extends Component {
   }
   toggleView(tab) {
     if (this.state.activeTab !== tab) {
-      cookie.save('ViewSwitchDefault', tab);
+      cookie.set('ViewSwitchDefault', tab);
       this.setState({
         activeTab: tab,
       });

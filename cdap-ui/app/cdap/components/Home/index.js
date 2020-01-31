@@ -68,7 +68,9 @@ const ProfileCreateView = Loadable({
 });
 const ProfileCreateProvisionerSelection = Loadable({
   loader: () =>
-    import(/* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'),
+    import(
+      /* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'
+    ),
   loading: LoadingSVGCentered,
 });
 const ProfileDetailView = Loadable({
@@ -101,7 +103,9 @@ const FieldLevelLineage = Loadable({
 
 const ExperimentToggle = Loadable({
   loader: () =>
-    import(/* webpackChunkMame: "ExperimentToggle" */ 'components/ExperimentWrapper/ExperimentToggle'),
+    import(
+      /* webpackChunkMame: "ExperimentToggle" */ 'components/ExperimentWrapper/ExperimentToggle'
+    ),
   loading: LoadingSVGCentered,
 });
 

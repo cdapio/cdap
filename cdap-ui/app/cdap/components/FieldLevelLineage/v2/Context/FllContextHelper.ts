@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
 import { TIME_OPTIONS_MAP } from 'components/FieldLevelLineage/store/ActionCreator';

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as React from 'react';
 import * as Loadable from 'react-loadable';
@@ -20,7 +20,9 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CodeEditor from 'components/CodeEditor';
 const SubTSXComponent = Loadable({
   loader: () =>
-    import(/* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'),
+    import(
+      /* webpackChunkName: "ChildTSXComponent" */ 'components/SampleTSXComponent/ChildTSXComponent'
+    ),
   loading: LoadingSVGCentered,
 });
 interface IFCProps {

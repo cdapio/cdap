@@ -23,7 +23,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import 'whatwg-fetch';
 import { Observable } from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import T from 'i18n-react';
 import { MyMarketApi } from 'api/market';
 import { MyArtifactApi } from 'api/artifact';
@@ -31,6 +31,8 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
 import SessionStore from 'services/SessionTokenStore';
+
+const cookie = new Cookies();
 
 export default class OneStepDeployPlugin extends Component {
   constructor(props) {
@@ -122,7 +124,7 @@ export default class OneStepDeployPlugin extends Component {
         };
 
         if (window.CDAP_CONFIG.securityEnabled) {
-          let token = cookie.load('CDAP_Auth_Token');
+          let token = cookie.get('CDAP_Auth_Token');
           if (!isNil(token)) {
             headers.Authorization = `Bearer ${token}`;
           }

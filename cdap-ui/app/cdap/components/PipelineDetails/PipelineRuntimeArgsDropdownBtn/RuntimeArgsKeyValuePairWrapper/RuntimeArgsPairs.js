@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import KeyValuePairs from 'components/KeyValuePairs';
 import { connect } from 'react-redux';
@@ -43,9 +43,6 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-const ConnectedRuntimeArgsPairs = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(KeyValuePairs);
+const ConnectedRuntimeArgsPairs = connect(mapStateToProps, mapDispatchToProps)(KeyValuePairs);
 
 export default ConnectedRuntimeArgsPairs;

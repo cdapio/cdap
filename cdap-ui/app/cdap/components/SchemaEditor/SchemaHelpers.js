@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import uuidV4 from 'uuid/v4';
 import cdapavsc from 'services/cdapavscwrapper';
@@ -107,7 +107,7 @@ function getParsedSchema(schema) {
     return false;
   };
 
-  if (isEmptySchema(schema) || (!schema || schema === 'record')) {
+  if (isEmptySchema(schema) || !schema || schema === 'record') {
     return defaultSchema;
   }
   let parsed;
@@ -158,7 +158,7 @@ function getParsedSchemaForDataPrep(schema) {
     return false;
   };
 
-  if (isEmptySchema(schema) || (!schema || schema === 'record')) {
+  if (isEmptySchema(schema) || !schema || schema === 'record') {
     return defaultSchema;
   }
   let parsed;

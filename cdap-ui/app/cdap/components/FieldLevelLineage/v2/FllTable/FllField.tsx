@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React, { useState, useContext } from 'react';
 import {
@@ -71,9 +71,7 @@ function FllField({ field, isActive, classes }: IFieldProps) {
 
   const timeParams = getTimeQueryParams(selection, start, end);
 
-  const linkPath = `/ns/${field.namespace}/datasets/${field.dataset}/fields${timeParams}&field=${
-    field.name
-  }`;
+  const linkPath = `/ns/${field.namespace}/datasets/${field.dataset}/fields${timeParams}&field=${field.name}`;
 
   const toggleHoverState = (nextState) => {
     setHoverState(nextState);

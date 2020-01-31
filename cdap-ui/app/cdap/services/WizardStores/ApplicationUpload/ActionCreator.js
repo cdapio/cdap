@@ -16,9 +16,11 @@
 
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import NamespaceStore from 'services/NamespaceStore';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import UploadFile from 'services/upload-file';
 import isNil from 'lodash/isNil';
+
+const cookie = new Cookies();
 
 const UploadApplication = () => {
   let state = ApplicationUploadStore.getState();
@@ -30,7 +32,7 @@ const UploadApplication = () => {
     'X-Archive-Name': name,
   };
   if (window.CDAP_CONFIG.securityEnabled) {
-    let token = cookie.load('CDAP_Auth_Token');
+    let token = cookie.get('CDAP_Auth_Token');
     if (!isNil(token)) {
       headers.Authorization = `Bearer ${token}`;
     }

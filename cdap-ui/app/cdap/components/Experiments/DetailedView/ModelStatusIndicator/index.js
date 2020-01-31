@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -90,9 +90,7 @@ export default function ModelStatusIndicator({ status, loading, error, model, ge
           <span>Error</span>
         </span>
         <UncontrolledTooltip placement="right" delay={0} target={`error-${model.id}`}>
-          {`Failed to get the status of the model '${
-            model.name
-          }'. Click to try loading the status again`}
+          {`Failed to get the status of the model '${model.name}'. Click to try loading the status again`}
         </UncontrolledTooltip>
       </span>
     );

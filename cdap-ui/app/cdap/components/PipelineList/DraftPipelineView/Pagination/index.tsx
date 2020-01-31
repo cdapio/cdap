@@ -39,9 +39,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const Pagination = connect(
-  mapStateToProps,
-  mapDispatch
-)(PaginationView);
+const Pagination = connect(mapStateToProps, mapDispatch)(PaginationView);
 
 export default Pagination;

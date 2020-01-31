@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 
@@ -277,7 +277,7 @@ export default class LogsMetricsGraph extends Component {
                     {popOverData.logsMetrics['system.app.log.warn'] || '0'}
                   </span>
                 </div>
-                <a href={logUrl} target="_blank">
+                <a href={logUrl} target="_blank" rel="noopener noreferrer">
                   {T.translate(`${PREFIX}.hint.viewLogs`)}
                 </a>
               </div>
@@ -326,7 +326,7 @@ export default class LogsMetricsGraph extends Component {
                   <span className="text-warning">{run.warnings}</span>
                 </td>
                 <td>
-                  <a href={logUrl} target="_blank">
+                  <a href={logUrl} target="_blank" rel="noopener noreferrer">
                     {T.translate(`${PREFIX}.table.body.viewLog`)}{' '}
                   </a>
                 </td>

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -99,9 +99,6 @@ ExecutorResources.propTypes = {
   onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedExecutorResources = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ExecutorResources);
+const ConnectedExecutorResources = connect(mapStateToProps, mapDispatchToProps)(ExecutorResources);
 
 export default ConnectedExecutorResources;

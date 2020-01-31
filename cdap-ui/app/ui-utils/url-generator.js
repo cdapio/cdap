@@ -71,7 +71,7 @@ window.getAbsUIUrl = function(navigationObj = {}) {
 function buildCustomUrl(url, params = {}) {
   let queryParams = {};
   for (let key in params) {
-    if (!params.hasOwnProperty(key)) {
+    if (!Object.prototype.hasOwnProperty.call(params, key)) {
       continue;
     }
     let val = params[key];

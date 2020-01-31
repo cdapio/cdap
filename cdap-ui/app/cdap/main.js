@@ -30,7 +30,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Home from 'components/Home';
 import AppHeader from 'components/AppHeader';
 import Footer from 'components/Footer';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import { Router, Route, Switch } from 'react-router-dom';
 import history from 'services/history';
 import NamespaceStore from 'services/NamespaceStore';
@@ -62,6 +62,8 @@ import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
 
+const cookie = new Cookies();
+
 const DAG = Loadable({
   loader: () => import(/* webpackChunkName: "DAG" */ 'components/DAG'),
   loading: LoadingSVGCentered,
@@ -81,7 +83,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache({ fragmentMatcher }),
   request: (operation) => {
     if (window.CDAP_CONFIG.securityEnabled && cookie.load('CDAP_Auth_Token')) {
-      const token = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+      const token = `Bearer ${cookie.get('CDAP_Auth_Token')}`;
 
       operation.setContext({
         headers: {
@@ -127,12 +129,12 @@ class CDAP extends Component {
   setUIState = () => {
     StatusFactory.startPollingForBackendStatus();
     applyTheme();
-    cookie.save('DEFAULT_UI', 'NEW', { path: '/' });
+    cookie.set('DEFAULT_UI', 'NEW', { path: '/' });
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({
         type: NamespaceActions.updateUsername,
         payload: {
-          username: cookie.load('CDAP_Auth_User') || '',
+          username: cookie.get('CDAP_Auth_User') || '',
         },
       });
     }
@@ -254,7 +256,9 @@ class CDAP extends Component {
                       }
                       const SampleTSXComponent = Loadable({
                         loader: () =>
-                          import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+                          import(
+                            /* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'
+                          ),
                         loading: LoadingSVGCentered,
                       });
                       return (
@@ -273,7 +277,9 @@ class CDAP extends Component {
                       }
                       const MarkdownImpl = Loadable({
                         loader: () =>
-                          import(/* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'),
+                          import(
+                            /* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'
+                          ),
                         loading: LoadingSVGCentered,
                       });
                       return (

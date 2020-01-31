@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 // jexl library to parse js expression specified in widget json
 import jexl from 'jexl';
@@ -233,7 +233,10 @@ export function filterByCondition(
   propertiesToHide = propertiesToHide.filter(
     (property) => !objectQuery(propertiesFromBackend, property.property, 'required')
   );
-  propertiesToShow = difference(propertiesToShow, propertiesToHide.map((p) => p.property));
+  propertiesToShow = difference(
+    propertiesToShow,
+    propertiesToHide.map((p) => p.property)
+  );
   const propertiesToFilterMap = propertiesToHide.reduce(
     (prev, curr) => ({ ...prev, [curr.property]: curr.filterName }),
     {}

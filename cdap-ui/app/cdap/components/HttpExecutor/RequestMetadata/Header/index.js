@@ -37,9 +37,6 @@ const mapDispatchToKeyValProps = (dispatch) => {
   };
 };
 
-const Header = connect(
-  mapStateToKeyValProps,
-  mapDispatchToKeyValProps
-)(KeyValuePairs);
+const Header = connect(mapStateToKeyValProps, mapDispatchToKeyValProps)(KeyValuePairs);
 
 export default Header;

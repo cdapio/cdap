@@ -77,9 +77,7 @@ export default class EnabledTriggerRow extends Component {
           <strong>{T.translate(`${TRIGGER_PREFIX}.description`)}: </strong>
           <span>{info.description}</span>
           <a
-            href={`/pipelines/ns/${schedule.trigger.programId.namespace}/view/${
-              schedule.trigger.programId.application
-            }`}
+            href={`/pipelines/ns/${schedule.trigger.programId.namespace}/view/${schedule.trigger.programId.application}`}
           >
             {T.translate(`${TRIGGER_PREFIX}.viewPipeline`)}
           </a>

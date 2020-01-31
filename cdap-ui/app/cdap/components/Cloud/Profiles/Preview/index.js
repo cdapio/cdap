@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
@@ -126,9 +126,7 @@ export default class ProfilePreview extends Component {
     }
     let profileNamespace =
       this.state.profileDetails.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
-    let profileDetailsLink = `${location.protocol}//${
-      location.host
-    }/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
+    let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
     let profileProvisionerLabel = getProvisionerLabel(
       this.state.profileDetails,
       this.state.provisioners

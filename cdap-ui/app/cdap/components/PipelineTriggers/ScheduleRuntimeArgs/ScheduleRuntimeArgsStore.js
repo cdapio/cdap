@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { createStore, combineReducers } from 'redux';
 import { defaultAction, composeEnhancers } from 'services/helpers';
@@ -156,7 +156,10 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
         triggeredPipelineInfo: Object.assign({}, state.triggeredPipelineInfo, {
           unMappedMacros:
             action.payload.mappingKey && action.payload.mappingValue
-              ? difference(state.triggeredPipelineInfo.macros, argsMapping.map((arg) => arg.value))
+              ? difference(
+                  state.triggeredPipelineInfo.macros,
+                  argsMapping.map((arg) => arg.value)
+                )
               : state.triggeredPipelineInfo.unMappedMacros,
         }),
       });

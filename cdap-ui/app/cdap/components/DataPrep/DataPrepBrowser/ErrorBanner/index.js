@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { connect } from 'react-redux';
 import { setError } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/Actions/commons';
@@ -30,9 +30,6 @@ const mapDispatchToProps = () => {
   };
 };
 
-const DataPrepErrorBanner = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(ErrorBanner);
+const DataPrepErrorBanner = connect(mapStateToProps, mapDispatchToProps)(ErrorBanner);
 
 export default DataPrepErrorBanner;

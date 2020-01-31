@@ -29,7 +29,7 @@ const popperOptions = {
     preventOverflow: {
       priority: ['right', 'bottom'],
       escapeWithReference: false,
-      boundariesElement: 'window',
+      boundariesElement: 'viewport',
     },
     offset: {
       enabled: true,

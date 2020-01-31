@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
@@ -153,14 +153,14 @@ export default class EntityListView extends Component {
     let queryObject = this.getQueryObject(queryString.parse(nextProps.location.search));
     if (
       nextProps.match.params.namespace !== this.props.match.params.namespace ||
-      (!isEqual(queryObject.filters, searchState.activeFilters) ||
-        queryObject.sort.fullSort !== searchState.activeSort.fullSort ||
-        queryObject.query !== searchState.query ||
-        queryObject.page !== searchState.currentPage ||
-        objectQuery(queryObject, 'overview', 'id') !==
-          objectQuery(searchState, 'overviewEntity', 'id') ||
-        objectQuery(queryObject, 'overview', 'type') !==
-          objectQuery(searchState, 'overviewEntity', 'type'))
+      !isEqual(queryObject.filters, searchState.activeFilters) ||
+      queryObject.sort.fullSort !== searchState.activeSort.fullSort ||
+      queryObject.query !== searchState.query ||
+      queryObject.page !== searchState.currentPage ||
+      objectQuery(queryObject, 'overview', 'id') !==
+        objectQuery(searchState, 'overviewEntity', 'id') ||
+      objectQuery(queryObject, 'overview', 'type') !==
+        objectQuery(searchState, 'overviewEntity', 'type')
     ) {
       if (nextProps.match.params.namespace !== this.props.match.params.namespace) {
         NamespaceStore.dispatch({

@@ -12,10 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
+
+const cookie = new Cookies();
 
 interface IExptWrapperProps {
   defaultComponent: React.ReactElement<any>;
@@ -26,7 +28,7 @@ const ExperimentWrapper: React.FC<IExptWrapperProps> = ({
   defaultComponent,
   experimentComponent,
 }: IExptWrapperProps) => {
-  const showExperiment = cookie.load('CDAP_enable_experiments');
+  const showExperiment = cookie.get('CDAP_enable_experiments');
   if (showExperiment === 'on') {
     return experimentComponent;
   } else {

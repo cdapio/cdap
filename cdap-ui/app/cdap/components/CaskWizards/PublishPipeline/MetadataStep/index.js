@@ -40,10 +40,7 @@ const mapDispatchToPipelineProps = (dispatch) => {
   };
 };
 
-const PipelineName = connect(
-  mapStateToPipelineNameProps,
-  mapDispatchToPipelineProps
-)(Input);
+const PipelineName = connect(mapStateToPipelineNameProps, mapDispatchToPipelineProps)(Input);
 
 export default function MetadataStep() {
   return (

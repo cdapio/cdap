@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React, { useState, useEffect } from 'react';
 import Select from '@material-ui/core/Select';
@@ -56,13 +56,10 @@ export default function MultiSelect({
     onChange(selectionsString);
   };
 
-  useEffect(
-    () => {
-      const selection = value.toString().split(delimiter);
-      setSelections(selection);
-    },
-    [value]
-  );
+  useEffect(() => {
+    const selection = value.toString().split(delimiter);
+    setSelections(selection);
+  }, [value]);
 
   function renderValue(values: any) {
     if (selections.length === 0 || (selections.length === 1 && selections[0] === '')) {

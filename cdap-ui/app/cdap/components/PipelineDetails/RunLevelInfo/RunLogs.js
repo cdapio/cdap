@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import React from 'react';
 import { connect } from 'react-redux';
@@ -55,7 +55,7 @@ const RunLogs = ({ currentRun, runs, appId, artifactName }) => {
   let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
 
   return (
-    <a href={path} target="_blank">
+    <a href={path} target="_blank" rel="noopener noreferrer">
       <div className="run-info-container run-logs-container">
         <LogsBtnComp />
       </div>

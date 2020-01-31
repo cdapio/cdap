@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import uuidV4 from 'uuid/v4';
 import FilePath from 'components/FileBrowser/FilePath';
@@ -82,9 +82,6 @@ const mapDispatchToProps = () => {
   };
 };
 
-const S3PathWrapper = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(S3Path);
+const S3PathWrapper = connect(mapStateToProps, mapDispatchToProps)(S3Path);
 
 export default S3PathWrapper;

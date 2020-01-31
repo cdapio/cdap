@@ -17,11 +17,13 @@
 import React from 'react';
 require('./AuthorizationMessage.scss');
 import NamespaceStore from 'services/NamespaceStore';
-import cookie from 'react-cookie';
+import Cookies from 'universal-cookie';
 import RedirectToLogin from 'services/redirect-to-login';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import T from 'i18n-react';
+
+const cookie = new Cookies();
 
 export default function AuthorizationErrorMessage() {
   let eventEmitter = ee(ee);
