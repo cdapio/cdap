@@ -51,6 +51,14 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
   }
 
   @Override
+  public Set<String> getDroppedFields(EndPoint endPoint, long start, long end) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
+      return fieldLineageTable.getDroppedFields(endPoint, start, end);
+    });
+  }
+
+  @Override
   public Set<EndPointField> getIncomingSummary(EndPointField endPointField, long start, long end) {
     return TransactionRunners.run(transactionRunner, context -> {
       FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
