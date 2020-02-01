@@ -181,7 +181,8 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
         NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME)
       );
 
-      Set<ProgramType> allowCustomProfiles = EnumSet.of(ProgramType.MAPREDUCE, ProgramType.SPARK, ProgramType.WORKFLOW);
+      Set<ProgramType> allowCustomProfiles = EnumSet.of(ProgramType.MAPREDUCE, ProgramType.SPARK,
+                                                        ProgramType.WORKFLOW, ProgramType.WORKER);
       for (ProgramId programId : programIds) {
         ProgramOptions options = programLifecycleService.createProgramOptions(programId, userArgs,
                                                                               systemArgs, false);
