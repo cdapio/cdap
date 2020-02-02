@@ -34,6 +34,7 @@ const Replicator: React.FC = () => {
           path={`${basepath}/create/:artifactName/:artifactVersion/:artifactScope/:pluginName`}
           component={Create}
         />
+        <Route exact path={`${basepath}/drafts/:draftId`} component={Create} />
         <Route
           render={() => {
             return <Redirect to={`/ns/${getCurrentNamespace()}/replicator`} />;

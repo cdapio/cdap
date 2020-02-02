@@ -23,6 +23,7 @@ import ConfigurationGroup from 'components/ConfigurationGroup';
 import { objectQuery } from 'services/helpers';
 import If from 'components/If';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
+import { fetchPluginWidget } from 'components/Replicator/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -55,14 +56,34 @@ enum VIEW {
 
 const SourceConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  sourcePlugin,
+  sourcePluginInfo,
+  sourcePluginWidget,
+  setSourcePluginWidget,
   sourceConfig,
   setSourceConfig,
 }) => {
   const [view, setView] = React.useState(VIEW.configuration);
   const [values, setValues] = React.useState(sourceConfig);
 
-  const pluginProperties = objectQuery(sourcePlugin, 'pluginInfo', 'properties');
+  const pluginProperties = objectQuery(sourcePluginInfo, 'properties');
+
+  React.useEffect(() => {
+    if (sourcePluginWidget) {
+      return;
+    }
+
+    const artifact = sourcePluginInfo.artifact;
+
+    fetchPluginWidget(
+      artifact.name,
+      artifact.version,
+      artifact.scope,
+      sourcePluginInfo.name,
+      sourcePluginInfo.type
+    ).subscribe((res) => {
+      setSourcePluginWidget(res);
+    });
+  }, []);
 
   function handleNext() {
     setSourceConfig(values);
@@ -100,8 +121,8 @@ const SourceConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
       <div className={classes.content}>
         <If condition={view === VIEW.configuration}>
           <ConfigurationGroup
-            widgetJson={sourcePlugin.widgetInfo}
-            pluginProperties={pluginProperties}
+            widgetJson={sourcePluginWidget}
+            pluginProperties={sourcePluginInfo.properties}
             values={values}
             onChange={setValues}
           />

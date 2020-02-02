@@ -19,7 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import { PluginType } from 'components/Replicator/constants';
-import { fetchPluginInfo } from 'components/Replicator/utilities';
+import { fetchPluginInfo, fetchPluginWidget } from 'components/Replicator/utilities';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroup from 'components/ConfigurationGroup';
 import { objectQuery } from 'services/helpers';
@@ -34,9 +34,11 @@ const styles = (): StyleRules => {
 
 const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  targetPlugin,
+  targetPluginInfo,
+  targetPluginWidget,
   targetConfig,
-  setTargetPlugin,
+  setTargetPluginInfo,
+  setTargetPluginWidget,
   setTargetConfig,
 }) => {
   const [values, setValues] = React.useState(targetConfig);
@@ -50,7 +52,17 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
 
     fetchPluginInfo(artifactName, artifactScope, pluginName, PluginType.target).subscribe(
       (res) => {
-        setTargetPlugin(res);
+        setTargetPluginInfo(res);
+
+        fetchPluginWidget(
+          artifactName,
+          res.artifact.version,
+          res.artifact.scope,
+          pluginName,
+          PluginType.target
+        ).subscribe((widget) => {
+          setTargetPluginWidget(widget);
+        });
       },
       (err) => {
         // tslint:disable-next-line: no-console
@@ -61,11 +73,11 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
     );
   }, []);
 
-  if (!targetPlugin) {
+  if (!targetPluginInfo) {
     return <LoadingSVGCentered />;
   }
 
-  const pluginProperties = objectQuery(targetPlugin, 'pluginInfo', 'properties');
+  const pluginProperties = objectQuery(targetPluginInfo, 'properties');
 
   function isNextDisabled() {
     const requiredProperties = Object.keys(pluginProperties).filter((property) => {
@@ -86,8 +98,8 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   return (
     <div className={classes.root}>
       <ConfigurationGroup
-        widgetJson={targetPlugin.widgetInfo}
-        pluginProperties={pluginProperties}
+        widgetJson={targetPluginWidget}
+        pluginProperties={targetPluginInfo.properties}
         values={values}
         onChange={setValues}
       />

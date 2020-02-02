@@ -18,6 +18,7 @@ import * as React from 'react';
 import SourceList from 'components/Replicator/List/SourceList';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 const Status = ({ appName }) => {
@@ -44,11 +45,19 @@ const Status = ({ appName }) => {
 export default class List extends React.PureComponent {
   public state = {
     replicators: [],
+    drafts: [],
   };
 
   public componentDidMount() {
     this.fetchList();
+    this.fetchDrafts();
   }
+
+  private fetchDrafts = () => {
+    MyReplicatorApi.listDrafts({ namespace: getCurrentNamespace() }).subscribe((res) => {
+      this.setState({ drafts: res });
+    });
+  };
 
   private fetchList = () => {
     MyReplicatorApi.list({ namespace: getCurrentNamespace() }).subscribe((res) => {
@@ -147,6 +156,19 @@ export default class List extends React.PureComponent {
                 >
                   Delete
                 </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <h2>Drafts</h2>
+        <ul>
+          {this.state.drafts.map((draft) => {
+            return (
+              <li key={draft.name}>
+                <Link to={`/ns/${getCurrentNamespace()}/replicator/drafts/${draft.name}`}>
+                  {draft.label}
+                </Link>
               </li>
             );
           })}

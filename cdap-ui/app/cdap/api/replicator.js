@@ -22,6 +22,8 @@ const dataSrc = DataSourceConfigurer.getInstance();
 const pluginPath = '/namespaces/:namespace/artifacts/delta-app/versions/0.1.0-SNAPSHOT/extensions';
 const appPath = '/namespaces/:namespace/apps/:appName';
 const programPath = `${appPath}/workers/DeltaWorker`;
+const servicePath = `/namespaces/system/apps/delta/services/assessor/methods/v1/contexts/:namespace`;
+const draftPath = `${servicePath}/drafts/:draftId`;
 
 export const MyReplicatorApi = {
   getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType?scope=system`),
@@ -30,4 +32,15 @@ export const MyReplicatorApi = {
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`),
   action: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/:action`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
+  listDrafts: apiCreator(dataSrc, 'GET', 'REQUEST', `${servicePath}/drafts`),
+  putDraft: apiCreator(dataSrc, 'PUT', 'REQUEST', draftPath),
+  deleteDraft: apiCreator(dataSrc, 'DELETE', 'REQUEST', draftPath),
+  getDraft: apiCreator(dataSrc, 'GET', 'REQUEST', draftPath),
+  getTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/listTables`),
+  getTableInfo: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    `${draftPath}/databases/:database/tables/:tableId/describe`
+  ),
 };

@@ -24,9 +24,8 @@ const scope = 'SYSTEM';
 
 export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType) {
   const observable$ = Observable.create((observer) => {
-    const namespace = getCurrentNamespace();
     const pluginParams = {
-      namespace,
+      namespace: getCurrentNamespace(),
       parentArtifact,
       version,
       extension: pluginType,
@@ -39,53 +38,127 @@ export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginT
     };
 
     MyPipelineApi.getPluginProperties(pluginParams).subscribe(
-      ([plugin]) => {
-        const widgetKey = `widgets.${pluginName}-${pluginType}`;
-        const widgetParams = {
-          namespace,
-          artifactName,
-          scope: artifactScope,
-          artifactVersion: plugin.artifact.version,
-          keys: widgetKey,
-        };
-
-        MyPipelineApi.fetchWidgetJson(widgetParams).subscribe(
-          (widgetInfo) => {
-            if (!widgetInfo || !widgetInfo[widgetKey]) {
-              observer.next({
-                pluginInfo: plugin,
-                widgetInfo: {},
-              });
-              observer.complete();
-              return;
-            }
-
-            try {
-              const widgetContent = JSON.parse(widgetInfo[widgetKey]);
-
-              observer.next({
-                pluginInfo: plugin,
-                widgetInfo: widgetContent,
-              });
-
-              observer.complete();
-            } catch (parseError) {
-              observer.error(parseError);
-            }
-          },
-          (widgetError) => {
-            observer.error(widgetError);
-          }
-        );
+      ([res]) => {
+        observer.next(res);
+        observer.complete();
       },
-      (pluginError) => {
-        observer.error(pluginError);
+      (err) => {
+        observer.error(err);
       }
     );
   });
 
   return observable$;
 }
+
+export function fetchPluginWidget(
+  artifactName,
+  artifactVersion,
+  artifactScope,
+  pluginName,
+  pluginType
+) {
+  const observable$ = Observable.create((observer) => {
+    const widgetKey = `widgets.${pluginName}-${pluginType}`;
+    const params = {
+      namespace: getCurrentNamespace(),
+      artifactName,
+      artifactVersion,
+      scope: artifactScope,
+      keys: widgetKey,
+    };
+
+    MyPipelineApi.fetchWidgetJson(params).subscribe(
+      (res) => {
+        if (!res || !res[widgetKey]) {
+          observer.next({});
+          observer.complete();
+          return;
+        }
+
+        try {
+          const widgetContent = JSON.parse(res[widgetKey]);
+
+          observer.next(widgetContent);
+
+          observer.complete();
+        } catch (parseError) {
+          observer.error(parseError);
+        }
+      },
+      (err) => {
+        observer.error(err);
+      }
+    );
+  });
+
+  return observable$;
+}
+
+// export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType) {
+//   const observable$ = Observable.create((observer) => {
+//     const namespace = getCurrentNamespace();
+//     const pluginParams = {
+//       namespace,
+//       parentArtifact,
+//       version,
+//       extension: pluginType,
+//       pluginName,
+//       scope,
+//       artifactName,
+//       artifactScope,
+//       limit: 1,
+//       order: 'DESC',
+//     };
+
+//     MyPipelineApi.getPluginProperties(pluginParams).subscribe(
+//       ([plugin]) => {
+//         const widgetKey = `widgets.${pluginName}-${pluginType}`;
+//         const widgetParams = {
+//           namespace,
+//           artifactName,
+//           scope: artifactScope,
+//           artifactVersion: plugin.artifact.version,
+//           keys: widgetKey,
+//         };
+
+//         MyPipelineApi.fetchWidgetJson(widgetParams).subscribe(
+//           (widgetInfo) => {
+//             if (!widgetInfo || !widgetInfo[widgetKey]) {
+//               observer.next({
+//                 pluginInfo: plugin,
+//                 widgetInfo: {},
+//               });
+//               observer.complete();
+//               return;
+//             }
+
+//             try {
+//               const widgetContent = JSON.parse(widgetInfo[widgetKey]);
+
+//               observer.next({
+//                 pluginInfo: plugin,
+//                 widgetInfo: widgetContent,
+//               });
+
+//               observer.complete();
+//             } catch (parseError) {
+//               observer.error(parseError);
+//             }
+//           },
+//           (widgetError) => {
+//             observer.error(widgetError);
+//           }
+//         );
+//       },
+//       (pluginError) => {
+//         observer.error(pluginError);
+//       }
+//     );
+//   });
+
+//   return observable$;
+// }
 
 function constructPluginConfigurationSpec(plugin, pluginConfig) {
   return {
@@ -106,13 +179,13 @@ function constructPluginConfigurationSpec(plugin, pluginConfig) {
 export function constructReplicatorSpec(
   name,
   description,
-  sourcePlugin,
-  targetPlugin,
+  sourcePluginInfo,
+  targetPluginInfo,
   sourceConfig,
   targetConfig
 ) {
-  const sourceInfo = sourcePlugin.pluginInfo;
-  const targetInfo = targetPlugin.pluginInfo;
+  const source = constructPluginConfigurationSpec(sourcePluginInfo, sourceConfig);
+  const target = constructPluginConfigurationSpec(targetPluginInfo, targetConfig);
 
   const transferSpec = {
     name,
@@ -125,14 +198,11 @@ export function constructReplicatorSpec(
     config: {
       connections: [
         {
-          from: sourceInfo.name,
-          to: targetInfo.name,
+          from: source.name,
+          to: target.name,
         },
       ],
-      stages: [
-        constructPluginConfigurationSpec(sourceInfo, sourceConfig),
-        constructPluginConfigurationSpec(targetInfo, targetConfig),
-      ],
+      stages: [source, target],
       offsetBasePath: '/tmp/Replicator',
     },
   };

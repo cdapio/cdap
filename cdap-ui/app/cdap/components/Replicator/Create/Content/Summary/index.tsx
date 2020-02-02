@@ -32,6 +32,11 @@ const styles = (theme): StyleRules => {
     summary: {
       border: `1px solid ${theme.palette.grey[300]}`,
       borderRadius: '4px',
+      '& > pre': {
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+        padding: '15px',
+      },
     },
     error: {
       color: theme.palette.red[100],
@@ -41,12 +46,13 @@ const styles = (theme): StyleRules => {
 
 const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  sourcePlugin,
-  targetPlugin,
+  sourcePluginInfo,
+  targetPluginInfo,
   sourceConfig,
   targetConfig,
   name,
   description,
+  draftId,
 }) => {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
@@ -55,8 +61,8 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
     return constructReplicatorSpec(
       name,
       description,
-      sourcePlugin,
-      targetPlugin,
+      sourcePluginInfo,
+      targetPluginInfo,
       sourceConfig,
       targetConfig
     );
@@ -73,7 +79,12 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
     MyReplicatorApi.publish(params, spec).subscribe(
       () => {
-        setRedirect(true);
+        MyReplicatorApi.deleteDraft({
+          namespace: getCurrentNamespace(),
+          draftId,
+        }).subscribe(null, null, () => {
+          setRedirect(true);
+        });
       },
       (err) => {
         setError(err);
