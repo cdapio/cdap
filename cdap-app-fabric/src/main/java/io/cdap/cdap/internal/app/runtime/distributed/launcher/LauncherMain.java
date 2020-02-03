@@ -40,7 +40,8 @@ public class LauncherMain {
       throw new RuntimeException("Expect it to be a URLClassLoader");
     }
     URL[] urls = ((URLClassLoader) cl).getURLs();
-    URL thisURL = LauncherMain.class.getClassLoader().getResource(LauncherMain.class.getName().replace('.', '/') + ".class");
+    URL thisURL = LauncherMain.class.getClassLoader().getResource(LauncherMain.class.getName()
+                                                                    .replace('.', '/') + ".class");
     if (thisURL == null) {
       throw new RuntimeException("Failed to find the resource for main class");
     }

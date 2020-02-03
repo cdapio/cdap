@@ -32,6 +32,14 @@ public interface Launcher {
 
   /**
    *
+   * @param fileName
+   * @param localURI
+   * @return
+   */
+  URI getRemoteURI(String fileName, URI localURI) throws Exception;
+
+  /**
+   *
    * @param files
    */
   void prepare(Map<String, URI> files);

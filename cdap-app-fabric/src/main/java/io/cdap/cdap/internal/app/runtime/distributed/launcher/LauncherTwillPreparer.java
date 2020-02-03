@@ -36,7 +36,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
-import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ClassAcceptor;
@@ -66,6 +65,7 @@ import org.apache.twill.internal.container.TwillContainerMain;
 import org.apache.twill.internal.io.LocationCache;
 import org.apache.twill.internal.json.ArgumentsCodec;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
+import org.apache.twill.internal.utils.Dependencies;
 import org.apache.twill.internal.utils.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -393,7 +393,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
       TwillRuntimeSpecification twillRuntimeSpec;
       Path runtimeConfigDir = Files.createTempDirectory(stagingDir, Constants.Files.RUNTIME_CONFIG_JAR);
       twillRuntimeSpec = saveSpecification(twillSpec,
-                                           runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC), stagingDir);
+                                           runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC), stagingDir, launcher);
       saveLogback(runtimeConfigDir.resolve(Constants.Files.LOGBACK_TEMPLATE));
       saveClassPaths(runtimeConfigDir);
       saveArguments(new Arguments(arguments, runnableArgs), runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
@@ -426,53 +426,6 @@ public class LauncherTwillPreparer implements TwillPreparer {
     if (System.currentTimeMillis() - startTime >= timeoutMillis) {
       throw new TimeoutException(String.format("Aborting startup of program run %s due to timeout after %d %s",
                                                programRunId, timeout, timeoutUnit.name().toLowerCase()));
-    }
-  }
-
-  /**
-   * Localize files to the target host.
-   */
-  private void localizeFiles(SSHSession session, Map<String, LocalFile> localFiles,
-                             String targetPath, RuntimeSpecification runtimeSpec) throws IOException {
-
-    // A map to remember what URI has already been uploaded to what target path.
-    // This helps reducing the bandwidth when same file is uploaded to different target path.
-    Map<URI, String> localizedFiles = new HashMap<>();
-    String localizedDir = targetPath + "/.localized";
-    session.executeAndWait("mkdir -p " + localizedDir);
-
-    for (LocalFile localFile : Iterables.concat(localFiles.values(), runtimeSpec.getLocalFiles())) {
-      URI uri = localFile.getURI();
-
-      // If not yet uploaded, upload it
-      String localizedFile = localizedFiles.get(uri);
-      if (localizedFile == null) {
-        String fileName = Hashing.md5().hashString(uri.toString()).toString() + "-" + getFileName(uri);
-        localizedFile = localizedDir + "/" + fileName;
-        try (InputStream inputStream = openURI(uri)) {
-          LOG.debug("Upload file {} to {}@{}:{}", uri, session.getUsername(), session.getAddress(), localizedFile);
-          //noinspection OctalInteger
-          session.copy(inputStream, localizedDir, fileName, localFile.getSize(), 0644,
-                       localFile.getLastModified(), localFile.getLastModified());
-        }
-        localizedFiles.put(uri, localizedFile);
-      }
-
-      // If it is an archive, expand it. If is a file, create a hardlink.
-      if (localFile.isArchive()) {
-        String expandedDir = targetPath + "/" + localFile.getName();
-        LOG.debug("Expanding archive {} on host {} to {}",
-                  localizedFile, session.getAddress().getHostName(), expandedDir);
-        session.executeAndWait(
-          "mkdir -p " + expandedDir,
-          "cd " + expandedDir,
-          String.format("jar xf %s", localizedFile)
-        );
-      } else {
-        LOG.debug("Create hardlink {} on host {} to {}/{}",
-                  localizedFile, session.getAddress().getHostName(), targetPath, localFile.getName());
-        session.executeAndWait(String.format("ln %s %s/%s", localizedFile, targetPath, localFile.getName()));
-      }
     }
   }
 
@@ -616,20 +569,56 @@ public class LauncherTwillPreparer implements TwillPreparer {
                    createLocalFile(Constants.Files.RUNTIME_CONFIG_JAR, location, true));
   }
 
+//  /**
+//   * Based on the given {@link TwillSpecification}, copy file to local filesystem.
+//   * @param spec The {@link TwillSpecification} for populating resource.
+//   */
+//  private Map<String, Collection<LocalFile>> populateRunnableLocalFiles(TwillSpecification spec,
+//                                                                        Path stagingDir) throws Exception {
+//    Map<String, Collection<LocalFile>> localFiles = new HashMap<>();
+//
+//    LOG.debug("Populating Runnable LocalFiles");
+//    for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
+//      String runnableName = entry.getKey();
+//
+//      for (LocalFile localFile : entry.getValue().getLocalFiles()) {
+//        LocalFile resolvedLocalFile = resolveLocalFile(localFile, stagingDir);
+//        URI remoteURI = launcher.getRemoteURI(resolvedLocalFile.getName(), resolvedLocalFile.getURI());
+//        File remoteFile = new File(remoteURI.getPath());
+//        DefaultLocalFile remoteLocalFile = new DefaultLocalFile(remoteFile.getName(), remoteURI,
+//                                                                remoteFile.lastModified(),
+//                                                                remoteFile.length(), resolvedLocalFile.isArchive(),
+//                                                                resolvedLocalFile.getPattern());
+//        localFiles.computeIfAbsent(runnableName, s -> new ArrayList<>()).add(remoteLocalFile);
+//        LOG.info("Added file {}", remoteLocalFile.getURI());
+//      }
+//    }
+//    LOG.debug("Done Runnable LocalFiles");
+//    return localFiles;
+//  }
+
   /**
    * Based on the given {@link TwillSpecification}, copy file to local filesystem.
    * @param spec The {@link TwillSpecification} for populating resource.
    */
   private Map<String, Collection<LocalFile>> populateRunnableLocalFiles(TwillSpecification spec,
-                                                                        Path stagingDir) throws IOException {
+                                                                        Path stagingDir) throws Exception {
     Map<String, Collection<LocalFile>> localFiles = new HashMap<>();
 
     LOG.debug("Populating Runnable LocalFiles");
-    for (Map.Entry<String, RuntimeSpecification> entry: spec.getRunnables().entrySet()) {
+    for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
       String runnableName = entry.getKey();
 
       for (LocalFile localFile : entry.getValue().getLocalFiles()) {
-        localFiles.computeIfAbsent(runnableName, s -> new ArrayList<>()).add(resolveLocalFile(localFile, stagingDir));
+        LocalFile resolvedLocalFile = resolveLocalFile(localFile, stagingDir);
+//        URI remoteURI = launcher.getRemoteURI(resolvedLocalFile.getName(), resolvedLocalFile.getURI());
+//        File remoteFile = new File(remoteURI.getPath());
+//        DefaultLocalFile remoteLocalFile = new DefaultLocalFile(remoteFile.getName(), remoteURI,
+//                                                                remoteFile.lastModified(),
+//                                                                remoteFile.length(), resolvedLocalFile.isArchive(),
+//                                                                resolvedLocalFile.getPattern());
+        localFiles.computeIfAbsent(runnableName, s -> new ArrayList<>()).add(resolvedLocalFile);
+        LOG.info("Added file {}", resolvedLocalFile.getURI());
       }
     }
     LOG.debug("Done Runnable LocalFiles");
@@ -665,7 +654,8 @@ public class LauncherTwillPreparer implements TwillPreparer {
   }
 
   private TwillRuntimeSpecification saveSpecification(TwillSpecification spec,
-                                                      Path targetFile, Path stagingDir) throws IOException {
+                                                      Path targetFile, Path stagingDir,
+                                                      Launcher launcher) throws Exception {
     final Map<String, Collection<LocalFile>> runnableLocalFiles = populateRunnableLocalFiles(spec, stagingDir);
 
     // Rewrite LocalFiles inside twillSpec
@@ -724,40 +714,36 @@ public class LauncherTwillPreparer implements TwillPreparer {
 
     LOG.info("Create and copy {}", Constants.Files.LAUNCHER_JAR);
 
+    // TODO Optimize jar packaging
     Location location = locationCache.get(Constants.Files.LAUNCHER_JAR, new LocationCache.Loader() {
-      ApplicationBundler appBundler;
-      Set<Class<?>> classes = Sets.newHashSet();
-
       @Override
       public void load(String name, Location targetLocation) throws IOException {
-        // Create a jar file with the TestLauncher and dependent classes inside.
+        // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
         try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
-          appBundler = new ApplicationBundler(new ClassAcceptor() {
+          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+          if (classLoader == null) {
+            classLoader = getClass().getClassLoader();
+          }
+          Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
             @Override
             public boolean accept(String className, URL classUrl, URL classPathUrl) {
-              if (className.endsWith("TestLauncher")) {
-                try {
-                  classes.add(WrappedLauncher.class);
-                  jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-                  try (InputStream is = classUrl.openStream()) {
-                    ByteStreams.copy(is, jarOut);
-                  }
-                  return true;
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
+              try {
+                jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                try (InputStream is = classUrl.openStream()) {
+                  ByteStreams.copy(is, jarOut);
                 }
+              } catch (IOException e) {
+                throw new RuntimeException(e);
               }
-              return false;
+              return true;
             }
-          });
+          }, WrappedLauncher.class.getName(), LauncherRunner.class.getName());
         }
-        appBundler.createBundle(targetLocation, classes);
       }
     });
 
-    LOG.info("Done {}", Constants.Files.LAUNCHER_JAR);
-
-    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
+    LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
+    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, true));
   }
 
   private void saveClassPaths(Path targetDir) throws IOException {

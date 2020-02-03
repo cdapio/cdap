@@ -482,8 +482,8 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.kafka,org.scala-lang,commons-logging</excludeGroupIds>
-                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
+                  <excludeGroupIds>org.apache.hbase,asm,commons-logging</excludeGroupIds>
+                  <excludeArtifactIds>servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>

@@ -115,7 +115,6 @@ final class DataprocClient implements AutoCloseable {
     }
 
     String projectId = conf.getProjectId();
-    LOG.info("###### project id: {}", projectId);
 //    String networkHostProjectID = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
 //      conf.getNetworkHostProjectID();
 //    String systemProjectId = null;

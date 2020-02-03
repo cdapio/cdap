@@ -37,7 +37,7 @@ import org.apache.twill.api.TwillRunnerService;
 /**
  * Guice module for {@link ProgramRunnerFactory} used for program execution in {@link ClusterMode#ISOLATED} mode.
  */
-final class RemoteExecutionProgramRunnerModule extends PrivateModule {
+public final class RemoteExecutionProgramRunnerModule extends PrivateModule {
 
   @Override
   protected void configure() {

@@ -157,7 +157,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     this.name = name;
   }
 
-  protected void doMain() throws Exception {
+  public void doMain() throws Exception {
+    LOG.info("### twill spec path : {}",
+             new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.TWILL_SPEC).getAbsoluteFile());
     TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create()
       .fromJson(new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.TWILL_SPEC));
     org.apache.twill.internal.Arguments arguments = readJsonFile(new File(Constants.Files.RUNTIME_CONFIG_JAR,
