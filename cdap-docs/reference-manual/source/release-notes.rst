@@ -82,6 +82,8 @@ Deprecation
 
 - :cask-issue:`CDAP-15917` - Removed the outdated Validator plugin
 
+- With the 6.1.1 release, support for running CDAP on Apache Hadoop is deprecated, and will be removed in the next major release.
+
 
 Bug Fixes
 ---------
