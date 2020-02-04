@@ -36,7 +36,9 @@ import {
   conditionFalseConnectionStyle,
 } from 'components/DAG/JSPlumbSettings';
 import { fromJS } from 'immutable';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import ReactPanZoom from '@ajainarayanan/react-pan-zoom';
+import IconSVG from 'components/IconSVG';
 
 const registerTypes = {
   connections: {
@@ -50,10 +52,13 @@ const registerTypes = {
   endpoints: {},
 };
 
-const styles = () => {
+const styles = (): StyleRules => {
   return {
     root: {
       margin: '20px',
+    },
+    diagramContainer: {
+      position: 'relative',
     },
     btnStyles: {
       color: 'white',
@@ -77,10 +82,57 @@ const styles = () => {
     conditionBtn: {
       backgroundColor: '#4e5568',
     },
+    panContainer: {
+      height: 'calc(100vh - 192px)',
+      width: 'calc(100% - 20px)',
+      overflow: 'hidden',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1,
+      margin: '10px',
+      border: '1px solid grey',
+      '&> *': {
+        height: '100%',
+        width: '100%',
+      },
+    },
+    containerActions: {
+      width: '50px',
+      backgroundColor: '#eee',
+      zIndex: 1000,
+      position: 'absolute',
+      right: '13px',
+      top: '44px',
+      '&> *': {
+        borderRadius: 0,
+        borderBottom: '1px solid white',
+      },
+      '&> :first-child': {
+        borderTopRightRadius: '4px',
+        borderTopLeftRadius: '4px',
+      },
+      '&> :last-child': {
+        borderBottomLeftRadius: '4px',
+        borderBottomRightRadius: '4px',
+      },
+    },
+    containerActionBtn: {
+      minWidth: 'unset',
+      width: '50px',
+      background: '#bbb',
+      height: '30px',
+    },
   };
 };
 interface IDAGProps extends WithStyles<typeof styles> {}
 class DAG extends React.PureComponent<IDAGProps> {
+  public state = {
+    dx: 0,
+    dy: 0,
+    zoom: 1,
+  };
+
   public addNode = (addNode, type, showAlertAndError) => {
     addNode(
       fromJS({
@@ -118,6 +170,98 @@ class DAG extends React.PureComponent<IDAGProps> {
       {label}
     </Button>
   );
+
+  public zoomIn = () => {
+    this.setState({
+      zoom: this.state.zoom + 0.1,
+    });
+  };
+  public zoomOut = () => {
+    this.setState({
+      zoom: this.state.zoom - 0.1,
+    });
+  };
+  public resetPan = () => {
+    this.setState({
+      zoom: 1,
+      dx: 0,
+      dy: 0,
+    });
+  };
+  public onPan = (dx, dy) => {
+    this.setState({ dx, dy });
+  };
+
+  private renderNodeBtns = (classes, context) => {
+    return (
+      <div>
+        {this.getButton(
+          'source',
+          'Add Source',
+          `${classes.btnStyles} ${classes.sourceBtn}`,
+          context.addNode
+        )}
+        {this.getButton(
+          'transform',
+          'Add Transform',
+          `${classes.btnStyles} ${classes.transformBtn}`,
+          context.addNode
+        )}
+        {this.getButton(
+          'transform',
+          'Add Transform (w/alert & error)',
+          `${classes.btnStyles} ${classes.transformBtn}`,
+          context.addNode,
+          true
+        )}
+        {this.getButton(
+          'sink',
+          'Add Sink',
+          `${classes.btnStyles} ${classes.sinkBtn}`,
+          context.addNode
+        )}
+        {this.getButton(
+          'alertpublisher',
+          'Add Alert',
+          `${classes.btnStyles} ${classes.alertBtn}`,
+          context.addNode
+        )}
+        {this.getButton(
+          'error',
+          'Add Error',
+          `${classes.btnStyles} ${classes.errorBtn}`,
+          context.addNode
+        )}
+        {this.getButton(
+          'condition',
+          'Add Condition',
+          `${classes.btnStyles} ${classes.conditionBtn}`,
+          context.addNode
+        )}
+        {this.getButton(
+          'splittertransform',
+          'Add Splitter',
+          `${classes.btnStyles} ${classes.transformBtn}`,
+          context.addNode
+        )}
+      </div>
+    );
+  };
+  private renderContainerActions = (classes) => {
+    return (
+      <div className={classes.containerActions}>
+        <Button className={classes.containerActionBtn} onClick={this.zoomIn}>
+          <IconSVG name="icon-zoomIn" />
+        </Button>
+        <Button className={classes.containerActionBtn} onClick={this.zoomOut}>
+          <IconSVG name="icon-zoomout" />
+        </Button>
+        <Button className={classes.containerActionBtn} onClick={this.resetPan}>
+          <IconSVG name="icon-fit" />
+        </Button>
+      </div>
+    );
+  };
   public render() {
     const { classes } = this.props;
     return (
@@ -129,71 +273,33 @@ class DAG extends React.PureComponent<IDAGProps> {
               <MyContext.Consumer>
                 {(context) => {
                   return (
-                    <React.Fragment>
-                      {this.getButton(
-                        'source',
-                        'Add Source',
-                        `${classes.btnStyles} ${classes.sourceBtn}`,
-                        context.addNode
-                      )}
-                      {this.getButton(
-                        'transform',
-                        'Add Transform',
-                        `${classes.btnStyles} ${classes.transformBtn}`,
-                        context.addNode
-                      )}
-                      {this.getButton(
-                        'transform',
-                        'Add Transform (w/alert & error)',
-                        `${classes.btnStyles} ${classes.transformBtn}`,
-                        context.addNode,
-                        true
-                      )}
-                      {this.getButton(
-                        'sink',
-                        'Add Sink',
-                        `${classes.btnStyles} ${classes.sinkBtn}`,
-                        context.addNode
-                      )}
-                      {this.getButton(
-                        'alertpublisher',
-                        'Add Alert',
-                        `${classes.btnStyles} ${classes.alertBtn}`,
-                        context.addNode
-                      )}
-                      {this.getButton(
-                        'error',
-                        'Add Error',
-                        `${classes.btnStyles} ${classes.errorBtn}`,
-                        context.addNode
-                      )}
-                      {this.getButton(
-                        'condition',
-                        'Add Condition',
-                        `${classes.btnStyles} ${classes.conditionBtn}`,
-                        context.addNode
-                      )}
-                      {this.getButton(
-                        'splittertransform',
-                        'Add Splitter',
-                        `${classes.btnStyles} ${classes.transformBtn}`,
-                        context.addNode
-                      )}
-                      <DAGRenderer
-                        nodes={context.nodes}
-                        connections={context.connections}
-                        addConnection={context.addConnection}
-                        removeConnection={context.removeConnection}
-                        removeNode={context.removeNode}
-                        jsPlumbSettings={defaultJsPlumbSettings}
-                      >
-                        {context.nodes.map((node, i) => {
-                          const nodeObj = node.toJS();
-                          const Component = this.nodeTypeToComponentMap[nodeObj.type];
-                          return <Component {...nodeObj} key={i} />;
-                        })}
-                      </DAGRenderer>
-                    </React.Fragment>
+                    <div className={classes.diagramContainer}>
+                      {this.renderNodeBtns(classes, context)}
+                      {this.renderContainerActions(classes)}
+                      <div className={classes.panContainer}>
+                        <ReactPanZoom
+                          zoom={this.state.zoom}
+                          pandx={this.state.dx}
+                          pandy={this.state.dy}
+                          onPan={this.onPan}
+                        >
+                          <DAGRenderer
+                            nodes={context.nodes}
+                            connections={context.connections}
+                            addConnection={context.addConnection}
+                            removeConnection={context.removeConnection}
+                            removeNode={context.removeNode}
+                            jsPlumbSettings={defaultJsPlumbSettings}
+                          >
+                            {context.nodes.map((node, i) => {
+                              const nodeObj = node.toJS();
+                              const Component = this.nodeTypeToComponentMap[nodeObj.type];
+                              return <Component {...nodeObj} key={i} />;
+                            })}
+                          </DAGRenderer>
+                        </ReactPanZoom>
+                      </div>
+                    </div>
                   );
                 }}
               </MyContext.Consumer>

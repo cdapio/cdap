@@ -23,10 +23,12 @@ import ButtonBase from '@material-ui/core/ButtonBase';
 import { blue, grey, bluegrey } from 'components/ThemeWrapper/colors';
 require('./conditionNode.scss');
 
+const DIMENSION_OF_CONDITION_NODE = 105;
+
 const styles = genericNodeStyles({
   border: `1px solid #4e5568`,
-  width: '105px',
-  height: '105px',
+  width: `${DIMENSION_OF_CONDITION_NODE}px`,
+  height: `${DIMENSION_OF_CONDITION_NODE}px`,
   '&.drag-hover': {
     backgroundColor: 'rgba(78, 85, 104, 0.1)',
   },
@@ -183,4 +185,4 @@ class ConditionNodeComponent extends AbstractNode<IConditionNodeProps> {
 }
 
 const ConditionNode = withStyles(styles)(ConditionNodeComponent);
-export { ConditionNode };
+export { ConditionNode, DIMENSION_OF_CONDITION_NODE };
