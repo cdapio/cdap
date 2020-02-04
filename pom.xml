@@ -163,7 +163,7 @@
     <scala2.10.version>2.10.4</scala2.10.version>
     <scala2.11.version>2.11.8</scala2.11.version>
     <servlet.api.version>3.0.1</servlet.api.version>
-    <shiro.version>1.2.1</shiro.version>
+    <shiro.version>1.5.0</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
     <spark1.artifacts.dir>spark1_2.10</spark1.artifacts.dir>
