@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.lineage.field.EndPoint;
@@ -26,6 +27,7 @@ import io.cdap.cdap.api.lineage.field.TransformOperation;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.codec.OperationTypeAdapter;
+import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -791,6 +793,40 @@ public class FieldLineageInfoTest {
     List<Operation> topologicallySortedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
     assertBefore(topologicallySortedOperations, read1, write1);
     assertBefore(topologicallySortedOperations, read2, write2);
+  }
+
+  @Test
+  public void testMultiSourceDroppedFields() {
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"), "first_name", "last_name", "social");
+    TransformOperation combineNames = new TransformOperation("combineNames", "combine names",
+        Arrays.asList(
+            InputField.of("read", "first_name"),
+            InputField.of("read", "last_name")),
+        "full_name");
+    TransformOperation dropSocial = new TransformOperation("dropSocial", "drop social",
+        Collections.singletonList(InputField.of("read", "social")));
+    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of(null, "endpoint2"),
+        Collections.singletonList(InputField.of("combineNames", "full_name")));
+
+    List<Operation> operations = new ArrayList<>();
+    operations.add(read);
+    operations.add(write);
+    operations.add(combineNames);
+    operations.add(dropSocial);
+    FieldLineageInfo info1 = new FieldLineageInfo(operations);
+
+    EndPoint ep1 = EndPoint.of("endpoint1");
+    EndPoint ep2 = EndPoint.of("endpoint2");
+
+    Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
+    expectedOutgoingSummary.put(new EndPointField(ep1, "first_name"),
+        Sets.newHashSet(new EndPointField(ep2, "full_name")));
+    expectedOutgoingSummary.put(new EndPointField(ep1, "last_name"),
+        Sets.newHashSet(new EndPointField(ep2, "full_name")));
+    expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
+        Sets.newHashSet((EndPointField) null));
+
+    Assert.assertEquals(info1.getOutgoingSummary(), expectedOutgoingSummary);
   }
 
   private void assertBefore(List<Operation> list, Operation a, Operation b) {

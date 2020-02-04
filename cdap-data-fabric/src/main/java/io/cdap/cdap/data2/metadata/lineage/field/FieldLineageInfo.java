@@ -75,6 +75,9 @@ public class FieldLineageInfo {
   // We maintain the set of fields dropped in this lineage; ones with incoming, but no outgoing.
   private Set<String> droppedFields;
 
+  // for every field, which readOperation did it ultimately come from
+  private Map<String, ReadOperation> fieldSources;
+
   private transient Set<WriteOperation> writeOperations;
 
   private transient Set<ReadOperation> readOperations;
@@ -130,6 +133,7 @@ public class FieldLineageInfo {
     LOG.trace("Received field lineage operations {}", GSON.toJson(operations));
     this.operations = new HashSet<>(operations);
     this.droppedFields = new HashSet<>();
+    this.fieldSources = new HashMap<>();
     computeAndValidateFieldLineageInfo(operations);
     this.checksum = computeChecksum();
     if (computeSummaries) {
@@ -166,6 +170,8 @@ public class FieldLineageInfo {
                     "operation '%s'.", read.getName()));
           }
           readOperations.add(read);
+          for (String output: read.getOutputs())
+            fieldSources.put(output, read);
           break;
         case TRANSFORM:
           TransformOperation transform = (TransformOperation) operation;
@@ -176,9 +182,12 @@ public class FieldLineageInfo {
             connections.add(transform);
           }
           allOrigins.addAll(origins);
-          if (transform.getInputs().size() > transform.getOutputs().size()) {
-            droppedFields.addAll(Sets.difference(transform.getInputs().stream().map(InputField::getName)
-                .collect(Collectors.toSet()), new HashSet<>(transform.getOutputs())));
+          if (transform.getOutputs().isEmpty()) {
+            droppedFields.addAll(transform.getInputs().stream().map(InputField::getName).collect(
+                Collectors.toList()));
+          } else {
+            for (String output : transform.getOutputs())
+              fieldSources.put(output, fieldSources.get(transform.getInputs().get(0).getName()));
           }
           break;
         case WRITE:
@@ -312,7 +321,6 @@ public class FieldLineageInfo {
       for (InputField field : write.getInputs()) {
         endPointFields.add(field.getName());
       }
-      endPointFields.addAll(droppedFields);
     }
     return destinationFields;
   }
@@ -401,8 +409,9 @@ public class FieldLineageInfo {
       }
     }
     for (String field : droppedFields) {
-      EndPointField endPointField = new EndPointField((EndPoint) getSources().toArray()[0], field);
-      outgoingSummary.put(endPointField, new HashSet<>());
+      ReadOperation read = fieldSources.get(field);
+      EndPointField endPointField = new EndPointField(read.getSource(), field);
+      outgoingSummary.put(endPointField, Sets.newHashSet((EndPointField) null));
     }
     return outgoingSummary;
   }
@@ -748,9 +757,5 @@ public class FieldLineageInfo {
   @Override
   public int hashCode() {
     return (int) (checksum ^ (checksum >>> 32));
-  }
-
-  public Set<String> getDroppedFields() {
-    return droppedFields;
   }
 }
