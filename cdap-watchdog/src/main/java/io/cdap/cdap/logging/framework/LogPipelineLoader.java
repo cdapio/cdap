@@ -22,11 +22,8 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusChecker;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -43,8 +40,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -161,20 +160,21 @@ public class LogPipelineLoader {
     Preconditions.checkState(systemPipeline != null, "Missing cdap system pipeline configuration");
 
     List<File> files = DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
-    return Iterables.concat(Collections.singleton(systemPipeline),
-                            Iterables.filter(Iterables.transform(files, new Function<File, URL>() {
-      @Nullable
-      @Override
-      public URL apply(File file) {
-        try {
-          return file.toURI().toURL();
-        } catch (MalformedURLException e) {
-          // This shouldn't happen
-          LOG.warn("Ignoring log pipeline config file {} due to {}", file, e.getMessage());
-          return null;
-        }
-      }
-    }), Predicates.notNull()));
+    return Stream.concat(Stream.of(systemPipeline), files.stream().map(this::toURL).filter(Objects::nonNull))::iterator;
+  }
+
+  /**
+   * Returns an {@link URL} representing the given file or {@code null} if failed to represent it as URL.
+   */
+  @Nullable
+  private URL toURL(File file) {
+    try {
+      return file.toURI().toURL();
+    } catch (MalformedURLException e) {
+      // This shouldn't happen
+      LOG.warn("Ignoring log pipeline config file {} due to {}", file, e.getMessage());
+      return null;
+    }
   }
 
   /**
@@ -193,13 +193,20 @@ public class LogPipelineLoader {
 
     // Check if the configuration has any error in it.
     if (!new StatusChecker(context).isErrorFree(Status.ERROR)) {
+      Throwable failureCause = null;
       List<Status> errors = new ArrayList<>();
       for (Status status : context.getStatusManager().getCopyOfStatusList()) {
         if (status.getEffectiveLevel() == Status.ERROR) {
+          Throwable t = status.getThrowable();
+          if (failureCause == null) {
+            failureCause = t;
+          } else if (t != null) {
+            failureCause.addSuppressed(t);
+          }
           errors.add(status);
         }
       }
-      throw new JoranException("Configuration failed " + errors);
+      throw new JoranException("Configuration failed " + errors, failureCause);
     }
 
     // Default the pipeline name to the config file name (without extension) if it is not set
