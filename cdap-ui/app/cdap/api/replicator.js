@@ -37,10 +37,5 @@ export const MyReplicatorApi = {
   deleteDraft: apiCreator(dataSrc, 'DELETE', 'REQUEST', draftPath),
   getDraft: apiCreator(dataSrc, 'GET', 'REQUEST', draftPath),
   listTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/listTables`),
-  getTableInfo: apiCreator(
-    dataSrc,
-    'POST',
-    'REQUEST',
-    `${draftPath}/databases/:database/tables/:tableId/describe`
-  ),
+  getTableInfo: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/describeTable`),
 };

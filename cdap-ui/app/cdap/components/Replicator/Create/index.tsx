@@ -142,7 +142,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     isInvalidSource: false,
     loading: true,
 
-    activeStep: 2,
+    activeStep: 0,
 
     setActiveStep: this.setActiveStep,
     setNameDescription: this.setNameDescription,

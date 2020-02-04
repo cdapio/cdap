@@ -19,11 +19,13 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { Map } from 'immutable';
+import { List, Map } from 'immutable';
 import Checkbox from '@material-ui/core/Checkbox';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import orderBy from 'lodash/orderBy';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import SelectColumns from 'components/Replicator/Create/Content/SelectColumns';
+import If from 'components/If';
 
 const styles = (theme): StyleRules => {
   return {
@@ -36,7 +38,7 @@ const styles = (theme): StyleRules => {
         maxHeight: '100%', // beating specificity
 
         '& .grid-row': {
-          gridTemplateColumns: '55px 3fr 1fr 100px',
+          gridTemplateColumns: '55px 3fr 1fr 1fr 100px',
           alignItems: 'center',
         },
 
@@ -44,6 +46,14 @@ const styles = (theme): StyleRules => {
           paddingTop: 0,
           paddingBottom: 0,
         },
+      },
+    },
+    changeLink: {
+      color: theme.palette.grey[300],
+      cursor: 'pointer',
+      '&:hover': {
+        textDecoration: 'underline',
+        color: theme.palette.blue[200],
       },
     },
   };
@@ -57,17 +67,30 @@ interface ITable {
   numColumns: number;
 }
 
+interface IColumn {
+  name: string;
+  type: string;
+}
+
 interface ISelectTablesState {
   tables: ITable[];
   selectedTables: Map<string, boolean>;
+  columns: Map<string, List<IColumn>>;
+  openTable?: ITable;
   error: any;
   loading: boolean;
+}
+
+export function generateTableKey(row) {
+  return `db-${row.database}-table-${row.table}`;
 }
 
 class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTablesState> {
   public state = {
     tables: [],
     selectedTables: Map<string, boolean>(),
+    columns: Map<string, List<IColumn>>(),
+    openTable: null,
     loading: true,
     error: null,
   };
@@ -99,12 +122,8 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     );
   };
 
-  private generateKey = (row) => {
-    return `db-${row.database}-table-${row.table}`;
-  };
-
   private toggleSelected = (row) => {
-    const key = this.generateKey(row);
+    const key = generateTableKey(row);
 
     if (this.state.selectedTables.get(key)) {
       this.setState({
@@ -128,12 +147,32 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
 
     const selectedMap = {};
     this.state.tables.forEach((row) => {
-      const key = this.generateKey(row);
+      const key = generateTableKey(row);
       selectedMap[key] = true;
     });
 
     this.setState({
-      selectedTables: this.state.selectedTables.merge(Map(selectedMap)),
+      selectedTables: Map(selectedMap),
+    });
+  };
+
+  public openTable = (table = null) => {
+    this.setState({
+      openTable: table,
+    });
+  };
+
+  private getInitialSelected = () => {
+    if (!this.state.openTable) {
+      return null;
+    }
+
+    return this.state.columns.get(generateTableKey(this.state.openTable));
+  };
+
+  public onColumnsSelection = (tableKey, columns: List<IColumn>) => {
+    this.setState({
+      columns: this.state.columns.set(tableKey, columns),
     });
   };
 
@@ -145,52 +184,73 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     const { classes } = this.props;
 
     return (
-      <div className={classes.root}>
-        <h3>Select tables and columns to replicate</h3>
+      <React.Fragment>
+        <div className={classes.root}>
+          <h3>Select tables and columns to replicate</h3>
 
-        <div className={`grid-wrapper ${classes.gridWrapper}`}>
-          <div className={`grid grid-container grid-compact`}>
-            <div className="grid-header">
-              <div className="grid-row">
-                <div>
-                  <Checkbox
-                    checked={this.state.selectedTables.size === this.state.tables.length}
-                    onChange={this.toggleSelectAll}
-                    color="primary"
-                  />
+          <div className={`grid-wrapper ${classes.gridWrapper}`}>
+            <div className={`grid grid-container grid-compact`}>
+              <div className="grid-header">
+                <div className="grid-row">
+                  <div>
+                    <Checkbox
+                      checked={this.state.selectedTables.size === this.state.tables.length}
+                      onChange={this.toggleSelectAll}
+                      color="primary"
+                    />
+                  </div>
+                  <div>Table name</div>
+                  <div>Total columns</div>
+                  <div>Selected columns</div>
+                  <div />
                 </div>
-                <div>Table name</div>
-                <div>Total columns</div>
-                <div />
+              </div>
+
+              <div className="grid-body">
+                {this.state.tables.map((row) => {
+                  const key = generateTableKey(row);
+                  const checked = !!this.state.selectedTables.get(key);
+                  const columns = this.state.columns.get(key);
+
+                  return (
+                    <div key={key} className="grid-row">
+                      <div>
+                        <Checkbox
+                          checked={checked}
+                          onChange={this.toggleSelected.bind(this, row)}
+                          color="primary"
+                        />
+                      </div>
+                      <div>{row.table}</div>
+                      <div>{row.numColumns}</div>
+                      <div>{columns ? columns.size : 'All'}</div>
+                      <div>
+                        <span
+                          onClick={this.openTable.bind(this, row)}
+                          className={classes.changeLink}
+                        >
+                          Change
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-            <div className="grid-body">
-              {this.state.tables.map((row) => {
-                const key = this.generateKey(row);
-                const checked = !!this.state.selectedTables.get(key);
-
-                return (
-                  <div key={key} className="grid-row">
-                    <div>
-                      <Checkbox
-                        checked={checked}
-                        onChange={this.toggleSelected.bind(this, row)}
-                        color="primary"
-                      />
-                    </div>
-                    <div>{row.table}</div>
-                    <div>{row.numColumns}</div>
-                    <div>Change</div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
+
+          <StepButtons />
         </div>
 
-        <StepButtons />
-      </div>
+        <If condition={this.state.openTable}>
+          <SelectColumns
+            tableInfo={this.state.openTable}
+            initialSelected={this.getInitialSelected()}
+            toggle={this.openTable.bind(this, null)}
+            onSave={this.onColumnsSelection}
+          />
+        </If>
+      </React.Fragment>
     );
   }
 }
