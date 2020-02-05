@@ -27,6 +27,12 @@ const draftPath = `${servicePath}/drafts/:draftId`;
 
 export const MyReplicatorApi = {
   getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType?scope=system`),
+  batchGetPluginsWidgets: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    '/namespaces/:namespace/artifactproperties'
+  ),
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps?artifactName=delta-app'),
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`),

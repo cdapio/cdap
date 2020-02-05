@@ -17,6 +17,8 @@
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Observable } from 'rxjs/Observable';
 import { MyPipelineApi } from 'api/pipeline';
+import { MyReplicatorApi } from 'api/replicator';
+import { bucketPlugins } from 'services/PluginUtilities';
 
 const parentArtifact = 'delta-app';
 const version = '0.1.0-SNAPSHOT';
@@ -95,71 +97,6 @@ export function fetchPluginWidget(
   return observable$;
 }
 
-// export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType) {
-//   const observable$ = Observable.create((observer) => {
-//     const namespace = getCurrentNamespace();
-//     const pluginParams = {
-//       namespace,
-//       parentArtifact,
-//       version,
-//       extension: pluginType,
-//       pluginName,
-//       scope,
-//       artifactName,
-//       artifactScope,
-//       limit: 1,
-//       order: 'DESC',
-//     };
-
-//     MyPipelineApi.getPluginProperties(pluginParams).subscribe(
-//       ([plugin]) => {
-//         const widgetKey = `widgets.${pluginName}-${pluginType}`;
-//         const widgetParams = {
-//           namespace,
-//           artifactName,
-//           scope: artifactScope,
-//           artifactVersion: plugin.artifact.version,
-//           keys: widgetKey,
-//         };
-
-//         MyPipelineApi.fetchWidgetJson(widgetParams).subscribe(
-//           (widgetInfo) => {
-//             if (!widgetInfo || !widgetInfo[widgetKey]) {
-//               observer.next({
-//                 pluginInfo: plugin,
-//                 widgetInfo: {},
-//               });
-//               observer.complete();
-//               return;
-//             }
-
-//             try {
-//               const widgetContent = JSON.parse(widgetInfo[widgetKey]);
-
-//               observer.next({
-//                 pluginInfo: plugin,
-//                 widgetInfo: widgetContent,
-//               });
-
-//               observer.complete();
-//             } catch (parseError) {
-//               observer.error(parseError);
-//             }
-//           },
-//           (widgetError) => {
-//             observer.error(widgetError);
-//           }
-//         );
-//       },
-//       (pluginError) => {
-//         observer.error(pluginError);
-//       }
-//     );
-//   });
-
-//   return observable$;
-// }
-
 function constructPluginConfigurationSpec(plugin, pluginConfig) {
   return {
     name: plugin.name,
@@ -208,4 +145,72 @@ export function constructReplicatorSpec(
   };
 
   return transferSpec;
+}
+
+export function fetchPluginsAndWidgets(pluginType) {
+  const observable$ = Observable.create((observer) => {
+    const params = {
+      namespace: getCurrentNamespace(),
+      pluginType,
+    };
+
+    MyReplicatorApi.getPlugins(params).subscribe(
+      (res) => {
+        const pluginsBucket = bucketPlugins(res);
+
+        // convert plugins buckets into array with only latest version
+        const plugins = Object.keys(pluginsBucket).map((pluginName) => {
+          return pluginsBucket[pluginName][0];
+        });
+
+        const widgetRequestBody = plugins.map((plugin) => {
+          const propertyKey = `${plugin.name}-${plugin.type}`;
+          const pluginReqBody = {
+            ...plugin.artifact,
+            properties: [`widgets.${propertyKey}`],
+          };
+          return pluginReqBody;
+        });
+
+        MyReplicatorApi.batchGetPluginsWidgets(
+          { namespace: getCurrentNamespace() },
+          widgetRequestBody
+        ).subscribe(
+          (widgetRes) => {
+            const processedWidgetMap = {};
+
+            widgetRes.forEach((plugin) => {
+              Object.keys(plugin.properties).forEach((propertyName) => {
+                const pluginKey = propertyName.split('.')[1];
+
+                let widget = {};
+                try {
+                  widget = JSON.parse(plugin.properties[propertyName]);
+                } catch (e) {
+                  // tslint:disable-next-line: no-console
+                  console.log('Failed to parse widget JSON', e);
+                }
+
+                processedWidgetMap[pluginKey] = widget;
+              });
+            });
+
+            observer.next({
+              plugins,
+              widgetMap: processedWidgetMap,
+            });
+            observer.complete();
+          },
+          (err) => {
+            observer.error(err);
+          }
+        );
+      },
+      (err) => {
+        observer.error(err);
+      }
+    );
+  });
+
+  return observable$;
 }
