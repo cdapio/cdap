@@ -19,6 +19,7 @@ package io.cdap.cdap.data2.metadata.lineage.field;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.data.schema.Schema.Field;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -824,9 +825,17 @@ public class FieldLineageInfoTest {
     expectedOutgoingSummary.put(new EndPointField(ep1, "last_name"),
         Sets.newHashSet(new EndPointField(ep2, "full_name")));
     expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
-        Sets.newHashSet((EndPointField) null));
-
+        Sets.newHashSet(FieldLineageInfo.NULL_EPF));
     Assert.assertEquals(info1.getOutgoingSummary(), expectedOutgoingSummary);
+
+    Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
+    expectedIncomingSummary.put(new EndPointField(ep2, "full_name"),
+        Sets.newHashSet(
+            new EndPointField(ep1, "first_name"),
+            new EndPointField(ep1, "last_name")));
+    expectedIncomingSummary.put(FieldLineageInfo.NULL_EPF,
+        Sets.newHashSet(new EndPointField(ep1, "social")));
+    Assert.assertEquals(info1.getIncomingSummary(), expectedIncomingSummary);
   }
 
   private void assertBefore(List<Operation> list, Operation a, Operation b) {
