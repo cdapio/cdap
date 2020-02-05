@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,21 @@
  * the License.
  */
 
-import React from 'react';
-import Cookies from 'universal-cookie';
+import * as React from 'react';
 
-const cookie = new Cookies();
-
-interface IExptWrapperProps {
+interface IToggleFeatureProps {
   defaultComponent: React.ReactElement<any>;
-  experimentComponent: React.ReactElement<any>;
+  experimentalComponent: React.ReactElement<any>;
+  name: string;
 }
 
-const ExperimentWrapper: React.FC<IExptWrapperProps> = ({
+const ToggleFeature: React.SFC<IToggleFeatureProps> = ({
   defaultComponent,
-  experimentComponent,
-}: IExptWrapperProps) => {
-  const showExperiment = cookie.get('CDAP_enable_experiments');
-  if (showExperiment === 'on') {
-    return experimentComponent;
-  } else {
-    return defaultComponent;
-  }
+  experimentalComponent,
+  name,
+}) => {
+  const featureAvailable = window.localStorage.getItem(name) === 'true';
+  return featureAvailable ? experimentalComponent : defaultComponent;
 };
 
-export default ExperimentWrapper;
+export default ToggleFeature;
