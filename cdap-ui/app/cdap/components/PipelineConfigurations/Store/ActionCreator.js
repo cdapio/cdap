@@ -45,36 +45,23 @@ import { CLOUD } from 'services/global-constants';
 // Filter certain preferences from being shown in the run time arguments
 // They are being represented in other places (like selected compute profile).
 const getFilteredRuntimeArgs = (runtimeArgs) => {
-  const RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY = [
-    CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY,
-    CLOUD.PROFILE_PROPERTIES_PREFERENCE,
-    'logical.start.time',
-  ];
   let { resolvedMacros } = PipelineConfigurationsStore.getState();
   let modifiedRuntimeArgs = {};
   let pairs = [...runtimeArgs.pairs];
-  const skipIfProfilePropMatch = (prop) => {
-    let isMatch = RUNTIME_ARGS_TO_SKIP_DURING_DISPLAY.filter(
-      (skipProp) => prop.indexOf(skipProp) !== -1
-    );
-    return isMatch.length ? true : false;
-  };
-  pairs = pairs
-    .filter((pair) => !skipIfProfilePropMatch(pair.key))
-    .map((pair) => {
-      if (pair.key in resolvedMacros) {
-        return {
-          notDeletable: true,
-          provided: pair.provided || false,
-          ...pair,
-        };
-      }
+  pairs = pairs.map((pair) => {
+    if (pair.key in resolvedMacros) {
       return {
+        notDeletable: true,
+        provided: pair.provided || false,
         ...pair,
-        // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
-        provided: null,
       };
-    });
+    }
+    return {
+      ...pair,
+      // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
+      provided: null,
+    };
+  });
   if (!pairs.length) {
     pairs.push(getDefaultKeyValuePair());
   }
@@ -82,23 +69,11 @@ const getFilteredRuntimeArgs = (runtimeArgs) => {
   return modifiedRuntimeArgs;
 };
 
-// While adding runtime argument make sure to include the excluded preferences
 const updateRunTimeArgs = (rtArgs) => {
-  let { runtimeArgs } = PipelineConfigurationsStore.getState();
-  let modifiedRuntimeArgs = {};
-  let excludedPairs = [...runtimeArgs.pairs];
-  const preferencesToFilter = [
-    CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY,
-    CLOUD.PROFILE_PROPERTIES_PREFERENCE,
-  ];
-  const shouldExcludeProperty = (property) =>
-    preferencesToFilter.filter((prefProp) => property.indexOf(prefProp) !== -1).length;
-  excludedPairs = excludedPairs.filter((pair) => shouldExcludeProperty(pair.key));
-  modifiedRuntimeArgs.pairs = rtArgs.pairs.concat(excludedPairs);
   PipelineConfigurationsStore.dispatch({
     type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
     payload: {
-      runtimeArgs: modifiedRuntimeArgs,
+      runtimeArgs: rtArgs,
     },
   });
 };
