@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,26 +12,19 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-import React from 'react';
-import cookie from 'react-cookie';
+import * as React from 'react';
+import If from 'components/If';
 
-interface IExptWrapperProps {
-  defaultComponent: React.ReactElement<any>;
-  experimentComponent: React.ReactElement<any>;
+interface IExperimentWrapperProps {
+  children: React.ReactNode;
+  name: string;
 }
 
-const ExperimentWrapper: React.FC<IExptWrapperProps> = ({
-  defaultComponent,
-  experimentComponent,
-}: IExptWrapperProps) => {
-  const showExperiment = cookie.load('CDAP_enable_experiments');
-  if (showExperiment === 'on') {
-    return experimentComponent;
-  } else {
-    return defaultComponent;
-  }
+const ExperimentWrapper: React.FC<IExperimentWrapperProps> = ({ children, name }) => {
+  const featureAvailable = window.localStorage.getItem(name) === 'true';
+  return <If condition={featureAvailable}>{children}</If>;
 };
 
 export default ExperimentWrapper;

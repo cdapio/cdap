@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,20 +12,14 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
-import * as React from 'react';
+ */
 
-interface IIfComponentProps {
-  condition: boolean;
-  children: React.ReactNode;
-}
-
-const If: React.FC<IIfComponentProps> = ({ condition, children }) => {
-  if (!condition) {
-    return null;
-  }
-
-  return <React.Fragment>{children}</React.Fragment>;
-};
-
-export default If;
+export default [
+  {
+    name: 'CDAP Common',
+    description: `This is a common flag that developers can use to hide or show features. The flag is stored in browser's local storage with experiment ID as the name.`,
+    id: 'cdap-common-experiment',
+    screenshot: null,
+    value: false,
+  },
+];

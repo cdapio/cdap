@@ -95,9 +95,8 @@ const FieldLevelLineage = Loadable({
   loading: LoadingSVGCentered,
 });
 
-const ExperimentToggle = Loadable({
-  loader: () =>
-    import(/* webpackChunkMame: "ExperimentToggle" */ 'components/ExperimentWrapper/ExperimentToggle'),
+const Lab = Loadable({
+  loader: () => import(/* webpackChunkMame: "Lab" */ 'components/Lab'),
   loading: LoadingSVGCentered,
 });
 
@@ -150,7 +149,22 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
-          <Route path="/ns/:namespace/experimentToggle" component={ExperimentToggle} />
+          <Route path="/ns/:namespace/lab" component={Lab} />
+          <Route
+            exact
+            path="/ns/:namespace/lab-experiment-test"
+            render={(props) => {
+              if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                return <Page404 {...props} />;
+              }
+              const LabExperimentTestComp = Loadable({
+                loader: () =>
+                  import(/* webpackChunkName: "LabExperimentTest" */ 'components/Lab/LabExperimentTest'),
+                loading: LoadingSVGCentered,
+              });
+              return <LabExperimentTestComp {...props} />;
+            }}
+          />
           <Route component={Page404} />
         </Switch>
       </div>
