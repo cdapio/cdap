@@ -811,10 +811,10 @@ public class FieldLineageInfoTest {
         "ssn2");
     TransformOperation dropSocial = new TransformOperation("dropSocial", "drop ssn2",
         Collections.singletonList(InputField.of("renameSocialAgain", "ssn2")));
-    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of(null, "endpoint2"),
+    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of("endpoint2"),
         Arrays.asList(InputField.of("read", "first_name"), InputField.of("read", "last_name")));
 
-    List<Operation> operations = Arrays.asList(read, renameSocial, renameSocialAgain, dropSocial, write);
+    Set<Operation> operations = Sets.newHashSet(read, renameSocial, renameSocialAgain, dropSocial, write);
     FieldLineageInfo info = new FieldLineageInfo(operations);
 
     EndPoint ep1 = EndPoint.of("endpoint1");
@@ -828,13 +828,13 @@ public class FieldLineageInfoTest {
     expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2ln, ep2fn));
     expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2ln, ep2fn));
     expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
-        Sets.newHashSet(FieldLineageInfo.NULL_EPF));
-    Assert.assertEquals(info.getOutgoingSummary(), expectedOutgoingSummary);
+        Collections.singleton(FieldLineageInfo.NULL_EPF));
+    Assert.assertEquals(expectedOutgoingSummary, info.getOutgoingSummary());
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
     expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
     expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
-    Assert.assertEquals(info.getIncomingSummary(), expectedIncomingSummary);
+    Assert.assertEquals(expectedIncomingSummary, info.getIncomingSummary());
   }
 
   @Test
@@ -848,14 +848,10 @@ public class FieldLineageInfoTest {
         "full_name");
     TransformOperation dropSocial = new TransformOperation("dropSocial", "drop social",
         Collections.singletonList(InputField.of("read", "social")));
-    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of(null, "endpoint2"),
+    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of("endpoint2"),
         Collections.singletonList(InputField.of("combineNames", "full_name")));
 
-    List<Operation> operations = new ArrayList<>();
-    operations.add(read);
-    operations.add(write);
-    operations.add(combineNames);
-    operations.add(dropSocial);
+    Set<Operation> operations = Sets.newHashSet(read, write, combineNames, dropSocial);
     FieldLineageInfo info1 = new FieldLineageInfo(operations);
 
     EndPoint ep1 = EndPoint.of("endpoint1");
@@ -863,19 +859,19 @@ public class FieldLineageInfoTest {
 
     Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
     expectedOutgoingSummary.put(new EndPointField(ep1, "first_name"),
-        Sets.newHashSet(new EndPointField(ep2, "full_name")));
+        Collections.singleton(new EndPointField(ep2, "full_name")));
     expectedOutgoingSummary.put(new EndPointField(ep1, "last_name"),
-        Sets.newHashSet(new EndPointField(ep2, "full_name")));
+        Collections.singleton(new EndPointField(ep2, "full_name")));
     expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
-        Sets.newHashSet(FieldLineageInfo.NULL_EPF));
-    Assert.assertEquals(info1.getOutgoingSummary(), expectedOutgoingSummary);
+        Collections.singleton(FieldLineageInfo.NULL_EPF));
+    Assert.assertEquals(expectedOutgoingSummary, info1.getOutgoingSummary());
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
     expectedIncomingSummary.put(new EndPointField(ep2, "full_name"),
         Sets.newHashSet(
             new EndPointField(ep1, "first_name"),
             new EndPointField(ep1, "last_name")));
-    Assert.assertEquals(info1.getIncomingSummary(), expectedIncomingSummary);
+    Assert.assertEquals(expectedIncomingSummary, info1.getIncomingSummary());
   }
 
   private void assertBefore(List<Operation> list, Operation a, Operation b) {
