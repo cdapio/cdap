@@ -16,20 +16,17 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { Link } from 'react-router-dom';
-import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
 import HorizontalCarousel from 'components/HorizontalCarousel';
 import { fetchPluginsAndWidgets } from 'components/Replicator/utilities';
 import { PluginType } from 'components/Replicator/constants';
+import { objectQuery } from 'services/helpers';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
-import { objectQuery } from 'services/helpers';
-import If from 'components/If';
-import LoadingSVG from 'components/LoadingSVG';
+import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
+import classnames from 'classnames';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     header: {
       display: 'grid',
@@ -40,12 +37,12 @@ const styles = (): StyleRules => {
       alignItems: 'center',
       justifyContent: 'flex-end',
     },
-    link: {
+    targetItem: {
       marginRight: '25px',
-
-      '&:hover': {
-        textDecoration: 'none',
-      },
+      cursor: 'pointer',
+    },
+    selected: {
+      backgroundColor: theme.palette.grey[700],
     },
     search: {
       width: '200px',
@@ -53,29 +50,29 @@ const styles = (): StyleRules => {
     },
     listContainer: {
       marginTop: '15px',
-      height: '100px',
-    },
-    loadingContainer: {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      marginBottom: '15px',
     },
   };
 };
 
-const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
-  const [sources, setSources] = React.useState([]);
+interface ITargetListProps extends WithStyles<typeof styles> {
+  onSelect: (target) => void;
+  currentSelection: any;
+}
+
+const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, currentSelection }) => {
+  const [targets, setTargets] = React.useState([]);
   const [widgetMap, setWidgetMap] = React.useState({});
   const [search, setSearch] = React.useState('');
-  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetchPluginsAndWidgets(PluginType.source).subscribe((res) => {
-      setSources(res.plugins);
+    fetchPluginsAndWidgets(PluginType.target).subscribe((res) => {
+      if (res.plugins.length === 1 && !currentSelection) {
+        onSelect(res.plugins[0]);
+      }
+
+      setTargets(res.plugins);
       setWidgetMap(res.widgetMap);
-      setLoading(false);
     });
   }, []);
 
@@ -84,15 +81,19 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     setSearch(value);
   }
 
-  let filteredSources = sources;
+  if (targets.length === 1) {
+    return null;
+  }
+
+  let filteredTarget = targets;
   if (search.length > 0) {
-    filteredSources = sources.filter((source) => {
-      const pluginKey = `${source.name}-${source.type}`;
+    filteredTarget = targets.filter((target) => {
+      const pluginKey = `${target.name}-${target.type}`;
       const displayName = objectQuery(widgetMap, pluginKey, 'display-name');
 
       const normalizedSearch = search.toLowerCase();
 
-      if (source.name.toLowerCase().indexOf(normalizedSearch) !== -1) {
+      if (target.name.toLowerCase().indexOf(normalizedSearch) !== -1) {
         return true;
       }
 
@@ -104,12 +105,11 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     <div>
       <div className={classes.header}>
         <div>
-          <h4>Create new delta replicator</h4>
-          <div>Start by selecting the source from where you want to replicate your data</div>
+          <h4>Select target</h4>
         </div>
         <div className={classes.searchSection}>
           <div>
-            {sources.length} {sources.length === 1 ? 'source' : 'sources'} available
+            {targets.length} {targets.length === 1 ? 'source' : 'sources'} available
           </div>
           <TextField
             className={classes.search}
@@ -117,7 +117,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             onChange={handleSearch}
             size="small"
             variant="outlined"
-            placeholder="Search sources by name"
+            placeholder="Search targets by name"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -130,38 +130,34 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
       </div>
 
       <div className={classes.listContainer}>
-        <If condition={loading}>
-          <div className={classes.loadingContainer}>
-            <LoadingSVG />
-          </div>
-        </If>
-        <If condition={!loading}>
-          <HorizontalCarousel scrollAmount={PluginCardWidth}>
-            {filteredSources.map((source) => {
-              const { name: artifactName, version, scope } = source.artifact;
-              const pluginKey = `${source.name}-${source.type}`;
-              const widgetInfo = widgetMap[pluginKey];
+        <HorizontalCarousel scrollAmount={PluginCardWidth}>
+          {filteredTarget.map((target) => {
+            const pluginKey = `${target.name}-${target.type}`;
+            const widgetInfo = widgetMap[pluginKey];
+            const targetName = widgetInfo ? widgetInfo['display-name'] : target.name;
 
-              const sourceName = widgetInfo ? widgetInfo['display-name'] : source.name;
+            const currentSelectionName = objectQuery(currentSelection, 'name');
+            const currentSelectionArtifact = objectQuery(currentSelection, 'artifact', 'name');
 
-              return (
-                <Link
-                  key={source.name}
-                  className={classes.link}
-                  to={`/ns/${getCurrentNamespace()}/replicator/create/${artifactName}/${version}/${scope}/${
-                    source.name
-                  }`}
-                >
-                  <PluginCard name={sourceName} />
-                </Link>
-              );
-            })}
-          </HorizontalCarousel>
-        </If>
+            return (
+              <div
+                key={target.name}
+                className={classnames(classes.targetItem, {
+                  [classes.selected]:
+                    target.name === currentSelectionName &&
+                    target.artifact.name === currentSelectionArtifact,
+                })}
+                onClick={onSelect.bind(null, target)}
+              >
+                <PluginCard name={targetName} />
+              </div>
+            );
+          })}
+        </HorizontalCarousel>
       </div>
     </div>
   );
 };
 
-const SourceList = withStyles(styles)(SourceListView);
-export default SourceList;
+const TargetList = withStyles(styles)(TargetListView);
+export default TargetList;
