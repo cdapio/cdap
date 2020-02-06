@@ -15,165 +15,79 @@
  */
 
 import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import SourceList from 'components/Replicator/List/SourceList';
-import { MyReplicatorApi } from 'api/replicator';
+import { Route, Switch, NavLink } from 'react-router-dom';
+import { basepath } from 'components/Replicator';
+import Deployed from 'components/Replicator/List/Deployed';
+import Drafts from 'components/Replicator/List/Drafts';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { Link } from 'react-router-dom';
-import moment from 'moment';
 
-const Status = ({ appName }) => {
-  const [programStatus, setProgramStatus] = React.useState();
+const styles = (theme): StyleRules => {
+  return {
+    root: {
+      padding: '25px 40px',
+      height: '100%',
+    },
+    linkContainer: {
+      marginTop: '50px',
+      borderBottom: `2px solid ${theme.palette.grey[400]}`,
+      display: 'flex',
+    },
+    link: {
+      color: theme.palette.grey[50],
+      fontSize: '20px',
+      marginRight: '100px',
+      '&:hover': {
+        textDecoration: 'none',
+        color: 'inherit',
+      },
+    },
+    activeLink: {
+      fontWeight: 600,
+      borderBottom: `3px solid ${theme.palette.grey[200]}`,
+    },
+    contentContainer: {
+      marginTop: '15px',
 
-  React.useEffect(() => {
-    const params = {
-      namespace: getCurrentNamespace(),
-      appName,
-    };
-
-    const status$ = MyReplicatorApi.pollStatus(params).subscribe((res) => {
-      setProgramStatus(res.status);
-    });
-
-    return () => {
-      status$.unsubscribe();
-    };
-  });
-
-  return <span className="ml-3">{programStatus}</span>;
+      // 100% - header in source list - source list - (margin top + NavLink) - content marginTop
+      height: 'calc(100% - 50px - 115px - 85px - 15px)',
+    },
+  };
 };
 
-export default class List extends React.PureComponent {
-  public state = {
-    replicators: [],
-    drafts: [],
-  };
+const ListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+  return (
+    <div className={classes.root}>
+      <SourceList />
 
-  public componentDidMount() {
-    this.fetchList();
-    this.fetchDrafts();
-  }
-
-  private fetchDrafts = () => {
-    MyReplicatorApi.listDrafts({ namespace: getCurrentNamespace() }).subscribe((res) => {
-      this.setState({ drafts: res });
-    });
-  };
-
-  private fetchList = () => {
-    MyReplicatorApi.list({ namespace: getCurrentNamespace() }).subscribe((res) => {
-      this.setState({ replicators: res });
-    });
-  };
-
-  private start = (appName) => {
-    const params = {
-      namespace: getCurrentNamespace(),
-      appName,
-      action: 'start',
-    };
-
-    MyReplicatorApi.action(params).subscribe(
-      () => {
-        // tslint:disable-next-line: no-console
-        console.log(`${appName} started`);
-      },
-      (err) => {
-        // tslint:disable-next-line: no-console
-        console.log(err);
-      }
-    );
-  };
-
-  private stop = (appName) => {
-    const params = {
-      namespace: getCurrentNamespace(),
-      appName,
-      action: 'stop',
-    };
-
-    MyReplicatorApi.action(params).subscribe(
-      () => {
-        // tslint:disable-next-line: no-console
-        console.log(`${appName} stopped`);
-      },
-      (err) => {
-        // tslint:disable-next-line: no-console
-        console.log(err);
-      }
-    );
-  };
-
-  private delete = (appName) => {
-    const params = {
-      namespace: getCurrentNamespace(),
-      appName,
-    };
-
-    MyReplicatorApi.delete(params).subscribe(this.fetchList, (err) => {
-      // tslint:disable-next-line: no-console
-      console.log(err);
-    });
-  };
-
-  public render() {
-    return (
-      <div className="container">
-        <h1>Replicator List</h1>
-        <br />
-        <SourceList />
-
-        <h2>Replicators</h2>
-        <ul>
-          {this.state.replicators.map((replicator) => {
-            const startTime = moment()
-              .subtract(7, 'days')
-              .format('X');
-            let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${
-              replicator.name
-            }/workers/DeltaWorker/logs`;
-
-            logUrl = `${logUrl}?start=${startTime}`;
-            logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
-
-            return (
-              <li key={replicator.name}>
-                <strong>{replicator.name}</strong>
-                <Status appName={replicator.name} />
-                <span className="btn btn-link" onClick={this.start.bind(this, replicator.name)}>
-                  Start
-                </span>
-                <span className="btn btn-link" onClick={this.stop.bind(this, replicator.name)}>
-                  Stop
-                </span>
-                <span>
-                  <a href={logUrl} target="_tab">
-                    Logs
-                  </a>
-                </span>
-                <span
-                  className="btn btn-danger ml-3"
-                  onClick={this.delete.bind(this, replicator.name)}
-                >
-                  Delete
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-
-        <h2>Drafts</h2>
-        <ul>
-          {this.state.drafts.map((draft) => {
-            return (
-              <li key={draft.name}>
-                <Link to={`/ns/${getCurrentNamespace()}/replicator/drafts/${draft.name}`}>
-                  {draft.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <div className={classes.linkContainer}>
+        <NavLink
+          exact
+          to={`/ns/${getCurrentNamespace()}/replicator`}
+          activeClassName={classes.activeLink}
+          className={classes.link}
+        >
+          Replicators
+        </NavLink>
+        <NavLink
+          exact
+          to={`/ns/${getCurrentNamespace()}/replicator/drafts`}
+          activeClassName={classes.activeLink}
+          className={classes.link}
+        >
+          Drafts
+        </NavLink>
       </div>
-    );
-  }
-}
+      <div className={classes.contentContainer}>
+        <Switch>
+          <Route exact path={`${basepath}/drafts`} component={Drafts} />
+          <Route exact path={`${basepath}`} component={Deployed} />
+        </Switch>
+      </div>
+    </div>
+  );
+};
+
+const List = withStyles(styles)(ListView);
+export default List;
