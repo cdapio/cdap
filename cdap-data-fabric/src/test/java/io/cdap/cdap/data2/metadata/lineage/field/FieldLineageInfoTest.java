@@ -19,7 +19,6 @@ package io.cdap.cdap.data2.metadata.lineage.field;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.cdap.api.data.schema.Schema.Field;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -806,15 +805,14 @@ public class FieldLineageInfoTest {
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
         "first_name", "last_name", "social");
     TransformOperation renameSocial = new TransformOperation("renameSocial", "rename social",
-        Collections.singletonList(InputField.of("read", "social")),"ssn");
-    TransformOperation renameSocialAgain = new TransformOperation("renameSocialAgain", "rename social again",
-        Collections.singletonList(InputField.of("renameSocial", "ssn")),"ssn2");
+        Collections.singletonList(InputField.of("read", "social")), "ssn");
+    TransformOperation renameSocialAgain = new TransformOperation("renameSocialAgain",
+        "rename social again", Collections.singletonList(InputField.of("renameSocial", "ssn")),
+        "ssn2");
     TransformOperation dropSocial = new TransformOperation("dropSocial", "drop ssn2",
         Collections.singletonList(InputField.of("renameSocialAgain", "ssn2")));
     WriteOperation write = new WriteOperation("write", "write data", EndPoint.of(null, "endpoint2"),
-        Arrays.asList(
-            InputField.of("read", "first_name"),
-            InputField.of("read", "last_name")));
+        Arrays.asList(InputField.of("read", "first_name"), InputField.of("read", "last_name")));
 
     List<Operation> operations = Arrays.asList(read, renameSocial, renameSocialAgain, dropSocial, write);
     FieldLineageInfo info = new FieldLineageInfo(operations);
@@ -843,7 +841,8 @@ public class FieldLineageInfoTest {
 
   @Test
   public void testMultiSourceDroppedFields() {
-    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"), "first_name", "last_name", "social");
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
+        "first_name", "last_name", "social");
     TransformOperation combineNames = new TransformOperation("combineNames", "combine names",
         Arrays.asList(
             InputField.of("read", "first_name"),
