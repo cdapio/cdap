@@ -20,9 +20,11 @@ import { createContextConnect, ICreateContext } from 'components/Replicator/Crea
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import { PluginType } from 'components/Replicator/constants';
 import { fetchPluginInfo, fetchPluginWidget } from 'components/Replicator/utilities';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroup from 'components/ConfigurationGroup';
 import { objectQuery } from 'services/helpers';
+import TargetList from 'components/Replicator/Create/Content/TargetConfig/TargetList';
+import If from 'components/If';
+import LoadingSVG from 'components/LoadingSVG';
 
 const styles = (): StyleRules => {
   return {
@@ -42,15 +44,33 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   setTargetConfig,
 }) => {
   const [values, setValues] = React.useState(targetConfig);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (targetPluginWidget || !targetPluginInfo) {
+      return;
+    }
+
+    const artifact = targetPluginInfo.artifact;
+
+    fetchPluginWidget(
+      artifact.name,
+      artifact.version,
+      artifact.scope,
+      targetPluginInfo.name,
+      targetPluginInfo.type
+    ).subscribe((res) => {
+      setTargetPluginWidget(res);
+    });
+  }, []);
 
   // Fetch Target
-  React.useEffect(() => {
-    // TODO: replace with data from Target List
-    const artifactName = 'delta-bigquery-plugins';
-    const artifactScope = 'SYSTEM';
-    const pluginName = 'bigquery';
+  function handleTargetSelect(target) {
+    setLoading(true);
+    const artifactName = target.artifact.name;
+    const pluginName = target.name;
 
-    fetchPluginInfo(artifactName, artifactScope, pluginName, PluginType.target).subscribe(
+    fetchPluginInfo(artifactName, target.artifact.scope, pluginName, PluginType.target).subscribe(
       (res) => {
         setTargetPluginInfo(res);
 
@@ -60,9 +80,16 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
           res.artifact.scope,
           pluginName,
           PluginType.target
-        ).subscribe((widget) => {
-          setTargetPluginWidget(widget);
-        });
+        ).subscribe(
+          (widget) => {
+            setTargetPluginWidget(widget);
+          },
+          null,
+          () => {
+            setLoading(false);
+            setValues({});
+          }
+        );
       },
       (err) => {
         // tslint:disable-next-line: no-console
@@ -71,13 +98,9 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
         // TODO: error handling
       }
     );
-  }, []);
-
-  if (!targetPluginInfo) {
-    return <LoadingSVGCentered />;
   }
 
-  const pluginProperties = objectQuery(targetPluginInfo, 'properties');
+  const pluginProperties = objectQuery(targetPluginInfo, 'properties') || {};
 
   function isNextDisabled() {
     const requiredProperties = Object.keys(pluginProperties).filter((property) => {
@@ -97,12 +120,19 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
 
   return (
     <div className={classes.root}>
-      <ConfigurationGroup
-        widgetJson={targetPluginWidget}
-        pluginProperties={targetPluginInfo.properties}
-        values={values}
-        onChange={setValues}
-      />
+      <TargetList onSelect={handleTargetSelect} currentSelection={targetPluginInfo} />
+
+      <If condition={targetPluginInfo && !loading}>
+        <ConfigurationGroup
+          widgetJson={targetPluginWidget}
+          pluginProperties={pluginProperties}
+          values={values}
+          onChange={setValues}
+        />
+      </If>
+      <If condition={loading}>
+        <LoadingSVG />
+      </If>
 
       <StepButtons onNext={handleNext} nextDisabled={isNextDisabled()} />
     </div>
