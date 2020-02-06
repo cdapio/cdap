@@ -63,11 +63,6 @@ public class FakeFieldLineageReader implements FieldLineageReader {
   }
 
   @Override
-  public Set<String> getDroppedFields(EndPoint endPoint, long start, long end) {
-    return null;
-  }
-
-  @Override
   public Set<EndPointField> getIncomingSummary(EndPointField endPointField, long start, long end) {
     return incomingSummary.getOrDefault(endPointField.getField(), summary);
   }

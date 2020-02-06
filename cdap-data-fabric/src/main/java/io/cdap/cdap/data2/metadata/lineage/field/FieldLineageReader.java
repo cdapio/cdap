@@ -39,17 +39,6 @@ public interface FieldLineageReader {
   Set<String> getFields(EndPoint endPoint, long start, long end);
 
   /**
-   * Get the set of fields dropped during execution {@link WriteOperation},
-   * over the given time range.
-   *
-   * @param endPoint the EndPoint for which the fields need to be returned
-   * @param start start time (inclusive) in milliseconds
-   * @param end end time (exclusive) in milliseconds
-   * @return set of fields written to a given EndPoint
-   */
-  Set<String> getDroppedFields(EndPoint endPoint, long start, long end);
-
-  /**
    * Get the incoming summary for the specified EndPointField over a given time range.
    * Incoming summary consists of set of EndPointFields which participated in the computation
    * of the given EndPointField.

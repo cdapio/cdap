@@ -797,6 +797,51 @@ public class FieldLineageInfoTest {
   }
 
   @Test
+  public void testRenameThenDropFields() {
+    // read: endpoint1 -> (first_name, last_name, social)
+    // renameSocial: read.social -> ssn
+    // renameSocialAgain: renameSocial.ssn -> ssn2
+    // dropSocial: renameSocialAgain.ssn2 -> ()
+    // write: (read.first_name, read.first_name) -> endpoint2
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
+        "first_name", "last_name", "social");
+    TransformOperation renameSocial = new TransformOperation("renameSocial", "rename social",
+        Collections.singletonList(InputField.of("read", "social")),"ssn");
+    TransformOperation renameSocialAgain = new TransformOperation("renameSocialAgain", "rename social again",
+        Collections.singletonList(InputField.of("renameSocial", "ssn")),"ssn2");
+    TransformOperation dropSocial = new TransformOperation("dropSocial", "drop ssn2",
+        Collections.singletonList(InputField.of("renameSocialAgain", "ssn2")));
+    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of(null, "endpoint2"),
+        Arrays.asList(
+            InputField.of("read", "first_name"),
+            InputField.of("read", "last_name")));
+
+    List<Operation> operations = Arrays.asList(read, renameSocial, renameSocialAgain, dropSocial, write);
+    FieldLineageInfo info = new FieldLineageInfo(operations);
+
+    EndPoint ep1 = EndPoint.of("endpoint1");
+    EndPoint ep2 = EndPoint.of("endpoint2");
+    EndPointField ep2ln = new EndPointField(ep2, "last_name");
+    EndPointField ep2fn = new EndPointField(ep2, "first_name");
+    EndPointField ep1ln = new EndPointField(ep1, "last_name");
+    EndPointField ep1fn = new EndPointField(ep1, "first_name");
+
+    Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
+    expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2ln, ep2fn));
+    expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2ln, ep2fn));
+    expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
+        Sets.newHashSet(FieldLineageInfo.NULL_EPF));
+    Assert.assertEquals(info.getOutgoingSummary(), expectedOutgoingSummary);
+
+    Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
+    expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
+    expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
+    expectedIncomingSummary.put(FieldLineageInfo.NULL_EPF,
+        Sets.newHashSet(new EndPointField(ep1, "social")));
+    Assert.assertEquals(info.getIncomingSummary(), expectedIncomingSummary);
+  }
+
+  @Test
   public void testMultiSourceDroppedFields() {
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"), "first_name", "last_name", "social");
     TransformOperation combineNames = new TransformOperation("combineNames", "combine names",

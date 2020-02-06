@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -77,10 +78,7 @@ public class FieldLineageInfo {
 
   // We maintain the map of fields dropped in this lineage; ones with incoming, but no outgoing.
   // Also the TransformOperation that dropped that field.
-  private Map<String, TransformOperation> droppedFields;
-
-  // for every field, which readOperation did it ultimately come from
-  private Map<String, ReadOperation> fieldSources;
+  private final Map<String, TransformOperation> droppedFields;
 
   private transient Set<WriteOperation> writeOperations;
 
@@ -137,7 +135,6 @@ public class FieldLineageInfo {
     LOG.trace("Received field lineage operations {}", GSON.toJson(operations));
     this.operations = new HashSet<>(operations);
     this.droppedFields = new HashMap<>();
-    this.fieldSources = new HashMap<>();
     computeAndValidateFieldLineageInfo(operations);
     this.checksum = computeChecksum();
     if (computeSummaries) {
@@ -174,8 +171,6 @@ public class FieldLineageInfo {
                     "operation '%s'.", read.getName()));
           }
           readOperations.add(read);
-          for (String output: read.getOutputs())
-            fieldSources.put(output, read);
           break;
         case TRANSFORM:
           TransformOperation transform = (TransformOperation) operation;
@@ -190,9 +185,6 @@ public class FieldLineageInfo {
             for (InputField inputField : transform.getInputs()) {
               droppedFields.put(inputField.getName(), transform);
             }
-          } else {
-            for (String output : transform.getOutputs())
-              fieldSources.put(output, fieldSources.get(transform.getInputs().get(0).getName()));
           }
           break;
         case WRITE:
@@ -281,7 +273,7 @@ public class FieldLineageInfo {
    * @return all {@link EndPoint}s representing the source for read operations
    */
   public Set<EndPoint> getSources() {
-    if (sources == null || sources.size() == 0) {
+    if (sources == null || sources.isEmpty()) {
       populateSourcesAndDestinations();
     }
     return sources;
@@ -291,7 +283,7 @@ public class FieldLineageInfo {
    * @return all {@link EndPoint}s representing the destination for write operations
    */
   public Set<EndPoint> getDestinations() {
-    if (destinations == null || destinations.size() == 0) {
+    if (destinations == null || destinations.isEmpty()) {
       populateSourcesAndDestinations();
     }
     return destinations;
@@ -344,10 +336,15 @@ public class FieldLineageInfo {
       }
     }
     for (String field : droppedFields.keySet()) {
-      ReadOperation read = fieldSources.get(field);
-      EndPointField endPointField = new EndPointField(read.getSource(), field);
-      Set<EndPointField> droppedEPFs = summary.computeIfAbsent(NULL_EPF, k -> new HashSet<>());
-      droppedEPFs.add(endPointField);
+      TransformOperation transform = droppedFields.get(field);
+      Operation previous = null;
+      for (InputField input : transform.getInputs()) {
+        if (input.getName().equals(field)) {
+          previous = operationsMap.get(input.getOrigin());
+          break;
+        }
+      }
+      computeIncomingSummaryHelper(NULL_EPF, transform, previous, summary);
     }
     return summary;
   }
@@ -418,11 +415,6 @@ public class FieldLineageInfo {
         Set<EndPointField> outgoingEndPointFields = outgoingSummary.computeIfAbsent(value, k -> new HashSet<>());
         outgoingEndPointFields.add(entry.getKey());
       }
-    }
-    for (String field : droppedFields.keySet()) {
-      ReadOperation read = fieldSources.get(field);
-      EndPointField endPointField = new EndPointField(read.getSource(), field);
-      outgoingSummary.put(endPointField, Sets.newHashSet(NULL_EPF));
     }
     return outgoingSummary;
   }
