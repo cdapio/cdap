@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,10 @@
  * the License.
 */
 
-/* global module */
+export const REQUEST_ORIGIN_ROUTER = 'ROUTER';
+export const REQUEST_ORIGIN_MARKET = 'MARKET';
 
-const REQUEST_ORIGIN_ROUTER = 'ROUTER';
-const REQUEST_ORIGIN_MARKET = 'MARKET';
-
-function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
+export function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
   if (!cdapConfig) {
     return null;
   }
@@ -37,13 +35,7 @@ function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
   return path ? `${baseUrl}/${path}` : baseUrl;
 }
 
-function deconstructUrl(cdapConfig, url, requestOrigin) {
+export function deconstructUrl(cdapConfig, url, requestOrigin) {
   const routerBaseUrl = constructUrl(cdapConfig, '', requestOrigin);
   return `/${url.replace(routerBaseUrl, '')}`;
 }
-module.exports = {
-  REQUEST_ORIGIN_MARKET,
-  REQUEST_ORIGIN_ROUTER,
-  constructUrl,
-  deconstructUrl,
-};

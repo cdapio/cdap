@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,22 @@
  * the License.
  */
 
+import sockjs from 'sockjs';
+import http from 'http';
+import fs from 'fs';
+import log4js from 'log4js';
+import https from 'https';
+import ip from 'ip';
+import { getApp } from 'server/express';
+import Aggregator from 'server/aggregator';
+import { extractConfig } from 'server/config/parser';
+import { getCDAPConfig } from 'server/cdap-config';
+import { applyGraphQLMiddleware } from 'gql/graphql';
+import { getHostName } from 'server/config/hostname';
+
 /**
  * Spins up servers
  */
-var express = require('./server/express.js'),
-  Aggregator = require('./server/aggregator.js'),
-  parser = require('./server/config/parser.js'),
-  cdapConfigurator = require('./server/cdap-config.js'),
-  sockjs = require('sockjs'),
-  http = require('http'),
-  fs = require('fs'),
-  log4js = require('log4js'),
-  graphql = require('./graphql/graphql.js'),
-  https = require('https'),
-  getHostName = require('./server/config/hostname'),
-  ip = require('ip');
 
 var cdapConfig,
   securityConfig,
@@ -95,24 +96,23 @@ async function setAllowedOrigin() {
 }
 
 log.info('Starting CDAP UI ...');
-cdapConfigurator
-  .getCDAPConfig()
+getCDAPConfig()
   .then(function(c) {
     cdapConfig = c;
     if (cdapConfig['security.enabled'] === 'true') {
       log.debug('CDAP Security has been enabled');
-      return parser.extractConfig('security');
+      return extractConfig('security');
     }
   })
 
   .then(function(s) {
     securityConfig = s;
     setAllowedOrigin();
-    return express.getApp(Object.assign({}, cdapConfig, securityConfig));
+    return getApp(Object.assign({}, cdapConfig, securityConfig));
   })
 
   .then(function(app) {
-    graphql.applyMiddleware(app, Object.assign({}, cdapConfig, securityConfig), log);
+    applyGraphQLMiddleware(app, Object.assign({}, cdapConfig, securityConfig), log);
 
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {

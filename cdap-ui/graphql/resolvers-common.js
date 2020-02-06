@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,24 @@
  * the License.
  */
 
-const request = require('request');
-const { ApolloError } = require('apollo-server');
+import request from 'request';
+import { ApolloError } from 'apollo-server';
 
-function getGETRequestOptions() {
+export function getGETRequestOptions() {
   return {
     method: 'GET',
     json: true,
   };
 }
 
-function getPOSTRequestOptions() {
+export function getPOSTRequestOptions() {
   return {
     method: 'POST',
     json: true,
   };
 }
 
-function requestPromiseWrapper(options, token, bodyModifiersFn) {
+export function requestPromiseWrapper(options, token, bodyModifiersFn) {
   if (token) {
     options.headers = {
       Authorization: token,
@@ -61,9 +61,3 @@ function requestPromiseWrapper(options, token, bodyModifiersFn) {
     });
   });
 }
-
-module.exports = {
-  getGETRequestOptions,
-  getPOSTRequestOptions,
-  requestPromiseWrapper,
-};

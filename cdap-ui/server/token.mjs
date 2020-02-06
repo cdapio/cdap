@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,8 @@
  * the License.
 */
 
-const crypto = require('crypto');
-const path = require('path');
+import crypto from 'crypto';
+import path from 'path';
 
 const EncryptionConstants = {
   ONE_HOUR_MILLIS: 60 * 60 * 1000,
@@ -127,7 +127,7 @@ function getSecretFromCDAPConfig(cdapConfig, logger) {
  * Example output (not representative of size but the structure)
  * eCEsJ32ACxFp7wkHnsKxZA==-eFM6EJU568EzM+xFl2eeVQ4ruEk6WjjCJ1sISpDU5jpTF4w==
  */
-function generateToken(cdapConfig, logger = console, authToken = '') {
+export function generateToken(cdapConfig, logger = console, authToken = '') {
   const instanceName = cdapConfig['instance.metadata.id'];
   const secret = getSecretFromCDAPConfig(cdapConfig, logger);
   const salt = getSalt();
@@ -155,7 +155,7 @@ function generateToken(cdapConfig, logger = console, authToken = '') {
  *  - Both the shasum should match
  *  - AND age of token shouldn't be more than an hour.
  */
-function validateToken(encryptedToken, cdapConfig, logger = console, authToken = '') {
+export function validateToken(encryptedToken, cdapConfig, logger = console, authToken = '') {
   let timestamp, shasum, timeinmillis;
   if (!encryptedToken) {
     return false;
@@ -191,7 +191,7 @@ function validateToken(encryptedToken, cdapConfig, logger = console, authToken =
   const iter2 = shasum.values();
   let xor = 0;
 
-  // Both iterators should have the same number of values 
+  // Both iterators should have the same number of values
   // as the length are the same
   let pair1 = iter1.next();
   let pair2 = iter2.next();
@@ -203,8 +203,3 @@ function validateToken(encryptedToken, cdapConfig, logger = console, authToken =
 
   return xor === 0;
 }
-
-module.exports = {
-  generateToken,
-  validateToken,
-};

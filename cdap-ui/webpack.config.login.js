@@ -39,8 +39,8 @@ const getWebpackDllPlugins = (mode) => {
     sharedDllManifestFileName = 'shared-vendor-development-manifest.json';
   }
   return new webpack.DllReferencePlugin({
-    context: path.resolve(__dirname, 'server', 'public', 'dll'),
-    manifest: require(path.join(__dirname, 'server', 'public', 'dll', sharedDllManifestFileName)),
+    context: path.resolve(__dirname, 'packaged', 'public', 'dll'),
+    manifest: require(path.join(__dirname, 'packaged', 'public', 'dll', sharedDllManifestFileName)),
   });
 };
 var plugins = [
@@ -97,9 +97,9 @@ if (!isModeProduction(mode)) {
 const loaderExclude = [
   /node_modules/,
   /bower_components/,
-  /server\/public\/dist/,
-  /server\/public\/cdap_dist/,
-  /server\/public\/common_dist/,
+  /packaged\/public\/dist/,
+  /packaged\/public\/cdap_dist/,
+  /packaged\/public\/common_dist/,
   /lib/,
 ];
 
@@ -180,7 +180,7 @@ var webpackConfig = {
   },
   output: {
     filename: '[name].js',
-    path: __dirname + '/server/public/login_dist/login_assets',
+    path: __dirname + '/packaged/public/login_dist/login_assets',
     publicPath: '/login_assets/',
   },
   plugins: plugins,

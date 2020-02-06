@@ -1026,8 +1026,8 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Sandbox"; };
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} Sandbox || return ${?}
   cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v10.16.2} || return ${?}
-  local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/index.js} | grep -v grep | awk '{ print $1 }')
-  
+  local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server_dist/index.js} | grep -v grep | awk '{ print $1 }')
+
   if [[ -z ${__node_pid} ]]; then
     : # continue
   else
@@ -1210,7 +1210,7 @@ cdap_ui() {
   fi
   local readonly MAIN_CMD=${MAIN_CMD}
   export NODE_ENV="production"
-  local readonly MAIN_CMD_ARGS="${CDAP_HOME}"/${CDAP_UI_PATH:-ui/index.js}
+  local readonly MAIN_CMD_ARGS="${CDAP_HOME}"/${CDAP_UI_PATH:-ui/server_dist/index.js}
   cdap_start_bin || die "Failed to start CDAP ${CDAP_SERVICE} service"
 }
 

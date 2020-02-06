@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +14,9 @@
  * the License.
  */
 
-const { PIPELINE_PROGRAMS_MAP } = require('./common');
+import { PIPELINE_PROGRAMS_MAP } from 'gql/types/PipelineRecord/common';
 
-async function pipelineRunsResolver(parent, args, context) {
+export async function pipelineRunsResolver(parent, args, context) {
   const namespace = context.namespace;
   const name = parent.name;
 
@@ -41,7 +41,3 @@ async function pipelineRunsResolver(parent, args, context) {
 
   return runInfo.runs;
 }
-
-module.exports = {
-  pipelineRunsResolver,
-};

@@ -62,9 +62,9 @@ if (!isModeProduction(mode)) {
 const loaderExclude = [
   /node_modules/,
   /bower_components/,
-  /server\/public\/dist/,
-  /server\/public\/cdap_dist/,
-  /server\/public\/common_dist/,
+  /packaged\/public\/dist/,
+  /packaged\/public\/cdap_dist/,
+  /packaged\/public\/common_dist/,
   /lib/,
 ];
 
@@ -167,7 +167,7 @@ var webpackConfig = {
   output: {
     filename: '[name].js',
     chunkFilename: '[name].[chunkhash].js',
-    path: __dirname + '/server/public/common_dist',
+    path: __dirname + '/packaged/public/common_dist',
     library: 'CaskCommon',
     libraryTarget: 'umd',
     publicPath: '/common_assets/',

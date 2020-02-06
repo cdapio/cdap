@@ -17,9 +17,10 @@ coverage/
 .classpath
 .project
 .settings/
+packaged/public/*
+packaged/server_dist/*
 server_dist/
-server/public/*
-!server/public/dll
+!packaged/public/dll
 .vscode/
 cypress/screenshots
 cypress/snapshots/actual/

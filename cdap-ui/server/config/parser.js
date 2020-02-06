@@ -1,6 +1,6 @@
 // @ts-nocheck
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,25 +15,20 @@
  * the License.
  */
 
-/* global require, module, process */
+/* global process */
 
-module.exports = {
-  extractConfig: extractConfig,
-  extractUISettings: extractUISettings,
-};
+import q from 'q';
+import log4js from 'log4js';
+import ConfigReader from 'server/config/config-reader';
 
-var promise = require('q'),
-  log4js = require('log4js'),
-  cache = {},
-  path;
-const ConfigReader = require('./config-reader');
+const cache = {};
+let path;
+const log = log4js.getLogger('default');
 
-var log = log4js.getLogger('default');
-
-function extractUISettings() {
+export function extractUISettings() {
   try {
-    if (require.resolve('./ui-settings.json')) {
-      return require('./ui-settings.json') || {};
+    if (__non_webpack_require__.resolve('./ui-settings.json')) {
+      return __non_webpack_require__('./ui-settings.json') || {};
     }
   } catch (e) {
     log.info('Unable to find UI settings json file.');
@@ -46,8 +41,8 @@ function extractUISettings() {
  *  @returns {promise}
  */
 
-function extractConfig(param) {
-  var deferred = promise.defer();
+export function extractConfig(param) {
+  var deferred = q.defer();
   param = param || 'cdap';
 
   if (cache[param]) {
@@ -71,7 +66,7 @@ function extractConfig(param) {
       path = getConfigPath(param);
       if (path && path.length) {
         path = path.replace(/\"/g, '');
-        cache[param] = require(path);
+        cache[param] = __non_webpack_require__(path);
       } else {
         throw 'No configuration JSON provided.(No "cConf" and "sConf" commandline arguments passed)';
       }
@@ -80,7 +75,7 @@ function extractConfig(param) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
       log.warn('Using development configuration for "' + param + '"');
-      cache[param] = require('./development/' + param + '.json');
+      cache[param] = __non_webpack_require__('./server/config/development/' + param + '.json');
     }
 
     deferred.resolve(cache[param]);
