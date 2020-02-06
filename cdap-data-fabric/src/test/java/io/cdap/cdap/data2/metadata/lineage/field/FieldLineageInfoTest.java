@@ -27,7 +27,6 @@ import io.cdap.cdap.api.lineage.field.TransformOperation;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.codec.OperationTypeAdapter;
-import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,6 +34,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
