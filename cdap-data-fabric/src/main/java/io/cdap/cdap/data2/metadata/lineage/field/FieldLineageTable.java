@@ -239,25 +239,6 @@ public class FieldLineageTable {
     return fields;
   }
 
-  /**
-   * Get the set of fields dropped by field lineage
-   * {@link io.cdap.cdap.api.lineage.field.TransformOperation}, over the given time range.
-   *
-   * @param endPoint the EndPoint for which the fields need to be returned
-   * @param start start time (inclusive) in milliseconds
-   * @param end end time (exclusive) in milliseconds
-   * @return set of fields dropped to a given EndPoint
-   */
-  public Set<String> getDroppedFields(EndPoint endPoint, long start, long end) throws IOException {
-    // A EndPoint can either have incoming lineage information (when it acts as a sink) or outgoing lineage
-    // information (when it act as a source). During the given time period it is possible that the EndPoint has been
-    // used a source only or sink only or both. So we combine all the field information which we have for the
-    // EndPoint.
-    Set<String> fields = getDestinationFields(endPoint, start, end);
-    fields.addAll(getSourceFields(endPoint, start, end));
-    return fields;
-  }
-
   private Set<String> getDestinationFields(EndPoint endPoint, long start, long end) throws IOException {
     Set<Long> checksums = getChecksumsWithProgramRunsInRange(INCOMING_DIRECTION_MARKER, endPoint, start, end).keySet();
     Set<String> result = new HashSet<>();
