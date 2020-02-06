@@ -20,7 +20,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -141,6 +140,12 @@ public class FieldLineageInfo {
       this.destinationFields = computeDestinationFields();
       this.incomingSummary = computeIncomingSummary();
       this.outgoingSummary = computeOutgoingSummary();
+
+      // incomingSummary would have NULL_EPF key if there's a drop operation, so we must clear the
+      // null EPF from the map
+      if (!droppedFields.isEmpty()) {
+        incomingSummary.remove(NULL_EPF);
+      }
     }
   }
 

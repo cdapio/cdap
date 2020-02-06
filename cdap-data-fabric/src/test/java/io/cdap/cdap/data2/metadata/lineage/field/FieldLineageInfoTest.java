@@ -834,8 +834,6 @@ public class FieldLineageInfoTest {
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
     expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
     expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
-    expectedIncomingSummary.put(FieldLineageInfo.NULL_EPF,
-        Sets.newHashSet(new EndPointField(ep1, "social")));
     Assert.assertEquals(info.getIncomingSummary(), expectedIncomingSummary);
   }
 
@@ -877,8 +875,6 @@ public class FieldLineageInfoTest {
         Sets.newHashSet(
             new EndPointField(ep1, "first_name"),
             new EndPointField(ep1, "last_name")));
-    expectedIncomingSummary.put(FieldLineageInfo.NULL_EPF,
-        Sets.newHashSet(new EndPointField(ep1, "social")));
     Assert.assertEquals(info1.getIncomingSummary(), expectedIncomingSummary);
   }
 
