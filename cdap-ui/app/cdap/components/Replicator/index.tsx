@@ -20,21 +20,23 @@ import Helmet from 'react-helmet';
 import List from 'components/Replicator/List';
 import Create from 'components/Replicator/Create';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import Detail from 'components/Replicator/Detail';
 
-const basepath = '/ns/:namespace/replicator';
+export const basepath = '/ns/:namespace/replicator';
 
 const Replicator: React.FC = () => {
   return (
     <React.Fragment>
       <Helmet title="Replicator" />
       <Switch>
-        <Route exact path={basepath} component={List} />
         <Route
           exact
           path={`${basepath}/create/:artifactName/:artifactVersion/:artifactScope/:pluginName`}
           component={Create}
         />
         <Route exact path={`${basepath}/drafts/:draftId`} component={Create} />
+        <Route exact path={`${basepath}/detail/:replicatorId`} component={Detail} />
+        <Route path={basepath} component={List} />
         <Route
           render={() => {
             return <Redirect to={`/ns/${getCurrentNamespace()}/replicator`} />;
