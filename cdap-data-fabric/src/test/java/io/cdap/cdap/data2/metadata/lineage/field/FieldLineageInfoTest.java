@@ -874,6 +874,42 @@ public class FieldLineageInfoTest {
     Assert.assertEquals(expectedIncomingSummary, info1.getIncomingSummary());
   }
 
+  @Test
+  public void testGeneratedFields() {
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
+        "first_name", "last_name");
+    TransformOperation generateSocial = new TransformOperation("generateSocial", "generate social",
+        Collections.emptyList(), "social");
+    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of("endpoint2"),
+        Arrays.asList(
+            InputField.of("read", "first_name"),
+            InputField.of("read", "last_name"),
+            InputField.of("generateSocial", "social")));
+
+    Set<Operation> operations = Sets.newHashSet(read, generateSocial, write);
+    FieldLineageInfo info1 = new FieldLineageInfo(operations);
+
+    EndPoint ep1 = EndPoint.of("endpoint1");
+    EndPoint ep2 = EndPoint.of("endpoint2");
+    EndPointField ep2ln = new EndPointField(ep2, "last_name");
+    EndPointField ep2fn = new EndPointField(ep2, "first_name");
+    EndPointField ep1ln = new EndPointField(ep1, "last_name");
+    EndPointField ep1fn = new EndPointField(ep1, "first_name");
+    EndPointField ep2social = new EndPointField(ep2, "social");
+
+    Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
+    expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2fn, ep2ln));
+    expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2fn, ep2ln));
+    expectedOutgoingSummary.put(FieldLineageInfo.NULL_EPF, Collections.singleton(ep2social));
+    Assert.assertEquals(expectedOutgoingSummary, info1.getOutgoingSummary());
+
+    Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
+    expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
+    expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
+    expectedIncomingSummary.put(ep2social, Collections.singleton(FieldLineageInfo.NULL_EPF));
+    Assert.assertEquals(expectedIncomingSummary, info1.getIncomingSummary());
+  }
+
   private void assertBefore(List<Operation> list, Operation a, Operation b) {
     int aIndex = list.indexOf(a);
     int bIndex = list.indexOf(b);
