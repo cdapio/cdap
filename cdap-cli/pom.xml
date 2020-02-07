@@ -68,10 +68,6 @@
       <artifactId>jline</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.googlecode.concurrent-trees</groupId>
-      <artifactId>concurrent-trees</artifactId>
-    </dependency>
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>

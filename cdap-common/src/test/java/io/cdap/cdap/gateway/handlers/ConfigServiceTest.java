@@ -18,12 +18,12 @@ package io.cdap.cdap.gateway.handlers;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.ConfigEntry;
-import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -33,7 +33,7 @@ public class ConfigServiceTest {
 
   @Test
   public void testConfig() {
-    String cConfResourceString =
+    String confStr =
       "<configuration>\n" +
         "\n" +
         "  <property>\n" +
@@ -43,11 +43,10 @@ public class ConfigServiceTest {
         "  </property>\n" +
         "\n" +
         "</configuration>";
-    ReaderInputStream cConfResource = new ReaderInputStream(new StringReader(cConfResourceString));
-    CConfiguration cConf = CConfiguration.create(cConfResource);
+    ByteArrayInputStream source = new ByteArrayInputStream(confStr.getBytes(StandardCharsets.UTF_8));
+    CConfiguration cConf = CConfiguration.create(source);
 
-    ConfigEntry cConfEntry = new ConfigEntry(
-      "stream.zz.threshold", "1", cConfResource.toString());
+    ConfigEntry cConfEntry = new ConfigEntry("stream.zz.threshold", "1", source.toString());
 
     // hConf
     Configuration hConf = new Configuration();
@@ -61,11 +60,10 @@ public class ConfigServiceTest {
       "  </property>\n" +
       "\n" +
       "</configuration>";
-    ReaderInputStream hConfResource = new ReaderInputStream(new StringReader(hConfResourceString));
-    hConf.addResource(hConfResource);
+    source = new ByteArrayInputStream(hConfResourceString.getBytes(StandardCharsets.UTF_8));
+    hConf.addResource(source);
 
-    ConfigEntry hConfEntry = new ConfigEntry(
-      "stream.notification.threshold", "3", hConfResource.toString());
+    ConfigEntry hConfEntry = new ConfigEntry("stream.notification.threshold", "3", source.toString());
 
     // test
     ConfigService configService = new ConfigService(cConf, hConf);

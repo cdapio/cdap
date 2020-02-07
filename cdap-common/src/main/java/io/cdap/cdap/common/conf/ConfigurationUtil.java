@@ -18,12 +18,12 @@ package io.cdap.cdap.common.conf;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -39,7 +39,7 @@ public final class ConfigurationUtil {
   public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj) throws IOException {
     byte[] encoded = codec.encode(obj);
     LOG.trace("Serializing {} {}", key, Bytes.toStringBinary(encoded));
-    conf.set(key, Base64.encodeBase64String(encoded));
+    conf.set(key, Base64.getEncoder().encodeToString(encoded));
   }
 
   public static <T> T get(Configuration conf, String key, Codec<T> codec) throws IOException {
@@ -49,7 +49,7 @@ public final class ConfigurationUtil {
       return codec.decode(null);
     }
 
-    byte[] encoded = Base64.decodeBase64(value);
+    byte[] encoded = Base64.getDecoder().decode(value);
     LOG.trace("De-serializing {} {}", key, Bytes.toStringBinary(encoded));
     return codec.decode(encoded);
   }
@@ -57,7 +57,7 @@ public final class ConfigurationUtil {
   public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj) throws IOException {
     byte[] encoded = codec.encode(obj);
     LOG.trace("Serializing {} {}", key, Bytes.toStringBinary(encoded));
-    conf.put(key, Base64.encodeBase64String(encoded));
+    conf.put(key, Base64.getEncoder().encodeToString(encoded));
   }
 
   public static <T> T get(Map<String, String> conf, String key, Codec<T> codec) throws IOException {
@@ -67,7 +67,7 @@ public final class ConfigurationUtil {
       return codec.decode(null);
     }
 
-    byte[] encoded = Base64.decodeBase64(value);
+    byte[] encoded = Base64.getDecoder().decode(value);
     LOG.trace("De-serializing {} {}", key, Bytes.toStringBinary(encoded));
     return codec.decode(encoded);
   }
