@@ -66,7 +66,7 @@ import javax.ws.rs.QueryParam;
  * Pass 1: In first pass it visit all the classes skipping interfaces and looks for non-static methods which has
  * {@link AuthEnforce} annotation. If an {@link AuthEnforce} annotation is found then it store all the
  * {@link AuthEnforce} annotation details and also visits the parameter annotation and collects all the position of
- * parameters with {@link Name}(preferered)/{@link QueryParam}/{@link PathParam} annotation. Note: No byte code
+ * parameters with {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation. Note: No byte code
  * modification of the class is done in this pass.
  * </p>
  * <p>
