@@ -78,9 +78,6 @@ public class FieldLineageInfo {
   // We maintain the set of transforms in this lineage that dropped fields
   private final Set<TransformOperation> dropTransforms;
 
-  // Also maintain the set of transforms in this lineage that generated fields
-  private final Set<TransformOperation> generateTransforms;
-
   private transient Set<WriteOperation> writeOperations;
 
   private transient Set<ReadOperation> readOperations;
@@ -136,7 +133,6 @@ public class FieldLineageInfo {
     LOG.trace("Received field lineage operations {}", GSON.toJson(operations));
     this.operations = new HashSet<>(operations);
     this.dropTransforms = new HashSet<>();
-    this.generateTransforms = new HashSet<>();
     computeAndValidateFieldLineageInfo(operations);
     this.checksum = computeChecksum();
     if (computeSummaries) {
@@ -191,8 +187,6 @@ public class FieldLineageInfo {
           allOrigins.addAll(origins);
           if (transform.getOutputs().isEmpty()) {
             dropTransforms.add(transform);
-          } else if (transform.getInputs().isEmpty()) {
-            generateTransforms.add(transform);
           }
           break;
         case WRITE:

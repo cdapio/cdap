@@ -880,13 +880,15 @@ public class FieldLineageInfoTest {
         "first_name", "last_name");
     TransformOperation generateSocial = new TransformOperation("generateSocial", "generate social",
         Collections.emptyList(), "social");
+    TransformOperation renameSocial = new TransformOperation("renameSocial", "rename social",
+        Collections.singletonList(InputField.of("generateSocial", "social")), "ssn");
     WriteOperation write = new WriteOperation("write", "write data", EndPoint.of("endpoint2"),
         Arrays.asList(
             InputField.of("read", "first_name"),
             InputField.of("read", "last_name"),
-            InputField.of("generateSocial", "social")));
+            InputField.of("renameSocial", "ssn")));
 
-    Set<Operation> operations = Sets.newHashSet(read, generateSocial, write);
+    Set<Operation> operations = Sets.newHashSet(read, generateSocial, renameSocial, write);
     FieldLineageInfo info1 = new FieldLineageInfo(operations);
 
     EndPoint ep1 = EndPoint.of("endpoint1");
@@ -895,7 +897,7 @@ public class FieldLineageInfoTest {
     EndPointField ep2fn = new EndPointField(ep2, "first_name");
     EndPointField ep1ln = new EndPointField(ep1, "last_name");
     EndPointField ep1fn = new EndPointField(ep1, "first_name");
-    EndPointField ep2social = new EndPointField(ep2, "social");
+    EndPointField ep2social = new EndPointField(ep2, "ssn");
 
     Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
     expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2fn, ep2ln));
