@@ -123,10 +123,7 @@
     <cdap.common.version>0.12.0</cdap.common.version>
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
-    <commons.codec.version>1.6</commons.codec.version>
     <commons.compress.version>1.18</commons.compress.version>
-    <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <dumbster.version>1.6</dumbster.version>
     <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -143,7 +140,6 @@
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hive.version>1.2.1</hive.version>
     <hsql.version>2.2.4</hsql.version>
-    <javamail.version>1.4.1</javamail.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
@@ -163,7 +159,6 @@
     <scala2.10.version>2.10.4</scala2.10.version>
     <scala2.11.version>2.11.8</scala2.11.version>
     <servlet.api.version>3.0.1</servlet.api.version>
-    <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
     <spark1.artifacts.dir>spark1_2.10</spark1.artifacts.dir>
@@ -175,7 +170,6 @@
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
     <twill.version>0.13.0</twill.version>
-    <twitter4j.version>4.0.3</twitter4j.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <opentable.version>0.13.1</opentable.version>
@@ -330,11 +324,6 @@
         <version>${guice.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.inject.extensions</groupId>
-        <artifactId>guice-servlet</artifactId>
-        <version>${guice.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-servlet-initializer</artifactId>
         <version>${resteasy.version}</version>
@@ -353,16 +342,6 @@
         <groupId>jline</groupId>
         <artifactId>jline</artifactId>
         <version>${jline.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.googlecode.concurrent-trees</groupId>
-        <artifactId>concurrent-trees</artifactId>
-        <version>${concurrent.trees.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -490,11 +469,6 @@
         <groupId>org.iq80.leveldb</groupId>
         <artifactId>leveldb</artifactId>
         <version>${leveldb.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>${commons.codec.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>
@@ -993,22 +967,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-core</artifactId>
-        <version>${shiro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-guice</artifactId>
-        <version>${shiro.version}</version>
-      </dependency>
-      <dependency>
         <groupId>mysql</groupId>
         <artifactId>mysql-connector-java</artifactId>
         <version>${mysql.version}</version>
@@ -1256,6 +1214,12 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -1528,37 +1492,6 @@
             <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.twitter4j</groupId>
-        <artifactId>twitter4j-core</artifactId>
-        <version>${twitter4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.twitter4j</groupId>
-        <artifactId>twitter4j-stream</artifactId>
-        <version>${twitter4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>dumbster</groupId>
-        <artifactId>dumbster</artifactId>
-        <version>${dumbster.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>mail</artifactId>
-        <version>${javamail.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -1932,7 +1865,6 @@
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
                   <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
-                  <link>http://twitter4j.org/javadoc/</link>
                 </links>
                 <quiet>true</quiet>
               </configuration>
@@ -2756,7 +2688,6 @@
             <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
             <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
             <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
-            <link>http://twitter4j.org/javadoc/</link>
           </links>
           <quiet>true</quiet>
           <groups>
