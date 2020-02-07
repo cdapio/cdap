@@ -883,20 +883,21 @@ public class FieldLineageInfoTest {
   @Test
   public void testGeneratedFields() {
     // read: endpoint1 -> (first_name, last_name)
-    // generateSocial: () -> social
-    // renameSocial: generateSocial.social -> ssn
-    // write: (read.first_name, read.last_name, renameSocial.ssn) -> endpoint2
+    // generateSocialAndDob: () -> social, dob
+    // renameSocial: generateSocialAndDob.social -> ssn
+    // write: (read.first_name, read.last_name, renameSocial.ssn, generateSocialAndDob.dob) -> endpoint2
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
         "first_name", "last_name");
-    TransformOperation generateSocial = new TransformOperation("generateSocial", "generate social",
-        Collections.emptyList(), "social");
+    TransformOperation generateSocial = new TransformOperation("generateSocialAndDob", "generate social",
+        Collections.emptyList(), "social", "dob");
     TransformOperation renameSocial = new TransformOperation("renameSocial", "rename social",
-        Collections.singletonList(InputField.of("generateSocial", "social")), "ssn");
+        Collections.singletonList(InputField.of("generateSocialAndDob", "social")), "ssn");
     WriteOperation write = new WriteOperation("write", "write data", EndPoint.of("endpoint2"),
         Arrays.asList(
             InputField.of("read", "first_name"),
             InputField.of("read", "last_name"),
-            InputField.of("renameSocial", "ssn")));
+            InputField.of("renameSocial", "ssn"),
+            InputField.of("generateSocialAndDob", "dob")));
 
     Set<Operation> operations = Sets.newHashSet(read, generateSocial, renameSocial, write);
     FieldLineageInfo info1 = new FieldLineageInfo(operations);
@@ -908,17 +909,19 @@ public class FieldLineageInfoTest {
     EndPointField ep1ln = new EndPointField(ep1, "last_name");
     EndPointField ep1fn = new EndPointField(ep1, "first_name");
     EndPointField ep2ssn = new EndPointField(ep2, "ssn");
+    EndPointField ep2dob = new EndPointField(ep2, "dob");
 
     Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
     expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2fn, ep2ln));
     expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2fn, ep2ln));
-    expectedOutgoingSummary.put(NULL_EPF, Collections.singleton(ep2ssn));
+    expectedOutgoingSummary.put(NULL_EPF, Sets.newHashSet(ep2ssn, ep2dob));
     Assert.assertEquals(expectedOutgoingSummary, info1.getOutgoingSummary());
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
     expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
     expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
     expectedIncomingSummary.put(ep2ssn, Collections.singleton(NULL_EPF));
+    expectedIncomingSummary.put(ep2dob, Collections.singleton(NULL_EPF));
     Assert.assertEquals(expectedIncomingSummary, info1.getIncomingSummary());
   }
 
