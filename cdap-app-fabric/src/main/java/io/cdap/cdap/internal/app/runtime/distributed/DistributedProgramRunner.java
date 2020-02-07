@@ -41,7 +41,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.twill.TwillAppLifecycleEventHandler;
@@ -73,6 +72,7 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
+import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -82,6 +82,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -185,6 +186,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
     validateOptions(program, oldOptions);
+    System.out.println("After validate options");
 
     final CConfiguration cConf = createContainerCConf(this.cConf);
     final Configuration hConf = createContainerHConf(this.hConf);
@@ -193,33 +195,41 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
       final ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
+      System.out.println("Before validate options");
       setupLaunchConfig(launchConfig, program, oldOptions, cConf, hConf, tempDir);
 
       // Add extra localize resources needed by the program runner
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
       final List<String> additionalClassPaths = new ArrayList<>();
+      System.out.println("Adding container jars");
       addContainerJars(cConf, localizeResources, additionalClassPaths);
-      addAdditionalLogAppenderJars(cConf, tempDir, localizeResources);
+      //addAdditionalLogAppenderJars(cConf, tempDir, localizeResources);
 
+      System.out.println("Adding  validate options");
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
+      System.out.println("Calling localize configs");
       List<URI> configResources = localizeConfigs(cConf, hConf, tempDir, localizeResources);
 
+      System.out.println("Localize program jar");
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
       final String programJarName = programJarLocation.getName();
       localizeResources.put(programJarName, new LocalizeResource(program.getJarLocation().toURI(), false));
 
+      System.out.println("Localize expanded jar");
       // Localize an expanded program jar
       final String expandedProgramJarName = "expanded." + programJarName;
       localizeResources.put(expandedProgramJarName, new LocalizeResource(program.getJarLocation().toURI(), true));
 
+      System.out.println("Localize app spec");
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
                             new LocalizeResource(saveJsonFile(program.getApplicationSpecification(),
                                                               ApplicationSpecification.class,
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
+      System.out.println("Localize logback");
       final URI logbackURI = getLogBackURI(program, tempDir);
       if (logbackURI != null) {
         // Localize the logback xml
@@ -235,6 +245,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       extraSystemArgs.put(ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME);
       extraSystemArgs.put(ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME);
 
+      System.out.println("update program options");
       ProgramOptions options = updateProgramOptions(oldOptions, localizeResources,
                                                     DirUtils.createTempDir(tempDir), extraSystemArgs);
 
@@ -247,11 +258,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
         public ProgramController call() throws Exception {
+          System.out.println("inside callable");
           ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
+          System.out.println("creating twill application");
           ProgramTwillApplication twillApplication = new ProgramTwillApplication(
             programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
             localizeResources, createEventHandler(cConf, programRunId));
 
+          System.out.println("creating twill preparer");
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
           // Also add the configuration files to container classpath so that the
@@ -291,6 +305,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
           logProgramStart(program, options);
 
+          System.out.println("starting program " + program.getId());
           LOG.info("Starting {} with debugging enabled: {}, logback: {}",
                    program.getId(), options.isDebug(), logbackURI);
 
@@ -333,12 +348,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
               .withClassPaths(yarnAppClassPath);
           }
 
+          System.out.println("Using main classloader");
           twillPreparer
             .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
             .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
             // Use the MainClassLoader for class rewriting
             .setClassLoader(MainClassLoader.class.getName());
 
+          System.out.println("before program launch");
           // Invoke the before launch hook
           beforeLaunch(program, options);
 
@@ -349,6 +366,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
             DistributedProgramRunner.this.getClass().getClassLoader(),
             extraDependencies.stream().map(Class::getClassLoader)::iterator));
           try {
+            System.out.println("creating twill controller");
             twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                   TimeUnit.SECONDS);
           } finally {
@@ -681,19 +699,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Adds a {@link LogHandler} to the {@link TwillPreparer} based on the configuration.
    */
   private void addLogHandler(TwillPreparer twillPreparer, CConfiguration cConf) {
-    String confLevel = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
-    if ("OFF".equals(confLevel)) {
-      twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
-      return;
-    }
-
-    LogEntry.Level logLevel = LogEntry.Level.ERROR;
-    try {
-      logLevel = "ALL".equals(confLevel) ? LogEntry.Level.TRACE : LogEntry.Level.valueOf(confLevel.toUpperCase());
-    } catch (Exception e) {
-      LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", confLevel);
-    }
-    twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
+    twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out, true)));
+//    String confLevel = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+//    if ("OFF".equals(confLevel)) {
+//      twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
+//      return;
+//    }
+//
+//    LogEntry.Level logLevel = LogEntry.Level.ERROR;
+//    try {
+//      logLevel = "ALL".equals(confLevel) ? LogEntry.Level.TRACE : LogEntry.Level.valueOf(confLevel.toUpperCase());
+//    } catch (Exception e) {
+//      LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", confLevel);
+//    }
+//    twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
   }
 
   /**

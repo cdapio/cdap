@@ -59,15 +59,16 @@ public class WrappedLauncher {
       thisURL = URI.create(path.substring(0, path.indexOf("!/"))).toURL();
     }
 
-    System.out.println("This URL: " + thisURL);
+    //System.out.println("This URL: " + thisURL);
 
     File appJarDir = new File(Constants.Files.APPLICATION_JAR);
     File twillJarDir = new File(Constants.Files.TWILL_JAR);
     File resourceJarDir = new File(Constants.Files.RESOURCES_JAR);
     File runtimeConfigDir = new File(Constants.Files.RUNTIME_CONFIG_JAR);
+    File logback = new File("logback.xml");
 
     // add app jar, twill jar, resource jar
-    URL[] classpath = createClasspath(appJarDir, twillJarDir, resourceJarDir, runtimeConfigDir);
+    URL[] classpath = createClasspath(appJarDir, twillJarDir, resourceJarDir, runtimeConfigDir, logback);
     List<URL> urlList = new ArrayList<>(Arrays.asList(urls));
 
     // add this url
@@ -83,21 +84,24 @@ public class WrappedLauncher {
       }
     }
 
-    System.out.println("Classpath URLs: " + queue);
+   // System.out.println("Classpath URLs: " + queue);
 
     URLClassLoader newCL = new URLClassLoader(queue.toArray(new URL[0]), cl.getParent());
     Thread.currentThread().setContextClassLoader(newCL);
     Class<?> cls = newCL.loadClass(LauncherRunner.class.getName());
-    Method method = cls.getMethod("runnerMethod");
+    Method method = cls.getMethod("runnerMethod", String[].class);
 
     System.out.println("Invoking runnerMethod.");
-    method.invoke(cls.newInstance());
+
+    System.out.println("Launching main: doMain : " + Arrays.toString(args));
+    method.invoke(cls.newInstance(), new Object[]{args});
+
     System.out.println("Main class completed.");
     System.out.println("Launcher completed");
   }
 
   private static URL[] createClasspath(File appJarDir, File twillJarDir,
-                                       File resourceJarDir, File runtimeConfigDir) throws IOException {
+                                       File resourceJarDir, File runtimeConfigDir, File logback) throws IOException {
     List<URL> urls = new ArrayList<>();
 
     // For backward compatibility, sort jars from twill and jars from application together
@@ -113,6 +117,7 @@ public class WrappedLauncher {
 
     // add resources and runtime args
     urls.add(new File(resourceJarDir, "resources").toURI().toURL());
+    urls.add(logback.toURI().toURL());
     addRuntimeConfig(runtimeConfigDir.toURI().toURL(), urls);
 
     // Add all lib jars
@@ -153,7 +158,7 @@ public class WrappedLauncher {
           }
           Path jarPath = tempDir.resolve(name);
 
-          System.out.println("Jar entry" + entry.getName() + "is expanded to " + jarPath);
+       //   System.out.println("Jar entry" + entry.getName() + "is expanded to " + jarPath);
           Files.copy(jarInput, jarPath);
           depJars.add(jarPath.toUri().toURL());
         }
@@ -180,7 +185,7 @@ public class WrappedLauncher {
         }
         Path jarPath = tempDir.resolve(name);
 
-        System.out.println("Jar entry" + entry.getName() + "is expanded to " + jarPath);
+       // System.out.println("Jar entry" + entry.getName() + "is expanded to " + jarPath);
         Files.copy(jarInput, jarPath);
         depJars.add(jarPath.toUri().toURL());
         entry = jarInput.getNextJarEntry();

@@ -17,39 +17,39 @@
 package io.cdap.cdap.runtime.spi.launcher;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
 /**
  *
  */
-public interface Launcher {
+public class LauncherFile {
+  private final String name;
+  private final URI uri;
+  private final boolean isArchive;
 
-  /**
-   *
-   * @return
-   */
-  String getName();
+  public LauncherFile(String name, URI uri, boolean isArchive) {
+    this.name = name;
+    this.uri = uri;
+    this.isArchive = isArchive;
+  }
 
-  /**
-   *
-   * @param fileName
-   * @param localURI
-   * @return
-   */
-  URI getRemoteURI(String fileName, URI localURI) throws Exception;
+  public String getName() {
+    return name;
+  }
 
-  /**
-   *
-   * @param files
-   */
-  void prepare(Map<String, URI> files);
+  public URI getUri() {
+    return uri;
+  }
 
+  public boolean isArchive() {
+    return isArchive;
+  }
 
-  /**
-   *
-   * @param programId
-   * @param launcherFileList
-   */
-  void launch(String programId, List<LauncherFile> launcherFileList);
+  @Override
+  public String toString() {
+    return "LauncherFile{" +
+      "name='" + name + '\'' +
+      ", uri=" + uri +
+      ", isArchive=" + isArchive +
+      '}';
+  }
 }

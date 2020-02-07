@@ -212,7 +212,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addIsolatedModules(List<Module> modules) {
-    modules.add(new RemoteExecutionDiscoveryModule());
+    modules.add(new ZKClientModule());
+    modules.add(new ZKDiscoveryModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());
@@ -258,7 +259,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
           }
         });
 
-        bindRuntimeMonitorServer(binder());
+   //     bindRuntimeMonitorServer(binder());
       }
     });
   }

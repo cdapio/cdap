@@ -30,8 +30,10 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
+import io.cdap.cdap.runtime.spi.launcher.LauncherFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -84,19 +85,25 @@ public class DataprocLauncher implements Launcher {
   }
 
   @Override
-  public void launch(Map<String, URI> localFiles) {
+  public void launch(String programId, List<LauncherFile> launcherFileList) {
+    String fileSuffix = null;
     try {
 
-      LOG.info("Inside dataproc launcher");
+      LOG.info("Inside dataproc launcher for program id: {}", programId);
 
       // Instantiates a client
       Storage storage = StorageOptions.getDefaultInstance().getService();
 
       // The name for the new bucket
       String bucketName = "launcher-three";
+      // TODO Get artifacts to run mapreduce or spark jobs
+      List<String> uris = new ArrayList<>();
+      List<String> files = new ArrayList<>();
 
-      for (Map.Entry<String, URI> entry : localFiles.entrySet()) {
-        File file = new File(entry.getValue());
+      for (LauncherFile launcherFile : launcherFileList) {
+        LOG.info("Uploading launcher file: {} to gcs bucket.", launcherFile.getName());
+
+        File file = new File(launcherFile.getUri());
         //init array with file length
         byte[] bytesArray = new byte[(int) file.length()];
 
@@ -104,22 +111,32 @@ public class DataprocLauncher implements Launcher {
         fis.read(bytesArray); //read file into bytes[]
         fis.close();
 
-        BlobId blobId = BlobId.of(bucketName, entry.getKey());
+        BlobId blobId = BlobId.of(bucketName, launcherFile.getName());
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
         Blob blob = storage.create(blobInfo, bytesArray);
+
+        if (launcherFile.getName().endsWith("jar")) {
+          LOG.info("Adding {} to jar", blob.getName());
+          uris.add("gs://launcher-three/" + blob.getName());
+          if (file.getName().startsWith("2.0.0-SNAPSHOT")) {
+            // 2.0.0-SNAPSHOT.06ff0c10-0129-4c8b-aa13-03b958b408cf.jar to jar
+            fileSuffix = file.getName().substring(15, 51);
+            LOG.info("File suffix is : {}", fileSuffix);
+          }
+        } else {
+          LOG.info("Adding {} to file", blob.getName());
+          files.add("gs://launcher-three/" + blob.getName());
+        }
       }
 
-
-      // TODO Get artifacts to run mapreduce or spark jobs
-      List<String> uris = new ArrayList<>();
-      uris.add(new URI("gs://launcher-three/launcher.jar").toString());
-      uris.add(new URI("gs://cdf-launcher/twill.jar").toString());
-      uris.add(new URI("gs://launcher-three/application.jar").toString());
-      uris.add(new URI("gs://launcher-three/resources.jar").toString());
-      uris.add(new URI("gs://launcher-three/runtime.config.jar").toString());
-
+//      uris.add(new URI("gs://launcher-three/launcher.jar").toString());
+//      uris.add(new URI("gs://launcher-three/twill.jar").toString());
+//      uris.add(new URI("gs://launcher-three/application.jar").toString());
+//      uris.add(new URI("gs://launcher-three/resources.jar").toString());
+//      uris.add(new URI("gs://launcher-three/runtime.config.jar").toString());
 //      uris.add(new URI("gs://launcher-three/cdap.jar").toString());
 
+      // TODO Sandbox would require these files to do be present.
       //uris.add(new URI("gs://cdf-launcher/kafka_2.10-0.8.0.jar").toString());
       //uris.add(new URI("gs://cdf-launcher/scala-library-2.10.1.jar").toString());
 //      uris.add(new URI("gs://cdf-launcher/scala-compiler-2.10.1.jar").toString());
@@ -128,12 +145,14 @@ public class DataprocLauncher implements Launcher {
 //      uris.add(new URI("gs://cdf-launcher/metrics-annotation-2.2.0.jar").toString());
 //      uris.add(new URI("gs://cdf-launcher/zkclient-0.3.jar").toString());
 
-      List<String> collect = localFiles.values().stream().map(
-        x -> new File(x).getAbsolutePath()).collect(Collectors.toList());
-      for (String url : collect) {
-        LOG.info("classpath {}", url);
-      }
+      List<String> archive = new ArrayList<>();
 
+      for (LauncherFile launcherFile : launcherFileList) {
+        if (launcherFile.isArchive()) {
+          LOG.info("Adding {} to archive", launcherFile.getName());
+          archive.add(launcherFile.getName());
+        }
+      }
       // TODO Get cluster information from provisioned cluster using Launcher interface
       try {
         SubmitJobRequest request = SubmitJobRequest.newBuilder()
@@ -144,6 +163,10 @@ public class DataprocLauncher implements Launcher {
                                     .setMainClass("io.cdap.cdap.internal.app.runtime.distributed" +
                                                     ".launcher.WrappedLauncher")
                                     .addAllJarFileUris(uris)
+                                    .addAllFileUris(files)
+                                    .addAllArchiveUris(archive)
+                                    .addAllArgs(ImmutableList.of(programId, fileSuffix))
+
                                     .build())
                     .build())
           .build();
@@ -159,7 +182,7 @@ public class DataprocLauncher implements Launcher {
         LOG.error("Error while launching hadoop job on dataproc {}", e.getMessage(), e);
       }
     } catch (Exception e) {
-      LOG.error("error while launching the job: " + e.getMessage());
+      LOG.error("error while launching the job: " + e.getMessage(), e);
     }
   }
 }

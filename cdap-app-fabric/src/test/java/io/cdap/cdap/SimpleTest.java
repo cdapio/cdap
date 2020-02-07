@@ -14,42 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.runtime.spi.launcher;
-
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
+package io.cdap.cdap;
 
 /**
  *
  */
-public interface Launcher {
+public class SimpleTest {
 
-  /**
-   *
-   * @return
-   */
-  String getName();
+  public static void main(String[] args) throws Exception {
 
-  /**
-   *
-   * @param fileName
-   * @param localURI
-   * @return
-   */
-  URI getRemoteURI(String fileName, URI localURI) throws Exception;
-
-  /**
-   *
-   * @param files
-   */
-  void prepare(Map<String, URI> files);
-
-
-  /**
-   *
-   * @param programId
-   * @param launcherFileList
-   */
-  void launch(String programId, List<LauncherFile> launcherFileList);
+  }
 }

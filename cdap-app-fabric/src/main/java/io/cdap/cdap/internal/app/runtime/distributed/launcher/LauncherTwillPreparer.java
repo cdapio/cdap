@@ -36,6 +36,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
+import io.cdap.cdap.runtime.spi.launcher.LauncherFile;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ClassAcceptor;
@@ -394,6 +395,8 @@ public class LauncherTwillPreparer implements TwillPreparer {
       Path runtimeConfigDir = Files.createTempDirectory(stagingDir, Constants.Files.RUNTIME_CONFIG_JAR);
       twillRuntimeSpec = saveSpecification(twillSpec,
                                            runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC), stagingDir, launcher);
+      RuntimeSpecification runtimeSpec = twillRuntimeSpec.getTwillSpecification().getRunnables().values()
+        .stream().findFirst().orElseThrow(IllegalStateException::new);
       saveLogback(runtimeConfigDir.resolve(Constants.Files.LOGBACK_TEMPLATE));
       saveClassPaths(runtimeConfigDir);
       saveArguments(new Arguments(arguments, runnableArgs), runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
@@ -403,12 +406,21 @@ public class LauncherTwillPreparer implements TwillPreparer {
       Paths.deleteRecursively(runtimeConfigDir);
 
       throwIfTimeout(startTime, timeout, timeoutUnit);
-      Map<String, URI> urls = new HashMap<>();
+      List<LauncherFile> launcherFiles = new ArrayList<>();
       for (Map.Entry<String, LocalFile> entry : localFiles.entrySet()) {
-        urls.put(entry.getKey(), entry.getValue().getURI());
+        LauncherFile launcherFile = new LauncherFile(entry.getKey(), entry.getValue().getURI(),
+                                                      entry.getValue().isArchive());
+        LOG.info("### Adding file : {}", launcherFile);
+        launcherFiles.add(launcherFile);
       }
+      for (LocalFile file : runtimeSpec.getLocalFiles()) {
+        LauncherFile launcherFile = new LauncherFile(file.getName(), file.getURI(), file.isArchive());
+        launcherFiles.add(launcherFile);
+        LOG.info("### Adding file : {}", launcherFile);
+      }
+
       LOG.info("####### Finally launching job");
-      launcher.launch(urls);
+      launcher.launch(programRunId.getRun(), launcherFiles);
       cancelLoggingContext.cancel();
       DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
     } catch (Exception e) {
@@ -743,7 +755,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
     });
 
     LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
-    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, true));
+    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
   }
 
   private void saveClassPaths(Path targetDir) throws IOException {

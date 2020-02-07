@@ -45,9 +45,9 @@ import java.util.Collections;
 public class DistributedWorkerProgramRunner extends DistributedProgramRunner
                                             implements LongRunningDistributedProgramRunner {
   @Inject
-  DistributedWorkerProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
-                                 Impersonator impersonator, ClusterMode clusterMode,
-                                 @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
+  public DistributedWorkerProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
+                                        Impersonator impersonator, ClusterMode clusterMode,
+                                        @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
     super(cConf, hConf, impersonator, clusterMode, twillRunner);
   }
 
@@ -74,6 +74,7 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) {
+    System.out.println("In Distributed Worker Runner");
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
 
@@ -83,6 +84,7 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
                              Integer.parseInt("3"), options.getUserArguments().asMap(),
                              workerSpec.getResources());
     if (clusterMode == ClusterMode.ISOLATED) {
+      System.out.println("Cluster mode isolated. setting extra classpath");
       // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
       launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
     }
