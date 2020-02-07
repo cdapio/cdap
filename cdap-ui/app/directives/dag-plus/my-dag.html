@@ -115,7 +115,7 @@
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
-                 'selected': DAGPlusPlusCtrl.selectedNode.name === node.name,
+                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.name),
                }"
                ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
           <div class="node"
@@ -241,7 +241,9 @@
               <span ng-if="DAGPlusPlusCtrl.nodeMenuOpen !== node.name"
                     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                     class="menu-icon menu-icon-node fa fa-bars float-xs-right"
-                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleNodeMenu(node, $event)">
+                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleNodeMenu(node, $event)"
+                    data-cy="hamburgermenu-{{node.plugin.name}}-{{node.type}}-{{$index}}-toggle"
+              >
               </span>
             </div>
           </div>
@@ -250,20 +252,36 @@
                 class="node-popover-menu">
             <div
               class="menu-icon fa fa-bars"
-              ng-click="DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
+              ng-click="DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)"
+            >
             </div>
             <div class="menu-content">
               <div
                 class="menu-content-action"
-                ng-click="DAGPlusPlusCtrl.onNodeCopy(node)">
+                ng-click="DAGPlusPlusCtrl.onKeyboardCopy()"
+                data-cy="hamburgermenu-{{node.plugin.name}}-{{node.type}}-{{$index}}-copy"
+              >
                 Copy
               </div>
               <hr />
-              <div class="menu-content-action menu-content-delete"
-                ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
+              <div
+                class="menu-content-action menu-content-delete"
+                ng-click="DAGPlusPlusCtrl.deleteSelectedNodes()"
+                data-cy="hamburgermenu-{{node.plugin.name}}-{{node.type}}-{{$index}}-delete"
+              >
                 Delete
               </div>
             </div>
+          </div>
+          <div ng-if="!DAGPlusPlusCtrl.isDisabled">
+            <plugin-context-menu
+              node-id="'{{node.name}}'"
+              get-plugin-configuration="DAGPlusPlusCtrl.getPluginConfiguration"
+              get-selected-connections="DAGPlusPlusCtrl.getSelectedConnections"
+              get-selected-nodes="DAGPlusPlusCtrl.getSelectedNodes"
+              on-delete="DAGPlusPlusCtrl.deleteSelectedNodes"
+              on-open="DAGPlusPlusCtrl.onPluginContextMenuOpen"
+            ></plugin-context-menu>
           </div>
         </div>
 
@@ -292,7 +310,25 @@
 
         </div>
       </div>
-
+      <div ng-if="!DAGPlusPlusCtrl.isDisabled">
+        <pipeline-context-menu
+          on-wrangler-source-add="DAGPlusPlusCtrl.onPipelineContextMenuPaste"
+          on-nodes-paste="DAGPlusPlusCtrl.onPipelineContextMenuPaste"
+          pipeline-artifact-type="DAGPlusPlusCtrl.pipelineArtifactType"
+          on-zoom-in="DAGPlusPlusCtrl.zoomIn"
+          on-zoom-out="DAGPlusPlusCtrl.zoomOut"
+          fit-to-screen="DAGPlusPlusCtrl.fitToScreen"
+          pretty-print-graph="DAGPlusPlusCtrl.cleanUpGraph"
+        ></pipeline-context-menu>
+        <selection-box
+          boundaries="DAGPlusPlusCtrl.selectionBox.boundaries"
+          selectables="DAGPlusPlusCtrl.selectionBox.selectables"
+          toggle-selection="DAGPlusPlusCtrl['selectionBox'].toggle"
+          on-selection-start="DAGPlusPlusCtrl.selectionBox.start"
+          on-selection-move="DAGPlusPlusCtrl.selectionBox.move"
+          on-selection-end="DAGPlusPlusCtrl.selectionBox.end"
+        ></selection-box>
+      </div>
     </div>
 </div>
 

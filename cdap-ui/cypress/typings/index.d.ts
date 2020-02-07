@@ -69,6 +69,11 @@ declare global {
       move_node: (nodeObj: INodeIdentifier | string, toX: number, toY: number) => Chainable<JQuery<any>>;
 
       /**
+       * Selects everything between these two nodes.
+       */
+      select_from_to: (from: INodeIdentifier, to: INodeIdentifier) => Chainable<any>;
+
+      /**
        * Creates a simple BQ source -> Wrangler Transform -> BQ Sink pipeline.
        *
        * This is a dumb command to be reused whenever we want to create a basic pipeline

@@ -83,7 +83,8 @@ class HydratorPlusPlusHydratorService {
 
     return {
       nodes: nodes,
-      connections: connections
+      connections: connections,
+      comments: config.comments || [],
     };
   }
 
