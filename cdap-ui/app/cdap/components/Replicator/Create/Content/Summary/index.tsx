@@ -23,11 +23,21 @@ import If from 'components/If';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
 import { Redirect } from 'react-router-dom';
+import ConfigDisplay from 'components/Replicator/ConfigDisplay';
 
 const styles = (theme): StyleRules => {
+  const borderBottom = `2px solid ${theme.palette.grey[300]}`;
+
   return {
     root: {
-      padding: '25px 40px',
+      padding: '15px 40px',
+    },
+    header: {
+      borderBottom,
+      paddingBottom: '15px',
+    },
+    configContainer: {
+      borderBottom,
     },
     summary: {
       border: `1px solid ${theme.palette.grey[300]}`,
@@ -48,6 +58,8 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
   sourcePluginInfo,
   targetPluginInfo,
+  sourcePluginWidget,
+  targetPluginWidget,
   sourceConfig,
   targetConfig,
   name,
@@ -99,8 +111,19 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
   return (
     <div className={classes.root}>
-      <div className={classes.summary}>
-        <pre>{JSON.stringify(constructJson(), null, 2)}</pre>
+      <div className={classes.header}>
+        <h3>{name}</h3>
+        <div>{description}</div>
+      </div>
+      <div className={classes.configContainer}>
+        <ConfigDisplay
+          sourcePluginInfo={sourcePluginInfo}
+          targetPluginInfo={targetPluginInfo}
+          sourcePluginWidget={sourcePluginWidget}
+          targetPluginWidget={targetPluginWidget}
+          sourceConfig={sourceConfig}
+          targetConfig={targetConfig}
+        />
       </div>
 
       <If condition={error}>
