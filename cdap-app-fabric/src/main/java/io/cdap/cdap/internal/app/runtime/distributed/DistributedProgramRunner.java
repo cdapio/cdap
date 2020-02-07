@@ -338,7 +338,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
           // For on premise, need to add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the
           // twill container.
-          if (clusterMode == ClusterMode.ON_PREMISE) {
+          //if (clusterMode == ClusterMode.ON_PREMISE) {
             // The Yarn app classpath goes last
             List<String> yarnAppClassPath = Arrays.asList(
               hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
@@ -346,7 +346,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
             twillPreparer
               .withApplicationClassPaths(yarnAppClassPath)
               .withClassPaths(yarnAppClassPath);
-          }
+          //}
 
           System.out.println("Using main classloader");
           twillPreparer

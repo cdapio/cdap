@@ -23,7 +23,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -53,7 +52,6 @@ import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
@@ -427,14 +425,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // We don't do this in the DistributedProgramContainerModule
       // because that module is used in both launcher and task containers
       module = Modules.override(module).with(
-        new MessagingServerRuntimeModule().getStandaloneModules(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            // Bind a Cancellable for the RuntimeMonitor to stop this program run.
-            bind(Cancellable.class).toInstance(() -> stop());
-          }
-      });
+        new MessagingServerRuntimeModule().getStandaloneModules());
     }
 
     return module;
@@ -532,13 +523,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   private void addIsolatedServices(Injector injector, Collection<Service> services) {
+    services.add(injector.getInstance(ZKClientService.class));
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);
     }
     services.add(injector.getInstance(TransactionManager.class));
     services.add(injector.getInstance(MessagingHttpService.class));
-    services.add(injector.getInstance(RuntimeMonitorServer.class));
+  //  services.add(injector.getInstance(RuntimeMonitorServer.class));
   }
 
   private void startCoreServices() {
