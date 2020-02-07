@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
-import static io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo.NULL_EPF;
-
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,6 +27,9 @@ import io.cdap.cdap.api.lineage.field.TransformOperation;
 import io.cdap.cdap.api.lineage.field.WriteOperation;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.codec.OperationTypeAdapter;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,8 +40,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Test;
+
+import static io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo.NULL_EPF;
 
 /**
  * Test for {@link FieldLineageInfo}
