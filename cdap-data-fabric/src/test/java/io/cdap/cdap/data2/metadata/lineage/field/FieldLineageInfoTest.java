@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import static io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo.NULL_EPF;
+
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -828,7 +830,7 @@ public class FieldLineageInfoTest {
     expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2ln, ep2fn));
     expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2ln, ep2fn));
     expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
-        Collections.singleton(FieldLineageInfo.NULL_EPF));
+        Collections.singleton(NULL_EPF));
     Assert.assertEquals(expectedOutgoingSummary, info.getOutgoingSummary());
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
@@ -839,6 +841,10 @@ public class FieldLineageInfoTest {
 
   @Test
   public void testMultiSourceDroppedFields() {
+    // read: endpoint1 -> (first_name, last_name, social)
+    // combineNames: (read.first_name, read.last_name) -> full_name
+    // dropSocial: read.social -> ()
+    // write: (combineNames.full_name) -> endpoint2
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
         "first_name", "last_name", "social");
     TransformOperation combineNames = new TransformOperation("combineNames", "combine names",
@@ -863,7 +869,7 @@ public class FieldLineageInfoTest {
     expectedOutgoingSummary.put(new EndPointField(ep1, "last_name"),
         Collections.singleton(new EndPointField(ep2, "full_name")));
     expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
-        Collections.singleton(FieldLineageInfo.NULL_EPF));
+        Collections.singleton(NULL_EPF));
     Assert.assertEquals(expectedOutgoingSummary, info1.getOutgoingSummary());
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
@@ -876,6 +882,10 @@ public class FieldLineageInfoTest {
 
   @Test
   public void testGeneratedFields() {
+    // read: endpoint1 -> (first_name, last_name)
+    // generateSocial: () -> social
+    // renameSocial: generateSocial.social -> ssn
+    // write: (read.first_name, read.last_name, renameSocial.ssn) -> endpoint2
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
         "first_name", "last_name");
     TransformOperation generateSocial = new TransformOperation("generateSocial", "generate social",
@@ -897,18 +907,59 @@ public class FieldLineageInfoTest {
     EndPointField ep2fn = new EndPointField(ep2, "first_name");
     EndPointField ep1ln = new EndPointField(ep1, "last_name");
     EndPointField ep1fn = new EndPointField(ep1, "first_name");
-    EndPointField ep2social = new EndPointField(ep2, "ssn");
+    EndPointField ep2ssn = new EndPointField(ep2, "ssn");
 
     Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
     expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2fn, ep2ln));
     expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2fn, ep2ln));
-    expectedOutgoingSummary.put(FieldLineageInfo.NULL_EPF, Collections.singleton(ep2social));
+    expectedOutgoingSummary.put(NULL_EPF, Collections.singleton(ep2ssn));
     Assert.assertEquals(expectedOutgoingSummary, info1.getOutgoingSummary());
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
     expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
     expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
-    expectedIncomingSummary.put(ep2social, Collections.singleton(FieldLineageInfo.NULL_EPF));
+    expectedIncomingSummary.put(ep2ssn, Collections.singleton(NULL_EPF));
+    Assert.assertEquals(expectedIncomingSummary, info1.getIncomingSummary());
+  }
+
+  @Test
+  public void testMultiSourceGenerateFields() {
+    // read: endpoint1 -> (full_name)
+    // separateNames: (read.full_name) -> (read.first_name, read.last_name)
+    // generateSocial: () -> social
+    // write: (separateNames.first_name, separateNames.last_name, generateSocial.social) -> endpoint2
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("endpoint1"),
+        "full_name");
+    TransformOperation separateNames = new TransformOperation("separateNames", "separate names",
+        Collections.singletonList(InputField.of("read", "full_name")),
+        "first_name", "last_name");
+    TransformOperation generateSocial = new TransformOperation("generateSocial", "generate social",
+        Collections.emptyList(), "social");
+    WriteOperation write = new WriteOperation("write", "write data", EndPoint.of("endpoint2"),
+        Arrays.asList(
+            InputField.of("separateNames", "first_name"),
+            InputField.of("separateNames", "last_name"),
+            InputField.of("generateSocial", "social")));
+
+    Set<Operation> operations = Sets.newHashSet(read, write, separateNames, generateSocial);
+    FieldLineageInfo info1 = new FieldLineageInfo(operations);
+
+    EndPoint ep1 = EndPoint.of("endpoint1");
+    EndPoint ep2 = EndPoint.of("endpoint2");
+
+    Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
+    expectedOutgoingSummary.put(new EndPointField(ep1, "full_name"),
+        Sets.newHashSet(new EndPointField(ep2, "first_name"), new EndPointField(ep2, "last_name")));
+    expectedOutgoingSummary.put(NULL_EPF, Collections.singleton(new EndPointField(ep2, "social")));
+    Assert.assertEquals(expectedOutgoingSummary, info1.getOutgoingSummary());
+
+    Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
+    expectedIncomingSummary.put(new EndPointField(ep2, "first_name"),
+        Collections.singleton(new EndPointField(ep1, "full_name")));
+    expectedIncomingSummary.put(new EndPointField(ep2, "last_name"),
+        Collections.singleton(new EndPointField(ep1, "full_name")));
+    expectedIncomingSummary.put(new EndPointField(ep2, "social"),
+        Collections.singleton(NULL_EPF));
     Assert.assertEquals(expectedIncomingSummary, info1.getIncomingSummary());
   }
 

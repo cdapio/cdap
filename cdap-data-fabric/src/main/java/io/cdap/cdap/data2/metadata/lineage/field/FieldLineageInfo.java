@@ -343,16 +343,6 @@ public class FieldLineageInfo {
         computeIncomingSummaryHelper(NULL_EPF, previous, transform, summary);
       }
     }
-    // generated fields are the only ones not yet added, so add to incomingSummary every write
-    // output field that's not yet added
-    for (WriteOperation write : writeOperations) {
-      for (InputField input : write.getInputs()) {
-        EndPointField endPointField = new EndPointField(write.getDestination(), input.getName());
-        if (!summary.containsKey(endPointField)) {
-          summary.put(endPointField, Collections.singleton(NULL_EPF));
-        }
-      }
-    }
     return summary;
   }
 
@@ -371,8 +361,11 @@ public class FieldLineageInfo {
   private void computeIncomingSummaryHelper(EndPointField field, Operation currentOperation,
                                             Operation previousOperation,
                                             Map<EndPointField, Set<EndPointField>> summary) {
-    if (currentOperation.getType() == OperationType.READ) {
-      // if current operation is of type READ, previous operation must be of type TRANSFORM or WRITE
+    if (currentOperation.getType() == OperationType.READ
+        || currentOperation.getType() == OperationType.TRANSFORM
+        && ((TransformOperation) currentOperation).getInputs().isEmpty()) {
+      // if current operation is of type READ, or is a generate transform (one with no inputs),
+      // previous operation must be of type TRANSFORM or WRITE
       // get only the input fields from the previous operations for which the origin is current READ operation
       Set<InputField> inputFields = new HashSet<>();
       if (OperationType.WRITE == previousOperation.getType()) {
@@ -386,12 +379,17 @@ public class FieldLineageInfo {
 
       // for all the input fields of the previous operation if the origin was current operation (remember we are
       // traversing backward)
-      ReadOperation read = (ReadOperation) currentOperation;
-      EndPoint source = read.getSource();
-      for (InputField inputField : inputFields) {
-        if (inputField.getOrigin().equals(currentOperation.getName())) {
-          sourceEndPointFields.add(new EndPointField(source, inputField.getName()));
+      if (currentOperation.getType() == OperationType.READ) {
+        ReadOperation read = (ReadOperation) currentOperation;
+        EndPoint source = read.getSource();
+        for (InputField inputField : inputFields) {
+          if (inputField.getOrigin().equals(currentOperation.getName())) {
+            sourceEndPointFields.add(new EndPointField(source, inputField.getName()));
+          }
         }
+      } else {
+        // note the source of every generated field is NULL_EPF
+        sourceEndPointFields.add(NULL_EPF);
       }
       // reached the end of graph unwind the recursive calls
       return;
