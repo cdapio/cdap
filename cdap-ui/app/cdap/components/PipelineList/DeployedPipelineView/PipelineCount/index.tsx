@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import T from 'i18n-react';
+import { connect } from 'react-redux';
 
 import './PipelineCount.scss';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
@@ -27,7 +28,7 @@ interface IProps {
 
 const PREFIX = 'features.PipelineList';
 
-const PipelineCountView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) => {
+const PipelineCountView: React.SFC<IProps> = ({ pipelines = [], pipelinesLoading }) => {
   if (pipelinesLoading) {
     return null;
   }
@@ -35,13 +36,17 @@ const PipelineCountView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) =
     <div className="pipeline-count">
       <h5>
         {T.translate(`${PREFIX}.DeployedPipelineView.pipelineCount`, {
-          context: pipelines.length,
+          context: pipelines ? pipelines.length : 0,
         })}
       </h5>
     </div>
   );
 };
 
+const mapStateToProps = (state) => ({
+  pipelines: state.deployed.pipelines,
+});
+
 const PipelineCount = PipelineCountView;
 
-export default PipelineCount;
+export default connect(mapStateToProps)(PipelineCount);

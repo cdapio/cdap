@@ -155,6 +155,11 @@ const GLOBALS = {
     'cdap-data-streams': 'spark',
   },
 
+  programTypeName: {
+    'cdap-data-pipeline': 'Workflow',
+    'cdap-data-streams': 'Spark',
+  },
+
   programId: {
     'cdap-data-pipeline': 'DataPipelineWorkflow',
     'cdap-data-streams': 'DataStreamsSparkStreaming',

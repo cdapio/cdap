@@ -18,91 +18,36 @@ import * as React from 'react';
 import PipelineTableRow from 'components/PipelineList/DeployedPipelineView/PipelineTable/PipelineTableRow';
 import { connect } from 'react-redux';
 import T from 'i18n-react';
-import { PROGRAM_STATUSES } from 'services/global-constants';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
-import { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
+import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
-import orderBy from 'lodash/orderBy';
 import './PipelineTable.scss';
-import { objectQuery } from 'services/helpers';
 
 interface IProps {
   pipelines: IPipeline[];
+  filteredPipelines: IPipeline[];
   search: string;
   onClear: () => void;
-  pageLimit: number;
-  currentPage: number;
-  sortOrder: string;
-  sortColumn: string;
   refetch: () => void;
 }
 
 const PREFIX = 'features.PipelineList';
 
-function getOrderColumnFunction(sortColumn, sortOrder) {
-  switch (sortColumn) {
-    case 'name':
-      return (pipeline) => pipeline.name.toLowerCase();
-    case 'type':
-      return (pipeline) => pipeline.artifact.name;
-    case 'status':
-      return (pipeline) => {
-        return objectQuery(pipeline, 'runs', 0, 'status') || PROGRAM_STATUSES.DEPLOYED;
-      };
-    case 'lastStartTime':
-      return (pipeline) => {
-        const lastStarting = objectQuery(pipeline, 'runs', 0, 'starting');
-
-        if (!lastStarting) {
-          return sortOrder === SORT_ORDER.asc ? Infinity : -1;
-        }
-        return lastStarting;
-      };
-    case 'runs':
-      return (pipeline) => {
-        return pipeline.totalRuns || 0;
-      };
-  }
-}
-
 const PipelineTableView: React.SFC<IProps> = ({
   pipelines,
+  filteredPipelines: filteredList,
   search,
   onClear,
-  pageLimit,
-  currentPage,
-  sortOrder,
-  sortColumn,
   refetch,
 }) => {
   function renderBody() {
-    if (pipelines.length === 0) {
+    if (!pipelines || (Array.isArray(pipelines) && pipelines.length === 0)) {
       return <EmptyList type={VIEW_TYPES.deployed} />;
     }
 
-    let filteredList = pipelines;
-    if (search.length > 0) {
-      filteredList = pipelines.filter((pipeline) => {
-        const name = pipeline.name.toLowerCase();
-        const searchFilter = search.toLowerCase();
-
-        return name.indexOf(searchFilter) !== -1;
-      });
-    } else {
-      filteredList = orderBy(
-        filteredList,
-        [getOrderColumnFunction(sortColumn, sortOrder)],
-        [sortOrder]
-      );
-
-      const startIndex = (currentPage - 1) * pageLimit;
-      const endIndex = startIndex + pageLimit;
-      filteredList = filteredList.slice(startIndex, endIndex);
-    }
-
-    if (filteredList.length === 0) {
+    if (!filteredList || (Array.isArray(filteredList) && filteredList.length === 0)) {
       return (
         <EmptyMessageContainer
           title={T.translate(`${PREFIX}.EmptyList.EmptySearch.heading`, { search }).toString()}
@@ -134,11 +79,11 @@ const PipelineTableView: React.SFC<IProps> = ({
         <div className="grid-header">
           <div className="grid-row">
             <SortableHeader columnName="name" />
-            <SortableHeader columnName="type" />
-            <SortableHeader columnName="status" />
-            <SortableHeader columnName="lastStartTime" />
+            <strong>{T.translate(`${PREFIX}.type`)}</strong>
+            <strong>{T.translate(`${PREFIX}.status`)}</strong>
+            <strong>{T.translate(`${PREFIX}.lastStartTime`)}</strong>
             <strong>{T.translate(`${PREFIX}.nextRun`)}</strong>
-            <SortableHeader columnName="runs" />
+            <strong>{T.translate(`${PREFIX}.runs`)}</strong>
             <strong>{T.translate(`${PREFIX}.tags`)}</strong>
             <strong />
           </div>
@@ -157,6 +102,8 @@ const mapStateToProps = (state) => {
     currentPage: state.deployed.currentPage,
     sortOrder: state.deployed.sortOrder,
     sortColumn: state.deployed.sortColumn,
+    pipelines: state.deployed.pipelines,
+    filteredPipelines: state.deployed.filteredPipelines,
   };
 };
 

@@ -190,6 +190,7 @@
     "moment": "2.21.0",
     "moment-timezone": "0.5.17",
     "mousetrap": "1.6.0",
+    "natural-orderby": "2.0.3",
     "ngreact": "0.3.0",
     "numeral": "1.5.3",
     "object-hash": "1.1.0",

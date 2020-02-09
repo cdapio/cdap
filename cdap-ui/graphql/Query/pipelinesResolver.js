@@ -16,8 +16,8 @@
 
 const urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('../resolvers-common.js');
-
+  resolversCommon = require('../resolvers-common.js'),
+  naturalSort = require('natural-orderby');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
@@ -35,7 +35,8 @@ async function queryTypePipelinesResolver(parent, args, context) {
   options.url = urlHelper.constructUrl(cdapConfig, path);
   context.namespace = namespace;
 
-  return await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const apps = await resolversCommon.requestPromiseWrapper(options, context.auth);
+  return naturalSort.orderBy(apps, [(app) => app.name], ['asc']);
 }
 
 module.exports = {

@@ -17,14 +17,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import IconSVG from 'components/IconSVG';
-import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
+import { setSearch } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import T from 'i18n-react';
 
 interface ISearchBoxProps {
   value: string;
   onChange: () => void;
 }
-
 const PREFIX = 'features.PipelineList';
 
 const SearchBoxView: React.SFC<ISearchBoxProps> = ({ value, onChange }) => {
@@ -54,15 +53,10 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatch = (dispatch) => {
+const mapDispatch = () => {
   return {
     onChange: (e) => {
-      dispatch({
-        type: Actions.setSearch,
-        payload: {
-          search: e.target.value,
-        },
-      });
+      setSearch(e.target.value);
     },
   };
 };

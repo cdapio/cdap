@@ -24,7 +24,7 @@ type PipelineRecord {
   artifact: ArtifactSummary!
   ownerPrincipal: String
   runs: [PipelineRun]
-  totalRuns: Int!
+  totalRuns: Int
 }
 
 type PipelineRun {
