@@ -22,11 +22,17 @@ import Content from 'components/Replicator/Create/Content';
 import { Redirect } from 'react-router-dom';
 import { objectQuery } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { fetchPluginInfo, fetchPluginWidget } from 'components/Replicator/utilities';
+import {
+  fetchPluginInfo,
+  fetchPluginWidget,
+  constructTablesSelection,
+} from 'components/Replicator/utilities';
 import { PluginType } from 'components/Replicator/constants';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import uuidV4 from 'uuid/v4';
 import { MyReplicatorApi } from 'api/replicator';
+import { generateTableKey } from 'components/Replicator/utilities';
+import { List, Map, Set, fromJS } from 'immutable';
 
 export const CreateContext = React.createContext({});
 
@@ -61,6 +67,12 @@ interface ICreateProps extends WithStyles<typeof styles> {
 
 type IPluginConfig = Record<string, string>;
 
+enum DML {
+  insert = 'INSERT',
+  update = 'UPDATE',
+  delete = 'DELETE',
+}
+
 interface ICreateState {
   name: string;
   description: string;
@@ -70,6 +82,9 @@ interface ICreateState {
   targetPluginWidget: any;
   sourceConfig: IPluginConfig;
   targetConfig: IPluginConfig;
+  tables: any;
+  columns: any;
+  dmlBlacklist: Map<string, Set<DML>>;
   draftId: string;
   isInvalidSource: boolean;
   loading: boolean;
@@ -81,6 +96,7 @@ interface ICreateState {
   setTargetPluginInfo: (targetPluginInfo: any) => void;
   setTargetPluginWidget: (targetPluginWidget) => void;
   setTargetConfig: (targetConfig: IPluginConfig) => void;
+  setTables: (tables, columns, dmlBlacklist) => void;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -128,6 +144,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     this.setState({ targetConfig });
   };
 
+  public setTables = (tables, columns, dmlBlacklist) => {
+    this.setState({ tables, columns, dmlBlacklist });
+  };
+
   public state = {
     name: '',
     description: '',
@@ -137,12 +157,15 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     targetPluginWidget: null,
     sourceConfig: null,
     targetConfig: null,
+    tables: null,
+    columns: null,
+    dmlBlacklist: Map<string, Set<DML>>(),
 
     draftId: null,
     isInvalidSource: false,
     loading: true,
 
-    activeStep: 4,
+    activeStep: 0,
 
     setActiveStep: this.setActiveStep,
     setNameDescription: this.setNameDescription,
@@ -151,6 +174,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setTargetPluginInfo: this.setTargetPluginInfo,
     setTargetPluginWidget: this.setTargetPluginWidget,
     setTargetConfig: this.setTargetConfig,
+    setTables: this.setTables,
   };
 
   public componentDidMount() {
@@ -199,17 +223,15 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         loading: false,
         name: res.label,
         description: objectQuery(res, 'config', 'description') || '',
+        activeStep: 1,
       };
 
       const stages = objectQuery(res, 'config', 'stages') || [];
+
+      // SOURCE
       const source = stages.find((stage) => {
         const stageType = objectQuery(stage, 'plugin', 'type');
         return stageType === PluginType.source;
-      });
-
-      const target = stages.find((stage) => {
-        const stageType = objectQuery(stage, 'plugin', 'type');
-        return stageType === PluginType.target;
       });
 
       if (source) {
@@ -224,7 +246,52 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
         newState.sourcePluginInfo = sourcePluginInfo;
         newState.sourceConfig = objectQuery(source, 'plugin', 'properties') || {};
+        newState.activeStep = 2;
       }
+
+      // TABLES & COLUMNS
+      const tables = objectQuery(res, 'config', 'tables');
+      if (tables) {
+        let selectedTables = Map<string, Map<string, string>>();
+        interface IColumn {
+          name: string;
+          type: string;
+        }
+
+        let columns = Map<string, List<IColumn>>();
+        let dmlBlacklist = Map<string, Set<DML>>();
+        tables.forEach((table) => {
+          const tableKey = generateTableKey(table);
+
+          selectedTables = selectedTables.set(
+            tableKey,
+            fromJS({
+              database: table.database,
+              table: table.table,
+            })
+          );
+
+          const tableColumns = objectQuery(table, 'columns') || [];
+          const columnList = fromJS(tableColumns);
+
+          columns = columns.set(tableKey, columnList);
+
+          const tableDML = objectQuery(table, 'dmlBlacklist') || [];
+          dmlBlacklist = dmlBlacklist.set(tableKey, Set<DML>(tableDML));
+        });
+
+        newState.tables = selectedTables;
+        newState.columns = columns;
+        newState.dmlBlacklist = dmlBlacklist;
+
+        // newState.activeStep = 3;
+      }
+
+      // TARGET
+      const target = stages.find((stage) => {
+        const stageType = objectQuery(stage, 'plugin', 'type');
+        return stageType === PluginType.target;
+      });
 
       if (target) {
         const targetArtifact = objectQuery(target, 'plugin', 'artifact') || {};
@@ -238,6 +305,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
         newState.targetPluginInfo = targetPluginInfo;
         newState.targetConfig = objectQuery(target, 'plugin', 'properties') || {};
+        newState.activeStep = 4;
       }
 
       this.setState(newState);
@@ -313,9 +381,16 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         description: this.state.description,
         connections,
         stages,
+        tables: constructTablesSelection(
+          this.state.tables,
+          this.state.columns,
+          this.state.dmlBlacklist
+        ),
       },
     };
 
+    // tslint:disable-next-line: no-console
+    console.log('body', body);
     return body;
   };
 
@@ -324,6 +399,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   };
 
   private renderState = () => {
+    if (true) {
+      return null;
+    }
+
     const state = { ...this.state };
 
     Object.keys(state).forEach((stateKey) => {

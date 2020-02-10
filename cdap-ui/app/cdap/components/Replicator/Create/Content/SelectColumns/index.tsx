@@ -24,11 +24,20 @@ import IconButton from '@material-ui/core/IconButton';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
 import Checkbox from '@material-ui/core/Checkbox';
-import { generateTableKey } from 'components/Replicator/Create/Content/SelectTables';
+import { generateTableKey } from 'components/Replicator/utilities';
 import LoadingSVG from 'components/LoadingSVG';
 
 const styles = (theme): StyleRules => {
   return {
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      zIndex: 5,
+    },
     root: {
       position: 'absolute',
       top: '100px',
@@ -207,6 +216,10 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
                 <Checkbox
                   color="primary"
                   checked={this.state.selectedColumns.size === this.state.columns.length}
+                  indeterminate={
+                    this.state.selectedColumns.size < this.state.columns.length &&
+                    this.state.selectedColumns.size > 0
+                  }
                   onChange={this.toggleSelectAll}
                 />
               </div>
@@ -265,33 +278,35 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     const { classes } = this.props;
 
     return (
-      <div className={classes.root}>
-        <div className={classes.header}>
-          <div>
-            <h3>{this.props.tableInfo.table}</h3>
-            <div>Select the columns to be replicated</div>
+      <div className={classes.backdrop}>
+        <div className={classes.root}>
+          <div className={classes.header}>
             <div>
-              Columns - {this.state.selectedColumns.size} of {this.state.columns.length} selected
+              <h3>{this.props.tableInfo.table}</h3>
+              <div>Select the columns to be replicated</div>
+              <div>
+                Columns - {this.state.selectedColumns.size} of {this.state.columns.length} selected
+              </div>
+            </div>
+
+            <div className={classes.actionButtons}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.handleSave}
+                disabled={this.state.loading}
+              >
+                Save
+              </Button>
+
+              <IconButton onClick={this.props.toggle}>
+                <CloseIcon />
+              </IconButton>
             </div>
           </div>
 
-          <div className={classes.actionButtons}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.handleSave}
-              disabled={this.state.loading}
-            >
-              Save
-            </Button>
-
-            <IconButton onClick={this.props.toggle}>
-              <CloseIcon />
-            </IconButton>
-          </div>
+          {this.state.loading ? this.renderLoading() : this.renderContent()}
         </div>
-
-        {this.state.loading ? this.renderLoading() : this.renderContent()}
       </div>
     );
   }
