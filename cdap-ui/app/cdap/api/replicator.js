@@ -45,6 +45,8 @@ export const MyReplicatorApi = {
   getReplicator: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`),
   getStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/status`),
+  assessPipeline: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessPipeline`),
+  assessTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessTable`),
 
   // To be replaced with GraphQL
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps?artifactName=delta-app'),

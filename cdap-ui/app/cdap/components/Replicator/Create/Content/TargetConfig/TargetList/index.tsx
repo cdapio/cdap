@@ -25,6 +25,7 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
 import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
 import classnames from 'classnames';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -105,7 +106,7 @@ const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, current
     <div>
       <div className={classes.header}>
         <div>
-          <h4>Select target</h4>
+          <Heading type={HeadingTypes.h4} label="Select target" />
         </div>
         <div className={classes.searchSection}>
           <div>

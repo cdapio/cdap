@@ -19,13 +19,16 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { List, Map } from 'immutable';
+import { List, Map, Set, fromJS } from 'immutable';
 import Checkbox from '@material-ui/core/Checkbox';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import orderBy from 'lodash/orderBy';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import SelectColumns from 'components/Replicator/Create/Content/SelectColumns';
 import If from 'components/If';
+import { generateTableKey } from 'components/Replicator/utilities';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -38,7 +41,7 @@ const styles = (theme): StyleRules => {
         maxHeight: '100%', // beating specificity
 
         '& .grid-row': {
-          gridTemplateColumns: '55px 3fr 1fr 1fr 100px',
+          gridTemplateColumns: '55px 3fr 1fr 1fr 200px 120px 120px 120px',
           alignItems: 'center',
         },
 
@@ -49,12 +52,15 @@ const styles = (theme): StyleRules => {
       },
     },
     changeLink: {
-      color: theme.palette.grey[300],
+      color: theme.palette.grey[200],
       cursor: 'pointer',
       '&:hover': {
         textDecoration: 'underline',
         color: theme.palette.blue[200],
       },
+    },
+    headerDMLcheckbox: {
+      marginLeft: '-11px',
     },
   };
 };
@@ -72,24 +78,28 @@ interface IColumn {
   type: string;
 }
 
+enum DML {
+  insert = 'INSERT',
+  update = 'UPDATE',
+  delete = 'DELETE',
+}
+
 interface ISelectTablesState {
   tables: ITable[];
-  selectedTables: Map<string, boolean>;
+  selectedTables: Map<string, Map<string, string>>;
   columns: Map<string, List<IColumn>>;
+  dmlBlacklist: Map<string, Set<DML>>;
   openTable?: ITable;
   error: any;
   loading: boolean;
 }
 
-export function generateTableKey(row) {
-  return `db-${row.database}-table-${row.table}`;
-}
-
 class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTablesState> {
   public state = {
     tables: [],
-    selectedTables: Map<string, boolean>(),
-    columns: Map<string, List<IColumn>>(),
+    selectedTables: this.props.tables,
+    columns: this.props.columns,
+    dmlBlacklist: this.props.dmlBlacklist,
     openTable: null,
     loading: true,
     error: null,
@@ -111,13 +121,12 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
 
     MyReplicatorApi.listTables(params).subscribe(
       (res) => {
-        this.setState({ tables: orderBy(res.tables, ['table'], ['asc']) });
+        this.setState({ tables: orderBy(res.tables, ['table'], ['asc']), loading: false });
       },
       (err) => {
-        this.setState({ error: err });
-      },
-      () => {
-        this.setState({ loading: false });
+        // tslint:disable-next-line: no-console
+        console.log('error', err);
+        this.setState({ error: err, loading: false });
       }
     );
   };
@@ -133,7 +142,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     }
 
     this.setState({
-      selectedTables: this.state.selectedTables.set(key, true),
+      selectedTables: this.state.selectedTables.set(key, fromJS(row)),
     });
   };
 
@@ -148,7 +157,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     const selectedMap = {};
     this.state.tables.forEach((row) => {
       const key = generateTableKey(row);
-      selectedMap[key] = true;
+      selectedMap[key] = fromJS(row);
     });
 
     this.setState({
@@ -176,6 +185,227 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     });
   };
 
+  /**
+   * returns
+   *  -1 for none selected
+   *  0 for indeterminate
+   *  1 for all selected
+   */
+  private dmlSelectAllIndicator = (dmlEvent: DML) => {
+    const dmlListArray = this.state.tables.map((table) => {
+      const key = generateTableKey(table);
+      const tableDML = this.state.dmlBlacklist.get(key);
+
+      if (!tableDML) {
+        return false;
+      }
+
+      return tableDML.has(dmlEvent);
+    });
+
+    // creating a set will create a unique value array
+    const dmlListSet = Set(dmlListArray);
+
+    if (dmlListSet.size === 2) {
+      return 0;
+    }
+
+    return dmlListSet.has(false) ? 1 : -1;
+  };
+
+  private toggleAllDML = (dmlEvent: DML) => {
+    let dmlBlacklist = this.state.dmlBlacklist;
+
+    if (this.dmlSelectAllIndicator(dmlEvent) !== -1) {
+      // deselect all
+      this.state.tables.forEach((table) => {
+        const key = generateTableKey(table);
+        let tableDML = dmlBlacklist.get(key);
+
+        if (!tableDML) {
+          tableDML = Set<DML>([dmlEvent]);
+        } else {
+          tableDML = tableDML.add(dmlEvent);
+        }
+
+        dmlBlacklist = dmlBlacklist.set(key, tableDML);
+      });
+    } else {
+      // select all
+      this.state.tables.forEach((table) => {
+        const key = generateTableKey(table);
+        let tableDML = dmlBlacklist.get(key);
+
+        if (!tableDML) {
+          tableDML = Set<DML>();
+        } else {
+          tableDML = tableDML.remove(dmlEvent);
+        }
+
+        dmlBlacklist = dmlBlacklist.set(key, tableDML);
+      });
+    }
+
+    this.setState({
+      dmlBlacklist,
+    });
+  };
+
+  private toggleDML = (key, dmlEvent: DML) => {
+    // get current blacklist
+    const tableDML = this.state.dmlBlacklist.get(key);
+    let dmlSet: Set<DML>;
+    if (!tableDML) {
+      dmlSet = Set<DML>([dmlEvent]);
+    } else if (tableDML.has(dmlEvent)) {
+      dmlSet = tableDML.delete(dmlEvent);
+    } else {
+      dmlSet = tableDML.add(dmlEvent);
+    }
+
+    this.setState({
+      dmlBlacklist: this.state.dmlBlacklist.set(key, dmlSet),
+    });
+  };
+
+  private renderError = () => {
+    if (!this.state.error) {
+      return null;
+    }
+
+    return <div className="text-danger">{JSON.stringify(this.state.error, null, 2)}</div>;
+  };
+
+  public handleNext = () => {
+    this.props.setTables(this.state.selectedTables, this.state.columns, this.state.dmlBlacklist);
+  };
+
+  private renderContent = () => {
+    if (this.state.error) {
+      return null;
+    }
+
+    const { classes } = this.props;
+
+    return (
+      <div className={`grid-wrapper ${classes.gridWrapper}`}>
+        <div className={`grid grid-container grid-compact`}>
+          <div className="grid-header">
+            <div className="grid-row">
+              <div>
+                <Checkbox
+                  checked={this.state.selectedTables.size === this.state.tables.length}
+                  indeterminate={
+                    this.state.selectedTables.size < this.state.tables.length &&
+                    this.state.selectedTables.size > 0
+                  }
+                  onChange={this.toggleSelectAll}
+                  color="primary"
+                />
+              </div>
+              <div>Table name</div>
+              <div>Total columns</div>
+              <div>Selected columns</div>
+              <div />
+              <div>
+                <Checkbox
+                  color="primary"
+                  className={classes.headerDMLcheckbox}
+                  checked={this.dmlSelectAllIndicator(DML.insert) === 1}
+                  indeterminate={this.dmlSelectAllIndicator(DML.insert) === 0}
+                  onChange={this.toggleAllDML.bind(this, DML.insert)}
+                />
+              </div>
+              <div>
+                <Checkbox
+                  color="primary"
+                  className={classes.headerDMLcheckbox}
+                  checked={this.dmlSelectAllIndicator(DML.update) === 1}
+                  indeterminate={this.dmlSelectAllIndicator(DML.update) === 0}
+                  onChange={this.toggleAllDML.bind(this, DML.update)}
+                />
+              </div>
+              <div>
+                <Checkbox
+                  color="primary"
+                  className={classes.headerDMLcheckbox}
+                  checked={this.dmlSelectAllIndicator(DML.delete) === 1}
+                  indeterminate={this.dmlSelectAllIndicator(DML.delete) === 0}
+                  onChange={this.toggleAllDML.bind(this, DML.delete)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid-body">
+            {this.state.tables.map((row) => {
+              const key = generateTableKey(row);
+              const checked = !!this.state.selectedTables.get(key);
+              const columns = this.state.columns.get(key);
+              const tableDML = this.state.dmlBlacklist.get(key) || Set<DML>();
+
+              return (
+                <div key={key} className="grid-row">
+                  <div>
+                    <Checkbox
+                      checked={checked}
+                      onChange={this.toggleSelected.bind(this, row)}
+                      color="primary"
+                    />
+                  </div>
+                  <div>{row.table}</div>
+                  <div>{row.numColumns}</div>
+                  <div>{columns ? columns.size : 'All'}</div>
+                  <div>
+                    <span onClick={this.openTable.bind(this, row)} className={classes.changeLink}>
+                      Change
+                    </span>
+                  </div>
+                  <div>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          onClick={this.toggleDML.bind(this, key, DML.insert)}
+                          checked={!tableDML.has(DML.insert)}
+                        />
+                      }
+                      label="Inserts"
+                    />
+                  </div>
+                  <div>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          onClick={this.toggleDML.bind(this, key, DML.update)}
+                          checked={!tableDML.has(DML.update)}
+                        />
+                      }
+                      label="Updates"
+                    />
+                  </div>
+                  <div>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          onClick={this.toggleDML.bind(this, key, DML.delete)}
+                          checked={!tableDML.has(DML.delete)}
+                        />
+                      }
+                      label="Deletes"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   public render() {
     if (this.state.loading) {
       return <LoadingSVGCentered />;
@@ -186,60 +416,12 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     return (
       <React.Fragment>
         <div className={classes.root}>
-          <h3>Select tables and columns to replicate</h3>
+          <Heading type={HeadingTypes.h3} label="Select tables and columns to replicate" />
 
-          <div className={`grid-wrapper ${classes.gridWrapper}`}>
-            <div className={`grid grid-container grid-compact`}>
-              <div className="grid-header">
-                <div className="grid-row">
-                  <div>
-                    <Checkbox
-                      checked={this.state.selectedTables.size === this.state.tables.length}
-                      onChange={this.toggleSelectAll}
-                      color="primary"
-                    />
-                  </div>
-                  <div>Table name</div>
-                  <div>Total columns</div>
-                  <div>Selected columns</div>
-                  <div />
-                </div>
-              </div>
+          {this.renderError()}
+          {this.renderContent()}
 
-              <div className="grid-body">
-                {this.state.tables.map((row) => {
-                  const key = generateTableKey(row);
-                  const checked = !!this.state.selectedTables.get(key);
-                  const columns = this.state.columns.get(key);
-
-                  return (
-                    <div key={key} className="grid-row">
-                      <div>
-                        <Checkbox
-                          checked={checked}
-                          onChange={this.toggleSelected.bind(this, row)}
-                          color="primary"
-                        />
-                      </div>
-                      <div>{row.table}</div>
-                      <div>{row.numColumns}</div>
-                      <div>{columns ? columns.size : 'All'}</div>
-                      <div>
-                        <span
-                          onClick={this.openTable.bind(this, row)}
-                          className={classes.changeLink}
-                        >
-                          Change
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <StepButtons />
+          <StepButtons onNext={this.handleNext} />
         </div>
 
         <If condition={this.state.openTable}>

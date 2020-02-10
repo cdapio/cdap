@@ -214,3 +214,83 @@ export function fetchPluginsAndWidgets(pluginType) {
 
   return observable$;
 }
+
+export function generateTableKey(row) {
+  return `db-${row.database}-table-${row.table}`;
+}
+
+interface IColumn {
+  name: string;
+  type: string;
+}
+
+enum DML {
+  insert = 'INSERT',
+  update = 'UPDATE',
+  delete = 'DELETE',
+}
+
+interface ITableObj {
+  database: string;
+  table: string;
+  schema?: string;
+  columns?: IColumn[];
+  dmlBlacklist?: DML[];
+}
+export function constructTablesSelection(tables, columns, dmlBlacklist) {
+  if (!tables) {
+    return [];
+  }
+
+  const tablesArr = [];
+
+  /**
+   * {
+   *    database,
+   *    table
+   *    schema
+   * }
+   */
+
+  tables.toList().forEach((row) => {
+    const database = row.get('database');
+    const table = row.get('table');
+
+    const tableObj: ITableObj = {
+      database,
+      table,
+    };
+
+    const schemaName = row.get('schema');
+
+    if (schemaName) {
+      tableObj.schema = schemaName;
+    }
+
+    const tableKey = generateTableKey(tableObj);
+    const selectedColumns = columns.get(tableKey);
+
+    if (selectedColumns && selectedColumns.size > 0) {
+      const tableColumns = [];
+      selectedColumns.forEach((column) => {
+        const columnObj = {
+          name: column.get('name'),
+          type: column.get('type'),
+        };
+
+        tableColumns.push(columnObj);
+      });
+
+      tableObj.columns = tableColumns;
+    }
+
+    const tableDML = dmlBlacklist.get(tableKey);
+    if (tableDML && tableDML.size > 0) {
+      tableObj.dmlBlacklist = tableDML.toArray();
+    }
+
+    tablesArr.push(tableObj);
+  });
+
+  return tablesArr;
+}
