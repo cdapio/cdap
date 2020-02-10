@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import * as React from 'react';
 
-interface IIfComponentProps {
-  condition: boolean;
+import * as React from 'react';
+import If from 'components/If';
+
+interface IExperimentWrapperProps {
   children: React.ReactNode;
+  name: string;
 }
 
-const If: React.FC<IIfComponentProps> = ({ condition, children }) => {
-  if (!condition) {
-    return null;
-  }
-
-  return <React.Fragment>{children}</React.Fragment>;
+const ExperimentWrapper: React.FC<IExperimentWrapperProps> = ({ children, name }) => {
+  const featureAvailable = window.localStorage.getItem(name) === 'true';
+  return <If condition={featureAvailable}>{children}</If>;
 };
 
-export default If;
+export default ExperimentWrapper;
