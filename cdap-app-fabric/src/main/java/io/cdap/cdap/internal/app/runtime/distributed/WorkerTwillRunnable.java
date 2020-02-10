@@ -23,6 +23,13 @@ import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
  */
 public class WorkerTwillRunnable extends AbstractProgramTwillRunnable<WorkerProgramRunner> {
 
+  /**
+   * Main method for the remote execution mode.
+   */
+  public static void main(String[] args) throws Exception {
+    new WorkerTwillRunnable(getRunnableNameFromEnv()).doMain();
+  }
+
   protected WorkerTwillRunnable(String name) {
     super(name);
   }

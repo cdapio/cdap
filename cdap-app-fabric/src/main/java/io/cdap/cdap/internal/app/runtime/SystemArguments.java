@@ -374,8 +374,9 @@ public final class SystemArguments {
    */
   public static boolean isProfileAllowed(ProgramType programType) {
     return programType == ProgramType.WORKFLOW
-            || programType == ProgramType.MAPREDUCE
-            || programType == ProgramType.SPARK;
+      || programType == ProgramType.MAPREDUCE
+      || programType == ProgramType.SPARK
+      || programType == ProgramType.WORKER;
   }
 
   /**

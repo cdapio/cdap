@@ -57,7 +57,7 @@ public class SystemArgumentsTest {
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(mrId, args));
     Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(serviceId, args));
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(sparkId, args));
-    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(workerId, args));
+    Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(workerId, args));
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(workflowID, args));
   }
 

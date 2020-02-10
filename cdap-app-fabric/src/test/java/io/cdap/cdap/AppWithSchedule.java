@@ -27,6 +27,7 @@ import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.dataset.lib.ObjectStores;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
+import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import org.slf4j.Logger;
@@ -46,6 +47,8 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
   public static final String SCHEDULE = "SampleSchedule";
   public static final String SCHEDULE_2 = "SampleSchedule2";
   public static final String MAPREDUCE = "SampleMR";
+  public static final String SPARK = "SampleSpark";
+  public static final String WORKER = "DummyWorker";
 
   @Override
   public void configure() {
@@ -62,7 +65,9 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
 
       if (config.addWorkflow) {
         addMapReduce(new SampleMR());
+        addSpark(new SampleSpark());
         addWorkflow(new SampleWorkflow());
+        addWorker(new DummyWorker());
       }
 
       Map<String, String> scheduleProperties = Maps.newHashMap();
@@ -88,8 +93,6 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       throw Throwables.propagate(e);
     }
   }
-
-
 
   /**
    * Application Config Class to control schedule creation
@@ -164,6 +167,11 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
   }
 
   private class SampleMR extends AbstractMapReduce {
+    @Override
+    public void configure() { }
+  }
+
+  private class SampleSpark extends AbstractSpark {
     @Override
     public void configure() { }
   }

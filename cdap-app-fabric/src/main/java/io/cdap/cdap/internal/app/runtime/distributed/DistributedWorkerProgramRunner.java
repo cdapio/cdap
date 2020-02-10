@@ -37,6 +37,7 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
 import java.io.File;
+import java.util.Collections;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -81,5 +82,9 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
     launchConfig.addRunnable(workerSpec.getName(), new WorkerTwillRunnable(workerSpec.getName()),
                              Integer.parseInt(instances), options.getUserArguments().asMap(),
                              workerSpec.getResources());
+    if (clusterMode == ClusterMode.ISOLATED) {
+      // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
+      launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
+    }
   }
 }

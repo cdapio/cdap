@@ -87,11 +87,17 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       ScheduleId scheduleId2 = defaultAppId.schedule(AppWithSchedule.SCHEDULE);
       ProgramId programId = defaultAppId.workflow(AppWithSchedule.WORKFLOW_NAME);
       ProgramId mapReduceProgramId = defaultAppId.mr(AppWithSchedule.MAPREDUCE);
+      ProgramId sparkProgramId = defaultAppId.spark(AppWithSchedule.SPARK);
+      ProgramId workerProgramId = defaultAppId.worker(AppWithSchedule.WORKER);
 
-      // Verify the workflow and schedule has been updated to native profile
+      // Verify the workflow, schedule, mapreduce, spark, worker has been updated to native profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(sparkProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(workerProgramId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -102,10 +108,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       setPreferences(getPreferenceURI(TEST_NAMESPACE1),
                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile"), 200);
 
-      // Verify the workflow and schedule has been updated to my profile
+      // Verify the workflow, schedule, mapreduce, spark, worker has been updated to my profile
       Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(sparkProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(workerProgramId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -116,10 +126,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       setPreferences(getPreferenceURI(TEST_NAMESPACE1, defaultAppId.getApplication()),
                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile2"), 200);
 
-      // Verify the workflow and schedule has been updated to my profile 2
+      // Verify the workflow, schedule, mapreduce, spark, worker has been updated to my profile 2
       Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(sparkProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(workerProgramId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile2.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -129,10 +143,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       // delete app level pref, metadata should point to ns level
       deletePreferences(getPreferenceURI(TEST_NAMESPACE1, defaultAppId.getApplication()), 200);
 
-      // Verify the workflow and schedule has been updated to my profile
+      // Verify the workflow, schedule, mapreduce, spark, worker has been updated to my profile
       Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(sparkProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(workerProgramId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -142,10 +160,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       // delete at ns level should let the program use native profile since no profile is set at instance level
       deletePreferences(getPreferenceURI(TEST_NAMESPACE1), 200);
 
-      // Verify the workflow and schedule has been updated to native profile
+      // Verify the workflow, schedule, mapreduce, spark, worker has been updated to native profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(sparkProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(workerProgramId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -156,10 +178,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       setPreferences(getPreferenceURI(),
                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "SYSTEM:MyProfile3"), 200);
 
-      // Verify the workflow and schedule has been updated to profile 3
+      // Verify the workflow, schedule, mapreduce, spark, worker has been updated to profile 3
       Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(sparkProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(workerProgramId).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -169,10 +195,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       deletePreferences(getPreferenceURI(), 200);
       deleteApp(defaultAppId, 200);
 
-      // Verify the workflow and schedule metadata has been deleted
+      // Verify the workflow, schedule, mapreduce, spark, worker metadata has been deleted
       Tasks.waitFor(false, () -> getMetadataProperties(programId).containsKey("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(false, () -> getMetadataProperties(mapReduceProgramId).containsKey("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(false, () -> getMetadataProperties(sparkProgramId).containsKey("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(false, () -> getMetadataProperties(workerProgramId).containsKey("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(false, () -> getMetadataProperties(scheduleId1).containsKey("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
