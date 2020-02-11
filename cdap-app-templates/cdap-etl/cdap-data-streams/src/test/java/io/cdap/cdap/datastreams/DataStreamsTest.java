@@ -177,7 +177,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     Set<DatasetFieldLineageSummary.FieldLineageRelations> expectedRelations =
       Collections.singleton(
-        new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(sinkName1),
+        new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(sinkName1), 2,
                                                              ImmutableSet.of(new FieldRelation("key", "key"),
                                                                              new FieldRelation("value", "value"))));
     Assert.assertEquals(expectedRelations, outgoing);
@@ -217,7 +217,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     expectedRelations =
       Collections.singleton(
-        new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(sinkName2),
+        new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(sinkName2), 2, 
                                                              ImmutableSet.of(new FieldRelation("key", "key"),
                                                                              new FieldRelation("value", "value"))));
     Assert.assertEquals(expectedRelations, outgoing);

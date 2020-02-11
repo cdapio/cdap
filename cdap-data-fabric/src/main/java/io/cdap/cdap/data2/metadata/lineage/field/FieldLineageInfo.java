@@ -347,7 +347,13 @@ public class FieldLineageInfo {
     for (TransformOperation transform : dropTransforms) {
       for (InputField input : transform.getInputs()) {
         Operation previous = operationsMap.get(input.getOrigin());
-        computeIncomingSummaryHelper(NULL_EPF, previous, transform, summary);
+        // drop transforms uses a common NULL endpoint as key
+        Set<EndPointField> endPointFields = summary.computeIfAbsent(NULL_EPF, k -> new HashSet<>());
+        if (operationEndPointMap.containsKey(input.getOrigin())) {
+          endPointFields.addAll(new HashSet<>(operationEndPointMap.get(input.getOrigin())));
+          continue;
+        }
+        endPointFields.addAll(computeIncomingSummaryHelper(previous, transform, operationEndPointMap));
       }
     }
     return summary;
