@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -177,12 +177,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Store manages non-runtime lifecycle.
    */
-  protected final Store store;
+  private final Store store;
 
   /**
    * Runtime program service for running and managing programs.
    */
-  protected final ProgramRuntimeService runtimeService;
+  private final ProgramRuntimeService runtimeService;
 
   @Inject
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
@@ -821,9 +821,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String programName = scheduleFromRequest.getProgram().getProgramName();
     ProgramId programId = applicationId.program(programType, programName);
 
-    if (!lifecycleService.programExists(programId)) {
-      throw new NotFoundException(programId);
-    }
+    lifecycleService.ensureProgramExists(programId);
 
     String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
     Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), Collections.emptyMap());
@@ -1475,11 +1473,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appId,
                                  @PathParam("worker-id") String workerId) throws Exception {
     try {
-      ProgramId workderId = validateAndGetNamespace(namespaceId).app(appId).worker(workerId);
-      if (!lifecycleService.programExists(workderId)) {
-        throw new NotFoundException(workderId);
-      }
-      int count = store.getWorkerInstances(workderId);
+      ProgramId programId = validateAndGetNamespace(namespaceId).app(appId).worker(workerId);
+      lifecycleService.ensureProgramExists(programId);
+      int count = store.getWorkerInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Instances(count)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1527,8 +1523,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
 
-  private void getLiveInfo(HttpResponder responder, ProgramId programId,
-                             ProgramRuntimeService runtimeService) {
+  private void getLiveInfo(HttpResponder responder, ProgramId programId, ProgramRuntimeService runtimeService) {
     try {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimeService.getLiveInfo(programId)));
     } catch (SecurityException e) {
@@ -1547,10 +1542,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
       ProgramId programId = validateAndGetNamespace(namespaceId).app(appId).service(serviceId);
-      if (!lifecycleService.programExists(programId)) {
-        throw new NotFoundException(programId);
-      }
-
+      lifecycleService.ensureProgramExists(programId);
       int instances = store.getServiceInstances(programId);
       responder.sendJson(HttpResponseStatus.OK,
                          GSON.toJson(new ServiceInstances(instances, getInstanceCount(programId, serviceId))));
@@ -1620,14 +1612,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void setServiceInstances(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId)
-    throws Exception {
+                                  @PathParam("service-id") String serviceId) throws Exception {
     try {
       ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
-      if (!store.programExists(programId)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
-        return;
-      }
+      Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
 
       int instances = getInstances(request);
       lifecycleService.setInstances(programId, instances);
