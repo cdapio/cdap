@@ -38,6 +38,15 @@
     </description>
   </property>
 
+  <property>
+    <name>system.app.config.dir</name>
+    <value>system-app-config</value>
+    <description>
+      Directory that contains definitions for what system apps should be running. This directory is continuously
+      monitored for new/modified config files and updating application state to match what is defined in those files.
+    </description>
+  </property>
+
   <!-- Applications Configuration -->
 
   <property>
