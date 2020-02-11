@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -108,6 +108,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeScheduler;
+  private final Store store;
+  private final ProgramRuntimeService runtimeService;
 
   @Inject
   WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
@@ -119,6 +121,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
           mrJobInfoFetcher, namespaceQueryAdmin, programScheduleService);
     this.datasetFramework = datasetFramework;
     this.timeScheduler = timeScheduler;
+    this.store = store;
+    this.runtimeService = runtimeService;
   }
 
   @POST
@@ -127,12 +131,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                  @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                  @PathParam("workflow-name") String workflowName,
                                  @PathParam("run-id") String runId) throws Exception {
-    ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
-    if (runtimeInfo == null) {
-      throw new NotFoundException(id.run(runId));
-    }
-    ProgramController controller = runtimeInfo.getController();
+    ProgramController controller = getProgramController(namespaceId, appId, workflowName, runId);
     if (controller.getState() == ProgramController.State.SUSPENDED) {
       throw new ConflictException("Program run already suspended");
     }
@@ -146,18 +145,25 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                 @PathParam("workflow-name") String workflowName,
                                 @PathParam("run-id") String runId) throws Exception {
-
-    ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
-    if (runtimeInfo == null) {
-      throw new NotFoundException(id.run(runId));
-    }
-    ProgramController controller = runtimeInfo.getController();
+    ProgramController controller = getProgramController(namespaceId, appId, workflowName, runId);
     if (controller.getState() == ProgramController.State.ALIVE) {
       throw new ConflictException("Program is already running");
     }
     controller.resume().get();
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
+  }
+
+  /**
+   * Returns the {@link ProgramController} for the given workflow program.
+   */
+  private ProgramController getProgramController(String namespaceId, String appId,
+                                                 String workflowName, String runId) throws NotFoundException {
+    ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    if (runtimeInfo == null) {
+      throw new NotFoundException(id.run(runId));
+    }
+    return runtimeInfo.getController();
   }
 
   /**
@@ -191,13 +197,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     try {
       ApplicationId appId = new ApplicationId(namespaceId, appName);
       WorkflowId workflowId = new WorkflowId(appId, workflowName);
-      ApplicationSpecification appSpec = store.getApplication(appId);
-      if (appSpec == null) {
-        throw new ApplicationNotFoundException(appId);
-      }
-      if (appSpec.getWorkflows().get(workflowName) == null) {
-        throw new ProgramNotFoundException(workflowId);
-      }
+      Store.ensureProgramExists(workflowId, store.getApplication(appId));
+
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
         runtimes = timeScheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);

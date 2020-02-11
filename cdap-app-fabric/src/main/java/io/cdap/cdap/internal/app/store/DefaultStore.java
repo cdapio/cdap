@@ -120,8 +120,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ProgramDescriptor loadProgram(ProgramId id) throws ApplicationNotFoundException,
-    ProgramNotFoundException {
+  public ProgramDescriptor loadProgram(ProgramId id) throws NotFoundException {
     ApplicationMeta appMeta = TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
     });
@@ -130,10 +129,7 @@ public class DefaultStore implements Store {
       throw new ApplicationNotFoundException(id.getParent());
     }
 
-    if (!programExists(id, appMeta.getSpec())) {
-      throw new ProgramNotFoundException(id);
-    }
-
+    Store.ensureProgramExists(id, appMeta.getSpec());
     return new ProgramDescriptor(id, appMeta.getSpec());
   }
 
@@ -565,28 +561,6 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
     });
-  }
-
-  @Override
-  public boolean applicationExists(ApplicationId id) {
-    return getApplication(id) != null;
-  }
-
-  @Override
-  public boolean programExists(ProgramId id) {
-    ApplicationSpecification appSpec = getApplication(id.getParent());
-    return appSpec != null && programExists(id, appSpec);
-  }
-
-  private boolean programExists(ProgramId id, ApplicationSpecification appSpec) {
-    switch (id.getType()) {
-      case MAPREDUCE: return appSpec.getMapReduce().containsKey(id.getProgram());
-      case SERVICE:   return appSpec.getServices().containsKey(id.getProgram());
-      case SPARK:     return appSpec.getSpark().containsKey(id.getProgram());
-      case WORKER:    return appSpec.getWorkers().containsKey(id.getProgram());
-      case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getProgram());
-      default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
-    }
   }
 
   @Override
