@@ -30,6 +30,13 @@ angular.module(PKG.name + '.feature.hydrator')
       uiSupportedArtifacts.push(GLOBALS.eltSqlPipeline);
     }
 
+    $urlRouterProvider.otherwise(() => {
+      //Unmatched route, will show 404
+      window.CaskCommon.ee.emit(
+        window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { statusCode: 404 });
+
+    });
+
     $stateProvider
       .state('home', {
         url: '/',
@@ -61,6 +68,29 @@ angular.module(PKG.name + '.feature.hydrator')
               defer.resolve();
             });
             return defer.promise;
+          },
+          rResetPreviousPageLevelError: function () {
+            window.CaskCommon.ee.emit(
+              window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
+          },
+          rValidNamespace: function ($stateParams, myNamespace) {
+            const { namespace } = $stateParams;
+            myNamespace.getList().then(namespaces => {
+              const validNamespace = namespaces.find(ns => ns.name === namespace);
+              // Current namespace not in available list of namespaces
+              if (namespaces.length > 0 && !validNamespace) {
+                const error = {
+                  statusCode: 404,
+                  data: `Namespace '${namespace}' does not exist.`
+                };
+                window.CaskCommon.ee.emit(
+                  window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
+              }
+            }).catch(err => {
+              //When namespace call fails for any other reason
+              window.CaskCommon.ee.emit(
+                window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, err);
+            });
           }
         },
         data: {
@@ -178,7 +208,7 @@ angular.module(PKG.name + '.feature.hydrator')
               }
               return defer.promise;
             },
-            rSelectedArtifact: function(rCDAPVersion, $stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
+            rSelectedArtifact: function(rCDAPVersion, $stateParams, $q, myPipelineApi) {
               var defer = $q.defer();
               let isArtifactValid = (backendArtifacts, artifact) => {
                 return backendArtifacts.filter( a =>
@@ -195,34 +225,21 @@ angular.module(PKG.name + '.feature.hydrator')
                 return validUISupportedArtifact.length ?  validUISupportedArtifact[0]: false;
               };
 
-              let showError = (message) => {
-                message = (typeof message === 'string' ? message : GLOBALS.en.hydrator.studio.error['MISSING-SYSTEM-ARTIFACTS']);
-                myAlertOnValium.show({
-                  type: 'danger',
-                  templateUrl: '/assets/features/hydrator/templates/partial/error-template.html',
-                  templateScope: {
-                    content: [message],
-                    currentIndex: 0
-                  }
-                });
+              let showError = (error) => {
+                window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
               };
 
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
               }).$promise.then((artifactsFromBackend) => {
-                let showWarningAndNavigateAway = () => {
-                  if (!$state.current.name.length) {
-                    $state.go('hydrator.create').then(showError);
-                    return;
-                  } else {
-                    $state.go($state.current).then(showError);
-                  }
+                let showNoArtifactsError = () => {
+                  showError({ data: GLOBALS.en.hydrator.studio.error['MISSING-SYSTEM-ARTIFACTS'], statusCode: 404 });
                 };
 
                 let chooseDefaultArtifact = () => {
                   if (!isArtifactValid(artifactsFromBackend, GLOBALS.etlDataPipeline)) {
                     if (!isAnyUISupportedArtifactPresent(artifactsFromBackend).length) {
-                      return showWarningAndNavigateAway();
+                      return showNoArtifactsError();
                     } else {
                       $stateParams.artifactType = getValidUISupportedArtifact(artifactsFromBackend).name;
                       defer.resolve($stateParams.artifactType);
@@ -234,7 +251,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 };
 
                 if (!artifactsFromBackend.length) {
-                  return showWarningAndNavigateAway();
+                  return showNoArtifactsError();
                 }
 
                 if (!isArtifactValid(artifactsFromBackend, $stateParams.artifactType)) {
@@ -244,7 +261,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 }
               },
               (err) => {
-                showError(err);
+                  showError(err);
               }
             );
               return defer.promise;
@@ -359,7 +376,10 @@ angular.module(PKG.name + '.feature.hydrator')
                       return;
                     }
                     return $q.resolve(pipelineDetail);
-                  }
+                  },(err) => {
+                      window.CaskCommon.ee.emit(
+                        window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, err);
+                    }
                 );
             }
           },

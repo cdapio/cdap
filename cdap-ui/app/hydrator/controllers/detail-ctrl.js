@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS, caskWindowManager) {
+  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS, caskWindowManager, myHelpers) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     const pipelineDetailsActionCreator = window.CaskCommon.PipelineDetailActionCreator;
     const pipelineMetricsActionCreator = window.CaskCommon.PipelineMetricsActionCreator;
@@ -32,6 +32,19 @@ angular.module(PKG.name + '.feature.hydrator')
 
     pipelineDetailsActionCreator.init(rPipelineDetail);
     let runid = $stateParams.runid;
+
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    this.pageLevelError = null;
+    const { globalEvents } = window.CaskCommon;
+
+    this.eventEmitter.on(globalEvents.PAGE_LEVEL_ERROR, (error) => {
+      if (error.reset === true) {
+        this.pageLevelError = null;
+      }
+      else {
+        this.pageLevelError = myHelpers.handlePageLevelError(error);
+      }
+    });
 
     let runsFetch = pipelineDetailsActionCreator.getRuns({
       namespace: $stateParams.namespace,

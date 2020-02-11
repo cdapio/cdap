@@ -156,9 +156,9 @@ function setWorkspaceRetry(params, observer, workspaceId) {
         setWorkspaceRetry(params, observer, workspaceId);
       } else {
         DataPrepStore.dispatch({
-          type: DataPrepActions.setDataError,
+          type: DataPrepActions.setWorkspaceError,
           payload: {
-            errorMessage: true,
+            workspaceError: { message: err.response.message, statusCode: err.statusCode },
           },
         });
         observer.error(err);

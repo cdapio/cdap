@@ -14,8 +14,7 @@
  * the License.
  */
 
-import * as React from 'react';
-import classnames from 'classnames';
+import React from 'react';
 import DeployedPipelineView from 'components/PipelineList/DeployedPipelineView';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import DraftPipelineView from 'components/PipelineList/DraftPipelineView';

@@ -417,9 +417,6 @@ features:
       dataErrorMessageTitle2: Unable to load data for "{workspaceName}".
       emptyWorkspace: No data
       noData: No data. Try removing some transformation steps.
-      refreshBtnLinkLabel: Refresh
-      suggestion1: the page
-      suggestionTitle: "You can try to:"
     DataPrepBrowser:
       BigQueryBrowser:
         datasetCount:

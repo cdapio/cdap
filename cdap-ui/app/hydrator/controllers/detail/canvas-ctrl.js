@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, $uibModal, MyPipelineStatusMapper, moment, $interval, $scope) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, $uibModal, MyPipelineStatusMapper, moment, $interval, $scope, myHelpers) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.PipelineDetailStore = window.CaskCommon.PipelineDetailStore;
@@ -34,6 +34,21 @@ angular.module(PKG.name + '.feature.hydrator')
       console.log('ERROR in configuration from backend: ', e);
       return;
     }
+
+    const { globalEvents } = window.CaskCommon;
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    this.pageLevelError = null;
+
+    this.eventEmitter.on(globalEvents.PAGE_LEVEL_ERROR, (error) => {
+      if (error.reset === true) {
+        this.pageLevelError = null;
+      }
+      else {
+        this.pageLevelError = myHelpers.handlePageLevelError(error);
+      }
+    });
+
+
     let pipelineConfig = this.PipelineDetailStore.getState().config;
     let nodes = this.HydratorPlusPlusHydratorService.getNodesFromStages(pipelineConfig.stages);
 

@@ -37,6 +37,7 @@ import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
 import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
+import globalEvents from 'services/global-events';
 
 require('./DataPrep.scss');
 
@@ -61,6 +62,7 @@ export default class DataPrep extends Component {
       currentWorkspace: null,
       sidePanelToggle: false,
       workspaceName: null,
+      workspaceError: {},
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
@@ -77,6 +79,22 @@ export default class DataPrep extends Component {
     this._isMounted = true;
     this.checkBackendUp(this.props);
     checkDataPrepHigherVersion();
+    this.storeSub = DataPrepStore.subscribe(() => {
+      let state = DataPrepStore.getState();
+      // only update if the new error is different than existing one
+      if (
+        state.error.workspaceError &&
+        state.error.workspaceError.message !== this.state.workspaceError.message &&
+        state.error.workspaceError.statusCode !== this.state.workspaceError.statusCode
+      ) {
+        this.setState({ workspaceError: state.error.workspaceError }, () => {
+          this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
+            data: this.state.workspaceError.message,
+            statusCode: this.state.workspaceError.statusCode,
+          });
+        });
+      }
+    });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -100,6 +118,7 @@ export default class DataPrep extends Component {
     if (this.dataprepStoreSubscription) {
       this.dataprepStoreSubscription();
     }
+    this.storeSub();
   }
 
   refreshDataPrep = () => {

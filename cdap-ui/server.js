@@ -26,10 +26,8 @@ import { extractConfig } from 'server/config/parser';
 import { getCDAPConfig } from 'server/cdap-config';
 import { applyGraphQLMiddleware } from 'gql/graphql';
 import { getHostName } from 'server/config/hostname';
+import middleware404 from 'server/middleware-404';
 
-/**
- * Spins up servers
- */
 
 var cdapConfig,
   securityConfig,
@@ -112,7 +110,10 @@ getCDAPConfig()
   })
 
   .then(function(app) {
+    // handles /graphql route
     applyGraphQLMiddleware(app, Object.assign({}, cdapConfig, securityConfig), log);
+    // handles all unmatched routes
+    app.use(middleware404.render404);
 
     var port, server;
     if (cdapConfig['ssl.external.enabled'] === 'true') {

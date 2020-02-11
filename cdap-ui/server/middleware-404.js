@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,31 +12,16 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-@import '../../../styles/variables.scss';
 
-$hr_color: #999999;
+/**
+ * @fileoverview catch-all middleware for 404 routes.
+ */
 
-.dataprep-error-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 35%;
-  margin: 0 auto;
-  margin-left: auto;
-  margin-right: auto;
-  width: auto;
-  padding: 0 20px;
-  hr {
-    width: 100%;
-    color: $hr_color;
-    background-color: $hr_color;
-  }
-  .btn-link {
-    margin: 0 5px 0 0;
-    color: var(--brand-primary-color);
-    cursor: pointer;
+module.exports = {
+  render404: function(req, res) {
+    // rendering cdap page which will render 404 UI
+    res.render('cdap', {nonceVal: `${res.locals.nonce}`});
   }
 }

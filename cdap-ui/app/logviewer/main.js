@@ -245,7 +245,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium, myLoadingService) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium, myLoadingService, myHelpers) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -253,22 +253,34 @@ angular
 
     $scope.copyrightYear = new Date().getFullYear();
 
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    this.pageLevelError = null;
+    const { globalEvents } = window.CaskCommon;
     function getVersion() {
       dataSource.request({
         _cdapPath: '/version'
       })
-        .then(function(res) {
-          $scope.version = res.version;
-          $rootScope.cdapVersion = $scope.version;
+      .then(function(res) {
+        $scope.version = res.version;
+        $rootScope.cdapVersion = $scope.version;
 
-          window.CaskCommon.VersionStore.dispatch({
-            type: window.CaskCommon.VersionActions.updateVersion,
-            payload: {
-              version: res.version
-            }
-          });
+        window.CaskCommon.VersionStore.dispatch({
+          type: window.CaskCommon.VersionActions.updateVersion,
+          payload: {
+            version: res.version
+          }
         });
+      });
     }
+
+    this.eventEmitter.on(globalEvents.PAGE_LEVEL_ERROR, (error) => {
+      if (error.rest === true) {
+        this.pageLevelError = null;
+      }
+      else {
+        this.pageLevelError = myHelpers.handlePageLevelError(error);
+      }
+    });
 
     $scope.$on(CASK_THEME_EVENT.changed, function (event, newClassName) {
       if(!event.defaultPrevented) {

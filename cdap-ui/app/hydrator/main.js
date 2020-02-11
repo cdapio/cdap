@@ -269,11 +269,24 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium, myLoadingService) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium, myLoadingService, myHelpers) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
     getVersion();
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    this.pageLevelError = null;
+    const {globalEvents} = window.CaskCommon;
+
+    this.eventEmitter.on(globalEvents.PAGE_LEVEL_ERROR, (error) => {
+      if (error.reset === true) {
+        this.pageLevelError = null;
+      }
+      else {
+        this.pageLevelError = myHelpers.handlePageLevelError(error);
+      }
+    });
+
     $scope.copyrightYear = new Date().getFullYear();
 
     function getVersion() {

@@ -18,7 +18,9 @@ import { combineReducers, createStore, Store as InterfaceStore } from 'redux';
 import NamespaceActions from './NamespaceActions';
 import { composeEnhancers, objectQuery, isNilOrEmpty } from 'services/helpers';
 import { SYSTEM_NAMESPACE } from 'services/global-constants';
+import { MyNamespaceApi } from 'api/namespace';
 import { IAction } from 'services/redux-helpers';
+import find from 'lodash/find';
 
 export interface INamespace {
   name: string;
@@ -100,5 +102,58 @@ const getCurrentNamespace = () => {
   return namespace;
 };
 
+const isValidNamespace = async (namespace: string) => {
+  if (namespace) {
+    const validNamespaces = await MyNamespaceApi.list().toPromise();
+    const validNs = validNamespaces.find((ns: INamespace) => ns.name === namespace);
+    return validNs;
+  }
+  return false;
+};
+
+const getValidNamespace = async (currentNs) => {
+  const list = await MyNamespaceApi.list().toPromise();
+  if (!list || list.length === 0) {
+    throw new Error('Unable to retrieve namespaces.');
+  }
+  const validNs = list.find((ns: INamespace) => ns.name === currentNs);
+  if (!validNs) {
+    const findNamespace = (nsList, name) => {
+      return find(nsList, { name });
+    };
+
+    /*
+     * 1. Check if localStorage has a 'DefaultNamespace' set by the user, if not,
+     * 2. Check if there is a 'default' namespace from backend, if not,
+     * 3. Take first one from the list of namespaces from backend.
+     */
+
+    let selectedNs;
+    let defaultNamespace;
+
+    // Check #1
+    if (!selectedNs) {
+      defaultNamespace = localStorage.getItem('DefaultNamespace');
+      const defaultNsFromBackend = list.filter((ns) => ns.name === defaultNamespace);
+      if (defaultNsFromBackend.length) {
+        selectedNs = defaultNsFromBackend[0];
+      }
+    }
+    // Check #2
+    if (!selectedNs) {
+      selectedNs = findNamespace(list, 'default');
+    }
+    // Check #3
+    if (!selectedNs) {
+      selectedNs = list[0].name;
+    } else {
+      selectedNs = selectedNs.name;
+    }
+
+    return selectedNs;
+  }
+  return validNs.name;
+};
+
 export default NamespaceStore;
-export { getCurrentNamespace };
+export { getCurrentNamespace, isValidNamespace, getValidNamespace };

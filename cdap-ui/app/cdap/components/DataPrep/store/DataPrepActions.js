@@ -31,6 +31,7 @@ const DataPrepActions = {
   setDataError: 'DATAPREP_SET_DATA_ERROR',
   setCLIError: 'DATAPREP_CLI_ERROR',
   dismissError: 'DATAPREP_DISMISS_ERROR',
+  setWorkspaceError: 'DATAPREP_WORKSPACE_ERROR',
   setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS',
   setColumnsInformation: 'DATAPREP_SET_COLUMNS_INFORMATION',
   setWorkspaceList: 'DATAPREP_SET_WORKSPACE_LIST',

@@ -28,3 +28,11 @@
 
   @include error-page-styles();
 }
+.refreshBtn {
+  color: var(--brand-primary-color);
+  cursor: pointer;
+  margin: 0 5px;
+  &:hover {
+    text-decoration: underline;
+  }
+}
