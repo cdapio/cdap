@@ -36,7 +36,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -173,16 +172,16 @@ public class ProgramScheduleService {
   /**
    * List the schedules for the given workflow that match the given predicate
    *
-   * @param workflowId the workflow to get schedules for
+   * @param programId the program to get schedules for
    * @param predicate return schedules that match this predicate
    * @return schedules for the given program that match the given predicate
    * @throws UnauthorizedException if the principal is not authorized to access the application
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
-  public Collection<ProgramScheduleRecord> list(WorkflowId workflowId,
+  public Collection<ProgramScheduleRecord> list(ProgramId programId,
                                                 Predicate<ProgramScheduleRecord> predicate) throws Exception {
-    AuthorizationUtil.ensureAccess(workflowId, authorizationEnforcer, authenticationContext.getPrincipal());
-    return scheduler.listScheduleRecords(workflowId).stream().filter(predicate).collect(Collectors.toList());
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return scheduler.listScheduleRecords(programId).stream().filter(predicate).collect(Collectors.toList());
   }
 
   /**

@@ -93,7 +93,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
@@ -211,14 +210,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
     ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+
     ProgramRunId run = programId.run(runId);
-    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
-    if (appSpec == null) {
-      throw new NotFoundException(programId.getApplication());
-    }
-    if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
-      throw new NotFoundException(programId);
-    }
     RunRecordMeta runRecordMeta = store.getRun(run);
     if (runRecordMeta == null) {
       throw new NotFoundException(run);
@@ -729,9 +723,43 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doGetSchedules(responder, new NamespaceId(namespaceId).app(appName, appVersion), null, triggerType, scheduleStatus);
   }
 
-  protected void doGetSchedules(HttpResponder responder, ApplicationId applicationId,
-                                @Nullable String workflow, @Nullable String triggerTypeStr,
-                                @Nullable String statusStr) throws Exception {
+
+  /**
+   * Get Program schedules.
+   */
+  @GET
+  @Path("/apps/{app-id}/{program-type}/{program-id}/schedules")
+  public void getProgramSchedules(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespace,
+                                  @PathParam("app-id") String application,
+                                  @PathParam("program-type") String programType,
+                                  @PathParam("program-id") String program,
+                                  @QueryParam("trigger-type") String triggerType,
+                                  @QueryParam("schedule-status") String scheduleStatus) throws Exception {
+    getProgramSchedules(request, responder, namespace, application, ApplicationId.DEFAULT_VERSION,
+                        programType, program, triggerType, scheduleStatus);
+  }
+
+  /**
+   * Get Program schedules.
+   */
+  @GET
+  @Path("/apps/{app-id}/versions/{app-version}/{program-type}/{program-id}/schedules")
+  public void getProgramSchedules(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespace,
+                                  @PathParam("app-id") String application,
+                                  @PathParam("app-version") String version,
+                                  @PathParam("program-type") String programType,
+                                  @PathParam("program-id") String program,
+                                  @QueryParam("trigger-type") String triggerType,
+                                  @QueryParam("schedule-status") String scheduleStatus) throws Exception {
+    ApplicationId appId = new NamespaceId(namespace).app(application, version);
+    doGetSchedules(responder, appId, appId.program(getProgramType(programType), program), triggerType, scheduleStatus);
+  }
+
+  private void doGetSchedules(HttpResponder responder, ApplicationId applicationId,
+                              @Nullable ProgramId programId, @Nullable String triggerTypeStr,
+                              @Nullable String statusStr) throws Exception {
     ApplicationSpecification appSpec = store.getApplication(applicationId);
     if (appSpec == null) {
       throw new NotFoundException(applicationId);
@@ -760,12 +788,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     Collection<ProgramScheduleRecord> schedules;
-    if (workflow != null) {
-      WorkflowId workflowId = applicationId.workflow(workflow);
-      if (appSpec.getWorkflows().get(workflow) == null) {
-        throw new NotFoundException(workflowId);
-      }
-      schedules = programScheduleService.list(workflowId, predicate);
+    if (programId != null) {
+      Store.ensureProgramExists(programId, appSpec);
+      schedules = programScheduleService.list(programId, predicate);
     } else {
       schedules = programScheduleService.list(applicationId, predicate);
     }
