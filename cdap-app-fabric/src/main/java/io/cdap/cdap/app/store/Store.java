@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -156,8 +157,7 @@ public interface Store {
    * @return An instance of {@link ProgramDescriptor} if found.
    * @throws IOException
    */
-  ProgramDescriptor loadProgram(ProgramId program) throws IOException, ApplicationNotFoundException,
-                                                          ProgramNotFoundException;
+  ProgramDescriptor loadProgram(ProgramId program) throws IOException, NotFoundException;
 
   /**
    * Fetches run records for particular program.
@@ -387,20 +387,6 @@ public interface Store {
   void deleteWorkflowStats(ApplicationId id);
 
   /**
-   * Check if an application exists.
-   * @param id id of application.
-   * @return true if the application exists, false otherwise.
-   */
-  boolean applicationExists(ApplicationId id);
-
-  /**
-   * Check if a program exists.
-   * @param id id of the program
-   * @return true if the program exists, false otherwise.
-   */
-  boolean programExists(ProgramId id);
-
-  /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
    *
    * @param workflowId {@link WorkflowId} of the workflow whose {@link WorkflowToken} is to be retrieved
@@ -485,4 +471,25 @@ public interface Store {
    */
   List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
                                long startTime, long endTime, int limitPerProgram);
+
+  /**
+   * Ensures the given program exists in the given application spec.
+   *
+   * @throws NotFoundException if the program does not exists.
+   */
+  static void ensureProgramExists(ProgramId programId,
+                                  @Nullable ApplicationSpecification appSpec) throws NotFoundException {
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(programId.getParent());
+    }
+    if (!Objects.equals(programId.getApplication(), appSpec.getName())
+      || !Objects.equals(programId.getVersion(), appSpec.getAppVersion())) {
+      throw new IllegalArgumentException("Program " + programId + " does not belong to application " +
+                                           appSpec.getName() + ":" + appSpec.getAppVersion());
+    }
+
+    if (!appSpec.getProgramsByType(programId.getType().getApiProgramType()).contains(programId.getProgram())) {
+      throw new ProgramNotFoundException(programId);
+    }
+  }
 }
