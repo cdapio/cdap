@@ -16,10 +16,12 @@
 
 import PropTypes from 'prop-types';
 
-import React from 'react';
+import React, { useContext } from 'react';
 import classNames from 'classnames';
+import { DropdownContext } from 'reactstrap';
 
-const CustomDropdownMenu = (props, context) => {
+const CustomDropdownMenu = (props) => {
+  const context = useContext(DropdownContext);
   let { className, right, children, tag: Tag } = props;
   const classes = classNames(className, 'dropdown-menu', { 'dropdown-menu-right': right });
   Tag = Tag || 'ul';
@@ -36,10 +38,6 @@ CustomDropdownMenu.propTypes = {
   className: PropTypes.string,
   cssModule: PropTypes.object,
   tag: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
-};
-CustomDropdownMenu.contextTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  right: PropTypes.bool,
 };
 
 export default CustomDropdownMenu;

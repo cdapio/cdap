@@ -1,4 +1,4 @@
-import { INodeIdentifier } from "./typings";
+import { INodeIdentifier } from './typings';
 
 /*
  * Copyright © 2018 Cask Data, Inc.
@@ -14,7 +14,7 @@ import { INodeIdentifier } from "./typings";
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 const username = Cypress.env('username') || 'admin';
 const password = Cypress.env('password') || 'admin';
@@ -113,7 +113,7 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .type(pipelineName)
     .type('{enter}');
   cy.get('[data-testid=deploy-pipeline]').click();
-  cy.wait(10000);
+  cy.get('[data-cy="Deployed"]', { timeout: 10000 }).should('contain', 'Deployed');
   cy.url()
     .should('include', `/view/${pipelineName}`)
     .then(() => done());

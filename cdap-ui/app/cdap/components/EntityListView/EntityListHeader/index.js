@@ -209,7 +209,7 @@ export default class EntityListHeader extends Component {
         toggle={() => {}}
         onClick={this.handleFilterToggle.bind(this)}
       >
-        <DropdownToggle tag="div" className="filter-toggle">
+        <DropdownToggle tag="div" className="filter-toggle" data-cy="filter-dropdown">
           <span>{T.translate('features.EntityListView.Header.filterBy')}</span>
           <span className="float-right">
             <IconSVG name="icon-angle-down" />
@@ -225,6 +225,7 @@ export default class EntityListHeader extends Component {
                     className="form-check-input"
                     checked={this.state.activeFilters.indexOf(option.id) !== -1}
                     onChange={this.onFilterClick.bind(this, option)}
+                    data-cy={`${option.displayName}-input`}
                   />
                   <label className="form-check-label" onClick={(e) => e.stopPropagation()}>
                     {option.displayName}
