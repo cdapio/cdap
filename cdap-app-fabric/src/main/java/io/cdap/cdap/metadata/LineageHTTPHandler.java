@@ -61,6 +61,7 @@ import javax.ws.rs.QueryParam;
 public class LineageHTTPHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .serializeNulls()
     .create();
 
   private final LineageAdmin lineageAdmin;
