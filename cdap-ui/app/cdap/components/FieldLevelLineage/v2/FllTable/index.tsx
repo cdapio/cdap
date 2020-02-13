@@ -20,9 +20,10 @@ import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import { IField } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import { IField, ITableInfo } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import FllTableHeader from 'components/FieldLevelLineage/v2/FllTable/FllTableHeader';
 
 // TO DO: Consolidate different fontsizes in ThemeWrapper
 const styles = (theme) => {
@@ -64,23 +65,6 @@ const styles = (theme) => {
         cursor: 'unset',
       },
     },
-    tableHeader: {
-      borderBottom: `2px solid ${theme.palette.grey[300]}`,
-      height: '40px',
-      paddingLeft: '10px',
-      fontWeight: 'bold',
-      fontSize: '1rem',
-      overflow: 'hidden',
-      ' & .table-name': {
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-      },
-    },
-    tableSubheader: {
-      color: theme.palette.grey[100],
-      fontWeight: 'normal',
-    },
     viewLineage: {
       visibility: 'hidden',
       color: theme.palette.blue[300],
@@ -90,27 +74,24 @@ const styles = (theme) => {
 
 interface ITableProps extends WithStyles<typeof styles> {
   tableId?: string;
-  fields?: IField[];
+  tableInfo?: ITableInfo;
   type?: string;
   isActive?: boolean;
 }
 
-function renderGridHeader(fields: IField[], isTarget: boolean, classes) {
-  const count: number = fields.length;
-  const tableName = fields[0].dataset;
+function renderGridHeader(
+  tableInfo: ITableInfo,
+  fields: IField[],
+  isTarget: boolean,
+  isExpanded: boolean = false
+) {
   return (
-    <div className={classes.tableHeader}>
-      <div className="table-name">{tableName}</div>
-      <div className={classes.tableSubheader}>
-        {isTarget
-          ? T.translate('features.FieldLevelLineage.v2.FllTable.fieldsCount', {
-              context: count,
-            })
-          : T.translate('features.FieldLevelLineage.v2.FllTable.relatedFieldsCount', {
-              context: count,
-            })}
-      </div>
-    </div>
+    <FllTableHeader
+      tableInfo={tableInfo}
+      fields={fields}
+      isTarget={isTarget}
+      isExpanded={isExpanded}
+    />
   );
 }
 
@@ -130,18 +111,19 @@ function renderGridBody(fields: IField[], tableName: string, activeFields = new 
   );
 }
 
-function FllTable({ tableId, fields, type, isActive, classes }: ITableProps) {
+function FllTable({ tableId, tableInfo, type, isActive, classes }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   const { target, activeCauseSets, activeImpactSets } = useContext<IContextState>(FllContext);
+  const fields = tableInfo ? tableInfo.fields : [];
   const isTarget = type === 'target';
 
   // get fields that are a direct cause or impact to selected field
   let activeFields = [];
   if (isActive && !isTarget) {
-    if (type === 'cause') {
-      activeFields = activeCauseSets[tableId];
-    } else {
-      activeFields = activeImpactSets[tableId];
+    if (type === 'cause' && Object.keys(activeCauseSets).length > 0) {
+      activeFields = activeCauseSets[tableId].fields;
+    } else if (type === 'impact' && Object.keys(activeImpactSets).length > 0) {
+      activeFields = activeImpactSets[tableId].fields;
     }
   }
 
@@ -169,7 +151,7 @@ function FllTable({ tableId, fields, type, isActive, classes }: ITableProps) {
         { [classes.targetTable]: isTarget },
         { [classes.activeTable]: isActive }
       )}
-      renderGridHeader={renderGridHeader.bind(null, fields, isTarget, classes)}
+      renderGridHeader={renderGridHeader.bind(null, tableInfo, fields, isTarget, false, classes)}
       renderGridBody={renderGridBody.bind(this, fields, tableId, activeFieldIds, classes)}
     />
   );
