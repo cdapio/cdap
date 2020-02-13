@@ -947,6 +947,9 @@ public abstract class AppFabricTestBase {
                                   programId.getApplicationId(),
                                   programId.getType().getCategoryName(), programId.getId());
       HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespaceId()));
+      if (response.getResponseCode() == 404) {
+        return null;
+      }
       JsonObject status = GSON.fromJson(response.getResponseBodyAsString(), JsonObject.class);
       if (status == null || !status.has("status")) {
         return null;
@@ -965,6 +968,9 @@ public abstract class AppFabricTestBase {
                                   programId.getVersion(),
                                   programId.getType().getCategoryName(), programId.getProgram());
       HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespace()));
+      if (response.getResponseCode() == 404) {
+        return null;
+      }
       JsonObject status = GSON.fromJson(response.getResponseBodyAsString(), JsonObject.class);
       if (status == null || !status.has("status")) {
         return null;

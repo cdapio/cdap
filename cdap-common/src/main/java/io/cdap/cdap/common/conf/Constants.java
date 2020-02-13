@@ -62,6 +62,8 @@ public final class Constants {
   public static final String SPARK_COMPAT_ENV = "SPARK_COMPAT";
   // File specifying bootstrap steps
   public static final String BOOTSTRAP_FILE = "bootstrap.file";
+  // Directory path location for all system app configs
+  public static final String SYSTEM_APP_CONFIG_DIR = "system.app.config.dir";
 
   public static final String CLUSTER_NAME = "cluster.name";
   /* Used by the user to specify what part of a path should be replaced by the current user's name. */
