@@ -16,52 +16,17 @@
 
 package io.cdap.cdap.runtime.spi.launcher;
 
-import java.util.List;
-
 /**
- *
+ * Represents job identity.
  */
-public interface Launcher {
+public class JobId {
+  private final String id;
 
-  /**
-   *
-   * @return
-   */
-  String getName();
-
-  /**
-   *
-   * @param launchInfo
-   * @return
-   */
-  JobId launch(LaunchInfo launchInfo);
-
-  /**
-   * gets job details
-   * @param jobId
-   * @return
-   * @throws Exception
-   */
-  default JobDetails getDetails(JobId jobId) throws Exception {
-    return null;
+  public JobId(String id) {
+    this.id = id;
   }
 
-  /**
-   * lists all intransit or running jobs.
-   * @return
-   * @throws Exception
-   */
-  default List<JobDetails> list() throws Exception {
-    return null;
-  }
-
-  /**
-   * stops job
-   *
-   * @param jobId
-   * @throws Exception
-   */
-  default void stop(JobId jobId) throws Exception {
-
+  public String getId() {
+    return id;
   }
 }

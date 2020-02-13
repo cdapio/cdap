@@ -26,6 +26,7 @@ import com.google.common.collect.Sets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -33,10 +34,13 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.launcher.LaunchInfo;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
 import io.cdap.cdap.runtime.spi.launcher.LauncherFile;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ClassAcceptor;
@@ -105,8 +109,9 @@ import javax.annotation.Nullable;
  * launch dataproc job with main class to launch yarn job.
  */
 public class LauncherTwillPreparer implements TwillPreparer {
-
   private static final Logger LOG = LoggerFactory.getLogger(LauncherTwillPreparer.class);
+  private static final Gson GSON = new Gson();
+
   private static final String SETUP_SPARK_SH = "setupSpark.sh";
   private static final String SETUP_SPARK_PY = "setupSpark.py";
   private static final String SPARK_ENV_SH = "sparkEnv.sh";
@@ -420,7 +425,12 @@ public class LauncherTwillPreparer implements TwillPreparer {
       }
 
       LOG.info("####### Finally launching job");
-      launcher.launch(programRunId.getRun(), launcherFiles);
+
+      Cluster cluster = GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER),
+                                      Cluster.class);
+      LaunchInfo info = new LaunchInfo(programRunId.getRun(), cluster.getName(), launcherFiles,
+                                       cluster.getProperties());
+      launcher.launch(info);
       cancelLoggingContext.cancel();
       DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
     } catch (Exception e) {

@@ -32,6 +32,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
@@ -39,19 +40,28 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
+import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -109,20 +119,6 @@ public class LauncherRunner {
   public void runnerMethod(String[] args) throws Exception {
     Injector injector = Guice.createInjector(createmodule());
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    DistributedWorkerProgramRunner programRunner = injector.getInstance(DistributedWorkerProgramRunner.class);
-
-    String runIdString = args[0];
-    ProgramId programId = new ProgramId("default", "TestWorkerAppTwo", ProgramType.WORKER, "TestWorker");
-
-
-    File tempDir = createTempDirectory(cConf, programId, runIdString);
-    // Get the artifact details and save it into the program options.
-    ArtifactId artifactId = new ArtifactId("default", "workerapp", "2.0.0-SNAPSHOT");
-
-    String pwd = System.getProperty("user.dir");
-    System.out.println("Current working directory " + pwd);
-
-    System.out.println("Reading program options json");
     File file = new File("program.options.json");
     if (!file.exists()) {
       System.out.println("File program options does not exist " + file.getAbsoluteFile());
@@ -138,8 +134,25 @@ public class LauncherRunner {
     //System.out.println("Deserialized program options: " + programOptions);
 
     ProgramOptions deserializedOptions = GSON.fromJson(programOptions, SimpleProgramOptions.class);
-    ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId,
-                                                                deserializedOptions, runIdString);
+
+    // TODO get namespace, appname, program type, program name from program options
+    ProgramId programId = deserializedOptions.getProgramId();
+    ProgramRunner programRunner;
+    if (programId.getType() == ProgramType.WORKER) {
+      programRunner = injector.getInstance(DistributedWorkerProgramRunner.class);
+    } else if (programId.getType() == ProgramType.WORKFLOW) {
+      programRunner = injector.getInstance(DistributedWorkflowProgramRunner.class);
+    } else {
+      programRunner = injector.getInstance(DistributedMapReduceProgramRunner.class);
+    }
+
+    String runIdString = args[0];
+    File tempDir = createTempDirectory(cConf, programId, runIdString);
+    // Get the artifact details and save it into the program options.
+//    ArtifactId artifactId = new ArtifactId("default", "workerapp", "2.0.0-SNAPSHOT");
+//
+//    ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId,
+//                                                                deserializedOptions, runIdString);
 
     System.out.println("Reading app spec json");
     file = new File("appSpec.json");
@@ -162,8 +175,8 @@ public class LauncherRunner {
 
     // Create and run the program
     System.out.println("Argument 1: " + args[1]);
-    Program executableProgram = createProgram(cConf, programRunner, programDescriptor, tempDir, args[1]);
-    ProgramController controller = programRunner.run(executableProgram, runtimeProgramOptions);
+    Program executableProgram = createProgram(cConf, programRunner, programDescriptor, tempDir, deserializedOptions);
+    ProgramController controller = programRunner.run(executableProgram, deserializedOptions);
     CountDownLatch latch = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
 
@@ -210,9 +223,10 @@ public class LauncherRunner {
    */
   protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                   ProgramDescriptor programDescriptor,
-                                  File tempDir, String runId) throws IOException {
+                                  File tempDir, ProgramOptions options) throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(new File(System.getProperty("user.dir")));
-    Location programJarFileLocation = locationFactory.create("2.0.0-SNAPSHOT." + runId + ".jar");
+    Location programJarFileLocation =
+      locationFactory.create(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR));
 
    // File programJarFileLocation = new File("2.0.0-SNAPSHOT." + runId + ".jar");
     // Take a snapshot of the JAR file to avoid program mutation
@@ -274,14 +288,12 @@ public class LauncherRunner {
   private List<Module> createmodule() {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(CConfiguration.create()));
-//    modules.add(new MessagingClientModule());
     modules.add(new AuthenticationContextModules().getProgramContainerModule());
     modules.add(new AbstractModule() {
 
       @Override
       protected void configure() {
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
-        // TwillRunner used by the ProgramRunner is the remote execution one
         YarnConfiguration conf = new YarnConfiguration();
         LocationFactory locationFactory = new FileContextLocationFactory(conf);
         YarnTwillRunnerService yarnTwillRunnerService =
@@ -290,16 +302,27 @@ public class LauncherRunner {
         bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
           .toInstance(yarnTwillRunnerService);
 
-       // bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class).in(Scopes.SINGLETON);
         bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
-        // A private Map binding of ProgramRunner for ProgramRunnerFactory to use
         MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
           binder(), ProgramType.class, ProgramRunner.class);
 
+        // ProgramRunnerFactory should be in distributed mode
+        bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
+        bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+          .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
+
+        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
         defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+        bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
       }
     });
+
+    modules.add(new MessagingClientModule());
+    modules.add(new ZKClientModule());
+    modules.add(new ZKDiscoveryModule());
 
     return modules;
   }

@@ -140,5 +140,4 @@ public interface Provisioner {
    * @return {@link Capabilities} of this provisioner
    */
   Capabilities getCapabilities();
-
 }

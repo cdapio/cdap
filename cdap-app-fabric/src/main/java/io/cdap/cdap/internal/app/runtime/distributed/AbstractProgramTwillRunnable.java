@@ -43,6 +43,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
@@ -530,6 +531,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
     services.add(injector.getInstance(TransactionManager.class));
     services.add(injector.getInstance(MessagingHttpService.class));
+    services.add(injector.getInstance(DatasetService.class));
   //  services.add(injector.getInstance(RuntimeMonitorServer.class));
   }
 

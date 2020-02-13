@@ -48,6 +48,7 @@ import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
@@ -390,6 +391,8 @@ final class DataprocClient implements AutoCloseable {
                         Boolean.toString(Boolean.TRUE));
       dataprocProps.put("dataproc:dataproc.logging.stackdriver.job.yarn.container.enable",
                         Boolean.toString(Boolean.TRUE));
+      // keep yarn node manager cache
+      dataprocProps.put("yarn:yarn.nodemanager.delete.debug-delay-sec", "87000");
 
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
@@ -422,6 +425,10 @@ final class DataprocClient implements AutoCloseable {
       if (conf.getGcsBucket() != null) {
         builder.setConfigBucket(conf.getGcsBucket());
       }
+
+      // TODO: Do not hardcode, use resources for it. Also make sure script is generic enough for any number of workers
+      builder.addInitializationActions(0, NodeInitializationAction.newBuilder()
+        .setExecutableFile("gs://blah-bucket123/zookeeper/zookeeper.sh").build());
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)

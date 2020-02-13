@@ -41,6 +41,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.twill.TwillAppLifecycleEventHandler;
@@ -72,7 +73,6 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
-import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -80,9 +80,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -230,11 +230,29 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
       System.out.println("Localize logback");
-      final URI logbackURI = getLogBackURI(program, tempDir);
-      if (logbackURI != null) {
+      URI oldlogbackURI = getLogBackURI(program, tempDir);
+      if (oldlogbackURI != null) {
         // Localize the logback xml
-        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+        LOG.info("Logback file is not null");
+        System.out.println("Logback file is not null");
+        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(oldlogbackURI, false));
+      } else {
+        System.out.println("logback file is null.");
+        File oldLogbackFile = new File("logback.xml");
+        // Copy the template
+        File logbackFile = new File(tempDir, "logback.xml");
+        try (InputStream is = new FileInputStream(oldLogbackFile)) {
+          Files.copy(is, logbackFile.toPath());
+        }
+        if (!logbackFile.exists()) {
+          System.out.println("Logback file is not available in current working dir");
+        } else {
+          System.out.println("Adding logback file to localized resource");
+          oldlogbackURI = logbackFile.toURI();
+          localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackFile.toURI(), false));
+        }
       }
+      final URI logbackURI = oldlogbackURI;
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
       // and runs it in the remote container
@@ -317,6 +335,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           }
 
           if (logbackURI != null) {
+            System.out.println("Adding java options for logback");
             twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
           }
 
@@ -530,11 +549,19 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
       File archiveFile = new File(tempDir, "artifacts.jar");
-      BundleJarUtil.createJar(localDir, archiveFile);
+      if (!localDir.exists()) {
+        archiveFile = new File ("artifacts.jar");
+        // Localize plugins to two files, one expanded into a directory, one not.
+        localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+        localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+      } else {
+        BundleJarUtil.createJar(localDir, archiveFile);
+        // Localize plugins to two files, one expanded into a directory, one not.
+        localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+        localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+      }
 
-      // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
-      localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+
 
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
@@ -699,20 +726,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Adds a {@link LogHandler} to the {@link TwillPreparer} based on the configuration.
    */
   private void addLogHandler(TwillPreparer twillPreparer, CConfiguration cConf) {
-    twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out, true)));
-//    String confLevel = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
-//    if ("OFF".equals(confLevel)) {
-//      twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
-//      return;
-//    }
-//
-//    LogEntry.Level logLevel = LogEntry.Level.ERROR;
-//    try {
-//      logLevel = "ALL".equals(confLevel) ? LogEntry.Level.TRACE : LogEntry.Level.valueOf(confLevel.toUpperCase());
-//    } catch (Exception e) {
-//      LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", confLevel);
-//    }
-//    twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
+//    twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out, true)));
+    String confLevel = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+    if ("OFF".equals(confLevel)) {
+      twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
+      return;
+    }
+
+    LogEntry.Level logLevel = LogEntry.Level.ERROR;
+    try {
+      logLevel = "ALL".equals(confLevel) ? LogEntry.Level.TRACE : LogEntry.Level.valueOf(confLevel.toUpperCase());
+    } catch (Exception e) {
+      LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", confLevel);
+    }
+    twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
   }
 
   /**

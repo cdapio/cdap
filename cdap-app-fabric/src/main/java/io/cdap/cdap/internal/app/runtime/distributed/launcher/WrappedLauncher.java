@@ -117,7 +117,6 @@ public class WrappedLauncher {
 
     // add resources and runtime args
     urls.add(new File(resourceJarDir, "resources").toURI().toURL());
-    urls.add(logback.toURI().toURL());
     addRuntimeConfig(runtimeConfigDir.toURI().toURL(), urls);
 
     // Add all lib jars
@@ -125,6 +124,7 @@ public class WrappedLauncher {
       urls.add(jarFile.toURI().toURL());
     }
 
+    //urls.add(logback.toURI().toURL());
     return urls.toArray(new URL[urls.size()]);
   }
 

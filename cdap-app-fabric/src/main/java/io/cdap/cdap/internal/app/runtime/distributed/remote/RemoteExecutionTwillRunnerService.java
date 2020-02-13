@@ -712,7 +712,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
           LOG.debug("Remote runtime server for program run {} is running at {}", programRunId, address);
           return address;
         } catch (Exception e) {
-          WARN_LOG.warn("Failed to create SSH session for program run {} monitoring. Will be retried.", programRunId);
+          WARN_LOG.warn("Failed to create SSH session for program run {} monitoring. Will be retried.",
+                        programRunId, e);
           return null;
         }
       }
