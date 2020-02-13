@@ -138,10 +138,10 @@ function FllTable({ tableId, fields, type, isActive, classes }: ITableProps) {
   // get fields that are a direct cause or impact to selected field
   let activeFields = [];
   if (isActive && !isTarget) {
-    if (type === 'cause') {
-      activeFields = activeCauseSets[tableId];
-    } else {
-      activeFields = activeImpactSets[tableId];
+    if (type === 'cause' && Object.keys(activeCauseSets).length > 0) {
+      activeFields = activeCauseSets[tableId].fields;
+    } else if (type === 'impact' && Object.keys(activeImpactSets).length > 0) {
+      activeFields = activeImpactSets[tableId].fields;
     }
   }
 

@@ -25,7 +25,8 @@ import { IContextState } from 'components/FieldLevelLineage/v2/Context/FllContex
 // types for backend response
 interface IFllEntity {
   entityId?: IEntityId;
-  relations?: IRelation[];
+  relations?: IResLink[];
+  fieldCount?: number;
 }
 
 interface IEntityId {
@@ -34,7 +35,8 @@ interface IEntityId {
   entity?: string;
 }
 
-export interface IRelation {
+// Info we get from backend about lineage connection
+export interface IResLink {
   source?: string;
   destination?: string;
 }
@@ -46,8 +48,11 @@ export interface IField {
   type?: string;
   dataset?: string;
   namespace?: string;
+  hasIncomingOps?: boolean;
+  hasOutgoingOps?: boolean;
 }
 
+// IResLink plus extra info for rendering connections
 export interface ILink {
   source: IField;
   destination: IField;
@@ -58,8 +63,14 @@ export interface ILinkSet {
   outgoing: ILink[];
 }
 
-export interface ITableFields {
-  [tablename: string]: IField[];
+// Field count and field name info for all incoming or outgoing datsets
+export interface ITablesList {
+  [tablename: string]: ITableInfo;
+}
+
+export interface ITableInfo {
+  fields: IField[];
+  fieldCount?: number;
 }
 
 export interface ITimeParams {
@@ -112,23 +123,41 @@ export const getDefaultLinks = () => {
  * namespace and target are the target namespace and dataset name
  */
 
-export function parseRelations(
+export function getLinks(
   namespace: string,
   target: string,
   ents: IFllEntity[],
   isCause: boolean = true
 ) {
-  const tables: ITableFields = {};
-  const relLinks: ILink[] = [];
-  ents.map((ent) => {
+  const tables: ITablesList = {};
+  const links: ILink[] = [];
+  const targetFieldsWithOps = new Set(); // Keep track of all target fields with operations/lineage
+
+  ents.forEach((ent) => {
     // Assumes that all tableNames are unique within a namespace
+
+    // Check if entity should not be rendered (i.e. from dropped or added field)
+    if (!ent.hasOwnProperty('entityId')) {
+      // Just mark the target field(s) as having operations, for the dangling links
+      ent.relations.map((rel) => {
+        const targetField = isCause ? rel.destination : rel.source; // Grab the target field
+        targetFieldsWithOps.add(targetField);
+      });
+      return;
+    }
 
     const type = isCause ? 'cause' : 'impact';
     const tableId = getTableId(ent.entityId.dataset, ent.entityId.namespace, type);
-    // tables keeps track of fields for each incoming or outgoing dataset.
-    tables[tableId] = [];
-    // fieldIds keeps track of fields, since a single field can have multiple connections
+
+    // tables keeps track of datasets and fields that need to be rendered.
+    tables[tableId] = {
+      fieldCount: ent.fieldCount,
+      fields: [],
+    };
+    // fieldIds keeps track of fields to prevent duplication, since a single field can have multiple connections
     const fieldIds = new Map();
+
+    // Go through all the entity's relations to grab fields to be rendered and the target fields (which have ops)
     ent.relations.map((rel) => {
       /** backend response assumes connection goes from left to right
        * i.e. an incoming connection's destination = target field,
@@ -139,19 +168,23 @@ export function parseRelations(
       let id = fieldIds.get(fieldName);
       const field: IField = {
         id,
-        type: isCause ? 'cause' : 'impact',
+        type,
         name: fieldName,
         dataset: ent.entityId.dataset,
         namespace: ent.entityId.namespace,
       };
+      // if we haven't seen this field yet, add it to the table's list of fields
       if (!fieldIds.has(fieldName)) {
         id = getFieldId(fieldName, ent.entityId.dataset, ent.entityId.namespace, type);
         field.id = id;
         fieldIds.set(fieldName, id);
-        tables[tableId].push(field);
+        tables[tableId].fields.push(field);
       }
 
       const targetName = isCause ? rel.destination : rel.source;
+
+      targetFieldsWithOps.add(targetName);
+
       const targetField: IField = {
         id: getFieldId(targetName, target, namespace, 'target'),
         type: 'target',
@@ -163,30 +196,42 @@ export function parseRelations(
         source: isCause ? field : targetField,
         destination: isCause ? targetField : field,
       };
-      relLinks.push(link);
+      links.push(link);
     });
   });
-  return { tables, relLinks };
+  return { tables, links, targetFieldsWithOps };
 }
 
 export function getFieldsAndLinks(d) {
-  const incoming = parseRelations(d.entityId.namespace, d.entityId.dataset, d.incoming);
-  const outgoing = parseRelations(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
-  const causeTables = incoming.tables;
-  const impactTables = outgoing.tables;
-  const links: ILinkSet = { incoming: incoming.relLinks, outgoing: outgoing.relLinks };
-  return { causeTables, impactTables, links };
+  const incomingLineage = getLinks(d.entityId.namespace, d.entityId.dataset, d.incoming);
+  const outgoingLineage = getLinks(d.entityId.namespace, d.entityId.dataset, d.outgoing, false);
+  const causeTables = incomingLineage.tables;
+  const impactTables = outgoingLineage.tables;
+  const targetFieldsWithOps = {
+    incoming: incomingLineage.targetFieldsWithOps,
+    outgoing: outgoingLineage.targetFieldsWithOps,
+  };
+  const links: ILinkSet = { incoming: incomingLineage.links, outgoing: outgoingLineage.links };
+  return { causeTables, impactTables, links, targetFieldsWithOps };
 }
 
-export function makeTargetFields({ namespace, dataset }: IEntityId, fields: string[]) {
+export function makeTargetFields(
+  { namespace, dataset }: IEntityId,
+  fields: string[],
+  fieldsWithOps
+) {
   const targetFields = fields.map((fieldname) => {
     const id = `target_ns-${namespace}_ds-${dataset}_fd-${fieldname}`;
+    const hasIncomingOps = fieldsWithOps.incoming.has(fieldname);
+    const hasOutgoingOps = fieldsWithOps.outgoing.has(fieldname);
     const field: IField = {
       id,
       type: 'target',
       name: fieldname,
       dataset,
       namespace,
+      hasIncomingOps,
+      hasOutgoingOps,
     };
     return field;
   });
@@ -253,7 +298,7 @@ export function getFieldLineage(
     const parsedRes = getFieldsAndLinks(res);
     const targetInfo: IContextState = {
       target: res.entityId.dataset,
-      targetFields: makeTargetFields(res.entityId, res.fields),
+      targetFields: makeTargetFields(res.entityId, res.fields, parsedRes.targetFieldsWithOps),
       links: parsedRes.links,
       causeSets: parsedRes.causeTables,
       impactSets: parsedRes.impactTables,

@@ -20,7 +20,7 @@ import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
 import OperationsModal from 'components/FieldLevelLineage/v2/OperationsModal';
 import {
-  ITableFields,
+  ITablesList,
   IField,
   ILinkSet,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
@@ -67,8 +67,8 @@ const styles = (theme): StyleRules => {
 
 interface ILineageState {
   activeField: IField;
-  activeCauseSets: ITableFields;
-  activeImpactSets: ITableFields;
+  activeCauseSets: ITablesList;
+  activeImpactSets: ITablesList;
   activeLinks: ILinkSet;
 }
 
@@ -269,13 +269,13 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     <If condition={Object.keys(visibleCauseSets).length === 0}>
                       <FllTable type="cause" />
                     </If>
-                    {Object.entries(visibleCauseSets).map(([tableId, fields]) => {
+                    {Object.entries(visibleCauseSets).map(([tableId, tableInfo]) => {
                       const isActive = tableId in activeCauseSets;
                       return (
                         <FllTable
                           key={tableId}
                           tableId={tableId}
-                          fields={fields}
+                          fields={tableInfo.fields}
                           type="cause"
                           isActive={isActive}
                         />
@@ -291,13 +291,13 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     <If condition={Object.keys(visibleImpactSets).length === 0}>
                       <FllTable type="impact" />
                     </If>
-                    {Object.entries(visibleImpactSets).map(([tableId, fields]) => {
+                    {Object.entries(visibleImpactSets).map(([tableId, tableInfo]) => {
                       const isActive = tableId in activeImpactSets;
                       return (
                         <FllTable
                           key={tableId}
                           tableId={tableId}
-                          fields={fields}
+                          fields={tableInfo.fields}
                           type="impact"
                           isActive={isActive}
                         />
