@@ -188,7 +188,7 @@ export default class Home extends Component {
             exact
             path="/ns/:namespace/lab-experiment-test"
             render={(props) => {
-              if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+              if (!window.Cypress) {
                 return <Page404 {...props} />;
               }
               const LabExperimentTestComp = Loadable({
