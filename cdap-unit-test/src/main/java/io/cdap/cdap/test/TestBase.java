@@ -369,6 +369,9 @@ public class TestBase {
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
+    if (previewManager instanceof Service) {
+      ((Service) previewManager).startAndWait();
+    }
   }
 
   /**
@@ -488,6 +491,10 @@ public class TestBase {
   public static void finish() throws Exception {
     if (--nestedStartCount != 0) {
       return;
+    }
+
+    if (previewManager instanceof Service) {
+      ((Service) previewManager).stopAndWait();
     }
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
