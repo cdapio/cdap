@@ -108,6 +108,18 @@ public final class LevelDBTableFactory implements TableFactory {
     return new LevelDBPayloadTable(getLevelDB(topicMetadata, payloadTableName), topicMetadata);
   }
 
+  @Override
+  public void close() {
+    LevelDBMetadataTable metadataTable;
+    synchronized (this) {
+      metadataTable = this.metadataTable;
+    }
+    if (metadataTable != null) {
+      Closeables.closeQuietly(metadataTable.getLevelDB());
+    }
+    levelDBs.values().forEach(Closeables::closeQuietly);
+  }
+
   /**
    * Returns the LevelDB {@link DB} object for the given {@link TopicMetadata}, which stores on the given file path.
    */

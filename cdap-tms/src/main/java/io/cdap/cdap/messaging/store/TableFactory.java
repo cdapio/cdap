@@ -18,12 +18,13 @@ package io.cdap.cdap.messaging.store;
 
 import io.cdap.cdap.messaging.TopicMetadata;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * A factory to create instances of {@link MessageTable}, {@link PayloadTable} and {@link MetadataTable}.
  */
-public interface TableFactory {
+public interface TableFactory extends Closeable {
 
   MetadataTable createMetadataTable() throws IOException;
 
