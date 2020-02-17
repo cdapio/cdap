@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.app.preview;
 
-import com.google.inject.Module;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
- * Represents the Guice module for creating {@link PreviewRunner}.
+ *
  */
-public interface PreviewRunnerModule extends Module {
+public interface PreviewRunnerModuleFactory {
 
-  String PREVIEW_PROGRAM_ID = "previewProgramId";
+  PreviewRunnerModule create(ProgramId programId);
 }
