@@ -25,6 +25,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
@@ -250,8 +251,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   protected void shutDown() throws Exception {
     messageTableWriterCache.invalidateAll();
-    messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
+    Closeables.closeQuietly(tableFactory);
     LOG.info("Core Messaging Service stopped");
   }
 

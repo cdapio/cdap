@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -106,6 +107,21 @@ public final class LevelDBTableFactory implements TableFactory {
   @Override
   public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
     return new LevelDBPayloadTable(getLevelDB(topicMetadata, payloadTableName), topicMetadata);
+  }
+
+  @Override
+  public void close() {
+    LevelDBMetadataTable metadataTable;
+    synchronized (this) {
+      metadataTable = this.metadataTable;
+      this.metadataTable = null;
+    }
+    if (metadataTable != null) {
+      Closeables.closeQuietly(metadataTable.getLevelDB());
+    }
+    Collection<DB> dbs = levelDBs.values();
+    dbs.forEach(Closeables::closeQuietly);
+    dbs.clear();
   }
 
   /**
