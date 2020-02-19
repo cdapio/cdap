@@ -1541,13 +1541,20 @@ features:
         InputHeader: "Input datasets to {target}"
         NoRelatedSubheader: "0 datasets"
         OutputHeader: "Output datasets from {target}"
-        RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
+        RelatedSubheader: 
+          1: "Viewing {first} of {total} dataset"
+          _: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and transformations'
-        TargetSubheader: "Viewing {first} to {last} of {total} fields"
+        TargetSubheader:
+          1:  "Viewing {first} of {total} field"
+          _:  "Viewing {first} to {last} of {total} fields"
       FllTable:
         fieldsCount:
           1: "{context} field"
           _: "{context} fields"
+        FllExpandableField:
+          hideFields: "Hide unrelated fields"
+          showFields: "Show unrelated fields"
         FllField:
           viewLineage: "View"
           viewDropdown: "View"

@@ -1,28 +1,28 @@
 {
-    "name": "Airport_test",
-    "description": "Data Pipeline Application",
     "artifact": {
         "name": "cdap-data-pipeline",
-        "version": "[6.1.0-SNAPSHOT, 6.2.0-SNAPSHOT]",
+        "version": "[6.2.0-SNAPSHOT, 7.0.0-SNAPSHOT]",
         "scope": "SYSTEM"
     },
+    "description": "With wrangler. Drops fields to get unrelated fields.",
+    "name": "FLL_airport_pipeline2",
     "config": {
         "resources": {
-            "memoryMB": 1024,
+            "memoryMB": 2048,
             "virtualCores": 1
         },
         "driverResources": {
-            "memoryMB": 1024,
+            "memoryMB": 2048,
             "virtualCores": 1
         },
         "connections": [
             {
-                "from": "Airport_source",
+                "from": "BigQueryTable",
                 "to": "Wrangler"
             },
             {
                 "from": "Wrangler",
-                "to": "Airport_sink"
+                "to": "Avro-Time-Partitioned-Dataset"
             }
         ],
         "comments": [],
@@ -32,41 +32,31 @@
         "stageLoggingEnabled": true,
         "stages": [
             {
-                "name": "Airport_source",
+                "name": "BigQueryTable",
                 "plugin": {
-                    "name": "File",
+                    "name": "BigQueryTable",
                     "type": "batchsource",
-                    "label": "Airport_source",
+                    "label": "BigQueryTable",
                     "artifact": {
-                        "name": "core-plugins",
-                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+                        "name": "google-cloud",
+                        "version": "[0.15.0-SNAPSHOT, 1.0.0-SNAPSHOT]",
                         "scope": "SYSTEM"
                     },
                     "properties": {
-                        "copyHeader": "true",
-                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
-                        "path": "file:/tmp/cdap-ui-integration-fixtures/airports.csv",
-                        "format": "text",
-                        "ignoreNonExistingFolders": "false",
-                        "recursive": "false",
-                        "referenceName": "airports.csv",
-                        "filenameOnly": "false"
+                        "project": "${projectId}",
+                        "serviceFilePath": "${serviceFilePath}",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]}]}",
+                        "dataset": "fll_test",
+                        "referenceName": "airport_source",
+                        "table": "airports"
                     }
                 },
                 "outputSchema": [
                     {
                         "name": "etlSchemaBody",
-                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]}]}"
                     }
-                ],
-                "type": "batchsource",
-                "label": "Airport_source",
-                "icon": "icon-file",
-                "$$hashKey": "object:2727",
-                "_uiPosition": {
-                    "left": "320px",
-                    "top": "239.5px"
-                }
+                ]
             },
             {
                 "name": "Wrangler",
@@ -76,66 +66,61 @@
                     "label": "Wrangler",
                     "artifact": {
                         "name": "wrangler-transform",
-                        "version": "[4.1.0-SNAPSHOT, 6.0.0-SNAPSHOT)",
+                        "version": "[4.2.0-SNAPSHOT, 5.0.0-SNAPSHOT]",
                         "scope": "SYSTEM"
                     },
                     "properties": {
-                        "workspaceId": "d39a2514-b8f8-4314-a03f-1e7291d30428",
-                        "directives": "parse-as-csv :body ',' true\ndrop body",
-                        "schema": "{\"name\":\"avroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"string\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"string\",\"null\"]}]}",
-                        "field": "body",
+                        "field": "*",
                         "precondition": "false",
-                        "threshold": "1"
-                    }
-                },
-                "outputSchema": "{\"name\":\"avroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"string\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"string\",\"null\"]}]}",
-                "type": "transform",
-                "label": "Wrangler",
-                "icon": "icon-DataPreparation",
-                "$$hashKey": "object:2728",
-                "_uiPosition": {
-                    "left": "620px",
-                    "top": "239.5px"
-                }
-            },
-            {
-                "name": "Airport_sink",
-                "plugin": {
-                    "name": "File",
-                    "type": "batchsink",
-                    "label": "Airport_sink",
-                    "artifact": {
-                        "name": "core-plugins",
-                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
-                        "scope": "SYSTEM"
-                    },
-                    "properties": {
-                        "suffix": "yyyy-MM-dd-HH-mm",
-                        "format": "csv",
-                        "referenceName": "Airport_sink",
-                        "path": "/tmp/cdap-ui-integration-fixtures"
+                        "threshold": "1",
+                        "workspaceId": "120cac00-0e66-4607-9672-e774a298d6b3",
+                        "directives": "drop name\ndrop state",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"latitude\",\"type\":\"double\"},{\"name\":\"longitude\",\"type\":\"double\"}]}"
                     }
                 },
                 "outputSchema": [
                     {
                         "name": "etlSchemaBody",
-                        "schema": ""
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"latitude\",\"type\":\"double\"},{\"name\":\"longitude\",\"type\":\"double\"}]}"
                     }
                 ],
-                "inputSchema": [],
-                "type": "batchsink",
-                "label": "Airport_sink",
-                "icon": "icon-file",
-                "$$hashKey": "object:2729",
-                "_uiPosition": {
-                    "left": "920px",
-                    "top": "239.5px"
-                }
+                "inputSchema": [
+                    {
+                        "name": "BigQueryTable",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]},{\"name\":\"country\",\"type\":[\"string\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]}]}"
+                    }
+                ]
+            },
+            {
+                "name": "Avro-Time-Partitioned-Dataset",
+                "plugin": {
+                    "name": "TPFSAvro",
+                    "type": "batchsink",
+                    "label": "Avro Time Partitioned Dataset",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.4.0-SNAPSHOT, 3.0.0-SNAPSHOT]",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "compressionCodec": "None",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"latitude\",\"type\":\"double\"},{\"name\":\"longitude\",\"type\":\"double\"}]}",
+                        "name": "avro_sink"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"latitude\",\"type\":\"double\"},{\"name\":\"longitude\",\"type\":\"double\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "Wrangler",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"iata\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"latitude\",\"type\":\"double\"},{\"name\":\"longitude\",\"type\":\"double\"}]}"
+                    }
+                ]
             }
         ],
         "schedule": "0 * * * *",
         "engine": "mapreduce",
         "numOfRecordsPreview": 100,
+        "description": "With wrangler. Drops fields to get unrelated fields.",
         "maxConcurrentRuns": 1
     }
-}
+  }

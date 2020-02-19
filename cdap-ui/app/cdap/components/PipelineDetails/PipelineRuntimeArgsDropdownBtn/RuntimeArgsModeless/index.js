@@ -97,6 +97,7 @@ class RuntimeArgsModeless extends PureComponent {
         <BtnWithLoading
           loading={this.state.saving}
           className="btn btn-primary"
+          data-cy="save-runtime-args-btn"
           onClick={this.saveRuntimeArgs}
           disabled={this.state.saving || !isEmpty(this.state.savedSuccessMessage)}
           label="Save"

@@ -72,7 +72,7 @@ function FllHeader({ type, total, classes }: IHeaderProps) {
     last = total;
   }
 
-  const options = { first, last, total };
+  const options = { first, last, total, context: total };
   let subHeader;
 
   if (total === 0) {
