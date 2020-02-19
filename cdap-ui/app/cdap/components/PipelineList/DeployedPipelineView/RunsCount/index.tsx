@@ -16,13 +16,27 @@
 
 import * as React from 'react';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
+import IconSVG from 'components/IconSVG';
 
 interface IProps {
   pipeline: IPipeline;
 }
 
 const RunsCount: React.SFC<IProps> = ({ pipeline }) => {
-  const runsCount = pipeline.totalRuns || 0;
+  const runsCount = pipeline.totalRuns;
+  if (runsCount === null) {
+    return (
+      <div className="runs">
+        <span className="fa fa-spin fa-lg">
+          <IconSVG name="icon-spinner" />
+        </span>
+      </div>
+    );
+  }
+
+  if (runsCount === 0) {
+    return <div className="runs">--</div>;
+  }
 
   return <div className="runs">{runsCount}</div>;
 };
