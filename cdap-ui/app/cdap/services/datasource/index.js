@@ -255,10 +255,11 @@ export default class Datasource {
     }
   }
 
-  pausePoll() {
+  pausePoll = () => {
     Object.keys(this.bindings)
-      .filter(subscriptionID => this.bindings[subscriptionID].action === 'POLL')
+      .filter(subscriptionID => this.bindings[subscriptionID].type === 'POLL')
       .forEach(subscriptionID => {
+
         Socket.send({
           action: 'poll-stop',
           resource: this.bindings[subscriptionID].resource,
@@ -266,9 +267,9 @@ export default class Datasource {
       });
   }
 
-  resumePoll() {
+  resumePoll = () => {
     Object.keys(this.bindings)
-      .filter(subscriptionID => this.bindings[subscriptionID].action === 'POLL')
+      .filter(subscriptionID => this.bindings[subscriptionID].type === 'POLL')
       .forEach(subscriptionID => {
         Socket.send({
           action: 'poll-start',

@@ -15,27 +15,36 @@
  */
 
 import { connect } from 'react-redux';
-import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
 import PaginationView from 'components/PipelineList/PaginationView';
-
+import { setPage } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 const mapStateToProps = (state) => {
+  let { filteredPipelines = [], pipelines = [] } = state.deployed;
+  const { pageLimit, currentPage } = state.deployed;
+  /**
+   * We need to show pagination if,
+   * 1. The current filtered pipelines length is 1 less than pageLimit, or
+   * 2. The current filtered pipelines is less than total pipelines, or
+   * 3. If the user is in any page other than 1 (which means we need to show always)
+   *
+   * The filteredPipelines will atmost have pageLimit pipelines. We don't need to show
+   * pagination if there are exactly 25 pipelines or less (reason for pipelines & filteredPipelines length check).
+   */
+  filteredPipelines = filteredPipelines || [];
+  pipelines = pipelines || [];
+  const shouldDisplay =
+    (filteredPipelines.length > pageLimit - 1 && pipelines.length > filteredPipelines.length) ||
+    state.deployed.currentPage !== 1;
   return {
-    currentPage: state.deployed.currentPage,
-    pageLimit: state.deployed.pageLimit,
-    shouldDisplay: state.deployed.search.length === 0,
+    currentPage,
+    pageLimit,
+    shouldDisplay,
+    numPipelines: pipelines.length,
   };
 };
 
-const mapDispatch = (dispatch) => {
+const mapDispatch = () => {
   return {
-    setPage: (page) => {
-      dispatch({
-        type: Actions.setPage,
-        payload: {
-          currentPage: page,
-        },
-      });
-    },
+    setPage,
   };
 };
 

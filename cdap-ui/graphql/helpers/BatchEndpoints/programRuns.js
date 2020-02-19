@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2020 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,22 @@
  * the License.
  */
 
-import { constructUrl } from 'server/url-helper';
-import { getCDAPConfig } from 'server/cdap-config';
-import { getPOSTRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
+const urlHelper = require('../../../server/url-helper'),
+  cdapConfigurator = require('../../../server/cdap-config.js'),
+  resolversCommon = require('../../resolvers-common.js');
 
 let cdapConfig;
-getCDAPConfig().then(function (value) {
+cdapConfigurator.getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-export async function batchProgramRuns(req, auth) {
+async function batchProgramRuns(req, auth) {
   const namespace = req[0].namespace;
-  const options = getPOSTRequestOptions();
-  options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
-  options.body = req.map((reqObj) => reqObj.program);
+  const options = resolversCommon.getPOSTRequestOptions();
+  options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
+  options.body = req.slice(0, 25).map((reqObj) => reqObj.program);
 
-  const runInfo = await requestPromiseWrapper(options, auth);
+  const runInfo = await resolversCommon.requestPromiseWrapper(options, auth);
 
   const runsMap = {};
   runInfo.forEach((run) => {
@@ -38,7 +38,11 @@ export async function batchProgramRuns(req, auth) {
 
   // DataLoader requires the response to be in the same order as the request. However, the backend
   // do not guarantee this, therefore we are creating a map for lookup to maintain the order.
-  return options.body.map((program) => {
+  return req.map(({ program }) => {
     return runsMap[program.appId];
   });
 }
+
+module.exports = {
+  batchProgramRuns,
+};

@@ -33,6 +33,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -516,15 +517,20 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
         // Execute the startup task if provided
         if (startupTask != null) {
+          ClassLoader startupClassLoader = Optional
+            .ofNullable(Thread.currentThread().getContextClassLoader())
+            .orElse(getClass().getClassLoader());
           Future<?> startupTaskFuture = startupTaskExecutor.submit(() -> {
             Map<String, String> systemArgs = programOptions.getArguments().asMap();
             LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, systemArgs);
             Cancellable restoreContext = LoggingContextAccessor.setLoggingContext(loggingContext);
+            ClassLoader oldCl = ClassLoaders.setContextClassLoader(startupClassLoader);
             try {
               startupTaskCompletion.complete(startupTask.call());
             } catch (Throwable t) {
               startupTaskCompletion.completeExceptionally(t);
             } finally {
+              ClassLoaders.setContextClassLoader(oldCl);
               restoreContext.cancel();
             }
           });

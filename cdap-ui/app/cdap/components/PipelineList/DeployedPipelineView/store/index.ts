@@ -18,6 +18,7 @@ import { combineReducers, createStore } from 'redux';
 import { composeEnhancers } from 'services/helpers';
 import { Reducer, Store as StoreInterface } from 'redux';
 import { IAction } from 'services/redux-helpers';
+import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
 enum SORT_ORDER {
   asc = 'asc',
@@ -31,6 +32,8 @@ interface IState {
   search: string;
   currentPage: number;
   pageLimit: number;
+  pipelines: IPipeline[];
+  filteredPipelines: IPipeline[];
 }
 
 interface IStore {
@@ -44,6 +47,8 @@ const Actions = {
   setSort: 'DEPLOYED_PIPELINE_SET_SORT',
   setPage: 'DEPLOYED_PIPELINE_SET_PAGE',
   reset: 'DEPLOYED_PIPELINE_RESET',
+  setPipelines: 'DEPLOYED_PIPELINE_SET_PIPELINES',
+  updateFilteredPipelines: 'DEPLOYED_PIPELINE_UPDATE_FILTERED_PIPELINES',
 };
 
 const defaultInitialState: IState = {
@@ -53,6 +58,8 @@ const defaultInitialState: IState = {
   search: '',
   currentPage: 1,
   pageLimit: 25,
+  pipelines: null,
+  filteredPipelines: null,
 };
 
 const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction) => {
@@ -71,18 +78,34 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
       return {
         ...state,
         search: action.payload.search,
+        filteredPipelines: action.payload.filteredPipelines,
+        currentPage: 1,
       };
     case Actions.setSort:
       return {
         ...state,
         sortColumn: action.payload.sortColumn,
         sortOrder: action.payload.sortOrder,
+        filteredPipelines: action.payload.filteredPipelines,
         currentPage: 1,
       };
     case Actions.setPage:
       return {
         ...state,
         currentPage: action.payload.currentPage,
+        filteredPipelines: action.payload.filteredPipelines,
+      };
+    case Actions.setPipelines:
+      return {
+        ...state,
+        pipelines: action.payload.pipelines,
+        filteredPipelines: action.payload.filteredPipelines,
+      };
+    case Actions.updateFilteredPipelines:
+      return {
+        ...state,
+        pipelines: action.payload.pipelines,
+        filteredPipelines: action.payload.filteredPipelines,
       };
     case Actions.reset:
       return defaultInitialState;
@@ -102,4 +125,4 @@ const Store: StoreInterface<IStore> = createStore(
 );
 
 export default Store;
-export { Actions, SORT_ORDER };
+export { Actions, SORT_ORDER, IStore };

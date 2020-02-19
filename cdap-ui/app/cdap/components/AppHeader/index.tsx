@@ -33,6 +33,7 @@ import { SYSTEM_NAMESPACE } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
 import { NamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ThemeWrapper from 'components/ThemeWrapper';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 require('styles/bootstrap_4_patch.scss');
 
@@ -118,6 +119,14 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
       namespace: this.state.currentNamespace,
       isNativeLink: this.props.nativeLink,
     };
+    // (TODO): This still doesn't capture correctly how we handle
+    // when authorization is enabled and user has access to no namespaces.
+    if (
+      !this.state.currentNamespace ||
+      (typeof this.state.currentNamespace === 'string' && !this.state.currentNamespace.length)
+    ) {
+      return <LoadingSVGCentered showFullPage />;
+    }
     return (
       <AppBar
         position="fixed"

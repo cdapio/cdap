@@ -16,7 +16,10 @@
 
 import * as React from 'react';
 import PipelineTable from 'components/PipelineList/DeployedPipelineView/PipelineTable';
-import { reset } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
+import {
+  reset,
+  setFilteredPipelines,
+} from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import PipelineCount from 'components/PipelineList/DeployedPipelineView/PipelineCount';
 import SearchBox from 'components/PipelineList/DeployedPipelineView/SearchBox';
 import Pagination from 'components/PipelineList/DeployedPipelineView/Pagination';
@@ -52,11 +55,14 @@ const DeployedPipeline: React.FC = () => {
     return () => {
       reset();
     };
+  }, []);
+
+  const { loading, error, data, refetch, networkStatus } = useQuery(QUERY, {
+    errorPolicy: 'all',
+    notifyOnNetworkStatusChange: true,
   });
 
-  const { loading, error, data, refetch } = useQuery(QUERY, { errorPolicy: 'all' });
-
-  if (loading) {
+  if (loading || networkStatus === 4) {
     return <LoadingSVGCentered />;
   }
 
@@ -79,18 +85,18 @@ const DeployedPipeline: React.FC = () => {
     return <div className="pipeline-deployed-view error-container">{errors}</div>;
   }
 
-  const pipelines = data.pipelines;
+  setFilteredPipelines(data.pipelines);
 
   return (
     <Provider store={Store}>
       <div className="pipeline-deployed-view pipeline-list-content">
         <div className="deployed-header">
-          <PipelineCount pipelines={pipelines} pipelinesLoading={loading} />
+          <PipelineCount pipelinesLoading={loading} />
           <SearchBox />
-          <Pagination numPipelines={pipelines.length} />
+          <Pagination />
         </div>
 
-        <PipelineTable pipelines={pipelines} refetch={refetch} />
+        <PipelineTable refetch={refetch} />
       </div>
     </Provider>
   );

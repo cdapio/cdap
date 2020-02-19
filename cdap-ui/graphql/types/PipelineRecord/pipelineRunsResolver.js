@@ -35,8 +35,8 @@ export async function pipelineRunsResolver(parent, args, context) {
     program,
   });
 
-  if (runInfo.length === 0) {
-    return [];
+  if (!runInfo || (Array.isArray(runInfo) && runInfo.length === 0)) {
+    return;
   }
 
   return runInfo.runs;
