@@ -61,7 +61,7 @@ export default class PipelineRunButton extends Component {
       } else {
         let { runtimeArgs } = this.props;
         // Arguments with empty values are assumed to be provided from the pipeline
-        runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => !runtimeArg.value);
+        runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => runtimeArg.value);
         let runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
         runPipeline(runtimeArgsMap);
       }
