@@ -120,8 +120,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public ProgramDescriptor loadProgram(ProgramId id) throws ApplicationNotFoundException,
-    ProgramNotFoundException {
+  public ProgramDescriptor loadProgram(ProgramId id) throws NotFoundException {
     ApplicationMeta appMeta = TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
     });
@@ -130,10 +129,7 @@ public class DefaultStore implements Store {
       throw new ApplicationNotFoundException(id.getParent());
     }
 
-    if (!programExists(id, appMeta.getSpec())) {
-      throw new ProgramNotFoundException(id);
-    }
-
+    Store.ensureProgramExists(id, appMeta.getSpec());
     return new ProgramDescriptor(id, appMeta.getSpec());
   }
 
@@ -292,15 +288,8 @@ public class DefaultStore implements Store {
   @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
                                                   long startTime, long endTime, int limit) {
-    return getRuns(id, status, startTime, endTime, limit, null);
-  }
-
-  @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
-                                                  long startTime, long endTime, int limit,
-                                                  @Nullable Predicate<RunRecordMeta> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, filter);
+      return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null);
     });
   }
 
@@ -508,24 +497,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void removeAllApplications(NamespaceId id) {
-    LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
-
-    TransactionRunners.run(transactionRunner, context -> {
-      AppMetadataStore metaStore = getAppMetadataStore(context);
-      metaStore.deleteApplications(id.getNamespace());
-      metaStore.deleteProgramHistory(id.getNamespace());
-    });
-  }
-
-  @Override
   public void removeAll(NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplications(id.getNamespace());
-      metaStore.deleteProgramHistory(id.getNamespace());
+      metaStore.deleteProgramHistory(id);
     });
   }
 
@@ -583,28 +561,6 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
     });
-  }
-
-  @Override
-  public boolean applicationExists(ApplicationId id) {
-    return getApplication(id) != null;
-  }
-
-  @Override
-  public boolean programExists(ProgramId id) {
-    ApplicationSpecification appSpec = getApplication(id.getParent());
-    return appSpec != null && programExists(id, appSpec);
-  }
-
-  private boolean programExists(ProgramId id, ApplicationSpecification appSpec) {
-    switch (id.getType()) {
-      case MAPREDUCE: return appSpec.getMapReduce().containsKey(id.getProgram());
-      case SERVICE:   return appSpec.getServices().containsKey(id.getProgram());
-      case SPARK:     return appSpec.getSpark().containsKey(id.getProgram());
-      case WORKER:    return appSpec.getWorkers().containsKey(id.getProgram());
-      case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getProgram());
-      default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
-    }
   }
 
   @Override
@@ -772,8 +728,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime,
-                                      long endTime, int limit, @Nullable Predicate<RunRecordMeta> filter) {
+  public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
+                                      long startTime, long endTime, int limitPerProgram) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
@@ -786,8 +742,9 @@ public class DefaultStore implements Store {
           continue;
         }
 
-        List<RunRecord> runs = appMetadataStore.getRuns(programId, status, startTime, endTime, limit, filter).values()
-          .stream()
+        List<RunRecord> runs = appMetadataStore.getRuns(programId, status, startTime, endTime,
+                                                        limitPerProgram, null)
+          .values().stream()
           .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
         result.add(new ProgramHistory(programId, runs, null));
       }

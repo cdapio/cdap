@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -156,8 +157,7 @@ public interface Store {
    * @return An instance of {@link ProgramDescriptor} if found.
    * @throws IOException
    */
-  ProgramDescriptor loadProgram(ProgramId program) throws IOException, ApplicationNotFoundException,
-                                                          ProgramNotFoundException;
+  ProgramDescriptor loadProgram(ProgramId program) throws IOException, NotFoundException;
 
   /**
    * Fetches run records for particular program.
@@ -172,21 +172,6 @@ public interface Store {
    */
   Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
                                            long startTime, long endTime, int limit);
-
-  /**
-   * Fetches run records for particular program.
-   * Returned ProgramRunRecords are sorted by their startTime.
-   *
-   * @param id        id of the program
-   * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime in seconds
-   * @param endTime   fetch run history that has started before the endTime in seconds
-   * @param limit     max number of entries to fetch for this history call
-   * @param filter    predicate to be passed to filter the records
-   * @return          map of logged runs
-   */
-  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime,
-                                           int limit, Predicate<RunRecordMeta> filter);
 
   /**
    * Fetches the run records for the particular status. Same as calling
@@ -381,13 +366,6 @@ public interface Store {
   void removeApplication(ApplicationId id);
 
   /**
-   * Removes all applications (with programs) associated with the given namespace.
-   *
-   * @param id namespace id whose applications to remove
-   */
-  void removeAllApplications(NamespaceId id);
-
-  /**
    * Remove all metadata associated with the given namespace.
    *
    * @param id namespace id whose items to remove
@@ -407,20 +385,6 @@ public interface Store {
    * @param id id of application to be deleted
    */
   void deleteWorkflowStats(ApplicationId id);
-
-  /**
-   * Check if an application exists.
-   * @param id id of application.
-   * @return true if the application exists, false otherwise.
-   */
-  boolean applicationExists(ApplicationId id);
-
-  /**
-   * Check if a program exists.
-   * @param id id of the program
-   * @return true if the program exists, false otherwise.
-   */
-  boolean programExists(ProgramId id);
 
   /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
@@ -502,10 +466,30 @@ public interface Store {
    * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
-   * @param limit     max number of runs to fetch for each program
-   * @param filter    predicate to be passed to filter the records
+   * @param limitPerProgram     max number of runs to fetch for each program
    * @return          runs for each program
    */
-  List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status, long startTime, long endTime,
-                               int limit, @Nullable Predicate<RunRecordMeta> filter);
+  List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus status,
+                               long startTime, long endTime, int limitPerProgram);
+
+  /**
+   * Ensures the given program exists in the given application spec.
+   *
+   * @throws NotFoundException if the program does not exists.
+   */
+  static void ensureProgramExists(ProgramId programId,
+                                  @Nullable ApplicationSpecification appSpec) throws NotFoundException {
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(programId.getParent());
+    }
+    if (!Objects.equals(programId.getApplication(), appSpec.getName())
+      || !Objects.equals(programId.getVersion(), appSpec.getAppVersion())) {
+      throw new IllegalArgumentException("Program " + programId + " does not belong to application " +
+                                           appSpec.getName() + ":" + appSpec.getAppVersion());
+    }
+
+    if (!appSpec.getProgramsByType(programId.getType().getApiProgramType()).contains(programId.getProgram())) {
+      throw new ProgramNotFoundException(programId);
+    }
+  }
 }

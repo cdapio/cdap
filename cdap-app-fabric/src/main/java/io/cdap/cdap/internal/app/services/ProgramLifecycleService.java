@@ -37,12 +37,10 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
-import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -299,7 +297,7 @@ public class ProgramLifecycleService {
                                  ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
     Set<? extends EntityId> visibleEntities = authorizationEnforcer.isVisible(new HashSet<>(programs),
                                                                               authenticationContext.getPrincipal());
-    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit, null)) {
+    for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end, limit)) {
       ProgramId programId = programHistory.getProgramId();
       if (visibleEntities.contains(programId)) {
         histories.add(programHistory);
@@ -673,11 +671,7 @@ public class ProgramLifecycleService {
 
     if (runtimeInfos.isEmpty() && activeRunRecords.isEmpty()) {
       // Error out if no run information from runtime service and from run record
-      if (!store.applicationExists(programId.getParent())) {
-        throw new ApplicationNotFoundException(programId.getParent());
-      } else if (!store.programExists(programId)) {
-        throw new ProgramNotFoundException(programId);
-      }
+      Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
 
@@ -788,10 +782,7 @@ public class ProgramLifecycleService {
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
-    if (!store.programExists(programId)) {
-      throw new NotFoundException(programId);
-    }
-
+    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
     preferencesService.setProperties(programId, runtimeArgs);
   }
 
@@ -809,10 +800,7 @@ public class ProgramLifecycleService {
     // user can have READ, ADMIN or EXECUTE to retrieve the runtime arguments
     AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.of(Action.READ, Action.EXECUTE, Action.ADMIN),
                                          authorizationEnforcer, authenticationContext.getPrincipal());
-
-    if (!store.programExists(programId)) {
-      throw new NotFoundException(programId);
-    }
+    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
     return preferencesService.getProperties(programId);
   }
 
@@ -862,9 +850,12 @@ public class ProgramLifecycleService {
     resetLogLevels(programId, loggerNames, runId);
   }
 
-  public boolean programExists(ProgramId programId) throws Exception {
+  /**
+   * Ensures the caller is authorized to check if the given program exists.
+   */
+  public void ensureProgramExists(ProgramId programId) throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
-    return store.programExists(programId);
+    Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
   }
 
   private boolean isStopped(ProgramId programId) throws Exception {
