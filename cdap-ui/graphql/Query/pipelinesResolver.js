@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,31 +14,27 @@
  * the License.
  */
 
-const urlHelper = require('../../server/url-helper'),
-  cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('../resolvers-common.js'),
-  naturalSort = require('natural-orderby');
+import { constructUrl } from 'server/url-helper';
+import { getCDAPConfig } from 'server/cdap-config';
+import { getGETRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
+import { orderBy } from 'natural-orderby';
 
 let cdapConfig;
-cdapConfigurator.getCDAPConfig().then(function(value) {
+getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-async function queryTypePipelinesResolver(parent, args, context) {
+export async function queryTypePipelinesResolver(parent, args, context) {
   const namespace = args.namespace;
-  const options = resolversCommon.getGETRequestOptions();
+  const options = getGETRequestOptions();
 
-  const pipelineArtifacts = ['cdap-data-pipeline', 'cdap-data-streams'];
+  const pipelineArtifacts = ['cdap-data-pipeline', 'cdap-data-streams', 'cdap-sql-pipeline'];
 
   let path = `/v3/namespaces/${namespace}/apps?artifactName=${pipelineArtifacts.join(',')}`;
 
-  options.url = urlHelper.constructUrl(cdapConfig, path);
+  options.url = constructUrl(cdapConfig, path);
   context.namespace = namespace;
 
-  const apps = await resolversCommon.requestPromiseWrapper(options, context.auth);
-  return naturalSort.orderBy(apps, [(app) => app.name], ['asc']);
+  const apps = await requestPromiseWrapper(options, context.auth);
+  return orderBy(apps, [(app) => app.name], ['asc']);
 }
-
-module.exports = {
-  queryTypePipelinesResolver,
-};
