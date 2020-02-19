@@ -18,7 +18,6 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
-import { constructReplicatorSpec } from 'components/Replicator/utilities';
 import If from 'components/If';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
@@ -65,19 +64,27 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   name,
   description,
   draftId,
+  getReplicatorConfig,
 }) => {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [redirect, setRedirect] = React.useState(false);
+
+  // TODO: Fetch artifacts version from Backend service
   function constructJson() {
-    return constructReplicatorSpec(
+    return {
       name,
-      description,
-      sourcePluginInfo,
-      targetPluginInfo,
-      sourceConfig,
-      targetConfig
-    );
+      artifact: {
+        name: 'delta-app',
+        version: '0.1.0-SNAPSHOT',
+        scope: 'SYSTEM',
+      },
+      config: {
+        ...getReplicatorConfig(),
+        // TODO: replace with actual textbox step to configure offsetBasePath
+        offsetBasePath: window.CDAP_CONFIG.hydrator.defaultCheckpointDir || '/tmp/Replicator',
+      },
+    };
   }
 
   function publish() {
@@ -106,7 +113,7 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   }
 
   if (redirect) {
-    return <Redirect to={`/ns/${getCurrentNamespace()}/replicator`} />;
+    return <Redirect to={`/ns/${getCurrentNamespace()}/replicator/detail/${name}`} />;
   }
 
   return (

@@ -102,6 +102,7 @@ interface ICreateState {
   setTargetPluginWidget: (targetPluginWidget) => void;
   setTargetConfig: (targetConfig: IPluginConfig) => void;
   setTables: (tables, columns, dmlBlacklist) => void;
+  getReplicatorConfig: () => any;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -153,6 +154,45 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     this.setState({ tables, columns, dmlBlacklist });
   };
 
+  // TODO: Refactor
+  private getReplicatorConfig = () => {
+    const source = this.constructStageSpec('source');
+    const target = this.constructStageSpec('target');
+
+    const stages = [];
+    if (source) {
+      stages.push(source);
+    }
+
+    if (target) {
+      stages.push(target);
+    }
+
+    const connections = [];
+
+    if (source && target) {
+      connections.push({
+        from: source.name,
+        to: target.name,
+      });
+    }
+
+    const config = {
+      description: this.state.description,
+      connections,
+      stages,
+      tables: constructTablesSelection(
+        this.state.tables,
+        this.state.columns,
+        this.state.dmlBlacklist
+      ),
+    };
+
+    // tslint:disable-next-line: no-console
+    console.log('config', config);
+    return config;
+  };
+
   public state = {
     name: '',
     description: '',
@@ -180,6 +220,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setTargetPluginWidget: this.setTargetPluginWidget,
     setTargetConfig: this.setTargetConfig,
     setTables: this.setTables,
+    getReplicatorConfig: this.getReplicatorConfig,
   };
 
   public componentDidMount() {
@@ -319,7 +360,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
       draftId: this.state.draftId,
     };
 
-    const body = this.getDraftBody();
+    const body = {
+      label: this.state.name,
+      config: this.getReplicatorConfig(),
+    };
     return MyReplicatorApi.putDraft(params, body);
   };
 
@@ -351,46 +395,6 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     }
 
     return stage;
-  };
-
-  // TODO: Refactor
-  private getDraftBody = () => {
-    const source = this.constructStageSpec('source');
-    const target = this.constructStageSpec('target');
-
-    const stages = [];
-    if (source) {
-      stages.push(source);
-    }
-
-    if (target) {
-      stages.push(target);
-    }
-
-    const connections = [];
-
-    if (source && target) {
-      connections.push({
-        from: source.name,
-        to: target.name,
-      });
-    }
-
-    const body = {
-      label: this.state.name,
-      config: {
-        description: this.state.description,
-        connections,
-        stages,
-        tables: constructTablesSelection(
-          this.state.tables,
-          this.state.columns,
-          this.state.dmlBlacklist
-        ),
-      },
-    };
-
-    return body;
   };
 
   private redirectToListView = () => {

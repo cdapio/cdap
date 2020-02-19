@@ -36,6 +36,7 @@ interface IJsonFeatureNames {
   pipelineStudio?: string;
   reports?: string;
   'rules-engine'?: string;
+  cdc?: string;
 }
 
 interface IOnePoint0SpecJSON extends IThemeJSON {
@@ -98,6 +99,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'create-profile'?: boolean;
     'reload-system-artifacts'?: boolean;
     'sql-pipeline'?: boolean;
+    cdc?: boolean;
   };
 }
 
@@ -174,6 +176,7 @@ interface IFeatureNames {
   rulesEngine: string;
   projectAdmin: string;
   systemAdmin: string;
+  cdc: string;
 }
 
 interface IThemeObj {
@@ -213,6 +216,7 @@ interface IThemeObj {
   showReloadSystemArtifacts?: boolean;
   featureNames?: IFeatureNames;
   showSqlPipeline?: boolean;
+  showCDC?: boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -269,6 +273,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         rulesEngine: 'Rules',
         projectAdmin: 'Namespace Admin',
         systemAdmin: 'System Admin',
+        cdc: 'Delta Replicator',
       },
     };
     if (isNilOrEmpty(contentJson)) {
@@ -365,6 +370,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       }
       if ('rules-engine' in contentJson['feature-names']) {
         featureNames.rulesEngine = objectQuery(contentJson, 'feature-names', 'rules-engine');
+      }
+      if ('cdc' in contentJson['feature-names']) {
+        featureNames.cdc = objectQuery(contentJson, 'feature-names', 'cdc');
       }
 
       content.featureNames = featureNames;
@@ -491,6 +499,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('sql-pipeline' in featuresJson && isBoolean(featuresJson['sql-pipeline'])) {
       features.showSqlPipeline = featuresJson['sql-pipeline'];
+    }
+    if ('cdc' in featuresJson && isBoolean(featuresJson.cdc)) {
+      features.showCDC = featuresJson.cdc;
     }
     return features;
   }

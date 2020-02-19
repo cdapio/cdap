@@ -14,12 +14,23 @@
  * the License.
  */
 
-export enum PluginType {
-  source = 'cdcSource',
-  target = 'cdcTarget',
-}
+import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 
-export const PROGRAM_INFO = {
-  programType: 'workers',
-  programId: 'DeltaWorker',
+const styles = (theme): StyleRules => {
+  return {
+    root: {
+      borderRight: `2px solid ${theme.palette.grey[300]}`,
+      height: '50px',
+      marginLeft: '15px',
+      marginRight: '15px',
+    },
+  };
 };
+
+const VerticalDividerView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+  return <div className={classes.root} />;
+};
+
+const VerticalDivider = withStyles(styles)(VerticalDividerView);
+export default VerticalDivider;

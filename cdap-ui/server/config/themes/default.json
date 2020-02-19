@@ -49,6 +49,7 @@
     "namespace-mapping": true,
     "namespace-security": true,
     "create-profile": true,
-    "reload-system-artifacts": true
+    "reload-system-artifacts": true,
+    "cdc": true
   }
 }
