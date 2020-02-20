@@ -532,6 +532,14 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Nullable
+  @Override
+  public ApplicationMeta getApplicationMetadata(ApplicationId id) {
+    return TransactionRunners.run(transactionRunner, context -> {
+        return getAppMetadataStore(context).getApplication(id);
+    });
+  }
+
   @Override
   public Collection<ApplicationSpecification> getAllApplications(NamespaceId id) {
     return TransactionRunners.run(transactionRunner, context -> {
@@ -539,6 +547,14 @@ public class DefaultStore implements Store {
         .map(ApplicationMeta::getSpec).collect(Collectors.toList());
     });
   }
+
+  @Override
+  public Collection<ApplicationMeta> getAllApplicationMetadata(NamespaceId id) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getAllApplications(id.getNamespace()).stream().collect(Collectors.toList());
+    });
+  }
+
 
   @Override
   public Map<ApplicationId, ApplicationSpecification> getApplications(Collection<ApplicationId> ids) {

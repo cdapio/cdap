@@ -28,6 +28,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -296,12 +297,27 @@ public interface Store {
   ApplicationSpecification getApplication(ApplicationId id);
 
   /**
+   * Returns the metadata of application identified by the id
+   * @param id application id
+   * @return metadata of the application
+   */
+  @Nullable
+  ApplicationMeta getApplicationMetadata(ApplicationId id);
+
+  /**
    * Returns a collection of all application specs in the specified namespace
    *
    * @param id the namespace to get application specs from
    * @return collection of all application specs in the namespace
    */
   Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
+
+  /**
+   * Returns a collection of metadata for all applications in the given namespace
+   * @param id the namespace to get application metadata from
+   * @return a collection of metadata for all applications in the given namespace
+   */
+  Collection<ApplicationMeta> getAllApplicationMetadata(NamespaceId id);
 
   /**
    * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
