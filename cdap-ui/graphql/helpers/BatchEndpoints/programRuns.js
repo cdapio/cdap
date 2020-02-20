@@ -19,7 +19,7 @@ import { getCDAPConfig } from 'server/cdap-config';
 import { getPOSTRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
 
 let cdapConfig;
-getCDAPConfig().then(function (value) {
+getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
@@ -27,7 +27,7 @@ export async function batchProgramRuns(req, auth) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
-  options.body = req.map((reqObj) => reqObj.program);
+  options.body = req.slice(0, 25).map((reqObj) => reqObj.program);
 
   const runInfo = await requestPromiseWrapper(options, auth);
 
@@ -38,7 +38,7 @@ export async function batchProgramRuns(req, auth) {
 
   // DataLoader requires the response to be in the same order as the request. However, the backend
   // do not guarantee this, therefore we are creating a map for lookup to maintain the order.
-  return options.body.map((program) => {
+  return req.map(({ program }) => {
     return runsMap[program.appId];
   });
 }

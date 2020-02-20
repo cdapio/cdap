@@ -28,7 +28,7 @@ export async function batchTotalRuns(req, auth) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
-  const body = req.map((reqObj) => reqObj.program);
+  const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   const chunkedBody = chunk(body, 100);
 
   let runInfo = await Promise.all(
@@ -48,7 +48,7 @@ export async function batchTotalRuns(req, auth) {
     });
   });
 
-  return body.map((program) => {
+  return req.map(({ program }) => {
     return runsMap[program.appId];
   });
 }

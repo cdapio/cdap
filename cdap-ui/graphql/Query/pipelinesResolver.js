@@ -17,6 +17,7 @@
 import { constructUrl } from 'server/url-helper';
 import { getCDAPConfig } from 'server/cdap-config';
 import { getGETRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
+import { orderBy } from 'natural-orderby';
 
 let cdapConfig;
 getCDAPConfig().then(function(value) {
@@ -34,5 +35,6 @@ export async function queryTypePipelinesResolver(parent, args, context) {
   options.url = constructUrl(cdapConfig, path);
   context.namespace = namespace;
 
-  return await requestPromiseWrapper(options, context.auth);
+  const apps = await requestPromiseWrapper(options, context.auth);
+  return orderBy(apps, [(app) => app.name], ['asc']);
 }

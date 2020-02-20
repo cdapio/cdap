@@ -14,15 +14,25 @@
  * the License.
  */
 
+import PropTypes from 'prop-types';
 import React from 'react';
 import LoadingSVG from 'components/LoadingSVG';
+import classname from 'classnames';
 
 require('./LoadingSVGCentered.scss');
 
-export default function LoadingSVGCentered() {
+export default function LoadingSVGCentered({ showFullPage = false }) {
   return (
-    <div className="loading-svg-centered text-center">
+    <div
+      className={classname('loading-svg-centered text-center', {
+        'full-page': showFullPage,
+      })}
+    >
       <LoadingSVG />
     </div>
   );
 }
+
+LoadingSVGCentered.propTypes = {
+  showFullPage: PropTypes.bool,
+};

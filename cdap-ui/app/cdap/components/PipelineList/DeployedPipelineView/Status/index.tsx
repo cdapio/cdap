@@ -20,13 +20,25 @@ import StatusMapper from 'services/StatusMapper';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import { PROGRAM_STATUSES } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
+import isEmpty from 'lodash/isEmpty';
 
 interface IProps {
   pipeline: IPipeline;
 }
 
 const Status: React.SFC<IProps> = ({ pipeline }) => {
-  const pipelineStatus = objectQuery(pipeline, 'runs', 0, 'status') || PROGRAM_STATUSES.DEPLOYED;
+  const pipelineRuns = pipeline.runs;
+  let pipelineStatus = objectQuery(pipelineRuns, 0, 'status');
+  if (pipelineRuns === null) {
+    return (
+      <div className="status">
+        <span className="fa fa-spin fa-lg">
+          <IconSVG name="icon-spinner" />
+        </span>
+      </div>
+    );
+  }
+  pipelineStatus = isEmpty(pipelineStatus) ? PROGRAM_STATUSES.DEPLOYED : pipelineStatus;
   const displayStatus = StatusMapper.statusMap[pipelineStatus];
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
