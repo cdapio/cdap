@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.store;
+package io.cdap.cdap.app.preview;
 
-import io.cdap.cdap.messaging.TopicMetadata;
-
-import java.io.Closeable;
-import java.io.IOException;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
- * A factory to create instances of {@link MessageTable}, {@link PayloadTable} and {@link MetadataTable}.
+ * A factory for creating {@link PreviewRunnerModule} for a given program.
  */
-public interface TableFactory extends Closeable {
+public interface PreviewRunnerModuleFactory {
 
-  MetadataTable createMetadataTable() throws IOException;
-
-  MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException;
-
-  PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException;
+  PreviewRunnerModule create(ProgramId programId);
 }

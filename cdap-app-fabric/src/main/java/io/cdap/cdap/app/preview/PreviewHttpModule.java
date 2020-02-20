@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.inject.Binder;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -40,7 +42,19 @@ public class PreviewHttpModule extends PrivateModule {
     bind(DatasetFramework.class)
       .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
       .to(RemoteDatasetFramework.class);
+    bindPreviewRunnerFactory(binder());
     bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
     expose(PreviewManager.class);
+  }
+
+  /**
+   * Binds an implementation for {@link PreviewRunnerModuleFactory}.
+   */
+  protected void bindPreviewRunnerFactory(Binder binder) {
+    binder.install(
+      new FactoryModuleBuilder()
+        .implement(PreviewRunnerModule.class, DefaultPreviewRunnerModule.class)
+        .build(PreviewRunnerModuleFactory.class)
+    );
   }
 }
