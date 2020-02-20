@@ -19,13 +19,9 @@ package io.cdap.cdap.config;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.proto.PreferencesMetadata;
 import io.cdap.cdap.proto.element.EntityType;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ParentedId;
-import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.*;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -33,15 +29,10 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.store.StoreDefinition;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.annotation.Nullable;
+import java.util.*;
 
 /**
  * This class is responsible for preferences operations.
@@ -84,7 +75,32 @@ public class PreferencesTable {
         return get(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+                String.format("Get preferences on unexpected entity type: %s", entityId.getEntityType()));
+    }
+  }
+
+  /**
+   * Get the metadata of preferences for the entity id.
+   *
+   * @param entityId the entity id to get the preferences metadata from
+   * @return the metadata of preferences
+   */
+  public PreferencesMetadata getPreferencesMetadata(EntityId entityId) throws IOException {
+    switch (entityId.getEntityType()) {
+      case INSTANCE:
+        return getMetadata(EMPTY_NAMESPACE, INSTANCE_PREFERENCE, entityId.getEntityName());
+      case NAMESPACE:
+        NamespaceId namespaceId = (NamespaceId) entityId;
+        return getMetadata(namespaceId.getNamespace(), NAMESPACE_PREFERENCE, namespaceId.getNamespace());
+      case APPLICATION:
+        ApplicationId appId = (ApplicationId) entityId;
+        return getMetadata(appId.getNamespace(), APPLICATION_PREFERENCE, appId.getApplication());
+      case PROGRAM:
+        ProgramId programId = (ProgramId) entityId;
+        return getMetadata(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
+      default:
+        throw new UnsupportedOperationException(
+                String.format("Get preferences metadata on unexpected entity type: %s", entityId.getEntityType()));
     }
   }
 
@@ -92,12 +108,11 @@ public class PreferencesTable {
    * Verify that the preferences for the entity id were written with a greater or equal sequence id.
    *
    * @param entityId the entity id to verify
-   * @param afterId the sequence id to check
-   *
+   * @param afterId  the sequence id to check
    * @throws ConflictException if the latest version of the preferences is older than the given sequence id
    */
   public void ensureSequence(EntityId entityId, long afterId)
-    throws IOException, ConflictException {
+          throws IOException, ConflictException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         checkSeqId(EMPTY_NAMESPACE, INSTANCE_PREFERENCE, entityId.getEntityName(), afterId);
@@ -116,7 +131,7 @@ public class PreferencesTable {
         return;
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+                String.format("ensure sequence called on unexpected entity type: %s", entityId.getEntityType()));
     }
   }
 
@@ -151,7 +166,7 @@ public class PreferencesTable {
    * -> program level.
    *
    * @param entityId the entity id to get the preferences from
-   * @param name the name of the preference to resolve
+   * @param name     the name of the preference to resolve
    * @return the resolved value of the preference, or null of the named preference is not there
    */
   @Nullable
@@ -175,30 +190,29 @@ public class PreferencesTable {
    * Set the preferences for the entity id.
    *
    * @param entityId the entity id to set the preferences from
-   * @param propMap the map which contains the preferences
-   *
+   * @param propMap  the map which contains the preferences
    * @return the sequence id of the operation
    */
   public long setPreferences(EntityId entityId, Map<String, String> propMap) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         return upsert(
-          EMPTY_NAMESPACE, INSTANCE_PREFERENCE, new Config(entityId.getEntityName(), propMap));
+                EMPTY_NAMESPACE, INSTANCE_PREFERENCE, new Config(entityId.getEntityName(), propMap));
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
         return upsert(
-          namespaceId.getNamespace(), NAMESPACE_PREFERENCE, new Config(namespaceId.getNamespace(), propMap));
+                namespaceId.getNamespace(), NAMESPACE_PREFERENCE, new Config(namespaceId.getNamespace(), propMap));
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         return upsert(
-          appId.getNamespace(), APPLICATION_PREFERENCE, new Config(appId.getApplication(), propMap));
+                appId.getNamespace(), APPLICATION_PREFERENCE, new Config(appId.getApplication(), propMap));
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         return upsert(
-          programId.getNamespace(), PROGRAM_PREFERENCE, new Config(getProgramName(programId), propMap));
+                programId.getNamespace(), PROGRAM_PREFERENCE, new Config(getProgramName(programId), propMap));
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+                String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
     }
   }
 
@@ -206,7 +220,6 @@ public class PreferencesTable {
    * Delete the preferences for the entity id.
    *
    * @param entityId the entity id to delete the preferences
-   *
    * @return the sequence id of the operation, or -1 if no preferences existed for the entity id
    */
   public long deleteProperties(EntityId entityId) throws IOException {
@@ -224,7 +237,7 @@ public class PreferencesTable {
         return delete(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+                String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
     }
   }
 
@@ -233,7 +246,7 @@ public class PreferencesTable {
    */
   private String getProgramName(ProgramId programId) {
     return String.join(",", programId.getApplication(), programId.getType().getCategoryName(),
-                       programId.getProgram());
+            programId.getProgram());
   }
 
   private long upsert(String namespace, String type, Config config) throws IOException {
@@ -263,7 +276,7 @@ public class PreferencesTable {
   }
 
   private void checkSeqId(String namespace, String type, String name, long seq)
-    throws IOException, ConflictException {
+          throws IOException, ConflictException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
     Long currentSeq = null;
@@ -274,7 +287,7 @@ public class PreferencesTable {
       }
     }
     throw new ConflictException(String.format("Expected sequence id >= %d for %s %s in namespace %s, but found %s",
-                                              seq, type, name, namespace, String.valueOf(currentSeq)));
+            seq, type, name, namespace, String.valueOf(currentSeq)));
   }
 
   private Map<String, String> get(String namespace, String type, String name) throws IOException {
@@ -289,10 +302,30 @@ public class PreferencesTable {
     return Collections.emptyMap();
   }
 
+  /**
+   * Get the metadata of preferences
+   *
+   * @param namespace namespace of the entity
+   * @param type      preferences for what kind of entity (e.g. instance, namespace, application or program)
+   * @param name      the name of the entity (e.g. name of the application)
+   * @return metadata of preferences, Null if preferences for the entity are not found.
+   * @throws IOException if unable to read the data from underlying storage
+   */
+  @Nullable
+  private PreferencesMetadata getMetadata(String namespace, String type, String name) throws IOException {
+    List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
+    Optional<StructuredRow> row = table.read(primaryKey);
+    if (!row.isPresent()) {
+      return null;
+    }
+    Long seqId = row.get().getLong(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD);
+    return new PreferencesMetadata((seqId == null ? null : seqId.longValue()));
+  }
+
   private List<Field<?>> toFields(String namespace, String type, Config config, long seqId) {
     List<Field<?>> fields = getPrimaryKey(namespace, type, config.getName());
     fields.add(Fields.stringField(StoreDefinition.PreferencesStore.PROPERTIES_FIELD,
-                                  GSON.toJson(config.getProperties())));
+            GSON.toJson(config.getProperties())));
     fields.add(Fields.longField(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD, seqId));
     return fields;
   }

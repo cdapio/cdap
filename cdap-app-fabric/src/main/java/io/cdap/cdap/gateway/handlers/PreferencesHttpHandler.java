@@ -26,6 +26,7 @@ import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.PreferencesMetadata;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -36,13 +37,8 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import javax.ws.rs.*;
 import java.util.Map;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * Program Preferences HTTP Handler.
@@ -68,6 +64,12 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getInstancePrefs(HttpRequest request, HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties()));
+  }
+
+  @Path("/preferences/metadata")
+  @GET
+  public void getInstancePrefsMetadata(HttpRequest request, HttpResponder responder) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getMetadata()));
   }
 
   @Path("/preferences")
@@ -102,12 +104,25 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       if (resolved) {
         responder.sendJson(HttpResponseStatus.OK,
-                           GSON.toJson(preferencesService.getResolvedProperties(namespaceId)));
+                GSON.toJson(preferencesService.getResolvedProperties(namespaceId)));
       } else {
         responder.sendJson(HttpResponseStatus.OK,
-                           GSON.toJson(preferencesService.getProperties(namespaceId)));
+                GSON.toJson(preferencesService.getProperties(namespaceId)));
       }
     }
+  }
+
+  @Path("/namespaces/{namespace-id}/preferences/metadata")
+  @GET
+  public void getNamespacePrefsMetadata(HttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespace) {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (nsStore.get(namespaceId) == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
+      return;
+    }
+    PreferencesMetadata metadata = preferencesService.getMetadata(namespaceId);
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(metadata));
   }
 
   @Path("/namespaces/{namespace-id}/preferences")
@@ -153,7 +168,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-                                                                       appId, namespace));
+              appId, namespace));
     } else {
       if (resolved) {
         responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getResolvedProperties(applicationId)));
@@ -163,16 +178,30 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences/metadata")
+  @GET
+  public void getAppPrefsMetadata(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId) {
+    ApplicationId app = new ApplicationId(namespace, appId);
+    if (store.getApplication(app) == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
+              appId, namespace));
+      return;
+    }
+    PreferencesMetadata metadata = preferencesService.getMetadata(app);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata));
+  }
+
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void putAppPrefs(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
-    throws Exception {
+          throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-                                                                       appId, namespace));
+              appId, namespace));
       return;
     }
 
@@ -192,7 +221,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-                                                                       appId, namespace));
+              appId, namespace));
     } else {
       preferencesService.deleteProperties(applicationId);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -214,6 +243,17 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties(program)));
     }
+  }
+
+  @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences/metadata")
+  @GET
+  public void getProgramPrefsMetadata(HttpRequest request, HttpResponder responder,
+                                      @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
+                                      @PathParam("program-type") String programType, @PathParam("program-id") String programId) throws Exception {
+    ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    Store.ensureProgramExists(program, store.getApplication(program.getParent()));
+    PreferencesMetadata metadata = preferencesService.getMetadata(program);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata));
   }
 
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
@@ -252,7 +292,6 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
    * Parses the give program type into {@link ProgramType} object.
    *
    * @param programType the program type to parse.
-   *
    * @throws BadRequestException if the given program type is not a valid {@link ProgramType}.
    */
   private ProgramType getProgramType(String programType) throws BadRequestException {

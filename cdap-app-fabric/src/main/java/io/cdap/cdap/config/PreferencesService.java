@@ -28,6 +28,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.PreferencesMetadata;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -62,6 +63,12 @@ public class PreferencesService {
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
     this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
     this.transactionRunner = transactionRunner;
+  }
+
+  private PreferencesMetadata getConfigMetadata(EntityId entityId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return new PreferencesTable(context).getPreferencesMetadata(entityId);
+    });
   }
 
   private Map<String, String> getConfigProperties(EntityId entityId) {
@@ -164,31 +171,45 @@ public class PreferencesService {
   }
 
   /**
-   * Get instance level preferences
+   * Get instance level preferences and their metadata
    */
   public Map<String, String> getProperties() {
     return getConfigProperties(new InstanceId(""));
   }
 
+  public PreferencesMetadata getMetadata() { return getConfigMetadata(new InstanceId("")); }
+
   /**
-   * Get namespace level preferences
+   * Get namespace level preferences and their metadata
    */
   public Map<String, String> getProperties(NamespaceId namespaceId) {
     return getConfigProperties(namespaceId);
   }
 
+  public PreferencesMetadata getMetadata(NamespaceId namespaceId) {
+    return getConfigMetadata(namespaceId);
+  }
+
   /**
-   * Get app level preferences
+   * Get app level preferences and their metadata
    */
   public Map<String, String> getProperties(ApplicationId applicationId) {
     return getConfigProperties(applicationId);
   }
 
+  public PreferencesMetadata getMetadata(ApplicationId applicationId) {
+    return getConfigMetadata(applicationId);
+  }
+
   /**
-   * Get program level preferences
+   * Get program level preferences and their metadata
    */
   public Map<String, String> getProperties(ProgramId programId) {
     return getConfigProperties(programId);
+  }
+
+  public PreferencesMetadata getMetadata(ProgramId programId) {
+    return getConfigMetadata(programId);
   }
 
   /**
