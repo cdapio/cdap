@@ -344,7 +344,6 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
           'wrangler-datamodel-viewer'
         );
       }
-
       if ('entities' in contentJson['feature-names']) {
         featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
       }
@@ -379,6 +378,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showDashboard: true,
       showReports: true,
       showDataPrep: true,
+      // showWranglerDatamodelViewer: true,
       showPipelines: true,
       showPipelineStudio: true,
       showAnalytics: true,
@@ -419,7 +419,6 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     ) {
       features.showWranglerDatamodelViewer = featuresJson['wrangler-datamodel-viewer'];
     }
-
     if ('pipelines' in featuresJson && isBoolean(featuresJson.pipelines)) {
       features.showPipelines = featuresJson.pipelines;
     }
