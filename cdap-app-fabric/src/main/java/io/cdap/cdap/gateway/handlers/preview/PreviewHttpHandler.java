@@ -33,6 +33,7 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHandler;
+import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -56,6 +57,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -121,7 +124,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
   @GET
   @Path("/previews/{preview-id}/tracers")
   public void getTracers(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                         @PathParam("preview-id") String previewId) throws Exception {
+                         @PathParam("preview-id") String previewId) {
     // TODO Implement API in PreviewStore to get all the tracers.
   }
 
@@ -175,13 +178,10 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                              @QueryParam("filter") @DefaultValue("") String filterStr,
                              @QueryParam("format") @DefaultValue("text") String format,
                              @QueryParam("suppress") List<String> suppress) throws Exception {
-    ProgramRunId runId = getProgramRunId(namespaceId, previewId);
-    RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
-
-    doGetLogs(previewManager.getLogReader(runId.getParent().getParent()), responder, loggingContext, fromTimeSecsParam,
-              toTimeSecsParam, escape, filterStr, runRecord, format, suppress);
+    sendLogs(responder, namespaceId, previewId,
+             info -> doGetLogs(info.getLogReader(), responder, info.getLoggingContext(),
+                               fromTimeSecsParam, toTimeSecsParam, escape, filterStr,
+                               info.getRunRecord(), format, suppress));
   }
 
   @GET
@@ -195,11 +195,9 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                                  @QueryParam("filter") @DefaultValue("") String filterStr,
                                  @QueryParam("format") @DefaultValue("text") String format,
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
-    ProgramRunId runId = getProgramRunId(namespaceId, previewId);
-    RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
-    doPrev(previewManager.getLogReader(runId.getParent().getParent()), responder, loggingContext, maxEvents,
-           fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+    sendLogs(responder, namespaceId, previewId,
+             info -> doPrev(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
+                            fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
 
   @GET
@@ -213,11 +211,26 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                                  @QueryParam("filter") @DefaultValue("") String filterStr,
                                  @QueryParam("format") @DefaultValue("text") String format,
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
+    sendLogs(responder, namespaceId, previewId,
+             info -> doNext(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
+                            fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
+  }
+
+  private void sendLogs(HttpResponder responder, String namespaceId, String previewId,
+                        Consumer<LogReaderInfo> logsResponder) throws Exception {
     ProgramRunId runId = getProgramRunId(namespaceId, previewId);
+    if (runId == null) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
     RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
+    if (runRecord == null) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
-    doNext(previewManager.getLogReader(runId.getParent().getParent()), responder, loggingContext, maxEvents,
-           fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+    LogReader logReader = previewManager.getLogReader(runId.getParent().getParent());
+    logsResponder.accept(new LogReaderInfo(logReader, loggingContext, runRecord));
   }
 
   @POST
@@ -288,10 +301,12 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     }
   }
 
+  @Nullable
   private ProgramRunId getProgramRunId(String namespaceId, String previewId) throws Exception {
      return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getProgramRunId();
   }
 
+  @Nullable
   private RunRecordMeta getRunRecord(String namespaceId, String previewId) throws Exception {
     return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getRunRecord();
   }
@@ -334,6 +349,34 @@ public class PreviewHttpHandler extends AbstractLogHandler {
         !tags.get(MetricsQueryHelper.APP_STRING).equals(previewId)) {
         tags.put(MetricsQueryHelper.APP_STRING, previewId);
       }
+    }
+  }
+
+  /**
+   * A holder class for holding information needed for reading logs.
+   */
+  private static final class LogReaderInfo {
+
+    private final LogReader logReader;
+    private final LoggingContext loggingContext;
+    private final RunRecordMeta runRecord;
+
+    private LogReaderInfo(LogReader logReader, LoggingContext loggingContext, RunRecordMeta runRecord) {
+      this.logReader = logReader;
+      this.loggingContext = loggingContext;
+      this.runRecord = runRecord;
+    }
+
+    LogReader getLogReader() {
+      return logReader;
+    }
+
+    LoggingContext getLoggingContext() {
+      return loggingContext;
+    }
+
+    RunRecordMeta getRunRecord() {
+      return runRecord;
     }
   }
 }

@@ -20,8 +20,8 @@ import com.google.inject.Module;
 
 /**
  * Represents the Guice module for creating {@link PreviewRunner}.
+ * It is just a tagging interface for guice binding.
  */
 public interface PreviewRunnerModule extends Module {
 
-  String PREVIEW_PROGRAM_ID = "previewProgramId";
 }

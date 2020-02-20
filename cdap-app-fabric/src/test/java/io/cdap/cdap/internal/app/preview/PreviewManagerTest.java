@@ -23,6 +23,7 @@ import com.google.inject.Binder;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -66,7 +67,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
@@ -199,7 +199,7 @@ public class PreviewManagerTest {
   }
 
   /**
-   * Mocking the {@link PreviewRunnerModule} to provide a binding to the {@link MockPreviewRunner}.
+   * Mocking the {@link Module} to provide a binding to the {@link MockPreviewRunner}.
    */
   private static final class MockPreviewRunnerModule extends DefaultPreviewRunnerModule {
 
@@ -208,9 +208,9 @@ public class PreviewManagerTest {
                             AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
                             PrivilegesManager privilegesManager, PreferencesService preferencesService,
                             ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                            @Assisted ProgramId programId) {
+                            @Assisted PreviewRequest previewRequest) {
       super(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-            privilegesManager, preferencesService, programRuntimeProviderLoader, programId);
+            privilegesManager, preferencesService, programRuntimeProviderLoader, previewRequest);
     }
 
     @Override
@@ -224,8 +224,21 @@ public class PreviewManagerTest {
    */
   private static final class MockPreviewRunner implements PreviewRunner {
 
+    private final PreviewRequest previewRequest;
+
+    @Inject
+    MockPreviewRunner(PreviewRequest previewRequest) {
+      this.previewRequest = previewRequest;
+    }
+
+
     @Override
-    public void startPreview(PreviewRequest request) {
+    public PreviewRequest getPreviewRequest() {
+      return previewRequest;
+    }
+
+    @Override
+    public void startPreview() {
       // no-op
     }
 

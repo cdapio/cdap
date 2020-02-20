@@ -33,11 +33,15 @@ import javax.annotation.Nullable;
 public interface PreviewRunner {
 
   /**
+   * Returns the {@link PreviewRequest} for this runner.
+   */
+  PreviewRequest getPreviewRequest();
+
+  /**
    * Start the preview of an application.
-   * @param request the {@link PreviewRequest} with which preview to be started
    * @throws Exception if there were any error during starting preview
    */
-  void startPreview(PreviewRequest request) throws Exception;
+  void startPreview() throws Exception;
 
   /**
    * Get the status of the preview represented by this {@link PreviewRunner}.
