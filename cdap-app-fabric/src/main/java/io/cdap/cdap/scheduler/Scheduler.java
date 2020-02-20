@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,9 @@
 
 package io.cdap.cdap.scheduler;
 
-import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.ConflictException;
-import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.*;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -137,6 +134,14 @@ public interface Scheduler {
    * @throws NotFoundException if the schedule does not exist in the store
    */
   ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException;
+
+  /**
+   * Get the metadata of the given schedule from the store
+   * @param scheduleId the id of the schedule
+   * @return the metadata of the schedule from the store
+   * @throws NotFoundException if the schedule doesn't exist in the store
+   */
+  ProgramScheduleMeta getScheduleMetadata(ScheduleId scheduleId) throws NotFoundException;
 
   /**
    * Read a schedule's status from the store.

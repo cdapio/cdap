@@ -26,6 +26,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -137,6 +138,20 @@ public class ProgramScheduleService {
     AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
                                    authenticationContext.getPrincipal());
     return schedule;
+  }
+
+  /**
+   * Get the metadata of the given schedule
+   * @param scheduleId id that identifies a given schedule
+   * @return metadata of the schedule
+   * @throws Exception if any errors occurred while fetching the metadata or failing authorization check
+   */
+  public ProgramScheduleMeta getMeta(ScheduleId scheduleId) throws Exception {
+    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
+    AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
+            authenticationContext.getPrincipal());
+    ProgramScheduleMeta meta = scheduler.getScheduleMetadata(scheduleId);
+    return meta;
   }
 
   /**

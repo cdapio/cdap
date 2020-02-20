@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,21 +26,12 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.ConflictException;
-import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ProfileConflictException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.*;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
-import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.*;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
@@ -50,11 +41,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProfileId;
-import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.*;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
@@ -64,13 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -477,6 +458,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
     checkStarted();
     return execute(store -> store.getSchedule(scheduleId), NotFoundException.class);
+  }
+
+  @Override
+  public ProgramScheduleMeta getScheduleMetadata(ScheduleId scheduleId) throws NotFoundException {
+    checkStarted();
+    return execute(store -> store.getScheduleRecord(scheduleId).getMeta(), NotFoundException.class);
   }
 
   @Override

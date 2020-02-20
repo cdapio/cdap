@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,12 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import io.cdap.cdap.AllProgramsApp;
-import io.cdap.cdap.AppWithMultipleSchedules;
-import io.cdap.cdap.AppWithSchedule;
-import io.cdap.cdap.AppWithServices;
-import io.cdap.cdap.AppWithWorker;
-import io.cdap.cdap.AppWithWorkflow;
-import io.cdap.cdap.DummyAppWithTrackingTable;
-import io.cdap.cdap.SleepingWorkflowApp;
+import io.cdap.cdap.*;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -57,24 +46,9 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.MockProvisioner;
-import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.BatchProgramHistory;
-import io.cdap.cdap.proto.Instances;
-import io.cdap.cdap.proto.ProgramRecord;
-import io.cdap.cdap.proto.ProgramRunClusterStatus;
-import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.ProtoConstraint;
-import io.cdap.cdap.proto.ProtoTrigger;
-import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.ServiceInstances;
+import io.cdap.cdap.proto.*;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProfileId;
-import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.proto.id.*;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.test.SlowTests;
 import io.cdap.cdap.test.XSlowTests;
@@ -86,18 +60,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link ProgramLifecycleHttpHandler}
@@ -1148,40 +1115,57 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testSchedules() throws Exception {
+    String namespace1 = TEST_NAMESPACE1;
+    String appName = AppWithSchedule.NAME;
+    String appSchedule = AppWithSchedule.SCHEDULE;
+    String appVersion2 = VERSION2;
+
     // deploy an app with schedule
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META1.getNamespaceId()),
-                                              AppWithSchedule.NAME, VERSION1);
+            appName, VERSION1);
     addAppArtifact(artifactId, AppWithSchedule.class);
     AppRequest<? extends Config> request = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME);
+            new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(appName);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     // deploy another version of the app
-    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME, VERSION2);
+
+    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(appName, appVersion2);
     Assert.assertEquals(200, deploy(appV2Id, request).getResponseCode());
 
-    // list schedules for default version app, for the workflow and for the app, they should be same
+    // List schedules for the workflow, for default version app and for app version 2, they should be the same
     List<ScheduleDetail> schedules =
-      getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
+            getSchedules(namespace1, appName, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(1, schedules.size());
     ScheduleDetail schedule = schedules.get(0);
     Assert.assertEquals(SchedulableProgramType.WORKFLOW, schedule.getProgram().getProgramType());
     Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, schedule.getProgram().getProgramName());
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule.getTrigger());
 
-    // there should be two schedules now
-    List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
+    List<ScheduleDetail> schedulesForApp = listSchedules(namespace1, appName, null);
     Assert.assertEquals(1, schedulesForApp.size());
     Assert.assertEquals(schedules, schedulesForApp);
 
     List<ScheduleDetail> schedules2 =
-      getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, AppWithSchedule.WORKFLOW_NAME);
+            getSchedules(namespace1, appName, appVersion2, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(1, schedules2.size());
     ScheduleDetail schedule2 = schedules2.get(0);
     Assert.assertEquals(SchedulableProgramType.WORKFLOW, schedule2.getProgram().getProgramType());
     Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, schedule2.getProgram().getProgramName());
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule2.getTrigger());
+
+    // Get schedule metadata for app default version
+    ScheduleMetadata metadataForDefaultVersion = getScheduleMetadata(namespace1, appName, null, appSchedule);
+    Assert.assertTrue(metadataForDefaultVersion.getLastUpdateTime() > 0);
+    ScheduleMetadata metadataForApp = getScheduleMetadata(namespace1, appName, appSchedule);
+    Assert.assertTrue(metadataForApp.getLastUpdateTime() > 0);
+
+    // Get schedule metadata for a specific version of the app
+    Assert.assertEquals(metadataForDefaultVersion, metadataForApp);
+    ScheduleMetadata metadataForVersion2 = getScheduleMetadata(namespace1, appName, appVersion2, appSchedule);
+    Assert.assertTrue(metadataForVersion2.getLastUpdateTime() > 0);
+    Assert.assertTrue(metadataForVersion2.getLastUpdateTime() >= metadataForDefaultVersion.getLastUpdateTime());
 
     String newSchedule = "newTimeSchedule";
     testAddSchedule(newSchedule);

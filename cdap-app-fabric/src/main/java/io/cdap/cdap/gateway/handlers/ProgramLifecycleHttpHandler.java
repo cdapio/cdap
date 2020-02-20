@@ -13,22 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package io.cdap.cdap.gateway.handlers;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
+import com.google.common.base.*;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -39,11 +31,9 @@ import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.ConflictException;
-import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.*;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -56,6 +46,7 @@ import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
@@ -66,34 +57,8 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-import io.cdap.cdap.proto.BatchProgram;
-import io.cdap.cdap.proto.BatchProgramCount;
-import io.cdap.cdap.proto.BatchProgramHistory;
-import io.cdap.cdap.proto.BatchProgramResult;
-import io.cdap.cdap.proto.BatchProgramStart;
-import io.cdap.cdap.proto.BatchProgramStatus;
-import io.cdap.cdap.proto.BatchRunnable;
-import io.cdap.cdap.proto.BatchRunnableInstances;
-import io.cdap.cdap.proto.Containers;
-import io.cdap.cdap.proto.Instances;
-import io.cdap.cdap.proto.MRJobInfo;
-import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
-import io.cdap.cdap.proto.ProgramHistory;
-import io.cdap.cdap.proto.ProgramLiveInfo;
-import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.ProgramStatus;
-import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.ProtoTrigger;
-import io.cdap.cdap.proto.RunCountResult;
-import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.ScheduleDetail;
-import io.cdap.cdap.proto.ServiceInstances;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.*;
+import io.cdap.cdap.proto.id.*;
 import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
@@ -105,32 +70,17 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * {@link io.cdap.http.HttpHandler} to manage program lifecycle for v3 REST APIs
@@ -692,6 +642,31 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramSchedule schedule = programScheduleService.get(scheduleId);
     ScheduleDetail detail = schedule.toScheduleDetail();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
+  }
+
+  /**
+   * Get the metadata of the schedule of an application.
+   */
+  @GET
+  @Path("apps/{app-name}/schedules/{schedule-name}/metadata")
+  public void getScheduleMetadata(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-name") String appName,
+                                  @PathParam("schedule-name") String scheduleName) throws Exception {
+    doGetScheduleMetadata(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+  }
+
+  /**
+   * Get the metadata of the schedule for an application at a specific version
+   */
+  @GET
+  @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}/metadata")
+  public void getScheduleMetadata(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-name") String appName,
+                                  @PathParam("app-version") String appVersion,
+                                  @PathParam("schedule-name") String scheduleName) throws Exception {
+    doGetScheduleMetadata(responder, namespaceId, appName, appVersion, scheduleName);
   }
 
   /**
@@ -1798,5 +1773,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
+  }
+
+  /**
+   * Get the metadata of the schedule for an application with the supplied version
+   */
+  private void doGetScheduleMetadata(HttpResponder responder, String namespace,
+                                     String app, String version, String scheduleName) throws Exception {
+    ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
+    ProgramScheduleMeta metadata = programScheduleService.getMeta(scheduleId);
+    ScheduleMetadata scheduleMetadata = metadata.toScheduleMetadata();
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(scheduleMetadata, ScheduleMetadata.class));
   }
 }

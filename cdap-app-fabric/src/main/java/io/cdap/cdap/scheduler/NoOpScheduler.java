@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -88,6 +89,11 @@ public class NoOpScheduler implements Scheduler {
 
   @Override
   public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
+    return null;
+  }
+
+  @Override
+  public ProgramScheduleMeta getScheduleMetadata(ScheduleId scheduleId) throws NotFoundException {
     return null;
   }
 

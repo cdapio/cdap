@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,26 +17,29 @@
 package io.cdap.cdap.internal.app.runtime.schedule;
 
 import com.google.common.base.Objects;
+import io.cdap.cdap.proto.ScheduleMetadata;
 
 /**
- * Meta data about a program schedule, including its current status and last-updated timestamp.
+ * Metadata of a program schedule, including its current status and last-updated timestamp.
  */
 public class ProgramScheduleMeta {
-
   private final ProgramScheduleStatus status;
-  private final long lastUpdated;
+  /**
+   * Timestamp of last update
+   */
+  private final long lastUpdatedTime;
 
-  public ProgramScheduleMeta(ProgramScheduleStatus status, long lastUpdated) {
+  public ProgramScheduleMeta(ProgramScheduleStatus status, long lastUpdatedTime) {
     this.status = status;
-    this.lastUpdated = lastUpdated;
+    this.lastUpdatedTime = lastUpdatedTime;
   }
 
   public ProgramScheduleStatus getStatus() {
     return status;
   }
 
-  public long getLastUpdated() {
-    return lastUpdated;
+  public long getLastUpdatedTime() {
+    return lastUpdatedTime;
   }
 
   @Override
@@ -50,12 +53,17 @@ public class ProgramScheduleMeta {
 
     ProgramScheduleMeta that = (ProgramScheduleMeta) o;
 
-    return Objects.equal(this.lastUpdated, that.lastUpdated) &&
-      Objects.equal(this.status, that.status);
+    return Objects.equal(this.lastUpdatedTime, that.lastUpdatedTime) &&
+            Objects.equal(this.status, that.status);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(status, lastUpdated);
+    return Objects.hashCode(status, lastUpdatedTime);
   }
+
+  public ScheduleMetadata toScheduleMetadata() {
+    return new ScheduleMetadata(status.toString(), lastUpdatedTime);
+  }
+
 }

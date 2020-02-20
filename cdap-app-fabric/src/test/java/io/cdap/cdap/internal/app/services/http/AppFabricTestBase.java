@@ -35,6 +35,7 @@ import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
@@ -71,27 +72,19 @@ import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
-import io.cdap.cdap.proto.BatchApplicationDetail;
-import io.cdap.cdap.proto.BatchProgram;
-import io.cdap.cdap.proto.BatchProgramHistory;
-import io.cdap.cdap.proto.DatasetMeta;
-import io.cdap.cdap.proto.EntityScope;
-import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.ProtoConstraintCodec;
-import io.cdap.cdap.proto.ProtoTrigger;
-import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.*;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -155,7 +148,7 @@ import javax.ws.rs.core.MediaType;
  * running the handler tests, this also gives the ability to run individual test cases.
  */
 public abstract class AppFabricTestBase {
-  protected static final Gson GSON = new GsonBuilder()
+  protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
@@ -168,6 +161,7 @@ public abstract class AppFabricTestBase {
   private static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
   private static final Type SET_TRING_TYPE = new TypeToken<Set<String>>() { }.getType();
   private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
+  private static final Type LIST_APPLICATIONMETA_TYPE = new TypeToken<List<ApplicationMeta>>() { }.getType();
 
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -598,6 +592,20 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getResponseCode());
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
+  }
+
+  protected List<ApplicationMeta> getAllApplicationMetadata(String namespace) throws Exception {
+    HttpResponse response =
+            doGet(getVersionedAPIPath("apps/metadata", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_APPLICATIONMETA_TYPE);
+  }
+
+  protected ApplicationMeta getApplicationMetadata(ApplicationId appId) throws Exception {
+    HttpResponse response =
+            doGet(getVersionedAPIPath(
+                    String.format("/apps/%s/versions/%s/metadata", appId.getApplication(), appId.getVersion(), appId.getNamespace()),
+                    Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
+    return readResponse(response, ApplicationMeta.class);
   }
 
   /**
@@ -1168,6 +1176,22 @@ public abstract class AppFabricTestBase {
     return readResponse(response, ScheduleDetail.class);
   }
 
+  protected ScheduleMetadata getScheduleMetadata(String namespace, String appName, @Nullable String appVersion,
+                                                 String scheduleName) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules/%s/metadata", appName, appVersion, scheduleName);
+    HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    return readResponse(response, ScheduleMetadata.class);
+  }
+
+  protected ScheduleMetadata getScheduleMetadata(String namespace, String appName, String scheduleName) throws Exception {
+    String path = String.format("apps/%s/schedules/%s/metadata", appName, scheduleName);
+    HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
+    return readResponse(response, ScheduleMetadata.class);
+  }
+
   protected Map<String, String> getMetadataProperties(EntityId entityId) throws Exception {
     return metadataClient.getProperties(entityId.toMetadataEntity());
   }
@@ -1283,6 +1307,11 @@ public abstract class AppFabricTestBase {
     return "";
   }
 
+  protected String getPreferenceMetadataURI() {
+    return "";
+  }
+
+
   protected String getPreferenceURI(String namespace) {
     return String.format("%s/namespaces/%s", getPreferenceURI(), namespace);
   }
@@ -1309,6 +1338,16 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     if (expectedStatus == 200) {
       return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
+    }
+    return null;
+  }
+
+  protected PreferencesMetadata getPreferencesMetadata(String uri, HttpResponseStatus expectedStatus) throws Exception {
+    String request = String.format("/v3/%s/preferences/metadata", uri);
+    HttpResponse response = doGet(request);
+    Assert.assertEquals(expectedStatus.code(), response.getResponseCode());
+    if (expectedStatus == HttpResponseStatus.OK) {
+      return GSON.fromJson(response.getResponseBodyAsString(), PreferencesMetadata.class);
     }
     return null;
   }
