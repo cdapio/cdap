@@ -18,25 +18,24 @@
 package io.cdap.cdap.metadata.profile;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.ConflictException;
-import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.config.PreferencesTable;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
-import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
-import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.metadata.MetadataMessageProcessor;
-import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.*;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -53,7 +52,12 @@ import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
-import io.cdap.cdap.store.NamespaceTable;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,19 +90,19 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
   private final MetadataStorage metadataStorage;
-  private final NamespaceTable namespaceTable;
-  private final AppMetadataStore appMetadataStore;
-  private final ProgramScheduleStoreDataset scheduleDataset;
-  private final PreferencesTable preferencesTable;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final RemoteClient remoteClient;
 
   public ProfileMetadataMessageProcessor(MetadataStorage metadataStorage,
-                                         StructuredTableContext structuredTableContext) {
-    namespaceTable = new NamespaceTable(structuredTableContext);
-    appMetadataStore = AppMetadataStore.create(structuredTableContext);
-    scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
-    preferencesTable = new PreferencesTable(structuredTableContext);
+                                         NamespaceQueryAdmin namespaceQueryAdmin,
+                                         DiscoveryServiceClient discoveryServiceClient) {
     this.metadataStorage = metadataStorage;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+            new DefaultHttpRequestConfig(false),
+            String.format("%s", Constants.Gateway.API_VERSION_3));
   }
+
 
   @Override
   public void processMessage(MetadataMessage message, StructuredTableContext context)
@@ -134,14 +138,38 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     if (entityId.getEntityType() != EntityType.SCHEDULE) {
       return;
     }
-    long expectedUpdateTime = GSON.fromJson(message.getRawPayload(), long.class);
-    scheduleDataset.ensureUpdateTime((ScheduleId) entityId, expectedUpdateTime);
+    long creationTime = GSON.fromJson(message.getRawPayload(), long.class);
+
+    ScheduleId scheduleId = (ScheduleId)entityId;
+    ScheduleMetadata metadata = getScheduleMetadata(scheduleId);
+    Long lastUpdateTime = metadata.getLastUpdateTime();
+
+    if (lastUpdateTime == null) {
+      throw new NullPointerException(String.format("Unable to get last updated time"));
+    }
+
+    if (creationTime > lastUpdateTime) {
+      throw new ConflictException(String.format(
+              "Unexpected: creation time %d > last update time %d for schedule %s",
+              creationTime, lastUpdateTime, scheduleId.toString()));
+    }
   }
 
   private void validatePreferenceSequenceId(EntityId entityId, MetadataMessage message)
     throws IOException, ConflictException {
     long seqId = GSON.fromJson(message.getRawPayload(), long.class);
-    preferencesTable.ensureSequence(entityId, seqId);
+    PreferencesMetadata metadata = getPreferencesMetadata(entityId);
+    if (metadata == null) {
+      throw new IOException(String.format("Unable to get metadata for preferences"));
+    }
+
+    long latestSeqId = metadata.getSeqId();
+
+    if (seqId > latestSeqId) {
+      throw new ConflictException(String.format(
+              "Unexpected: seq id %d > lastest seq id %d for preferences %s",
+              seqId, latestSeqId, entityId.toString()));
+    }
   }
 
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
@@ -155,20 +183,32 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                                       List<MetadataMutation> updates) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
-        for (NamespaceMeta meta : namespaceTable.list()) {
-          collectProfileMetadata(meta.getNamespaceId(), message, updates);
+        try {
+          for (NamespaceMeta meta : namespaceQueryAdmin.list()) {
+            collectProfileMetadata(meta.getNamespaceId(), message, updates);
+          }
+        } catch (Exception e) {
+          LOG.debug("Failed to list namespaces, so the profile metadata of programs or schedules in it will not get " +
+                      "updated. Ignoring the message {}: ", message, e);
+          return;
         }
         break;
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
         // make sure namespace exists before updating
-        if (namespaceTable.get(namespaceId) == null) {
-          LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
-                      "updated. Ignoring the message {}", namespaceId, message);
+        try {
+          if (!namespaceQueryAdmin.exists(namespaceId)) {
+            LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
+                    "updated. Ignoring the message {}", namespaceId, message);
+            return;
+          }
+        } catch (Exception e) {
+          LOG.debug("Failed to check if namespace {} still exists, so the profile metadata of programs or schedules " +
+                  "in it will not get updated. Ignoring the message {}: ", namespaceId, message, e);
           return;
         }
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
-        List<ApplicationMeta> applicationMetas = appMetadataStore.getAllApplications(namespaceId.getNamespace());
+        List<ApplicationMeta> applicationMetas = getAllApplicationMetadata(namespaceId.getNamespace());
         for (ApplicationMeta meta : applicationMetas) {
           collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
         }
@@ -176,10 +216,12 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         // make sure app exists before updating
-        ApplicationMeta meta = appMetadataStore.getApplication(appId);
-        if (meta == null) {
-          LOG.debug("Application {} is not found, so the profile metadata of its programs/schedules will not get " +
-                      "updated. Ignoring the message {}", appId, message);
+        ApplicationMeta meta;
+        try {
+          meta = getApplicationMeta(appId);
+        } catch (Exception e) {
+          LOG.debug("Fail to get metadata of application {}, so the profile metadata of its programs/schedules will not get " +
+                      "updated. Ignoring the message {}: {}", appId, message, e);
           return;
         }
         collectAppProfileMetadata(appId, meta.getSpec(), null, updates);
@@ -187,10 +229,11 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         // make sure the app of the program exists before updating
-        meta = appMetadataStore.getApplication(programId.getParent());
-        if (meta == null) {
-          LOG.debug("Application {} is not found, so the profile metadata of program {} will not get updated. " +
-                      "Ignoring the message {}", programId.getParent(), programId, message);
+        try {
+          getApplicationMeta(programId.getParent());
+        } catch (Exception e) {
+          LOG.debug("Failed to get metadata of application {}, so the profile metadata of program {} will not get updated. " +
+                      "Ignoring the message {}: {}", programId.getParent(), programId, message, e);
           return;
         }
         if (SystemArguments.isProfileAllowed(programId.getType())) {
@@ -201,11 +244,12 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         ScheduleId scheduleId = (ScheduleId) entityId;
         // make sure the schedule exists before updating
         try {
-          ProgramSchedule schedule = scheduleDataset.getSchedule(scheduleId);
+          ScheduleDetail scheduleDetail = getSchedule(scheduleId);
+          ProgramSchedule schedule = ProgramSchedule.fromScheduleDetail(scheduleDetail);
           collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()), updates);
-        } catch (NotFoundException e) {
-          LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
-                      "Ignoring the message {}", scheduleId, message);
+        } catch (IOException e) {
+          LOG.debug("Failed to get Schedule {}, so its profile metadata will not get updated. " +
+                      "Ignoring the message {}: e", scheduleId, message, e);
           return;
         }
         break;
@@ -260,8 +304,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       : getProfileId(programId).orElse(appProfile);
     addProfileMetadataUpdate(programId, programProfile, updates);
 
-    for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
-      collectScheduleProfileMetadata(schedule, programProfile, updates);
+    for (ScheduleDetail schedule : listSchedules(programId)) {
+      ProgramSchedule programSchedule = ProgramSchedule.fromScheduleDetail(schedule);
+      collectScheduleProfileMetadata(programSchedule, programProfile, updates);
     }
   }
 
@@ -301,10 +346,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private ProfileId getResolvedProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getResolvedPreference(entityId, SystemArguments.PROFILE_NAME);
+    String profileName = getPreferences(entityId, true).get(SystemArguments.PROFILE_NAME);
     return profileName == null ? ProfileId.NATIVE : ProfileId.fromScopedName(namespaceId, profileName);
   }
-
   /**
    * Get the profile id for the provided entity id from its own preferences from preference dataset.
    *
@@ -314,8 +358,66 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private Optional<ProfileId> getProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getPreferences(entityId).get(SystemArguments.PROFILE_NAME);
+    String profileName = getPreferences(entityId, false).get(SystemArguments.PROFILE_NAME);
     return profileName == null ? Optional.empty() : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
+  }
+
+  private PreferencesMetadata getPreferencesMetadata(EntityId entityId) throws IOException {
+      HttpResponse resp;
+      String url = getPreferencesMetadataURL(entityId);
+      try {
+        resp = runHttpGet(url);
+        return GSON.fromJson(resp.getResponseBodyAsString(), PreferencesMetadata.class);
+      } catch (IOException e) {
+        LOG.warn("Failed to get preferences metadata for entity {} due to {}", entityId.toString(), e);
+      }
+      return null;
+    }
+
+  private Map<String, String> getPreferences(EntityId entityId, boolean resolved) {
+      HttpResponse resp;
+      String url = getPreferencesURL(entityId, resolved);
+      try {
+        resp = runHttpGet(url);
+        return GSON.fromJson(resp.getResponseBodyAsString(), new TypeToken<Map<String, String>>(){}.getType());
+      } catch (IOException e) {
+        LOG.warn("Failed to get preferences for entity {} due to {}", entityId.toString(), e);
+      }
+      return Collections.emptyMap();
+  }
+
+  private String getPreferencesMetadataURL(EntityId entityId) {
+    return String.format("%/metadata", getPreferencesURL(entityId, false));
+  }
+
+  private String getPreferencesURL(EntityId entityId, boolean resolved) {
+    String url;
+    switch (entityId.getEntityType()) {
+      case INSTANCE:
+        url = String.format("preferences");
+        break;
+      case NAMESPACE:
+        NamespaceId namespaceId = (NamespaceId) entityId;
+        url = String.format("namespaces/%s/preferences", namespaceId.getNamespace());
+        break;
+      case APPLICATION:
+        ApplicationId appId = (ApplicationId) entityId;
+        url = String.format("namespaces/%s/apps/%s/preferences",
+                appId.getNamespace(), appId.getApplication());
+        break;
+      case PROGRAM:
+        ProgramId programId = (ProgramId) entityId;
+        url = String.format("namespaces/%s/apps/%s/%s/%s/preferences",
+        programId.getNamespace(), programId.getApplication(), programId.getType().getCategoryName(), programId.getProgram());
+        break;
+      default:
+        throw new UnsupportedOperationException(
+          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+    }
+    if (resolved) {
+      url += "?resolved=true";
+    }
+    return url;
   }
 
   /**
@@ -342,5 +444,80 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       }
     }
     return programIds;
+  }
+
+  /**
+   * Get the schedule identified by the given schedule id
+   */
+  private ScheduleDetail getSchedule(ScheduleId scheduleId) throws IOException {
+    String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules/%s",
+            scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
+    HttpResponse httpResponse = runHttpGet(url);
+    ObjectResponse<ScheduleDetail> objectResponse = ObjectResponse.fromJsonBody(httpResponse, new TypeToken<ScheduleDetail>() {}.getType(), GSON);
+    return objectResponse.getResponseObject();
+  }
+
+  /**
+   * Get the list of schedules for the given program id
+   */
+  private List<ScheduleDetail> listSchedules(ProgramId programId) throws IOException {
+    String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules",
+            programId.getNamespace(), programId.getApplication(), programId.getVersion());
+    HttpResponse httpResponse = runHttpGet(url);
+    ObjectResponse<List<ScheduleDetail>> objectResponse = ObjectResponse.fromJsonBody(
+            httpResponse, new TypeToken<List<ScheduleDetail>>() {
+            }.getType(), GSON);
+    return objectResponse.getResponseObject();
+  }
+
+  /**
+   * Get the metadata of the schedule identified by the given schedule id
+   */
+  private ScheduleMetadata getScheduleMetadata(ScheduleId scheduleId) throws IOException {
+    String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules/%s/metadata",
+            scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
+    HttpResponse httpResponse = runHttpGet(url);
+    ScheduleMetadata metadata = GSON.fromJson(httpResponse.getResponseBodyAsString(), ScheduleMetadata.class);
+    return metadata;
+  }
+
+
+  /**
+   * Get the metadata of the application identified by the given id
+   */
+  private ApplicationMeta getApplicationMeta(ApplicationId appId) throws IOException {
+      String url = String.format("namespaces/%s/apps/%s/versions/%s/metadata",
+              appId.getNamespace(), appId.getApplication(), appId.getVersion());
+      HttpResponse resp = runHttpGet(url);
+      ApplicationMeta meta = GSON.fromJson(resp.getResponseBodyAsString(), ApplicationMeta.class);
+      return meta;
+  }
+
+  /**
+   * Get the metadata of all applications in the given namespace
+   */
+  private List<ApplicationMeta> getAllApplicationMetadata(String namespace) throws IOException {
+      String url = String.format("namespaces/%s/apps/metadata", namespace);
+      HttpResponse resp = runHttpGet(url);
+      ObjectResponse<List<ApplicationMeta>> objectResponse = ObjectResponse.fromJsonBody(
+              resp, new TypeToken<List<ApplicationMeta>>() { }.getType(), GSON);
+      return objectResponse.getResponseObject();
+  }
+
+
+  /**
+   * Make a GET request on the given URL
+   */
+  private HttpResponse runHttpGet(String url) throws IOException {
+    HttpRequest.Builder requestBuilder =
+            remoteClient.requestBuilder(HttpMethod.GET, url);
+    HttpResponse httpResponse = remoteClient.execute(requestBuilder.build());
+    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
+      throw new IOException("Request failed with NOT_FOUND:" + httpResponse.getResponseMessage());
+    }
+    if (httpResponse.getResponseCode() != 200) {
+      throw new IOException("Request failed: " + httpResponse.getResponseMessage());
+    }
+    return httpResponse;
   }
 }
