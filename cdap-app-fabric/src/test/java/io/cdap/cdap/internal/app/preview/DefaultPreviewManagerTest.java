@@ -19,15 +19,13 @@ package io.cdap.cdap.internal.app.preview;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
-import io.cdap.cdap.app.preview.PreviewRunnerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -136,25 +134,21 @@ public class DefaultPreviewManagerTest {
     DefaultPreviewManager previewManager = (DefaultPreviewManager) getInjector().getInstance(PreviewManager.class);
 
     ProgramId programId1 = new ProgramId("ns1", "app1", ProgramType.WORKFLOW, "wf1");
-    Injector injector1 = previewManager.createPreviewInjector(programId1);
-    Assert.assertEquals(
-      programId1,
-      injector1.getInstance(Key.get(ProgramId.class, Names.named(PreviewRunnerModule.PREVIEW_PROGRAM_ID))));
+    Injector injector1 = previewManager.createPreviewInjector(new PreviewRequest(programId1));
+    PreviewRunner runner1 = injector1.getInstance(PreviewRunner.class);
+    Assert.assertEquals(programId1, runner1.getPreviewRequest().getProgram());
 
     // Make sure same PreviewManager instance is returned for a same preview
-    Assert.assertEquals(injector1.getInstance(PreviewRunner.class),
-                        injector1.getInstance(PreviewRunner.class));
+    Assert.assertEquals(runner1, injector1.getInstance(PreviewRunner.class));
 
     // Also make sure it can return a LogReader
     injector1.getInstance(LogReader.class);
 
     ProgramId programId2 = new ProgramId("ns2", "app2", ProgramType.WORKFLOW, "wf2");
-    Injector injector2 = previewManager.createPreviewInjector(programId2);
-    Assert.assertEquals(
-      programId2, injector2.getInstance(Key.get(ProgramId.class, Names.named(PreviewRunnerModule.PREVIEW_PROGRAM_ID))));
-
-    PreviewRunner runner1 = injector1.getInstance(PreviewRunner.class);
+    Injector injector2 = previewManager.createPreviewInjector(new PreviewRequest(programId2));
     PreviewRunner runner2 = injector2.getInstance(PreviewRunner.class);
+    Assert.assertEquals(programId2, runner2.getPreviewRequest().getProgram());
+
     Assert.assertNotEquals(runner1, runner2);
 
     // since we don't start any preview run, the app injectors should be empty

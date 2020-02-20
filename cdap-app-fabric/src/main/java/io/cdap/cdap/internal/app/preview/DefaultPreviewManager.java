@@ -23,7 +23,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
@@ -35,7 +34,6 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
-import io.cdap.cdap.app.preview.PreviewRunnerModule;
 import io.cdap.cdap.app.preview.PreviewRunnerModuleFactory;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.BadRequestException;
@@ -93,6 +91,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -111,7 +110,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
-  private final Map<ApplicationId, Injector> appInjectors;
+  private final ConcurrentMap<ApplicationId, Injector> appInjectors;
   private final Path previewDataDir;
   private final PreviewRunnerModuleFactory previewRunnerModuleFactory;
 
@@ -165,7 +164,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         LOG.debug("Failed to parse the file directory {} to a valid preview id", name, e);
         continue;
       }
-      Injector injector = createPreviewInjector(programId);
+      Injector injector = createPreviewInjector(new PreviewRequest(programId));
       PreviewRunner runner = injector.getInstance(PreviewRunner.class);
       if (runner instanceof Service) {
         try {
@@ -193,7 +192,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public synchronized ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
+  public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
@@ -202,26 +201,32 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       throw new IllegalStateException("Preview service is not running. Cannot start preview for " + programId);
     }
 
-    if (!ensureCapacity()) {
-      throw new IllegalStateException("No more than " + maxPreviews + " can be executed concurrently");
+    Injector injector;
+    synchronized (this) {
+      if (!ensureCapacity()) {
+        throw new IllegalStateException("No more than " + maxPreviews + " can be executed concurrently");
+      }
+
+      PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);
+      injector = createPreviewInjector(previewRequest);
+      appInjectors.put(previewApp, injector);
     }
 
-    Injector injector = createPreviewInjector(programId);
     PreviewRunner runner = injector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
       ((Service) runner).startAndWait();
     }
     try {
-      runner.startPreview(new PreviewRequest<>(programId, appRequest));
+      runner.startPreview();
+      return previewApp;
     } catch (Exception e) {
       if (runner instanceof Service) {
         stopQuietly((Service) runner);
       }
+      appInjectors.remove(previewApp);
       removePreviewDir(programId);
       throw e;
     }
-    appInjectors.put(previewApp, injector);
-    return previewApp;
   }
 
   @Override
@@ -249,7 +254,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
    *
    * @return {@code true} if more preview can be executed, {@code false} otherwise.
    */
-  private synchronized boolean ensureCapacity() {
+  private boolean ensureCapacity() {
     if (appInjectors.size() < maxPreviews) {
       return true;
     }
@@ -278,8 +283,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     if (runner instanceof Service) {
       stopQuietly((Service) runner);
     }
-    ProgramId programId = injector.getInstance(Key.get(ProgramId.class,
-                                                       Names.named(PreviewRunnerModule.PREVIEW_PROGRAM_ID)));
+    ProgramId programId = runner.getPreviewRequest().getProgram();
     removePreviewDir(programId);
     LOG.debug("Evicted old preview run {}", programId);
     return true;
@@ -289,7 +293,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
    * Create injector for the given application id.
    */
   @VisibleForTesting
-  Injector createPreviewInjector(ProgramId programId) throws IOException {
+  Injector createPreviewInjector(PreviewRequest previewRequest) throws IOException {
     CConfiguration previewCConf = CConfiguration.copy(cConf);
 
     // Change all services bind address to local host
@@ -299,7 +303,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       .filter(s -> s.endsWith(".bind.address"))
       .forEach(key -> previewCConf.set(key, localhost));
 
-    Path previewDir = Files.createDirectories(getPreviewDirPath(programId));
+    Path previewDir = Files.createDirectories(getPreviewDirPath(previewRequest.getProgram()));
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
@@ -323,7 +327,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new PreviewDiscoveryRuntimeModule(discoveryService),
       new LocalLocationModule(),
       new ConfigStoreModule(),
-      previewRunnerModuleFactory.create(programId),
+      previewRunnerModuleFactory.create(previewRequest),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
