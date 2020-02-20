@@ -47,7 +47,6 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
-import io.cdap.cdap.logging.gateway.handlers.store.ProgramStore;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -102,7 +101,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final PreviewStore previewStore;
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
-  private final ProgramStore programStore;
   private final MetricsCollectionService metricsCollectionService;
   private final MetricsQueryHelper metricsQueryHelper;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
@@ -125,7 +123,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
-                       NamespaceAdmin namespaceAdmin, ProgramStore programStore,
+                       NamespaceAdmin namespaceAdmin,
                        MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper,
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
@@ -142,7 +140,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.previewStore = previewStore;
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
-    this.programStore = programStore;
     this.metricsCollectionService = metricsCollectionService;
     this.metricsQueryHelper = metricsQueryHelper;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
@@ -294,7 +291,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   public RunRecordMeta getRunRecord() {
-    return programStore.getRun(previewStore.getProgramRunId(programId.getParent()));
+    try {
+      return programLifecycleService.getRun(getProgramRunId());
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   @Override

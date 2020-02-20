@@ -24,6 +24,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Interface responsible for managing the lifecycle of a single preview application
@@ -71,8 +72,9 @@ public interface PreviewRunner {
 
   /**
    * Get the run record of the program executed as a part of preview.
-   * @return the {@link RunRecordMeta} associated with the preview
+   * @return the {@link RunRecordMeta} associated with the preview or {@code null} if there is no run record
    */
+  @Nullable
   RunRecordMeta getRunRecord();
 
   /**
