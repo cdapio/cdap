@@ -37,7 +37,7 @@ public interface PreviewRunner {
    * @param request the {@link PreviewRequest} with which preview to be started
    * @throws Exception if there were any error during starting preview
    */
-  void startPreview(PreviewRequest<?> request) throws Exception;
+  void startPreview(PreviewRequest request) throws Exception;
 
   /**
    * Get the status of the preview represented by this {@link PreviewRunner}.

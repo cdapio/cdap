@@ -212,7 +212,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       ((Service) runner).startAndWait();
     }
     try {
-      runner.startPreview(new PreviewRequest<>(programId, appRequest));
+      runner.startPreview(new PreviewRequest(programId, appRequest));
     } catch (Exception e) {
       if (runner instanceof Service) {
         stopQuietly((Service) runner);

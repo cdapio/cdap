@@ -21,13 +21,12 @@ import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Represents the preview application request.
- * @param <T> the type of application config
  */
-public class PreviewRequest<T> {
+public class PreviewRequest {
   private final ProgramId program;
-  private final AppRequest<T> appRequest;
+  private final AppRequest<?> appRequest;
 
-  public PreviewRequest(ProgramId program, AppRequest<T> appRequest) {
+  public PreviewRequest(ProgramId program, AppRequest<?> appRequest) {
     this.program = program;
     this.appRequest = appRequest;
   }
@@ -36,7 +35,7 @@ public class PreviewRequest<T> {
     return program;
   }
 
-  public AppRequest<T> getAppRequest() {
+  public AppRequest<?> getAppRequest() {
     return appRequest;
   }
 }

@@ -225,7 +225,7 @@ public class PreviewManagerTest {
   private static final class MockPreviewRunner implements PreviewRunner {
 
     @Override
-    public void startPreview(PreviewRequest<?> request) {
+    public void startPreview(PreviewRequest request) {
       // no-op
     }
 

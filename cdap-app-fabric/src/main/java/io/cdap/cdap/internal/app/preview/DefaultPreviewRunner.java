@@ -151,7 +151,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public void startPreview(PreviewRequest<?> previewRequest) throws Exception {
+  public void startPreview(PreviewRequest previewRequest) throws Exception {
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(previewRequest.getProgram().getNamespaceId()).build());
     AppRequest<?> request = previewRequest.getAppRequest();
     ArtifactSummary artifactSummary = request.getArtifact();
