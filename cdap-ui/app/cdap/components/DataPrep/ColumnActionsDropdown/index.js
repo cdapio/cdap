@@ -91,7 +91,7 @@ export default class ColumnActionsDropdown extends Component {
         tag: 'divider',
       }
     );
-    if (Theme.showWranglerDatamodelViewer) {
+    if (Theme.showWranglerDataModel) {
       this.directives.push(
         {
           id: uuidV4(),

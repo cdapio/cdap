@@ -28,6 +28,7 @@ interface IJsonFeatureNames {
   'control-center'?: string;
   dashboard?: string;
   'data-prep'?: string;
+  'wrangler-data-model'?: string;
   'wrangler-datamodel-viewer'?: string;
   entities?: string;
   hub?: string;
@@ -76,6 +77,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     dashboard?: boolean;
     reports?: boolean;
     'data-prep'?: boolean;
+    'wrangler-data-model'?: boolean;
     'wrangler-datamodel-viewer'?: boolean;
     pipelines?: boolean;
     pipelineStudio?: boolean;
@@ -163,6 +165,7 @@ interface IFeatureNames {
   controlCenter: string;
   dashboard: string;
   dataPrep: string;
+  wranglerDataModel: string;
   wranglerDatamodelViewer: string;
   entities: string;
   hub: string;
@@ -189,6 +192,7 @@ interface IThemeObj {
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
+  showWranglerDataModel?: boolean;
   showWranglerDatamodelViewer?: boolean;
   showPipelines?: boolean;
   showPipelineStudio?: boolean;
@@ -258,6 +262,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         controlCenter: 'Control Center',
         dashboard: 'Dashboard',
         dataPrep: 'Wrangler',
+        wranglerDataModel: 'Wrangler Data Model',
         wranglerDatamodelViewer: 'EnhancedWrangler',
         entities: 'Entities',
         hub: 'Hub',
@@ -337,6 +342,13 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       if ('data-prep' in contentJson['feature-names']) {
         featureNames.dataPrep = objectQuery(contentJson, 'feature-names', 'data-prep');
       }
+      if ('wrangler-data-model' in contentJson['feature-names']) {
+        featureNames.wranglerDataModel = objectQuery(
+          contentJson,
+          'feature-names',
+          'wrangler-data-model'
+        );
+      }
       if ('wrangler-datamodel-viewer' in contentJson['feature-names']) {
         featureNames.wranglerDatamodelViewer = objectQuery(
           contentJson,
@@ -378,7 +390,6 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showDashboard: true,
       showReports: true,
       showDataPrep: true,
-      // showWranglerDatamodelViewer: true,
       showPipelines: true,
       showPipelineStudio: true,
       showAnalytics: true,
@@ -412,6 +423,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('data-prep' in featuresJson && isBoolean(featuresJson['data-prep'])) {
       features.showDataPrep = featuresJson['data-prep'];
+    }
+    if ('wrangler-data-model' in featuresJson && isBoolean(featuresJson['wrangler-data-model'])) {
+      features.showWranglerDataModel = featuresJson['wrangler-data-model'];
     }
     if (
       'wrangler-datamodel-viewer' in featuresJson &&
