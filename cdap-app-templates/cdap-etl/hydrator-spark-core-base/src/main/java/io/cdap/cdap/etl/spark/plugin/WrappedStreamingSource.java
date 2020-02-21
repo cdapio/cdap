@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.spark.plugin;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.plugin.Caller;
 import org.apache.spark.streaming.api.java.JavaDStream;
@@ -48,6 +49,22 @@ public class WrappedStreamingSource<T> extends StreamingSource<T> {
         source.configurePipeline(pipelineConfigurer);
         return null;
       }
+    });
+  }
+
+  @Override
+  public void prepareRun(StreamingSourceContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      source.prepareRun(context);
+      return null;
+    });
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, StreamingSourceContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      source.onRunFinish(succeeded, context);
+      return null;
     });
   }
 

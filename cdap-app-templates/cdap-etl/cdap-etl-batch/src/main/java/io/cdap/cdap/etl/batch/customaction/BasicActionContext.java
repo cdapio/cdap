@@ -142,4 +142,9 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   public void record(Collection<? extends Operation> operations) {
     context.record(operations);
   }
+
+  @Override
+  public void flushLineage() {
+    context.flushLineage();
+  }
 }

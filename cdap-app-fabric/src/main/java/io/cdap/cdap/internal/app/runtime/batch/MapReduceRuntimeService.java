@@ -152,9 +152,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final BasicMapReduceContext context;
   private final NamespacePathLocator locationFactory;
   private final ProgramLifecycle<MapReduceContext> programLifecycle;
-  private final FieldLineageWriter fieldLineageWriter;
   private final ProgramRunId mapReduceRunId;
   private final ClusterMode clusterMode;
+  private final FieldLineageWriter fieldLineageWriter;
 
   private Job job;
   private Runnable cleanupTask;
@@ -164,8 +164,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           final MapReduce mapReduce, MapReduceSpecification specification,
                           final BasicMapReduceContext context, Location programJarLocation,
-                          NamespacePathLocator locationFactory,
-                          FieldLineageWriter fieldLineageWriter, ClusterMode clusterMode) {
+                          NamespacePathLocator locationFactory, ClusterMode clusterMode,
+                          FieldLineageWriter fieldLineageWriter) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -191,9 +191,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
       }
     };
-    this.fieldLineageWriter = fieldLineageWriter;
     this.mapReduceRunId = context.getProgram().getId().run(context.getRunId().getId());
     this.clusterMode = clusterMode;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -590,6 +590,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     context.destroyProgram(programLifecycle, txControl, false);
     if (emitFieldLineage()) {
       try {
+        // here we cannot call context.flushRecord() since the WorkflowNodeState will need to record and store
+        // the lineage information
         FieldLineageInfo info = new FieldLineageInfo(context.getFieldLineageOperations());
         fieldLineageWriter.write(mapReduceRunId, info);
       } catch (Throwable t) {

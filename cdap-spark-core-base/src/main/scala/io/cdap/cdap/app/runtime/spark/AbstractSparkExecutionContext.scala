@@ -35,6 +35,7 @@ import io.cdap.cdap.api.data.batch.DatasetOutputCommitter
 import io.cdap.cdap.api.data.batch.OutputFormatProvider
 import io.cdap.cdap.api.data.batch.Split
 import io.cdap.cdap.api.dataset.Dataset
+import io.cdap.cdap.api.lineage.field.Operation
 import io.cdap.cdap.api.messaging.MessagingContext
 import io.cdap.cdap.api.metadata.Metadata
 import io.cdap.cdap.api.metadata.MetadataEntity
@@ -361,6 +362,14 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   override def removeTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
     runtimeContext.removeTags(metadataEntity, tags:_*)
+  }
+
+  override def record(operations: util.Collection[_ <: Operation]): Unit = {
+    runtimeContext.record(operations)
+  }
+
+  override def flushLineage(): Unit = {
+    runtimeContext.flushLineage()
   }
 
   override def getDataTracer(tracerName: String): DataTracer = new SparkDataTracer(runtimeContext, tracerName)

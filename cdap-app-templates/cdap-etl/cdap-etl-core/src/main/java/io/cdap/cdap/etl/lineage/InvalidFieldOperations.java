@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.datapipeline;
+package io.cdap.cdap.etl.lineage;
 
 import java.util.List;
 import java.util.Map;

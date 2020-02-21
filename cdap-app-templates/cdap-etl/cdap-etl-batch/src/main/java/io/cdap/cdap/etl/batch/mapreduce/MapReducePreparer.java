@@ -29,11 +29,9 @@ import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
 import io.cdap.cdap.etl.batch.DefaultAggregatorContext;
 import io.cdap.cdap.etl.batch.DefaultJoinerContext;
-import io.cdap.cdap.etl.batch.PipelinePhasePreparer;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.conversion.WritableConversion;
 import io.cdap.cdap.etl.batch.conversion.WritableConversions;
@@ -44,6 +42,7 @@ import io.cdap.cdap.etl.common.submit.AggregatorContextProvider;
 import io.cdap.cdap.etl.common.submit.ContextProvider;
 import io.cdap.cdap.etl.common.submit.Finisher;
 import io.cdap.cdap.etl.common.submit.JoinerContextProvider;
+import io.cdap.cdap.etl.common.submit.PipelinePhasePreparer;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.hadoop.conf.Configuration;
@@ -57,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of the pipeline phase
@@ -72,8 +72,6 @@ public class MapReducePreparer extends PipelinePhasePreparer {
   private Configuration hConf;
   private Map<String, SinkOutput> sinkOutputs;
   private Map<String, String> inputAliasToStage;
-  private Map<String, List<FieldOperation>> stageOperations;
-
 
   public MapReducePreparer(MapReduceContext context, Metrics metrics, MacroEvaluator macroEvaluator,
                            PipelineRuntime pipelineRuntime, Set<String> connectorDatasets) {
@@ -115,6 +113,7 @@ public class MapReducePreparer extends PipelinePhasePreparer {
     return finishers;
   }
 
+  @Nullable
   @Override
   protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec stageSpec) {
     return null;

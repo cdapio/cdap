@@ -29,6 +29,7 @@ import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
@@ -37,16 +38,19 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.api.lineage.field.FieldWriteOperation;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import io.cdap.cdap.test.DataSetManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Mock sink that writes records to a Table and has a utility method for getting all records written.
@@ -87,6 +91,13 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
       context.createDataset(config.tableName, "table", DatasetProperties.EMPTY);
     }
     context.addOutput(Output.ofDataset(config.tableName));
+    Schema schema = context.getInputSchema();
+    if (schema != null && schema.getFields() != null) {
+      schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList())
+        .forEach(field -> context.record(Collections.singletonList(
+          new FieldWriteOperation("Mock sink " + field, "Write to mock sink",
+                                  EndPoint.of(context.getNamespace(), config.tableName), field))));
+    }
   }
 
   @Override

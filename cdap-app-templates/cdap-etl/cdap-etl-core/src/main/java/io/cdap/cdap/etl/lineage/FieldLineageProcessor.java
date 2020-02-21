@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.datapipeline;
+package io.cdap.cdap.etl.lineage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 /**
  * Field lineage processor to validate the stage operations and convert the pipeline level operations to platform
  * level operations
- * TODO: CDAP-15871 move the field operation related classes to etl-core when supporting realtime pipeline
  */
 public class FieldLineageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(FieldLineageProcessor.class);
@@ -104,8 +103,8 @@ public class FieldLineageProcessor {
           // if the field operations are empty for a stage, auto generate it for the stages that have input schema and
           // output schema
           if (fieldOperations == null || fieldOperations.isEmpty()) {
-            return  Collections.singletonList(new FieldTransformOperation("Transform", "",
-                                                                          stageInputs, stageOutputs));
+            return Collections.singletonList(new FieldTransformOperation("Transform", "",
+                                                                         stageInputs, stageOutputs));
           }
           return fieldOperations;
         });

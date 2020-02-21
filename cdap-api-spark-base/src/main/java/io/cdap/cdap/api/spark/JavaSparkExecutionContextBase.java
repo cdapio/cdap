@@ -26,6 +26,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.lineage.field.LineageRecorder;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataWriter;
@@ -49,7 +50,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public abstract class JavaSparkExecutionContextBase implements SchedulableProgramContext, RuntimeContext, Transactional,
-                                                               WorkflowInfoProvider,
+                                                               WorkflowInfoProvider, LineageRecorder,
                                                                SecureStore, MetadataReader, MetadataWriter {
 
   /**

@@ -39,6 +39,7 @@ import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -101,10 +102,12 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         SecureStoreManager secureStoreManager,
                         MessagingService messagingService, MetadataReader metadataReader,
                         MetadataPublisher metadataPublisher,
-                        NamespaceQueryAdmin namespaceQueryAdmin) {
+                        NamespaceQueryAdmin namespaceQueryAdmin,
+                        FieldLineageWriter fieldLineageWriter) {
     super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          messagingService, pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin);
+          messagingService, pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin,
+          fieldLineageWriter);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.spec = spec;

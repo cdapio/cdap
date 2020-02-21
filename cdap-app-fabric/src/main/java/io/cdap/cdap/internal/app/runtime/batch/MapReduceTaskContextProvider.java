@@ -37,6 +37,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
@@ -168,15 +169,16 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
    * Creates a {@link CacheLoader} for the task context cache.
    */
   private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
-    final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    final DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    final SecureStore secureStore = injector.getInstance(SecureStore.class);
-    final SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
-    final MessagingService messagingService = injector.getInstance(MessagingService.class);
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    SecureStore secureStore = injector.getInstance(SecureStore.class);
+    SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
+    MessagingService messagingService = injector.getInstance(MessagingService.class);
     // Multiple instances of BasicMapReduceTaskContext can share the same program.
-    final AtomicReference<Program> programRef = new AtomicReference<>();
-    final MetadataReader metadataReader = injector.getInstance(MetadataReader.class);
-    final MetadataPublisher metadataPublisher = injector.getInstance(MetadataPublisher.class);
+    AtomicReference<Program> programRef = new AtomicReference<>();
+    MetadataReader metadataReader = injector.getInstance(MetadataReader.class);
+    MetadataPublisher metadataPublisher = injector.getInstance(MetadataPublisher.class);
+    FieldLineageWriter fieldLineageWriter = injector.getInstance(FieldLineageWriter.class);
 
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
@@ -249,7 +251,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           transaction, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
           authorizationEnforcer, authenticationContext, messagingService, mapReduceClassLoader, metadataReader,
-          metadataPublisher, namespaceQueryAdmin
+          metadataPublisher, namespaceQueryAdmin, fieldLineageWriter
         );
       }
     };

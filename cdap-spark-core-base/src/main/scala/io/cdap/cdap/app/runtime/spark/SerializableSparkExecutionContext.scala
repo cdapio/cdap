@@ -21,6 +21,7 @@ import java.{lang, util}
 
 import io.cdap.cdap.api.TxRunnable
 import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.lineage.field.Operation
 import io.cdap.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
 import io.cdap.cdap.api.preview.DataTracer
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
@@ -154,4 +155,12 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
   override def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo] = delegate.getTriggeringScheduleInfo
 
   override def toJavaSparkExecutionContext() = delegate.toJavaSparkExecutionContext()
+
+  override def record(operations: util.Collection[_ <: Operation]): Unit = {
+    delegate.record(operations)
+  }
+
+  override def flushLineage(): Unit = {
+    delegate.flushLineage()
+  }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.datapipeline;
+package io.cdap.cdap.etl.lineage;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.lineage.field.EndPoint;
