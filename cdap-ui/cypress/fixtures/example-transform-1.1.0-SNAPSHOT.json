@@ -1,0 +1,10 @@
+{
+  "properties": {
+    "widgets.ExampleTransform-transform": "{\n  \"outputs\": [{\n    \"name\": \"schema\",\n    \"widget-type\": \"schema\",\n    \"label\": \"schema\"\n  }],\n  \"metadata\": {\"spec-version\": \"1.4\"},\n  \"configuration-groups\": [{\n    \"label\": \"Transform Configuration\",\n    \"properties\": [\n      {\n        \"widget-type\": \"textbox\",\n        \"name\": \"myOption\",\n        \"label\": \"My Option\",\n        \"widget-attributes\": {\n          \"default\": \"an example default value\",\n          \"width\": \"large\"\n        }\n      },\n      {\n        \"widget-type\": \"textbox\",\n        \"name\": \"myOptionalOption\",\n        \"label\": \"My Optional Option\",\n        \"widget-attributes\": {\"width\": \"large\"}\n      }\n    ]\n  }]\n}",
+    "doc.ExampleTransform-transform": "# Example Transform\n\nInsert documentation about your plugin in this file.\nThe UI will display the contents in the reference section of your plugin,\nassuming this file is named following a convention of ``[plugin-name]-transform.md``.\nThe plugin name is case sensitive.\n\nFor examples of plugin documentation, see the\n[Hydrator documentation](https://github.com/caskdata/hydrator-plugins/tree/develop/core-plugins/docs).\n"
+  },
+  "parents": [
+    "system:cdap-data-pipeline[6.0.0,10.0.0-SNAPSHOT)",
+    "system:cdap-data-streams[6.0.0,10.0.0-SNAPSHOT)"
+  ]
+}

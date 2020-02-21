@@ -252,7 +252,7 @@ function link (scope, element) {
           tooltipTime = new Date(tooltipTime);
         }
 
-        tooltipDiv.html(tooltipTime)
+        tooltipDiv.html(scope.moment(tooltipTime).format('MM-DD-YYYY, h:mm:ss a'))
           .style('left', (d3.event.pageX - overflowOffset) + 'px')
           .style('top', (d3.event.pageY - 28) + 'px');
       })

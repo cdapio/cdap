@@ -42,6 +42,24 @@ Cypress.Commands.add('upload_pipeline', (fileName, selector) => {
   });
 });
 
+Cypress.Commands.add(
+  'upload',
+  {
+    prevSubject: 'element',
+  },
+  (subject, file, fileName, fileType) => {
+    cy.window().then((window) => {
+      const blob = new Blob([file], { type: fileType });
+      const testFile = new window.File([blob], fileName);
+      const dataTransfer = new window.DataTransfer();
+      dataTransfer.items.add(testFile);
+      cy.wrap(subject).trigger('drop', {
+        dataTransfer,
+      });
+    });
+  }
+);
+
 Cypress.Commands.add('cleanup_pipelines', (headers, pipelineName) => {
   return cy
     .request({

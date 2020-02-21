@@ -106,7 +106,7 @@ export default function PipelineContextMenu({
   const menuOptions: IContextMenuOption[] = [
     {
       name: 'add-wrangler-source',
-      label: 'Add a wrangler source',
+      label: 'Wrangle',
       icon: <IconSVG name="icon-DataPreparation" />,
       onClick: () => setShowWranglerModal(!showWranglerModal),
     },

@@ -29,14 +29,22 @@ import {
   IFilteredConfigurationGroup,
 } from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
 import { IErrorObj } from 'components/ConfigurationGroup/utilities';
+import { h2Styles } from 'components/Markdown/MarkdownHeading';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     group: {
-      marginBottom: '45px',
+      marginBottom: '20px',
     },
     groupTitle: {
-      marginBottom: '25px',
+      marginBottom: '15px',
+    },
+    h2Title: {
+      ...h2Styles(theme),
+      marginBottom: 0,
+    },
+    groupSubTitle: {
+      color: theme.palette.grey[200],
     },
   };
 };
@@ -179,9 +187,9 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
       return (
         <div key={`${group.label}-${i}`} className={classes.group}>
           <div className={classes.groupTitle}>
-            <h2>{group.label}</h2>
+            <h2 className={classes.h2Title}>{group.label}</h2>
             <If condition={group.description && group.description.length > 0}>
-              <small>{group.description}</small>
+              <small className={classes.groupSubTitle}>{group.description}</small>
             </If>
           </div>
 

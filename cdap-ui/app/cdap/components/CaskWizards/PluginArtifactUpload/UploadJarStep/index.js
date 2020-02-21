@@ -46,7 +46,7 @@ const ArtifactUploader = connect(mapStateWithDNDFileProps, mapDispatchWithDNDFil
 export default function UploadJarStep(props, context) {
   return (
     <Provider store={PluginArtifactUploadStore}>
-      <div className="upload-step-container">
+      <div className="upload-step-container" data-cy="plugin-jar-upload-container">
         {/* TODO: shouldn't do this, replace in 4.2} */
         context.isMarket ? (
           <h4 className="upload-instruction">

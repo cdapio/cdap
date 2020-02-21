@@ -71,7 +71,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     vm.displayData = [];
     vm.data = [];
     vm.fullScreen = false;
-    vm.includeSystemLogs = true;
+    vm.includeSystemLogs = false;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
       time: true,

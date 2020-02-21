@@ -240,6 +240,7 @@ export default class Wizard extends Component {
     let nextButton = (
       <button
         className="btn btn-secondary"
+        data-cy="wizard-next-btn"
         onClick={this.goToNextStep.bind(this, matchedStep.id)}
         disabled={btnsDisabled}
       >
@@ -250,6 +251,7 @@ export default class Wizard extends Component {
     let prevButton = (
       <button
         className="btn btn-secondary"
+        data-cy="wizard-previous-btn"
         onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
         disabled={btnsDisabled}
       >
@@ -260,6 +262,7 @@ export default class Wizard extends Component {
     let finishButton = (
       <button
         className="btn btn-primary"
+        data-cy="wizard-finish-btn"
         onClick={this.submitForm.bind(this)}
         disabled={
           !this.state.requiredStepsCompleted || this.state.loading || btnsDisabled

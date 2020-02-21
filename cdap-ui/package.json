@@ -80,7 +80,7 @@
     "clean-webpack-plugin": "3.0.0",
     "copy-webpack-plugin": "5.0.5",
     "css-loader": "3.4.0",
-    "cypress": "3.6.1",
+    "cypress": "4.0.2",
     "cypress-plugin-retries": "1.2.2",
     "cypress-visual-regression": "1.0.4",
     "del": "5.1.0",
