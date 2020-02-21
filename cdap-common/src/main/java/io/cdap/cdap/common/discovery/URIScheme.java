@@ -62,11 +62,15 @@ public enum URIScheme {
   public static URI createURI(Discoverable discoverable, String pathFmt, Object...objs) {
     String scheme = getScheme(discoverable).scheme;
     InetSocketAddress address = discoverable.getSocketAddress();
+    String baseURI = String.format("%s://%s:%d", scheme, address.getHostName(), address.getPort());
+    if (address.getPort() == 0) {
+      baseURI = String.format("%s://%s", scheme, address.getHostName());
+    }
     String path = String.format(pathFmt, objs);
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
-    return URI.create(String.format("%s://%s:%d/%s", scheme, address.getHostName(), address.getPort(), path));
+    return URI.create(String.format("%s/%s", baseURI, path));
   }
 
 

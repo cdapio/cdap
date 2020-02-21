@@ -148,6 +148,17 @@ public class MonitorSocksProxyTest {
   }
 
   @Test
+  public void test() throws Exception {
+    // Make 10 requests. With connection keep-alive, there should only be one SSH tunnel created
+    URL url = new URL("http://metadata/computeMetadata/v1/instance/service-accounts/default/token");
+    HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url)
+                                                   .addHeader("Metadata-Flavor", "Google").build(),
+                                                 new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(200, response.getResponseCode());
+    System.out.println(response.getResponseBodyAsString());
+  }
+
+  @Test
   public void testChunkCall() throws Exception {
     InetSocketAddress httpAddr = httpService.getBindAddress();
 

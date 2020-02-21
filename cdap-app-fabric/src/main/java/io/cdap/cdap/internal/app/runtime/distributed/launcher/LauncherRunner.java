@@ -84,7 +84,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 
 /**
@@ -177,39 +177,55 @@ public class LauncherRunner {
     System.out.println("Argument 1: " + args[1]);
     Program executableProgram = createProgram(cConf, programRunner, programDescriptor, tempDir, deserializedOptions);
     ProgramController controller = programRunner.run(executableProgram, deserializedOptions);
-    CountDownLatch latch = new CountDownLatch(1);
+    CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     controller.addListener(new AbstractListener() {
-
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        System.out.println("In controller init");
+        switch (currentState) {
+          case ALIVE:
+            System.out.println("In alive, calling alive()");
+            alive();
+            break;
+          case COMPLETED:
+            System.out.println("In completed, calling completed()");
+            completed();
+            break;
+          case KILLED:
+            System.out.println("In killed, calling killed()");
+            killed();
+            break;
+          case ERROR:
+            System.out.println("In error, calling error()");
+            error(cause);
+            break;
+        }
+      }
+
+      @Override
+      public void alive() {
+        System.out.println("program is alive");
       }
 
       @Override
       public void completed() {
-        System.out.println("Program completed");
-        latch.countDown();
-      }
-
-      @Override
-      public void stopping() {
-        System.out.println("Program stopping");
+        System.out.println("program is completed");
+        programCompletion.complete(ProgramController.State.COMPLETED);
       }
 
       @Override
       public void killed() {
-        System.out.println("Program was killed");
-        latch.countDown();
+        System.out.println("program is killed");
+        programCompletion.complete(ProgramController.State.KILLED);
       }
 
       @Override
       public void error(Throwable cause) {
-        latch.countDown();
-        System.out.println("Program in error state: " + cause.getMessage());
-        cause.printStackTrace();
+        System.out.println("program is error");
+        programCompletion.completeExceptionally(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
-    latch.await();
+    // Block on the completion
+    programCompletion.get();
 
     if (controller.getFailureCause() != null) {
       System.out.println("Error message: " + controller.getFailureCause().getMessage());

@@ -77,7 +77,6 @@ public class MapReduceBatchContext extends AbstractBatchContext
           new LimitingInputFormatProvider(inputFormatProvider, getMaxPreviewRecords());
         trackableInput = Input.of(input.getName(), wrapper).alias(input.getAlias());
       }
-      trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(trackableInput));
       mrContext.addInput(trackableInput);
       return trackableInput;
     });

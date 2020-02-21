@@ -426,6 +426,7 @@ final class DataprocClient implements AutoCloseable {
         builder.setConfigBucket(conf.getGcsBucket());
       }
 
+
       // TODO: Do not hardcode, use resources for it. Also make sure script is generic enough for any number of workers
       builder.addInitializationActions(0, NodeInitializationAction.newBuilder()
         .setExecutableFile("gs://blah-bucket123/zookeeper/zookeeper.sh").build());

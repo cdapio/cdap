@@ -43,7 +43,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
-import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
@@ -284,6 +283,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       controller.addListener(new AbstractListener() {
         @Override
         public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+          LOG.info("### in runnable init");
           switch (currentState) {
             case ALIVE:
               alive();
@@ -302,17 +302,20 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
         @Override
         public void alive() {
+          LOG.info("### in runnable alive");
           controllerFuture.complete(controller);
         }
 
         @Override
         public void completed() {
+          LOG.info("### in runnable completed");
           controllerFuture.complete(controller);
           programCompletion.complete(ProgramController.State.COMPLETED);
         }
 
         @Override
         public void killed() {
+          LOG.info("### in runnable completed");
           controllerFuture.complete(controller);
           programCompletion.complete(ProgramController.State.KILLED);
         }
@@ -427,6 +430,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // because that module is used in both launcher and task containers
       module = Modules.override(module).with(
         new MessagingServerRuntimeModule().getStandaloneModules());
+      //module = Modules.override(module).with(new LauncherDiscoveryModule());
     }
 
     return module;
@@ -531,7 +535,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
     services.add(injector.getInstance(TransactionManager.class));
     services.add(injector.getInstance(MessagingHttpService.class));
-    services.add(injector.getInstance(DatasetService.class));
   //  services.add(injector.getInstance(RuntimeMonitorServer.class));
   }
 

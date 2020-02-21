@@ -17,6 +17,7 @@
 package io.cdap.cdap.data2.datafabric.dataset;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -41,6 +42,7 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -58,10 +60,12 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * Provides programmatic APIs to access {@link io.cdap.cdap.data2.datafabric.dataset.service.DatasetService}.
@@ -79,13 +83,17 @@ public class DatasetServiceClient {
   private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
   private final String masterShortUserName;
+  private boolean addAdditionalHeader;
 
   DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
-                       CConfiguration cConf, AuthenticationContext authenticationContext) {
+                       CConfiguration cConf, AuthenticationContext authenticationContext, boolean addAdditionalHeader) {
     this.remoteClient = new RemoteClient(
       discoveryClient, Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
       String.format("%s/namespaces/%s/data", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()));
     this.namespaceId = namespaceId;
+    LOG.info("### Discovery client class name: {}", discoveryClient.getClass().getName());
+    LOG.info("### Additional headers: {}", addAdditionalHeader);
+    this.addAdditionalHeader = addAdditionalHeader;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
@@ -324,6 +332,39 @@ public class DatasetServiceClient {
   private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws DatasetManagementException {
     if (LOG.isTraceEnabled()) {
       builder = builder.addHeader("callerId", Thread.currentThread().getName());
+    }
+    if (addAdditionalHeader) {
+      try {
+        LOG.info("Additional header is true..");
+        URL url = new URL("http://metadata/computeMetadata/v1/instance/service-accounts/default/token");
+        HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url)
+                                                       .addHeader("Metadata-Flavor", "Google").build(),
+                                                     new DefaultHttpRequestConfig(false));
+
+        LOG.info("### response from auth server json {}", response.getResponseBodyAsString());
+        JsonObject jobj = new Gson().fromJson(response.getResponseBodyAsString(), JsonObject.class);
+        String accessToken = jobj.get("access_token").getAsString();
+
+        builder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+      } catch (Exception e) {
+        LOG.error("### error while getting token: {}", e.getMessage(), e);
+      }
+    } else {
+      try {
+        LOG.info("Additional header is false..");
+        URL url = new URL("http://metadata/computeMetadata/v1/instance/service-accounts/default/token");
+        HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url)
+                                                       .addHeader("Metadata-Flavor", "Google").build(),
+                                                     new DefaultHttpRequestConfig(false));
+
+        LOG.info("### response from auth server json {}", response.getResponseBodyAsString());
+        JsonObject jobj = new Gson().fromJson(response.getResponseBodyAsString(), JsonObject.class);
+        String accessToken = jobj.get("access_token").getAsString();
+
+        builder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+      } catch (Exception e) {
+        LOG.error("### error while getting token: {}", e.getMessage(), e);
+      }
     }
     if (!securityEnabled || !authorizationEnabled) {
       return builder;

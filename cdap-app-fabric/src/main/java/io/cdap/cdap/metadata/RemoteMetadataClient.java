@@ -69,7 +69,7 @@ public class RemoteMetadataClient extends AbstractMetadataClient {
   @Override
   protected URL resolve(String resource) {
     URL url = remoteClient.resolve(resource);
-    LOG.trace("Resolved URL {} for resources {}", url, resource);
+    LOG.info("Resolved URL {} for resources {}", url, resource);
     return url;
   }
 

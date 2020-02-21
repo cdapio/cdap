@@ -31,7 +31,6 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import io.cdap.cdap.runtime.spi.launcher.JobId;
 import io.cdap.cdap.runtime.spi.launcher.LaunchInfo;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
@@ -41,16 +40,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class DataprocLauncher implements Launcher {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocLauncher.class);
-  private static final Gson GSON = new Gson();
 
   @Override
   public String getName() {
@@ -59,7 +61,6 @@ public class DataprocLauncher implements Launcher {
 
   @Override
   public JobId launch(LaunchInfo info) {
-    String fileSuffix = null;
     try {
 
       LOG.info("Inside dataproc launcher for program id: {}", info.getProgramId());
@@ -73,45 +74,23 @@ public class DataprocLauncher implements Launcher {
 
       // The name for the new bucket
       String bucketName = "launcher-three";
-      // TODO Get artifacts to run mapreduce or spark jobs
       List<String> uris = new ArrayList<>();
       List<String> files = new ArrayList<>();
 
+      // TODO paralelize this to be uploaded by multiple threads for faster job submission
+      ExecutorService executor = Executors.newFixedThreadPool(info.getLauncherFileList().size());
+
       for (LauncherFile launcherFile : info.getLauncherFileList()) {
-        LOG.info("Uploading launcher file: {} to gcs bucket.", launcherFile.getName());
-
-        File file = new File(launcherFile.getUri());
-        //init array with file length
-        byte[] bytesArray = new byte[(int) file.length()];
-
-        FileInputStream fis = new FileInputStream(file);
-        fis.read(bytesArray); //read file into bytes[]
-        fis.close();
-
-        String fileName = launcherFile.getName();
-
-        if (fileName.equals("artifacts")) {
-          fileName = "artifacts.jar";
-        }
-        BlobId blobId = BlobId.of(bucketName, fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
-        Blob blob = storage.create(blobInfo, bytesArray);
-
-        if (launcherFile.getName().endsWith("jar")) {
-          LOG.info("Adding {} to jar", blob.getName());
-          uris.add("gs://launcher-three/" + blob.getName());
-          if (blob.getName().startsWith("expanded.")) {
-            // 2.0.0-SNAPSHOT.06ff0c10-0129-4c8b-aa13-03b958b408cf.jar to jar
-            int i = blob.getName().lastIndexOf(".jar");
-            fileSuffix = blob.getName().substring(0, i);
-            fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf('.') + 1);
-            LOG.info("File suffix is : {}", fileSuffix);
+        executor.submit(() -> {
+          try {
+            LOG.info("Uploading file {}", launcherFile.getName());
+            uploadFile(storage, bucketName, uris, files, launcherFile);
+          } catch (IOException e) {
+            LOG.error("Exception while uploading file {}", e.getMessage(), e);
           }
-        } else {
-          LOG.info("Adding {} to file", blob.getName());
-          files.add("gs://launcher-three/" + blob.getName());
-        }
+        });
       }
+      executor.awaitTermination(30, TimeUnit.MINUTES);
 
       List<String> archive = new ArrayList<>();
 
@@ -135,7 +114,7 @@ public class DataprocLauncher implements Launcher {
                                     .addAllJarFileUris(uris)
                                     .addAllFileUris(files)
                                     .addAllArchiveUris(archive)
-                                    .addAllArgs(ImmutableList.of(info.getProgramId(), fileSuffix))
+                                    .addAllArgs(ImmutableList.of(info.getProgramId(), "abc"))
                                     .build())
                     .build())
           .build();
@@ -157,5 +136,44 @@ public class DataprocLauncher implements Launcher {
 
     // TODO return job id for monitoring
     return null;
+  }
+
+  private void uploadFile(Storage storage, String bucketName, List<String> uris,
+                            List<String> files, LauncherFile launcherFile) throws IOException {
+    LOG.info("Uploading launcher file: {} to gcs bucket.", launcherFile.getName());
+
+    File file = new File(launcherFile.getUri());
+    //init array with file length
+    byte[] bytesArray = new byte[(int) file.length()];
+
+    FileInputStream fis = new FileInputStream(file);
+    fis.read(bytesArray); //read file into bytes[]
+    fis.close();
+
+    String fileName = launcherFile.getName();
+
+    if (fileName.equals("artifacts")) {
+      fileName = "artifacts.jar";
+    }
+    BlobId blobId = BlobId.of(bucketName, fileName);
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
+    // TODO use writer channel instead of create for large files. Figure out whether that api is atomic
+    Blob blob = storage.create(blobInfo, bytesArray);
+
+    if (launcherFile.getName().endsWith("jar")) {
+      LOG.info("Adding {} to jar", blob.getName());
+      uris.add("gs://launcher-three/" + blob.getName());
+      if (blob.getName().startsWith("expanded.")) {
+        // 2.0.0-SNAPSHOT.06ff0c10-0129-4c8b-aa13-03b958b408cf.jar to jar
+        int i = blob.getName().lastIndexOf(".jar");
+//        fileSuffix = blob.getName().substring(0, i);
+//        fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf('.') + 1);
+//        LOG.info("File suffix is : {}", fileSuffix);
+      }
+    } else {
+      LOG.info("Adding {} to file", blob.getName());
+      files.add("gs://launcher-three/" + blob.getName());
+    }
+    //return fileSuffix;
   }
 }

@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -32,6 +33,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -40,7 +42,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
@@ -52,12 +56,16 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
 
   private final RemoteClient remoteClient;
   private final AuthenticationContext authenticationContext;
+  private boolean addAdditionalHeader;
 
   @Inject
   public RemoteDatasetOpExecutor(DiscoveryServiceClient discoveryClient, AuthenticationContext authenticationContext) {
     this.authenticationContext = authenticationContext;
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.DATASET_EXECUTOR,
                                          new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+    if (discoveryClient.getClass().getName().contains("LauncherDiscoveryService")) {
+      addAdditionalHeader = true;
+    }
   }
 
   @Override
@@ -113,6 +121,23 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
       HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path);
       if (body != null) {
         builder.withBody(body);
+      }
+      if (addAdditionalHeader) {
+        try {
+          LOG.info("Additional header is true..");
+          URL url = new URL("http://metadata/computeMetadata/v1/instance/service-accounts/default/token");
+          HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url)
+                                                         .addHeader("Metadata-Flavor", "Google").build(),
+                                                       new DefaultHttpRequestConfig(false));
+
+          LOG.info("### response from auth server json {}", response.getResponseBodyAsString());
+          JsonObject jobj = new Gson().fromJson(response.getResponseBodyAsString(), JsonObject.class);
+          String accessToken = jobj.get("access_token").getAsString();
+
+          builder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        } catch (Exception e) {
+          LOG.error("### error while getting token: {}", e.getMessage(), e);
+        }
       }
       String userId = authenticationContext.getPrincipal().getName();
       if (userId != null) {

@@ -33,10 +33,8 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
-import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -64,9 +62,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     Injector injector = getInjector();
 
     Deque<Service> coreServices = new LinkedList<>();
-    if (clusterMode == ClusterMode.ON_PREMISE) {
+    if (clusterMode == ClusterMode.ISOLATED) {
       coreServices.add(injector.getInstance(ZKClientService.class));
-      coreServices.add(injector.getInstance(KafkaClientService.class));
+     // coreServices.add(injector.getInstance(KafkaClientService.class));
     }
     coreServices.add(injector.getInstance(MetricsCollectionService.class));
 
@@ -79,12 +77,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   protected void startUp() throws Exception {
     super.startUp();
     try {
-      oldProxySelector = ProxySelector.getDefault();
-      if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
-        Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
-      }
-
       for (Service service : coreServices) {
         service.startAndWait();
       }
@@ -122,9 +114,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
         }
       }
     }
-
-    Authenticator.setDefault(null);
-    ProxySelector.setDefault(oldProxySelector);
 
     if (failure != null) {
       throw failure;

@@ -90,6 +90,19 @@ public class RESTClientTest {
     verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
+  @Test
+  public void test() throws Exception {
+    URL url = new URL("https://six-one-one-cluster-vini-project-238000-dot-usw1.datafusion.googleusercontent" +
+                        ".com/api/v3/namespaces/");
+    String s = "ya29.a0Adw1xeXtJHVO8T8QQUlWmIBy6omzTXX_yoNgFJLGLuPH9wC4qaePR926T2CKBs8YIS0NvG1kejwrMNmAU_a3E4xRE7" +
+      "oGrphme9jiBq9bArZN3LQ0U6Pu-UgDX_3atNqATW0xlBx2M6zlnQQJx6Q8Awks-tKSxwEctISaolRwa_Gmmw";
+    HttpRequest request = HttpRequest.get(url).addHeader(HttpHeaders.AUTHORIZATION,
+                                                         "Bearer " + s).build();
+    HttpResponse response = restClient.execute(request);
+    System.out.println(response.getResponseCode());
+    System.out.println(response.getResponseBodyAsString());
+  }
+
   @Test(expected = UnauthenticatedException.class)
   public void testPostUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPostAuth").toURL();

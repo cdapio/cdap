@@ -83,16 +83,21 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, DatasetServiceClient> clientCache;
   private final DatasetDefinitionRegistryFactory registryFactory;
+  private boolean addAdditionalHeader;
 
   @Inject
   public RemoteDatasetFramework(final CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
                                 DatasetDefinitionRegistryFactory registryFactory,
                                 final AuthenticationContext authenticationContext) {
     this.cConf = cConf;
+    LOG.info("### Discovery client class name: {}", discoveryClient.getClass().getName());
+    if (discoveryClient.getClass().getName().contains("LauncherDiscoveryService")) {
+      addAdditionalHeader = true;
+    }
     this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, DatasetServiceClient>() {
       @Override
       public DatasetServiceClient load(NamespaceId namespace) throws Exception {
-        return new DatasetServiceClient(discoveryClient, namespace, cConf, authenticationContext);
+        return new DatasetServiceClient(discoveryClient, namespace, cConf, authenticationContext, addAdditionalHeader);
       }
     });
     this.registryFactory = registryFactory;

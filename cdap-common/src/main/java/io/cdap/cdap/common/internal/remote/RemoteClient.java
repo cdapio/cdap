@@ -31,6 +31,8 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -45,6 +47,7 @@ import javax.annotation.Nullable;
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
@@ -52,13 +55,18 @@ public class RemoteClient {
 
   public RemoteClient(final DiscoveryServiceClient discoveryClient, final String discoverableServiceName,
                       HttpRequestConfig httpRequestConfig, String basePath) {
+    LOG.info("### Discoverable in remote client: {}", discoverableServiceName);
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
+//    ServiceDiscovered discover = discoveryClient.discover(discoverableServiceName);
+//    LOG.info("### Service discovered: {}", discover.getName());
+
     // Use a supplier to delay the discovery until the first time it is being used.
     this.endpointStrategySupplier = Suppliers.memoize(
       () -> new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName)));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
+    LOG.info("### base path: {}", this.basePath);
   }
 
   /**
