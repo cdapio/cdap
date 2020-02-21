@@ -34,6 +34,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
@@ -68,6 +69,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataReader metadataReader;
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final FieldLineageWriter fieldLineageWriter;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -75,7 +77,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                              TransactionSystemClient txClient,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService, MetadataReader metadataReader,
-                             MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin) {
+                             MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
+                             FieldLineageWriter fieldLineageWriter) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -88,6 +91,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.fieldLineageWriter = fieldLineageWriter;
   }
 
   @Override
@@ -131,7 +135,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, metadataReader, metadataPublisher,
-                                                          namespaceQueryAdmin);
+                                                          namespaceQueryAdmin, fieldLineageWriter);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.batch;
+package io.cdap.cdap.etl.common.submit;
 
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
@@ -30,18 +30,20 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.MultiConnectorFactory;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
-import io.cdap.cdap.etl.common.submit.Finisher;
-import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -55,6 +57,7 @@ public abstract class PipelinePhasePreparer {
   private final Metrics metrics;
   protected final MacroEvaluator macroEvaluator;
   protected final PipelineRuntime pipelineRuntime;
+  protected Map<String, List<FieldOperation>> stageOperations;
 
   public PipelinePhasePreparer(PluginContext pluginContext, Metrics metrics, MacroEvaluator macroEvaluator,
                                PipelineRuntime pipelineRuntime) {
@@ -70,7 +73,7 @@ public abstract class PipelinePhasePreparer {
    * @param phaseSpec the pipeline phase to prepare
    * @return list of finishers that should be run when the pipeline ends
    */
-  public List<Finisher> prepare(BatchPhaseSpec phaseSpec)
+  public List<Finisher> prepare(PhaseSpec phaseSpec)
     throws TransactionFailureException, InstantiationException, IOException {
     PipelinePluginInstantiator pluginInstantiator =
       new PipelinePluginInstantiator(pluginContext, metrics, phaseSpec, new MultiConnectorFactory());
@@ -107,7 +110,7 @@ public abstract class PipelinePhasePreparer {
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
         SplitterTransform<?, ?> splitterTransform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSplitterTransform(splitterTransform, stageSpec);
-      } else {
+      }  else {
         submitterPlugin = create(pluginInstantiator, stageSpec);
       }
 
@@ -120,10 +123,13 @@ public abstract class PipelinePhasePreparer {
     return finishers;
   }
 
+  // for map reduce engine, spark related plugin cannot be created
   @Nullable
   protected abstract SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec stageSpec)
     throws InstantiationException;
 
+  // for streaming pipeline, batch source cannot be created
+  @Nullable
   protected abstract SubmitterPlugin createSource(BatchConfigurable<BatchSourceContext> batchSource,
                                                   StageSpec stageSpec);
 

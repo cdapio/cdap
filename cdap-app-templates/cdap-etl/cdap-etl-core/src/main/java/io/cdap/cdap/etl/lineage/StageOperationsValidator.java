@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.datapipeline;
+package io.cdap.cdap.etl.lineage;
 
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldReadOperation;

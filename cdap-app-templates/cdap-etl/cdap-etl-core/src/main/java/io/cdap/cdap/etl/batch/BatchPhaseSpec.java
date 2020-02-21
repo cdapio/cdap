@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.batch;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 
 import java.util.Map;
@@ -26,15 +27,10 @@ import java.util.Map;
 /**
  * Information required by one phase of a batch pipeline.
  */
-public class BatchPhaseSpec {
-  private final String phaseName;
-  private final PipelinePhase phase;
+public class BatchPhaseSpec extends PhaseSpec {
   private final Resources resources;
   private final Resources driverResources;
   private final Resources clientResources;
-  private final boolean isStageLoggingEnabled;
-  private final boolean isProcessTimingEnabled;
-  private final Map<String, String> connectorDatasets;
   private final Map<String, String> pipelineProperties;
   private final String description;
   private final int numOfRecordsPreview;
@@ -45,26 +41,14 @@ public class BatchPhaseSpec {
                         boolean isStageLoggingEnabled, boolean isProcessTimingEnabled,
                         Map<String, String> connectorDatasets, int numOfRecordsPreview,
                         Map<String, String> pipelineProperties, boolean isPipelineContainsCondition) {
-    this.phaseName = phaseName;
-    this.phase = phase;
+    super(phaseName, phase, connectorDatasets, isStageLoggingEnabled, isProcessTimingEnabled);
     this.resources = resources;
     this.driverResources = driverResources;
     this.clientResources = clientResources;
-    this.isStageLoggingEnabled = isStageLoggingEnabled;
-    this.isProcessTimingEnabled = isProcessTimingEnabled;
-    this.connectorDatasets = connectorDatasets;
     this.description = createDescription();
     this.numOfRecordsPreview = numOfRecordsPreview;
     this.pipelineProperties = ImmutableMap.copyOf(pipelineProperties);
     this.isPipelineContainsCondition = isPipelineContainsCondition;
-  }
-
-  public String getPhaseName() {
-    return phaseName;
-  }
-
-  public PipelinePhase getPhase() {
-    return phase;
   }
 
   public Resources getResources() {
@@ -77,18 +61,6 @@ public class BatchPhaseSpec {
 
   public Resources getClientResources() {
     return clientResources;
-  }
-
-  public boolean isStageLoggingEnabled() {
-    return isStageLoggingEnabled;
-  }
-
-  public boolean isProcessTimingEnabled() {
-    return isProcessTimingEnabled;
-  }
-
-  public Map<String, String> getConnectorDatasets() {
-    return connectorDatasets;
   }
 
   public String getDescription() {
@@ -109,10 +81,10 @@ public class BatchPhaseSpec {
 
   private String createDescription() {
     StringBuilder description = new StringBuilder("Sources '");
-    Joiner.on("', '").appendTo(description, phase.getSources());
+    Joiner.on("', '").appendTo(description, getPhase().getSources());
     description.append("' to sinks '");
 
-    Joiner.on("', '").appendTo(description, phase.getSinks());
+    Joiner.on("', '").appendTo(description, getPhase().getSinks());
     description.append("'.");
     return description.toString();
   }

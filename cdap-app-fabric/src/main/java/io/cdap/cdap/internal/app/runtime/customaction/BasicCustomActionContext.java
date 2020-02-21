@@ -29,6 +29,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -58,13 +59,14 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   @Nullable PluginInstantiator pluginInstantiator,
                                   SecureStore secureStore, SecureStoreManager secureStoreManager,
                                   MessagingService messagingService, MetadataReader metadataReader,
-                                  MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin) {
+                                  MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
+                                  FieldLineageWriter fieldLineageWriter) {
 
     super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<>()), secureStore,
           secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin);
+          namespaceQueryAdmin, fieldLineageWriter);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

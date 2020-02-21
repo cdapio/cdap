@@ -33,7 +33,6 @@ import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.common.Scope;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
-import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
@@ -65,10 +64,10 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.DataSetFieldSetter;
 import io.cdap.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -95,7 +94,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
@@ -184,7 +182,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                     metricsCollectionService, this.datasetFramework, txClient,
                                                     discoveryServiceClient, nodeStates, pluginInstantiator,
                                                     secureStore, secureStoreManager, messagingService, null,
-                                                    metadataReader, metadataPublisher, namespaceQueryAdmin);
+                                                    metadataReader, metadataPublisher, namespaceQueryAdmin,
+                                                    fieldLineageWriter);
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -306,7 +305,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       return;
     }
 
-    writeFieldLineage(workflowContext.getFieldLineageOperations());
+    writeFieldLineage(workflowContext);
   }
 
   private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
@@ -422,7 +421,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                     pluginInstantiator, secureStore,
                                                                     secureStoreManager, messagingService,
                                                                     metadataReader, metadataPublisher,
-                                                                    namespaceQueryAdmin);
+                                                                    namespaceQueryAdmin, fieldLineageWriter);
     customActionExecutor = new CustomActionExecutor(context, instantiator, classLoader);
     status.put(node.getNodeId(), node);
     workflowStateWriter.addWorkflowNodeState(workflowRunId,
@@ -438,7 +437,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       workflowStateWriter.setWorkflowToken(workflowRunId, token);
       NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
       if (failureCause == null) {
-        writeFieldLineage(context.getFieldLineageOperations());
+        writeFieldLineage(context);
       }
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
       BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
@@ -448,11 +447,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private void writeFieldLineage(Set<Operation> fieldLineageOperations) {
+  private void writeFieldLineage(AbstractContext context) {
     try {
-      if (!fieldLineageOperations.isEmpty()) {
-        FieldLineageInfo fieldLineageInfo = new FieldLineageInfo(fieldLineageOperations);
-        fieldLineageWriter.write(workflowRunId, fieldLineageInfo);
+      if (!context.getFieldLineageOperations().isEmpty()) {
+        context.flushLineage();
       }
     } catch (Throwable t) {
       LOG.debug("Failed to emit the field lineage operations for Workflow {}", workflowRunId, t);
@@ -494,7 +492,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                   pluginInstantiator, secureStore, secureStoreManager,
                                                                   messagingService, node.getConditionSpecification(),
                                                                   metadataReader, metadataPublisher,
-                                                                  namespaceQueryAdmin);
+                                                                  namespaceQueryAdmin, fieldLineageWriter);
     final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(

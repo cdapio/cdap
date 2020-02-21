@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
@@ -86,11 +87,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                       PluginFinder pluginFinder, LocationFactory locationFactory,
                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                      NamespaceQueryAdmin namespaceQueryAdmin) {
+                      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin);
+          namespaceQueryAdmin, fieldLineageWriter);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;

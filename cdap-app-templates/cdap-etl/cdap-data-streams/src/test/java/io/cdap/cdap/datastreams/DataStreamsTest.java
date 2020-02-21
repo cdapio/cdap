@@ -25,11 +25,16 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.Lineage;
+import io.cdap.cdap.data2.metadata.lineage.Relation;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
 import io.cdap.cdap.etl.mock.alert.TMSAlertPublisher;
@@ -51,22 +56,29 @@ import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.metadata.DatasetFieldLineageSummary;
+import io.cdap.cdap.metadata.FieldLineageAdmin;
+import io.cdap.cdap.metadata.FieldRelation;
+import io.cdap.cdap.metadata.LineageAdmin;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestConfiguration;
+import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -98,6 +110,142 @@ public class DataStreamsTest extends HydratorTestBase {
 
     setupStreamingArtifacts(APP_ARTIFACT_ID, DataStreamsApp.class);
     checkpointDir = "file://" + TMP_FOLDER.getRoot().toPath().toString();
+  }
+
+  @Test
+  public void testLineageWithMacros() throws Exception {
+    Schema schema = Schema.recordOf(
+      "test",
+      Schema.Field.of("key", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("value", Schema.of(Schema.Type.STRING))
+    );
+
+    List<StructuredRecord> input = ImmutableList.of(
+      StructuredRecord.builder(schema).set("key", "key1").set("value", "value1").build(),
+      StructuredRecord.builder(schema).set("key", "key2").set("value", "value2").build());
+
+    String srcName = "lineageSource";
+    String sinkName1 = "lineageOutput1";
+    String sinkName2 = "lineageOutput2";
+
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+      .addStage(new ETLStage("source", MockSource.getPlugin(schema, input, 0L, srcName)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("${output}")))
+      .addStage(new ETLStage("identity", IdentityTransform.getPlugin()))
+      .addConnection("source", "identity")
+      .addConnection("identity", "sink")
+      .setCheckpointDir(checkpointDir)
+      .setBatchInterval("1s")
+      .build();
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("lineageApp");
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ProgramId spark = appId.spark(DataStreamsSparkLauncher.NAME);
+
+    RunId runId = testLineageWithMacro(appManager, new HashSet<>(input), sinkName1);
+
+    FieldLineageAdmin fieldAdmin = getFieldLineageAdmin();
+    LineageAdmin lineageAdmin = getLineageAdmin();
+
+    // wait for the lineage get populated
+    Tasks.waitFor(true, () -> {
+      Lineage dsLineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(srcName),
+                                                      0, System.currentTimeMillis(), 1, "workflow");
+      DatasetFieldLineageSummary fll =
+        fieldAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("default", srcName),
+                                          0, System.currentTimeMillis());
+      return dsLineage.getRelations().size() == 2 && !fll.getOutgoing().isEmpty();
+    }, 10, TimeUnit.SECONDS);
+
+    Lineage lineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(srcName),
+                                                  0, System.currentTimeMillis(), 1, "workflow");
+
+    Set<Relation> expectedLineage =
+      ImmutableSet.of(new Relation(NamespaceId.DEFAULT.dataset(srcName), spark, AccessType.READ, runId),
+                      new Relation(NamespaceId.DEFAULT.dataset(sinkName1), spark, AccessType.WRITE, runId));
+    Assert.assertEquals(expectedLineage, lineage.getRelations());
+
+    DatasetFieldLineageSummary summary =
+      fieldAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("default", srcName),
+                                        0, System.currentTimeMillis());
+    Assert.assertEquals(NamespaceId.DEFAULT.dataset(srcName), summary.getDatasetId());
+    Assert.assertEquals(ImmutableSet.of("key", "value"), summary.getFields());
+    Assert.assertTrue(summary.getIncoming().isEmpty());
+    Set<DatasetFieldLineageSummary.FieldLineageRelations> outgoing = summary.getOutgoing();
+    Assert.assertEquals(1, outgoing.size());
+
+    Set<DatasetFieldLineageSummary.FieldLineageRelations> expectedRelations =
+      Collections.singleton(
+        new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(sinkName1), 2,
+                                                             ImmutableSet.of(new FieldRelation("key", "key"),
+                                                                             new FieldRelation("value", "value"))));
+    Assert.assertEquals(expectedRelations, outgoing);
+
+    // here sleep for 1 seconds to start the second run because the dataset lineage is storing based on unit second
+    TimeUnit.SECONDS.sleep(1);
+    long startTimeMillis = System.currentTimeMillis();
+    runId = testLineageWithMacro(appManager, new HashSet<>(input), sinkName2);
+
+    // wait for the lineage get populated
+    Tasks.waitFor(true, () -> {
+      Lineage dsLineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(srcName),
+                                                      startTimeMillis, System.currentTimeMillis(), 1, "workflow");
+      long end = System.currentTimeMillis();
+      DatasetFieldLineageSummary fll =
+        fieldAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("default", srcName),
+                                          startTimeMillis, end);
+      return dsLineage.getRelations().size() == 2 && !fll.getOutgoing().isEmpty();
+    }, 10, TimeUnit.SECONDS);
+
+    lineage = lineageAdmin.computeLineage(NamespaceId.DEFAULT.dataset(srcName),
+                                          startTimeMillis, System.currentTimeMillis(), 1, "workflow");
+
+    expectedLineage =
+      ImmutableSet.of(new Relation(NamespaceId.DEFAULT.dataset(srcName), spark, AccessType.READ, runId),
+                      new Relation(NamespaceId.DEFAULT.dataset(sinkName2), spark, AccessType.WRITE, runId));
+    Assert.assertEquals(expectedLineage, lineage.getRelations());
+
+    summary =
+      fieldAdmin.getDatasetFieldLineage(Constants.FieldLineage.Direction.BOTH, EndPoint.of("default", srcName),
+                                        startTimeMillis, System.currentTimeMillis());
+    Assert.assertEquals(NamespaceId.DEFAULT.dataset(srcName), summary.getDatasetId());
+    Assert.assertEquals(ImmutableSet.of("key", "value"), summary.getFields());
+    Assert.assertTrue(summary.getIncoming().isEmpty());
+    outgoing = summary.getOutgoing();
+    Assert.assertEquals(1, outgoing.size());
+
+    expectedRelations =
+      Collections.singleton(
+        new DatasetFieldLineageSummary.FieldLineageRelations(NamespaceId.DEFAULT.dataset(sinkName2), 2,
+                                                             ImmutableSet.of(new FieldRelation("key", "key"),
+                                                                             new FieldRelation("value", "value"))));
+    Assert.assertEquals(expectedRelations, outgoing);
+  }
+
+  private RunId testLineageWithMacro(ApplicationManager appManager,
+                                    Set<StructuredRecord> expected, String outputName) throws Exception {
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start(Collections.singletonMap("output", outputName));
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
+    Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 1, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(outputName);
+    Tasks.waitFor(
+      true,
+      () -> {
+        outputManager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(outputManager));
+        return expected.equals(outputRecords);
+      },
+      1,
+      TimeUnit.MINUTES);
+
+    sparkManager.stop();
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
+    return RunIds.fromString(sparkManager.getHistory().iterator().next().getPid());
   }
 
   @Test
@@ -134,7 +282,7 @@ public class DataStreamsTest extends HydratorTestBase {
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
-    final Set<StructuredRecord> expected = new HashSet<>();
+    Set<StructuredRecord> expected = new HashSet<>();
     expected.add(samuelRecord);
     expected.add(jacksonRecord);
 
@@ -162,24 +310,15 @@ public class DataStreamsTest extends HydratorTestBase {
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return getDataset(outputName).get() != null;
-      }
-    }, 1, TimeUnit.MINUTES);
+    Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 1, TimeUnit.MINUTES);
 
-    final DataSetManager<Table> outputManager = getDataset(outputName);
+    DataSetManager<Table> outputManager = getDataset(outputName);
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          outputManager.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(outputManager));
-          return expected.equals(outputRecords);
-        }
+      () -> {
+        outputManager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(outputManager));
+        return expected.equals(outputRecords);
       },
       1,
       TimeUnit.MINUTES);
@@ -244,14 +383,14 @@ public class DataStreamsTest extends HydratorTestBase {
     sparkManager.start(arguments);
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
-    final DataSetManager<Table> sink1 = getDataset("sink1");
-    final DataSetManager<Table> sink2 = getDataset("sink2");
+    DataSetManager<Table> sink1 = getDataset("sink1");
+    DataSetManager<Table> sink2 = getDataset("sink2");
 
     Schema aggSchema = Schema.recordOf(
       "user.count",
       Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
-    final Set<StructuredRecord> expectedAggregates = ImmutableSet.of(
+    Set<StructuredRecord> expectedAggregates = ImmutableSet.of(
       StructuredRecord.builder(aggSchema).set("id", 0L).set("ct", 3L).build(),
       StructuredRecord.builder(aggSchema).set("id", 1L).set("ct", 1L).build(),
       StructuredRecord.builder(aggSchema).set("id", 2L).set("ct", 1L).build(),
@@ -262,24 +401,19 @@ public class DataStreamsTest extends HydratorTestBase {
       Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("isDupe", Schema.of(Schema.Type.BOOLEAN)));
-    final Set<StructuredRecord> expectedJoined = ImmutableSet.of(
+    Set<StructuredRecord> expectedJoined = ImmutableSet.of(
       StructuredRecord.builder(outputSchema).set("id", 1L).set("name", "Samuel").set("isDupe", true).build(),
       StructuredRecord.builder(outputSchema).set("id", 2L).set("name", "Dwayne").set("isDupe", true).build(),
       StructuredRecord.builder(outputSchema).set("id", 3L).set("name", "Terry").set("isDupe", false).build());
 
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sink1.flush();
-          sink2.flush();
-          Set<StructuredRecord> actualAggs = new HashSet<>();
-          Set<StructuredRecord> actualJoined = new HashSet<>();
-          actualAggs.addAll(MockSink.readOutput(sink1));
-          actualJoined.addAll(MockSink.readOutput(sink2));
-          return expectedAggregates.equals(actualAggs) && expectedJoined.equals(actualJoined);
-        }
+      () -> {
+        sink1.flush();
+        sink2.flush();
+        Set<StructuredRecord> actualAggs = new HashSet<>(MockSink.readOutput(sink1));
+        Set<StructuredRecord> actualJoined = new HashSet<>(MockSink.readOutput(sink2));
+        return expectedAggregates.equals(actualAggs) && expectedJoined.equals(actualJoined);
       },
       1,
       TimeUnit.MINUTES);
@@ -303,7 +437,7 @@ public class DataStreamsTest extends HydratorTestBase {
       "user.count",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
-    final Set<StructuredRecord> expectedAggregates2 = ImmutableSet.of(
+    Set<StructuredRecord> expectedAggregates2 = ImmutableSet.of(
       StructuredRecord.builder(aggSchema).set("name", "all").set("ct", 3L).build(),
       StructuredRecord.builder(aggSchema).set("name", "Samuel").set("ct", 1L).build(),
       StructuredRecord.builder(aggSchema).set("name", "Dwayne").set("ct", 1L).build(),
@@ -314,24 +448,19 @@ public class DataStreamsTest extends HydratorTestBase {
       Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("dupe", Schema.of(Schema.Type.BOOLEAN)));
-    final Set<StructuredRecord> expectedJoined2 = ImmutableSet.of(
+    Set<StructuredRecord> expectedJoined2 = ImmutableSet.of(
       StructuredRecord.builder(outputSchema).set("id", 1L).set("name", "Samuel").set("dupe", true).build(),
       StructuredRecord.builder(outputSchema).set("id", 2L).set("name", "Dwayne").set("dupe", true).build(),
       StructuredRecord.builder(outputSchema).set("id", 3L).set("name", "Terry").set("dupe", false).build());
 
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sink1.flush();
-          sink2.flush();
-          Set<StructuredRecord> actualAggs = new HashSet<>();
-          Set<StructuredRecord> actualJoined = new HashSet<>();
-          actualAggs.addAll(MockSink.readOutput(sink1));
-          actualJoined.addAll(MockSink.readOutput(sink2));
-          return expectedAggregates2.equals(actualAggs) && expectedJoined2.equals(actualJoined);
-        }
+      () -> {
+        sink1.flush();
+        sink2.flush();
+        Set<StructuredRecord> actualAggs = new HashSet<>(MockSink.readOutput(sink1));
+        Set<StructuredRecord> actualJoined = new HashSet<>(MockSink.readOutput(sink2));
+        return expectedAggregates2.equals(actualAggs) && expectedJoined2.equals(actualJoined);
       },
       1,
       TimeUnit.MINUTES);
@@ -402,28 +531,24 @@ public class DataStreamsTest extends HydratorTestBase {
     );
 
     // check output
-    final DataSetManager<Table> sinkManager1 = getDataset(sink1Name);
-    final Set<StructuredRecord> expected1 = ImmutableSet.of(
+    DataSetManager<Table> sinkManager1 = getDataset(sink1Name);
+    Set<StructuredRecord> expected1 = ImmutableSet.of(
       StructuredRecord.builder(outputSchema1).set("user", "all").set("ct", 5L).build(),
       StructuredRecord.builder(outputSchema1).set("user", "samuel").set("ct", 3L).build(),
       StructuredRecord.builder(outputSchema1).set("user", "john").set("ct", 2L).build());
 
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sinkManager1.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sinkManager1));
-          return expected1.equals(outputRecords);
-        }
+      () -> {
+        sinkManager1.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sinkManager1));
+        return expected1.equals(outputRecords);
       },
       1,
       TimeUnit.MINUTES);
 
-    final DataSetManager<Table> sinkManager2 = getDataset(sink2Name);
-    final Set<StructuredRecord> expected2 = ImmutableSet.of(
+    DataSetManager<Table> sinkManager2 = getDataset(sink2Name);
+    Set<StructuredRecord> expected2 = ImmutableSet.of(
       StructuredRecord.builder(outputSchema2).set("item", 0L).set("ct", 5L).build(),
       StructuredRecord.builder(outputSchema2).set("item", 1L).set("ct", 1L).build(),
       StructuredRecord.builder(outputSchema2).set("item", 2L).set("ct", 1L).build(),
@@ -432,21 +557,17 @@ public class DataStreamsTest extends HydratorTestBase {
 
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sinkManager2.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sinkManager2));
-          return expected2.equals(outputRecords);
-        }
+      () -> {
+        sinkManager2.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sinkManager2));
+        return expected2.equals(outputRecords);
       },
       1,
       TimeUnit.MINUTES);
 
     sparkManager.stop();
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
-    
+
     validateMetric(appId, "source1.records.out", 2);
     validateMetric(appId, "source2.records.out", 3);
     validateMetric(appId, "agg1.records.in", 5);
@@ -634,19 +755,15 @@ public class DataStreamsTest extends HydratorTestBase {
 
     StructuredRecord joinRecordPlane = StructuredRecord.builder(outSchema2)
       .set("t_id", "3").set("c_id", "4").set("i_id", "33").build();
-    final Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane, joinRecordPlane);
+    Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane, joinRecordPlane);
 
-    final DataSetManager<Table> outputManager = getDataset(outputName);
+    DataSetManager<Table> outputManager = getDataset(outputName);
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          outputManager.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(outputManager));
-          return expected.equals(outputRecords);
-        }
+      () -> {
+        outputManager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(outputManager));
+        return expected.equals(outputRecords);
       },
       4,
       TimeUnit.MINUTES);
@@ -738,7 +855,7 @@ public class DataStreamsTest extends HydratorTestBase {
                       Schema.Field.of("errMsg", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
                       Schema.Field.of("errCode", Schema.nullableOf(Schema.of(Schema.Type.INT))),
                       Schema.Field.of("errStage", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
-    final Set<StructuredRecord> expected = ImmutableSet.of(
+    Set<StructuredRecord> expected = ImmutableSet.of(
       StructuredRecord.builder(flattenSchema)
         .set("name", "Leo").set("errMsg", "bad string value").set("errCode", 1).set("errStage", "filter1").build(),
       StructuredRecord.builder(flattenSchema)
@@ -747,35 +864,27 @@ public class DataStreamsTest extends HydratorTestBase {
         .set("name", "Don").set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg1").build(),
       StructuredRecord.builder(flattenSchema)
         .set("name", "Mike").set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg2").build());
-    final DataSetManager<Table> sink1Table = getDataset(sink1TableName);
+    DataSetManager<Table> sink1Table = getDataset(sink1TableName);
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sink1Table.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sink1Table));
-          return expected.equals(outputRecords);
-        }
+      () -> {
+        sink1Table.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink1Table));
+        return expected.equals(outputRecords);
       },
       4,
       TimeUnit.MINUTES);
 
-    final Set<StructuredRecord> expected2 = ImmutableSet.of(
+    Set<StructuredRecord> expected2 = ImmutableSet.of(
       StructuredRecord.builder(inputSchema).set("name", "Leo").build(),
       StructuredRecord.builder(inputSchema).set("name", "Ralph").build());
-    final DataSetManager<Table> sink2Table = getDataset(sink2TableName);
+    DataSetManager<Table> sink2Table = getDataset(sink2TableName);
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sink2Table.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sink2Table));
-          return expected2.equals(outputRecords);
-        }
+      () -> {
+        sink2Table.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink2Table));
+        return expected2.equals(outputRecords);
       },
       4,
       TimeUnit.MINUTES);
@@ -831,36 +940,28 @@ public class DataStreamsTest extends HydratorTestBase {
 
     // check output
     // sink1 should only have records where both name and email are null (user0)
-    final DataSetManager<Table> sink1Manager = getDataset(sink1Name);
-    final Set<StructuredRecord> expected1 = ImmutableSet.of(user0);
+    DataSetManager<Table> sink1Manager = getDataset(sink1Name);
+    Set<StructuredRecord> expected1 = ImmutableSet.of(user0);
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sink1Manager.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sink1Manager));
-          return expected1.equals(outputRecords);
-        }
+      () -> {
+        sink1Manager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink1Manager));
+        return expected1.equals(outputRecords);
       },
       4,
       TimeUnit.MINUTES);
 
     // sink2 should have anything with a non-null name or non-null email
-    final DataSetManager<Table> sink2Manager = getDataset(sink2Name);
-    final Set<StructuredRecord> expected2 = ImmutableSet.of(user1, user2, user3);
+    DataSetManager<Table> sink2Manager = getDataset(sink2Name);
+    Set<StructuredRecord> expected2 = ImmutableSet.of(user1, user2, user3);
 
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          sink2Manager.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sink2Manager));
-          return expected2.equals(outputRecords);
-        }
+      () -> {
+        sink2Manager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink2Manager));
+        return expected2.equals(outputRecords);
       },
       4,
       TimeUnit.MINUTES);
@@ -882,7 +983,7 @@ public class DataStreamsTest extends HydratorTestBase {
   @Test
   public void testAlertPublisher() throws Exception {
     String sinkName = "alertSink";
-    final String topic = "alertTopic";
+    String topic = "alertTopic";
 
     Schema schema = Schema.recordOf("x", Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.LONG))));
     StructuredRecord record1 = StructuredRecord.builder(schema).set("id", 1L).build();
@@ -920,33 +1021,29 @@ public class DataStreamsTest extends HydratorTestBase {
 
     Tasks.waitFor(
       true,
-      new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          // get alerts from TMS
-          try {
-            getMessagingAdmin(NamespaceId.DEFAULT.getNamespace()).getTopicProperties(topic);
-          } catch (TopicNotFoundException e) {
-            return false;
-          }
-          MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
-          Set<Alert> actualMessages = new HashSet<>();
-          try (CloseableIterator<Message> iter =
-                 messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), topic, 5, 0)) {
-            while (iter.hasNext()) {
-              Message message = iter.next();
-              Alert alert = GSON.fromJson(message.getPayloadAsString(), Alert.class);
-              actualMessages.add(alert);
-            }
-          }
-
-          // get records from sink
-          sinkTable.flush();
-          Set<StructuredRecord> outputRecords = new HashSet<>();
-          outputRecords.addAll(MockSink.readOutput(sinkTable));
-
-          return expectedRecords.equals(outputRecords) && expectedMessages.equals(actualMessages);
+      () -> {
+        // get alerts from TMS
+        try {
+          getMessagingAdmin(NamespaceId.DEFAULT.getNamespace()).getTopicProperties(topic);
+        } catch (TopicNotFoundException e) {
+          return false;
         }
+        MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
+        Set<Alert> actualMessages = new HashSet<>();
+        try (CloseableIterator<Message> iter =
+               messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), topic, 5, 0)) {
+          while (iter.hasNext()) {
+            Message message = iter.next();
+            Alert alert = GSON.fromJson(message.getPayloadAsString(), Alert.class);
+            actualMessages.add(alert);
+          }
+        }
+
+        // get records from sink
+        sinkTable.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sinkTable));
+
+        return expectedRecords.equals(outputRecords) && expectedMessages.equals(actualMessages);
       },
       4,
       TimeUnit.MINUTES);

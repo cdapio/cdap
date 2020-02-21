@@ -51,6 +51,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
@@ -271,7 +272,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(LocationFactory.class),
         injector.getInstance(MetadataReader.class),
         injector.getInstance(MetadataPublisher.class),
-        injector.getInstance(NamespaceQueryAdmin.class)
+        injector.getInstance(NamespaceQueryAdmin.class),
+        injector.getInstance(FieldLineageWriter.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

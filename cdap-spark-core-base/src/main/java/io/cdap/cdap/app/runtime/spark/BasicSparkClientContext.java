@@ -426,6 +426,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
+  public void flushLineage() {
+    sparkRuntimeContext.flushLineage();
+  }
+
+  @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
     sparkRuntimeContext.addProperties(metadataEntity, properties);
   }

@@ -20,6 +20,7 @@ import java.io.IOException
 
 import io.cdap.cdap.api.annotation.Beta
 import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.lineage.field.LineageRecorder
 import io.cdap.cdap.api.messaging.MessagingContext
 import io.cdap.cdap.api.metadata.{MetadataReader, MetadataWriter}
 import io.cdap.cdap.api.metrics.Metrics
@@ -38,7 +39,8 @@ import scala.reflect.ClassTag
   * Spark program execution context. User Spark program can interact with CDAP through this context.
   */
 @Beta
-trait SparkExecutionContextBase extends RuntimeContext with Transactional with MetadataReader with MetadataWriter {
+trait SparkExecutionContextBase extends RuntimeContext
+  with Transactional with MetadataReader with MetadataWriter with LineageRecorder {
 
   /**
     * @return The specification used to configure this Spark job instance.

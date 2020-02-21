@@ -447,6 +447,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     runtimeContext.destroyProgram(programLifecycle, txControl, false);
     if (emitFieldLineage()) {
       try {
+        // here we cannot call context.flushRecord() since the WorkflowNodeState will need to record and store
+        // the lineage information
         FieldLineageInfo info = new FieldLineageInfo(runtimeContext.getFieldLineageOperations());
         fieldLineageWriter.write(runtimeContext.getProgramRunId(), info);
       } catch (Throwable t) {
@@ -707,7 +709,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     // See if the scriptURI is on the same cluster.
     if (Objects.equals(homeURI.getScheme(), scriptURI.getScheme())
-        && Objects.equals(homeURI.getAuthority(), scriptURI.getAuthority())) {
+      && Objects.equals(homeURI.getAuthority(), scriptURI.getAuthority())) {
       // If the extension is ".py", just return it.
       if (scriptURI.getPath().endsWith(".py")) {
         return scriptURI;
@@ -947,7 +949,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           invalidateAll.setAccessible(true);
           invalidateAll.invoke(cache);
           LOG.debug("BeanIntrospector.ctorParamNamesCache has been invalidated.");
-        break;
+          break;
 
         default:
           // Unexpected, maybe due to version change in the BeanIntrospector, hence log a WARN.
