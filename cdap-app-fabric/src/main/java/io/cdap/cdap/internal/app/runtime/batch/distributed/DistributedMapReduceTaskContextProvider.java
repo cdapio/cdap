@@ -33,6 +33,7 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.net.ProxySelector;
@@ -62,9 +63,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     Injector injector = getInjector();
 
     Deque<Service> coreServices = new LinkedList<>();
-    if (clusterMode == ClusterMode.ISOLATED) {
+    if (clusterMode == ClusterMode.ON_PREMISE) {
       coreServices.add(injector.getInstance(ZKClientService.class));
-     // coreServices.add(injector.getInstance(KafkaClientService.class));
+      coreServices.add(injector.getInstance(KafkaClientService.class));
     }
     coreServices.add(injector.getInstance(MetricsCollectionService.class));
 

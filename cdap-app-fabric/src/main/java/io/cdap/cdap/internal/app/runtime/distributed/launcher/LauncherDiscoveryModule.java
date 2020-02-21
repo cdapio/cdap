@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
@@ -55,15 +54,15 @@ public class LauncherDiscoveryModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(ZKClientService.class).toProvider(ZKServiceProvider.class).in(Scopes.SINGLETON);
-    bind(ZKClient.class).to(ZKClientService.class);
-    bind(ZKDiscoveryService.class).toProvider(ZKDiscoveryServiceProvider.class).in(Scopes.SINGLETON);
-    expose(ZKClientService.class);
-
-    bind(DiscoveryService.class).annotatedWith(Names.named(DELEGATE_DISCOVERY_SERVICE))
-      .to(ZKDiscoveryService.class).in(Scopes.SINGLETON);
-    bind(DiscoveryServiceClient.class).annotatedWith(Names.named(DELEGATE_DISCOVERY_SERVICE_CLIENT))
-      .to(ProgramDiscoveryServiceClient.class).in(Scopes.SINGLETON);
+//    bind(ZKClientService.class).toProvider(ZKServiceProvider.class).in(Scopes.SINGLETON);
+//    bind(ZKClient.class).to(ZKClientService.class);
+//    bind(ZKDiscoveryService.class).toProvider(ZKDiscoveryServiceProvider.class).in(Scopes.SINGLETON);
+//    expose(ZKClientService.class);
+//
+//    bind(DiscoveryService.class).annotatedWith(Names.named(DELEGATE_DISCOVERY_SERVICE))
+//      .to(ZKDiscoveryService.class).in(Scopes.SINGLETON);
+//    bind(DiscoveryServiceClient.class).annotatedWith(Names.named(DELEGATE_DISCOVERY_SERVICE_CLIENT))
+//      .to(ProgramDiscoveryServiceClient.class).in(Scopes.SINGLETON);
 
     bind(LauncherDiscoveryService.class).in(Scopes.SINGLETON);
     bind(DiscoveryService.class).to(LauncherDiscoveryService.class);

@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.distributed.launcher;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -49,22 +48,12 @@ public class LauncherDiscoveryService implements DiscoveryServiceClient, Discove
   private static final Logger LOG = LoggerFactory.getLogger(LauncherDiscoveryService.class);
 
   private final CConfiguration cConf;
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private final DiscoveryService discoveryService;
-  private final Map<String, Integer> seenSoFar;
   private final Map<String, DefaultServiceDiscovered> services;
 
   @Inject
-  public LauncherDiscoveryService(CConfiguration cConf,
-                                  @Named(LauncherDiscoveryModule.DELEGATE_DISCOVERY_SERVICE_CLIENT)
-                                    DiscoveryServiceClient client,
-                                  @Named(LauncherDiscoveryModule.DELEGATE_DISCOVERY_SERVICE)
-                                      DiscoveryService service) {
+  public LauncherDiscoveryService(CConfiguration cConf) {
     this.cConf = cConf;
-    this.discoveryServiceClient = client;
-    this.discoveryService = service;
     this.services = new ConcurrentHashMap<>();
-    this.seenSoFar = new ConcurrentHashMap<>();
   }
 
   @Override

@@ -344,6 +344,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
 
       stopCoreServices();
+      //
     }
   }
 
@@ -528,7 +529,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   private void addIsolatedServices(Injector injector, Collection<Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
+    //services.add(injector.getInstance(ZKClientService.class));
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);

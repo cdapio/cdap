@@ -30,4 +30,8 @@ public interface TableFactory {
   MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException;
 
   PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException;
+
+  default void close() {
+    // no-op
+  }
 }

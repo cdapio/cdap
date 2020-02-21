@@ -151,6 +151,13 @@ public final class LevelDBTableFactory implements TableFactory {
     return dir;
   }
 
+  @Override
+  public void close() {
+    for (DB db : levelDBs.values()) {
+      Closeables.closeQuietly(db);
+    }
+  }
+
   private class DataCleanup implements Runnable {
 
     @Override
