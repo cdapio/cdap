@@ -86,10 +86,10 @@ class MapToTarget extends Component {
       if (targetModel) {
         await this.applyDirective(option);
       } else {
-        await this.selectTargetDataModel(option);
+        await this.selectTargetModel(option);
       }
     } else {
-      await this.selectTargetModel(option);
+      await this.selectTargetDataModel(option);
     }
   }
 
