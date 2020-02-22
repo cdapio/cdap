@@ -296,3 +296,168 @@ export function setVisualizationState(state) {
     },
   });
 }
+
+export function setLoading(loading) {
+  DataPrepStore.dispatch({
+    type: loading ? DataPrepActions.enableLoading : DataPrepActions.disableLoading,
+  });
+}
+
+export function setError(error) {
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setError,
+    payload: {
+      message: error.message || error.response.message,
+    },
+  });
+}
+
+export async function initializeMapToTarget() {
+  let { dataModelList, targetDataModel, targetModel } = DataPrepStore.getState().dataprep;
+  const {
+    dataModel,
+    dataModelRevision,
+    dataModelModel,
+  } = DataPrepStore.getState().dataprep.properties;
+
+  if (!Array.isArray(dataModelList)) {
+    dataModelList = await fetchDataModelList();
+    if (dataModel) {
+      targetDataModel = dataModelList.find(
+        (dm) => dm.id === dataModel && dm.revision === dataModelRevision
+      );
+      if (targetDataModel) {
+        await setTargetDataModel(targetDataModel);
+        if (dataModelModel) {
+          targetModel = targetDataModel.models.find((m) => m.id === dataModelModel);
+          if (targetModel) {
+            await setTargetModel(targetModel);
+          }
+        }
+      }
+    }
+  }
+}
+
+export async function fetchDataModelList() {
+  const namespace = NamespaceStore.getState().selectedNamespace;
+  const params = {
+    context: namespace,
+  };
+
+  const response = await MyDataPrepApi.listDataModels(params).toPromise();
+  const dataModelList = response.values.map((dataModel) => ({
+    id: dataModel[namespace].id,
+    revision: dataModel.revisions.pop() || 1,
+    name: dataModel.displayName,
+    description: dataModel.description,
+  }));
+  dataModelList.sort((a, b) => a.name.localeCompare(b.name));
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setDataModelList,
+    payload: {
+      dataModelList,
+    },
+  });
+
+  return dataModelList;
+}
+
+export async function fetchModelList(dataModel) {
+  const params = {
+    context: NamespaceStore.getState().selectedNamespace,
+    dataModelId: dataModel.id,
+    revision: dataModel.revision,
+  };
+
+  const response = await MyDataPrepApi.listModels(params).toPromise();
+  dataModel.models = response.values.schema.fields.map((model) => ({
+    id: model.name,
+    name: model.name,
+    description: model.doc,
+    fields: model.fields.map((field) => ({
+      id: field.name,
+      name: field.name,
+      description: field.doc,
+    })),
+  }));
+
+  return dataModel.models;
+}
+
+export async function setTargetDataModel(dataModel) {
+  const { targetDataModel, targetModel } = DataPrepStore.getState().dataprep;
+  const params = {
+    context: NamespaceStore.getState().selectedNamespace,
+    workspaceId: DataPrepStore.getState().dataprep.workspaceId,
+  };
+
+  if (targetModel) {
+    await MyDataPrepApi.removeModel(Object.assign({ modelId: targetModel.id }, params)).toPromise();
+  }
+  if (targetDataModel) {
+    await MyDataPrepApi.removeDataModel(params).toPromise();
+  }
+  if (dataModel) {
+    await MyDataPrepApi.addDataModel(params, {
+      id: dataModel.id,
+      revision: dataModel.revision,
+    }).toPromise();
+
+    if (!Array.isArray(dataModel.models)) {
+      await fetchModelList(dataModel);
+    }
+  }
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setProperties,
+    payload: {
+      properties: {
+        dataModel: dataModel ? dataModel.id : null,
+        dataModelRevision: dataModel ? dataModel.revision : null,
+        dataModelModel: null,
+      },
+    },
+  });
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setTargetDataModel,
+    payload: {
+      targetDataModel: dataModel,
+    },
+  });
+}
+
+export async function setTargetModel(model) {
+  const { targetModel } = DataPrepStore.getState().dataprep;
+  const params = {
+    context: NamespaceStore.getState().selectedNamespace,
+    workspaceId: DataPrepStore.getState().dataprep.workspaceId,
+  };
+
+  if (targetModel) {
+    await MyDataPrepApi.removeModel(Object.assign({ modelId: targetModel.id }, params)).toPromise();
+  }
+  if (model) {
+    await MyDataPrepApi.addModel(params, {
+      id: model.id,
+    }).toPromise();
+  }
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setProperties,
+    payload: {
+      properties: {
+        dataModelModel: model ? model.id : null,
+      },
+    },
+  });
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setTargetModel,
+    payload: {
+      targetModel: model,
+    },
+  });
+}

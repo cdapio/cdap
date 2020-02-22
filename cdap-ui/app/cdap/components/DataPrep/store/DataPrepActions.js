@@ -35,6 +35,9 @@ const DataPrepActions = {
   setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS',
   setColumnsInformation: 'DATAPREP_SET_COLUMNS_INFORMATION',
   setWorkspaceList: 'DATAPREP_SET_WORKSPACE_LIST',
+  setDataModelList: 'DATAPREP_SET_DATA_MODEL_LIST',
+  setTargetDataModel: 'DATAPREP_SET_TARGET_DATA_MODEL',
+  setTargetModel: 'DATAPREP_SET_TARGET_MODEL',
 };
 
 export default DataPrepActions;

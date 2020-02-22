@@ -1,0 +1,39 @@
+$target-option-hover-color: #eeeeee;
+
+.map-to-target-directive {
+  .second-level-popover {
+    .selected-item {
+      display: flex;
+      flex-direction: row;
+
+      .selected-item-name {
+        flex: 1;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+
+      .unselect-icon {
+        cursor: pointer;
+        padding: 5px;
+        margin: 0 !important;
+
+        &:hover {
+          font-weight: bold;
+        }
+      }
+    }
+
+    .target-option {
+      cursor: pointer;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      padding: 5px 10px;
+
+      &:hover {
+        background-color: $target-option-hover-color;
+      }
+    }
+  }
+}

@@ -1039,6 +1039,7 @@ features:
         title: Swap two column names
       MapToTarget:
         title: Map to Target
+        dataModelPlaceholder: Select Data Model
     pageTitle: '{productName} | {featureName} {workspaceUri}'
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.

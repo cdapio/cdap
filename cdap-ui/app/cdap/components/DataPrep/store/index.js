@@ -42,6 +42,9 @@ const defaultInitialState = {
   singleWorkspaceMode: false,
   workspaceInfo: null,
   properties: {},
+  dataModelList: null,
+  targetDataModel: null,
+  targetModel: null,
 };
 
 const errorInitialState = {
@@ -148,6 +151,21 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setHighlightColumns:
       stateCopy = Object.assign({}, state, {
         highlightColumns: action.payload.highlightColumns,
+      });
+      break;
+    case DataPrepActions.setDataModelList:
+      stateCopy = Object.assign({}, state, {
+        dataModelList: action.payload.dataModelList,
+      });
+      break;
+    case DataPrepActions.setTargetDataModel:
+      stateCopy = Object.assign({}, state, {
+        targetDataModel: action.payload.targetDataModel,
+      });
+      break;
+    case DataPrepActions.setTargetModel:
+      stateCopy = Object.assign({}, state, {
+        targetModel: action.payload.targetModel,
       });
       break;
     case DataPrepActions.enableLoading:
