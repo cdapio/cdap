@@ -19,15 +19,20 @@ package io.cdap.cdap.app.preview;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ProgramId;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents the preview application request.
- * @param <T> the type of application config
  */
-public class PreviewRequest<T> {
+public class PreviewRequest {
   private final ProgramId program;
-  private final AppRequest<T> appRequest;
+  private final AppRequest<?> appRequest;
 
-  public PreviewRequest(ProgramId program, AppRequest<T> appRequest) {
+  public PreviewRequest(ProgramId program) {
+    this(program, null);
+  }
+
+  public PreviewRequest(ProgramId program, @Nullable AppRequest<?> appRequest) {
     this.program = program;
     this.appRequest = appRequest;
   }
@@ -36,7 +41,8 @@ public class PreviewRequest<T> {
     return program;
   }
 
-  public AppRequest<T> getAppRequest() {
+  @Nullable
+  public AppRequest<?> getAppRequest() {
     return appRequest;
   }
 }
