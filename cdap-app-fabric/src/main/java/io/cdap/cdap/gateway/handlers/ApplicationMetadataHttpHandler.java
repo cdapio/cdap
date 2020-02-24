@@ -22,6 +22,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -77,9 +78,12 @@ public class ApplicationMetadataHttpHandler extends AbstractAppFabricHttpHandler
   public void getApplicationMetadata(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
-                                     @PathParam("version-id") String versionId) {
+                                     @PathParam("version-id") String versionId) throws ApplicationNotFoundException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     ApplicationMeta appMeta = store.getApplicationMetadata(applicationId);
+    if (appMeta == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appMeta));
   }
 }
