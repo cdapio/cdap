@@ -109,10 +109,10 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       if (resolved) {
         responder.sendJson(HttpResponseStatus.OK,
-                GSON.toJson(preferencesService.getResolvedProperties(namespaceId)));
+                           GSON.toJson(preferencesService.getResolvedProperties(namespaceId)));
       } else {
         responder.sendJson(HttpResponseStatus.OK,
-                GSON.toJson(preferencesService.getProperties(namespaceId)));
+                           GSON.toJson(preferencesService.getProperties(namespaceId)));
       }
     }
   }
@@ -173,7 +173,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-              appId, namespace));
+                                                                       appId, namespace));
     } else {
       if (resolved) {
         responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getResolvedProperties(applicationId)));
@@ -202,11 +202,11 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void putAppPrefs(FullHttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
-          throws Exception {
+    throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-              appId, namespace));
+                                                                       appId, namespace));
       return;
     }
 
@@ -226,7 +226,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     if (store.getApplication(applicationId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-              appId, namespace));
+                                                                       appId, namespace));
     } else {
       preferencesService.deleteProperties(applicationId);
       responder.sendStatus(HttpResponseStatus.OK);
