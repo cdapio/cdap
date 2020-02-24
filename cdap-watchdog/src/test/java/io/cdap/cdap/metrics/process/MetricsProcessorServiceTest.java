@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Testing the basic properties of the {@link MessagingMetricsProcessorService}
+ * Testing the basic properties of the {@link MessagingMetricsProcessorManagerService}
  */
 public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase {
 
@@ -76,14 +76,14 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     // Start KafkaMetricsProcessorService after metrics are published to Kafka
 
-    // Intentionally set queue size to a small value, so that MessagingMetricsProcessorService
+    // Intentionally set queue size to a small value, so that MessagingMetricsProcessorManagerService
     // internally can persist metrics when more messages are to be fetched
-    MessagingMetricsProcessorService messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(cConf, injector.getInstance(MetricDatasetFactory.class),
-                                           messagingService, injector.getInstance(SchemaGenerator.class),
-                                           injector.getInstance(DatumReaderFactory.class), metricStore,
-                                           partitions, new NoopMetricsContext(), 50, 0);
-    messagingMetricsProcessorService.startAndWait();
+    MessagingMetricsProcessorManagerService messagingMetricsProcessorManagerService =
+      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
+                                                  messagingService, injector.getInstance(SchemaGenerator.class),
+                                                  injector.getInstance(DatumReaderFactory.class), metricStore,
+                                                  partitions, new NoopMetricsContext(), 50, 0);
+    messagingMetricsProcessorManagerService.startAndWait();
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // Publish metrics with messaging service and record expected metrics
@@ -92,18 +92,18 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     }
 
     Thread.sleep(500);
-    // Stop and restart messagingMetricsProcessorService
-    messagingMetricsProcessorService.stopAndWait();
-    // Intentionally set queue size to a large value, so that MessagingMetricsProcessorService
+    // Stop and restart messagingMetricsProcessorManagerService
+    messagingMetricsProcessorManagerService.stopAndWait();
+    // Intentionally set queue size to a large value, so that MessagingMetricsProcessorManagerService
     // internally only persists metrics during terminating.
-    messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(cConf, injector.getInstance(MetricDatasetFactory.class),
-                                           messagingService, injector.getInstance(SchemaGenerator.class),
-                                           injector.getInstance(DatumReaderFactory.class), metricStore,
-                                           partitions, new NoopMetricsContext(), 50, 0);
-    messagingMetricsProcessorService.startAndWait();
+    messagingMetricsProcessorManagerService =
+      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
+                                                  messagingService, injector.getInstance(SchemaGenerator.class),
+                                                  injector.getInstance(DatumReaderFactory.class), metricStore,
+                                                  partitions, new NoopMetricsContext(), 50, 0);
+    messagingMetricsProcessorManagerService.startAndWait();
 
-    // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics
+    // Publish metrics after MessagingMetricsProcessorManagerService restarts and record expected metrics
     for (int i = 20; i < 30; i++) {
       publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.GAUGE);
     }
@@ -139,7 +139,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     }
 
     // Stop services and servers
-    messagingMetricsProcessorService.stopAndWait();
+    messagingMetricsProcessorManagerService.stopAndWait();
     // Delete all metrics
     metricStore.deleteAll();
   }

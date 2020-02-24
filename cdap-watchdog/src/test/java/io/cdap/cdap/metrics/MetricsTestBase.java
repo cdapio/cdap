@@ -37,6 +37,7 @@ import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -48,7 +49,7 @@ import java.util.List;
 
 /**
  * TestBase for testing {@link io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService} 
- * and {@link io.cdap.cdap.metrics.process.MessagingMetricsProcessorService}
+ * and {@link MessagingMetricsProcessorManagerService}
  */
 public abstract class MetricsTestBase {
 

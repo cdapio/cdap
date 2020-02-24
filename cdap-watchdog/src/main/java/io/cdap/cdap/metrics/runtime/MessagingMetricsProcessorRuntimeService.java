@@ -23,7 +23,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.resource.ResourceBalancerService;
-import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -32,7 +32,7 @@ import org.apache.twill.zookeeper.ZKClient;
 import java.util.Set;
 
 /**
- * A service that creates {@link MessagingMetricsProcessorService} dynamically at runtime
+ * A service that creates {@link MessagingMetricsProcessorManagerService} dynamically at runtime
  * according to the given numerical topic suffices from {@link ResourceBalancerService}.
  */
 public final class MessagingMetricsProcessorRuntimeService extends ResourceBalancerService {
