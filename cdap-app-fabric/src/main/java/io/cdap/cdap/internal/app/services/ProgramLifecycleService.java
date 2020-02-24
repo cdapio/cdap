@@ -234,6 +234,28 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the {@link RunRecordMeta} for the given program run.
+   *
+   * @param programRunId the program run to fetch
+   * @return the {@link RunRecordMeta} for the given run
+   * @throws NotFoundException if the given program or program run doesn't exist
+   * @throws Exception if authorization failed
+   */
+  public RunRecordMeta getRun(ProgramRunId programRunId) throws Exception {
+    AuthorizationUtil.ensureAccess(programRunId, authorizationEnforcer, authenticationContext.getPrincipal());
+
+    ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programRunId.getParent());
+    if (programSpec == null) {
+      throw new NotFoundException(programRunId.getParent());
+    }
+    RunRecordMeta meta = store.getRun(programRunId);
+    if (meta == null) {
+      throw new NotFoundException(programRunId);
+    }
+    return meta;
+  }
+
+  /**
    * Get the latest runs within the specified start and end times for the specified program.
    *
    * @param programId the program to get runs for

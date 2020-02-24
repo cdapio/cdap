@@ -199,6 +199,11 @@ public final class HBaseTableFactory implements TableFactory {
     );
   }
 
+  @Override
+  public void close() {
+    // no-op
+  }
+
   public void upgradeMessageTable(String tableName) throws IOException {
     upgradeCoProcessor(tableUtil.createHTableId(NamespaceId.SYSTEM, tableName),
                        tableUtil.getMessageTableRegionObserverClassForVersion());

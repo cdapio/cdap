@@ -51,8 +51,12 @@ final class LevelDBMetadataTable implements MetadataTable {
 
   private final DB levelDB;
 
-  LevelDBMetadataTable(DB levelDB) throws IOException {
+  LevelDBMetadataTable(DB levelDB) {
     this.levelDB = levelDB;
+  }
+
+  DB getLevelDB() {
+    return levelDB;
   }
 
   @Override

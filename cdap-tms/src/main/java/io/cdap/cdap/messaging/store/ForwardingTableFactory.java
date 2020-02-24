@@ -44,4 +44,9 @@ public abstract class ForwardingTableFactory implements TableFactory {
   public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
     return getDelegate().createPayloadTable(topicMetadata);
   }
+
+  @Override
+  public void close() throws IOException {
+    getDelegate().close();
+  }
 }
