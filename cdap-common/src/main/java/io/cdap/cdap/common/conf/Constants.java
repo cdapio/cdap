@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,6 +64,9 @@ public final class Constants {
   public static final String BOOTSTRAP_FILE = "bootstrap.file";
   // Directory path location for all system app configs
   public static final String SYSTEM_APP_CONFIG_DIR = "system.app.config.dir";
+  // Directory path for caching remove location content
+  public static final String LOCATION_CACHE_PATH = "location.cache.path";
+  public static final String LOCATION_CACHE_EXPIRATION_MS = "location.cache.expiration.ms";
 
   public static final String CLUSTER_NAME = "cluster.name";
   /* Used by the user to specify what part of a path should be replaced by the current user's name. */

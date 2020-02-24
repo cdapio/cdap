@@ -189,6 +189,22 @@
   </property>
 
   <property>
+    <name>location.cache.path</name>
+    <value></value>
+    <description>
+      Local directory for caching remote location content
+    </description>
+  </property>
+
+  <property>
+    <name>location.cache.expiration.ms</name>
+    <value>86400000</value>
+    <description>
+      Location cache expiration time in milliseconds
+    </description>
+  </property>
+
+  <property>
     <name>thrift.max.read.buffer</name>
     <value>16777216</value>
     <description>

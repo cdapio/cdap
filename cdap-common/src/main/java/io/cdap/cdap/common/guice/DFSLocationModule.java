@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,15 @@
 
 package io.cdap.cdap.common.guice;
 
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.CachingLocationFactory;
+import io.cdap.cdap.common.io.DefaultCachingPathProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -29,6 +32,10 @@ import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A guice module to provide binding for {@link LocationFactory} that uses the {@link FileContextLocationFactory} as
@@ -66,16 +73,29 @@ public class DFSLocationModule extends PrivateModule {
     @Override
     public LocationFactory get() {
       String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
-      LOG.debug("HDFS namespace is {}", namespace);
+      LOG.debug("Location namespace is {}", namespace);
+
+      LocationFactory lf;
 
       // This FileContextLocationFactory supports multiple users from the same process.
       // It is used when security is enabled, which in turn impersonation could occur.
       if (UserGroupInformation.isSecurityEnabled()) {
-        return new FileContextLocationFactory(hConf, namespace);
+        lf = new FileContextLocationFactory(hConf, namespace);
+      } else {
+        // In non hadoop secure mode, use the static file context, which operates as single user.
+        lf = new InsecureFileContextLocationFactory(hConf, namespace, staticFileContextProvider.get());
       }
 
-      // In non hadoop secure mode, use the static file context, which operates as single user.
-      return new InsecureFileContextLocationFactory(hConf, namespace, staticFileContextProvider.get());
+      String locationCachePath = cConf.get(Constants.LOCATION_CACHE_PATH);
+      if (Strings.isNullOrEmpty(locationCachePath)) {
+        return lf;
+      }
+
+      LOG.debug("Location cache path is {}", locationCachePath);
+
+      Path cachePath = Paths.get(locationCachePath).toAbsolutePath();
+      long expiry = cConf.getLong(Constants.LOCATION_CACHE_EXPIRATION_MS);
+      return new CachingLocationFactory(lf, new DefaultCachingPathProvider(cachePath, expiry, TimeUnit.MILLISECONDS));
     }
   }
 }
