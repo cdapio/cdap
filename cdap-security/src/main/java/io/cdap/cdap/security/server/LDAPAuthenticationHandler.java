@@ -58,7 +58,10 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
         copyProperties(handlerProps, map, optionalConfigurables, false);
 
         String ldapsVerifyCertificate = handlerProps.get("ldapsVerifyCertificate");
-        ldapSSLVerifyCertificate = Boolean.parseBoolean(Objects.firstNonNull(ldapsVerifyCertificate, "true"));
+        String useLdaps = handlerProps.get("useLdaps");
+        if (Boolean.parseBoolean(Objects.firstNonNull(useLdaps, "false"))) {
+          ldapSSLVerifyCertificate = Boolean.parseBoolean(Objects.firstNonNull(ldapsVerifyCertificate, "true"));
+        }
 
         return new AppConfigurationEntry[] {
           new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
