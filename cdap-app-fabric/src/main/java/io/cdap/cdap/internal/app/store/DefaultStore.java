@@ -536,7 +536,7 @@ public class DefaultStore implements Store {
   @Override
   public ApplicationMeta getApplicationMetadata(ApplicationId id) {
     return TransactionRunners.run(transactionRunner, context -> {
-        return getAppMetadataStore(context).getApplication(id);
+      return getAppMetadataStore(context).getApplication(id);
     });
   }
 

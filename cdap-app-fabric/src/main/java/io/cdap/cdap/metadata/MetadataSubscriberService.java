@@ -59,7 +59,14 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.metadata.*;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
+import io.cdap.cdap.spi.metadata.MetadataDirective;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -67,7 +74,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Service responsible for consuming metadata messages from TMS and persist it to metadata store.

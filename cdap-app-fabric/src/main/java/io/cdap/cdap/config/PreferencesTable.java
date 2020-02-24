@@ -21,7 +21,12 @@ import com.google.gson.Gson;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.PreferencesMetadata;
 import io.cdap.cdap.proto.element.EntityType;
-import io.cdap.cdap.proto.id.*;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ParentedId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -32,7 +37,13 @@ import io.cdap.cdap.store.StoreDefinition;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * This class is responsible for preferences operations.
@@ -100,7 +111,7 @@ public class PreferencesTable {
         return getMetadata(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
       default:
         throw new UnsupportedOperationException(
-                String.format("Get preferences metadata on unexpected entity type: %s", entityId.getEntityType()));
+          String.format("Get preferences metadata on unexpected entity type: %s", entityId.getEntityType()));
     }
   }
 
@@ -131,7 +142,7 @@ public class PreferencesTable {
         return;
       default:
         throw new UnsupportedOperationException(
-                String.format("ensure sequence called on unexpected entity type: %s", entityId.getEntityType()));
+          String.format("ensure sequence called on unexpected entity type: %s", entityId.getEntityType()));
     }
   }
 

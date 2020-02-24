@@ -172,7 +172,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
 
     // Application not created yet.
     metadata = getPreferencesMetadata(getPreferenceURI(namespace1, "some_non_existing_app"),
-            HttpResponseStatus.NOT_FOUND);
+                                      HttpResponseStatus.NOT_FOUND);
     Assert.assertNull(metadata);
 
     // Create the app.
@@ -192,9 +192,9 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     setPreferences(uriNamespace1, ImmutableMap.of("k1", "namespace"), 200);
     setPreferences(uriApp, ImmutableMap.of("k1", "application"), 200);
     Assert.assertEquals("application",
-            getPreferences(uriApp, false, 200).get("k1"));
+                        getPreferences(uriApp, false, 200).get("k1"));
     Assert.assertEquals("application",
-            getPreferences(uriApp, true, 200).get("k1"));
+                        getPreferences(uriApp, true, 200).get("k1"));
     Assert.assertEquals("namespace", getPreferences(uriNamespace1, false, 200).get("k1"));
     Assert.assertEquals("namespace", getPreferences(uriNamespace1, true, 200).get("k1"));
     Assert.assertEquals("instance", getPreferences(uri, true, 200).get("k1"));
@@ -208,7 +208,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     // Delete preferences on the application.
     deletePreferences(uriApp, 200);
     Assert.assertEquals("namespace",
-            getPreferences(uriApp, true, 200).get("k1"));
+                        getPreferences(uriApp, true, 200).get("k1"));
     Assert.assertNull(getPreferences(uriApp, false, 200).get("k1"));
 
     // Even if preferences have been deleted, metadata still remains
@@ -219,9 +219,9 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     // Delete preferences on the namespace and verify.
     deletePreferences(uriNamespace1, 200);
     Assert.assertEquals("instance",
-            getPreferences(uriApp, true, 200).get("k1"));
+                        getPreferences(uriApp, true, 200).get("k1"));
     Assert.assertEquals("instance",
-            getPreferences(uriNamespace1, true, 200).get("k1"));
+                        getPreferences(uriNamespace1, true, 200).get("k1"));
     Assert.assertNull(getPreferences(uriNamespace1, false, 200).get("k1"));
 
     // Delete preferences on the instance and verify.
@@ -244,9 +244,9 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> propMap = Maps.newHashMap();
     Assert.assertEquals(propMap, getPreferences(uriNamespace2Service, false, 200));
     getPreferences(getPreferenceURI(
-            namespace2, appName, "invalidType", "somename"), false, 400);
+      namespace2, appName, "invalidType", "somename"), false, 400);
     getPreferences(getPreferenceURI(
-            namespace2, appName, "services", "somename"), false, 404);
+      namespace2, appName, "services", "somename"), false, 404);
 
     // No preferences have been set yet.
     metadata = getPreferencesMetadata(uriNamespace2Service, HttpResponseStatus.OK);
@@ -256,7 +256,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     propMap.put("k1", "k349*&#$");
     setPreferences(uriNamespace2Service, propMap, 200);
     Assert.assertEquals(propMap, getPreferences(
-            uriNamespace2Service, false, 200));
+      uriNamespace2Service, false, 200));
 
     // Check the metadata of preferences
     metadata = getPreferencesMetadata(uriNamespace2Service, HttpResponseStatus.OK);
@@ -269,7 +269,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(propMap, getPreferences(uri, true, 200));
     propMap.put("k1", "k349*&#$");
     Assert.assertEquals(propMap, getPreferences(
-            uriNamespace2Service, false, 200));
+      uriNamespace2Service, false, 200));
 
     // Delete preferences on the program and the instance
     deletePreferences(uriNamespace2Service, 200);
@@ -279,7 +279,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     deletePreferences(uri, 200);
     propMap.clear();
     Assert.assertEquals(propMap, getPreferences(
-            uriNamespace2Service, false, 200));
+      uriNamespace2Service, false, 200));
     Assert.assertEquals(propMap, getPreferences(uri, false, 200));
   }
 

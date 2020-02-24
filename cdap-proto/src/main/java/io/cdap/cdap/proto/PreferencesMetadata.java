@@ -25,7 +25,7 @@ import java.util.Objects;
 public class PreferencesMetadata {
 
   /**
-   *  Sequence id of operations on the preferences
+   * Sequence id of operations on the preferences
    */
   private final long seqId;
 

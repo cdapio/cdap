@@ -41,7 +41,27 @@ import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
-import io.cdap.cdap.gateway.handlers.*;
+import io.cdap.cdap.gateway.handlers.ApplicationMetadataHttpHandler;
+import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
+import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
+import io.cdap.cdap.gateway.handlers.BootstrapHttpHandler;
+import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.gateway.handlers.ConfigHandler;
+import io.cdap.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
+import io.cdap.cdap.gateway.handlers.ImpersonationHandler;
+import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
+import io.cdap.cdap.gateway.handlers.OperationalStatsHttpHandler;
+import io.cdap.cdap.gateway.handlers.OperationsDashboardHttpHandler;
+import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
+import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
+import io.cdap.cdap.gateway.handlers.UsageHandler;
+import io.cdap.cdap.gateway.handlers.VersionHandler;
+import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
+import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -346,6 +366,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     /**
      * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
      * and turning off check for new versions.
+     *
      * @param store JobStore.
      * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}

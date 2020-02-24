@@ -177,7 +177,9 @@ public class PreferencesService {
     return getConfigProperties(new InstanceId(""));
   }
 
-  public PreferencesMetadata getMetadata() { return getConfigMetadata(new InstanceId("")); }
+  public PreferencesMetadata getMetadata() {
+    return getConfigMetadata(new InstanceId(""));
+  }
 
   /**
    * Get namespace level preferences and their metadata
@@ -237,7 +239,7 @@ public class PreferencesService {
    * Get program level resolved preferences
    */
   public Map<String, String> getResolvedProperties(ProgramId programId) {
-   return getConfigResolvedProperties(programId);
+    return getConfigResolvedProperties(programId);
   }
 
   /**

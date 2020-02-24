@@ -84,7 +84,19 @@ import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
-import io.cdap.cdap.proto.*;
+import io.cdap.cdap.proto.BatchApplicationDetail;
+import io.cdap.cdap.proto.BatchProgram;
+import io.cdap.cdap.proto.BatchProgramHistory;
+import io.cdap.cdap.proto.DatasetMeta;
+import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.PreferencesMetadata;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProtoConstraintCodec;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ScheduleMetadata;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -596,15 +608,15 @@ public abstract class AppFabricTestBase {
 
   protected List<ApplicationMeta> getAllApplicationMetadata(String namespace) throws Exception {
     HttpResponse response =
-            doGet(getVersionedAPIPath("apps/metadata", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+      doGet(getVersionedAPIPath("apps/metadata", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_APPLICATIONMETA_TYPE);
   }
 
   protected ApplicationMeta getApplicationMetadata(ApplicationId appId) throws Exception {
     HttpResponse response =
-            doGet(getVersionedAPIPath(
-                    String.format("/apps/%s/versions/%s/metadata", appId.getApplication(), appId.getVersion(), appId.getNamespace()),
-                    Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
+      doGet(getVersionedAPIPath(
+        String.format("/apps/%s/versions/%s/metadata", appId.getApplication(), appId.getVersion(), appId.getNamespace()),
+        Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     return readResponse(response, ApplicationMeta.class);
   }
 
@@ -1310,7 +1322,6 @@ public abstract class AppFabricTestBase {
   protected String getPreferenceMetadataURI() {
     return "";
   }
-
 
   protected String getPreferenceURI(String namespace) {
     return String.format("%s/namespaces/%s", getPreferenceURI(), namespace);

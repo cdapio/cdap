@@ -142,6 +142,7 @@ public class ProgramScheduleService {
 
   /**
    * Get the metadata of the given schedule
+   *
    * @param scheduleId id that identifies a given schedule
    * @return metadata of the schedule
    * @throws Exception if any errors occurred while fetching the metadata or failing authorization check
@@ -149,7 +150,7 @@ public class ProgramScheduleService {
   public ProgramScheduleMeta getMeta(ScheduleId scheduleId) throws Exception {
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
     AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
-            authenticationContext.getPrincipal());
+                                   authenticationContext.getPrincipal());
     ProgramScheduleMeta meta = scheduler.getScheduleMetadata(scheduleId);
     return meta;
   }

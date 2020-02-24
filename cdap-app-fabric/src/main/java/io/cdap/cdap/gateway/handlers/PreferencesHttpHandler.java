@@ -37,8 +37,13 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import javax.ws.rs.*;
 import java.util.Map;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Program Preferences HTTP Handler.
@@ -185,7 +190,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId app = new ApplicationId(namespace, appId);
     if (store.getApplication(app) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
-              appId, namespace));
+                                                                       appId, namespace));
       return;
     }
     PreferencesMetadata metadata = preferencesService.getMetadata(app);

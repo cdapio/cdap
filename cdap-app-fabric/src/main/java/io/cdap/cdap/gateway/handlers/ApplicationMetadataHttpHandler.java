@@ -48,8 +48,7 @@ import java.util.stream.Collectors;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ApplicationMetadataHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON =
-          ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-
+    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type LIST_APPLICATION_META_TYPE = new TypeToken<List<ApplicationMeta>>() { }.getType();
 
   /**

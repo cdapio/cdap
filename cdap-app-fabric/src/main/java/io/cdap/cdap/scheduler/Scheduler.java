@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.scheduler;
 
-import io.cdap.cdap.common.*;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -137,6 +141,7 @@ public interface Scheduler {
 
   /**
    * Get the metadata of the given schedule from the store
+   *
    * @param scheduleId the id of the schedule
    * @return the metadata of the schedule from the store
    * @throws NotFoundException if the schedule doesn't exist in the store

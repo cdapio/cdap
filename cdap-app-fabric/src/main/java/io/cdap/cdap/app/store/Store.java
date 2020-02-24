@@ -298,6 +298,7 @@ public interface Store {
 
   /**
    * Returns the metadata of application identified by the id
+   *
    * @param id application id
    * @return metadata of the application
    */
@@ -314,6 +315,7 @@ public interface Store {
 
   /**
    * Returns a collection of metadata for all applications in the given namespace
+   *
    * @param id the namespace to get application metadata from
    * @return a collection of metadata for all applications in the given namespace
    */

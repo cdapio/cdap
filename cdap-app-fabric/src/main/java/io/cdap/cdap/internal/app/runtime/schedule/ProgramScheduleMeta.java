@@ -54,7 +54,7 @@ public class ProgramScheduleMeta {
     ProgramScheduleMeta that = (ProgramScheduleMeta) o;
 
     return Objects.equal(this.lastUpdatedTime, that.lastUpdatedTime) &&
-            Objects.equal(this.status, that.status);
+      Objects.equal(this.status, that.status);
   }
 
   @Override

@@ -55,7 +55,7 @@ public class ScheduleMetadata {
     }
     ScheduleMetadata that = (ScheduleMetadata) o;
     return Objects.equals(status, that.status) &&
-            Objects.equals(lastUpdateTime, that.lastUpdateTime);
+      Objects.equals(lastUpdateTime, that.lastUpdateTime);
   }
 
   @Override
@@ -66,8 +66,8 @@ public class ScheduleMetadata {
   @Override
   public String toString() {
     return "ScheduleMetadata{" +
-            "status='" + status +
-            ", lsatUpdateTime='" + lastUpdateTime +
-            '}';
+      "status='" + status +
+      ", lsatUpdateTime='" + lastUpdateTime +
+      '}';
   }
 }

@@ -140,10 +140,10 @@ public class ProgramSchedule {
   public static ProgramSchedule fromScheduleDetail(ScheduleDetail schedule) throws IllegalArgumentException {
     ProgramType programType = ProgramType.valueOfSchedulableType(schedule.getProgram().getProgramType());
     ProgramId programId = new ProgramId(
-            schedule.getNamespace(), schedule.getApplication(), programType, schedule.getProgram().getProgramName());
+      schedule.getNamespace(), schedule.getApplication(), programType, schedule.getProgram().getProgramName());
     ProgramSchedule programSchedule = new ProgramSchedule(
-            schedule.getName(), schedule.getDescription(), programId, schedule.getProperties(),
-            schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
+      schedule.getName(), schedule.getDescription(), programId, schedule.getProperties(),
+      schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
     return programSchedule;
   }
 }
