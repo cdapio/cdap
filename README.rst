@@ -15,7 +15,7 @@
 Introduction
 ============
 
-CDAP is an integrated, open source application
+CDAP is an integrated, open source application testing
 development platform for the Hadoop ecosystem that provides developers with data and
 application abstractions to simplify and accelerate application development, address a
 broader range of real-time and batch use cases, and deploy applications into production
