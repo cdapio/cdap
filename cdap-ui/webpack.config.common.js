@@ -214,7 +214,7 @@ if (isModeProduction(mode)) {
     new TerserPlugin({
       terserOptions: {
         cache: false,
-        parallel: true,
+        parallel: 6,
         sourceMap: true,
         extractComments: true,
         output: {
