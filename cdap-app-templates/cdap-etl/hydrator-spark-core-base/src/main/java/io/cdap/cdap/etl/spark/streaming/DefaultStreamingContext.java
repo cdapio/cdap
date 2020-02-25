@@ -70,8 +70,9 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   }
 
   @Override
-  public void registerLineage(final String referenceName)
+  public void registerLineage(String referenceName)
     throws DatasetManagementException, TransactionFailureException {
+
     try {
       if (!admin.datasetExists(referenceName)) {
         admin.createDataset(referenceName, EXTERNAL_DATASET_TYPE, DatasetProperties.EMPTY);
@@ -113,6 +114,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
 
   @Override
   public void record(List<FieldOperation> operations) {
-    throw new UnsupportedOperationException("Lineage recording is not supported.");
+    throw new UnsupportedOperationException("Field lineage recording is not supported. Please record lineage " +
+                                              "in prepareRun() stage");
   }
 }

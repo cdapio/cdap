@@ -351,7 +351,13 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public void record(Collection<? extends Operation> operations) {
     throw new UnsupportedOperationException("Recording field lineage operations is not supported in " +
-                                              "                                 MapReduce task-level context");
+                                              "MapReduce task-level context");
+  }
+
+  @Override
+  public void flushLineage() {
+    throw new UnsupportedOperationException("Recording field lineage operations is not supported in " +
+                                              "MapReduce task-level context");
   }
 
   @Override

@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.streaming;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.SubmitterLifecycle;
 import org.apache.spark.streaming.api.java.JavaDStream;
 
 import java.io.Serializable;
@@ -29,7 +30,8 @@ import java.io.Serializable;
  * @param <T> type of object contained in the stream
  */
 @Beta
-public abstract class StreamingSource<T> implements PipelineConfigurable, Serializable {
+public abstract class StreamingSource<T> implements PipelineConfigurable,
+  SubmitterLifecycle<StreamingSourceContext>, Serializable {
 
   public static final String PLUGIN_TYPE = "streamingsource";
 
@@ -42,6 +44,16 @@ public abstract class StreamingSource<T> implements PipelineConfigurable, Serial
    * @return the stream to read from.
    */
   public abstract JavaDStream<T> getStream(StreamingContext context) throws Exception;
+
+  @Override
+  public void prepareRun(StreamingSourceContext context) throws Exception {
+    // no-op
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, StreamingSourceContext context) {
+    // no-op
+  }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

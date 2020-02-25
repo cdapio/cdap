@@ -86,7 +86,7 @@ import javax.annotation.Nullable;
  */
 @VisibleForTesting
 public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
-                                      implements ProgramClassLoaderProvider, Closeable {
+  implements ProgramClassLoaderProvider, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
@@ -191,7 +191,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    authorizationEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,
                                                                    locationFactory, metadataReader, metadataPublisher,
-                                                                   namespaceQueryAdmin);
+                                                                   namespaceQueryAdmin, fieldLineageWriter);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

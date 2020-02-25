@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,40 +16,26 @@
 
 package io.cdap.cdap.etl.api.streaming;
 
-import io.cdap.cdap.api.Transactional;
-import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
-import io.cdap.cdap.etl.api.StageContext;
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import io.cdap.cdap.etl.api.batch.BatchContext;
 import org.apache.tephra.TransactionFailureException;
 
+import javax.annotation.Nullable;
+
 /**
- * Context for streaming plugin stages.
+ * Context passed to streaming source during prepare run phase.
  */
-@Beta
-public interface StreamingContext extends StageContext, Transactional {
-
-  /**
-   * @return Spark JavaStreamingContext for the pipeline.
-   */
-  JavaStreamingContext getSparkStreamingContext();
-
-  /**
-   * @return CDAP JavaSparkExecutionContext for the pipeline.
-   */
-  JavaSparkExecutionContext getSparkExecutionContext();
-
+public interface StreamingSourceContext extends BatchContext {
   /**
    * Register dataset lineage for this Spark program using the given reference name
    *
    * @param referenceName reference name used for source
+   * @param schema schema for this dataset
    *
    * @throws DatasetManagementException thrown if there was an error in creating reference dataset
    * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
-   * @deprecated use {@link StreamingSourceContext#registerLineage(String, Schema)} to record lineage in prepare stage
    */
-  @Deprecated
-  void registerLineage(String referenceName) throws DatasetManagementException, TransactionFailureException;
+  void registerLineage(String referenceName,
+                       @Nullable Schema schema) throws DatasetManagementException, TransactionFailureException;
 }

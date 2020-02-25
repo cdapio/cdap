@@ -78,6 +78,7 @@ import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.TrackedIterator;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
+import io.cdap.cdap.etl.lineage.FieldLineageProcessor;
 import io.cdap.cdap.etl.planner.ConditionBranches;
 import io.cdap.cdap.etl.planner.ControlDag;
 import io.cdap.cdap.etl.planner.Dag;

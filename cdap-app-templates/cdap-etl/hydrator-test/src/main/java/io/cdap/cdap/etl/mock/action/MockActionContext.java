@@ -245,6 +245,11 @@ public class MockActionContext implements ActionContext {
   }
 
   @Override
+  public void flushLineage() {
+    // no-op
+  }
+
+  @Override
   public FailureCollector getFailureCollector() {
     return collector;
   }
