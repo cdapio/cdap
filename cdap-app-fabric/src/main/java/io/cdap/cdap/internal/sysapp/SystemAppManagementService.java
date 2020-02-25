@@ -74,7 +74,8 @@ public class SystemAppManagementService extends AbstractIdleService {
   }
 
   private void bootStrapSystemAppConfigDir() throws Exception {
-    LOG.debug("Number of config files {} in system app config directory.", systemAppConfigDirPath.listFiles().length);
+    LOG.debug("Number of config files {} in system app config directory.",
+              DirUtils.listFiles(systemAppConfigDirPath).size());
     for (File sysAppConfigFile : DirUtils.listFiles(systemAppConfigDirPath)) {
       LOG.debug("Running steps in config file {}", sysAppConfigFile.getAbsoluteFile());
       executeSysConfig(sysAppConfigFile.getAbsoluteFile());
