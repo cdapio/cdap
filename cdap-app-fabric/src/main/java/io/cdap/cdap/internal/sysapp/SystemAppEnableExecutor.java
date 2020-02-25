@@ -111,18 +111,15 @@ public class SystemAppEnableExecutor {
     ArtifactSummary artifactSummary = arguments.getArtifact();
 
     KerberosPrincipalId ownerPrincipalId =
-        arguments.getOwnerPrincipal() == null ? null
-            : new KerberosPrincipalId(arguments.getOwnerPrincipal());
+      arguments.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(arguments.getOwnerPrincipal());
 
     // if we don't null check, it gets serialized to "null"
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
 
     try {
-      return appLifecycleService
-          .deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-              artifactSummary, configString, x -> {
-              },
-              ownerPrincipalId, arguments.canUpdateSchedules());
+      return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
+                                           artifactSummary, configString, x -> { },
+                                           ownerPrincipalId, arguments.canUpdateSchedules());
 
     } catch (UnauthorizedException | InvalidArtifactException e) {
       throw e;
