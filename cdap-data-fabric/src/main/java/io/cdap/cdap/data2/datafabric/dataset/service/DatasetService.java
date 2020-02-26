@@ -242,7 +242,7 @@ public class DatasetService extends AbstractService {
     typeService.stopAndWait();
 
     // Wait for a few seconds for requests to stop
-    httpService.stop(3, 5, TimeUnit.SECONDS);
+    httpService.stop();
     LOG.info("DatasetService stopped");
   }
 

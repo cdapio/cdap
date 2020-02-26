@@ -26,7 +26,6 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Name;
@@ -135,7 +134,7 @@ public class PluginInstantiator implements Closeable {
   public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
     File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
     if (!destFile.exists()) {
-      Files.copy(Locations.newInputSupplier(artifactLocation), destFile);
+      Locations.linkOrCopy(artifactLocation, destFile);
     }
   }
 
