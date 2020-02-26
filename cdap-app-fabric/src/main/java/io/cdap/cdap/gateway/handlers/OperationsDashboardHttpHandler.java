@@ -26,7 +26,6 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
-import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -82,7 +81,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
 
   @Inject
   public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService,
-                                        Store store, Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
+                                        Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
     this.programHeartbeatService = programHeartbeatService;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;

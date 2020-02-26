@@ -84,6 +84,7 @@ import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramHistory;
+import io.cdap.cdap.proto.BatchProgramSchedule;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -92,6 +93,7 @@ import io.cdap.cdap.proto.ProtoConstraintCodec;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -1138,6 +1140,13 @@ public abstract class AppFabricTestBase {
     return doPut(getVersionedAPIPath(path, namespace), GSON.toJson(schedule));
   }
 
+  protected HttpResponse enableSchedule(String namespace, String appName,
+                                        @Nullable String appVersion, String scheduleName) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules/%s/enable", appName, appVersion, scheduleName);
+    return doPost(getVersionedAPIPath(path, namespace));
+  }
+
   protected HttpResponse deleteSchedule(String namespace, String appName, @Nullable String appVersion,
                                         String scheduleName) throws Exception {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
@@ -1161,6 +1170,47 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     return readResponse(response, ScheduleDetail.class);
   }
+
+  /**
+   * Returns a list of {@link ScheduledRuntime}.
+   *
+   * @param programId the program id
+   * @param next if true, fetch the list of future run times. If false, fetch the list of past run times.
+   */
+  protected List<ScheduledRuntime> getScheduledRunTimes(ProgramId programId, boolean next) throws Exception {
+    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/%sruntime", programId.getApplication(),
+                                          programId.getProgram(), next ? "next" : "previous");
+    String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+                                              programId.getNamespace());
+    HttpResponse response = doGet(versionedUrl);
+    Assert.assertEquals(200, response.getResponseCode());
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+  }
+
+  /**
+   * Returns a list of {@link BatchProgramSchedule}.
+   *
+   * @param namespace the namespace to query in
+   * @param programIds list of programs to query for scheuled run time
+   * @param next if true, fetch the list of future run times. If false, fetch the list of past run times.
+   * @return a list of {@link BatchProgramSchedule}
+   */
+  protected List<BatchProgramSchedule> getScheduledRunTimes(String namespace,
+                                                            Collection<? extends ProgramId> programIds,
+                                                            boolean next) throws Exception {
+    Assert.assertTrue(programIds.stream().map(ProgramId::getNamespace).allMatch(namespace::equals));
+
+    String url = String.format("%sruntime", next ? "next" : "previous");
+    String versionedUrl = getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+
+    List<BatchProgram> batchPrograms = programIds.stream()
+      .map(id -> new BatchProgram(id.getApplication(), id.getType(), id.getProgram()))
+      .collect(Collectors.toList());
+    HttpResponse response = doPost(versionedUrl, GSON.toJson(batchPrograms));
+    Assert.assertEquals(200, response.getResponseCode());
+    return readResponse(response, new TypeToken<List<BatchProgramSchedule>>() { }.getType());
+  }
+
 
   protected Map<String, String> getMetadataProperties(EntityId entityId) throws Exception {
     return metadataClient.getProperties(entityId.toMetadataEntity());

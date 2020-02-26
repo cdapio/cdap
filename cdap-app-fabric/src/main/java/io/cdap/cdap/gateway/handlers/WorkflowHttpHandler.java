@@ -25,13 +25,11 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.InstanceNotFoundException;
-import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.NodeValue;
 import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
-import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
@@ -41,19 +39,15 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
-import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
-import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowTokenDetail;
 import io.cdap.cdap.proto.WorkflowTokenNodeDetail;
@@ -62,15 +56,12 @@ import io.cdap.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.Ids;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
-import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +85,7 @@ import javax.ws.rs.QueryParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
+public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHttpHandler.class);
   private static final Type STRING_TO_NODESTATEDETAIL_MAP_TYPE
     = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
@@ -107,20 +98,12 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     .create();
 
   private final DatasetFramework datasetFramework;
-  private final TimeSchedulerService timeScheduler;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
 
   @Inject
-  WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
-                      TimeSchedulerService timeScheduler, MRJobInfoFetcher mrJobInfoFetcher,
-                      ProgramLifecycleService lifecycleService, NamespaceQueryAdmin namespaceQueryAdmin,
-                      DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                      ProgramScheduleService programScheduleService) {
-    super(store, runtimeService, discoveryServiceClient, lifecycleService,
-          mrJobInfoFetcher, namespaceQueryAdmin, programScheduleService);
+  WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService, DatasetFramework datasetFramework) {
     this.datasetFramework = datasetFramework;
-    this.timeScheduler = timeScheduler;
     this.store = store;
     this.runtimeService = runtimeService;
   }
@@ -164,82 +147,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new NotFoundException(id.run(runId));
     }
     return runtimeInfo.getController();
-  }
-
-  /**
-   * Returns the previous runtime when the scheduled program ran.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/previousruntime")
-  public void getPreviousScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId,
-                                  @PathParam("workflow-id") String workflowId)
-    throws SchedulerException, NotFoundException {
-    getScheduledRuntime(responder, namespaceId, appId, workflowId, true);
-  }
-
-  /**
-   * Returns next scheduled runtime of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
-  public void getNextScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId,
-                                  @PathParam("workflow-id") String workflowId)
-    throws SchedulerException, NotFoundException {
-    getScheduledRuntime(responder, namespaceId, appId, workflowId, false);
-  }
-
-  private void getScheduledRuntime(HttpResponder responder, String namespaceId, String appName, String workflowName,
-                                   boolean previousRuntimeRequested) throws SchedulerException, NotFoundException {
-    try {
-      ApplicationId appId = new ApplicationId(namespaceId, appName);
-      WorkflowId workflowId = new WorkflowId(appId, workflowName);
-      Store.ensureProgramExists(workflowId, store.getApplication(appId));
-
-      List<ScheduledRuntime> runtimes;
-      if (previousRuntimeRequested) {
-        runtimes = timeScheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
-      } else {
-        runtimes = timeScheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
-      }
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimes));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
-  }
-
-  /**
-   * Get Workflow schedules
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
-  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespace,
-                                   @PathParam("app-id") String application,
-                                   @PathParam("workflow-id") String workflow,
-                                   @QueryParam("trigger-type") String triggerType,
-                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    doGetSchedules(responder, new NamespaceId(namespace).app(application, ApplicationId.DEFAULT_VERSION),
-                   workflow, triggerType, scheduleStatus);
-  }
-
-  /**
-   * Get Workflow schedules
-   */
-  @GET
-  @Path("/apps/{app-id}/versions/{app-version}/workflows/{workflow-id}/schedules")
-  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespace,
-                                   @PathParam("app-id") String application,
-                                   @PathParam("app-version") String version,
-                                   @PathParam("workflow-id") String workflow,
-                                   @QueryParam("trigger-type") String triggerType,
-                                   @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    doGetSchedules(responder, new NamespaceId(namespace).app(application, version), workflow,
-                   triggerType, scheduleStatus);
   }
 
   @GET
